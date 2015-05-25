@@ -30,5 +30,7 @@ builder.build( assign( {
     return process.exit( 1 );
   }
 
+  console.log( '- Created installer for ' + cli.flags.platform + ' -' );
+
   process.exit();
 } );
