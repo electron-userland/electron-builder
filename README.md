@@ -1,11 +1,13 @@
-# electron-builder
+# electron-builder (WIP)
 
 ## Building MacOS installer
 
 ```
-$ electron-builder dist/macos/Loopline\ Systems.app "Loopline Systems" --platform=macos --out=/Users/stefanjudis/foo --macos-icon=assets/macos/mount.icns --macos-background=assets/macos/installer.png
+$ electron-builder fancyApp.app "Fancy App" --platform=macos --out=/some/path/to/output/dir/ --macos-icon=/path/to/icon/mount.icns --macos-background=/path/to/moung/background.png
 ```
 
+## Build Windows installer
+
 ```
-$ electron-builder dist/win/Loopline\ Systems-win32 "Loopline Systems" --platform=win
+$ electron-builder fandyApp-win32 "Fancy" --platform=win --out=/some/path/to/output/dir/
 ```
