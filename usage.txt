@@ -1,0 +1,9 @@
+
+Usage
+  $ electron-builder <sourcedir> <appname> --plattform=<plattform>
+
+  Required options :
+    platform :      win, macos
+
+  Optional options :
+    out :            the dir to the installer at the end. defaults to current working dir

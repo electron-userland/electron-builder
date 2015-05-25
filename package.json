@@ -21,5 +21,11 @@
   "bugs": {
     "url": "https://github.com/loopline-systems/electron-builder/issues"
   },
-  "homepage": "https://github.com/loopline-systems/electron-builder"
+  "homepage": "https://github.com/loopline-systems/electron-builder",
+  "dependencies": {
+    "appdmg": "^0.3.1",
+    "lodash.assign": "^3.2.0",
+    "lodash.template": "^3.6.1",
+    "meow": "^3.1.0"
+  }
 }
