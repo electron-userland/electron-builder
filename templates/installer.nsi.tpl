@@ -12,7 +12,7 @@ Name "${APP_NAME}"
 
 
 # define the resulting installer's name
-OutFile "<%= out %> Setup.exe"
+OutFile "<%= out %>${APP_NAME} Setup.exe"
 
 # set the installation directory
 InstallDir "$PROGRAMFILES\${APP_NAME}\"
