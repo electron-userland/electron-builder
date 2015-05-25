@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "version": "1.0.0",
-  "description": "Create electron installers the easy way",
+  "description": "Create electron app installers the easy way",
   "main": "index.js",
   "scripts": {
     "test": "npm test"
