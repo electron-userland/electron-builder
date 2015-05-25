@@ -26,6 +26,7 @@
     "appdmg": "^0.3.1",
     "fs-extra": "^0.18.4",
     "lodash.assign": "^3.2.0",
+    "lodash.camelcase": "^3.0.1",
     "lodash.template": "^3.6.1",
     "meow": "^3.1.0"
   }

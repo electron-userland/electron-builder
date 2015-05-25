@@ -7,6 +7,9 @@
 
 var platforms = require( './lib/platforms' );
 var fs        = require( 'fs' );
+var path      = require( 'path' );
+var defaults  = require( './config/default' );
+var assign    = require( 'lodash.assign' );
 
 var Builder = {
   /**
@@ -20,8 +23,15 @@ var Builder = {
     options.log = options.log || console.log;
     options.out = options.out || process.cwd();
 
+    if ( typeof options.config === 'string' ) {
+      options.basePath = path.dirname( path.join( process.cwd(), options.config ) );
+      options.config   = require( path.join( process.cwd(), options.config ) );
+    }
+
+    options.config.macos.contents[ 1 ].path = options.out;
+
     // FAIL when not all required options are set
-    if ( !options.appPath || !options.name || !options.platform ) {
+    if ( !options.appPath || !options.platform ) {
       return callback( new Error( 'Required option not set' ) );
     }
 
@@ -32,10 +42,6 @@ var Builder = {
       );
     }
 
-    // put platform depending options handling here
-    // missing
-    //   macosbackround
-    //   macosicon
     platforms[ options.platform ].init().build( options, callback );
   }
 };

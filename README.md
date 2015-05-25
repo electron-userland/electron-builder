@@ -3,29 +3,44 @@
 ## Building MacOS installer
 
 ```
-$ electron-builder fancyApp.app "Fancy App" --platform=macos --out=/some/path/to/output/dir/ --macos-icon=/path/to/icon/mount.icns --macos-background=/path/to/moung/background.png
+$ electron-builder dist/macos/someFancy.app --platform=macos --out=/some/path/ --config=config.json
 ```
 
 ## Build Windows installer
 
 ```
-$ electron-builder fandyApp-win32 "Fancy App" --platform=win --out=/some/path/to/output/dir/
+$ electron-builder dist/win/someFancy-win32 --platform=win --out=/some/path/ --config=config.json
 ```
 
-## Node module
-
 ```
-var builder = ( require( 'electron-builder' ) ).init();
+Usage
+  $ electron-builder <sourcedir> --plattform=<plattform> --config=<configPath> --out=<outputPath>
 
-builder.build( options, function( error ) {
-  if ( error ) {
-    console.error( error );
+  Required options:
+    platform:          win, macos
+    config:            path to config file
 
-    return process.exit( 1 );
+  Optional options:
+    out:               path to output the installer
+
+Config.json sample:
+
+{
+  "macos" : {
+    "title": "Loopline Systems Installer",
+    "background": "./assets/macos/installer.png",
+    "icon": "./assets/macos/mount.icns",
+    "icon-size": 80,
+    "contents": [
+      { "x": 80, "y": 150, "type": "link", "path": "/Applications" },
+      { "x": 325, "y": 150, "type": "file", "path": "/path/to/App" }
+    ]
+  },
+  "win" : {
+    "title" : "Loopline Systems Setup",
+    "icon" : "../assets/win/icon.ico"
   }
+}
 
-  console.log( '- Created installer for ' + options.platform + ' -' );
-
-  process.exit();
-} );
 ```
+

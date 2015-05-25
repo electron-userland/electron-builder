@@ -12,17 +12,16 @@ var meow    = require( 'meow' );
 var builder = ( require( './' ) ).init();
 var usage   = fs.readFileSync( __dirname + '/usage.txt' ).toString();
 var assign  = require( 'lodash.assign' );
+var path    = require( 'path' );
 
 var cli = meow( {
     help: usage
 } );
 
-var appPath = cli.input[ 0 ];
-var name    = cli.input[ 1 ];
+var appPath = path.join( process.cwd(), cli.input[ 0 ] );
 
 builder.build( assign( {
-  appPath     : appPath,
-  name        : name
+  appPath     : appPath
 }, cli.flags ), function( error ) {
   if ( error ) {
     console.error( error );

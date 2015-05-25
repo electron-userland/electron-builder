@@ -1,15 +1,10 @@
 
 Usage
-  $ electron-builder <sourcedir> <appname> --plattform=<plattform>
+  $ electron-builder <sourcedir> --plattform=<plattform> --config=<configPath> --out=<outputPath>
 
   Required options:
     platform:          win, macos
+    config:            path to config file
 
   Optional options:
-    out:               the dir to the installer at the end. defaults to current working dir
-
-  Optional MacOS only options:
-    macos-icon:        path to mount icon
-    macos-background:  path to installer background image
-
-  Optional Windows only options:
+    out:               path to output the installer
