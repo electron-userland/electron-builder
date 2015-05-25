@@ -1,6 +1,6 @@
 # electron-builder (WIP)
 
-## Building MacOS installer
+## Build MacOS installer
 
 ```
 $ electron-builder dist/macos/someFancy.app --platform=macos --out=/some/path/ --config=config.json
