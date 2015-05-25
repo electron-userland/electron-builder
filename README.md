@@ -9,12 +9,14 @@ $ electron-builder fancyApp.app "Fancy App" --platform=macos --out=/some/path/to
 ## Build Windows installer
 
 ```
-$ electron-builder fandyApp-win32 "Fancy" --platform=win --out=/some/path/to/output/dir/
+$ electron-builder fandyApp-win32 "Fancy App" --platform=win --out=/some/path/to/output/dir/
 ```
 
 ## Node module
 
 ```
+var builder = ( require( 'electron-builder' ) ).init();
+
 builder.build( options, function( error ) {
   if ( error ) {
     console.error( error );
