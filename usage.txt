@@ -2,8 +2,14 @@
 Usage
   $ electron-builder <sourcedir> <appname> --plattform=<plattform>
 
-  Required options :
-    platform :      win, macos
+  Required options:
+    platform:          win, macos
 
-  Optional options :
-    out :            the dir to the installer at the end. defaults to current working dir
+  Optional options:
+    out:               the dir to the installer at the end. defaults to current working dir
+
+  Optional MacOS only options:
+    macos-icon:        path to mount icon
+    macos-background:  path to installer background image
+
+  Optional Windows only options:
