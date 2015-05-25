@@ -1,6 +1,5 @@
 !define APP_NAME "<%= name %>"
 !define APP_DIR "${APP_NAME}"
-!define COMPANY_NAME "Loopline Systems GmbH"
 
 Name "${APP_NAME}"
 
@@ -48,7 +47,7 @@ Section
   CreateDirectory "$SMPROGRAMS\${APP_DIR}"
   CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
   CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall ${APP_NAME}.exe"
-  CreateShortCut "$DESKTOP\Loopline Systems.lnk" "$INSTDIR\${APP_NAME}.exe"
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
 SectionEnd
 
 # create a section to define what the uninstaller does
