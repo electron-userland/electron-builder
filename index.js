@@ -20,7 +20,7 @@ var Builder = {
   build : function( options, callback ) {
     options     = options || {};
     options.log = options.log || console.log;
-    options.out = options.out || process.cwd();
+    options.out = path.join( process.cwd(), options.out ) || process.cwd();
 
     // FAIL when not all required options are set
     if ( !options.appPath || !options.platform || !options.config ) {
@@ -35,7 +35,7 @@ var Builder = {
       try {
         options.config   = require( configPath );
       } catch( error ) {
-        return callback( new Error( 'Could not load config.json' ) );
+        return callback( new Error( 'Could not load config file' ) );
       }
     }
 

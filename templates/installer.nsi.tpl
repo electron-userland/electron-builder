@@ -11,7 +11,7 @@ Name "${APP_NAME}"
 
 
 # define the resulting installer's name
-OutFile "<%= out %>${APP_NAME}.exe"
+OutFile "<%= out %>${APP_NAME} Setup.exe"
 
 # set the installation directory
 InstallDir "$PROGRAMFILES\${APP_NAME}\"
@@ -38,7 +38,7 @@ Section
   SetOutPath $INSTDIR
 
   # specify the files to go in the output path
-  File /r "<%= appPath %>"
+  File /r "<%= appPath %>\*"
 
   # create the uninstaller
   WriteUninstaller "$INSTDIR\Uninstall ${APP_NAME}.exe"
