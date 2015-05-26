@@ -143,7 +143,7 @@ package.json
     "build:macos": "npm run clean:macos && electron-packager ./app \"Loopline Systems\" --out=dist/macos --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/macos/loopline.icns",
     "build:win": "npm run clean:win && electron-packager ./app \"Loopline Systems\" --out=dist/win --platform=win32 --arch=ia32 --version=0.25.3 --icon=assets/win/icon.ico",
 
-    "pack": "npm run build && npm run pack:macos && npm run pack:win",
+    "pack": "npm run pack:macos && npm run pack:win",
     "pack:macos": "npm run build:macos && electron-builder \"dist/macos/Loopline Systems.app\" --platform=macos --out=\"dist/macos\" --config=packager.json",
     "pack:win": "npm run build:win && electron-builder \"dist/win/Loopline Systems-win32\" --platform=win --out=\"dist/win\" --config=packager.json"
   },
