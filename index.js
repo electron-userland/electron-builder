@@ -10,12 +10,16 @@ var fs        = require( 'fs' );
 var path      = require( 'path' );
 var assign    = require( 'lodash.assign' );
 
+/**
+ * Prototype for electron-builder
+ * @type {Object}
+ */
 var Builder = {
   /**
-   * [build description]
-   * @param  {[type]}   options  [description]
-   * @param  {Function} callback [description]
-   * @return {[type]}            [description]
+   * Build the installer for given platform
+   *
+   * @param  {Object}   options  option
+   * @param  {Function} callback callback
    */
   build : function( options, callback ) {
     options     = options || {};
@@ -34,12 +38,12 @@ var Builder = {
     }
 
     if ( typeof options.config === 'string' ) {
-      var configPath = path.join( process.cwd(), options.config );
+      var configPath = path.resolve( process.cwd(), options.config );
 
       options.basePath = path.dirname( configPath );
 
       try {
-        options.config   = require( configPath );
+        options.config = require( configPath );
       } catch( error ) {
         return callback( new Error( 'Could not load config file' ) );
       }
@@ -57,6 +61,11 @@ var Builder = {
 };
 
 
+/**
+ * Expose factory function
+ *
+ * @type {Object}
+ */
 module.exports = {
   init : function() {
    return Object.create( Builder );

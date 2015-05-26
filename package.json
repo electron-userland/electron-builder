@@ -4,7 +4,8 @@
   "description": "Create electron apps installers the easy way",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": "tape ./**/*_spec.js | tnyan",
+    "test:debug": "tape ./**/*_spec.js | tap-spec"
   },
   "repository": {
     "type": "git",
@@ -29,5 +30,11 @@
     "lodash.camelcase": "^3.0.1",
     "lodash.template": "^3.6.1",
     "meow": "^3.1.0"
+  },
+  "devDependencies": {
+    "proxyquire": "^1.5.0",
+    "tap-nyan": "0.0.2",
+    "tap-spec": "^3.0.0",
+    "tape": "^4.0.0"
   }
 }
