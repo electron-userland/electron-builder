@@ -8,7 +8,6 @@
 var platforms = require( './lib/platforms' );
 var fs        = require( 'fs' );
 var path      = require( 'path' );
-var defaults  = require( './config/default' );
 var assign    = require( 'lodash.assign' );
 
 var Builder = {
@@ -23,17 +22,25 @@ var Builder = {
     options.log = options.log || console.log;
     options.out = options.out || process.cwd();
 
+    // FAIL when not all required options are set
+    if ( !options.appPath || !options.platform || !options.config ) {
+      return callback( new Error( 'Required option not set' ) );
+    }
+
     if ( typeof options.config === 'string' ) {
-      options.basePath = path.dirname( path.join( process.cwd(), options.config ) );
-      options.config   = require( path.join( process.cwd(), options.config ) );
+      var configPath = path.join( process.cwd(), options.config );
+
+      options.basePath = path.dirname( configPath );
+
+      try {
+        options.config   = require( configPath );
+      } catch( error ) {
+        return callback( new Error( 'Could not load config.json' ) );
+      }
     }
 
     options.config.macos.contents[ 1 ].path = options.out;
 
-    // FAIL when not all required options are set
-    if ( !options.appPath || !options.platform ) {
-      return callback( new Error( 'Required option not set' ) );
-    }
 
     // FAIL when set platform is not available
     if ( !platforms[ options.platform ] ) {
