@@ -45,9 +45,6 @@ var Builder = {
       }
     }
 
-    options.config.macos.contents[ 1 ].path = options.out;
-
-
     // FAIL when set platform is not available
     if ( !platforms[ options.platform ] ) {
       return callback(
