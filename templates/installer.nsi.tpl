@@ -40,6 +40,9 @@ Section
   # specify the files to go in the output path
   File /r "<%= appPath %>\*"
 
+  # specify icon to go in the output path
+  File "icon.ico"
+
   # create the uninstaller
   WriteUninstaller "$INSTDIR\Uninstall ${APP_NAME}.exe"
 
@@ -48,6 +51,13 @@ Section
   CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
   CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall ${APP_NAME}.exe"
   CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "DisplayName" "${APP_NAME}"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "UninstallString" "$INSTDIR\Uninstall ${APP_NAME}.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "DisplayIcon" "$INSTDIR\icon.ico"
 SectionEnd
 
 # create a section to define what the uninstaller does
@@ -75,4 +85,6 @@ Section "Uninstall"
   rmDir  "$SMPROGRAMS\${APP_DIR}"
   delete "$DESKTOP\${APP_NAME}.lnk"
 
+
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 SectionEnd
