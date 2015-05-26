@@ -20,7 +20,13 @@ var Builder = {
   build : function( options, callback ) {
     options     = options || {};
     options.log = options.log || console.log;
-    options.out = path.join( process.cwd(), options.out ) || process.cwd();
+    options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
+
+    // make sure the output directory
+    // ends with a slash
+    if ( options.out[ options.out.length - 1 ] !== path.sep ) {
+      options.out += path.sep;
+    }
 
     // FAIL when not all required options are set
     if ( !options.appPath || !options.platform || !options.config ) {
