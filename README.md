@@ -77,18 +77,18 @@ config.json.sample:
 
 {
   "macos" : {
-    "title": "Loopline Systems Installer",
-    "background": "./assets/macos/installer.png",
-    "icon": "./assets/macos/mount.icns",
+    "title": "Loopline Systems",
+    "background": "assets/macos/installer.png",
+    "icon": "assets/macos/mount.icns",
     "icon-size": 80,
     "contents": [
-      { "x": 80, "y": 150, "type": "link", "path": "/Applications" },
-      { "x": 325, "y": 150, "type": "file" }
+      { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
+      { "x": 192, "y": 344, "type": "file" }
     ]
   },
   "win" : {
-    "title" : "Loopline Systems Setup",
-    "icon" : "../assets/win/icon.ico"
+    "title" : "Loopline Systems",
+    "icon" : "assets/win/icon.ico"
   }
 }
 ```
