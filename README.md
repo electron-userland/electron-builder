@@ -1,11 +1,11 @@
 # electron-builder (WIP)
 
-The electron-builder project is used to create installer for the platforms Windows and MacOS.
-It's build to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
+The electron-builder project is used to create installers for the platforms Windows and MacOS.
+It's built to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
 
-If you are looking for a complete set up on how to use [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the "How we use it section below".
+If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the "How we use it section below".
 
-The project is currently only executed on MacOS machines. Any support or help on Windows support is welcome.
+The project has currently only been executed on MacOS machines. Any support or help for Windows is welcome.
 
 ## Install
 
@@ -95,7 +95,7 @@ config.json.sample:
 
 ## How we use it so far
 
-This workflow creates when running `npm run pack` executables for the platforms Windows and MacOS inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
+When you run `npm run pack` it will create executables for the platforms Windows and MacOS inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
 
 
 ```
