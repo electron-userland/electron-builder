@@ -5,10 +5,10 @@
  * Licensed under the MIT license.
  */
 
+'use strict';
+
 var platforms = require( './lib/platforms' );
-var fs        = require( 'fs' );
 var path      = require( 'path' );
-var assign    = require( 'lodash.assign' );
 
 /**
  * Prototype for electron-builder
@@ -68,6 +68,6 @@ var Builder = {
  */
 module.exports = {
   init : function() {
-   return Object.create( Builder );
+    return Object.create( Builder );
   }
 };

@@ -4,7 +4,8 @@
   "description": "Create electron apps installers the easy way",
   "main": "index.js",
   "scripts": {
-    "test": "tape ./**/*_spec.js | tnyan",
+    "lint": "eslint ./lib/**/*.js cli.js index.js",
+    "test": "npm run lint && tape ./**/*_spec.js | tnyan",
     "test:debug": "tape ./**/*_spec.js | tap-spec"
   },
   "repository": {
@@ -32,6 +33,7 @@
     "meow": "^3.1.0"
   },
   "devDependencies": {
+    "eslint": "^0.21.2",
     "proxyquire": "^1.5.0",
     "tap-nyan": "0.0.2",
     "tap-spec": "^3.0.0",
