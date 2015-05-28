@@ -32,7 +32,7 @@ part of package.json
 
 {
   "scripts" : {
-    "build:macos": "npm run clean:macos && electron-packager ./app \"Loopline Systems\" --out=dist/macos --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/macos/loopline.icns",
+    "pack:macos": "npm run build:macos && electron-builder \"dist/macos/Loopline Systems.app\" --platform=macos --out=\"dist/macos\" --config=packager.json"
   }
 }
 
@@ -109,9 +109,9 @@ desktop
   |
   |-- assets                            // build related assets
     |-- macos                           // build assets for macos
-      |-- installer.png                 //   -> referenced in packager.json
-      |-- mount.icns
-      |-- loopline.icns
+      |-- installer.png                 //   -> referenced in packager.json ( dmg mount icon )
+      |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
+      |-- loopline.icns                 //   -> referenced in packager.json ( dmg background )
     |-- win                             // build assets for macos
       |-- icon.ico                      //   -> referenced in packager.json
   |
