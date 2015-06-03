@@ -25,12 +25,14 @@
   },
   "homepage": "https://github.com/loopline-systems/electron-builder",
   "dependencies": {
-    "appdmg": "^0.3.1",
     "fs-extra": "^0.18.4",
     "lodash.assign": "^3.2.0",
     "lodash.camelcase": "^3.0.1",
     "lodash.template": "^3.6.1",
     "meow": "^3.1.0"
+  },
+  "optionalDependencies": {
+    "appdmg": "^0.3.1"
   },
   "devDependencies": {
     "eslint": "^0.21.2",
