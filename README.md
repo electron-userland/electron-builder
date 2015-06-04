@@ -179,3 +179,11 @@ packager.json
   }
 }
 ```
+
+## Contribution
+
+You want to help out and have ideas to make it better? Great!
+
+Create an issue and we will tackle it.
+
+If you decide to propose a pull request ( even better ) make sure `npm test` is succeeding.
