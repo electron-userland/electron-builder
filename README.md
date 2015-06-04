@@ -39,7 +39,7 @@ part of package.json
 ```
 
 ## Pre-requisites
-If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe. 
+If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe.
 
 You will also need the nullsoft scriptable install system for all platforms.
 
@@ -54,6 +54,13 @@ $ apt-get update
 $ apt-get install wine nsis -y
 ```
 On Windows download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
+
+If you're on OS X/Linux and want to build for Windows, make also sure you're running at least `v0.12.0` of node.js.
+
+```
+$ node --version
+v0.12.0
+```
 
 ## Build MacOS installer
 
