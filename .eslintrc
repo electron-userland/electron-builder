@@ -17,10 +17,20 @@
             "always"
         ],
         "no-multi-spaces" : false,
-        "key-spacing": [2, {
-          "beforeColon": true,
-          "afterColon": true
-        }]
+        "key-spacing": [
+            2, {
+              "beforeColon": true,
+              "afterColon": true
+            }
+        ],
+        "space-in-brackets": [
+            2,
+            "always"
+        ],
+        "space-in-parens": [
+            2,
+            "always"
+        ]
     },
     "env": {
         "es6": true,

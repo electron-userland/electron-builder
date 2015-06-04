@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint ./lib/**/*.js cli.js index.js",
-    "test": "npm run lint && tape ./**/*_spec.js | tnyan",
-    "test:debug": "tape ./**/*_spec.js | tap-spec"
+    "test": "npm run lint || exit 1; result=\"$(tape ./**/*_spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;"
   },
   "repository": {
     "type": "git",
