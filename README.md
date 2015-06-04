@@ -1,4 +1,4 @@
-[![npm version](http://img.shields.io/npm/v/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm downloads](http://img.shields.io/npm/dm/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![Dependency Status](http://img.shields.io/gemnasium/loopline-systems/electron-builder.svg?style=flat)](https://gemnasium.com/loopline-systems/electron-builder)
+[![Build Status](https://img.shields.io/travis/loopline-systems/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm version](http://img.shields.io/npm/v/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm downloads](http://img.shields.io/npm/dm/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![Dependency Status](http://img.shields.io/gemnasium/loopline-systems/electron-builder.svg?style=flat)](https://gemnasium.com/loopline-systems/electron-builder)
 
 
 # electron-builder (WIP)
