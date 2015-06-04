@@ -16,11 +16,15 @@
             2,
             "always"
         ],
-        "no-multi-spaces" : false,
+        "no-multi-spaces": false,
+        "no-underscore-dangle": false,
+        "no-use-before-define": false,
         "key-spacing": [
-            2, {
-              "beforeColon": true,
-              "afterColon": true
+            2,
+            {
+                "align": "colon",
+                "beforeColon": true,
+                "afterColon": true
             }
         ],
         "space-in-brackets": [
