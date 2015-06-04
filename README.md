@@ -39,11 +39,21 @@ part of package.json
 ```
 
 ## Pre-requisites
-If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe.
+If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe. 
 
+You will also need the nullsoft scriptable install system for all platforms.
+
+On osx via brew
 ```
 $ brew install wine makensis
 ```
+On linux via apt-get
+```
+$ add-apt-repository ppa:ubuntu-wine/ppa -y
+$ apt-get update
+$ apt-get install wine nsis -y
+```
+On Windows download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
 
 ## Build MacOS installer
 
