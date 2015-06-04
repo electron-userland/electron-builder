@@ -204,3 +204,8 @@ You want to help out and have ideas to make it better? Great!
 Create an issue and we will tackle it.
 
 If you decide to propose a pull request ( even better ) make sure `npm test` is succeeding.
+
+## Releases
+
+For releases we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
+You'll find proper release notes [here](https://github.com/loopline-systems/electron-builder/releases).
