@@ -6,7 +6,7 @@
 The electron-builder project is used to create installers for the platforms Windows and MacOS.
 It's built to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
 
-If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the "How we use it section below".
+If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the ["How we use it section below"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far).
 
 The project has currently only been executed on MacOS machines. Any support or help for Windows is welcome.
 
