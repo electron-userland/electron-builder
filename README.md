@@ -1,4 +1,4 @@
-[![npm version](http://img.shields.io/npm/v/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm downloads](http://img.shields.io/npm/dm/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![Dependency Status](http://img.shields.io/gemnasium/loopline-systems/electron-builder.svg?style=flat)](https://gemnasium.com/loopline-systems/electron-builder)
+[![Build Status](https://img.shields.io/travis/loopline-systems/electron-builder.svg?style=flat)](https://travis-ci.org/loopline-systems/electron-builder) [![npm version](http://img.shields.io/npm/v/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm downloads](http://img.shields.io/npm/dm/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![Dependency Status](http://img.shields.io/gemnasium/loopline-systems/electron-builder.svg?style=flat)](https://gemnasium.com/loopline-systems/electron-builder)
 
 
 # electron-builder (WIP)
@@ -6,7 +6,7 @@
 The electron-builder project is used to create installers for the platforms Windows and MacOS.
 It's built to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
 
-If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the "How we use it section below".
+If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the ["How we use it section below"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far).
 
 The project has currently only been executed on MacOS machines. Any support or help for Windows is welcome.
 
@@ -39,7 +39,7 @@ part of package.json
 ```
 
 ## Pre-requisites
-If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe. 
+If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe.
 
 You will also need the nullsoft scriptable install system for all platforms.
 
@@ -54,6 +54,13 @@ $ apt-get update
 $ apt-get install wine nsis -y
 ```
 On Windows download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
+
+If you're on OS X/Linux and want to build for Windows, make also sure you're running at least `v0.12.0` of node.js.
+
+```
+$ node --version
+v0.12.0
+```
 
 ## Build MacOS installer
 
@@ -197,3 +204,8 @@ You want to help out and have ideas to make it better? Great!
 Create an issue and we will tackle it.
 
 If you decide to propose a pull request ( even better ) make sure `npm test` is succeeding.
+
+## Releases
+
+For releases we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
+You'll find proper release notes [here](https://github.com/loopline-systems/electron-builder/releases).

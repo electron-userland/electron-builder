@@ -1,10 +1,10 @@
 {
   "name": "electron-builder",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Create electron apps installers the easy way",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint ./lib/**/*.js cli.js index.js",
+    "lint": "eslint ./lib cli.js index.js",
     "test": "npm run lint || exit 1; result=\"$(tape ./**/*_spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;"
   },
   "repository": {
