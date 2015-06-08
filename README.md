@@ -43,11 +43,11 @@ If you're on OS X/Linux and want to build for Windows, you need Wine installed. 
 
 You will also need the nullsoft scriptable install system for all platforms.
 
-On osx via brew
+On OS X via brew
 ```
 $ brew install wine makensis
 ```
-On linux via apt-get
+On Linux via apt-get
 ```
 $ add-apt-repository ppa:ubuntu-wine/ppa -y
 $ apt-get update
