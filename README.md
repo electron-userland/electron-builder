@@ -3,12 +3,12 @@
 
 # electron-builder (WIP)
 
-The electron-builder project is used to create installers for the platforms Windows and MacOS.
+The electron-builder project is used to create installers for the platforms Windows and OS X.
 It's built to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
 
 If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the ["How we use it section below"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far).
 
-The project has currently only been executed on MacOS machines. Any support or help for Windows is welcome.
+The project has currently only been executed on OS X machines. Any support or help for Windows is welcome.
 
 ## Install
 
@@ -32,7 +32,7 @@ part of package.json
 
 {
   "scripts" : {
-    "pack:macos": "npm run build:macos && electron-builder \"dist/macos/Loopline Systems.app\" --platform=macos --out=\"dist/macos\" --config=packager.json"
+    "pack:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=packager.json"
   }
 }
 
@@ -43,7 +43,7 @@ If you're on OS X/Linux and want to build for Windows, you need Wine installed. 
 
 You will also need the nullsoft scriptable install system for all platforms.
 
-On osx via brew
+On OS X via brew
 ```
 $ brew install wine makensis
 ```
@@ -62,10 +62,10 @@ $ node --version
 v0.12.0
 ```
 
-## Build MacOS installer
+## Build OS X installer
 
 ```
-$ electron-builder dist/macos/someFancy.app --platform=macos --out=/some/path/ --config=config.json
+$ electron-builder dist/osx/someFancy.app --platform=osx --out=/some/path/ --config=config.json
 ```
 
 ## Build Windows installer
@@ -81,7 +81,7 @@ Usage
   $ electron-builder <sourcedir> --plattform=<plattform> --config=<configPath> --out=<outputPath>
 
   Required options:
-    platform:          win, macos
+    platform:          win, osx
     config:            path to config file
 
   Optional options:
@@ -96,10 +96,10 @@ You will find a sample config file below.
 config.json.sample:
 
 {
-  "macos" : {
+  "osx" : {
     "title": "Loopline Systems",
-    "background": "assets/macos/installer.png",
-    "icon": "assets/macos/mount.icns",
+    "background": "assets/osx/installer.png",
+    "icon": "assets/osx/mount.icns",
     "icon-size": 80,
     "contents": [
       { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
@@ -115,7 +115,7 @@ config.json.sample:
 
 ## How we use it so far
 
-When you run `npm run pack` it will create executables for the platforms Windows and MacOS inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
+When you run `npm run pack` it will create executables for the platforms Windows and OS X inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
 
 
 ```
@@ -125,15 +125,15 @@ desktop
   |-- app                               // actual electron application
   |
   |-- assets                            // build related assets
-    |-- macos                           // build assets for macos
+    |-- osx                             // build assets for OS X
       |-- installer.png                 //   -> referenced in packager.json ( dmg mount icon )
       |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
       |-- loopline.icns                 //   -> referenced in packager.json ( dmg background )
-    |-- win                             // build assets for macos
+    |-- win                             // build assets for OS X
       |-- icon.ico                      //   -> referenced in packager.json
   |
   |-- dist                              // out put folder
-    |-- macos                           // generated executables for MacOS
+    |-- osx                             // generated executables for OS X
       |-- Loopline Systems.app
       |-- Loopline Systems.dmg
     |-- win                             // generated executables for Windows
@@ -156,15 +156,15 @@ package.json
     "dev": "electron ./app",
 
     "clean": "rm -rf ./dist",
-    "clean:macos": "rm -rf ./dist/macos",
+    "clean:osx": "rm -rf ./dist/osx",
     "clean:win": "rm -rf ./dist/win",
 
-    "build": "npm run clean && npm run build:macos && npm run build:win",
-    "build:macos": "npm run clean:macos && electron-packager ./app \"Loopline Systems\" --out=dist/macos --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/macos/loopline.icns",
+    "build": "npm run clean && npm run build:osx && npm run build:win",
+    "build:osx": "npm run clean:osx && electron-packager ./app \"Loopline Systems\" --out=dist/osx --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/osx/loopline.icns",
     "build:win": "npm run clean:win && electron-packager ./app \"Loopline Systems\" --out=dist/win --platform=win32 --arch=ia32 --version=0.25.3 --icon=assets/win/icon.ico",
 
-    "pack": "npm run pack:macos && npm run pack:win",
-    "pack:macos": "npm run build:macos && electron-builder \"dist/macos/Loopline Systems.app\" --platform=macos --out=\"dist/macos\" --config=packager.json",
+    "pack": "npm run pack:osx && npm run pack:win",
+    "pack:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=packager.json",
     "pack:win": "npm run build:win && electron-builder \"dist/win/Loopline Systems-win32\" --platform=win --out=\"dist/win\" --config=packager.json"
   },
   "dependencies": {
@@ -180,10 +180,10 @@ package.json
 packager.json
 
 {
-  "macos" : {
+  "osx" : {
     "title": "Loopline Systems",
-    "background": "assets/macos/installer.png",
-    "icon": "assets/macos/mount.icns",
+    "background": "assets/osx/installer.png",
+    "icon": "assets/osx/mount.icns",
     "icon-size": 80,
     "contents": [
       { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
