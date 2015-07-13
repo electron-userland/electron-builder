@@ -1,10 +1,10 @@
 
 Usage
-  $ electron-builder <sourcedir> --plattform=<plattform> --config=<configPath> --out=<outputPath>
+  $ electron-builder <sourcedir> --platform=<platform> --config=<configPath> --out=<outputPath>
 
   Required options:
     platform:          win, osx
     config:            path to config file
 
   Optional options:
-    out:               path to output the installer
+    out:               path to output the installer (path must exist)
