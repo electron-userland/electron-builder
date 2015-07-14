@@ -27,15 +27,13 @@ $ npm install --save electron-builder
 
 After that you can easily use the `electron-builder` binary in your `npm scripts`.
 
-```
 part of package.json
-
+```js
 {
   "scripts" : {
     "pack:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=packager.json"
   }
 }
-
 ```
 
 ## Pre-requisites
@@ -78,23 +76,22 @@ $ electron-builder dist/win/someFancy-win32 --platform=win --out=/some/path/ --c
 
 ```
 Usage
-  $ electron-builder <sourcedir> --plattform=<plattform> --config=<configPath> --out=<outputPath>
+  $ electron-builder <sourcedir> --platform=<platform> --config=<configPath> --out=<outputPath>
 
   Required options:
     platform:          win, osx
     config:            path to config file
 
   Optional options:
-    out:               path to output the installer
+    out:               path to output the installer (must exist)
 ```
 
 Because the configuration is fairly complex we decided to go with a good old config file for now.
 You will find a sample config file below.
 
 
-```
 config.json.sample:
-
+```js
 {
   "osx" : {
     "title": "Loopline Systems",
@@ -118,9 +115,8 @@ config.json.sample:
 When you run `npm run pack` it will create executables for the platforms Windows and OS X inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
 
 
-```
 directory structure
-
+```
 desktop
   |-- app                               // actual electron application
   |
@@ -144,9 +140,8 @@ desktop
 ```
 
 
-```
 package.json
-
+```js
 {
   "name": "loopline-desktop",
   "version": "1.0.0",
@@ -176,9 +171,8 @@ package.json
 
 ```
 
-```
 packager.json
-
+```js
 {
   "osx" : {
     "title": "Loopline Systems",
