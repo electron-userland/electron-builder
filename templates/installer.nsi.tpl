@@ -1,4 +1,5 @@
 !define APP_NAME "<%= name %>"
+!define APP_EXECUTABLE "<%= executable %>"
 !define APP_DIR "${APP_NAME}"
 
 Name "${APP_NAME}"
@@ -21,7 +22,7 @@ InstallDir "$PROGRAMFILES\${APP_NAME}\"
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXECUTABLE}.exe"
 
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_LANGUAGE "English"
@@ -48,9 +49,9 @@ Section
 
   # create shortcuts in the start menu and on the desktop
   CreateDirectory "$SMPROGRAMS\${APP_DIR}"
-  CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+  CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE}.exe"
   CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall ${APP_NAME}.exe"
-  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE}.exe"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "DisplayName" "${APP_NAME}"
@@ -63,11 +64,11 @@ SectionEnd
 # create a section to define what the uninstaller does
 Section "Uninstall"
 
-  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
+  ${nsProcess::FindProcess} "${APP_EXECUTABLE}.exe" $R0
 
   ${If} $R0 == 0
       DetailPrint "${APP_NAME} is running. Closing it down..."
-      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
+      ${nsProcess::KillProcess} "${APP_EXECUTABLE}.exe" $R0
       DetailPrint "Waiting for ${APP_NAME} to close."
       Sleep 2000
   ${EndIf}
