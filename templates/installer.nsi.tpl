@@ -150,8 +150,27 @@ SectionEnd
 
 
 Section Uninstall
-    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}"
-    Delete "$INSTDIR\Uninstall ${NAME}.exe"
-    Delete "$INSTDIR\${NAME}.exe"
-    RMDir "$InstDir"
+  ${nsProcess::FindProcess} "${NAME}.exe" $R0
+
+  ${If} $R0 == 0
+      DetailPrint "${NAME} is running. Closing it down..."
+      ${nsProcess::KillProcess} "${NAME}.exe" $R0
+      DetailPrint "Waiting for ${NAME} to close."
+      Sleep 2000
+  ${EndIf}
+
+  ${nsProcess::Unload}
+
+  SetShellVarContext all
+
+  Delete "$INSTDIR\Uninstall ${NAME}.exe"
+  Delete "$INSTDIR\${NAME}.exe"
+  RMDir /r $INSTDIR
+
+  Delete "$SMPROGRAMS\${APP_DIR}\${NAME}.lnk"
+  Delete "$SMPROGRAMS\${APP_DIR}\Uninstall ${NAME}.lnk"
+  RMDir  "$SMPROGRAMS\${APP_DIR}"
+  delete "$DESKTOP\${NAME}.lnk"
+  
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}"
 SectionEnd
