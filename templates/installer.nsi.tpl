@@ -129,6 +129,17 @@ FunctionEnd
 
 
 Section
+    ${nsProcess::FindProcess} "${NAME}.exe" $R0
+
+    ${If} $R0 == 0
+        DetailPrint "${NAME} is running. Closing it down..."
+        ${nsProcess::KillProcess} "${NAME}.exe" $R0
+        DetailPrint "Waiting for ${NAME} to close."
+        Sleep 2000
+    ${EndIf}
+
+    ${nsProcess::Unload}
+
     ${If} $PortableMode = 0
       # delete the previously installed files
       RMDir /r $INSTDIR
