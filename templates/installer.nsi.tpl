@@ -3,7 +3,7 @@
 !define DEFAULTNORMALDESTINATON "$ProgramFiles\${NAME}"
 !define DEFAULTPORTABLEDESTINATON "$Desktop\${NAME}"
 Name "${NAME}"
-Outfile "${NAME} Setup.exe"
+OutFile "<%= out %>\${NAME} Setup.exe"
 RequestExecutionlevel highest
 SetCompressor LZMA
 
