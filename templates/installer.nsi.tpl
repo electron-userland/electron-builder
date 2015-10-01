@@ -3,7 +3,7 @@
 !define DEFAULTNORMALDESTINATON "$ProgramFiles\${NAME}"
 !define DEFAULTPORTABLEDESTINATON "$Desktop\${NAME}"
 Name "${NAME}"
-Outfile "${NAME} setup.exe"
+Outfile "${NAME} Setup.exe"
 RequestExecutionlevel highest
 SetCompressor LZMA
 
@@ -131,8 +131,8 @@ Section
 
     ${If} $PortableMode = 0
         WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "DisplayName" "${NAME}"
-        WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
-        WriteUninstaller "$INSTDIR\uninstall.exe"
+        WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "UninstallString" '"$INSTDIR\Uninstall ${NAME}.exe"'
+        WriteUninstaller "$INSTDIR\Uninstall ${NAME}.exe"
     ${Else}
         ; Create the file the application uses to detect portable mode
         FileOpen $0 "$INSTDIR\portable.dat" w
