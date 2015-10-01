@@ -158,7 +158,14 @@ Section
     ${If} $PortableMode = 0
         WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "DisplayName" "${NAME}"
         WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "UninstallString" '"$INSTDIR\Uninstall ${NAME}.exe"'
+        WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "DisplayIcon" "$INSTDIR\icon.ico"
         WriteUninstaller "$INSTDIR\Uninstall ${NAME}.exe"
+
+        # create shortcuts in the start menu and on the desktop
+        CreateDirectory "$SMPROGRAMS\${NAME}"
+        CreateShortCut "$SMPROGRAMS\${NAME}\${NAME}.lnk" "$INSTDIR\${NAME}.exe"
+        CreateShortCut "$SMPROGRAMS\${NAME}\Uninstall ${NAME}.lnk" "$INSTDIR\Uninstall ${NAME}.exe"
+        CreateShortCut "$DESKTOP\${NAME}.lnk" "$INSTDIR\${NAME}.exe"
     ${Else}
         ; Create the file the application uses to detect portable mode
         FileOpen $0 "$INSTDIR\portable.dat" w
