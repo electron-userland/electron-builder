@@ -1,99 +1,150 @@
-!define APP_NAME "<%= name %>"
-!define APP_DIR "${APP_NAME}"
+!define NAME "<%= name %>"
+!define UNINSTKEY "${NAME}" ; Using a GUID here is not a bad idea
+!define DEFAULTNORMALDESTINATON "$ProgramFiles\${NAME}"
+!define DEFAULTPORTABLEDESTINATON "$Desktop\${NAME}"
+Name "${NAME}"
+Outfile "${NAME} setup.exe"
+RequestExecutionlevel highest
+SetCompressor LZMA
 
-Name "${APP_NAME}"
+Var NormalDestDir
+Var PortableDestDir
+Var PortableMode
 
-!include "x64.nsh"
-!include "LogicLib.nsh"
-!include "MUI2.nsh"
-!define MUI_ICON "icon.ico"
+!include LogicLib.nsh
+!include FileFunc.nsh
+!include MUI2.nsh
+!include x64.nsh
 
-!addplugindir .
-!include "nsProcess.nsh"
-
-# define the resulting installer's name
-OutFile "<%= out %>\${APP_NAME} Setup.exe"
-
-InstallDir "$PROGRAMFILES"
-
-Function .onInit
-  # set the installation directory properly based on arch
-  ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64"
-  ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES"
-  ${EndIf}
-FunctionEnd
-
-# app dialogs
 !insertmacro MUI_PAGE_WELCOME
+Page Custom PortableModePageCreate PortableModePageLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
-!define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Start ${NAME}"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${NAME}.exe"
 
 !insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE English
 
-# default section start
+Function .onInit
+    StrCpy $NormalDestDir "${DEFAULTNORMALDESTINATON}"
+    StrCpy $PortableDestDir "${DEFAULTPORTABLEDESTINATON}"
+
+    # set the installation directory
+    ${If} ${RunningX64}
+      StrCpy $NormalDestDir "$PROGRAMFILES64\${APP_NAME}\"
+    ${Else}
+      StrCpy $NormalDestDir "$PROGRAMFILES\${APP_NAME}\"
+    ${EndIf}
+
+    ${GetParameters} $9
+
+    ClearErrors
+    ${GetOptions} $9 "/?" $8
+    ${IfNot} ${Errors}
+        MessageBox MB_ICONINFORMATION|MB_SETFOREGROUND "\
+          /PORTABLE : Extract application to USB drive etc$\n\
+          /S : Silent install$\n\
+          /D=%directory% : Specify destination directory$\n"
+        Quit
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $9 "/PORTABLE" $8
+    ${IfNot} ${Errors}
+        StrCpy $PortableMode 1
+        StrCpy $0 $PortableDestDir
+    ${Else}
+        StrCpy $PortableMode 0
+        StrCpy $0 $NormalDestDir
+        ${If} ${Silent}
+            Call RequireAdmin
+        ${EndIf}
+    ${EndIf}
+
+    ${If} $InstDir == ""
+        ; User did not use /D to specify a directory, 
+        ; we need to set a default based on the install mode
+        StrCpy $InstDir $0
+    ${EndIf}
+    Call SetModeDestinationFromInstdir
+FunctionEnd
+
+
+Function RequireAdmin
+    UserInfo::GetAccountType
+    Pop $8
+    ${If} $8 != "admin"
+        MessageBox MB_ICONSTOP "You need administrator rights to install ${NAME}"
+        SetErrorLevel 740 ;ERROR_ELEVATION_REQUIRED
+        Abort
+    ${EndIf}
+FunctionEnd
+
+
+Function SetModeDestinationFromInstdir
+    ${If} $PortableMode = 0
+        StrCpy $NormalDestDir $InstDir
+    ${Else}
+        StrCpy $PortableDestDir $InstDir
+    ${EndIf}
+FunctionEnd
+
+
+Function PortableModePageCreate
+    Call SetModeDestinationFromInstdir ; If the user clicks BACK on the directory page we will remember their mode specific directory
+    !insertmacro MUI_HEADER_TEXT "Install Mode" "Choose how you want to install ${NAME}."
+    nsDialogs::Create 1018
+    Pop $0
+    ${NSD_CreateLabel} 0 10u 100% 24u "Select install mode:"
+    Pop $0
+    ${NSD_CreateRadioButton} 30u 50u -30u 8u "Normal install"
+    Pop $1
+    ${NSD_CreateRadioButton} 30u 70u -30u 8u "Portable"
+    Pop $2
+    ${If} $PortableMode = 0
+        SendMessage $1 ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${Else}
+        SendMessage $2 ${BM_SETCHECK} ${BST_CHECKED} 0
+    ${EndIf}
+    nsDialogs::Show
+FunctionEnd
+
+Function PortableModePageLeave
+    ${NSD_GetState} $1 $0
+    ${If} $0 <> ${BST_UNCHECKED}
+        StrCpy $PortableMode 0
+        StrCpy $InstDir $NormalDestDir
+        Call RequireAdmin
+    ${Else}
+        StrCpy $PortableMode 1
+        StrCpy $InstDir $PortableDestDir
+    ${EndIf}
+FunctionEnd
+
+
+
 Section
-  SetShellVarContext all
+    SetOutPath "$InstDir"
+    ;File "source\${NAME}.exe"
 
-  # delete the installed files
-  RMDir /r $INSTDIR\${APP_NAME}\
-
-  # define the path to which the installer should install
-  SetOutPath $INSTDIR\${APP_NAME}\
-
-  # specify the files to go in the output path
-  File /r "<%= appPath %>\*"
-
-  # specify icon to go in the output path
-  File "icon.ico"
-
-  # create the uninstaller
-  WriteUninstaller "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
-
-  # create shortcuts in the start menu and on the desktop
-  CreateDirectory "$SMPROGRAMS\${APP_DIR}"
-  CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
-  CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
-  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
-
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "DisplayName" "${APP_NAME}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "UninstallString" "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "DisplayIcon" "$INSTDIR\${APP_NAME}\\icon.ico"
+    ${If} $PortableMode = 0
+        WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "DisplayName" "${NAME}"
+        WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+        WriteUninstaller "$INSTDIR\uninstall.exe"
+    ${Else}
+        ; Create the file the application uses to detect portable mode
+        FileOpen $0 "$INSTDIR\portable.dat" w
+        FileWrite $0 "PORTABLE"
+        FileClose $0
+    ${EndIf}
 SectionEnd
 
-# create a section to define what the uninstaller does
-Section "Uninstall"
 
-  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
-
-  ${If} $R0 == 0
-      DetailPrint "${APP_NAME} is running. Closing it down..."
-      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
-      DetailPrint "Waiting for ${APP_NAME} to close."
-      Sleep 2000
-  ${EndIf}
-
-  ${nsProcess::Unload}
-
-  SetShellVarContext all
-
-  # delete the installed files
-  RMDir /r $INSTDIR\${APP_NAME}\
-
-  # delete the shortcuts
-  delete "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk"
-  delete "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk"
-  rmDir  "$SMPROGRAMS\${APP_DIR}"
-  delete "$DESKTOP\${APP_NAME}.lnk"
-
-
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+Section Uninstall
+    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}"
+    Delete "$INSTDIR\Uninstall ${NAME}.exe"
+    ;Delete "$INSTDIR\${NAME}.exe"
+    RMDir "$InstDir"
 SectionEnd
