@@ -127,7 +127,14 @@ FunctionEnd
 
 Section
     SetOutPath "$InstDir"
-    ;File "source\${NAME}.exe"
+
+    # specify the files to go in the output path
+    File /r "<%= appPath %>\*"
+
+    # specify icon to go in the output path
+    File "icon.ico"
+
+    #;File "source\${NAME}.exe"
 
     ${If} $PortableMode = 0
         WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}" "DisplayName" "${NAME}"
