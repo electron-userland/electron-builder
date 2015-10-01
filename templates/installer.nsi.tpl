@@ -14,14 +14,14 @@ Name "${APP_NAME}"
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
 
-InstallDir "$PROGRAMFILES\${APP_NAME}\"
+InstallDir "$PROGRAMFILES"
 
 Function .onInit
   # set the installation directory properly based on arch
   ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${APP_NAME}\"
+    StrCpy $INSTDIR "$PROGRAMFILES64"
   ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${APP_NAME}\"
+    StrCpy $INSTDIR "$PROGRAMFILES"
   ${EndIf}
 FunctionEnd
 
@@ -31,21 +31,20 @@ FunctionEnd
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}.exe"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
 
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_LANGUAGE "English"
-
 
 # default section start
 Section
   SetShellVarContext all
 
   # delete the installed files
-  RMDir /r $INSTDIR
+  RMDir /r $INSTDIR\${APP_NAME}\
 
   # define the path to which the installer should install
-  SetOutPath $INSTDIR
+  SetOutPath $INSTDIR\${APP_NAME}\
 
   # specify the files to go in the output path
   File /r "<%= appPath %>\*"
@@ -54,20 +53,20 @@ Section
   File "icon.ico"
 
   # create the uninstaller
-  WriteUninstaller "$INSTDIR\Uninstall ${APP_NAME}.exe"
+  WriteUninstaller "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
 
   # create shortcuts in the start menu and on the desktop
   CreateDirectory "$SMPROGRAMS\${APP_DIR}"
-  CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
-  CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall ${APP_NAME}.exe"
-  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}.exe"
+  CreateShortCut "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
+  CreateShortCut "$SMPROGRAMS\${APP_DIR}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
+  CreateShortCut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_NAME}\${APP_NAME}.exe"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "DisplayName" "${APP_NAME}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "UninstallString" "$INSTDIR\Uninstall ${APP_NAME}.exe"
+                   "UninstallString" "$INSTDIR\${APP_NAME}\Uninstall ${APP_NAME}.exe"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "DisplayIcon" "$INSTDIR\icon.ico"
+                   "DisplayIcon" "$INSTDIR\${APP_NAME}\\icon.ico"
 SectionEnd
 
 # create a section to define what the uninstaller does
@@ -87,7 +86,7 @@ Section "Uninstall"
   SetShellVarContext all
 
   # delete the installed files
-  RMDir /r $INSTDIR
+  RMDir /r $INSTDIR\${APP_NAME}\
 
   # delete the shortcuts
   delete "$SMPROGRAMS\${APP_DIR}\${APP_NAME}.lnk"
