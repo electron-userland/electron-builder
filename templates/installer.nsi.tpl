@@ -14,7 +14,10 @@ Var PortableMode
 !include LogicLib.nsh
 !include FileFunc.nsh
 !include MUI2.nsh
+!define MUI_ICON "icon.ico"
+!addplugindir .
 !include x64.nsh
+!include nsProcess.nsh
 
 !insertmacro MUI_PAGE_WELCOME
 Page Custom PortableModePageCreate PortableModePageLeave
@@ -171,6 +174,6 @@ Section Uninstall
   Delete "$SMPROGRAMS\${APP_DIR}\Uninstall ${NAME}.lnk"
   RMDir  "$SMPROGRAMS\${APP_DIR}"
   delete "$DESKTOP\${NAME}.lnk"
-  
+
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}"
 SectionEnd
