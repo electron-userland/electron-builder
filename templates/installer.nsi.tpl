@@ -1,3 +1,4 @@
+!include "x64.nsh"
 !define APP_NAME "<%= name %>"
 !define APP_DIR "${APP_NAME}"
 
@@ -8,10 +9,11 @@ Name "${APP_NAME}"
 
 !addplugindir .
 !include "nsProcess.nsh"
-!include "x64.nsh"
 
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
+
+InstallDir ""
 
 Function .onInit
   # set the installation directory
