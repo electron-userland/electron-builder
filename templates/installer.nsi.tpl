@@ -8,13 +8,17 @@ Name "${APP_NAME}"
 
 !addplugindir .
 !include "nsProcess.nsh"
-
+!include "x64.nsh"
 
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
 
 # set the installation directory
-InstallDir "$PROGRAMFILES\${APP_NAME}\"
+${If} ${RunningX64}
+  InstallDir "$PROGRAMFILES64\${APP_NAME}\"
+${Else}
+  InstallDir "$PROGRAMFILES\${APP_NAME}\"
+${EndIf}
 
 # app dialogs
 !insertmacro MUI_PAGE_WELCOME
