@@ -13,12 +13,14 @@ Name "${APP_NAME}"
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
 
-# set the installation directory
-${If} ${RunningX64}
-  InstallDir "$PROGRAMFILES64\${APP_NAME}\"
-${Else}
-  InstallDir "$PROGRAMFILES\${APP_NAME}\"
-${EndIf}     
+Function .onInit
+  # set the installation directory
+  ${If} ${RunningX64}
+    InstallDir "$PROGRAMFILES64\${APP_NAME}\"
+  ${Else}
+    InstallDir "$PROGRAMFILES\${APP_NAME}\"
+  ${EndIf}
+FunctionEnd
 
 # app dialogs
 !insertmacro MUI_PAGE_WELCOME
