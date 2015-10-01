@@ -152,6 +152,6 @@ SectionEnd
 Section Uninstall
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTKEY}"
     Delete "$INSTDIR\Uninstall ${NAME}.exe"
-    ;Delete "$INSTDIR\${NAME}.exe"
+    Delete "$INSTDIR\${NAME}.exe"
     RMDir "$InstDir"
 SectionEnd
