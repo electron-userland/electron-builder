@@ -129,6 +129,11 @@ FunctionEnd
 
 
 Section
+    ${If} $PortableMode = 0
+      # delete the previously installed files
+      RMDir /r $INSTDIR
+    ${EndIf}
+
     SetOutPath "$InstDir"
 
     # specify the files to go in the output path
