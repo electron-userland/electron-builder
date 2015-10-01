@@ -18,10 +18,11 @@ ${If} ${RunningX64}
   InstallDir "$PROGRAMFILES64\${APP_NAME}\"
 ${Else}
   InstallDir "$PROGRAMFILES\${APP_NAME}\"
-${EndIf}
+${EndIf}     
 
 # app dialogs
 !insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_RUN_TEXT "Start ${APP_NAME}"
