@@ -1,9 +1,10 @@
-!include "x64.nsh"
 !define APP_NAME "<%= name %>"
 !define APP_DIR "${APP_NAME}"
 
 Name "${APP_NAME}"
 
+!include "x64.nsh"
+!include "LogicLib.nsh"
 !include "MUI2.nsh"
 !define MUI_ICON "icon.ico"
 
@@ -13,14 +14,14 @@ Name "${APP_NAME}"
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
 
-InstallDir ""
+InstallDir "$PROGRAMFILES\${APP_NAME}\"
 
 Function .onInit
-  # set the installation directory
+  # set the installation directory properly based on arch
   ${If} ${RunningX64}
-    InstallDir "$PROGRAMFILES64\${APP_NAME}\"
+    StrCpy $INSTDIR "$PROGRAMFILES64\${APP_NAME}\"
   ${Else}
-    InstallDir "$PROGRAMFILES\${APP_NAME}\"
+    StrCpy $INSTDIR "$PROGRAMFILES\${APP_NAME}\"
   ${EndIf}
 FunctionEnd
 
