@@ -33,9 +33,9 @@ Function .onInit
 
     # set the installation directory
     ${If} ${RunningX64}
-      StrCpy $NormalDestDir "$PROGRAMFILES64\${APP_NAME}\"
+      StrCpy $NormalDestDir "$PROGRAMFILES64\${NAME}\"
     ${Else}
-      StrCpy $NormalDestDir "$PROGRAMFILES\${APP_NAME}\"
+      StrCpy $NormalDestDir "$PROGRAMFILES\${NAME}\"
     ${EndIf}
 
     ${GetParameters} $9
