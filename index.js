@@ -9,6 +9,7 @@
 
 var platforms = require( './lib/platforms' );
 var path      = require( 'path' );
+var fs        = require( 'fs' );
 
 /**
  * Prototype for electron-builder
@@ -26,10 +27,20 @@ var Builder = {
     options.log = options.log || console.log;
     options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
 
-    // make sure the output directory
-    // ends with a slash
+
+
+    // make sure the output
+    // directory ends with a slash
     if ( options.out[ options.out.length - 1 ] !== path.sep ) {
       options.out += path.sep;
+    }
+
+    // make sure the output
+    // directory exists
+    if ( !fs.existsSync( options.out ) ) {
+      options.log( '- Ouput directory ´' + options.out + '´ does not exist ' );
+      fs.mkdirSync( options.out );
+      options.log( '- Created ´' + options.out + '´ ' );
     }
 
     // FAIL when not all required options are set
