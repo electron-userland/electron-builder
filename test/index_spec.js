@@ -1,3 +1,5 @@
+'use strict';
+
 /*
  * electron-builder
  * https://github.com/loopline-systems/electron-builder
@@ -5,9 +7,11 @@
  * Licensed under the MIT license.
  */
 
-var test                = require( 'tape' );
-var proxyquire          = require( 'proxyquire' );
-var proxyquireStrict    = proxyquire.noCallThru();
+var test             = require( 'tape' );
+var tmp              = require( 'tmp' );
+var fs               = require( 'fs' );
+var proxyquire       = require( 'proxyquire' );
+var proxyquireStrict = proxyquire.noCallThru();
 
 test( 'Builder.init', function( t ) {
   t.plan( 2 );
@@ -24,6 +28,8 @@ test( 'Builder.init', function( t ) {
 } );
 
 test( 'Builder.init().build - call the correct platform', function( t ) {
+  t.plan( 2 );
+
   var Builder = proxyquireStrict(
     '../',
     {
@@ -32,7 +38,7 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
           init : function() {
             return {
               build : function( options, callback ) {
-                t.end();
+                callback( null, 'foo' )
               }
             }
           }
@@ -47,7 +53,49 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
       platform : 'bar',
       config   : {}
     },
-    function() {}
+    function( error, result ) {
+      t.equal( error, null );
+      t.equal( result, 'foo' );
+      t.end();
+    }
+  );
+} );
+
+test( 'Builder.init().build - create output directory if not present', function( t ) {
+  t.plan( 1 );
+
+  var tmpDir  = tmp.dirSync( { unsafeCleanup : true } );
+  var Builder = proxyquireStrict(
+    '../',
+    {
+      './lib/platforms' : {
+        bar : {
+          init : function() {
+            return {
+              build : function( options, callback ) {
+                callback( null, 'foo' )
+              }
+            }
+          }
+        }
+      }
+    }
+  );
+
+  Builder.init().build(
+    {
+      appPath  : 'foo',
+      platform : 'bar',
+      config   : {},
+      out      : tmpDir.name + '/foo'
+    },
+    function( error, result ) {
+      t.equal( fs.existsSync( tmpDir.name + '/foo' ), true );
+
+      tmpDir.removeCallback();
+
+      t.end();
+    }
   );
 } );
 
@@ -136,4 +184,3 @@ test( 'Builder.init().build - check for required options', function( t ) {
     }
   );
 } );
-
