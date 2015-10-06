@@ -1,0 +1,13 @@
+# .editorconfig for electron-builder
+#
+# More info inside CONTRIBUTING.md
+
+# For all files in this project:
+#  - 2-space soft tabs
+#  - All files end with a line-break
+#  - Trim trailing whitespace
+[*]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
