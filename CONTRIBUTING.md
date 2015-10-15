@@ -16,6 +16,7 @@ This includes:
 - log of the terminal output
 - node version
 - npm version
+- on which system do you want to create installers (Win/MacOS,Linux)
 
 ## Pull requests notes
 
