@@ -23,11 +23,14 @@ var Builder = {
    * @param  {Function} callback callback
    */
   build : function( options, callback ) {
+
     options     = options || {};
     options.log = options.log || console.log;
     options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
 
-
+    options.log(
+      '- Running electron-builder ' + require( './package' ).version
+    );
 
     // make sure the output
     // directory ends with a slash
