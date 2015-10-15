@@ -1,6 +1,6 @@
 {
   "name": "electron-builder",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Create electron apps installers the easy way",
   "main": "index.js",
   "scripts": {
