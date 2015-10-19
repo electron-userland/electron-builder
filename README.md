@@ -124,8 +124,8 @@ desktop
     |-- osx                             // build assets for OS X
       |-- installer.png                 //   -> referenced in packager.json ( dmg background )
       |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
-      |-- loopline.icns                 //   -> referenced in packager.json ( dmg mount icon )
-    |-- win                             // build assets for OS X
+      |-- loopline.icns                 //   -> referenced in packager.json ( dmg background )
+    |-- win                             // build assets for Windows
       |-- icon.ico                      //   -> referenced in packager.json
   |
   |-- dist                              // out put folder
