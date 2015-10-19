@@ -122,7 +122,7 @@ desktop
   |
   |-- assets                            // build related assets
     |-- osx                             // build assets for OS X
-      |-- installer.png                 //   -> referenced in packager.json ( dmg mount icon )
+      |-- installer.png                 //   -> referenced in packager.json ( dmg background )
       |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
       |-- loopline.icns                 //   -> referenced in packager.json ( dmg background )
     |-- win                             // build assets for Windows
