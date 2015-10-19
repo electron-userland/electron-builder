@@ -1,5 +1,6 @@
 !define APP_NAME "<%= name %>"
 !define APP_DIR "${APP_NAME}"
+!define APP_FILE_NAME "<%= fileName %>"
 
 Name "${APP_NAME}"
 
@@ -11,7 +12,7 @@ Name "${APP_NAME}"
 
 
 # define the resulting installer's name
-OutFile "<%= out %>\${APP_NAME} Setup.exe"
+OutFile "<%= out %>\${APP_FILE_NAME}.exe"
 
 # set the installation directory
 InstallDir "$PROGRAMFILES\${APP_NAME}\"
