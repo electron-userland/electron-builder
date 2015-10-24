@@ -27,6 +27,7 @@ var Builder = {
     options     = options || {};
     options.log = options.log || console.log;
     options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
+    options.nsiTemplate = options.nsiTemplate || path.join( __dirname, 'templates/installer.nsi.tpl' );
 
     options.log(
       '- Running electron-builder ' + require( './package' ).version

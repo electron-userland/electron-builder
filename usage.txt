@@ -8,3 +8,4 @@ Usage
 
   Optional options:
     out:               path to output the installer (path must exist)
+    nsiTemplate:       path to override the installer.nsi template for win platform (path must exist)
