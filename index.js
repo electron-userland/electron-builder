@@ -24,9 +24,9 @@ var Builder = {
    */
   build : function( options, callback ) {
 
-    options     = options || {};
-    options.log = options.log || console.log;
-    options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
+    options             = options || {};
+    options.log         = options.log || console.log;
+    options.out         = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
     options.nsiTemplate = options.nsiTemplate || path.join( __dirname, 'templates/installer.nsi.tpl' );
 
     options.log(
