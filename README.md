@@ -105,7 +105,8 @@ config.json.sample:
   },
   "win" : {
     "title" : "Loopline Systems",
-    "icon" : "assets/win/icon.ico"
+    "icon" : "assets/win/icon.ico",
+    "nsiTemplate" : "path/to/custom/installer.nsi.tpl"
   }
 }
 ```
