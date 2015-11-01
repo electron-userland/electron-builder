@@ -111,6 +111,35 @@ config.json.sample:
 }
 ```
 
+### `osx.title`
+Title of the generated `dmg` file.
+
+### `osx.background`
+Background of the `dmg` dialog.
+
+### `osx.icon`
+Your application mount icon.
+
+### `osx.icon-size`
+Sizes of the icons included in `dmg` dialog.
+
+### `osx.contents`
+Icons you wish to include in `dmg` dialog.
+
+### `win.title`
+Title of your application shown in generated windows installer.
+
+### `win.icon`
+Icon to be shown in installation process.
+
+### `win.nsiTemplate` *( optional )*
+Option to define a custom NSI installation file.
+
+**Note:** You need to add something that might have value for others? Please consider a PR. ;)
+
+
+
+
 ## How we use it so far
 
 When you run `npm run pack` it will create executables for the platforms Windows and OS X inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
