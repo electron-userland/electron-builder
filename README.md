@@ -180,9 +180,9 @@ package.json
   "scripts": {
     "dev": "electron ./app",
 
-    "clean": "rimraf ./dist",
-    "clean:osx": "rimraf ./dist/osx",
-    "clean:win": "rimraf ./dist/win",
+    "clean": "rm -rf ./dist",
+    "clean:osx": "rm -rf ./dist/osx",
+    "clean:win": "rm -rf ./dist/win",
 
     "build": "npm run clean && npm run build:osx && npm run build:win",
     "build:osx": "npm run clean:osx && electron-packager ./app \"Loopline Systems\" --out=dist/osx --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/osx/loopline.icns",
@@ -200,6 +200,9 @@ package.json
 }
 
 ```
+
+**Important note for windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
+operable program or batch file.` you may want to use `rimraf` instead of `rm -rf` in the `clean` tasks. i.e.: `"clean": "rimraf ./dist"`*
 
 packager.json
 ```js
