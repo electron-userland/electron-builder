@@ -124,7 +124,7 @@ Your application mount icon.
 Sizes of the icons included in `dmg` dialog.
 
 ### `osx.contents`
-Icons you wish to include in `dmg` dialog.
+This property contains the configuration for the OSX dmg window. This property is passed to `appdmg`, which builds the dmg package. For a deeper explanation of the different options that you can set in this property, visit [`appdmg`'s page](https://www.npmjs.com/package/appdmg).
 
 ### `win.title`
 Title of your application shown in generated windows installer.
