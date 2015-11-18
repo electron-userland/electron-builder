@@ -17,9 +17,19 @@ var path    = require( 'path' );
 var builder = ( require( './' ) ).init();
 var usage   = fs.readFileSync( path.join( __dirname, 'usage.txt' ) ).toString();
 
-var cli = meow( {
-  help : usage
+var cli = meow( usage, {
+  help  : usage,
+  alias : {
+    h : 'help'
+  }
 } );
+
+if ( cli.input[ 0 ] == null ) {
+
+  console.error( usage );
+  throw new Error( 'Path to electron app not provided' );
+
+}
 
 var appPath = path.join( process.cwd(), cli.input[ 0 ] );
 
