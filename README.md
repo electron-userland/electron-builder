@@ -201,6 +201,9 @@ package.json
 
 ```
 
+**Important note for windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
+operable program or batch file.` you may want to use `rimraf` instead of `rm -rf` in the `clean` tasks. i.e.: `"clean": "rimraf ./dist"`*
+
 packager.json
 ```js
 {
