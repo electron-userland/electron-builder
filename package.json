@@ -12,7 +12,23 @@
     "url": "https://github.com/loopline-systems/electron-builder.git"
   },
   "keywords": [
-    "electron"
+    "electron",
+    "builder",
+    "build",
+    "installer",
+    "install",
+    "packager",
+    "pack",
+    "nsis",
+    "appdmg",
+    "app",
+    "dmg",    
+    "msi",
+    "exe",
+    "setup",
+    "Windows",
+    "OS X",
+    "Mac"
   ],
   "bin": {
     "electron-builder": "cli.js"
