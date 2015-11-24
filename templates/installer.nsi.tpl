@@ -1,4 +1,5 @@
 !define APP_NAME "<%= name %>"
+!define APP_VERSION "<%= version %>"
 !define APP_DIR "${APP_NAME}"
 
 Name "${APP_NAME}"
@@ -58,6 +59,8 @@ Section
                    "UninstallString" "$INSTDIR\Uninstall ${APP_NAME}.exe"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "DisplayIcon" "$INSTDIR\icon.ico"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "DisplayVersion" "$APP_VERSION"
 SectionEnd
 
 # create a section to define what the uninstaller does

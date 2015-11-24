@@ -105,6 +105,7 @@ config.json.sample:
   },
   "win" : {
     "title" : "Loopline Systems",
+    "version" : "x.x.x.x",
     "icon" : "assets/win/icon.ico",
     "nsiTemplate" : "path/to/custom/installer.nsi.tpl"
   }
@@ -128,6 +129,9 @@ This property contains the configuration for the OSX dmg window. This property i
 
 ### `win.title`
 Title of your application shown in generated windows installer.
+
+### `win.version`
+Version of your application shown in add/remove programs list.
 
 ### `win.icon`
 Icon to be shown in installation process.
