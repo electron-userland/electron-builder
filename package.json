@@ -12,7 +12,23 @@
     "url": "https://github.com/loopline-systems/electron-builder.git"
   },
   "keywords": [
-    "electron"
+    "electron",
+    "builder",
+    "build",
+    "installer",
+    "install",
+    "packager",
+    "pack",
+    "nsis",
+    "appdmg",
+    "app",
+    "dmg",    
+    "msi",
+    "exe",
+    "setup",
+    "Windows",
+    "OS X",
+    "Mac"
   ],
   "bin": {
     "electron-builder": "cli.js"
@@ -28,7 +44,8 @@
     "lodash.assign": "^3.2.0",
     "lodash.camelcase": "^3.0.1",
     "lodash.template": "^3.6.1",
-    "meow": "^3.1.0"
+    "meow": "^3.1.0",
+    "mkdirp": "^0.5.1"
   },
   "optionalDependencies": {
     "appdmg": "^0.3.1"
@@ -37,7 +54,7 @@
     "eslint": "^0.21.2",
     "proxyquire": "^1.5.0",
     "tap-nyan": "0.0.2",
-    "tap-spec": "^3.0.0",
+    "tap-spec": "^4.1.1",
     "tape": "^4.0.0",
     "tmp": "0.0.28"
   }
