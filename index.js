@@ -10,6 +10,7 @@
 var platforms = require( './lib/platforms' );
 var path      = require( 'path' );
 var fs        = require( 'fs' );
+var mkdirp    = require( 'mkdirp' );
 
 /**
  * Prototype for electron-builder
@@ -42,7 +43,7 @@ var Builder = {
     // directory exists
     if ( !fs.existsSync( options.out ) ) {
       options.log( '- Ouput directory ´' + options.out + '´ does not exist ' );
-      fs.mkdirSync( options.out );
+      mkdirp.sync( options.out );
       options.log( '- Created ´' + options.out + '´ ' );
     }
 
