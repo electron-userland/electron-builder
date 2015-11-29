@@ -12,6 +12,11 @@ Name "${APP_NAME}"
 !addplugindir .
 !include "nsProcess.nsh"
 
+<% if(fileAssociation){ %>
+# include file association script
+!include "FileAssociation.nsh"
+<% } %>
+
 BrandingText "${APP_NAME} ${APP_VERSION}"
 
 # define the resulting installer's name
@@ -60,6 +65,11 @@ Section
 
   # specify icon to go in the output path
   File "icon.ico"
+
+  <% if(fileAssociation){ %>
+    # specify file association
+    ${registerExtension} "$INSTDIR\${APP_NAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+  <% } %>
 
   # create the uninstaller
   WriteUninstaller "$INSTDIR\Uninstall ${APP_NAME}.exe"
