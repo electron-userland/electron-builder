@@ -145,7 +145,8 @@ Option to define a custom NSI installation file.
 
 ### `win.fileAssociation` *( optional )*
 Option to define a custom file association on Windows.
-Caution: `win.fileAssociation` does not work when `win.nsiTemplate` is defined.
+Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option should only work
+if the custom nsi template is based on the original one.
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
