@@ -33,6 +33,18 @@ InstallDir "$PROGRAMFILES\${APP_NAME}\"
 Section
   SetShellVarContext all
 
+  # Stop process if already running
+  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
+
+  ${If} $R0 == 0
+      DetailPrint "${APP_NAME} is running. Closing it down..."
+      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
+      DetailPrint "Waiting for ${APP_NAME} to close."
+      Sleep 2000
+  ${EndIf}
+
+  ${nsProcess::Unload}
+
   # delete the installed files
   RMDir /r $INSTDIR
 
