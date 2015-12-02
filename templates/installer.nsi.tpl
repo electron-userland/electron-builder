@@ -60,7 +60,7 @@ Section
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "DisplayIcon" "$INSTDIR\icon.ico"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "DisplayVersion" "$APP_VERSION"
+                   "DisplayVersion" "${APP_VERSION}"
 SectionEnd
 
 # create a section to define what the uninstaller does
