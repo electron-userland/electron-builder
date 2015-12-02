@@ -1,5 +1,8 @@
 !define APP_NAME "<%= name %>"
 !define APP_VERSION "<%= version %>"
+!define APP_PUBLISHER "<%= publisher %>"
+!define APP_INSTALLSIZE <%= size %>
+
 !define APP_DIR "${APP_NAME}"
 
 Name "${APP_NAME}"
@@ -88,6 +91,11 @@ Section
                    "DisplayIcon" "$INSTDIR\icon.ico"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "DisplayVersion" "${APP_VERSION}"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "Publisher" "${APP_PUBLISHER}"
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+                   "EstimatedSize" "${APP_INSTALLSIZE}"
+
 SectionEnd
 
 # create a section to define what the uninstaller does
