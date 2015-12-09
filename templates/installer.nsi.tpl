@@ -6,6 +6,7 @@ Name "${APP_NAME}"
 
 !include "MUI2.nsh"
 !define MUI_ICON "icon.ico"
+!define MUI_UNICON "icon.ico"
 
 !addplugindir .
 !include "nsProcess.nsh"
