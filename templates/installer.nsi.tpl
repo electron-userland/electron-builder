@@ -8,6 +8,7 @@ Name "${APP_NAME}"
 !define MUI_ICON "icon.ico"
 !define MUI_UNICON "icon.ico"
 
+
 !addplugindir .
 !include "nsProcess.nsh"
 
@@ -28,23 +29,31 @@ InstallDir "$PROGRAMFILES\${APP_NAME}\"
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_LANGUAGE "English"
 
+!macro CheckAppRunning ABORT_MSG
+  test:
+
+  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
+  ${If} $R0 == 0
+    MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION "${APP_NAME} is already running." /SD IDABORT IDRETRY retry IDIGNORE doStopProcess
+        Abort "${ABORT_MSG}"
+    retry:
+      goto test
+    doStopProcess:
+      DetailPrint "Closing down ${APP_NAME} ..."
+      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
+      DetailPrint "Waiting for ${APP_NAME} to close."
+      Sleep 2000
+  ${EndIf}
+  ${nsProcess::Unload}
+
+!macroend
+
 
 # default section start
 Section
   SetShellVarContext all
 
-  # Stop process if already running
-  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
-
-  ${If} $R0 == 0
-      DetailPrint "${APP_NAME} is running. Closing it down..."
-      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
-      DetailPrint "Waiting for ${APP_NAME} to close."
-      Sleep 2000
-  ${EndIf}
-
-  ${nsProcess::Unload}
-
+  !insertmacro CheckAppRunning "Installation canceled."
   # delete the installed files
   RMDir /r $INSTDIR
 
@@ -79,16 +88,7 @@ SectionEnd
 # create a section to define what the uninstaller does
 Section "Uninstall"
 
-  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
-
-  ${If} $R0 == 0
-      DetailPrint "${APP_NAME} is running. Closing it down..."
-      ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
-      DetailPrint "Waiting for ${APP_NAME} to close."
-      Sleep 2000
-  ${EndIf}
-
-  ${nsProcess::Unload}
+  !insertmacro CheckAppRunning "Uninstall canceled."
 
   SetShellVarContext all
 
