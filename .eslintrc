@@ -1,40 +1,13 @@
 {
     "rules": {
-        "indent": [
-            2,
-            2
-        ],
-        "quotes": [
-            2,
-            "single"
-        ],
-        "linebreak-style": [
-            2,
-            "unix"
-        ],
-        "semi": [
-            2,
-            "always"
-        ],
-        "no-multi-spaces": false,
-        "no-underscore-dangle": false,
-        "no-use-before-define": false,
-        "key-spacing": [
-            2,
-            {
-                "align": "colon",
-                "beforeColon": true,
-                "afterColon": true
-            }
-        ],
-        "space-in-brackets": [
-            2,
-            "always"
-        ],
-        "space-in-parens": [
-            2,
-            "always"
-        ]
+        "indent": [ 2, 2, { "SwitchCase" : 1 } ],
+        "quotes": [ 2, "single" ],
+        "linebreak-style": [ 2, "unix" ],
+        "semi": [ 2, "always" ],
+        "key-spacing": [ 2, { "align": "colon", "beforeColon": true, "afterColon": true } ],
+        "object-curly-spacing": [ 2, "always" ],
+        "array-bracket-spacing": [ 2, "always" ],
+        "space-in-parens": [ 2, "always" ]
     },
     "env": {
         "es6": true,
