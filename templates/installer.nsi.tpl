@@ -1,7 +1,6 @@
 !define APP_NAME "<%= name %>"
 !define APP_VERSION "<%= version %>"
 !define APP_PUBLISHER "<%= publisher %>"
-!define APP_INSTALLSIZE <%= size %>
 
 !define APP_DIR "${APP_NAME}"
 
@@ -11,9 +10,9 @@ Name "${APP_NAME}"
 !define MUI_ICON "icon.ico"
 !define MUI_UNICON "icon.ico"
 
-
 !addplugindir .
 !include "nsProcess.nsh"
+!include "FileFunc.nsh"
 
 <% if(fileAssociation){ %>
 # include file association script
@@ -93,8 +92,11 @@ Section
                    "DisplayVersion" "${APP_VERSION}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
                    "Publisher" "${APP_PUBLISHER}"
+
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-                   "EstimatedSize" "${APP_INSTALLSIZE}"
+                   "EstimatedSize" "$0"
 
 SectionEnd
 
