@@ -33,6 +33,21 @@ InstallDir "$PROGRAMFILES\${APP_NAME}\"
 Section
   SetShellVarContext all
 
+  # Stop process if already running
+  ${nsProcess::FindProcess} "${APP_NAME}.exe" $R0
+
+  ${If} $R0 == 0
+	  MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${APP_NAME} is running. $\r$\nClick OK to close it and continue with install" /SD IDCANCEL IDOK doStopProcess
+          Abort
+      doStopProcess:
+           DetailPrint "Closing running ${APP_NAME} ..."
+           ${nsProcess::KillProcess} "${APP_NAME}.exe" $R0
+           DetailPrint "Waiting for ${APP_NAME} to close."
+           Sleep 2000
+  ${EndIf}
+
+  ${nsProcess::Unload}
+
   # delete the installed files
   RMDir /r $INSTDIR
 
