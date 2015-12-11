@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint ./lib cli.js index.js",
     "test": "npm run lint || exit 1; result=\"$(tape ./**/*_spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
-    "publish": "publish-please"
+    "publish-please": "publish-please"
   },
   "repository": {
     "type": "git",
