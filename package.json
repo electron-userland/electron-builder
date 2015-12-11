@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint ./lib cli.js index.js",
-    "test": "npm run lint || exit 1; result=\"$(tape ./**/*_spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;"
+    "test": "npm run lint || exit 1; result=\"$(tape ./**/*_spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
+    "publish": "publish-please"
   },
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "eslint": "^1.10.0",
     "proxyquire": "^1.5.0",
+    "publish-please": "^1.1.0",
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
     "tape": "^4.0.0",
