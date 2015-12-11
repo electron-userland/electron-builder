@@ -12,6 +12,7 @@ Name "${APP_NAME}"
 !addplugindir .
 !include "nsProcess.nsh"
 
+BrandingText "${APP_NAME} ${APP_VERSION}"
 
 # define the resulting installer's name
 OutFile "<%= out %>\${APP_NAME} Setup.exe"
