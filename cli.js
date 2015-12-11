@@ -31,7 +31,7 @@ if ( cli.input[ 0 ] == null ) {
 
 }
 
-var appPath = path.join( process.cwd(), cli.input[ 0 ] );
+var appPath = path.resolve( process.cwd(), cli.input[ 0 ] );
 
 builder.build( assign( {
   appPath : appPath
