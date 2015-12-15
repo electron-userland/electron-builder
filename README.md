@@ -240,3 +240,7 @@ If you decide to propose a pull request ( even better ) make sure `npm test` is 
 
 For releases we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
 You'll find proper release notes [here](https://github.com/loopline-systems/electron-builder/releases).
+
+## Related packages
+
+[grunt-electron-builder-wrapper](https://www.npmjs.com/package/grunt-electron-builder-wrapper) - grunt plugin for electron-builder.
