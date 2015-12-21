@@ -107,7 +107,11 @@ config.json.sample:
     "title" : "Loopline Systems",
     "version" : "x.x.x.x",
     "icon" : "assets/win/icon.ico",
-    "nsiTemplate" : "path/to/custom/installer.nsi.tpl"
+    "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
+    "fileAssociation": { // optional
+      "extension": ".loop",
+      "fileType": "Loopline Systems File"
+    }
   }
 }
 ```
@@ -138,6 +142,11 @@ Icon to be shown in installation process.
 
 ### `win.nsiTemplate` *( optional )*
 Option to define a custom NSI installation file.
+
+### `win.fileAssociation` *( optional )*
+Option to define a custom file association on Windows.
+Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option should only work
+if the custom nsi template is based on the original one.
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
