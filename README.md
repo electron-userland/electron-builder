@@ -28,10 +28,10 @@ $ npm install --save electron-builder
 After that you can easily use the `electron-builder` binary in your `npm scripts`.
 
 part of package.json
-```js
+```json
 {
   "scripts" : {
-    "pack:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=packager.json"
+    "build:osx": "npm run pack:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=builder.json"
   }
 }
 ```
@@ -91,7 +91,7 @@ You will find a sample config file below.
 
 
 config.json.sample:
-```js
+```json
 {
   "osx" : {
     "title": "Loopline Systems",
@@ -156,11 +156,11 @@ desktop
   |
   |-- assets                            // build related assets
     |-- osx                             // build assets for OS X
-      |-- installer.png                 //   -> referenced in packager.json ( dmg background )
+      |-- installer.png                 //   -> referenced in builder.json ( dmg background )
       |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
-      |-- loopline.icns                 //   -> referenced in packager.json ( dmg background )
+      |-- loopline.icns                 //   -> referenced in builder.json ( dmg background )
     |-- win                             // build assets for Windows
-      |-- icon.ico                      //   -> referenced in packager.json
+      |-- icon.ico                      //   -> referenced in builder.json
   |
   |-- dist                              // out put folder
     |-- osx                             // generated executables for OS X
@@ -170,12 +170,12 @@ desktop
       |-- Loopline Systems-win32
       |-- Loopline Systems Setup.exe
   |-- package.json
-  |-- packager.json
+  |-- builder.json
 ```
 
 
 package.json
-```js
+```json
 {
   "name": "loopline-desktop",
   "version": "1.0.0",
@@ -188,13 +188,13 @@ package.json
     "clean:osx": "rm -rf ./dist/osx",
     "clean:win": "rm -rf ./dist/win",
 
-    "build": "npm run clean && npm run build:osx && npm run build:win",
-    "build:osx": "npm run clean:osx && electron-packager ./app \"Loopline Systems\" --out=dist/osx --platform=darwin --arch=x64 --version=0.25.3 --icon=assets/osx/loopline.icns",
-    "build:win": "npm run clean:win && electron-packager ./app \"Loopline Systems\" --out=dist/win --platform=win32 --arch=ia32 --version=0.25.3 --icon=assets/win/icon.ico",
+    "pack": "npm run clean && npm run build:osx && npm run build:win",
+    "pack:osx": "npm run clean:osx && electron-packager ./app \"Loopline Systems\" --out=dist/osx --platform=darwin --arch=x64 --version=0.36.1 --icon=assets/osx/loopline.icns",
+    "pack:win": "npm run clean:win && electron-packager ./app \"Loopline Systems\" --out=dist/win --platform=win32 --arch=ia32 --version=0.36.1 --icon=assets/win/icon.ico",
 
-    "pack": "npm run pack:osx && npm run pack:win",
-    "pack:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=packager.json",
-    "pack:win": "npm run build:win && electron-builder \"dist/win/Loopline Systems-win32\" --platform=win --out=\"dist/win\" --config=packager.json"
+    "build": "npm run pack:osx && npm run pack:win",
+    "build:osx": "npm run build:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=builder.json",
+    "build:win": "npm run build:win && electron-builder \"dist/win/Loopline Systems-win32\" --platform=win --out=\"dist/win\" --config=builder.json"
   },
   "dependencies": {
     "electron-packager": "^4.0.2",
@@ -208,8 +208,8 @@ package.json
 **Important note for windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
 operable program or batch file.` you may want to use windows counter part `rmdir` or `rimraf` (cross platform) to clean up the distribution folder.*
 
-packager.json
-```js
+builder.json
+```json
 {
   "osx" : {
     "title": "Loopline Systems",
