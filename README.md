@@ -52,7 +52,7 @@ On Ubuntu(-based) Linux distributions, via apt:
 # apt-get install wine nsis -y
 ```
 On Windows, download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
-You need to include NSIS in your PATH to find `makensis`, set your global enviornment variable or you can set a session variable using:
+You need to include NSIS in your PATH to find `makensis`, set your global environment variable or you can set a session variable using:
 ```
 set PATH=%PATH%;C:\Program Files (x86)\NSIS
 ```
