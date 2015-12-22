@@ -24,10 +24,13 @@ var Builder = {
    * @param  {Function} callback callback
    */
   build : function( options, callback ) {
+    var configPath;
 
     options     = options || {};
     options.log = options.log || console.log;
-    options.out = options.out ? path.resolve( process.cwd(), options.out ) : process.cwd();
+    options.out = options.out 
+                  ? path.resolve( process.cwd(), options.out ) 
+                  : process.cwd();
 
     options.log(
       '- Running electron-builder ' + require( './package' ).version
@@ -53,7 +56,7 @@ var Builder = {
     }
 
     if ( typeof options.config === 'string' ) {
-      var configPath = path.resolve( process.cwd(), options.config );
+      configPath = path.resolve( process.cwd(), options.config );
 
       options.basePath = path.dirname( configPath );
 
