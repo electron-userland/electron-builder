@@ -12,7 +12,7 @@ This includes:
 
 - description of what you're trying to do
 - package.json
-- packager.json
+- config.json
 - log of the terminal output
 - node version
 - npm version
