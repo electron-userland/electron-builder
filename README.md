@@ -52,6 +52,10 @@ On Ubuntu(-based) Linux distributions, via apt:
 # apt-get install wine nsis -y
 ```
 On Windows, download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
+You need to include NSIS in your PATH to find `makensis`, set your global environment variable or you can set a session variable using:
+```
+set PATH=%PATH%;C:\Program Files (x86)\NSIS
+```
 
 If you're on OS X/Linux and want to build for Windows, make also sure you're running at least `v0.12.0` of node.js.
 
@@ -107,6 +111,7 @@ config.json.sample:
     "title" : "Loopline Systems",
     "version" : "x.x.x.x",
     "icon" : "assets/win/icon.ico",
+    "verbosity": 1,
     "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
     "fileAssociation": { // optional
       "extension": ".loop",
@@ -142,6 +147,9 @@ Icon to be shown in installation process.
 
 ### `win.nsiTemplate` *( optional )*
 Option to define a custom NSI installation file.
+
+### `win.verbosity` *( optional )*
+Number 0-4 :  where 4=all, 3=no script, 2=no info, 1=no warnings, 0=none [Default 3]
 
 ### `win.fileAssociation` *( optional )*
 Option to define a custom file association on Windows.
