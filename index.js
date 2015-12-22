@@ -55,6 +55,9 @@ var Builder = {
       return callback( new Error( 'Required option not set' ) );
     }
 
+    // Make sure appPath is absolute
+    options.appPath = path.resolve( options.appPath );
+
     if ( typeof options.config === 'string' ) {
       configPath = path.resolve( process.cwd(), options.config );
 
