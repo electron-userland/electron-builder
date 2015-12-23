@@ -1,0 +1,2 @@
+**Important note for windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
+operable program or batch file.` you may want to use windows counter part `rmdir` or `rimraf` (cross platform) to clean up the distribution folder.*
