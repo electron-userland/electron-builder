@@ -110,6 +110,7 @@ config.json.sample:
   "win" : {
     "title" : "Loopline Systems",
     "version" : "x.x.x.x",
+    "publisher": "Publisher Info",
     "icon" : "assets/win/icon.ico",
     "verbosity": 1,
     "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
@@ -141,6 +142,9 @@ Title of your application shown in generated windows installer.
 
 ### `win.version`
 Version of your application shown in add/remove programs list.
+
+### `win.publisher`
+Publisher shown in add/remove programs list.
 
 ### `win.icon`
 Icon to be shown in installation process.
