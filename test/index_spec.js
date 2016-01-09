@@ -139,7 +139,9 @@ test( 'Builder.init().build - load config if passed as string', function( t ) {
       config   : '/some/not/existant/config.json'
     },
     function( error ) {
-      t.equal( error.message, 'Could not load config file' );
+      t.equal(
+        error.message, 'Could not load config file:\nCannot find module \'/some/not/existant/config.json\''
+      );
     }
   );
 } );
