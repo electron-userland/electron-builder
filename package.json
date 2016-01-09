@@ -12,6 +12,9 @@
     "type": "git",
     "url": "https://github.com/loopline-systems/electron-builder.git"
   },
+  "engines": {
+    "node": ">=0.12.0"
+  },
   "keywords": [
     "electron",
     "builder",
