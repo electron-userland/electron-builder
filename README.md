@@ -113,8 +113,8 @@ config.json.sample:
     "publisher": "Publisher Info",
     "icon" : "assets/win/icon.ico",
     "verbosity": 1,
-    "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
-    "fileAssociation": { // optional
+    "nsiTemplate" : "path/to/custom/installer.nsi.tpl",
+    "fileAssociation": {
       "extension": ".loop",
       "fileType": "Loopline Systems File"
     }
