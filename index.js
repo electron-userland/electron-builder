@@ -28,8 +28,8 @@ var Builder = {
 
     options     = options || {};
     options.log = options.log || console.log;
-    options.out = options.out 
-                  ? path.resolve( process.cwd(), options.out ) 
+    options.out = options.out
+                  ? path.resolve( process.cwd(), options.out )
                   : process.cwd();
 
     options.log(
@@ -66,7 +66,9 @@ var Builder = {
       try {
         options.config = require( configPath );
       } catch( error ) {
-        return callback( new Error( 'Could not load config file' ) );
+        return callback(
+          new Error( 'Could not load config file:\n' + error.message )
+        );
       }
     }
 
