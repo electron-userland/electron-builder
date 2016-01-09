@@ -50,10 +50,12 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
   Builder.init().build(
     {
       appPath  : 'foo',
+      basePath : 'bar',
       platform : 'bar',
       config   : {}
     },
     function( error, result ) {
+      console.log( error );
       t.equal( error, null );
       t.equal( result, 'foo' );
       t.end();
@@ -85,7 +87,8 @@ test( 'Builder.init().build - create output directory if not present', function(
   Builder.init().build(
     {
       appPath  : 'foo',
-      platform : 'bar',
+      basePath : 'bar',
+      platform : 'baz',
       config   : {},
       out      : tmpDir.name + '/foo'
     },
@@ -99,55 +102,8 @@ test( 'Builder.init().build - create output directory if not present', function(
   );
 } );
 
-test( 'Builder.init().build - load config if passed as string', function( t ) {
-  t.plan( 3 );
-
-  var Builder = proxyquireStrict(
-    '../',
-    {
-      './lib/platforms' : {
-        bar : {
-          init : function() {
-            return {
-              build : function( options, callback ) {
-                t.equal( options.basePath, '/some' );
-                t.equal( options.config.foo, 'bar' );
-              }
-            }
-          }
-        }
-      },
-      '/some/config.json' : {
-        foo : 'bar'
-      }
-    }
-  );
-
-  Builder.init().build(
-    {
-      appPath  : 'foo',
-      platform : 'bar',
-      config   : '/some/config.json'
-    },
-    function( e ) {}
-  );
-
-  Builder.init().build(
-    {
-      appPath  : 'foo',
-      platform : 'bar',
-      config   : '/some/not/existant/config.json'
-    },
-    function( error ) {
-      t.equal(
-        error.message, 'Could not load config file:\nCannot find module \'/some/not/existant/config.json\''
-      );
-    }
-  );
-} );
-
 test( 'Builder.init().build - check for required options', function( t ) {
-  t.plan( 3 );
+  t.plan( 4 );
 
   var Builder = proxyquireStrict(
     '../',
@@ -158,8 +114,9 @@ test( 'Builder.init().build - check for required options', function( t ) {
 
   Builder.init().build(
     {
-      platform : 'foo',
-      config   : 'bar'
+      appPath  : 'foo',
+      platform : 'bar',
+      config   : 'baz'
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
@@ -169,7 +126,8 @@ test( 'Builder.init().build - check for required options', function( t ) {
   Builder.init().build(
     {
       appPath  : 'foo',
-      config   : 'bar'
+      basePath : 'bar',
+      platform : 'baz',
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
@@ -178,8 +136,20 @@ test( 'Builder.init().build - check for required options', function( t ) {
 
   Builder.init().build(
     {
-      appPath  : 'bar',
-      platform : 'foo'
+      appPath  : 'foo',
+      basePath : 'bar',
+      config   : {}
+    },
+    function( error ) {
+      t.equal( error.message, 'Required option not set' );
+    }
+  );
+
+  Builder.init().build(
+    {
+      config   : {},
+      basePath : 'foo',
+      platform : 'bar'
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );

@@ -12,6 +12,7 @@ var path      = require( 'path' );
 var fs        = require( 'fs' );
 var mkdirp    = require( 'mkdirp' );
 
+
 /**
  * Prototype for electron-builder
  * @type {Object}
@@ -24,8 +25,6 @@ var Builder = {
    * @param  {Function} callback callback
    */
   build : function( options, callback ) {
-    var configPath;
-
     options     = options || {};
     options.log = options.log || console.log;
     options.out = options.out
@@ -51,26 +50,17 @@ var Builder = {
     }
 
     // FAIL when not all required options are set
-    if ( !options.appPath || !options.platform || !options.config ) {
+    if (
+      !options.appPath ||
+      !options.platform ||
+      !options.config ||
+      !options.basePath
+    ) {
       return callback( new Error( 'Required option not set' ) );
     }
 
     // Make sure appPath is absolute
     options.appPath = path.resolve( options.appPath );
-
-    if ( typeof options.config === 'string' ) {
-      configPath = path.resolve( process.cwd(), options.config );
-
-      options.basePath = path.dirname( configPath );
-
-      try {
-        options.config = require( configPath );
-      } catch( error ) {
-        return callback(
-          new Error( 'Could not load config file:\n' + error.message )
-        );
-      }
-    }
 
     // FAIL when set platform is not available
     if ( !platforms[ options.platform ] ) {
