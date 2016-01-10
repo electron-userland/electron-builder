@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint ./lib cli.js index.js",
-    "test": "npm run lint || exit 1; result=\"$(tape index.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
+    "test": "npm run lint || exit 1; result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
     "test-build" : "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
     "publish-please": "publish-please"
   },
