@@ -54,11 +54,13 @@ try {
 
 var basePath = path.dirname( configPath );
 
-builder.build( assign( {
+console.log( config, basePath );
+
+builder.build( assign( cli.flags, {
   appPath  : appPath,
   config   : config,
   basePath : basePath
-}, cli.flags ), function( error ) {
+} ), function( error ) {
   if ( error ) {
     throw error;
   }

@@ -17,7 +17,7 @@ test( 'Builder.init', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    '../',
+    './index.js',
     {
       './lib/platforms' : {}
     }
@@ -31,7 +31,7 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    '../',
+    './index.js',
     {
       './lib/platforms' : {
         bar : {
@@ -52,10 +52,10 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
       appPath  : 'foo',
       basePath : 'bar',
       platform : 'bar',
-      config   : {}
+      config   : {},
+      log      : function() {}
     },
     function( error, result ) {
-      console.log( error );
       t.equal( error, null );
       t.equal( result, 'foo' );
       t.end();
@@ -68,7 +68,7 @@ test( 'Builder.init().build - create output directory if not present', function(
 
   var tmpDir  = tmp.dirSync( { unsafeCleanup : true } );
   var Builder = proxyquireStrict(
-    '../',
+    './index.js',
     {
       './lib/platforms' : {
         bar : {
@@ -90,7 +90,8 @@ test( 'Builder.init().build - create output directory if not present', function(
       basePath : 'bar',
       platform : 'baz',
       config   : {},
-      out      : tmpDir.name + '/foo'
+      out      : tmpDir.name + '/foo',
+      log      : function() {}
     },
     function( error, result ) {
       t.equal( fs.existsSync( tmpDir.name + '/foo' ), true );
@@ -106,7 +107,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
   t.plan( 4 );
 
   var Builder = proxyquireStrict(
-    '../',
+    './index.js',
     {
       './lib/platforms' : {}
     }
@@ -116,7 +117,8 @@ test( 'Builder.init().build - check for required options', function( t ) {
     {
       appPath  : 'foo',
       platform : 'bar',
-      config   : 'baz'
+      config   : 'baz',
+      log      : function() {}
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
@@ -128,6 +130,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       appPath  : 'foo',
       basePath : 'bar',
       platform : 'baz',
+      log      : function() {}
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
@@ -138,7 +141,8 @@ test( 'Builder.init().build - check for required options', function( t ) {
     {
       appPath  : 'foo',
       basePath : 'bar',
-      config   : {}
+      config   : {},
+      log      : function() {}
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
@@ -149,7 +153,8 @@ test( 'Builder.init().build - check for required options', function( t ) {
     {
       config   : {},
       basePath : 'foo',
-      platform : 'bar'
+      platform : 'bar',
+      log      : function() {}
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
