@@ -84,9 +84,11 @@ Usage
 
   Required options:
     platform:          win, osx
-    config:            path to config file
 
   Optional options:
+    config:            path to config file
+                       -> if not provided `builder` property in `package.json`
+                          in current working directory will be read
     out:               path to output the installer (must exist)
 ```
 
@@ -117,6 +119,38 @@ config.json.sample:
     "fileAssociation": { // optional
       "extension": ".loop",
       "fileType": "Loopline Systems File"
+    }
+  }
+}
+```
+
+package.json.sample:
+```json
+{
+  "name": "Loopline App",
+  "version": "2.6.0",
+  "builder": {
+    "osx" : {
+      "title": "Loopline Systems",
+      "background": "assets/osx/installer.png",
+      "icon": "assets/osx/mount.icns",
+      "icon-size": 80,
+      "contents": [
+        { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
+        { "x": 192, "y": 344, "type": "file" }
+      ]
+    },
+    "win" : {
+      "title" : "Loopline Systems",
+      "version" : "x.x.x.x",
+      "publisher": "Publisher Info",
+      "icon" : "assets/win/icon.ico",
+      "verbosity": 1,
+      "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
+      "fileAssociation": { // optional
+        "extension": ".loop",
+        "fileType": "Loopline Systems File"
+      }
     }
   }
 }

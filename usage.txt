@@ -4,7 +4,9 @@ Usage
 
   Required options:
     platform:          win, osx
-    config:            path to config file
 
   Optional options:
+    config:            path to config file
+                       -> if not provided `builder` property in `package.json`
+                          in current working directory will be read
     out:               path to output the installer (path must exist)

@@ -31,14 +31,65 @@ if ( cli.input[ 0 ] == null ) {
 
 }
 
+// resolve app path
 var appPath = path.resolve( process.cwd(), cli.input[ 0 ] );
 
-builder.build( assign( {
-  appPath : appPath
-}, cli.flags ), function( error ) {
+// read config from file or package.json
+var config;
+var configPath;
+var configProperty;
+
+if ( typeof cli.flags.config === 'string' ) {
+  configPath = path.resolve( process.cwd(), cli.flags.config );
+} else {
+  configPath     = process.cwd() + '/package.json';
+  configProperty = 'builder';
+}
+
+try {
+  config = getConfigFromFile( configPath, configProperty );
+} catch( error ) {
+  throw new Error( 'Could not load config file:\n' + error.message );
+}
+
+var basePath = path.dirname( configPath );
+
+console.log( config, basePath );
+
+builder.build( assign( cli.flags, {
+  appPath  : appPath,
+  config   : config,
+  basePath : basePath
+} ), function( error ) {
   if ( error ) {
     throw error;
   }
 
   console.log( '- Created installer for ' + cli.flags.platform + ' -' );
 } );
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * Read config file and return config
+ *
+ * @param  {String}           configPath config file path
+ * @param  {String|undefined} property   property to include config
+ *
+ * @return {Object}                      configuration
+ */
+function getConfigFromFile( configPath, property ) {
+  var config = require( configPath );
+
+  if ( property ) {
+    if ( config[ property ] ) {
+      config = config[ property ];
+    } else {
+      throw new Error( '\'' + property + '\' is not defined in ' + configPath );
+    }
+  }
+
+  return config;
+}
