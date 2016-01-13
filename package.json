@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint ./lib cli.js index.js",
     "test": "npm run lint || exit 1; result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
-    "test-build" : "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
+    "test-build": "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
     "publish-please": "publish-please"
   },
   "repository": {
@@ -47,7 +47,7 @@
   "dependencies": {
     "fs-extra": "^0.26.0",
     "lodash.assign": "^3.2.0",
-    "lodash.camelcase": "^3.0.1",
+    "lodash.camelcase": "^4.0.0",
     "lodash.template": "^3.6.1",
     "meow": "^3.1.0",
     "mkdirp": "^0.5.1"
