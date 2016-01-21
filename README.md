@@ -8,7 +8,7 @@ It's built to work together with the [electron-packager](https://github.com/maxo
 
 If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the ["How we use it section below"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far).
 
-The project has currently only been executed on OS X machines. Any support or help for Windows is welcome.
+The project works fine on OS X, Windows and Linux(Ubuntu) machines.
 
 ## Install
 
