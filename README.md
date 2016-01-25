@@ -164,7 +164,7 @@ if the custom nsi template is based on the original one.
 Option to define a custom encoding for output template.nsi on Windows.
 Default value is 'UTF-8'.
 For available values see [ashtuchkin/iconv-lite's page](https://github.com/ashtuchkin/iconv-lite/wiki/Supported-Encodings).
-The packager.json config should always be UTF8 encoded.
+The provided template for the installer script (.nsi) should always be UTF8 encoded.
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
