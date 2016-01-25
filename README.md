@@ -194,6 +194,12 @@ Option to define a custom file association on Windows.
 Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option should only work
 if the custom nsi template is based on the original one.
 
+### `win.encoding` *( optional )*
+Option to define a custom encoding for output template.nsi on Windows.
+Default value is 'UTF-8'.
+For available values see [ashtuchkin/iconv-lite's page](https://github.com/ashtuchkin/iconv-lite/wiki/Supported-Encodings).
+The provided template for the installer script (.nsi) should always be UTF8 encoded.
+
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
 
