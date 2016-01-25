@@ -59,7 +59,7 @@
     "eslint": "^1.10.0",
     "proxyquire": "^1.5.0",
     "publish-please": "^1.1.0",
-    "rimraf": "^2.5.0",
+    "rimraf": "^2.5.1",
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
     "tape": "^4.0.0",
