@@ -163,7 +163,7 @@ if the custom nsi template is based on the original one.
 ### `win.encoding` *( optional )*
 Option to define a custom encoding for output template.nsi on Windows.
 Default value is 'UTF-8'.
-For available values see [node-iconv's page](https://github.com/bnoordhuis/node-iconv).
+For available values see [ashtuchkin/iconv-lite's page](https://github.com/ashtuchkin/iconv-lite/wiki/Supported-Encodings).
 The packager.json config should always be UTF8 encoded.
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
