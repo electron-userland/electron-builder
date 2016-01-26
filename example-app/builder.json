@@ -18,7 +18,6 @@
     "target" : "deb",
     "title" : "Builder Config Linux Example",
     "comment" : "This is a comment",
-    "genericName" : "builderConfigLinuxExample",
     "exec" : "myExec"
   }
 }
