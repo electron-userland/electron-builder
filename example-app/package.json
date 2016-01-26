@@ -13,6 +13,14 @@
     "win" : {
       "title" : "Electron Builder Example",
       "icon" : "icon.ico"
+    },
+    "linux" : {
+      "arch" : 64,
+      "target" : "deb",
+      "title" : "Builder Config Linux Example",
+      "comment" : "This is a comment",
+      "genericName" : "builderConfigLinuxExample",
+      "exec" : "myExec"
     }
   }
 }

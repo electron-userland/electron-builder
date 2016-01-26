@@ -3,7 +3,7 @@ Usage
   $ electron-builder <sourcedir> --platform=<platform> --config=<configPath> --out=<outputPath>
 
   Required options:
-    platform:          win, osx
+    platform:          win, osx, linux
 
   Optional options:
     config:            path to config file
