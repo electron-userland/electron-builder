@@ -81,7 +81,7 @@ $ electron-builder dist/win/someFancy-win32 --platform=win --out=/some/path/ --c
 ## Build Linux installer
 
 ```
-$ electron-builder dist/win/someFancy-win32 --platform=linux --out=/some/path/ --config=config.json
+$ electron-builder dist/win/someFancy-linux-x64 --platform=linux --out=/some/path/ --config=config.json
 ```
 
 ## Parameters
