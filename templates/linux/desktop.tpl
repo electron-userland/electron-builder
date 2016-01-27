@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=<%= title %>
 Comment=<%= comment %>
-Exec=<%= exec %>
+Exec=<%= executable %>
 Terminal=false
 Type=Application

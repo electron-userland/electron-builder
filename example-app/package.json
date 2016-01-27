@@ -17,9 +17,11 @@
     "linux" : {
       "arch" : 64,
       "target" : "deb",
-      "title" : "Builder Config Linux Example",
+      "version" : "0.1.2",
+      "title" : "Electron Builder Example",
       "comment" : "This is a comment",
-      "exec" : "myExec"
+      "executable" : "electron-builder-example",
+      "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
     }
   }
 }

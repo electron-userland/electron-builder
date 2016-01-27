@@ -132,9 +132,11 @@ config.json.sample:
   "linux" : {
     "arch" : 64,
     "target" : "deb",
-    "title" : "Builder Config Linux Example",
+    "version" : "x.x.x.x",
+    "title" : "Loopline Systems",
     "comment" : "This is a comment",
-    "exec" : "myExec"
+    "executable" : "myExec",
+    "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
   }
 }
 ```
@@ -170,9 +172,11 @@ package.json.sample:
     "linux" : {
       "arch" : 64,
       "target" : "deb",
-      "title" : "Builder Config Linux Example",
+      "version" : "x.x.x.x",
+      "title" : "Loopline Systems",
       "comment" : "This is a comment",
-      "exec" : "myExec"
+      "executable" : "myExec",
+      "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
     }
   }
 }
@@ -217,19 +221,25 @@ Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option sho
 if the custom nsi template is based on the original one.
 
 ### `linux.arch`
-Option to define architecture, be it `32` or `64`.
+Define architecture, be it `32` or `64`.
 
 ### `linux.target`
-Option to define package type, be it `deb` or `rpm`.
+Define package type, be it `deb` or `rpm`.
+
+### `linux.version`
+Version of your application.
 
 ### `linux.title`
-Option to define the name of the app.
+Define the name of the app.
 
 ### `linux.comment`
-Option to define a comment about the app.
+Define a comment about the app.
 
-### `linux.exec`
-Option to define the executable of the app.
+### `linux.executable`
+Define the executable of the app.
+
+### `linux.maintainer`
+Define the maintainer of the app. Must be with the following format : "Name <email@example.com>"
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 

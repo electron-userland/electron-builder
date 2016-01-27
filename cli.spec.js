@@ -86,16 +86,16 @@ test( 'Cli - linux - config file provided', function( t ) {
 
   childProcess.execFile(
     '../cli.js' ,
-    [ 'Example-win32-ia32', '--platform=linux', '--config=builder.json' ],
+    [ 'Example-linux-x64', '--platform=linux', '--config=builder.json' ],
     { cwd : __dirname + '/example-app' },
     function( error, stdout, stderr ) {
       t.notOk( error, 'No error thrown' );
       t.ok(
-        fs.statSync( __dirname + '/example-app/myExec-1.0-amd64.deb' ),
+        fs.statSync( __dirname + '/example-app/electron-builder-example-0.1.2-amd64.deb' ),
         'deb created'
       );
 
-      rimraf.sync( __dirname + '/example-app/myExec-1.0-amd64.deb' );
+      rimraf.sync( __dirname + '/example-app/electron-builder-example-0.1.2-amd64.deb' );
 
       t.end();
     }
@@ -149,16 +149,16 @@ test( 'Cli - linux - no config file provided', function( t ) {
 
   childProcess.execFile(
     '../cli.js' ,
-    [ 'Example-win32-ia32', '--platform=linux' ],
+    [ 'Example-linux-x64', '--platform=linux' ],
     { cwd : __dirname + '/example-app' },
     function( error, stdout, stderr ) {
       t.notOk( error, 'No error thrown' );
       t.ok(
-        fs.statSync( __dirname + '/example-app/myExec-1.0-amd64.deb' ),
+        fs.statSync( __dirname + '/example-app/electron-builder-example-0.1.2-amd64.deb' ),
         'deb created'
       );
 
-      rimraf.sync( __dirname + '/example-app/myExec-1.0-amd64.deb' );
+      rimraf.sync( __dirname + '/example-app/electron-builder-example-0.1.2-amd64.deb' );
 
       t.end();
     }

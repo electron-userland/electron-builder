@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Link to the binary
-ln -sf /opt/<%= exec %>/<%= exec %> /usr/local/bin/<%= exec %>
+ln -sf /opt/<%= executable %>/<%= executable %> /usr/local/bin/<%= executable %>
