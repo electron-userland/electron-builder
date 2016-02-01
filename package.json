@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "eslint": "^1.10.0",
-    "proxyquire": "^1.5.0",
+    "proxyquire": "^1.7.4",
     "publish-please": "^1.1.0",
     "rimraf": "^2.5.0",
     "tap-nyan": "0.0.2",
