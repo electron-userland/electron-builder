@@ -69,7 +69,7 @@ set PATH=%PATH%;C:\Program Files (x86)\NSIS
 
 ### Building for Linux
 
-If you're on OS X/Linux and want to build `.deb` or `.rpm` packages, you need fpm installed. Please check [fpm repo](https://github.com/jordansissel/fpm) for installation instructions.
+If you're on OS X/Linux and want to build `.deb` packages, you need fpm installed. Please check [fpm repo](https://github.com/jordansissel/fpm) for installation instructions.
 
 ### Building for MacOS
 
@@ -233,7 +233,7 @@ if the custom nsi template is based on the original one.
 Define architecture, be it `32` or `64`.
 
 ### `linux.target`
-Define package type, be it `deb` or `rpm`.
+Define package type, it must be `deb` (support for `rpm` is coming).
 
 ### `linux.version`
 Version of your application.
