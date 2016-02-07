@@ -37,6 +37,16 @@ part of package.json
 ```
 
 ## Pre-requisites
+
+Make sure you're running at least `v0.12.0` of node.js.
+
+```
+$ node --version
+v0.12.0
+```
+
+### Building for Windows
+
 If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe.
 
 You will also need the nullsoft scriptable install system for all platforms.
@@ -57,14 +67,13 @@ You need to include NSIS in your PATH to find `makensis`, set your global enviro
 set PATH=%PATH%;C:\Program Files (x86)\NSIS
 ```
 
-If you're on OS X/Linux and want to build for Windows, make also sure you're running at least `v0.12.0` of node.js.
-
-```
-$ node --version
-v0.12.0
-```
+### Building for Linux
 
 If you're on OS X/Linux and want to build `.deb` or `.rpm` packages, you need fpm installed. Please check [fpm repo](https://github.com/jordansissel/fpm) for installation instructions.
+
+### Building for MacOS
+
+Creating `dmg` files is currently only supported on MacOS machines.
 
 ## Build OS X installer
 
