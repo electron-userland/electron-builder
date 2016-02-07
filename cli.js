@@ -54,8 +54,6 @@ try {
 
 var basePath = path.dirname( configPath );
 
-console.log( config, basePath );
-
 builder.build( assign( cli.flags, {
   appPath  : appPath,
   config   : config,
