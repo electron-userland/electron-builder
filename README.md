@@ -239,7 +239,7 @@ Define a comment about the app.
 Define the executable of the app.
 
 ### `linux.maintainer`
-Define the maintainer of the app. Must be with the following format : "Name <email@example.com>"
+Define the maintainer of the app. Must be with the following format : `Name <email@example.com>`
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
