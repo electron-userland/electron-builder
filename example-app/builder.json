@@ -12,5 +12,14 @@
   "win" : {
     "title" : "Builder Config Windows Example",
     "icon" : "icon.ico"
+  },
+  "linux" : {
+    "arch" : 64,
+    "target" : "deb",
+    "version" : "0.1.2",
+    "title" : "Builder Config Linux Example",
+    "comment" : "This is a comment",
+    "executable" : "electron-builder-example",
+    "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
   }
 }

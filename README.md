@@ -64,6 +64,8 @@ $ node --version
 v0.12.0
 ```
 
+If you're on OS X/Linux and want to build `.deb` or `.rpm` packages, you need fpm installed. Please check [fpm repo](https://github.com/jordansissel/fpm) for installation instructions.
+
 ## Build OS X installer
 
 ```
@@ -76,6 +78,12 @@ $ electron-builder dist/osx/someFancy.app --platform=osx --out=/some/path/ --con
 $ electron-builder dist/win/someFancy-win32 --platform=win --out=/some/path/ --config=config.json
 ```
 
+## Build Linux installer
+
+```
+$ electron-builder dist/win/someFancy-linux-x64 --platform=linux --out=/some/path/ --config=config.json
+```
+
 ## Parameters
 
 ```
@@ -83,7 +91,7 @@ Usage
   $ electron-builder <sourcedir> --platform=<platform> --config=<configPath> --out=<outputPath>
 
   Required options:
-    platform:          win, osx
+    platform:          win, osx, linux
 
   Optional options:
     config:            path to config file
@@ -120,6 +128,15 @@ config.json.sample:
       "extension": ".loop",
       "fileType": "Loopline Systems File"
     }
+  },
+  "linux" : {
+    "arch" : 64,
+    "target" : "deb",
+    "version" : "x.x.x.x",
+    "title" : "Loopline Systems",
+    "comment" : "This is a comment",
+    "executable" : "myExec",
+    "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
   }
 }
 ```
@@ -151,6 +168,15 @@ package.json.sample:
         "extension": ".loop",
         "fileType": "Loopline Systems File"
       }
+    },
+    "linux" : {
+      "arch" : 64,
+      "target" : "deb",
+      "version" : "x.x.x.x",
+      "title" : "Loopline Systems",
+      "comment" : "This is a comment",
+      "executable" : "myExec",
+      "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
     }
   }
 }
@@ -193,6 +219,27 @@ Number 0-4 :  where 4=all, 3=no script, 2=no info, 1=no warnings, 0=none [Defaul
 Option to define a custom file association on Windows.
 Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option should only work
 if the custom nsi template is based on the original one.
+
+### `linux.arch`
+Define architecture, be it `32` or `64`.
+
+### `linux.target`
+Define package type, be it `deb` or `rpm`.
+
+### `linux.version`
+Version of your application.
+
+### `linux.title`
+Define the name of the app.
+
+### `linux.comment`
+Define a comment about the app.
+
+### `linux.executable`
+Define the executable of the app.
+
+### `linux.maintainer`
+Define the maintainer of the app. Must be with the following format : "Name <email@example.com>"
 
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
 
