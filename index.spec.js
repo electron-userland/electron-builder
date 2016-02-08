@@ -52,7 +52,7 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
       appPath  : 'foo',
       basePath : 'bar',
       platform : 'bar',
-      config   : {},
+      config   : { bar : {} },
       log      : function() {}
     },
     function( error, result ) {
@@ -104,7 +104,7 @@ test( 'Builder.init().build - create output directory if not present', function(
 } );
 
 test( 'Builder.init().build - check for required options', function( t ) {
-  t.plan( 4 );
+  t.plan( 5 );
 
   var Builder = proxyquireStrict(
     './index.js',
@@ -158,6 +158,22 @@ test( 'Builder.init().build - check for required options', function( t ) {
     },
     function( error ) {
       t.equal( error.message, 'Required option not set' );
+    }
+  );
+
+  Builder.init().build(
+    {
+      appPath  : 'foo',
+      config   : {},
+      basePath : 'bar',
+      platform : 'baz',
+      log      : function() {}
+    },
+    function( error ) {
+      t.equal(
+        error.message,
+        'No config property found for `baz`.\nPlease check your configuration file and the documentation.'
+      );
     }
   );
 } );

@@ -59,6 +59,16 @@ var Builder = {
       return callback( new Error( 'Required option not set' ) );
     }
 
+    // FAIL when no configuration for desired platform is found
+    if (
+      ! options.config[ options.platform ]
+    ) {
+      return callback( new Error(
+        'No config property found for `' + options.platform + '`.\n' +
+        'Please check your configuration file and the documentation.'
+      ) );
+    }
+
     // Make sure appPath is absolute
     options.appPath = path.resolve( options.appPath );
 
