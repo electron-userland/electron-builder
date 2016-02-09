@@ -45,53 +45,13 @@ $ node --version
 v0.12.0
 ```
 
-### Building for Windows
+### Creating Installers
 
-If you're on OS X/Linux and want to build for Windows, you need Wine installed. Wine is required in order to set the correct icon for the exe.
+For further documentation depending on the target please check the details sites:
 
-You will also need the nullsoft scriptable install system for all platforms.
-
-On OS X, via Homebrew
-```
-$ brew install wine makensis
-```
-On Ubuntu(-based) Linux distributions, via apt:
-```
-# add-apt-repository ppa:ubuntu-wine/ppa -y
-# apt-get update
-# apt-get install wine nsis -y
-```
-On Windows, download the [nullsoft scriptable installer](http://nsis.sourceforge.net/Download)
-You need to include NSIS in your PATH to find `makensis`, set your global environment variable or you can set a session variable using:
-```
-set PATH=%PATH%;C:\Program Files (x86)\NSIS
-```
-
-### Building for Linux
-
-If you're on OS X/Linux and want to build `.deb` packages, you need fpm installed. Please check [fpm repo](https://github.com/jordansissel/fpm) for installation instructions.
-
-### Building for MacOS
-
-Creating `dmg` files is currently only supported on MacOS machines.
-
-## Build OS X installer
-
-```
-$ electron-builder dist/osx/someFancy.app --platform=osx --out=/some/path/ --config=config.json
-```
-
-## Build Windows installer
-
-```
-$ electron-builder dist/win/someFancy-win32 --platform=win --out=/some/path/ --config=config.json
-```
-
-## Build Linux installer
-
-```
-$ electron-builder dist/win/someFancy-linux-x64 --platform=linux --out=/some/path/ --config=config.json
-```
+- [Create installers for Windows](./docs/win.md)
+- [Create installers for OS X](./docs/osx.md)
+- [Create installers for Linux](./docs/linux.md)
 
 ## Parameters
 
@@ -109,9 +69,7 @@ Usage
     out:               path to output the installer (must exist)
 ```
 
-Because the configuration is fairly complex we decided to go with a good old config file for now.
 You will find a sample config file below.
-
 
 config.json.sample:
 ```json
@@ -191,68 +149,7 @@ package.json.sample:
 }
 ```
 
-### `osx.title`
-Title of the generated `dmg` file.
-
-### `osx.background`
-Background of the `dmg` dialog.
-
-### `osx.icon`
-Your application mount icon.
-
-### `osx.icon-size`
-Sizes of the icons included in `dmg` dialog.
-
-### `osx.contents`
-This property contains the configuration for the OSX dmg window. This property is passed to `appdmg`, which builds the dmg package. For a deeper explanation of the different options that you can set in this property, visit [`appdmg`'s page](https://www.npmjs.com/package/appdmg).
-
-### `win.title`
-Title of your application shown in generated windows installer.
-
-### `win.version`
-Version of your application shown in add/remove programs list.
-
-### `win.publisher`
-Publisher shown in add/remove programs list.
-
-### `win.icon`
-Icon to be shown in installation process.
-
-### `win.nsiTemplate` *( optional )*
-Option to define a custom NSI installation file.
-
-### `win.verbosity` *( optional )*
-Number 0-4 :  where 4=all, 3=no script, 2=no info, 1=no warnings, 0=none [Default 3]
-
-### `win.fileAssociation` *( optional )*
-Option to define a custom file association on Windows.
-Caution: when you use `win.nsiTemplate` option, `win.fileAssociation` option should only work
-if the custom nsi template is based on the original one.
-
-### `linux.arch`
-Define architecture, be it `32` or `64`.
-
-### `linux.target`
-Define package type, it must be `deb` (support for `rpm` is coming).
-
-### `linux.version`
-Version of your application.
-
-### `linux.title`
-Define the name of the app.
-
-### `linux.comment`
-Define a comment about the app.
-
-### `linux.executable`
-Define the executable of the app.
-
-### `linux.maintainer`
-Define the maintainer of the app. Must be with the following format : `Name <email@example.com>`
-
 **Note:** You need to add something that might have value for others? Please consider a PR. ;)
-
-
 
 
 ## How we use it so far
