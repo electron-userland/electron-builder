@@ -33,15 +33,17 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
   var Builder = proxyquireStrict(
     './index.js',
     {
-      './lib/platforms' : {
-        bar : {
-          init : function() {
-            return {
-              build : function( options, callback ) {
-                callback( null, 'foo' )
-              }
+      './lib/platforms' : function( platform ) {
+        if ( platform === 'bar' ) {
+          return {
+            init : function() {
+              return {
+                build : function( options, callback ) {
+                  callback( null, 'foo' )
+                }
+              };
             }
-          }
+          };
         }
       }
     }
@@ -70,15 +72,17 @@ test( 'Builder.init().build - create output directory if not present', function(
   var Builder = proxyquireStrict(
     './index.js',
     {
-      './lib/platforms' : {
-        bar : {
-          init : function() {
-            return {
-              build : function( options, callback ) {
-                callback( null, 'foo' )
-              }
+      './lib/platforms' : function( platform ) {
+        if ( platform === 'bar' ) {
+          return {
+            init : function() {
+              return {
+                build : function( options, callback ) {
+                  callback( null, 'foo' )
+                }
+              };
             }
-          }
+          };
         }
       }
     }
