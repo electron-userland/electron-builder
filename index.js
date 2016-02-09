@@ -72,14 +72,11 @@ var Builder = {
     // Make sure appPath is absolute
     options.appPath = path.resolve( options.appPath );
 
-    // FAIL when set platform is not available
-    if ( !platforms[ options.platform ] ) {
-      return callback(
-        new Error( 'Building for ´' + options.platform + '´ is not supported' )
-      );
+    try {
+      platforms( options.platform ).init().build( options, callback );
+    } catch( error ) {
+      return callback( error );
     }
-
-    platforms[ options.platform ].init().build( options, callback );
   }
 };
 
