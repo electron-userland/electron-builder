@@ -3,47 +3,51 @@
 
 # electron-builder
 
-The electron-builder project is used to create installers for the platforms Windows,OS X and Linux.
-It's built to work together with the [electron-packager](https://github.com/maxogden/electron-packager).
+The electron-builder project is used to create installers for the platforms Windows, OS X and Linux.
+It's built to work together with [electron-packager](https://github.com/maxogden/electron-packager).
 
-If you are looking for a complete set up on how to use the [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder) check the ["How we use it section below"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far).
+If you are looking for a complete set up on how to use [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder), check the ["How we use it"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far) section below.
 
-The project works fine on OS X, Windows and Linux(Ubuntu) machines.
+The project has been tested successfully on OS X, Windows and Linux (Debian-based) machines.
 
 ## Install
 
 You can go the global installation route. ;)
 
 ```
-$ npm install -g electron-builder
+$ npm install -g electron-builder electron-packager
 ```
 
 **Oooooor...** You can wrap `electron-builder` with `npm scripts` to not have a global dependency.
 
 ```
-# install electron builder as a dependency of your project
-$ npm install --save electron-builder
+# install electron builder and electron-packager as dependencies of your project
+$ npm install --save-dev electron-builder electron-packager
 ```
 
-After that you can easily use the `electron-builder` binary in your `npm scripts`.
+After that, you can easily use the `electron-builder` binary in your `package.json`:
 
-part of package.json
 ```json
 {
   "scripts" : {
-    "build:osx": "npm run pack:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=builder.json"
+    "pack:osx": "electron-packager . MyApp --platform=darwin --arch=x64 --version=0.36.7 --icon=assets/MyApp.icns --out=dist --ignore=dist",
+    "build:osx": "npm run pack:osx && electron-builder dist/osx/MyApp.app --platform=osx --out=\"dist/osx\" --config=config.json"
   }
 }
 ```
 
+**Note:** Executables with spaces in their name **must** be written as `\"My App\"`.
+
 ## Pre-requisites
 
-Make sure you're running at least `v0.12.0` of node.js.
+- Node.js 0.12 or higher. You can check by running:
 
 ```
 $ node --version
 v0.12.0
 ```
+
+- [electron-packager](https://github.com/maxogden/electron-packager)
 
 ### Creating Installers
 
@@ -69,9 +73,10 @@ Usage
     out:               path to output the installer (must exist)
 ```
 
-You will find a sample config file below.
+Here's an example of what your `config.json` might look like:
 
-config.json.sample:
+**Note**: `nsiTemplate` and `fileAssociation` are completely optional.
+
 ```json
 {
   "osx" : {
@@ -90,8 +95,8 @@ config.json.sample:
     "publisher": "Publisher Info",
     "icon" : "assets/win/icon.ico",
     "verbosity": 1,
-    "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
-    "fileAssociation": { // optional
+    "nsiTemplate" : "path/to/custom/installer.nsi.tpl",
+    "fileAssociation": {
       "extension": ".loop",
       "fileType": "Loopline Systems File"
     }
@@ -108,7 +113,8 @@ config.json.sample:
 }
 ```
 
-package.json.sample:
+Or what your `package.json` might look like:
+
 ```json
 {
   "name": "Loopline App",
@@ -130,8 +136,8 @@ package.json.sample:
       "publisher": "Publisher Info",
       "icon" : "assets/win/icon.ico",
       "verbosity": 1,
-      "nsiTemplate" : "path/to/custom/installer.nsi.tpl", // optional
-      "fileAssociation": { // optional
+      "nsiTemplate" : "path/to/custom/installer.nsi.tpl",
+      "fileAssociation": {
         "extension": ".loop",
         "fileType": "Loopline Systems File"
       }
@@ -149,12 +155,12 @@ package.json.sample:
 }
 ```
 
-**Note:** You need to add something that might have value for others? Please consider a PR. ;)
+**Note:** Need to add something that might have value for others? Consider a [Pull Request](https://github.com/loopline-systems/electron-builder/pulls)! ;)
 
 
 ## How we use it so far
 
-When you run `npm run pack` it will create executables for the platforms Windows and OS X inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
+When you run `npm run pack`, it will create executables for the Windows and OS X platforms inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
 
 
 directory structure
@@ -178,11 +184,11 @@ desktop
       |-- Loopline Systems-win32
       |-- Loopline Systems Setup.exe
   |-- package.json
-  |-- builder.json
+  |-- config.json
 ```
 
+`package.json`:
 
-package.json
 ```json
 {
   "name": "loopline-desktop",
@@ -206,47 +212,28 @@ package.json
   },
   "dependencies": {
     "electron-packager": "^4.0.2",
-    "electron-prebuilt": "^0.25.2",
-    "electron-builder": "^2.5.0"
+    "electron-prebuilt": "^0.36.7",
+    "electron-builder": "^2.7.2"
   }
 }
 
 ```
 
-**Important note for windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
+**Important note for Windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
 operable program or batch file.` you may want to use windows counter part `rmdir` or `rimraf` (cross platform) to clean up the distribution folder.*
 
-builder.json
-```json
-{
-  "osx" : {
-    "title": "Loopline Systems",
-    "background": "assets/osx/installer.png",
-    "icon": "assets/osx/mount.icns",
-    "icon-size": 80,
-    "contents": [
-      { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
-      { "x": 192, "y": 344, "type": "file" }
-    ]
-  },
-  "win" : {
-    "title" : "Loopline Systems",
-    "icon" : "assets/win/icon.ico"
-  }
-}
-```
 
 ## Contribution
 
 You want to help out and have ideas to make it better? Great!
 
-Create an issue and we will tackle it.
+Create an [issue](https://github.com/loopline-systems/electron-builder/issues) and we will tackle it.
 
-If you decide to propose a pull request ( even better ) make sure `npm test` is succeeding.
+If you decide to propose a pull request (even better) make sure `npm test` is succeeding.
 
 ## Releases
 
-For releases we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
+For releases, we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
 You'll find proper release notes [here](https://github.com/loopline-systems/electron-builder/releases).
 
 ## Related packages
