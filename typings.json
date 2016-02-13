@@ -1,0 +1,12 @@
+{
+  "ambientDependencies": {
+    "fs-extra": "github:DefinitelyTyped/DefinitelyTyped/fs-extra/fs-extra.d.ts#72d95b38f008fed506c6cbf3af8a693bd7c3363a",
+    "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#cb5206a8ac1c9a3ddfd126f5ecea6729b2361452",
+    "progress": "github:DefinitelyTyped/DefinitelyTyped/progress/progress.d.ts#d54b18e0ac3277376700b6026ef9e9e3f380df50",
+    "should": "github:DefinitelyTyped/DefinitelyTyped/should/should.d.ts#5aa6dff6990465c7fb41504538ad7aa133ab01d3",
+    "tmp": "github:DefinitelyTyped/DefinitelyTyped/tmp/tmp.d.ts#48f20e97bfaf70fc1a9537b38aed98e9749be0ae"
+  },
+  "dependencies": {
+    "source-map-support": "github:typed-typings/npm-source-map-support#900ed4180a22285bce4bbabc0760427e71a59eca"
+  }
+}

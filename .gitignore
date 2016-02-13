@@ -1,3 +1,14 @@
-node_modules
-tmp
+node_modules/
+tmp/
 *.log
+out/
+npm-debug.log
+dist/
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/copyright/profiles_settings.xml
+.idea/workspace.xml
+typings/browser/
+typings/browser.d.ts
+typings/main.d.ts
+.DS_Store

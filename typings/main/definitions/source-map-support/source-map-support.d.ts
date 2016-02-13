@@ -1,0 +1,46 @@
+// Compiled using typings@0.6.8
+// Source: https://raw.githubusercontent.com/typed-typings/npm-source-map-support/900ed4180a22285bce4bbabc0760427e71a59eca/source-map-support.d.ts
+declare module 'source-map-support/source-map-support' {
+// Type definitions for source-map-support 0.2.10
+// Project: https://github.com/evanw/source-map-support
+// Definitions by: Bart van der Schoor <https://github.com/Bartvds>
+// Definitions: https://github.com/borisyankov/DefinitelyTyped
+
+/**
+ * Output of retrieveSourceMap().
+ */
+export interface UrlAndMap {
+  url: string;
+  map: string | Buffer;
+}
+
+/**
+ * Options to install().
+ */
+export interface Options {
+  handleUncaughtExceptions?: boolean;
+  emptyCacheBetweenOperations?: boolean;
+  retrieveFile?: (path: string) => string;
+  retrieveSourceMap?: (source: string) => UrlAndMap;
+}
+
+export interface Position {
+  source: string;
+  line: number;
+  column: number;
+}
+
+export function wrapCallSite (frame: any /* StackFrame */): any /* StackFrame */;
+export function getErrorSource (error: Error): string;
+export function mapSourcePosition (position: Position): Position;
+export function retrieveSourceMap (source: string): UrlAndMap;
+
+/**
+ * Install SourceMap support.
+ * @param options Can be used to e.g. disable uncaughtException handler.
+ */
+export function install (options?: Options): void;
+}
+declare module 'source-map-support' {
+export * from 'source-map-support/source-map-support';
+}

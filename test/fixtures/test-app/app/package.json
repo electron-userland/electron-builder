@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "name": "TestApp",
+  "version": "1.0.0",
+  "description": "Test Application",
+  "author": "Foo Bar",
+  "homepage": "https://github.com/atom/electron-quick-start#readme",
+  "dependencies": {
+    "nslog": "^3.0.0"
+  },
+  "build": {
+    "app-bundle-id": "your.id",
+    "app-category-type": "your.app.category.type",
+    "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico"
+  }
+}

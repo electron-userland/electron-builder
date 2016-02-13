@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "name": "TestApp",
+  "version": "1.0.0",
+  "description": "Test Application",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Foo Bar",
+  "devDependencies": {
+    "electron-prebuilt": "^0.36.7"
+  },
+  "build": {
+    "app-bundle-id": "your.id",
+    "app-category-type": "your.app.category.type",
+    "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
+    "linux": {
+      "//": "gz is much faster, in tests we don't need efficient compression",
+      "compression": "gz"
+    }
+  }
+}
