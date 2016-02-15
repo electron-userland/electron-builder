@@ -1,9 +1,37 @@
-language: node_js
-node_js:
-  - "0.12"
-  - "4"
-  - "5"
+os:
+  - osx
+  - linux
 
-branches:
-  only:
-    - master
+env:
+  - NODE_VERSION=4
+  - NODE_VERSION=5
+
+language: ruby
+
+rvm:
+  - 2.2.0
+
+cache:
+  directories:
+    - node_modules
+    - test/testApp/node_modules
+    - $HOME/.electron
+    - $HOME/.npm
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg ; fi
+  - gem install fpm
+
+install:
+- rm -rf ~/.nvm
+- git clone https://github.com/creationix/nvm.git ~/.nvm
+- source ~/.nvm/nvm.sh
+- nvm install $NODE_VERSION
+- npm install npm -g
+- npm -v
+- npm prune
+- npm install
+
+script:
+- npm run test

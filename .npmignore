@@ -1,2 +1,10 @@
 example-app
 *.spec.js
+.idea/
+typings/
+src/
+tsconfig.json
+tsd.json
+npm-debug.log
+test/
+docs/

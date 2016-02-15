@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="BuildTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="/usr/local/bin/node" path-to-js-file="node_modules/.bin/ava" application-parameters="test/BuildTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters" working-dir="$PROJECT_DIR$">
+    <method />
+  </configuration>
+</component>
