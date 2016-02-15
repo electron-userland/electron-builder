@@ -49,7 +49,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     }
   }
 
-  packageInDistributableFormat(outDir: string, customConfiguration: appdmg.Specification, arch: string): Promise<any> {
+  packageInDistributableFormat(outDir: string, arch: string): Promise<any> {
     const artifactPath = path.join(outDir, this.metadata.name + "-" + this.metadata.version + ".dmg")
     return BluebirdPromise.all([
       new BluebirdPromise<any>((resolve, reject) => {
@@ -70,8 +70,8 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
           ]
         }
 
-        if (customConfiguration != null) {
-          Object.assign(specification, customConfiguration)
+        if (this.customDistOptions != null) {
+          Object.assign(specification, this.customDistOptions)
         }
 
         if (specification.title == null) {

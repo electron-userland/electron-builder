@@ -1,6 +1,6 @@
 import { tsAwaiter } from "./awaiter"
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
-import { readFile } from "./promisifed-fs"
+import { readText } from "./promisifed-fs"
 import * as path from "path"
 
 const __awaiter = tsAwaiter
@@ -53,7 +53,7 @@ export class InfoRetriever {
 async function getGitUrlFromGitConfig(): Promise<string> {
   let data: string = null
   try {
-    data = await readFile(path.join(".git", "config"))
+    data = await readText(path.join(".git", "config"))
   }
   catch (e) {
     if (e.code === "ENOENT") {

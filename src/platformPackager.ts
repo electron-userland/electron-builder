@@ -37,6 +37,8 @@ export interface PackagerOptions {
 export interface BuildInfo extends ProjectMetadataProvider {
   options: PackagerOptions
 
+  devMetadata: DevMetadata
+
   projectDir: string
   appDir: string
 
@@ -54,13 +56,20 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
   metadata: AppMetadata
   devMetadata: Metadata
 
-  abstract getBuildConfigurationKey(): string
+  customDistOptions: DC
+
+  protected abstract getBuildConfigurationKey(): string
 
   constructor(protected info: BuildInfo) {
     this.options = info.options
     this.projectDir = info.projectDir
     this.metadata = info.metadata
     this.devMetadata = info.devMetadata
+
+    if (this.options.dist) {
+      const buildMetadata: any = info.devMetadata.build
+      this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.getBuildConfigurationKey()]
+    }
   }
 
   protected dispatchArtifactCreated(path: string) {
@@ -104,5 +113,5 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     })
   }
 
-  abstract packageInDistributableFormat(outDir: string, customConfiguration: DC, arch: string): Promise<any>
+  abstract packageInDistributableFormat(outDir: string, arch: string): Promise<any>
 }

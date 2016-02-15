@@ -7,37 +7,57 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { Packager } from "../out/packager"
 import { exec } from "../out/util"
-import { deleteDirectory, readFile } from "../out/promisifed-fs"
+import { deleteDirectory, readText } from "../out/promisifed-fs"
 import { CSC_LINK, CSC_KEY_PASSWORD } from "./helpers/codeSignData"
+import pathSorter from "path-sort"
 
 const copyDir = Promise.promisify(fse.copy)
 const tmpDir = Promise.promisify(tmp.dir)
 
-const expectedLinuxContents = [ '/',
+const expectedLinuxContents = ['/',
   '/opt/',
+  '/usr/',
   '/opt/TestApp/',
-  '/opt/TestApp/LICENSE',
-  '/opt/TestApp/LICENSES.chromium.html',
-  '/opt/TestApp/TestApp',
   '/opt/TestApp/content_shell.pak',
   '/opt/TestApp/icudtl.dat',
   '/opt/TestApp/libnode.so',
+  '/opt/TestApp/LICENSE',
+  '/opt/TestApp/LICENSES.chromium.html',
   '/opt/TestApp/natives_blob.bin',
   '/opt/TestApp/pkgtarget',
+  '/opt/TestApp/snapshot_blob.bin',
+  '/opt/TestApp/TestApp',
+  '/opt/TestApp/version',
+  '/usr/share/',
   '/opt/TestApp/resources/',
   '/opt/TestApp/resources/app.asar',
   '/opt/TestApp/resources/atom.asar',
-  '/opt/TestApp/snapshot_blob.bin',
-  '/opt/TestApp/version',
-  '/usr/',
-  '/usr/share/',
   '/usr/share/applications/',
   '/usr/share/applications/TestApp.desktop',
   '/usr/share/doc/',
+  '/usr/share/icons/',
   '/usr/share/doc/testapp/',
   '/usr/share/doc/testapp/changelog.Debian.gz',
-  '/usr/share/icons/',
-  '/usr/share/icons/hicolors/' ]
+  '/usr/share/icons/hicolor/',
+  '/usr/share/icons/hicolor/128x128/',
+  '/usr/share/icons/hicolor/16x16/',
+  '/usr/share/icons/hicolor/256x256/',
+  '/usr/share/icons/hicolor/32x32/',
+  '/usr/share/icons/hicolor/48x48/',
+  '/usr/share/icons/hicolor/512x512/',
+  '/usr/share/icons/hicolor/128x128/apps/',
+  '/usr/share/icons/hicolor/128x128/apps/TestApp.png',
+  '/usr/share/icons/hicolor/16x16/apps/',
+  '/usr/share/icons/hicolor/16x16/apps/TestApp.png',
+  '/usr/share/icons/hicolor/256x256/apps/',
+  '/usr/share/icons/hicolor/256x256/apps/TestApp.png',
+  '/usr/share/icons/hicolor/32x32/apps/',
+  '/usr/share/icons/hicolor/32x32/apps/TestApp.png',
+  '/usr/share/icons/hicolor/48x48/apps/',
+  '/usr/share/icons/hicolor/48x48/apps/TestApp.png',
+  '/usr/share/icons/hicolor/512x512/apps/',
+  '/usr/share/icons/hicolor/512x512/apps/TestApp.png'
+]
 
 async function assertPack(projectDir, platform) {
   projectDir = path.join(__dirname, "fixtures", projectDir)
@@ -69,7 +89,7 @@ async function assertPack(projectDir, platform) {
   await packager.build()
   if (platform === "darwin") {
     const packedAppDir = projectDir + "/dist/TestApp-darwin-x64/TestApp.app"
-    const info = parsePlist(await readFile(packedAppDir + "/Contents/Info.plist", "utf8"))
+    const info = parsePlist(await readText(packedAppDir + "/Contents/Info.plist"))
     assertThat(info).has.properties({
       CFBundleDisplayName: "TestApp",
       CFBundleIdentifier: "your.id",
@@ -90,11 +110,11 @@ async function assertPack(projectDir, platform) {
 
 async function getContents(path) {
   const result = await exec("dpkg", ["--contents", path])
-  return result[0]
+  return pathSorter(result[0]
     .split("\n")
     .map(it => it.length === 0 ? null : it.substring(it.indexOf('.') + 1))
     .filter(it => it != null && !(it.startsWith("/opt/TestApp/locales/") || it.startsWith("/opt/TestApp/libgcrypt")))
-    .sort()
+    )
 }
 
 if (process.env.TRAVIS !== "true") {
