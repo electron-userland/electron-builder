@@ -57,7 +57,7 @@
     "hosted-git-info": "^2.1.4",
     "json-parse-helpfulerror": "^1.0.3",
     "lodash.assign": "^4.0.2",
-    "lodash.camelcase": "^4.0.1",
+    "lodash.camelcase": "^4.1.0",
     "lodash.template": "^4.1.0",
     "meow": "^3.7.0",
     "mime": "^1.3.4",
