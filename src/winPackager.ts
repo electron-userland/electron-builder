@@ -5,16 +5,31 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import * as path from "path"
 import { Stats } from "fs"
 import { log } from "./util"
-import { deleteDirectory, deleteFile, stat, renameFile } from "./promisifed-fs"
+import { deleteFile, stat, renameFile } from "./promisifed-fs"
+import * as fse from "fs-extra"
 
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
 
+const emptyDir = BluebirdPromise.promisify(fse.emptyDir)
+
 export default class WinPackager extends PlatformPackager<any> {
   certFilePromise: Promise<string>
+  isNsis: boolean
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
+
+    // we are not going to support build both nsis and squirrel
+    this.isNsis = this.options.target != null && this.options.target.includes("nsis")
+    if (this.isNsis) {
+      // it is not an optimization, win.js cannot be runned in highly concurrent environment and we get
+      // "Error: EBUSY: resource busy or locked, unlink 'C:\Users\appveyor\AppData\Local\Temp\1\icon.ico'"
+      // on appveyor (well, yes, it is a Windows bug)
+      // Because NSIS support will be dropped some day, correct solution is not implemented
+      const iconPath = this.customDistOptions == null ? null : this.customDistOptions.icon
+      require("../lib/win").copyAssetsToTmpFolder(iconPath || path.join(this.projectDir, "build", "icon.ico"))
+    }
 
     // https://developer.mozilla.org/en-US/docs/Signing_an_executable_with_Authenticode
     // https://github.com/Squirrel/Squirrel.Windows/pull/505
@@ -35,12 +50,12 @@ export default class WinPackager extends PlatformPackager<any> {
   }
 
   pack(platform: string, arch: string, outDir: string): Promise<any> {
-    if (this.options.dist) {
+    if (this.options.dist && !this.isNsis) {
       const installerOut = outDir + "-installer"
       log("Removing %s", installerOut)
       return BluebirdPromise.all([
         super.pack(platform, arch, outDir),
-        deleteDirectory(installerOut)
+        emptyDir(installerOut)
       ])
     }
     else {
@@ -69,14 +84,16 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     const certificateFile = await this.certFilePromise
-
     const version = this.metadata.version
-    const outputDirectory = outDir + "-installer"
+    const outputDirectory = outDir + "-" + (this.isNsis ? "nsis" : "installer")
+    const appName = this.metadata.name
+    const archSuffix = arch === "x64" ? "-x64" : ""
+    const installerExePath = path.join(outputDirectory, appName + "Setup-" + version + archSuffix + ".exe")
     const options = Object.assign({
       name: this.metadata.name,
       appDirectory: outDir,
       outputDirectory: outputDirectory,
-      productName: this.metadata.name,
+      productName: appName,
       version: version,
       description: this.metadata.description,
       authors: this.metadata.author,
@@ -86,13 +103,17 @@ export default class WinPackager extends PlatformPackager<any> {
       certificatePassword: this.options.cscKeyPassword,
     }, this.customDistOptions)
 
+    if (this.isNsis) {
+      return await this.nsis(options, installerExePath)
+    }
+
     try {
       await new BluebirdPromise<any>((resolve, reject) => {
         require("electron-winstaller-temp-fork").build(options, (error: Error) => error == null ? resolve(null) : reject(error))
       })
     }
     catch (e) {
-      if (e.message.indexOf("Unable to set icon") < 0) {
+      if (!e.message.includes("Unable to set icon")) {
         throw e
       }
       else {
@@ -110,13 +131,33 @@ export default class WinPackager extends PlatformPackager<any> {
       }
     }
 
-    const appName = this.metadata.name
-    const archSuffix = (arch === "x64") ? "-x64" : ""
     return await BluebirdPromise.all([
-      renameFile(path.join(outputDirectory, appName + "Setup.exe"), path.join(outputDirectory, appName + "Setup-" + version + archSuffix + ".exe"))
+      renameFile(path.join(outputDirectory, appName + "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
       renameFile(path.join(outputDirectory, appName + "-" + version + "-full.nupkg"), path.join(outputDirectory, appName + "-" + version + archSuffix + "-full.nupkg"))
         .then(it => this.dispatchArtifactCreated(it))
     ])
+  }
+
+  private async nsis(options: any, installerFile: string) {
+    const nsisBuild = <(options: any, callback: (error: Error) => void) => void>require("../lib/win").init().build
+    // nsis cannot create dir
+    await emptyDir(options.outputDirectory)
+    return await BluebirdPromise.promisify(nsisBuild)(Object.assign(options, {
+      log: console.log,
+      appPath: options.appDirectory,
+      out: options.outputDirectory,
+      platform: "win32",
+      outFile: installerFile,
+      copyAssetsToTmpFolder: false,
+      config: {
+        win: Object.assign({
+          title: options.name,
+          version: options.version,
+          icon: options.setupIcon,
+          publisher: options.authors
+        }, this.customDistOptions)
+      }
+    }))
   }
 }

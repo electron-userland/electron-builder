@@ -65,9 +65,8 @@ export class Packager implements BuildInfo {
   }
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<any> {
-    const platforms = this.options.platform === "all" ? getSupportedPlatforms() : [this.options.platform || process.platform]
     const distTasks: Array<Promise<any>> = []
-    for (let platform of platforms) {
+    for (let platform of normalizePlatforms(this.options.platform)) {
       const helper = this.createHelper(platform, cleanupTasks)
       const archs = platform === "darwin" ? ["x64"] : (this.options.arch == null || this.options.arch === "all" ? ["ia32", "x64"] : [this.options.arch])
       for (let arch of archs) {
@@ -178,14 +177,23 @@ export class Packager implements BuildInfo {
   }
 }
 
-function getSupportedPlatforms(): string[] {
-  if (process.platform === "darwin") {
-    return ["darwin", "win32", "linux"]
+function normalizePlatforms(platforms: Array<string>): Array<string> {
+  if (platforms == null || platforms.length === 0) {
+    return [process.platform]
   }
-  else if (process.platform === "win32") {
-    return ["win32"]
+  else if (platforms[0] === "all") {
+    if (process.platform === "darwin") {
+      return ["darwin", "linux", "win32"]
+    }
+    else if (process.platform === "linux") {
+      // OS X code sign works only on OS X
+      return ["linux", "win32"]
+    }
+    else {
+      return ["win32"]
+    }
   }
   else {
-    return ["linux", "win32"]
+    return platforms
   }
 }

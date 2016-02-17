@@ -3,6 +3,7 @@
 !define APP_PUBLISHER "<%= publisher %>"
 
 !define APP_DIR "${APP_NAME}"
+!define APP_OUT_FILE "<%= outFile %>"
 
 Name "${APP_NAME}"
 
@@ -22,7 +23,7 @@ Name "${APP_NAME}"
 BrandingText "${APP_NAME} ${APP_VERSION}"
 
 # define the resulting installer's name
-OutFile "<%= out %>\${APP_NAME} Setup.exe"
+OutFile ${APP_OUT_FILE}
 
 # set the installation directory
 InstallDir "$PROGRAMFILES\${APP_NAME}\"

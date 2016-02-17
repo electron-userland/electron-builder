@@ -25,7 +25,10 @@ export interface PackagerOptions {
   githubToken?: string
 
   sign?: string
-  platform?: string
+
+  platform?: Array<string>
+  target?: Array<string>
+
   appDir?: string
 
   projectDir?: string
