@@ -59,11 +59,10 @@ const expectedLinuxContents = ['/',
   '/usr/share/icons/hicolor/512x512/apps/TestApp.png'
 ]
 
-async function assertPack(projectDir, platform) {
+async function assertPack(projectDir, platform, target, useTempDir) {
   projectDir = path.join(__dirname, "fixtures", projectDir)
   // const isDoNotUseTempDir = platform === "darwin"
-  const isDoNotUseTempDir = true
-  if (!isDoNotUseTempDir) {
+  if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
     const dir = await tmpDir({
       unsafeCleanup: true,
@@ -83,7 +82,8 @@ async function assertPack(projectDir, platform) {
     cscLink: CSC_LINK,
     cscKeyPassword: CSC_KEY_PASSWORD,
     dist: true,
-    platform: platform,
+    platform: [platform],
+    target: target
   })
 
   await packager.build()
@@ -141,5 +141,8 @@ if (process.platform !== "win32") {
 if (!process.env.TRAVIS) {
   test("win", async function () {
     await assertPack("test-app-one", "win32")
+  })
+  test("win: nsis", async function () {
+    await assertPack("test-app-one", "win32", ["nsis"], true)
   })
 }

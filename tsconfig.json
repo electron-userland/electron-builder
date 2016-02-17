@@ -20,7 +20,8 @@
     "typings/**/*.d.ts",
     "!typings/browser/**/*.d.ts",
     "!typings/browser.d.ts",
-    "!typings/main.d.ts"
+    "!typings/main.d.ts",
+    "node_modules/typescript/lib/lib.es7.d.ts"
   ],
   "files": [
     "lib/linux.d.ts",
@@ -41,6 +42,7 @@
     "typings/node.d.ts",
     "typings/progress-stream.d.ts",
     "typings/rimraf.d.ts",
+    "node_modules/typescript/lib/lib.es7.d.ts",
     "src/awaiter.ts",
     "src/build-cli.ts",
     "src/builder.ts",

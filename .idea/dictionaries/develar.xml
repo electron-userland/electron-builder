@@ -21,6 +21,7 @@
       <w>makedeb</w>
       <w>nokeys</w>
       <w>nomacver</w>
+      <w>nsis</w>
       <w>nupkg</w>
       <w>nuspec</w>
       <w>passin</w>
