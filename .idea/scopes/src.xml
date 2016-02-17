@@ -1,3 +1,3 @@
 <component name="DependencyValidationManager">
-  <scope name="src" pattern="file[electron-complete-builder]:src//*||file:tsconfig.json||file[electron-complete-builder]:typings//*" />
+  <scope name="src" pattern="file[electron-builder]:src//*||file[electron-builder]:typings//*||file:tsconfig.json" />
 </component>
