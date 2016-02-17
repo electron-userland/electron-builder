@@ -76,9 +76,7 @@ export class Packager implements BuildInfo {
         const outDir = path.join(this.projectDir, "dist", this.metadata.name + "-" + platform + "-" + arch)
         await helper.pack(platform, arch, outDir)
         if (this.options.dist) {
-          const buildMetadata: any = this.devMetadata.build
-          const customConfiguration = buildMetadata == null ? buildMetadata : buildMetadata[helper.getBuildConfigurationKey()]
-          distTasks.push(helper.packageInDistributableFormat(outDir, customConfiguration, arch))
+          distTasks.push(helper.packageInDistributableFormat(outDir, arch))
         }
       }
     }

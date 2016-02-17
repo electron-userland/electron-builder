@@ -4,9 +4,8 @@ import { tsAwaiter } from "./awaiter"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
 import * as path from "path"
 import { Stats } from "fs"
-import { stat, renameFile } from "./promisifed-fs"
 import { log } from "./util"
-import { deleteDirectory, deleteFile } from "./promisifed-fs"
+import { deleteDirectory, deleteFile, stat, renameFile } from "./promisifed-fs"
 
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
@@ -49,11 +48,11 @@ export default class WinPackager extends PlatformPackager<any> {
     }
   }
 
-  async packageInDistributableFormat(outDir: string, customConfiguration: any, arch: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, arch: string): Promise<any> {
     let iconUrl = this.metadata.build.iconUrl
     if (!iconUrl) {
-      if (customConfiguration != null) {
-        iconUrl = customConfiguration.iconUrl
+      if (this.customDistOptions != null) {
+        iconUrl = this.customDistOptions.iconUrl
       }
       if (!iconUrl) {
         if (this.info.repositoryInfo != null) {
@@ -85,7 +84,7 @@ export default class WinPackager extends PlatformPackager<any> {
       setupIcon: path.join(this.projectDir, "build", "icon.ico"),
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
-    }, customConfiguration)
+    }, this.customDistOptions)
 
     try {
       await new BluebirdPromise<any>((resolve, reject) => {

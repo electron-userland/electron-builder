@@ -6,8 +6,12 @@ import rimraf = require("rimraf")
 const readFileAsync: ((filename: string, encoding?: string) => Promise<string | Buffer>) = BluebirdPromise.promisify(fs.readFile)
 const writeFileAsync = BluebirdPromise.promisify(fs.writeFile)
 
-export function readFile(file: string): BluebirdPromise<string> {
+export function readText(file: string): BluebirdPromise<string> {
   return <BluebirdPromise<string>>readFileAsync(file, "utf8")
+}
+
+export function readBytes(file: string): BluebirdPromise<Buffer> {
+  return <BluebirdPromise<Buffer>>readFileAsync(file)
 }
 
 export function writeFile(path: string, data: string | Buffer): BluebirdPromise<any> {
@@ -15,7 +19,7 @@ export function writeFile(path: string, data: string | Buffer): BluebirdPromise<
 }
 
 export function parseJsonFile(file: string): BluebirdPromise<any> {
-  return readFile(file).
+  return readText(file).
     then(it => parseJson(it, file))
 }
 

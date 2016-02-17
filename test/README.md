@@ -8,6 +8,6 @@ brew install Caskroom/cask/xquartz wine mono
 Do not use OS X bundled Ruby. Install using `brew`.
 
 ```
-brew install ruby gnu-tar dpkg
+brew install ruby gnu-tar dpkg libicns
 gem install fpm
 ```
