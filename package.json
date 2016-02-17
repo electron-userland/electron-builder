@@ -11,7 +11,8 @@
     "test-win": "npm run pretest && ava",
     "test-build": "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
     "publish-please": "publish-please",
-    "release": "npm prune && npm test && npm run publish-please"
+    "declaration": "dts-generator --name electron-builder --project . --out out/electron-builder.d.ts --indent='  '",
+    "release": "npm prune && npm test && npm run declaration && npm run publish-please"
   },
   "repository": {
     "type": "git",
@@ -75,6 +76,7 @@
     "ava-tf": "^0.11.2-beta.0",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.5.0",
+    "dts-generator-tf": "^1.7.0-beta.0",
     "eslint": "^2.1.0",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
@@ -98,5 +100,6 @@
   },
   "ava": {
     "verbose": true
-  }
+  },
+  "typings": "./out/electron-builder.d.ts"
 }

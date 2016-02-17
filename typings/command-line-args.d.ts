@@ -6,7 +6,10 @@ declare module "command-line-args" {
   }
 
   interface UsageOptions {
-    hide: Array<string>
+    hide?: Array<string>
+    
+    title?: string
+    footer?: string
   }
 
   function describe(options: Array<any>): Options

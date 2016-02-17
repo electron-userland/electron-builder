@@ -4,7 +4,7 @@ example-app
 typings/
 src/
 tsconfig.json
-tsd.json
+typings.json
 npm-debug.log
 test/
 docs/

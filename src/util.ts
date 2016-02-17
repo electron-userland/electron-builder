@@ -49,13 +49,13 @@ export function installDependencies(appDir: string, arch: string, electronVersio
   })
 }
 
-interface BaseExecOptions {
+export interface BaseExecOptions {
   cwd?: string
   env?: any
   stdio?: any
 }
 
-interface ExecOptions extends BaseExecOptions {
+export interface ExecOptions extends BaseExecOptions {
   customFds?: any
   encoding?: string
   timeout?: number
@@ -63,7 +63,7 @@ interface ExecOptions extends BaseExecOptions {
   killSignal?: string
 }
 
-interface SpawnOptions extends BaseExecOptions {
+export interface SpawnOptions extends BaseExecOptions {
   custom?: any
   detached?: boolean
 }

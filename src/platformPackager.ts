@@ -8,6 +8,8 @@ import packager = require("electron-packager-tf")
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
 
+const pack = BluebirdPromise.promisify(packager)
+
 export interface DevMetadata extends Metadata {
   build: DevBuildMetadata
 }
@@ -61,6 +63,8 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
   customDistOptions: DC
 
+  currentArch: string
+
   protected abstract getBuildConfigurationKey(): string
 
   constructor(protected info: BuildInfo) {
@@ -79,42 +83,40 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     this.info.eventEmitter.emit("artifactCreated", path)
   }
 
-  pack(platform: string, arch: string, outDir: string): Promise<any> {
-    return new BluebirdPromise((resolve, reject) => {
-      const version = this.metadata.version
-      let buildVersion = version
-      const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
-      if (buildNumber != null) {
-        buildVersion += "." + buildNumber
+  pack(platform: string, outDir: string, appOutDir: string): Promise<any> {
+    const version = this.metadata.version
+    let buildVersion = version
+    const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
+    if (buildNumber != null) {
+      buildVersion += "." + buildNumber
+    }
+
+    const options = Object.assign({
+      dir: this.info.appDir,
+      out: outDir,
+      name: this.metadata.name,
+      platform: platform,
+      arch: this.currentArch,
+      version: this.info.electronVersion,
+      icon: path.join(this.projectDir, "build", "icon"),
+      asar: true,
+      overwrite: true,
+      "app-version": version,
+      "build-version": buildVersion,
+      "version-string": {
+        CompanyName: this.metadata.author,
+        FileDescription: this.metadata.description,
+        ProductVersion: version,
+        FileVersion: buildVersion,
+        ProductName: this.metadata.name,
+        InternalName: this.metadata.name,
       }
+    }, this.metadata.build, {"tmpdir": false})
 
-      const options = Object.assign({
-        dir: this.info.appDir,
-        out: path.dirname(outDir),
-        name: this.metadata.name,
-        platform: platform,
-        arch: arch,
-        version: this.info.electronVersion,
-        icon: path.join(this.projectDir, "build", "icon"),
-        asar: true,
-        overwrite: true,
-        "app-version": version,
-        "build-version": buildVersion,
-        "version-string": {
-          CompanyName: this.metadata.author,
-          FileDescription: this.metadata.description,
-          ProductVersion: version,
-          FileVersion: buildVersion,
-          ProductName: this.metadata.name,
-          InternalName: this.metadata.name,
-        }
-      }, this.metadata.build, {"tmpdir": false})
-
-      // this option only for windows-installer
-      delete options.iconUrl
-      packager(options, error => error == null ? resolve(null) : reject(error))
-    })
+    // this option only for windows-installer
+    delete options.iconUrl
+    return pack(options)
   }
 
-  abstract packageInDistributableFormat(outDir: string, arch: string): Promise<any>
+  abstract packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any>
 }

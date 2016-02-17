@@ -49,21 +49,25 @@ export default class WinPackager extends PlatformPackager<any> {
     return "win"
   }
 
-  pack(platform: string, arch: string, outDir: string): Promise<any> {
+  pack(platform: string, outDir: string, appOutDir: string): Promise<any> {
     if (this.options.dist && !this.isNsis) {
-      const installerOut = outDir + "-installer"
+      const installerOut = this.computeDistOut(outDir)
       log("Removing %s", installerOut)
       return BluebirdPromise.all([
-        super.pack(platform, arch, outDir),
+        super.pack(platform, outDir, appOutDir),
         emptyDir(installerOut)
       ])
     }
     else {
-      return super.pack(platform, arch, outDir)
+      return super.pack(platform, outDir, appOutDir)
     }
   }
 
-  async packageInDistributableFormat(outDir: string, arch: string): Promise<any> {
+  private computeDistOut(outDir: string): string {
+    return path.join(outDir, (this.isNsis ? "nsis" : "win") + (this.currentArch === "x64" ? "-x64" : ""))
+  }
+
+  async packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
     let iconUrl = this.metadata.build.iconUrl
     if (!iconUrl) {
       if (this.customDistOptions != null) {
@@ -85,14 +89,14 @@ export default class WinPackager extends PlatformPackager<any> {
 
     const certificateFile = await this.certFilePromise
     const version = this.metadata.version
-    const outputDirectory = outDir + "-" + (this.isNsis ? "nsis" : "installer")
+    const installerOutDir = this.computeDistOut(outDir)
     const appName = this.metadata.name
-    const archSuffix = arch === "x64" ? "-x64" : ""
-    const installerExePath = path.join(outputDirectory, appName + "Setup-" + version + archSuffix + ".exe")
+    const archSuffix = this.currentArch === "x64" ? "-x64" : ""
+    const installerExePath = path.join(installerOutDir, appName + "Setup-" + version + archSuffix + ".exe")
     const options = Object.assign({
       name: this.metadata.name,
-      appDirectory: outDir,
-      outputDirectory: outputDirectory,
+      appDirectory: appOutDir,
+      outputDirectory: installerOutDir,
       productName: appName,
       version: version,
       description: this.metadata.description,
@@ -108,9 +112,8 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     try {
-      await new BluebirdPromise<any>((resolve, reject) => {
-        require("electron-winstaller-temp-fork").build(options, (error: Error) => error == null ? resolve(null) : reject(error))
-      })
+      const build = <(options: any, callback: (error: Error) => void) => void>require("electron-winstaller-temp-fork").build
+      await BluebirdPromise.promisify(build)(options)
     }
     catch (e) {
       if (!e.message.includes("Unable to set icon")) {
@@ -132,18 +135,18 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     return await BluebirdPromise.all([
-      renameFile(path.join(outputDirectory, appName + "Setup.exe"), installerExePath)
+      renameFile(path.join(installerOutDir, appName + "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
-      renameFile(path.join(outputDirectory, appName + "-" + version + "-full.nupkg"), path.join(outputDirectory, appName + "-" + version + archSuffix + "-full.nupkg"))
+      renameFile(path.join(installerOutDir, appName + "-" + version + "-full.nupkg"), path.join(installerOutDir, appName + "-" + version + archSuffix + "-full.nupkg"))
         .then(it => this.dispatchArtifactCreated(it))
     ])
   }
 
   private async nsis(options: any, installerFile: string) {
-    const nsisBuild = <(options: any, callback: (error: Error) => void) => void>require("../lib/win").init().build
+    const build = <(options: any, callback: (error: Error) => void) => void>require("../lib/win").init().build
     // nsis cannot create dir
     await emptyDir(options.outputDirectory)
-    return await BluebirdPromise.promisify(nsisBuild)(Object.assign(options, {
+    return await BluebirdPromise.promisify(build)(Object.assign(options, {
       log: console.log,
       appPath: options.appDirectory,
       out: options.outputDirectory,

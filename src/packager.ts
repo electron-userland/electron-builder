@@ -10,7 +10,8 @@ import { AppMetadata, InfoRetriever } from "./repositoryInfo"
 import { PackagerOptions, PlatformPackager, BuildInfo, DevMetadata } from "./platformPackager"
 import MacPackager from "./macPackager"
 import WinPackager from "./winPackager"
-import LinuxPackager from "./linuxPackager"
+import * as errorMessages from "./errorMessages"
+import * as util from "util"
 
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
@@ -72,10 +73,12 @@ export class Packager implements BuildInfo {
       for (let arch of archs) {
         await this.installAppDependencies(arch)
 
-        const outDir = path.join(this.projectDir, "dist", this.metadata.name + "-" + platform + "-" + arch)
-        await helper.pack(platform, arch, outDir)
+        helper.currentArch = arch
+        const outDir = path.join(this.projectDir, "dist")
+        const appOutDir = path.join(outDir, this.metadata.name + "-" + platform + "-" + arch)
+        await helper.pack(platform, outDir, appOutDir)
         if (this.options.dist) {
-          distTasks.push(helper.packageInDistributableFormat(outDir, arch))
+          distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir))
         }
       }
     }
@@ -101,10 +104,7 @@ export class Packager implements BuildInfo {
       }
 
       case "linux":
-      {
-        const helperClass: typeof LinuxPackager = require("./linuxPackager").default
-        return new helperClass(this)
-      }
+        return new (require("./linuxPackager").LinuxPackager)(this)
 
       default:
         throw new Error("Unsupported platform: " + platform)
@@ -120,7 +120,7 @@ export class Packager implements BuildInfo {
       required = false
     }
 
-    let absoluteAppPath = path.join(this.projectDir, customAppPath)
+    const absoluteAppPath = path.join(this.projectDir, customAppPath)
     try {
       fs.accessSync(absoluteAppPath)
     }
@@ -152,14 +152,7 @@ export class Packager implements BuildInfo {
       reportError("version")
     }
     else if (metadata.build == null) {
-      throw new Error("Please specify 'build' configuration in the application package.json ('" + appPackageFile + "'), at least\n\n" +
-          JSON.stringify({
-            build: {
-              "app-bundle-id": "your.id",
-              "app-category-type": "your.app.category.type",
-              "iconUrl": "see https://github.com/develar/electron-complete-builder#in-short",
-            }
-          }, null, "  ") + "\n\n is required.\n")
+      throw new Error(util.format(errorMessages.buildIsMissed, appPackageFile))
     }
     else if (metadata.author == null) {
       reportError("author")
@@ -172,7 +165,7 @@ export class Packager implements BuildInfo {
     }
     else {
       log("Skipping app dependencies installation because dev and app dependencies are not separated")
-      return Promise.resolve(null)
+      return BluebirdPromise.resolve(null)
     }
   }
 }

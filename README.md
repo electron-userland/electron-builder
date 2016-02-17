@@ -1,241 +1,133 @@
-[![Build Status](https://img.shields.io/travis/loopline-systems/electron-builder.svg?style=flat)](https://travis-ci.org/loopline-systems/electron-builder) [![npm version](http://img.shields.io/npm/v/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder) [![npm downloads](http://img.shields.io/npm/dm/electron-builder.svg?style=flat)](https://www.npmjs.org/package/electron-builder)  [![Uses greenkeeper.io](https://img.shields.io/badge/Uses-greenkeeper.io-green.svg)](http://greenkeeper.io/)
+Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
 
+* [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if two-package.json project layout used).
+* [Auto Update](#auto-update) ready application packaging.
+* [Code Signing](#code-signing) on a CI server or development machine.
+* [Build version management](#build-version-management).
+* [Publishing artifacts to GitHub Releases](./docs/deployment.md).
 
-# electron-builder
+[electron-packager](https://github.com/maxogden/electron-packager),
+[appdmg](https://github.com/LinusU/node-appdmg) and
+[windows-installer](https://github.com/electronjs/windows-installer) are used under the hood.
 
-The electron-builder project is used to create installers for the platforms Windows, OS X and Linux.
-It's built to work together with [electron-packager](https://github.com/maxogden/electron-packager).
+Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
-If you are looking for a complete set up on how to use [electron-packager](https://github.com/maxogden/electron-packager) and [electron-builder](https://github.com/loopline-systems/electron-builder), check the ["How we use it"](https://github.com/loopline-systems/electron-builder#how-we-use-it-so-far) section below.
+# Configuration
+## In short
+1. Ensure that required fields are specified in the application `package.json`:
 
-The project has been tested successfully on OS X, Windows and Linux (Debian-based) machines.
+  Standard `name`, `description`, `version` and `author`.
 
-## Install
-
-You can go the global installation route. ;)
-
-```
-$ npm install -g electron-builder electron-packager
-```
-
-**Oooooor...** You can wrap `electron-builder` with `npm scripts` to not have a global dependency.
-
-```
-# install electron builder and electron-packager as dependencies of your project
-$ npm install --save-dev electron-builder electron-packager
-```
-
-After that, you can easily use the `electron-builder` binary in your `package.json`:
-
-```json
-{
-  "scripts" : {
-    "pack:osx": "electron-packager . MyApp --platform=darwin --arch=x64 --version=0.36.7 --icon=assets/MyApp.icns --out=dist --ignore=dist",
-    "build:osx": "npm run pack:osx && electron-builder dist/osx/MyApp.app --platform=osx --out=\"dist/osx\" --config=config.json"
+  Custom `build` field must be specified:
+  ```json
+  "build": {
+    "app-bundle-id": "your.id",
+    "app-category-type": "your.app.category.type",
+    "iconUrl": "(windows only) A URL to an ICO file to use as the application icon, see details below"
   }
-}
-```
+  ```
+  This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
 
-**Note:** Executables with spaces in their name **must** be written as `\"My App\"`.
+2. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
+  Linux icon set will be generated automatically on the fly from the OS X `icns` file.
 
-## Pre-requisites
+3. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
+    ```json
+    "scripts": {
+      "postinstall": "install-app-deps",
+      "pack": "build",
+      "dist": "build"
+    }
+    ```
+    And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. DMG, windows installer, NuGet package)).
 
-- Node.js 0.12 or higher. You can check by running:
+4. Install [required system packages](./docs/multi-platform-build.md).
 
-```
-$ node --version
-v0.12.0
-```
+## iconUrl
+Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+* If you don't plan to build windows installer, you can omit it.
+* If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${info.user}/${info.project}/master/build/icon.ico` by default.
 
-- [electron-packager](https://github.com/maxogden/electron-packager)
-
-### Creating Installers
-
-For further documentation depending on the target please check the details sites:
-
-- [Create installers for Windows](./docs/win.md)
-- [Create installers for OS X](./docs/osx.md)
-- [Create installers for Linux](./docs/linux.md)
-
-## Parameters
-
-```
-Usage
-  $ electron-builder <sourcedir> --platform=<platform> --config=<configPath> --out=<outputPath>
-
-  Required options:
-    platform:          win, osx, linux
-
-  Optional options:
-    config:            path to config file
-                       -> if not provided `builder` property in `package.json`
-                          in current working directory will be read
-    out:               path to output the installer (must exist)
-```
-
-Here's an example of what your `config.json` might look like:
-
-**Note**: `nsiTemplate` and `fileAssociation` are completely optional.
-
+## Distributable Format Configuration
+In the development `package.json` custom `build` field can be specified to customize distributable format:
 ```json
-{
-  "osx" : {
-    "title": "Loopline Systems",
-    "background": "assets/osx/installer.png",
-    "icon": "assets/osx/mount.icns",
+"build": {
+  "osx": {
+    "title": "computed name from app package.js, you can overwrite",
+    "icon": "build/icon.icns",
     "icon-size": 80,
+    "background": "build/background.png",
     "contents": [
-      { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
-      { "x": 192, "y": 344, "type": "file" }
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      },
+      {
+        "x": 130,
+        "y": 220,
+        "type": "file",
+        "path": "computed path to artifact, do not specify it - will be overwritten"
+      }
     ]
   },
-  "win" : {
-    "title" : "Loopline Systems",
-    "version" : "x.x.x.x",
-    "publisher": "Publisher Info",
-    "icon" : "assets/win/icon.ico",
-    "verbosity": 1,
-    "nsiTemplate" : "path/to/custom/installer.nsi.tpl",
-    "fileAssociation": {
-      "extension": ".loop",
-      "fileType": "Loopline Systems File"
-    }
-  },
-  "linux" : {
-    "arch" : 64,
-    "target" : "deb",
-    "version" : "x.x.x.x",
-    "title" : "Loopline Systems",
-    "comment" : "This is a comment",
-    "executable" : "myExec",
-    "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
-  }
+  "win": "see https://github.com/electronjs/windows-installer#usage"
 }
 ```
 
-Or what your `package.json` might look like:
+As you can see, you need to customize OS X options only if you want to provide custom `x, y`.
+Don't customize paths to background and icon, — just follow conventions (if you don't want to use `build` as directory of resources — please create issue to ask ability to customize it).
 
-```json
-{
-  "name": "Loopline App",
-  "version": "2.6.0",
-  "builder": {
-    "osx" : {
-      "title": "Loopline Systems",
-      "background": "assets/osx/installer.png",
-      "icon": "assets/osx/mount.icns",
-      "icon-size": 80,
-      "contents": [
-        { "x": 438, "y": 344, "type": "link", "path": "/Applications" },
-        { "x": 192, "y": 344, "type": "file" }
-      ]
-    },
-    "win" : {
-      "title" : "Loopline Systems",
-      "version" : "x.x.x.x",
-      "publisher": "Publisher Info",
-      "icon" : "assets/win/icon.ico",
-      "verbosity": 1,
-      "nsiTemplate" : "path/to/custom/installer.nsi.tpl",
-      "fileAssociation": {
-        "extension": ".loop",
-        "fileType": "Loopline Systems File"
-      }
-    },
-    "linux" : {
-      "arch" : 64,
-      "target" : "deb",
-      "version" : "x.x.x.x",
-      "title" : "Loopline Systems",
-      "comment" : "This is a comment",
-      "executable" : "myExec",
-      "maintainer": "Dummy Maintainer <dummy@maintainer.org>"
-    }
-  }
-}
+See [OS X options](https://www.npmjs.com/package/appdmg#json-specification) and [Windows options](https://github.com/electronjs/windows-installer#usage).
+
+# Auto Update
+`electron-builder` produces all required artifacts:
+
+* `.dmg`: OS X installer, required for OS X user to initial install.
+* `-mac.zip`: required for Squirrel.Mac.
+* `.exe` and `-x64.exe`: Windows installer, required for Windows user to initial install. Please note — [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
+* `.full-nupkg`: required for Squirrel.Windows.
+* `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
+
+You need to deploy somewhere [releases/downloads server](https://github.com/GitbookIO/nuts).
+
+In general, there is a possibility to setup it as a service for all (it is boring to setup own if cloud service is possible).
+May be it will be soon (feel free to file an issue to track progress).
+It is safe since you should sign your app in any case (so, even if server will be compromised, users will not be affected because OS X will just block unsigned/unidentified app).
+
+# Code signing
+OS X and Windows code singing is supported.
+On a development machine set environment variable `CSC_NAME` to your identity (recommended). Or pass `--sign` parameter.
+```
+export CSC_NAME="Developer ID Application: Your Name (code)"
 ```
 
-**Note:** Need to add something that might have value for others? Consider a [Pull Request](https://github.com/loopline-systems/electron-builder/pulls)! ;)
+## Travis, AppVeyor and other CI servers
+To sign app on build server:
 
-
-## How we use it so far
-
-When you run `npm run pack`, it will create executables for the Windows and OS X platforms inside of the `dist` directory. It grabs the generated executables afterwards to create the installers out of it.
-
-
-directory structure
+1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
+ [Strong password](http://security.stackexchange.com/a/54773) must be used. Consider to not use special characters (for bash) because “*values are not escaped when your builds are executed*”.
+2. Upload `*.p12` file (e.g. on [Google Drive](http://www.syncwithtech.org/p/direct-download-link-generator.html)).
+3. Set ([Travis](https://docs.travis-ci.com/user/environment-variables/#Encrypted-Variables) or [AppVeyor](https://ci.appveyor.com/tools/encrypt)) `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables:
 ```
-desktop
-  |-- app                               // actual electron application
-  |
-  |-- assets                            // build related assets
-    |-- osx                             // build assets for OS X
-      |-- installer.png                 //   -> referenced in builder.json ( dmg background )
-      |-- mount.icns                    //   -> use by electron-packager ( actual app icon )
-      |-- loopline.icns                 //   -> referenced in builder.json ( dmg background )
-    |-- win                             // build assets for Windows
-      |-- icon.ico                      //   -> referenced in builder.json
-  |
-  |-- dist                              // out put folder
-    |-- osx                             // generated executables for OS X
-      |-- Loopline Systems.app
-      |-- Loopline Systems.dmg
-    |-- win                             // generated executables for Windows
-      |-- Loopline Systems-win32
-      |-- Loopline Systems Setup.exe
-  |-- package.json
-  |-- config.json
+travis encrypt "CSC_LINK='https://drive.google.com/uc?export=download&id=***'" --add
+travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
 ```
 
-`package.json`:
+# Build Version Management
+`CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
 
-```json
-{
-  "name": "loopline-desktop",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "electron ./app",
+# CLI usage
+Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
+In most cases you should not explicitly pass flags, so, we don't want to promote it here ([npm lifecycle](https://docs.npmjs.com/misc/scripts#current-lifecycle-event) is supported and script name is taken in account).
+Want more — please file issue.
 
-    "clean": "rm -rf ./dist",
-    "clean:osx": "rm -rf ./dist/osx",
-    "clean:win": "rm -rf ./dist/win",
+# Programmatic usage
+See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
 
-    "pack": "npm run clean && npm run pack:osx && npm run pack:win",
-    "pack:osx": "npm run clean:osx && electron-packager ./app \"Loopline Systems\" --out=dist/osx --platform=darwin --arch=x64 --version=0.36.1 --icon=assets/osx/loopline.icns",
-    "pack:win": "npm run clean:win && electron-packager ./app \"Loopline Systems\" --out=dist/win --platform=win32 --arch=ia32 --version=0.36.1 --icon=assets/win/icon.ico",
-
-    "build": "npm run build:osx && npm run build:win",
-    "build:osx": "npm run pack:osx && electron-builder \"dist/osx/Loopline Systems.app\" --platform=osx --out=\"dist/osx\" --config=builder.json",
-    "build:win": "npm run pack:win && electron-builder \"dist/win/Loopline Systems-win32\" --platform=win --out=\"dist/win\" --config=builder.json"
-  },
-  "dependencies": {
-    "electron-packager": "^4.0.2",
-    "electron-prebuilt": "^0.36.7",
-    "electron-builder": "^2.7.2"
-  }
-}
-
-```
-
-**Important note for Windows users:** *If the build process throws an error like `"rm" is not recognized as an internal or external command,
-operable program or batch file.` you may want to use windows counter part `rmdir` or `rimraf` (cross platform) to clean up the distribution folder.*
-
-
-## Contribution
-
-You want to help out and have ideas to make it better? Great!
-
-Create an [issue](https://github.com/loopline-systems/electron-builder/issues) and we will tackle it.
-
-If you decide to propose a pull request (even better) make sure `npm test` is succeeding.
-
-## Releases
-
-For releases, we like to give release names via [adj-noun](https://github.com/btford/adj-noun).
-You'll find proper release notes [here](https://github.com/loopline-systems/electron-builder/releases).
-
-## Related packages
-
-[grunt-electron-builder-wrapper](https://www.npmjs.com/package/grunt-electron-builder-wrapper) - grunt plugin for electron-builder.
+# Old API (< 2.8)
+Old API is deprecated, but not dropped. You can use it as before. Please note — new API by default produces Squirrel.Windows installer, set `target` to build NSIS:
+ ```
+ build --target=nsis
+ ```
