@@ -11,7 +11,6 @@
 
 var fs      = require( 'fs' );
 var meow    = require( 'meow' );
-var assign  = require( 'lodash.assign' );
 var path    = require( 'path' );
 
 var builder = ( require( './' ) ).init();
@@ -54,7 +53,7 @@ try {
 
 var basePath = path.dirname( configPath );
 
-builder.build( assign( cli.flags, {
+builder.build( Object.assign( cli.flags, {
   appPath  : appPath,
   config   : config,
   basePath : basePath
