@@ -50,7 +50,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
   }
 
   packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
-    const artifactPath = path.join(outDir, this.metadata.name + "-" + this.metadata.version + ".dmg")
+    const artifactPath = path.join(appOutDir, this.metadata.name + "-" + this.metadata.version + ".dmg")
     return BluebirdPromise.all([
       new BluebirdPromise<any>((resolve, reject) => {
         log("Creating DMG")
@@ -80,8 +80,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
 
         specification.contents[1].path = path.join(appOutDir, this.metadata.name + ".app")
 
-        const appDmg = require("appdmg")
-        const emitter = appDmg({
+        const emitter = require("appdmg")({
           target: artifactPath,
           basepath: this.projectDir,
           specification: specification

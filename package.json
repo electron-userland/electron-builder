@@ -57,12 +57,10 @@
     "fs-extra": "^0.26.5",
     "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
-    "json-parse-helpfulerror": "^1.0.3",
     "lodash.camelcase": "^4.1.0",
     "lodash.template": "^4.2.0",
     "meow": "^3.7.0",
     "mime": "^1.3.4",
-    "mkdirp": "^0.5.1",
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
     "rimraf": "^2.5.1",
@@ -77,11 +75,12 @@
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.5.0",
     "dts-generator-tf": "^1.7.0-beta.0",
-    "eslint": "^2.1.0",
+    "eslint": "^2.2.0",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "proxyquire": "^1.7.4",
     "publish-please": "^1.1.0",
+    "read-package-json": "^2.0.3",
     "rimraf": "^2.5.2",
     "should": "^8.2.2",
     "tap-nyan": "0.0.2",
@@ -89,8 +88,8 @@
     "tape": "^4.4.0",
     "ts-babel": "^0.3.0",
     "tsconfig-glob": "^0.4.1",
-    "tslint": "^3.3.0",
-    "typescript": "^1.8.0-beta"
+    "tslint": "^3.4.0",
+    "typescript": "^1.8.2"
   },
   "babel": {
     "plugins": [

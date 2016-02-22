@@ -104,7 +104,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
       "app-version": version,
       "build-version": buildVersion,
       "version-string": {
-        CompanyName: this.metadata.author,
+        CompanyName: this.metadata.author.name,
         FileDescription: this.metadata.description,
         ProductVersion: version,
         FileVersion: buildVersion,
