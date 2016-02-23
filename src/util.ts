@@ -1,6 +1,7 @@
 import { execFile, spawn as _spawn } from "child_process"
 import { Promise as BluebirdPromise } from "bluebird"
 import "source-map-support/register"
+import readPackageJsonAsync = require("read-package-json")
 
 export const log = console.log
 
@@ -18,6 +19,7 @@ export const commonArgs: any[] = [{
 }]
 
 const execFileAsync: (file: string, args?: string[], options?: ExecOptions) => BluebirdPromise<Buffer[]> = (<any>BluebirdPromise.promisify(execFile, {multiArgs: true}))
+export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
 export function installDependencies(appDir: string, arch: string, electronVersion: string): BluebirdPromise<any> {
   log("Installing app dependencies for arch %s to %s", arch || process.arch, appDir)

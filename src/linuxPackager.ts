@@ -68,7 +68,7 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
       version: this.metadata.version,
       title: this.metadata.name,
       comment: this.metadata.description,
-      maintainer: this.metadata.author,
+      maintainer: `${this.metadata.author.name} <${this.metadata.author.email}>`,
       arch: this.currentArch === "ia32" ? 32 : 64,
       target: "deb",
       executable: this.metadata.name,

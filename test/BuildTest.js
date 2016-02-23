@@ -7,7 +7,7 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { Packager } from "../out/packager"
 import { exec } from "../out/util"
-import { deleteDirectory, readText } from "../out/promisifed-fs"
+import { readText } from "../out/promisifed-fs"
 import { CSC_LINK, CSC_KEY_PASSWORD } from "./helpers/codeSignData"
 import pathSorter from "path-sort"
 
@@ -135,6 +135,10 @@ if (process.platform === "darwin") {
 if (process.platform !== "win32") {
   test("linux", async function () {
     await assertPack("test-app-one", "linux")
+  })
+
+  test("no-author-email", async (t) => {
+    t.throws(assertPack("test-app-no-author-email", "linux"), /Please specify author 'email' in .*/)
   })
 }
 

@@ -10,7 +10,7 @@
 var platforms = require( './lib/platforms' );
 var path      = require( 'path' );
 var fs        = require( 'fs' );
-var mkdirp    = require( 'mkdirp' );
+var fse    = require( 'fs-extra' );
 
 
 /**
@@ -45,7 +45,7 @@ var Builder = {
     // directory exists
     if ( !fs.existsSync( options.out ) ) {
       options.log( '- Ouput directory ´' + options.out + '´ does not exist ' );
-      mkdirp.sync( options.out );
+      fse.mkdirsSync( options.out );
       options.log( '- Created ´' + options.out + '´ ' );
     }
 

@@ -14,11 +14,16 @@ export interface Metadata {
   repository: string | RepositoryInfo
 }
 
+export interface MetadataAuthor {
+  name: string
+  email: string
+}
+
 export interface AppMetadata extends Metadata {
   version: string
   name: string
   description: string
-  author: string
+  author: MetadataAuthor
 
   build: BuildMetadata
 

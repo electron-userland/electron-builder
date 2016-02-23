@@ -1,7 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
-import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion } from "./util"
-import { parseJsonFile } from "./promisifed-fs"
+import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion, readPackageJson } from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -52,22 +51,23 @@ export class Packager implements BuildInfo {
   async build(): Promise<any> {
     const buildPackageFile = this.devPackageFile
     const appPackageFile = this.projectDir === this.appDir ? buildPackageFile : path.join(this.appDir, "package.json")
-    await BluebirdPromise.all(Array.from(new Set([buildPackageFile, appPackageFile]), parseJsonFile))
-      .then((result: any[]) => {
+    const platforms = normalizePlatforms(this.options.platform)
+    await BluebirdPromise.all(Array.from(new Set([buildPackageFile, appPackageFile]), readPackageJson))
+      .then(result => {
         this.metadata = result[result.length - 1]
         this.devMetadata = result[0]
-        this.checkMetadata(appPackageFile)
+        this.checkMetadata(appPackageFile, platforms)
 
         this.electronVersion = getElectronVersion(this.devMetadata, buildPackageFile)
       })
 
     const cleanupTasks: Array<() => Promise<any>> = []
-    return executeFinally(this.doBuild(cleanupTasks), error => all(cleanupTasks.map(it => it())))
+    return executeFinally(this.doBuild(platforms, cleanupTasks), error => all(cleanupTasks.map(it => it())))
   }
 
-  private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<any> {
+  private async doBuild(platforms: Array<string>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
     const distTasks: Array<Promise<any>> = []
-    for (let platform of normalizePlatforms(this.options.platform)) {
+    for (let platform of platforms) {
       const helper = this.createHelper(platform, cleanupTasks)
       const archs = platform === "darwin" ? ["x64"] : (this.options.arch == null || this.options.arch === "all" ? ["ia32", "x64"] : [this.options.arch])
       for (let arch of archs) {
@@ -136,7 +136,7 @@ export class Packager implements BuildInfo {
     return absoluteAppPath
   }
 
-  private checkMetadata(appPackageFile: string): void {
+  private checkMetadata(appPackageFile: string, platforms: Array<string>): void {
     const reportError = (missedFieldName: string) => {
       throw new Error("Please specify '" + missedFieldName + "' in the application package.json ('" + appPackageFile + "')")
     }
@@ -154,8 +154,14 @@ export class Packager implements BuildInfo {
     else if (metadata.build == null) {
       throw new Error(util.format(errorMessages.buildIsMissed, appPackageFile))
     }
-    else if (metadata.author == null) {
-      reportError("author")
+    else {
+      const author = metadata.author
+      if (author == null) {
+        reportError("author")
+      }
+      else if (this.options.dist && author.email == null && platforms.includes("linux")) {
+        throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
+      }
     }
   }
 
