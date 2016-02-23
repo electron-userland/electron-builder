@@ -1,6 +1,5 @@
 {
   "name": "electron-builder",
-  "version": "2.7.2",
   "description": "Complete solution to build ready for distribution and 'auto update' Electron App installers",
   "main": "index.js",
   "scripts": {
@@ -10,9 +9,8 @@
     "test": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
     "test-win": "npm run pretest && ava",
     "test-build": "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
-    "publish-please": "publish-please",
     "declaration": "dts-generator --name electron-builder --project . --out out/electron-builder.d.ts --indent='  '",
-    "release": "npm prune && npm test && npm run declaration && npm run publish-please"
+    "semantic-release": "npm run declaration && semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
@@ -79,7 +77,6 @@
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "proxyquire": "^1.7.4",
-    "publish-please": "^1.1.0",
     "read-package-json": "^2.0.3",
     "rimraf": "^2.5.2",
     "should": "^8.2.2",
@@ -89,7 +86,8 @@
     "ts-babel": "^0.3.0",
     "tsconfig-glob": "^0.4.1",
     "tslint": "^3.4.0",
-    "typescript": "^1.8.2"
+    "typescript": "^1.8.2",
+    "semantic-release": "^4.3.5"
   },
   "babel": {
     "plugins": [

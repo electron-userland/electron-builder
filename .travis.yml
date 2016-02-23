@@ -40,3 +40,10 @@ install:
 
 script:
 - npm run test
+
+after_success:
+  - npm run semantic-release
+
+branches:
+  except:
+    - "/^v\\d+\\.\\d+\\.\\d+$/"
