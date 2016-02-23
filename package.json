@@ -9,7 +9,7 @@
     "test": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
     "test-win": "npm run pretest && ava",
     "test-build": "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
-    "declaration": "dts-generator --name electron-builder --project . --out out/electron-builder.d.ts --indent='  '",
+    "declaration": "dts-generator --name electron-builder --out out/electron-builder.d.ts",
     "semantic-release": "npm run declaration && semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
@@ -69,10 +69,10 @@
     "appdmg": "^0.3.6"
   },
   "devDependencies": {
-    "ava-tf": "^0.11.2-beta.0",
+    "ava-tf": "^0.12.1",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.5.0",
-    "dts-generator-tf": "^1.7.0-beta.0",
+    "tsd-generator": "^2.0.2",
     "eslint": "^2.2.0",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
@@ -82,9 +82,9 @@
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
     "tape": "^4.4.0",
-    "ts-babel": "^0.3.0",
+    "ts-babel": "^0.4.3",
     "tsconfig-glob": "^0.4.1",
-    "tslint": "^3.4.0",
+    "tslint": "^3.5.0",
     "typescript": "^1.8.2",
     "semantic-release": "^4.3.5"
   },
