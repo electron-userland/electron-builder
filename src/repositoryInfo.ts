@@ -6,7 +6,7 @@ import * as path from "path"
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
 
-interface RepositoryInfo {
+export interface RepositoryInfo {
   url: string
 }
 

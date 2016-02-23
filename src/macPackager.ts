@@ -28,10 +28,10 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     return "osx"
   }
 
-  async pack(platform: string, arch: string, outDir: string): Promise<any> {
-    await super.pack(platform, arch, outDir)
+  async pack(platform: string, outDir: string, appOutDir: string): Promise<any> {
+    await super.pack(platform, outDir, appOutDir)
     let codeSigningInfo = await this.codeSigningInfo
-    return await this.signMac(path.join(outDir, this.metadata.name + ".app"), codeSigningInfo)
+    return await this.signMac(path.join(appOutDir, this.metadata.name + ".app"), codeSigningInfo)
   }
 
   private signMac(distPath: string, codeSigningInfo: CodeSigningInfo): Promise<any> {
@@ -49,7 +49,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     }
   }
 
-  packageInDistributableFormat(outDir: string, arch: string): Promise<any> {
+  packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
     const artifactPath = path.join(outDir, this.metadata.name + "-" + this.metadata.version + ".dmg")
     return BluebirdPromise.all([
       new BluebirdPromise<any>((resolve, reject) => {
@@ -78,7 +78,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
           specification.title = this.metadata.name
         }
 
-        specification.contents[1].path = path.join(outDir, this.metadata.name + ".app")
+        specification.contents[1].path = path.join(appOutDir, this.metadata.name + ".app")
 
         const appDmg = require("appdmg")
         const emitter = appDmg({
@@ -91,7 +91,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
       })
         .then(() => this.dispatchArtifactCreated(artifactPath)),
 
-      this.zipMacApp(outDir)
+      this.zipMacApp(appOutDir)
         .then(it => this.dispatchArtifactCreated(it))
     ])
   }

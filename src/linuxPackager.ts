@@ -13,7 +13,7 @@ Array.isArray(__awaiter)
 const buildDeb = BluebirdPromise.promisify(init().build)
 const tmpDir = BluebirdPromise.promisify(<(config: TmpOptions, callback: (error: Error, path: string, cleanupCallback: () => void) => void) => void>_tpmDir)
 
-export default class LinuxPackager extends PlatformPackager<DebOptions> {
+export class LinuxPackager extends PlatformPackager<DebOptions> {
   desktopIcons: Promise<Array<string>>
 
   constructor(info: BuildInfo) {
@@ -63,13 +63,13 @@ export default class LinuxPackager extends PlatformPackager<DebOptions> {
     return "linux"
   }
 
-  async packageInDistributableFormat(outDir: string, arch: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
     const specification: DebOptions = {
       version: this.metadata.version,
       title: this.metadata.name,
       comment: this.metadata.description,
       maintainer: this.metadata.author,
-      arch: arch === "ia32" ? 32 : 64,
+      arch: this.currentArch === "ia32" ? 32 : 64,
       target: "deb",
       executable: this.metadata.name,
       desktop: `[Desktop Entry]
@@ -88,8 +88,8 @@ export default class LinuxPackager extends PlatformPackager<DebOptions> {
     }
     return await buildDeb({
       log: function emptyLog() {/* ignore out */},
-      appPath: outDir,
-      out: path.dirname(outDir),
+      appPath: appOutDir,
+      out: outDir,
       config: {
         linux: specification
       }
@@ -98,7 +98,7 @@ export default class LinuxPackager extends PlatformPackager<DebOptions> {
   }
 }
 
-interface DebOptions {
+export interface DebOptions {
   title: string
   comment: string
 

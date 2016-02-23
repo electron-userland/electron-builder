@@ -14,7 +14,8 @@ var meow    = require( 'meow' );
 var path    = require( 'path' );
 
 var builder = ( require( './' ) ).init();
-var usage   = fs.readFileSync( path.join( __dirname, 'usage.txt' ) ).toString();
+var usage   = fs.readFileSync(
+  path.join( __dirname, 'docs', 'deprecated-usage.txt' ),  'utf8' );
 
 var cli = meow( usage, {
   help  : usage,

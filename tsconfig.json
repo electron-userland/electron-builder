@@ -47,6 +47,7 @@
     "src/build-cli.ts",
     "src/builder.ts",
     "src/codeSign.ts",
+    "src/errorMessages.ts",
     "src/gitHubPublisher.ts",
     "src/gitHubRequest.ts",
     "src/httpRequest.ts",

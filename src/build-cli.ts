@@ -7,6 +7,8 @@ import { commonArgs } from "./util"
 import { printErrorAndExit } from "./promise"
 import { tsAwaiter } from "./awaiter"
 import cla = require("command-line-args")
+import { readFileSync } from "fs"
+import * as path from "path"
 
 const __awaiter = tsAwaiter
 Array.isArray(__awaiter)
@@ -16,19 +18,23 @@ interface CliOptions extends PackagerOptions, PublishOptions {
 }
 
 const cli = cla(commonArgs.concat(
-  {name: "arch", type: String, description: "ia32, x64 or all (by default)."},
   {name: "dist", type: Boolean, alias: "d", description: "Whether to package in a distributable format (e.g. DMG, windows installer, NuGet package)."},
   {name: "publish", type: String, alias: "p", description: "Publish artifacts (to GitHub Releases): onTag (on tag push only) or onTagOrDraft (on tag push or if draft release exists)."},
-  {name: "sign", type: String},
   {name: "platform", type: String, multiple: true, description: "darwin, linux, win32 or all. Current platform (" + process.platform + ") by default."},
-  {name: "target", type: String, multiple: true, description: "Installer or package type. For win32 - squirrel (default) or nsis."},
-  {name: "help", alias: "h", type: Boolean}
+  {name: "arch", type: String, description: "ia32, x64 or all (by default)."},
+  {name: "target", type: String, multiple: true, description: "Installer or package type. For win32: squirrel (default) or nsis (deprecated)."},
+  {name: "sign", type: String},
+  {name: "help", alias: "h", type: Boolean, description: "Display this usage guide."}
 ))
 
 const args: CliOptions = cli.parse()
 
 if (args.help) {
-  console.log(cli.getUsage())
+  const version = process.env.npm_package_version || JSON.parse(readFileSync(path.join(__dirname, "..", "package.json"), "utf8")).version
+  console.log(cli.getUsage({
+    title: "electron-builder " + version,
+    footer: "Project home: [underline]{https://github.com/loopline-systems/electron-builder}"
+  }))
 }
 else {
   build(args)
