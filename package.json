@@ -82,7 +82,7 @@
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
     "tape": "^4.4.0",
-    "ts-babel": "^0.3.0",
+    "ts-babel": "^0.4.3",
     "tsconfig-glob": "^0.4.1",
     "tslint": "^3.4.0",
     "typescript": "^1.8.2",
