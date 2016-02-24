@@ -69,7 +69,7 @@
     "appdmg": "^0.3.6"
   },
   "devDependencies": {
-    "ava-tf": "^0.11.2-beta.0",
+    "ava-tf": "^0.12.1",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.5.0",
     "dts-generator-tf": "^1.7.0-beta.0",
