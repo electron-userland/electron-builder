@@ -17,6 +17,9 @@
     "linux": {
       "//": "gz is much faster, in tests we don't need efficient compression",
       "compression": "gz"
+    },
+    "win": {
+      "title": "My App"
     }
   }
 }
