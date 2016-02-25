@@ -23,7 +23,7 @@ Name "${APP_NAME}"
 BrandingText "${APP_NAME} ${APP_VERSION}"
 
 # define the resulting installer's name
-OutFile ${APP_OUT_FILE}
+OutFile "${APP_OUT_FILE}"
 
 # set the installation directory
 InstallDir "$PROGRAMFILES\${APP_NAME}\"
