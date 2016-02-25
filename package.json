@@ -48,7 +48,7 @@
   "bugs": "https://github.com/loopline-systems/electron-builder/issues",
   "homepage": "https://github.com/loopline-systems/electron-builder",
   "dependencies": {
-    "bluebird": "^3.3.1",
+    "bluebird": "^3.3.3",
     "command-line-args": "^2.1.6",
     "electron-packager-tf": "^5.2.1-beta.2",
     "electron-winstaller-temp-fork": "^0.1.0",
