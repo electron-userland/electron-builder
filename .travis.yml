@@ -26,7 +26,7 @@ addons:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns; fi
-  - gem install fpm
+  - gem install --no-rdoc fpm
 
 install:
 - rm -rf ~/.nvm
@@ -42,7 +42,7 @@ script:
 - npm run test
 
 after_success:
-  - npm run semantic-release
+  - if [[ "$TRAVIS_BRANCH" == "master" ]]; then npm run semantic-release ; fi
 
 branches:
   except:

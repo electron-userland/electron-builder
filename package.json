@@ -1,6 +1,7 @@
 {
   "name": "electron-builder",
   "description": "Complete solution to build ready for distribution and 'auto update' Electron App installers",
+  "version": "0.0.0-semantic-release",
   "main": "index.js",
   "scripts": {
     "compile": "tsconfig -i 2 && ts-babel",
@@ -48,7 +49,7 @@
   "bugs": "https://github.com/loopline-systems/electron-builder/issues",
   "homepage": "https://github.com/loopline-systems/electron-builder",
   "dependencies": {
-    "bluebird": "^3.3.1",
+    "bluebird": "^3.3.3",
     "command-line-args": "^2.1.6",
     "electron-packager-tf": "^5.2.1-beta.2",
     "electron-winstaller-temp-fork": "^0.1.0",
@@ -72,21 +73,23 @@
     "ava-tf": "^0.12.1",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.5.0",
-    "tsd-generator": "^2.0.2",
     "eslint": "^2.2.0",
+    "ghooks": "^1.0.3",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "proxyquire": "^1.7.4",
     "rimraf": "^2.5.2",
+    "semantic-release": "^4.3.5",
     "should": "^8.2.2",
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
     "tape": "^4.4.0",
     "ts-babel": "^0.4.3",
     "tsconfig-glob": "^0.4.1",
+    "tsd-generator": "^2.0.2",
     "tslint": "^3.5.0",
     "typescript": "^1.8.2",
-    "semantic-release": "^4.3.5"
+    "validate-commit-msg": "^2.1.0"
   },
   "babel": {
     "plugins": [
@@ -97,5 +100,10 @@
   "ava": {
     "verbose": true
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "config": {
+    "ghooks": {
+      "commit-msg": "validate-commit-msg"
+    }
+  }
 }
