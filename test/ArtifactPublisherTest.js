@@ -1,5 +1,5 @@
 import test from "ava-tf"
-import { GitHubPublisher } from "../out/gitHubPublisher"
+import { GitHubPublisher } from "electron-builder/out/gitHubPublisher"
 import { join } from "path"
 
 function getRandomInt(min, max) {

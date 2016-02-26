@@ -79,7 +79,7 @@ builder.build( Object.assign( cli.flags, {
  * @return {Object}                      configuration
  */
 function getConfigFromFile( configPath, property ) {
-  var config = require( configPath );
+  var config = JSON.parse( fs.readFileSync( configPath ) );
 
   if ( property ) {
     if ( config[ property ] ) {

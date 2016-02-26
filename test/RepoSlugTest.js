@@ -1,4 +1,4 @@
-import { InfoRetriever } from "../out/repositoryInfo"
+import { InfoRetriever } from "electron-builder/out/repositoryInfo"
 import assertThat from "should/as-function"
 import test from "ava-tf"
 

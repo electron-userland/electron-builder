@@ -21,4 +21,4 @@ install:
 build: off
 
 test_script:
-  - npm run test-win
+  - npm run test

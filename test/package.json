@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "name": "test",
+  "dependencies": {
+    "electron-builder": "file:.."
+  }
+}

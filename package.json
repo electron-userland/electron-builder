@@ -2,14 +2,14 @@
   "name": "electron-builder",
   "description": "Complete solution to build ready for distribution and 'auto update' Electron App installers",
   "version": "0.0.0-semantic-release",
-  "main": "index.js",
+  "main": "out/index.js",
   "scripts": {
     "compile": "tsconfig -i 2 && ts-babel",
     "lint": "eslint ./lib cli.js index.js && tslint src/*",
     "pretest": "npm run compile && npm run lint",
-    "test": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
-    "test-win": "npm run pretest && ava",
-    "test-build": "result=\"$(tape cli.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan;",
+    "test": "node ./test/helpers/runTests.js",
+    "test-nix": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
+    "test-win": "ava",
     "declaration": "dts-generator --name electron-builder --out out/electron-builder.d.ts",
     "semantic-release": "npm run declaration && semantic-release pre && npm publish && semantic-release post"
   },
@@ -51,7 +51,7 @@
   "dependencies": {
     "bluebird": "^3.3.3",
     "command-line-args": "^2.1.6",
-    "electron-packager-tf": "^5.2.1-beta.2",
+    "electron-packager-tf": "^5.2.2",
     "electron-winstaller-temp-fork": "^0.1.0",
     "fs-extra": "^0.26.5",
     "gm": "^1.21.1",
@@ -62,7 +62,6 @@
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.3",
-    "rimraf": "^2.5.1",
     "source-map-support": "^0.4.0",
     "tmp": "0.0.28"
   },
@@ -70,15 +69,14 @@
     "appdmg": "^0.3.6"
   },
   "devDependencies": {
-    "ava-tf": "^0.12.1",
+    "ava-tf": "^0.12.3",
     "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-transform-es2015-parameters": "^6.5.0",
+    "babel-plugin-transform-es2015-parameters": "^6.6.0",
     "eslint": "^2.2.0",
     "ghooks": "^1.0.3",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "proxyquire": "^1.7.4",
-    "rimraf": "^2.5.2",
     "semantic-release": "^4.3.5",
     "should": "^8.2.2",
     "tap-nyan": "0.0.2",

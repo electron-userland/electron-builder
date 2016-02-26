@@ -17,9 +17,9 @@ test( 'Builder.init', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    './index.js',
+    './out/index.js',
     {
-      './lib/platforms' : {}
+      './platforms' : {}
     }
   );
 
@@ -31,9 +31,9 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    './index.js',
+    './out/index.js',
     {
-      './lib/platforms' : function( platform ) {
+      './platforms' : function( platform ) {
         if ( platform === 'bar' ) {
           return {
             init : function() {
@@ -70,9 +70,9 @@ test( 'Builder.init().build - create output directory if not present', function(
 
   var tmpDir  = tmp.dirSync( { unsafeCleanup : true } );
   var Builder = proxyquireStrict(
-    './index.js',
+    './out/index.js',
     {
-      './lib/platforms' : function( platform ) {
+      './platforms' : function( platform ) {
         if ( platform === 'bar' ) {
           return {
             init : function() {
@@ -111,9 +111,9 @@ test( 'Builder.init().build - check for required options', function( t ) {
   t.plan( 5 );
 
   var Builder = proxyquireStrict(
-    './index.js',
+    './out/index.js',
     {
-      './lib/platforms' : {}
+      './platforms' : {}
     }
   );
 
