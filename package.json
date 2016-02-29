@@ -72,7 +72,7 @@
   "devDependencies": {
     "ava-tf": "^0.12.1",
     "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-transform-es2015-parameters": "^6.5.0",
+    "babel-plugin-transform-es2015-parameters": "^6.6.0",
     "eslint": "^2.2.0",
     "ghooks": "^1.0.3",
     "path-sort": "^0.1.0",
