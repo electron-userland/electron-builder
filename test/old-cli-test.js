@@ -7,7 +7,7 @@ const execFileAsync = Promise.promisify(require('child_process').execFile)
 const path = require('path')
 
 const exampleAppPath = path.join(__dirname, '..', 'example-app')
-const cliPath = path.join(__dirname, 'node_modules', '.bin', 'electron-builder') + (process.platform === "win32" ? ".cmd" : "")
+const cliPath = path.join(process.env.NODE_PATH, '..', '.bin', 'electron-builder') + (process.platform === "win32" ? ".cmd" : "")
 
 function exec(args) {
   return execFileAsync(cliPath, args, {
@@ -39,13 +39,13 @@ if (process.platform === "darwin") {
 }
 
 if (!process.env.CI || process.platform === "win32") {
-  test('Cli - windows - config file provided', async (t) => {
+  test.serial('Cli - windows - config file provided', async (t) => {
     await exec(['Example-win32-ia32', '--platform=win', '--config=builder.json'])
     t.ok(await fs.statAsync(path.join(exampleAppPath, 'Builder\ Config\ Windows\ example\ Setup.exe')), 'exe created')
     await fs.removeAsync(path.join(exampleAppPath, 'Builder\ Config\ Windows\ example\ Setup.exe'))
   })
 
-  test('Cli - windows - no config file provided', async t => {
+  test.serial('Cli - windows - no config file provided', async t => {
     await exec(['Example-win32-ia32', '--platform=win'])
     t.ok(await fs.statAsync(path.join(exampleAppPath, 'Electron\ Builder\ Example\ Setup.exe')), 'exe created')
     await fs.removeAsync(path.join(exampleAppPath, 'Electron\ Builder\ Example\ Setup.exe'))

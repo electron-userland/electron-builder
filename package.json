@@ -5,7 +5,7 @@
   "main": "out/index.js",
   "scripts": {
     "compile": "tsconfig -i 2 && ts-babel",
-    "lint": "eslint ./lib cli.js index.js && tslint src/*",
+    "lint": "eslint ./lib test cli.js index.js && tslint src/*",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/helpers/runTests.js",
     "test-nix": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
@@ -51,12 +51,12 @@
   "dependencies": {
     "bluebird": "^3.3.3",
     "command-line-args": "^2.1.6",
-    "electron-packager-tf": "^5.2.2",
-    "electron-winstaller-temp-fork": "^0.1.0",
+    "electron-packager-tf": "^5.2.3",
+    "electron-winstaller-temp-fork": "^2.0.5-beta.0",
     "fs-extra": "^0.26.5",
     "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
-    "lodash.template": "^4.2.1",
+    "lodash.template": "^4.2.2",
     "meow": "^3.7.0",
     "mime": "^1.3.4",
     "progress": "^1.1.8",
@@ -70,10 +70,19 @@
   },
   "devDependencies": {
     "ava-tf": "^0.12.3",
+    "babel-eslint": "^6.0.0-beta.1",
     "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-transform-es2015-parameters": "^6.6.0",
+    "babel-plugin-transform-async-to-module-method": "^6.5.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.6.4",
+    "babel-plugin-transform-es2015-parameters": "^6.6.4",
+    "babel-plugin-transform-strict-mode": "^6.6.4",
+    "babel-register": "^6.6.0",
+    "electron-download": "^1.4.1",
     "eslint": "^2.2.0",
+    "eslint-plugin-ava": "sindresorhus/eslint-plugin-ava",
     "ghooks": "^1.0.3",
+    "json-parse-helpfulerror": "^1.0.3",
+    "option-chain": "^0.1.1",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "proxyquire": "^1.7.4",
@@ -81,22 +90,41 @@
     "should": "^8.2.2",
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
-    "tape": "^4.4.0",
-    "ts-babel": "^0.4.3",
+    "tape": "^4.5.0",
+    "ts-babel": "^0.4.5",
     "tsconfig-glob": "^0.4.1",
     "tsd-generator": "^2.0.2",
     "tslint": "^3.5.0",
-    "typescript": "^1.8.2",
+    "typescript": "^1.8.7",
     "validate-commit-msg": "^2.1.0"
   },
   "babel": {
     "plugins": [
       "transform-es2015-parameters",
       "array-includes"
-    ]
+    ],
+    "env": {
+      "test": {
+        "ignore": "**/out/*.js",
+        "plugins": [
+          [
+            "babel-plugin-transform-async-to-module-method",
+            {
+              "module": "bluebird",
+              "method": "coroutine"
+            }
+          ],
+          "babel-plugin-transform-es2015-modules-commonjs",
+          "transform-strict-mode"
+        ]
+      }
+    }
   },
   "ava": {
-    "verbose": true
+    "verbose": true,
+    "require": [
+      "babel-register"
+    ]
   },
   "typings": "./out/electron-builder.d.ts",
   "config": {

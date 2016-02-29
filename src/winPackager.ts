@@ -28,7 +28,7 @@ export default class WinPackager extends PlatformPackager<any> {
       // on appveyor (well, yes, it is a Windows bug)
       // Because NSIS support will be dropped some day, correct solution is not implemented
       const iconPath = this.customDistOptions == null ? null : this.customDistOptions.icon
-      require("../lib/win").copyAssetsToTmpFolder(iconPath || path.join(this.projectDir, "build", "icon.ico"))
+      require("../lib/win").copyAssetsToTmpFolder(iconPath || path.join(this.buildResourcesDir, "icon.ico"))
     }
 
     // https://developer.mozilla.org/en-US/docs/Signing_an_executable_with_Authenticode
@@ -77,12 +77,12 @@ export default class WinPackager extends PlatformPackager<any> {
         if (this.info.repositoryInfo != null) {
           const info = await this.info.repositoryInfo.getInfo(this)
           if (info != null) {
-            iconUrl = `https://raw.githubusercontent.com/${info.user}/${info.project}/master/build/icon.ico`
+            iconUrl = `https://raw.githubusercontent.com/${info.user}/${info.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`
           }
         }
 
         if (!iconUrl) {
-          throw new Error("iconUrl is not specified, please see https://github.com/develar/electron-complete-builder#in-short")
+          throw new Error("iconUrl is not specified, please see https://github.com/loopline-systems/electron-builder#in-short")
         }
       }
     }
@@ -100,9 +100,9 @@ export default class WinPackager extends PlatformPackager<any> {
       productName: appName,
       version: version,
       description: this.metadata.description,
-      authors: this.metadata.author,
+      authors: this.metadata.author.name,
       iconUrl: iconUrl,
-      setupIcon: path.join(this.projectDir, "build", "icon.ico"),
+      setupIcon: path.join(this.buildResourcesDir, "icon.ico"),
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
     }, this.customDistOptions)
@@ -112,8 +112,7 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     try {
-      const build = <(options: any, callback: (error: Error) => void) => void>require("electron-winstaller-temp-fork").build
-      await BluebirdPromise.promisify(build)(options)
+      await require("electron-winstaller-temp-fork").createWindowsInstaller(options)
     }
     catch (e) {
       if (!e.message.includes("Unable to set icon")) {
