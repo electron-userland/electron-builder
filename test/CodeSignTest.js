@@ -1,8 +1,8 @@
-import { createKeychain, deleteKeychain, generateKeychainName } from "../out/codeSign"
+import { createKeychain, deleteKeychain, generateKeychainName } from "electron-builder/out/codeSign"
 import assertThat from "should/as-function"
 import avaTest from "ava-tf"
 import { CSC_NAME, CSC_LINK, CSC_KEY_PASSWORD } from "./helpers/codeSignData"
-import promises from "../out/promise"
+import promises from "electron-builder/out/promise"
 
 function test(doNotSkip, name, testFunction) {
   if (doNotSkip) {

@@ -158,7 +158,8 @@ export default class WinPackager extends PlatformPackager<any> {
           title: options.name,
           version: options.version,
           icon: options.setupIcon,
-          publisher: options.authors
+          publisher: options.authors,
+          verbosity: 2
         }, this.customDistOptions)
       }
     }))
