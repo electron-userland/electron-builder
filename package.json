@@ -86,7 +86,7 @@
     "tsconfig-glob": "^0.4.1",
     "tsd-generator": "^2.0.2",
     "tslint": "^3.5.0",
-    "typescript": "^1.8.2",
+    "typescript": "^1.8.5",
     "validate-commit-msg": "^2.1.0"
   },
   "babel": {
