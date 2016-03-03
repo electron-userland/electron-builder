@@ -105,6 +105,7 @@ export default class WinPackager extends PlatformPackager<any> {
       setupIcon: path.join(this.buildResourcesDir, "icon.ico"),
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
+      fixUpPaths: false
     }, this.customDistOptions)
 
     if (this.isNsis) {
@@ -134,7 +135,7 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     return await BluebirdPromise.all([
-      renameFile(path.join(installerOutDir, appName + "Setup.exe"), installerExePath)
+      renameFile(path.join(installerOutDir, "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
       renameFile(path.join(installerOutDir, appName + "-" + version + "-full.nupkg"), path.join(installerOutDir, appName + "-" + version + archSuffix + "-full.nupkg"))
         .then(it => this.dispatchArtifactCreated(it))

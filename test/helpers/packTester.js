@@ -14,7 +14,7 @@ import pathSorter from "path-sort"
 const copyDir = Promise.promisify(fse.copy)
 const tmpDir = Promise.promisify(tmp.dir)
 
-export async function assertPack(projectDir, platform, target, useTempDir, tempDirCreated) {
+export async function assertPack(projectDir, platform, packagerOptions, useTempDir, tempDirCreated) {
   projectDir = path.join(__dirname, "..", "fixtures", projectDir)
   // const isDoNotUseTempDir = platform === "darwin"
   if (useTempDir) {
@@ -36,14 +36,13 @@ export async function assertPack(projectDir, platform, target, useTempDir, tempD
     }
   }
 
-  const packager = new Packager({
+  const packager = new Packager(Object.assign({
     projectDir: projectDir,
     cscLink: CSC_LINK,
     cscKeyPassword: CSC_KEY_PASSWORD,
     dist: true,
     platform: Array.isArray(platform) ? platform : [platform],
-    target: target
-  })
+  }, packagerOptions))
 
   await packager.build()
   if (platform === "darwin" || (platform === "all" && process.platform === "darwin")) {
