@@ -16,7 +16,7 @@ export interface DevMetadata extends Metadata {
   directories?: MetadataDirectories
 }
 
-interface MetadataDirectories {
+export interface MetadataDirectories {
   buildResources?: string
 }
 

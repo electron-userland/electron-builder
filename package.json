@@ -6,12 +6,12 @@
   "scripts": {
     "compile": "tsconfig -i 2 && ts-babel",
     "lint": "eslint ./lib test cli.js index.js && tslint src/*",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run compile && npm run lint && npm run declaration",
     "test": "node ./test/helpers/runTests.js",
     "test-nix": "result=\"$(tape index.spec.js ./lib/*.spec.js ./lib/**/*.spec.js)\"; echo \"$result\" | tap-spec; echo \"$result\" | tnyan; ava",
     "test-win": "ava",
     "declaration": "dts-generator --name electron-builder --out out/electron-builder.d.ts",
-    "semantic-release": "npm run declaration && semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
