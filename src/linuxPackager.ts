@@ -63,13 +63,13 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
     return "linux"
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
     const specification: DebOptions = {
       version: this.metadata.version,
       title: this.metadata.name,
       comment: this.metadata.description,
       maintainer: `${this.metadata.author.name} <${this.metadata.author.email}>`,
-      arch: this.currentArch === "ia32" ? 32 : 64,
+      arch: arch === "ia32" ? 32 : 64,
       target: "deb",
       executable: this.metadata.name,
       desktop: `[Desktop Entry]

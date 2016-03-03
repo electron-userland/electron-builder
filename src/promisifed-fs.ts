@@ -1,4 +1,4 @@
-import * as fs from "fs"
+import * as fs from "fs-extra"
 import { Promise as BluebirdPromise } from "bluebird"
 
 const readFileAsync: ((filename: string, encoding?: string) => Promise<string | Buffer>) = BluebirdPromise.promisify(fs.readFile)
@@ -17,6 +17,13 @@ export function deleteFile(path: string, ignoreIfNotExists: boolean = false): Bl
 export function renameFile(oldPath: string, newPath: string): BluebirdPromise<string> {
   return new BluebirdPromise<any>((resolve, reject) => {
     fs.rename(oldPath, newPath, error => error == null ? resolve(newPath) : reject(error))
+  })
+}
+
+// returns copied name
+export function copyFile(src: string, dest: string): BluebirdPromise<string> {
+  return new BluebirdPromise<any>((resolve, reject) => {
+    fs.copy(src, dest, error => error == null ? resolve(dest) : reject(error))
   })
 }
 

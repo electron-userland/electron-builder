@@ -35,7 +35,10 @@ test("custom app dir", async function () {
     platforms = ["win32"]
   }
 
-  await assertPack("test-app-one", platforms, [], true, async projectDir => {
+  await assertPack("test-app-one", platforms, {
+    // speed up tests, we don't need check every arch
+    arch: process.arch
+  }, true, async projectDir => {
     const file = path.join(projectDir, "package.json")
     const data = parseJson(await readText(file))
     data.directories = {

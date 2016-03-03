@@ -70,8 +70,6 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
   customDistOptions: DC
 
-  currentArch: string
-
   protected abstract getBuildConfigurationKey(): string
 
   constructor(protected info: BuildInfo) {
@@ -97,7 +95,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     this.info.eventEmitter.emit("artifactCreated", path)
   }
 
-  pack(platform: string, outDir: string, appOutDir: string): Promise<any> {
+  pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
@@ -110,7 +108,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
       out: outDir,
       name: this.metadata.name,
       platform: platform,
-      arch: this.currentArch,
+      arch: arch,
       version: this.info.electronVersion,
       icon: path.join(this.buildResourcesDir, "icon"),
       asar: true,
@@ -132,5 +130,5 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     return pack(options)
   }
 
-  abstract packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any>
+  abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
 }

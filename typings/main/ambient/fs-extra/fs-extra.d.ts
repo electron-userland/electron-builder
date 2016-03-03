@@ -11,28 +11,29 @@
 declare module "fs-extra" {
 	import stream = require("stream");
 
-	export interface Stats {
-		isFile(): boolean;
-		isDirectory(): boolean;
-		isBlockDevice(): boolean;
-		isCharacterDevice(): boolean;
-		isSymbolicLink(): boolean;
-		isFIFO(): boolean;
-		isSocket(): boolean;
-		dev: number;
-		ino: number;
-		mode: number;
-		nlink: number;
-		uid: number;
-		gid: number;
-		rdev: number;
-		size: number;
-		blksize: number;
-		blocks: number;
-		atime: Date;
-		mtime: Date;
-		ctime: Date;
-	}
+	interface Stats {
+     isFile(): boolean;
+     isDirectory(): boolean;
+     isBlockDevice(): boolean;
+     isCharacterDevice(): boolean;
+     isSymbolicLink(): boolean;
+     isFIFO(): boolean;
+     isSocket(): boolean;
+     dev: number;
+     ino: number;
+     mode: number;
+     nlink: number;
+     uid: number;
+     gid: number;
+     rdev: number;
+     size: number;
+     blksize: number;
+     blocks: number;
+     atime: Date;
+     mtime: Date;
+     ctime: Date;
+     birthtime: Date;
+ }
 
 	export interface FSWatcher {
 		close(): void;
@@ -87,7 +88,7 @@ declare module "fs-extra" {
 	export function writeJsonSync(file: string, object: any, options?: OpenOptions): void;
 	export function writeJSONSync(file: string, object: any, options?: OpenOptions): void;
 
-	export function rename(oldPath: string, newPath: string, callback?: (err: Error) => void): void;
+	export function rename(oldPath: string, newPath: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
 	export function renameSync(oldPath: string, newPath: string): void;
 	export function truncate(fd: number, len: number, callback?: (err: Error) => void): void;
 	export function truncateSync(fd: number, len: number): void;
@@ -123,7 +124,7 @@ declare module "fs-extra" {
 	export function realpath(path: string, callback?: (err: Error, resolvedPath: string) => void): void;
 	export function realpath(path: string, cache: string, callback: (err: Error, resolvedPath: string) => void): void;
 	export function realpathSync(path: string, cache?: boolean): string;
-	export function unlink(path: string, callback?: (err: Error) => void): void;
+	export function unlink(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
 	export function unlinkSync(path: string): void;
 	export function rmdir(path: string, callback?: (err: Error) => void): void;
 	export function rmdirSync(path: string): void;
