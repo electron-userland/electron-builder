@@ -8,6 +8,7 @@ test.ifNotTravis("win", async function () {
 // nsis is deprecated and not thread-safe - just do not run on CI to avoid failures
 test.ifNotCi.serial("win: nsis", async function () {
   await assertPack("test-app-one", "win32", {
-    target: ["nsis"]
+    target: ["nsis"],
+    arch: process.arch
   }, true)
 })

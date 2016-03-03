@@ -72,12 +72,11 @@ export class Packager implements BuildInfo {
       for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(arch)
 
-        helper.currentArch = arch
         const outDir = path.join(this.projectDir, "dist")
         const appOutDir = path.join(outDir, this.metadata.name + "-" + platform + "-" + arch)
-        await helper.pack(platform, outDir, appOutDir)
+        await helper.pack(platform, outDir, appOutDir, arch)
         if (this.options.dist) {
-          distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir))
+          distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir, arch))
         }
       }
     }

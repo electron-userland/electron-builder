@@ -5,7 +5,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import * as path from "path"
 import { Stats } from "fs"
 import { log } from "./util"
-import { deleteFile, stat, renameFile } from "./promisifed-fs"
+import { deleteFile, stat, renameFile, copyFile } from "./promisifed-fs"
 import * as fse from "fs-extra"
 
 const __awaiter = tsAwaiter
@@ -49,25 +49,25 @@ export default class WinPackager extends PlatformPackager<any> {
     return "win"
   }
 
-  pack(platform: string, outDir: string, appOutDir: string): Promise<any> {
+  pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
     if (this.options.dist && !this.isNsis) {
-      const installerOut = this.computeDistOut(outDir)
+      const installerOut = this.computeDistOut(outDir, arch)
       log("Removing %s", installerOut)
       return BluebirdPromise.all([
-        super.pack(platform, outDir, appOutDir),
+        super.pack(platform, outDir, appOutDir, arch),
         emptyDir(installerOut)
       ])
     }
     else {
-      return super.pack(platform, outDir, appOutDir)
+      return super.pack(platform, outDir, appOutDir, arch)
     }
   }
 
-  private computeDistOut(outDir: string): string {
-    return path.join(outDir, (this.isNsis ? "nsis" : "win") + (this.currentArch === "x64" ? "-x64" : ""))
+  private computeDistOut(outDir: string, arch: string): string {
+    return path.join(outDir, (this.isNsis ? "nsis" : "win") + (arch === "x64" ? "-x64" : ""))
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
     let iconUrl = this.metadata.build.iconUrl
     if (!iconUrl) {
       if (this.customDistOptions != null) {
@@ -89,9 +89,9 @@ export default class WinPackager extends PlatformPackager<any> {
 
     const certificateFile = await this.certFilePromise
     const version = this.metadata.version
-    const installerOutDir = this.computeDistOut(outDir)
+    const installerOutDir = this.computeDistOut(outDir, arch)
     const appName = this.metadata.name
-    const archSuffix = this.currentArch === "x64" ? "-x64" : ""
+    const archSuffix = arch === "x64" ? "-x64" : ""
     const installerExePath = path.join(installerOutDir, appName + "Setup-" + version + archSuffix + ".exe")
     const options = Object.assign({
       name: this.metadata.name,
@@ -134,12 +134,22 @@ export default class WinPackager extends PlatformPackager<any> {
       }
     }
 
-    return await BluebirdPromise.all([
+    const promises = [
       renameFile(path.join(installerOutDir, "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
       renameFile(path.join(installerOutDir, appName + "-" + version + "-full.nupkg"), path.join(installerOutDir, appName + "-" + version + archSuffix + "-full.nupkg"))
         .then(it => this.dispatchArtifactCreated(it))
-    ])
+    ]
+
+    if (arch === "x64") {
+      this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
+    }
+    else {
+      promises.push(copyFile(path.join(installerOutDir, "RELEASES"), path.join(installerOutDir, "RELEASES-ia32"))
+        .then(it => this.dispatchArtifactCreated(it)))
+    }
+
+    return await BluebirdPromise.all(promises)
   }
 
   private async nsis(options: any, installerFile: string) {

@@ -52,7 +52,7 @@
     "bluebird": "^3.3.3",
     "command-line-args": "^2.1.6",
     "electron-packager-tf": "^5.2.3",
-    "electron-winstaller-temp-fork": "^2.0.5-beta.2",
+    "electron-winstaller-temp-fork": "^2.0.5-beta.3",
     "fs-extra": "^0.26.5",
     "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
@@ -105,16 +105,16 @@
     ],
     "env": {
       "test": {
-        "ignore": "**/out/*.js",
+        "ignore": ["**/out/*.js"],
         "plugins": [
           [
-            "babel-plugin-transform-async-to-module-method",
+            "transform-async-to-module-method",
             {
               "module": "bluebird",
               "method": "coroutine"
             }
           ],
-          "babel-plugin-transform-es2015-modules-commonjs",
+          "transform-es2015-modules-commonjs",
           "transform-strict-mode"
         ]
       }
