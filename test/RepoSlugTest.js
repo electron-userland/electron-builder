@@ -1,8 +1,8 @@
-import { InfoRetriever } from "electron-builder/out/repositoryInfo"
+import { InfoRetriever } from "out/repositoryInfo"
 import assertThat from "should/as-function"
 import test from "ava-tf"
 
-test("repo slug from TRAVIS_REPO_SLUG", function () {
+test("repo slug from TRAVIS_REPO_SLUG", () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
@@ -26,7 +26,7 @@ function restoreEnv(name, value) {
   }
 }
 
-test("repo slug from APPVEYOR", function () {
+test("repo slug from APPVEYOR", () => {
   const oldAppveyorAccountName = process.env.APPVEYOR_ACCOUNT_NAME
   const oldAppveyorProjectName = process.env.APPVEYOR_PROJECT_NAME
   const travisSlug = process.env.TRAVIS_REPO_SLUG

@@ -69,8 +69,7 @@ export class Packager implements BuildInfo {
     const distTasks: Array<Promise<any>> = []
     for (let platform of platforms) {
       const helper = this.createHelper(platform, cleanupTasks)
-      const archs = platform === "darwin" ? ["x64"] : (this.options.arch == null || this.options.arch === "all" ? ["ia32", "x64"] : [this.options.arch])
-      for (let arch of archs) {
+      for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(arch)
 
         helper.currentArch = arch
@@ -176,7 +175,11 @@ export class Packager implements BuildInfo {
   }
 }
 
-function normalizePlatforms(platforms: Array<string>): Array<string> {
+export function normalizeArchs(platform: string, arch?: string) {
+  return platform === "darwin" ? ["x64"] : (arch == null || arch === "all" ? ["ia32", "x64"] : [arch])
+}
+
+export function normalizePlatforms(platforms: Array<string>): Array<string> {
   if (platforms == null || platforms.length === 0) {
     return [process.platform]
   }

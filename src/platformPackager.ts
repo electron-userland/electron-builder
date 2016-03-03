@@ -12,6 +12,12 @@ const pack = BluebirdPromise.promisify(packager)
 
 export interface DevMetadata extends Metadata {
   build: DevBuildMetadata
+
+  directories?: MetadataDirectories
+}
+
+interface MetadataDirectories {
+  buildResources?: string
 }
 
 export interface DevBuildMetadata {
@@ -57,9 +63,10 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
   protected options: PackagerOptions
 
   protected projectDir: string
+  protected buildResourcesDir: string
 
   metadata: AppMetadata
-  devMetadata: Metadata
+  devMetadata: DevMetadata
 
   customDistOptions: DC
 
@@ -73,10 +80,17 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     this.metadata = info.metadata
     this.devMetadata = info.devMetadata
 
+    this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
+
     if (this.options.dist) {
       const buildMetadata: any = info.devMetadata.build
       this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.getBuildConfigurationKey()]
     }
+  }
+
+  protected get relativeBuildResourcesDirname() {
+    const directories = this.devMetadata.directories
+    return (directories == null ? null : directories.buildResources) || "build"
   }
 
   protected dispatchArtifactCreated(path: string) {
@@ -98,7 +112,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
       platform: platform,
       arch: this.currentArch,
       version: this.info.electronVersion,
-      icon: path.join(this.projectDir, "build", "icon"),
+      icon: path.join(this.buildResourcesDir, "icon"),
       asar: true,
       overwrite: true,
       "app-version": version,

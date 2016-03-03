@@ -1,13 +1,13 @@
 import test from "ava-tf"
-import { GitHubPublisher } from "electron-builder/out/gitHubPublisher"
+import { GitHubPublisher } from "out/gitHubPublisher"
 import { join } from "path"
 
 function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 function versionNumber() {
-  return getRandomInt(0, 99) + "." + Date.now() + "." + getRandomInt(0, 9);
+  return getRandomInt(0, 99) + "." + Date.now() + "." + getRandomInt(0, 9)
 }
 
 const token = new Buffer("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()

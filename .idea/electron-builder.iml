@@ -10,7 +10,6 @@
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app-one/dist" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/app/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/test-app/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/test/node_modules" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -33,7 +33,7 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
       prefix: "png-icons"
     })
 
-    const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.projectDir, "build", "icon.icns")])
+    const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
     if (!outputs[0].toString().includes("ih32")) {
       log("48x48 is not found in the icns, 128x128 will be resized")
       // icns doesn't contain required 48x48, use gm to resize

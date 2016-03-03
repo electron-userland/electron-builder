@@ -57,9 +57,9 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
 
         const specification: appdmg.Specification = {
           title: this.metadata.name,
-          icon: "build/icon.icns",
+          icon: path.join(this.buildResourcesDir, "icon.icns"),
           "icon-size": 80,
-          background: "build/background.png",
+          background: path.join(this.buildResourcesDir, "background.png"),
           contents: [
             {
               "x": 410, "y": 220, "type": "link", "path": "/Applications"
