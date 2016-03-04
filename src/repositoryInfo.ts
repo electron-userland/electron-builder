@@ -22,6 +22,7 @@ export interface MetadataAuthor {
 export interface AppMetadata extends Metadata {
   version: string
   name: string
+  productName: string
   description: string
   author: MetadataAuthor
 

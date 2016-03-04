@@ -55,6 +55,9 @@ export class Packager implements BuildInfo {
     await BluebirdPromise.all(Array.from(new Set([buildPackageFile, appPackageFile]), readPackageJson))
       .then(result => {
         this.metadata = result[result.length - 1]
+        if (this.metadata.productName) {
+          this.metadata.name = this.metadata.productName
+        }
         this.devMetadata = result[0]
         this.checkMetadata(appPackageFile, platforms)
 
