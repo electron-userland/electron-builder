@@ -4,15 +4,14 @@ import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion, rea
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
 import { AppMetadata, InfoRetriever } from "./repositoryInfo"
-import { PackagerOptions, PlatformPackager, BuildInfo, DevMetadata } from "./platformPackager"
+import { PackagerOptions, PlatformPackager, BuildInfo, DevMetadata, Platform } from "./platformPackager"
 import MacPackager from "./macPackager"
 import WinPackager from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 
-const __awaiter = tsAwaiter
+const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
@@ -39,7 +38,7 @@ export class Packager implements BuildInfo {
     this.appDir = this.computeAppDirectory()
   }
 
-  artifactCreated(handler: (path: string) => void): Packager {
+  artifactCreated(handler: (file: string, platform: Platform) => void): Packager {
     addHandler(this.eventEmitter, "artifactCreated", handler)
     return this
   }
@@ -52,7 +51,7 @@ export class Packager implements BuildInfo {
     const buildPackageFile = this.devPackageFile
     const appPackageFile = this.projectDir === this.appDir ? buildPackageFile : path.join(this.appDir, "package.json")
     const platforms = normalizePlatforms(this.options.platform)
-    await BluebirdPromise.all(Array.from(new Set([buildPackageFile, appPackageFile]), readPackageJson))
+    await BluebirdPromise.map(Array.from(new Set([buildPackageFile, appPackageFile])), readPackageJson)
       .then(result => {
         this.metadata = result[result.length - 1]
         this.devMetadata = result[0]

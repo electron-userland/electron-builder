@@ -1,7 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="BuildTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/BuildTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters --harmony_array_includes -r babel-register" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="BuildTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/BuildTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters --harmony_array_includes" working-dir="$PROJECT_DIR$">
     <envs>
-      <env name="BABEL_ENV" value="test" />
       <env name="NODE_PATH" value="." />
     </envs>
     <method />

@@ -1,14 +1,8 @@
 import { execFile, spawn as _spawn } from "child_process"
 import { Promise as BluebirdPromise } from "bluebird"
-import "source-map-support/register"
 import readPackageJsonAsync = require("read-package-json")
 
 export const log = console.log
-
-BluebirdPromise.config({
-  longStackTraces: true,
-  cancellation: true
-})
 
 export const DEFAULT_APP_DIR_NAME = "app"
 

@@ -1,11 +1,10 @@
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, Platform } from "./platformPackager"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
 import { log, spawn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
 
-const __awaiter = tsAwaiter
+const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
 export default class MacPackager extends PlatformPackager<appdmg.Specification> {
@@ -24,8 +23,8 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     }
   }
 
-  getBuildConfigurationKey() {
-    return "osx"
+  protected get platform() {
+    return Platform.OSX
   }
 
   async pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
@@ -100,7 +99,14 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     const appName = this.metadata.name
     // -y param is important - "store symbolic links as the link instead of the referenced file"
     const resultPath = `${appName}-${this.metadata.version}-mac.zip`
-    return spawn("zip", ["-ryXq", resultPath, appName + ".app"], {
+    const args = ["-ryXq", resultPath, appName + ".app"]
+
+    // todo move to options
+    if (process.env.TEST_MODE === "true") {
+      args.unshift("-0")
+    }
+
+    return spawn("zip", args, {
       cwd: outDir,
       stdio: "inherit",
     })

@@ -6,45 +6,41 @@
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
 declare module "tmp" {
+  export interface TmpFileOptions extends TmpOptions {
+    mode?: number;
+  }
 
-	module tmp {
-		interface Options extends SimpleOptions {
-			mode?: number;
-		}
+  export interface TmpOptions {
+    prefix?: string;
+    postfix?: string;
 
-		interface SimpleOptions {
-			prefix?: string;
-			postfix?: string;
-			template?: string;
-			dir?: string;
-			tries?: number;
-			keep?: boolean;
-			unsafeCleanup?: boolean;
-		}
+    template?: string;
+    dir?: string;
+    tries?: number;
+    keep?: boolean;
+    unsafeCleanup?: boolean;
+  }
 
-		interface SynchrounousResult {
-			name: string;
-			fd: number;
-			removeCallback: () => void;
-		}
+  interface SynchrounousResult {
+    name: string;
+    fd: number;
+    removeCallback: () => void;
+  }
 
-		function file(callback: (err: any, path: string, fd: number, cleanupCallback: () => void) => void): void;
-		function file(config: Options, callback?: (err: any, path: string, fd: number, cleanupCallback: () => void) => void): void;
+  function file(callback: (err: any, path: string, fd: number, cleanupCallback: () => void) => void): void;
+  function file(config: TmpFileOptions, callback?: (err: any, path: string, fd: number, cleanupCallback: () => void) => void): void;
 
-		function fileSync(config?: Options): SynchrounousResult;
+  function fileSync(config?: TmpFileOptions): SynchrounousResult;
 
-		function dir(callback: (err: any, path: string, cleanupCallback: () => void) => void): void;
-		function dir(config: Options, callback?: (err: any, path: string, cleanupCallback: () => void) => void): void;
+  export function dir(callback: (err: any, path: string, cleanupCallback: () => void) => void): void;
+  export function dir(config: TmpFileOptions, callback?: (err: any, path: string, cleanupCallback: () => void) => void): void;
 
-		function dirSync(config?: Options): SynchrounousResult;
+  function dirSync(config?: TmpFileOptions): SynchrounousResult;
 
-		function tmpName(callback: (err: any, path: string) => void): void;
-		function tmpName(config: SimpleOptions, callback?: (err: any, path: string) => void): void;
+  function tmpName(callback: (err: any, path: string) => void): void;
+  function tmpName(config: TmpOptions, callback?: (err: any, path: string) => void): void;
 
-		function tmpNameSync(config?: SimpleOptions): string;
+  function tmpNameSync(config?: TmpOptions): string;
 
-		function setGracefulCleanup(): void;
-	}
-
-	export = tmp;
+  function setGracefulCleanup(): void;
 }

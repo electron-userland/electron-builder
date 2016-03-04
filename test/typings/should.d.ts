@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.8
+// Compiled using typings@0.6.9
 // Source: https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/5aa6dff6990465c7fb41504538ad7aa133ab01d3/should/should.d.ts
 // Type definitions for should.js v8.1.1
 // Project: https://github.com/shouldjs/should.js
@@ -168,5 +168,9 @@ interface Window {
 }
 
 declare module "should" {
+  export = should;
+}
+
+declare module "should/as-function" {
   export = should;
 }

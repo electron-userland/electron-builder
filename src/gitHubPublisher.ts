@@ -3,17 +3,16 @@ import { log } from "./util"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
-import { stat } from "./promisifed-fs"
+import { stat } from "fs-extra-p"
 import { createReadStream } from "fs"
 import { gitHubRequest, HttpError, doGitHubRequest } from "./gitHubRequest"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
 import { ReadStream } from "tty"
 import progressStream = require("progress-stream")
 import ProgressBar = require("progress")
 
-const __awaiter = tsAwaiter
-Array.isArray(__awaiter)
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("./awaiter")
 
 export interface Publisher {
   upload(path: string): Promise<any>

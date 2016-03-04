@@ -19,13 +19,15 @@
     "no-unreachable": true,
     "no-unused-expression": true,
     "no-unused-variable": [
-      true
+      true,
+      {
+        "ignore-pattern": "^_+awaiter$"
+      }
     ],
     "no-use-before-declare": true,
     "no-internal-module": true,
     "no-trailing-whitespace": true,
     "no-var-keyword": true,
-    "no-var-requires": true,
     "one-line": [
       true,
       "check-open-brace",
