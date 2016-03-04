@@ -90,7 +90,8 @@ See [OS X options](https://www.npmjs.com/package/appdmg#json-specification) and 
 * `.full-nupkg`: required for Squirrel.Windows.
 * `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
 
-You need to deploy somewhere [releases/downloads server](https://github.com/GitbookIO/nuts).
+You need to deploy somewhere releases/downloads server.
+Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
 
 In general, there is a possibility to setup it as a service for all (it is boring to setup own if cloud service is possible).
 May be it will be soon (feel free to file an issue to track progress).

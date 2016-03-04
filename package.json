@@ -77,7 +77,7 @@
     "babel-plugin-transform-es2015-parameters": "^6.6.4",
     "babel-plugin-transform-strict-mode": "^6.6.4",
     "babel-register": "^6.6.0",
-    "electron-download": "^1.4.1",
+    "electron-download": "^2.0.0",
     "eslint": "^2.2.0",
     "eslint-plugin-ava": "sindresorhus/eslint-plugin-ava",
     "ghooks": "^1.0.3",
@@ -96,7 +96,7 @@
     "tsd-generator": "^2.0.2",
     "tslint": "^3.5.0",
     "typescript": "^1.8.7",
-    "validate-commit-msg": "^2.1.0"
+    "validate-commit-msg": "^2.2.0"
   },
   "babel": {
     "plugins": [
