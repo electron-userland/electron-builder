@@ -78,7 +78,7 @@
     "babel-plugin-transform-strict-mode": "^6.6.4",
     "babel-register": "^6.6.0",
     "electron-download": "^2.0.0",
-    "eslint": "^2.2.0",
+    "eslint": "^2.3.0",
     "eslint-plugin-ava": "sindresorhus/eslint-plugin-ava",
     "ghooks": "^1.0.3",
     "json-parse-helpfulerror": "^1.0.3",
@@ -105,7 +105,9 @@
     ],
     "env": {
       "test": {
-        "ignore": ["**/out/*.js"],
+        "ignore": [
+          "**/out/*.js"
+        ],
         "plugins": [
           [
             "transform-async-to-module-method",
