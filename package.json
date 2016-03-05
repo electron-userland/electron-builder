@@ -75,7 +75,7 @@
     "babel-plugin-transform-async-to-module-method": "^6.5.2",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.6.4",
     "babel-plugin-transform-es2015-parameters": "^6.6.4",
-    "babel-plugin-transform-strict-mode": "^6.6.4",
+    "babel-plugin-transform-strict-mode": "^6.6.5",
     "babel-register": "^6.6.0",
     "electron-download": "^2.0.0",
     "eslint": "^2.2.0",
@@ -105,7 +105,9 @@
     ],
     "env": {
       "test": {
-        "ignore": ["**/out/*.js"],
+        "ignore": [
+          "**/out/*.js"
+        ],
         "plugins": [
           [
             "transform-async-to-module-method",
