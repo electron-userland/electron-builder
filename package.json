@@ -96,7 +96,7 @@
     "tsd-generator": "^2.0.2",
     "tslint": "^3.5.0",
     "typescript": "^1.8.7",
-    "validate-commit-msg": "^2.2.0"
+    "validate-commit-msg": "^2.3.0"
   },
   "babel": {
     "plugins": [
@@ -105,7 +105,9 @@
     ],
     "env": {
       "test": {
-        "ignore": ["**/out/*.js"],
+        "ignore": [
+          "**/out/*.js"
+        ],
         "plugins": [
           [
             "transform-async-to-module-method",
