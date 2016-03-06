@@ -90,7 +90,7 @@
     "should": "^8.2.2",
     "tap-nyan": "0.0.2",
     "tap-spec": "^4.1.1",
-    "tape": "^4.5.0",
+    "tape": "^4.5.1",
     "ts-babel": "^0.4.5",
     "tsconfig-glob": "^0.4.1",
     "tsd-generator": "^2.0.2",
@@ -105,7 +105,9 @@
     ],
     "env": {
       "test": {
-        "ignore": ["**/out/*.js"],
+        "ignore": [
+          "**/out/*.js"
+        ],
         "plugins": [
           [
             "transform-async-to-module-method",
