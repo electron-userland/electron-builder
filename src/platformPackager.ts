@@ -42,6 +42,7 @@ export interface PackagerOptions {
   projectDir?: string
 
   cscLink?: string
+  csaLink?: string
   cscKeyPassword?: string
 }
 
