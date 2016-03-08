@@ -3,9 +3,8 @@ import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "./httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
 
-const __awaiter = tsAwaiter
+const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
 export function gitHubRequest<T>(path: string, token: string, data: { [name: string]: any; } = null, method: string = "GET"): BluebirdPromise<T> {

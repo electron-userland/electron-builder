@@ -7,7 +7,7 @@
  * Licensed under the MIT license.
  */
 
-var test             = require( 'tape' );
+var test             = require( 'ava-tf' );
 var tmp              = require( 'tmp' );
 var fs               = require( 'fs' );
 var proxyquire       = require( 'proxyquire' );
@@ -17,21 +17,21 @@ test( 'Builder.init', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    './out/index.js',
+    'out',
     {
       './platforms' : {}
     }
   );
 
-  t.equal( typeof Builder.init, 'function' );
-  t.equal( typeof Builder.init().build, 'function' );
+  t.is( typeof Builder.init, 'function' );
+  t.is( typeof Builder.init().build, 'function' );
 } );
 
-test( 'Builder.init().build - call the correct platform', function( t ) {
+test.cb( 'Builder.init().build - call the correct platform', function( t ) {
   t.plan( 2 );
 
   var Builder = proxyquireStrict(
-    './out/index.js',
+    'out',
     {
       './platforms' : function( platform ) {
         if ( platform === 'bar' ) {
@@ -58,19 +58,19 @@ test( 'Builder.init().build - call the correct platform', function( t ) {
       log      : function() {}
     },
     function( error, result ) {
-      t.equal( error, null );
-      t.equal( result, 'foo' );
+      t.is( error, null );
+      t.is( result, 'foo' );
       t.end();
     }
   );
 } );
 
-test( 'Builder.init().build - create output directory if not present', function( t ) {
+test.cb( 'Builder.init().build - create output directory if not present', function( t ) {
   t.plan( 1 );
 
   var tmpDir  = tmp.dirSync( { unsafeCleanup : true } );
   var Builder = proxyquireStrict(
-    './out/index.js',
+    'out',
     {
       './platforms' : function( platform ) {
         if ( platform === 'bar' ) {
@@ -98,7 +98,7 @@ test( 'Builder.init().build - create output directory if not present', function(
       log      : function() {}
     },
     function( error, result ) {
-      t.equal( fs.existsSync( tmpDir.name + '/foo' ), true );
+      t.is( fs.existsSync( tmpDir.name + '/foo' ), true );
 
       tmpDir.removeCallback();
 
@@ -111,7 +111,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
   t.plan( 5 );
 
   var Builder = proxyquireStrict(
-    './out/index.js',
+    'out',
     {
       './platforms' : {}
     }
@@ -125,7 +125,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       log      : function() {}
     },
     function( error ) {
-      t.equal( error.message, 'Required option not set' );
+      t.is( error.message, 'Required option not set' );
     }
   );
 
@@ -137,7 +137,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       log      : function() {}
     },
     function( error ) {
-      t.equal( error.message, 'Required option not set' );
+      t.is( error.message, 'Required option not set' );
     }
   );
 
@@ -149,7 +149,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       log      : function() {}
     },
     function( error ) {
-      t.equal( error.message, 'Required option not set' );
+      t.is( error.message, 'Required option not set' );
     }
   );
 
@@ -161,7 +161,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       log      : function() {}
     },
     function( error ) {
-      t.equal( error.message, 'Required option not set' );
+      t.is( error.message, 'Required option not set' );
     }
   );
 
@@ -174,7 +174,7 @@ test( 'Builder.init().build - check for required options', function( t ) {
       log      : function() {}
     },
     function( error ) {
-      t.equal(
+      t.is(
         error.message,
         'No config property found for `baz`.\nPlease check your configuration file and the documentation.'
       );

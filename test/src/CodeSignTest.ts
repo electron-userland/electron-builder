@@ -1,14 +1,17 @@
 import { createKeychain, deleteKeychain, generateKeychainName } from "out/codeSign"
-import assertThat from "should/as-function"
+import * as assertThat from "should/as-function"
 import test from "./helpers/avaEx"
 import { CSC_NAME, CSC_LINK, CSC_KEY_PASSWORD } from "./helpers/codeSignData"
-import promises from "out/promise"
+import { executeFinally, all } from "out/promise"
 
-test.ifOsx("create keychain", async () => {
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("out/awaiter")
+
+test.ifOsx("create keychain", async (t) => {
   const keychainName = generateKeychainName()
-  await promises.executeFinally(createKeychain(keychainName, CSC_LINK, CSC_KEY_PASSWORD)
+  await executeFinally(createKeychain(keychainName, CSC_LINK, CSC_KEY_PASSWORD)
     .then(result => {
       assertThat(result.cscKeychainName).not.empty()
       assertThat(result.cscName).equal(CSC_NAME)
-    }), () => promises.all([deleteKeychain(keychainName)]))
+    }), () => all([deleteKeychain(keychainName)]))
 })

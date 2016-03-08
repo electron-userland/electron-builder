@@ -1,15 +1,13 @@
 import { exec } from "./util"
-import { deleteFile } from "./promisifed-fs"
+import { deleteFile } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { tmpdir } from "os"
 import * as path from "path"
 import { executeFinally, all } from "./promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { randomBytes } from "crypto"
-import { tsAwaiter } from "./awaiter"
 
-const __awaiter = tsAwaiter
-Array.isArray(__awaiter)
+const __awaiter = require("./awaiter")
 
 export interface CodeSigningInfo {
   cscName: string

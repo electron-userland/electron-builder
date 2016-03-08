@@ -1,17 +1,12 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, Platform } from "./platformPackager"
 import * as path from "path"
-import { Stats } from "fs"
 import { log } from "./util"
-import { deleteFile, stat, renameFile, copyFile } from "./promisifed-fs"
-import * as fse from "fs-extra"
+import { deleteFile, stat, rename, copy, emptyDir, Stats } from "fs-extra-p"
 
-const __awaiter = tsAwaiter
+const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
-
-const emptyDir = BluebirdPromise.promisify(fse.emptyDir)
 
 export default class WinPackager extends PlatformPackager<any> {
   certFilePromise: Promise<string>
@@ -45,8 +40,8 @@ export default class WinPackager extends PlatformPackager<any> {
     }
   }
 
-  getBuildConfigurationKey() {
-    return "win"
+  protected get platform() {
+    return Platform.WINDOWS
   }
 
   pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
@@ -135,9 +130,9 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     const promises = [
-      renameFile(path.join(installerOutDir, "Setup.exe"), installerExePath)
+      rename(path.join(installerOutDir, "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
-      renameFile(path.join(installerOutDir, appName + "-" + version + "-full.nupkg"), path.join(installerOutDir, appName + "-" + version + archSuffix + "-full.nupkg"))
+      rename(path.join(installerOutDir, appName + "-" + version + "-full.nupkg"), path.join(installerOutDir, appName + "-" + version + archSuffix + "-full.nupkg"))
         .then(it => this.dispatchArtifactCreated(it))
     ]
 
@@ -145,7 +140,7 @@ export default class WinPackager extends PlatformPackager<any> {
       this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
     }
     else {
-      promises.push(copyFile(path.join(installerOutDir, "RELEASES"), path.join(installerOutDir, "RELEASES-ia32"))
+      promises.push(copy(path.join(installerOutDir, "RELEASES"), path.join(installerOutDir, "RELEASES-ia32"))
         .then(it => this.dispatchArtifactCreated(it)))
     }
 

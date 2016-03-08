@@ -1,8 +1,9 @@
 import platforms = require("./platforms")
 import * as path from "path"
-import * as fse from "fs-extra"
+import * as fs from "fs-extra-p"
 
 export { Packager } from "./packager"
+export { PackagerOptions, Platform } from "./platformPackager"
 
 /**
  * Prototype for electron-builder
@@ -34,9 +35,9 @@ const Builder = {
 
     // make sure the output
     // directory exists
-    if (!fse.existsSync(options.out)) {
+    if (!fs.existsSync(options.out)) {
       options.log("- Output directory ´" + options.out + "´ does not exist ")
-      fse.mkdirsSync(options.out)
+      fs.mkdirsSync(options.out)
       options.log(`- Created '${options.out}`)
     }
 

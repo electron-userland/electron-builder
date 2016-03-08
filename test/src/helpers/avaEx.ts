@@ -1,5 +1,18 @@
 import test from "ava-tf"
 
+declare module "ava-tf" {
+  namespace test {
+    export const ifNotWindows: typeof test;
+    export const ifOsx: typeof test;
+    export const ifNotCi: typeof test;
+    export const ifNotTravis: typeof test;
+  }
+  
+  interface AssertContext {
+    throws(value: (() => void) | Promise<any>, error?: ErrorValidator, message?: string): void
+  }
+}
+
 Object.defineProperties(test, {
   "ifNotWindows": {
     get: function () {

@@ -5,13 +5,12 @@ import { build } from "./builder"
 import { PublishOptions } from "./gitHubPublisher"
 import { commonArgs } from "./util"
 import { printErrorAndExit } from "./promise"
-import { tsAwaiter } from "./awaiter"
 import cla = require("command-line-args")
 import { readFileSync } from "fs"
 import * as path from "path"
 
-const __awaiter = tsAwaiter
-Array.isArray(__awaiter)
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("./awaiter")
 
 interface CliOptions extends PackagerOptions, PublishOptions {
   help: boolean

@@ -1,13 +1,12 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { tsAwaiter } from "./awaiter"
 import { init } from "../lib/linux"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { dir as _tpmDir, Options as TmpOptions } from "tmp"
+import { PlatformPackager, BuildInfo, Platform } from "./platformPackager"
+import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
 import { State as Gm } from "gm"
 
-const __awaiter = tsAwaiter
+const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
 const buildDeb = BluebirdPromise.promisify(init().build)
@@ -25,6 +24,10 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
     else {
       this.desktopIcons = BluebirdPromise.resolve(null)
     }
+  }
+
+  protected get platform() {
+    return Platform.LINUX
   }
 
   private async computeDesktopIconPath(): Promise<Array<string>> {
@@ -57,10 +60,6 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
       createMapping("256"),
       createMapping("512"),
     ]
-  }
-
-  getBuildConfigurationKey() {
-    return "linux"
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {

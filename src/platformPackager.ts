@@ -1,14 +1,26 @@
 import { AppMetadata, InfoRetriever, ProjectMetadataProvider, Metadata } from "./repositoryInfo"
 import EventEmitter = NodeJS.EventEmitter
-import { tsAwaiter } from "./awaiter"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import packager = require("electron-packager-tf")
 
-const __awaiter = tsAwaiter
-Array.isArray(__awaiter)
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("./awaiter")
 
 const pack = BluebirdPromise.promisify(packager)
+
+export class Platform {
+  public static OSX = new Platform("osx", "osx")
+  public static LINUX = new Platform("linux", "linux")
+  public static WINDOWS = new Platform("windows", "win")
+
+  constructor(public name: string, public buildConfigurationKey: string) {
+  }
+
+  toString() {
+    return this.name
+  }
+}
 
 export interface DevMetadata extends Metadata {
   build: DevBuildMetadata
@@ -70,7 +82,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
   customDistOptions: DC
 
-  protected abstract getBuildConfigurationKey(): string
+  protected abstract get platform(): Platform
 
   constructor(protected info: BuildInfo) {
     this.options = info.options
@@ -82,7 +94,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
     if (this.options.dist) {
       const buildMetadata: any = info.devMetadata.build
-      this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.getBuildConfigurationKey()]
+      this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
     }
   }
 
@@ -91,8 +103,8 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     return (directories == null ? null : directories.buildResources) || "build"
   }
 
-  protected dispatchArtifactCreated(path: string) {
-    this.info.eventEmitter.emit("artifactCreated", path)
+  protected dispatchArtifactCreated(file: string) {
+    this.info.eventEmitter.emit("artifactCreated", file, this.platform)
   }
 
   pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
