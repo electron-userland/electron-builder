@@ -53,7 +53,7 @@
     "bluebird": "^3.3.4",
     "command-line-args": "^2.1.6",
     "electron-packager-tf": "^5.2.3",
-    "electron-winstaller-temp-fork": "^2.0.5-beta.3",
+    "electron-winstaller-fixed": "^2.0.5-beta.4",
     "fs-extra": "^0.26.5",
     "fs-extra-p": "^0.1.0",
     "gm": "^1.21.1",
@@ -111,5 +111,8 @@
     "ghooks": {
       "commit-msg": "validate-commit-msg"
     }
+  },
+  "publishConfig": {
+    "tag": "next"
   }
 }
