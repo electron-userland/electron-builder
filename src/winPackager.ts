@@ -108,7 +108,7 @@ export default class WinPackager extends PlatformPackager<any> {
     }
 
     try {
-      await require("electron-winstaller-temp-fork").createWindowsInstaller(options)
+      await require("electron-winstaller-fixed").createWindowsInstaller(options)
     }
     catch (e) {
       if (!e.message.includes("Unable to set icon")) {
