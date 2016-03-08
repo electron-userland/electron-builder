@@ -16,7 +16,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
     if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
       const keychainName = generateKeychainName()
       cleanupTasks.push(() => deleteKeychain(keychainName))
-      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword)
+      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.csaLink)
     }
     else {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
