@@ -1,4 +1,5 @@
-import { PlatformPackager, BuildInfo, Platform } from "./platformPackager"
+import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { Platform } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn } from "./util"
@@ -30,7 +31,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
   async pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
     await super.pack(platform, outDir, appOutDir, arch)
     let codeSigningInfo = await this.codeSigningInfo
-    return await this.signMac(path.join(appOutDir, this.metadata.name + ".app"), codeSigningInfo)
+    return await this.signMac(path.join(appOutDir, this.appName + ".app"), codeSigningInfo)
   }
 
   private signMac(distPath: string, codeSigningInfo: CodeSigningInfo): Promise<any> {
@@ -55,7 +56,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
         log("Creating DMG")
 
         const specification: appdmg.Specification = {
-          title: this.metadata.name,
+          title: this.appName,
           icon: path.join(this.buildResourcesDir, "icon.icns"),
           "icon-size": 80,
           background: path.join(this.buildResourcesDir, "background.png"),
@@ -74,10 +75,10 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
         }
 
         if (specification.title == null) {
-          specification.title = this.metadata.name
+          specification.title = this.appName
         }
 
-        specification.contents[1].path = path.join(appOutDir, this.metadata.name + ".app")
+        specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
 
         const emitter = require("appdmg")({
           target: artifactPath,
@@ -96,10 +97,9 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
 
   private zipMacApp(outDir: string): Promise<string> {
     log("Creating ZIP for Squirrel.Mac")
-    const appName = this.metadata.name
     // -y param is important - "store symbolic links as the link instead of the referenced file"
-    const resultPath = `${appName}-${this.metadata.version}-mac.zip`
-    const args = ["-ryXq", resultPath, appName + ".app"]
+    const resultPath = `${this.metadata.name}-${this.metadata.version}-mac.zip`
+    const args = ["-ryXq", resultPath, this.appName + ".app"]
 
     // todo move to options
     if (process.env.TEST_MODE === "true") {

@@ -27,7 +27,7 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
-export function build(options: BuildOptions = {}): Promise<any> {
+export async function build(options: BuildOptions = {}): Promise<void> {
   if (options.cscLink == null) {
     options.cscLink = process.env.CSC_LINK
   }
@@ -83,15 +83,16 @@ export function build(options: BuildOptions = {}): Promise<any> {
       }
     })
   }
-  return executeFinally(packager.build(), error => {
-    if (error == null) {
-      return Promise.all(publishTasks)
-    }
-    else {
+
+  await executeFinally(packager.build(), errorOccurred => {
+    if (errorOccurred) {
       for (let task of publishTasks) {
         task.cancel()
       }
-      return null
+      return BluebirdPromise.resolve(null)
+    }
+    else {
+      return BluebirdPromise.all(publishTasks)
     }
   })
 }

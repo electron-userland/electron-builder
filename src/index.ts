@@ -3,7 +3,8 @@ import * as path from "path"
 import * as fs from "fs-extra-p"
 
 export { Packager } from "./packager"
-export { PackagerOptions, Platform } from "./platformPackager"
+export { PackagerOptions } from "./platformPackager"
+export { AppMetadata, DevMetadata, Platform, getProductName } from "./metadata"
 
 /**
  * Prototype for electron-builder

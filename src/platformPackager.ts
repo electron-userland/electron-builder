@@ -1,4 +1,5 @@
-import { AppMetadata, InfoRetriever, ProjectMetadataProvider, Metadata } from "./repositoryInfo"
+import { InfoRetriever, ProjectMetadataProvider } from "./repositoryInfo"
+import { AppMetadata, DevMetadata, Platform, getProductName } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -8,35 +9,6 @@ import packager = require("electron-packager-tf")
 const __awaiter = require("./awaiter")
 
 const pack = BluebirdPromise.promisify(packager)
-
-export class Platform {
-  public static OSX = new Platform("osx", "osx")
-  public static LINUX = new Platform("linux", "linux")
-  public static WINDOWS = new Platform("windows", "win")
-
-  constructor(public name: string, public buildConfigurationKey: string) {
-  }
-
-  toString() {
-    return this.name
-  }
-}
-
-export interface DevMetadata extends Metadata {
-  build: DevBuildMetadata
-
-  directories?: MetadataDirectories
-}
-
-export interface MetadataDirectories {
-  buildResources?: string
-}
-
-export interface DevBuildMetadata {
-  osx: appdmg.Specification
-  win: any,
-  linux: any
-}
 
 export interface PackagerOptions {
   arch?: string
@@ -72,15 +44,17 @@ export interface BuildInfo extends ProjectMetadataProvider {
 }
 
 export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
-  protected options: PackagerOptions
+  protected readonly options: PackagerOptions
 
-  protected projectDir: string
-  protected buildResourcesDir: string
+  protected readonly projectDir: string
+  protected readonly buildResourcesDir: string
 
-  metadata: AppMetadata
-  devMetadata: DevMetadata
+  readonly metadata: AppMetadata
+  readonly devMetadata: DevMetadata
 
   customDistOptions: DC
+
+  readonly appName: string
 
   protected abstract get platform(): Platform
 
@@ -96,6 +70,8 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
       const buildMetadata: any = info.devMetadata.build
       this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
     }
+
+    this.appName = getProductName(this.metadata)
   }
 
   protected get relativeBuildResourcesDirname() {
@@ -118,7 +94,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     const options = Object.assign({
       dir: this.info.appDir,
       out: outDir,
-      name: this.metadata.name,
+      name: this.appName,
       platform: platform,
       arch: arch,
       version: this.info.electronVersion,
@@ -132,8 +108,8 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
         FileDescription: this.metadata.description,
         ProductVersion: version,
         FileVersion: buildVersion,
-        ProductName: this.metadata.name,
-        InternalName: this.metadata.name,
+        ProductName: this.appName,
+        InternalName: this.appName,
       }
     }, this.metadata.build, {"tmpdir": false})
 

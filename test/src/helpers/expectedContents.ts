@@ -10,7 +10,6 @@ export const expectedLinuxContents = [
   "/opt/TestApp/LICENSE",
   "/opt/TestApp/LICENSES.chromium.html",
   "/opt/TestApp/natives_blob.bin",
-  "/opt/TestApp/pkgtarget",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
   "/opt/TestApp/version",

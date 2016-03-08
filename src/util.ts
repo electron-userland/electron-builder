@@ -12,7 +12,6 @@ export const commonArgs: any[] = [{
   description: "Relative (to the working directory) path to the folder containing the application package.json. Working directory or app/ by default."
 }]
 
-const execFileAsync: (file: string, args?: string[], options?: ExecOptions) => BluebirdPromise<Buffer[]> = (<any>BluebirdPromise.promisify(execFile, {multiArgs: true}))
 export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
 export function installDependencies(appDir: string, arch: string, electronVersion: string): BluebirdPromise<any> {
@@ -65,7 +64,22 @@ export interface SpawnOptions extends BaseExecOptions {
 }
 
 export function exec(file: string, args?: string[], options?: ExecOptions): BluebirdPromise<Buffer[]> {
-  return execFileAsync(file, args, options)
+  return new BluebirdPromise<Buffer[]>((resolve, reject) => {
+    execFile(file, args, options, function (error, stdout, stderr) {
+      if (error == null) {
+        resolve([stdout, stderr])
+      }
+      else {
+        if (stdout.length !== 0) {
+          console.error(stdout.toString())
+        }
+        if (stderr.length !== 0) {
+          console.error(stderr.toString())
+        }
+        reject(error)
+      }
+    })
+  })
 }
 
 export function spawn(command: string, args?: string[], options?: SpawnOptions): BluebirdPromise<any> {

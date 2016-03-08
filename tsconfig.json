@@ -3,7 +3,6 @@
     "module": "commonjs",
     "target": "es6",
     "noImplicitAny": true,
-    "removeComments": true,
     "outDir": "out",
     "newLine": "LF",
     "noResolve": true,
@@ -30,7 +29,6 @@
     "node_modules/fs-extra-p/bluebird.d.ts"
   ],
   "files": [
-    "lib/linux.d.ts",
     "typings/appdmg.d.ts",
     "typings/command-line-args.d.ts",
     "typings/electron-packager.d.ts",
@@ -59,6 +57,7 @@
     "src/install-app-deps.ts",
     "src/linuxPackager.ts",
     "src/macPackager.ts",
+    "src/metadata.ts",
     "src/packager.ts",
     "src/platformPackager.ts",
     "src/platforms.ts",

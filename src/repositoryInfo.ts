@@ -1,37 +1,10 @@
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import { readText } from "./promisifed-fs"
+import { AppMetadata, Metadata } from "./metadata"
 import * as path from "path"
 
 const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
-
-export interface RepositoryInfo {
-  url: string
-}
-
-export interface Metadata {
-  repository: string | RepositoryInfo
-}
-
-export interface MetadataAuthor {
-  name: string
-  email: string
-}
-
-export interface AppMetadata extends Metadata {
-  version: string
-  name: string
-  description: string
-  author: MetadataAuthor
-
-  build: BuildMetadata
-
-  windowsPackager: any
-}
-
-export interface BuildMetadata {
-  iconUrl: string
-}
 
 export interface ProjectMetadataProvider {
   metadata: AppMetadata

@@ -1,7 +1,7 @@
 import { Promise as BluebirdPromise } from "bluebird"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-Array.isArray(__awaiter)
 
 export function printErrorAndExit(error: Error) {
   console.error(error.stack || error.message || error)
@@ -9,14 +9,14 @@ export function printErrorAndExit(error: Error) {
 }
 
 // you don't need to handle error in your task - it is passed only indicate status of promise
-export async function executeFinally(promise: Promise<any>, task: (error?: Error) => Promise<any>): Promise<any> {
+export async function executeFinally(promise: Promise<any>, task: (errorOccurred: boolean) => Promise<any>): Promise<any> {
   let result: any = null
   try {
     result = await promise
   }
   catch (originalError) {
     try {
-      await task(originalError)
+      await task(true)
     }
     catch (taskError) {
       throw new NestedError([originalError, taskError])
@@ -26,7 +26,7 @@ export async function executeFinally(promise: Promise<any>, task: (error?: Error
   }
 
   try {
-    await task(null)
+    await task(false)
   }
   catch (taskError) {
     throw taskError

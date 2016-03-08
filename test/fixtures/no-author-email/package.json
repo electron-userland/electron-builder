@@ -5,7 +5,7 @@
   "description": "Test Application",
   "author": "Foo Bar",
   "devDependencies": {
-    "electron-prebuilt": "^0.36.9"
+    "electron-prebuilt": "^0.36.10"
   },
   "build": {
     "app-bundle-id": "your.id",

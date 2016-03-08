@@ -7,6 +7,7 @@ import { executeFinally, all } from "./promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { randomBytes } from "crypto"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 export interface CodeSigningInfo {
@@ -27,7 +28,7 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
   const developerCertPath = path.join(tmpdir(), randomString() + ".p12")
 
   const keychainPassword = randomString()
-  return executeFinally(Promise.all([
+  return executeFinally(BluebirdPromise.all([
       download("https://developer.apple.com/certificationauthority/AppleWWDRCA.cer", appleCertPath),
       download(cscLink, developerCertPath),
       BluebirdPromise.mapSeries([
@@ -37,9 +38,9 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
       ], it => exec("security", it))
     ])
     .then(() => importCerts(keychainName, appleCertPath, developerCertPath, cscKeyPassword)),
-    error => {
+    errorOccurred => {
       const tasks = [deleteFile(appleCertPath, true), deleteFile(developerCertPath, true)]
-      if (error != null) {
+      if (errorOccurred) {
         tasks.push(deleteKeychain(keychainName))
       }
       return all(tasks)

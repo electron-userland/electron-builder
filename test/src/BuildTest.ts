@@ -21,19 +21,7 @@ test.ifOsx("mac: one-package.json", async () => {
 })
 
 test("custom app dir", async () => {
-  let platforms: Array<string>
-  if (process.platform === "darwin") {
-    platforms = ["darwin", "linux"]
-  }
-  else if (process.platform === "linux") {
-    // todo install wine on Linux agent
-    platforms = ["linux"]
-  }
-  else {
-    platforms = ["win32"]
-  }
-
-  await assertPack("test-app-one", platforms, {
+  await assertPack("test-app-one", getPossiblePlatforms(), {
     // speed up tests, we don't need check every arch
     arch: process.arch
   }, true, async (projectDir) => {
@@ -44,9 +32,35 @@ test("custom app dir", async () => {
     }
 
     return await BluebirdPromise.all([
-      writeJson(file, data, {spaces: 2}),
+      writeJson(file, data),
       move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
     ])
   })
 })
 
+test("productName with space", async () => {
+  await assertPack("test-app-one", getPossiblePlatforms(), {
+    // speed up tests, we don't need check every arch
+    arch: process.arch
+  }, true, async (projectDir) => {
+    const file = path.join(projectDir, "package.json")
+    const data = await readJson(file)
+    data.productName = "Test App"
+
+    return await writeJson(file, data)
+  })
+})
+
+function getPossiblePlatforms(): Array<string> {
+  const isCi = process.env.CI != null
+  if (process.platform === "darwin") {
+    return isCi ? ["darwin", "linux"] : ["darwin", "linux", "win32"]
+  }
+  else if (process.platform === "linux") {
+    // todo install wine on Linux agent
+    return ["linux"]
+  }
+  else {
+    return ["win32"]
+  }
+}

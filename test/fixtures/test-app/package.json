@@ -4,6 +4,6 @@
     "start": "electron ."
   },
   "devDependencies": {
-    "electron-prebuilt": "^0.36.9"
+    "electron-prebuilt": "^0.36.10"
   }
 }
