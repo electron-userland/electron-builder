@@ -31,6 +31,9 @@ export async function build(options: BuildOptions = {}): Promise<void> {
   if (options.cscLink == null) {
     options.cscLink = process.env.CSC_LINK
   }
+  if (options.csaLink == null) {
+    options.csaLink = process.env.CSA_LINK
+  }
   if (options.cscKeyPassword == null) {
     options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
   }
