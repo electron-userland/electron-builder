@@ -60,7 +60,7 @@ async function importCerts(keychainName: string, authorityCertPath: string, deve
 function extractCommonName(password: string, certPath: string): BluebirdPromise<string> {
   return exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", "pass:" + password, "-nomacver", "-clcerts", "-in", certPath])
     .then(result => {
-      const match = result[0].toString().match(/^subject.*\/CN=([^\/]+)/m)
+      const match = result[0].toString().match(/^subject.*\/CN=([^\/\n]+)/m)
       if (match == null || match[1] == null) {
         throw new Error("Cannot extract common name from p12")
       }
