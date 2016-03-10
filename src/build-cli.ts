@@ -22,6 +22,7 @@ const cli = cla(commonArgs.concat(
   {name: "platform", type: String, multiple: true, description: "darwin, linux, win32 or all. Current platform (" + process.platform + ") by default."},
   {name: "arch", type: String, description: "ia32, x64 or all (by default)."},
   {name: "target", type: String, multiple: true, description: "Installer or package type. For win32: squirrel (default) or nsis (deprecated)."},
+  {name: "ignore", type: String, multiple: true, description: "A pattern which specifies which files to ignore when copying files to create the package(s). The out directory is ignored by default, along with the electron-prebuilt and electron-packager Node modules, the .git directory, and node_modules/.bin. Alternatively, this can be a predicate function that, given the file path, returns true if the file should be ignored or false if the file should be kept."},
   {name: "sign", type: String},
   {name: "help", alias: "h", type: Boolean, description: "Display this usage guide."}
 ))

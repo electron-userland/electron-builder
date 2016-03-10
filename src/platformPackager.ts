@@ -102,6 +102,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
       icon: path.join(this.buildResourcesDir, "icon"),
       asar: true,
       overwrite: true,
+      ignore: this.options.ignore,
       "app-version": version,
       "build-version": buildVersion,
       "version-string": {
