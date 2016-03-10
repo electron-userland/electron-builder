@@ -14,5 +14,5 @@ const devPackageFile = path.join(process.cwd(), "package.json")
 const appDir = args.appDir || DEFAULT_APP_DIR_NAME
 
 readPackageJson(devPackageFile)
-  .then(it => installDependencies(path.join(process.cwd(), appDir), args.arch, getElectronVersion(it, devPackageFile)))
+  .then(it => installDependencies(path.join(process.cwd(), appDir), getElectronVersion(it, devPackageFile), args.arch))
   .catch(printErrorAndExit)

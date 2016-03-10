@@ -165,7 +165,7 @@ export class Packager implements BuildInfo {
 
   private installAppDependencies(arch: string): Promise<any> {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      return installDependencies(this.appDir, arch, this.electronVersion)
+      return installDependencies(this.appDir, this.electronVersion, arch, "rebuild")
     }
     else {
       log("Skipping app dependencies installation because dev and app dependencies are not separated")
