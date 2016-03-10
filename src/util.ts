@@ -1,6 +1,8 @@
 import { execFile, spawn as _spawn } from "child_process"
 import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
+import * as os from "os"
+import * as path from "path"
 
 export const log = console.log
 
@@ -14,21 +16,20 @@ export const commonArgs: any[] = [{
 
 export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
-export function installDependencies(appDir: string, arch: string, electronVersion: string): BluebirdPromise<any> {
-  log("Installing app dependencies for arch %s to %s", arch || process.arch, appDir)
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
+  log("Installing app dependencies for arch %s to %s", arch, appDir)
+  const gypHome = path.join(os.homedir(), ".electron-gyp")
   const env = Object.assign({}, process.env, {
     npm_config_disturl: "https://atom.io/download/atom-shell",
     npm_config_target: electronVersion,
     npm_config_runtime: "electron",
-    HOME: require("os").homedir() + "/.electron-gyp",
+    npm_config_arch: arch,
+    HOME: gypHome,
+    USERPROFILE: gypHome,
   })
 
-  if (arch != null) {
-    env.npm_config_arch = arch
-  }
-
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = ["install"]
+  const npmExecArgs = [command, "--production"]
   if (npmExecPath == null) {
     npmExecPath = "npm"
   }
