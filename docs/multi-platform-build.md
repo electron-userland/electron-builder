@@ -24,10 +24,16 @@ brew install Caskroom/cask/xquartz wine mono
 
 To build app in distributable format for Linux on OS X:
 ```
-brew install ruby gnu-tar libicns
+brew install ruby gnu-tar libicns imagemagick graphicsmagick
 gem install fpm
 ```
 
-Please note — Windows codesign supported currently only on Windows.
+## Linux
+To build app in distributable format for Linux:
+```
+sudo apt-get install icnsutils graphicsmagick
+```
 
-Linux and Windows: not documented yet.
+## Windows
+
+Not documented yet.
