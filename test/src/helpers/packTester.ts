@@ -68,6 +68,7 @@ async function packAndCheck(projectDir: string, platforms: string[], packagerOpt
 
   const artifacts: Map<Platform, Array<string>> = new Map()
   packager.artifactCreated((file, platform) => {
+    assertThat(path.isAbsolute(file)).true()
     let list = artifacts.get(platform)
     if (list == null) {
       list = []

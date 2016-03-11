@@ -121,8 +121,7 @@ Icon=${this.metadata.name}
   private async buildDeb(options: DebOptions, outDir: string, appOutDir: string, arch: string): Promise<string> {
     const archName = arch === "ia32" ? "i386" : "amd64"
     const target = "deb"
-    const outFilename = `${this.metadata.name}-${this.metadata.version}-${archName}.${target}`
-    const destination = path.join(outDir, outFilename)
+    const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}-${archName}.${target}`)
     const scripts = await this.scriptFiles
     await exec("fpm", [
       "-s", "dir",
@@ -140,7 +139,7 @@ Icon=${this.metadata.name}
       "--deb-compression", options.compression || "xz",
       appOutDir + "/=/opt/" + this.appName,
     ].concat(await this.packageFiles))
-    return outFilename
+    return destination
   }
 }
 
