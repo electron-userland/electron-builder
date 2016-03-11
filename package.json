@@ -75,7 +75,7 @@
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.7.0",
     "electron-download": "^2.0.0",
-    "eslint": "^2.3.0",
+    "eslint": "^2.4.0",
     "eslint-plugin-ava": "sindresorhus/eslint-plugin-ava",
     "ghooks": "^1.0.3",
     "json-parse-helpfulerror": "^1.0.3",
