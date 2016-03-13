@@ -1,4 +1,4 @@
-import { copy, emptyDir, remove } from "fs-extra-p"
+import { copy, emptyDir, remove, writeJson, readJson } from "fs-extra-p"
 import * as assertThat from "should/as-function"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
@@ -164,4 +164,11 @@ async function getContents(path: string, productName: string) {
     .map(it => it.length === 0 ? null : it.substring(it.indexOf(".") + 1))
     .filter(it => it != null && !(it.startsWith(`/opt/${productName}/locales/`) || it.startsWith(`/opt/${productName}/libgcrypt`)))
     )
+}
+
+export async function modifyPackageJson(projectDir: string, task: (data: any) => void): Promise<any> {
+  const file = path.join(projectDir, "package.json")
+  const data = await readJson(file)
+  task(data)
+  return await writeJson(file, data)
 }

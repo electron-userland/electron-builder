@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack } from "./helpers/packTester"
+import { assertPack, modifyPackageJson } from "./helpers/packTester"
 import { move, writeJson, readJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -24,15 +24,13 @@ test("custom app dir", async () => {
   await assertPack("test-app-one", getPossiblePlatforms(), {
     // speed up tests, we don't need check every arch
     arch: process.arch
-  }, true, async (projectDir) => {
-    const file = path.join(projectDir, "package.json")
-    const data = await readJson(file)
-    data.directories = {
-      buildResources: "custom"
-    }
-
-    return await BluebirdPromise.all([
-      writeJson(file, data),
+  }, true, (projectDir) => {
+    return BluebirdPromise.all([
+      modifyPackageJson(projectDir, data => {
+        data.directories = {
+          buildResources: "custom"
+        }
+      }),
       move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
     ])
   })
@@ -42,12 +40,10 @@ test("productName with space", async () => {
   await assertPack("test-app-one", getPossiblePlatforms(), {
     // speed up tests, we don't need check every arch
     arch: process.arch
-  }, true, async (projectDir) => {
-    const file = path.join(projectDir, "package.json")
-    const data = await readJson(file)
-    data.productName = "Test App"
-
-    return await writeJson(file, data)
+  }, true, (projectDir) => {
+    return modifyPackageJson(projectDir, data => {
+      data.productName = "Test App"
+    })
   })
 })
 
