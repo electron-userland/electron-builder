@@ -141,12 +141,25 @@ export class GitHubPublisher implements Publisher {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  deleteRelease(): BluebirdPromise<void> {
-    if (this._releasePromise.isFulfilled()) {
-      return gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token, null, "DELETE")
-    }
-    else {
+  async deleteRelease(): Promise<void> {
+    if (!this._releasePromise.isFulfilled()) {
       return BluebirdPromise.resolve()
     }
+
+    for (let i = 0; i < 3; i++) {
+      try {
+        return await
+          gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token, null, "DELETE")
+      }
+      catch (e) {
+        if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {
+          continue
+        }
+
+        throw e
+      }
+    }
+
+    log("WARN: Cannot delete release " + this._releasePromise.value().id)
   }
 }
