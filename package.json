@@ -89,7 +89,7 @@
     "tsconfig-glob": "^0.4.1",
     "tslint": "next",
     "typescript": "1.9.0-dev.20160307",
-    "validate-commit-msg": "^2.3.1"
+    "validate-commit-msg": "^2.4.0"
   },
   "babel": {
     "plugins": [
