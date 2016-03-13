@@ -139,21 +139,21 @@ async function checkOsXResult(packager: Packager, artifacts: Array<string>) {
 async function checkWindowsResult(packagerOptions: PackagerOptions, artifacts: Array<string>) {
   const expected32 = [
     "RELEASES-ia32",
-    "TestApp-1.0.0-full.nupkg",
-    "TestAppSetup-1.0.0.exe"
+    "TestAppSetup-1.0.0-ia32.exe",
+    "TestApp-1.0.0-ia32-full.nupkg",
   ]
   const expected64 = [
     "RELEASES",
-    "TestAppSetup-1.0.0-x64.exe",
-    "TestApp-1.0.0-x64-full.nupkg"
+    "TestAppSetup-1.0.0.exe",
+    "TestApp-1.0.0-full.nupkg",
   ]
   const expected = packagerOptions != null && packagerOptions.arch === "x64" ? expected64 : expected32.concat(expected64)
   const filenames = artifacts.map(it => path.basename((it)))
   assertThat(filenames.slice().sort()).deepEqual(expected.sort())
 
-  let i = filenames.indexOf("RELEASES")
+  let i = filenames.indexOf("RELEASES-ia32")
   if (i !== -1) {
-    assertThat((await readText(artifacts[i])).indexOf("x64")).not.equal(-1)
+    assertThat((await readText(artifacts[i])).indexOf("ia32")).not.equal(-1)
   }
 }
 

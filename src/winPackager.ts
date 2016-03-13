@@ -86,7 +86,7 @@ export default class WinPackager extends PlatformPackager<any> {
     const certificateFile = await this.certFilePromise
     const version = this.metadata.version
     const installerOutDir = this.computeDistOut(outDir, arch)
-    const archSuffix = arch === "x64" ? "-x64" : ""
+    const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const options = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
@@ -137,28 +137,34 @@ export default class WinPackager extends PlatformPackager<any> {
     const nupkgPathOriginal = this.metadata.name + "-" + version + "-full.nupkg"
     const nupkgPathWithArch = this.metadata.name + "-" + version + archSuffix + "-full.nupkg"
 
-    async function changeFileNameInTheReleasesFile() {
+    async function changeFileNameInTheReleasesFile(): Promise<void> {
       const data = (await readFile(releasesFile, "utf8")).replace(new RegExp(" " + nupkgPathOriginal + " ", "g"), " " + nupkgPathWithArch + " ")
+      debugger
       await writeFile(releasesFile, data)
     }
 
-    await BluebirdPromise.all([
+    const promises: Array<Promise<any>> = [
       rename(path.join(installerOutDir, "Setup.exe"), installerExePath)
         .then(it => this.dispatchArtifactCreated(it)),
-      rename(path.join(installerOutDir, nupkgPathOriginal), path.join(installerOutDir, nupkgPathWithArch))
-        .then(it => this.dispatchArtifactCreated(it)),
-      changeFileNameInTheReleasesFile()
-        .then(() => {
-          if (arch === "x64") {
-            this.dispatchArtifactCreated(releasesFile)
-            return null
-          }
-          else {
-            return copy(releasesFile, path.join(installerOutDir, "RELEASES-ia32"))
-              .then(it => this.dispatchArtifactCreated(it))
-          }
-        }),
-    ])
+    ]
+
+    if (archSuffix === "") {
+      this.dispatchArtifactCreated(path.join(installerOutDir, nupkgPathOriginal))
+      this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
+    }
+    else {
+      promises.push(
+        rename(path.join(installerOutDir, nupkgPathOriginal), path.join(installerOutDir, nupkgPathWithArch))
+          .then(it => this.dispatchArtifactCreated(it))
+      )
+      promises.push(
+        changeFileNameInTheReleasesFile()
+          .then(() => copy(releasesFile, path.join(installerOutDir, "RELEASES-ia32")))
+          .then(it => this.dispatchArtifactCreated(it))
+      )
+    }
+
+    await BluebirdPromise.all(promises)
   }
 
   private async nsis(options: any, installerFile: string) {
