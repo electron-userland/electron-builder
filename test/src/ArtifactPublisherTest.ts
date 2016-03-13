@@ -1,4 +1,4 @@
-import test from "ava-tf"
+import test from "./helpers/avaEx"
 import { GitHubPublisher } from "out/gitHubPublisher"
 import { HttpError } from "out/gitHubRequest"
 import { join } from "path"
