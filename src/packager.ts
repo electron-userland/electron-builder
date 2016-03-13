@@ -1,4 +1,4 @@
-import * as fs from "fs"
+import { accessSync } from "fs"
 import * as path from "path"
 import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion, readPackageJson } from "./util"
 import { all, executeFinally } from "./promise"
@@ -120,7 +120,7 @@ export class Packager implements BuildInfo {
 
     const absoluteAppPath = path.join(this.projectDir, customAppPath)
     try {
-      fs.accessSync(absoluteAppPath)
+      accessSync(absoluteAppPath)
     }
     catch (e) {
       if (required) {

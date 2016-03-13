@@ -1,9 +1,11 @@
 import { InfoRetriever, ProjectMetadataProvider } from "./repositoryInfo"
-import { AppMetadata, DevMetadata, Platform, getProductName } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getProductName } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import packager = require("electron-packager-tf")
+import globby = require("globby")
+import { copy } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -44,7 +46,7 @@ export interface BuildInfo extends ProjectMetadataProvider {
   eventEmitter: EventEmitter
 }
 
-export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
+export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements ProjectMetadataProvider {
   protected readonly options: PackagerOptions
 
   protected readonly projectDir: string
@@ -53,7 +55,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
   readonly metadata: AppMetadata
   readonly devMetadata: DevMetadata
 
-  customDistOptions: DC
+  customBuildOptions: DC
 
   readonly appName: string
 
@@ -67,10 +69,8 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
 
-    if (this.options.dist) {
-      const buildMetadata: any = info.devMetadata.build
-      this.customDistOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
-    }
+    const buildMetadata: any = info.devMetadata.build
+    this.customBuildOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
 
     this.appName = getProductName(this.metadata)
   }
@@ -84,7 +84,7 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
     this.info.eventEmitter.emit("artifactCreated", file, this.platform)
   }
 
-  pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
@@ -116,7 +116,28 @@ export abstract class PlatformPackager<DC> implements ProjectMetadataProvider {
 
     // this option only for windows-installer
     delete options.iconUrl
-    return pack(options)
+    await pack(options)
+
+    const buildMetadata: any = this.devMetadata.build
+    let extraResources: Array<string> = buildMetadata == null ? null : buildMetadata.extraResources
+
+    const platformSpecificExtraResources = this.customBuildOptions == null ? null : this.customBuildOptions.extraResources
+    if (platformSpecificExtraResources != null) {
+      extraResources = extraResources == null ? platformSpecificExtraResources : extraResources.concat(platformSpecificExtraResources)
+    }
+
+    if (extraResources != null) {
+      const expandedPatterns = extraResources.map(it => it
+        .replace(/\$\{arch\}/g, arch)
+        .replace(/\$\{os\}/g, this.platform.buildConfigurationKey))
+      await BluebirdPromise.map(await globby(expandedPatterns, {cwd: this.projectDir}), it => {
+        let resourcesDir = appOutDir
+        if (platform === "darwin") {
+          resourcesDir = path.join(resourcesDir, this.appName + ".app", "Contents", "Resources")
+        }
+        return copy(path.join(this.projectDir, it), path.join(resourcesDir, it))
+      })
+    }
   }
 
   abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>

@@ -1,15 +1,23 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform } from "./metadata"
+import { Platform, PlatformSpecificBuildOptions } from "./metadata"
 import * as path from "path"
 import { log } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, Stats, writeFile } from "fs-extra-p"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-Array.isArray(__awaiter)
 
-export default class WinPackager extends PlatformPackager<any> {
+export interface WinBuildOptions extends PlatformSpecificBuildOptions {
+  readonly certificateFile?: string
+  readonly certificatePassword?: string
+
+  readonly icon?: string
+  readonly iconUrl?: string
+}
+
+export default class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string>
   isNsis: boolean
 
@@ -23,7 +31,7 @@ export default class WinPackager extends PlatformPackager<any> {
       // "Error: EBUSY: resource busy or locked, unlink 'C:\Users\appveyor\AppData\Local\Temp\1\icon.ico'"
       // on appveyor (well, yes, it is a Windows bug)
       // Because NSIS support will be dropped some day, correct solution is not implemented
-      const iconPath = this.customDistOptions == null ? null : this.customDistOptions.icon
+      const iconPath = this.customBuildOptions == null ? null : this.customBuildOptions.icon
       require("../lib/win").copyAssetsToTmpFolder(iconPath || path.join(this.buildResourcesDir, "icon.ico"))
     }
 
@@ -66,8 +74,8 @@ export default class WinPackager extends PlatformPackager<any> {
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
     let iconUrl = this.metadata.build.iconUrl
     if (!iconUrl) {
-      if (this.customDistOptions != null) {
-        iconUrl = this.customDistOptions.iconUrl
+      if (this.customBuildOptions != null) {
+        iconUrl = this.customBuildOptions.iconUrl
       }
       if (!iconUrl) {
         if (this.info.repositoryInfo != null) {
@@ -103,7 +111,7 @@ export default class WinPackager extends PlatformPackager<any> {
       certificatePassword: this.options.cscKeyPassword,
       fixUpPaths: false,
       usePackageJson: false
-    }, this.customDistOptions)
+    }, this.customBuildOptions)
 
     // we use metadata.name instead of appName because appName can contains unsafe chars
     const installerExePath = path.join(installerOutDir, this.metadata.name + "Setup-" + version + archSuffix + ".exe")
@@ -185,7 +193,7 @@ export default class WinPackager extends PlatformPackager<any> {
           icon: options.setupIcon,
           publisher: options.authors,
           verbosity: 2
-        }, this.customDistOptions)
+        }, this.customBuildOptions)
       }
     }))
   }

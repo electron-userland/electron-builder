@@ -17,6 +17,7 @@
       <w>enoent</w>
       <w>github</w>
       <w>globaldots</w>
+      <w>globby</w>
       <w>hicolor</w>
       <w>libgcrypt</w>
       <w>makedeb</w>
@@ -31,6 +32,7 @@
       <w>promisify</w>
       <w>repos</w>
       <w>rimraf</w>
+      <w>testapp</w>
       <w>tsconfig</w>
       <w>veyor</w>
       <w>winstaller</w>
