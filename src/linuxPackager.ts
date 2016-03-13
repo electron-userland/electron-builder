@@ -25,7 +25,7 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
     this.debOptions = Object.assign({
       name: this.metadata.name,
       comment: this.metadata.description,
-    }, this.customDistOptions)
+    }, this.customBuildOptions)
 
     if (this.options.dist) {
       const tempDir = tmpDir({
@@ -45,7 +45,7 @@ export class LinuxPackager extends PlatformPackager<DebOptions> {
     const tempDir = await tempDirPromise
 
     const promises: Array<Promise<Array<string>>> = []
-    if (this.customDistOptions == null || this.customDistOptions.desktop == null) {
+    if (this.customBuildOptions == null || this.customBuildOptions.desktop == null) {
       promises.push(this.computeDesktopIconPath(tempDir))
     }
 

@@ -1,5 +1,5 @@
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform } from "./metadata"
+import { Platform, PlatformSpecificBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn } from "./util"
@@ -8,7 +8,10 @@ import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, 
 const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
-export default class MacPackager extends PlatformPackager<appdmg.Specification> {
+export interface OsXBuildOptions extends PlatformSpecificBuildOptions, appdmg.Specification {
+}
+
+export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
@@ -55,7 +58,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
       new BluebirdPromise<any>((resolve, reject) => {
         log("Creating DMG")
 
-        const specification: appdmg.Specification = {
+        const specification: appdmg.Specification = Object.assign({
           title: this.appName,
           icon: path.join(this.buildResourcesDir, "icon.icns"),
           "icon-size": 80,
@@ -68,15 +71,7 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
               "x": 130, "y": 220, "type": "file"
             }
           ]
-        }
-
-        if (this.customDistOptions != null) {
-          Object.assign(specification, this.customDistOptions)
-        }
-
-        if (specification.title == null) {
-          specification.title = this.appName
-        }
+        }, this.customBuildOptions)
 
         specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
 
@@ -110,6 +105,6 @@ export default class MacPackager extends PlatformPackager<appdmg.Specification> 
       cwd: outDir,
       stdio: "inherit",
     })
-      .thenReturn(outDir + "/" + resultPath)
+      .thenReturn(path.join(outDir, resultPath))
   }
 }

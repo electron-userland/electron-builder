@@ -21,7 +21,7 @@ export function getProductName(metadata: AppMetadata) {
 }
 
 export interface DevMetadata extends Metadata {
-  readonly build: DevBuildMetadata
+  readonly build?: DevBuildMetadata
 
   readonly directories?: MetadataDirectories
 }
@@ -56,9 +56,15 @@ export interface MetadataDirectories {
 }
 
 export interface DevBuildMetadata {
-  readonly osx: appdmg.Specification
-  readonly win: any,
-  readonly linux: any
+  readonly osx?: appdmg.Specification
+  readonly win?: any,
+  readonly linux?: any
+
+  readonly extraResources?: Array<string>
+}
+
+export interface PlatformSpecificBuildOptions {
+  readonly extraResources?: Array<string>
 }
 
 export class Platform {
@@ -71,5 +77,15 @@ export class Platform {
 
   toString() {
     return this.name
+  }
+
+  public static fromNodePlatform(name: string): Platform {
+    switch (name) {
+      case "darwin": return Platform.OSX
+      case "win32": return Platform.WINDOWS
+      case "linux": return Platform.LINUX
+    }
+
+    throw new Error("Unknown platform: " + name)
   }
 }

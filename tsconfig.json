@@ -33,6 +33,7 @@
     "typings/command-line-args.d.ts",
     "typings/electron-packager.d.ts",
     "typings/gh-api.d.ts",
+    "typings/globby.d.ts",
     "typings/hosted-git-info.d.ts",
     "typings/main/ambient/gm/gm.d.ts",
     "typings/main/ambient/mime/mime.d.ts",

@@ -17,7 +17,11 @@ const __awaiter = require("out/awaiter")
 const tmpDirPrefix = "electron-builder-test-" + process.pid + "-"
 let tmpDirCounter = 0
 
-export async function assertPack(fixtureName: string, platform: string | Array<string>, packagerOptions?: PackagerOptions, useTempDir?: boolean, tempDirCreated?: (projectDir: string) => Promise<any>) {
+export async function assertPack(fixtureName: string,
+                                packagerOptions: PackagerOptions,
+                                useTempDir?: boolean,
+                                tempDirCreated?: (projectDir: string) => Promise<any>,
+                                packed?: (projectDir: string) => Promise<any>) {
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -42,8 +46,16 @@ export async function assertPack(fixtureName: string, platform: string | Array<s
       await tempDirCreated(projectDir)
     }
 
-    const platforms = Array.isArray(platform) ? platform : [platform]
-    await packAndCheck(projectDir, platforms, packagerOptions)
+    await packAndCheck(projectDir, Object.assign({
+      projectDir: projectDir,
+      cscLink: CSC_LINK,
+      cscKeyPassword: CSC_KEY_PASSWORD,
+      dist: true,
+    }, packagerOptions))
+
+    if (packed != null) {
+      await packed(projectDir)
+    }
   }
   finally {
     if (useTempDir && customTmpDir == null) {
@@ -57,14 +69,8 @@ export async function assertPack(fixtureName: string, platform: string | Array<s
   }
 }
 
-async function packAndCheck(projectDir: string, platforms: string[], packagerOptions?: PackagerOptions) {
-  const packager = new Packager(Object.assign({
-    projectDir: projectDir,
-    cscLink: CSC_LINK,
-    cscKeyPassword: CSC_KEY_PASSWORD,
-    dist: true,
-    platform: platforms,
-  }, packagerOptions))
+async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions): Promise<void> {
+  const packager = new Packager(packagerOptions)
 
   const artifacts: Map<Platform, Array<string>> = new Map()
   packager.artifactCreated((file, platform) => {
@@ -79,11 +85,15 @@ async function packAndCheck(projectDir: string, platforms: string[], packagerOpt
 
   await packager.build()
 
+  if (!packagerOptions.dist) {
+    return
+  }
+
   for (let key of artifacts.keys()) {
     artifacts.set(key, pathSorter(artifacts.get(key)))
   }
 
-  const expandedPlatforms = normalizePlatforms(platforms)
+  const expandedPlatforms = normalizePlatforms(packagerOptions.platform)
   if (expandedPlatforms.includes("darwin")) {
     await checkOsXResult(packager, artifacts.get(Platform.OSX))
   }
@@ -171,4 +181,10 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   const data = await readJson(file)
   task(data)
   return await writeJson(file, data)
+}
+
+export function platform(platform: string): PackagerOptions {
+  return {
+    platform: [platform]
+  }
 }

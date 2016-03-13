@@ -56,6 +56,7 @@
     "electron-winstaller-fixed": "^2.0.5-beta.7",
     "fs-extra": "^0.26.5",
     "fs-extra-p": "^0.1.0",
+    "globby": "^4.0.0",
     "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
     "lodash.template": "^4.2.2",
@@ -88,8 +89,8 @@
     "ts-babel": "^0.6.1",
     "tsconfig-glob": "^0.4.1",
     "tslint": "next",
-    "typescript": "1.9.0-dev.20160307",
-    "validate-commit-msg": "^2.3.1"
+    "typescript": "^1.9.0-dev.20160313",
+    "validate-commit-msg": "^2.4.0"
   },
   "babel": {
     "plugins": [

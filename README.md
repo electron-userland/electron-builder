@@ -1,6 +1,6 @@
 Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
 
-* [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if two-package.json project layout used).
+* [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
 * [Auto Update](#auto-update) ready application packaging.
 * [Code Signing](#code-signing) on a CI server or development machine.
 * [Build version management](#build-version-management).
@@ -12,9 +12,30 @@ Complete solution to build ready for distribution and "auto update" installers o
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
+# Two package.json structure
+
+We strongly recommend to use **two** package.json files (it is not required, you can build project with any structure).
+
+1. For development
+
+  In the root of the project.
+  Here you declare dependencies for your development environment and build scripts.
+
+2. For your application
+
+  In the `app` directory. *Only this directory is distributed with real application.*
+
+Why the two package.json structure is ideal and how it solves a lot of issues
+([#39](https://github.com/loopline-systems/electron-builder/issues/39),
+[#182](https://github.com/loopline-systems/electron-builder/issues/182),
+[#230](https://github.com/loopline-systems/electron-builder/issues/230))?
+
+1. Native npm modules (those written in C, not JavaScript) need to be compiled, and here we have two different compilation targets for them. Those used in application need to be compiled against electron runtime, and all `devDependencies` need to be compiled against your locally installed node.js. Thanks to having two files this is trivial.
+2. When you package the app for distribution there is no need to add up to size of the app with your `devDependencies`. Here those are always not included (because reside outside the `app` directory).
+
 # Configuration
 ## In short
-1. Ensure that required fields are specified in the application `package.json`:
+ 1. Ensure that required fields are specified in the application `package.json`:
 
   Standard `name`, `description`, `version` and `author`.
 
