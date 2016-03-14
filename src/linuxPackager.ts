@@ -5,7 +5,7 @@ import { Platform } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
 import { State as Gm } from "gm"
-import { outputFile, readFile } from "fs-extra-p"
+import { outputFile, readFile, stat } from "fs-extra-p"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
@@ -69,14 +69,31 @@ Icon=${this.metadata.name}
 
   private async computeDesktopIconPath(tempDir: string): Promise<Array<string>> {
     const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
+    log(outputs[0].toString())
     if (!outputs[0].toString().includes("ih32")) {
-      log("48x48 is not found in the icns, 128x128 will be resized")
+      log("48x48 is not found in the icns, 128x128 or 256x256 will be resized")
+
+      const gm = require("gm")
+
       // icns doesn't contain required 48x48, use gm to resize
-      await new BluebirdPromise((resolve, reject) => {
-        (<Gm>require("gm")(path.join(tempDir, "icon_128x128x32.png")))
-          .resize(48, 48)
-          .write(path.join(tempDir, "icon_48x48x32.png"), error => error == null ? resolve() : reject(error))
-      })
+      function resize(imagePath: string, size: number): BluebirdPromise<any> {
+        return new BluebirdPromise((resolve, reject) => {
+          (<Gm>gm(imagePath))
+            .resize(size, size)
+            .write(path.join(tempDir, `icon_${size}x${size}x32.png`), error => error == null ? resolve() : reject(error))
+        })
+      }
+
+      let imagePath = path.join(tempDir, "icon_128x128x32.png")
+      try {
+        await stat(imagePath)
+      }
+      catch (e) {
+        imagePath = path.join(tempDir, "icon_256x256x32.png")
+        // 128 should be in any case
+        await resize(imagePath, 128)
+      }
+      await resize(imagePath, 48)
     }
 
     const name = this.metadata.name
