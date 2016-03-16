@@ -34,23 +34,27 @@ Why the two package.json structure is ideal and how it solves a lot of issues
 2. When you package the app for distribution there is no need to add up to size of the app with your `devDependencies`. Here those are always not included (because reside outside the `app` directory).
 
 # Configuration
+
+See [options](./docs/options.md), but consider to follow simple 4-step guide outlined below at first.
+
 ## In short
- 1. Ensure that required fields are specified in the application `package.json`:
+1. Ensure that required fields are specified in the application `package.json`:
 
-  Standard `name`, `description`, `version` and `author`.
+   Standard `name`, `description`, `version` and `author`.
 
-  Custom `build` field must be specified:
-  ```json
-  "build": {
-    "app-bundle-id": "your.id",
-    "app-category-type": "your.app.category.type",
-    "iconUrl": "(windows only) A URL to an ICO file to use as the application icon, see details below"
-  }
-  ```
-  This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
+   Custom `build` field must be specified:
+    ```json
+    "build": {
+      "app-bundle-id": "your.id",
+      "app-category-type": "your.app.category.type",
+      "iconUrl": "(windows only) A URL to an ICO file to use as the application icon, see details below"
+    }
+    ```
+   This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
 
 2. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
-  Linux icon set will be generated automatically on the fly from the OS X `icns` file.
+
+   Linux icon set will be generated automatically on the fly from the OS X `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
 
 3. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
     ```json
@@ -63,44 +67,6 @@ Why the two package.json structure is ideal and how it solves a lot of issues
     And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. DMG, windows installer, NuGet package)).
 
 4. Install [required system packages](./docs/multi-platform-build.md).
-
-## iconUrl
-Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
-* If you don't plan to build windows installer, you can omit it.
-* If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${info.user}/${info.project}/master/build/icon.ico` by default.
-
-## Distributable Format Configuration
-In the development `package.json` custom `build` field can be specified to customize distributable format:
-```json
-"build": {
-  "osx": {
-    "title": "computed name from app package.js, you can overwrite",
-    "icon": "build/icon.icns",
-    "icon-size": 80,
-    "background": "build/background.png",
-    "contents": [
-      {
-        "x": 410,
-        "y": 220,
-        "type": "link",
-        "path": "/Applications"
-      },
-      {
-        "x": 130,
-        "y": 220,
-        "type": "file",
-        "path": "computed path to artifact, do not specify it - will be overwritten"
-      }
-    ]
-  },
-  "win": "see https://github.com/electronjs/windows-installer#usage"
-}
-```
-
-As you can see, you need to customize OS X options only if you want to provide custom `x, y`.
-Don't customize paths to background and icon, — just follow conventions (if you don't want to use `build` as directory of resources — please create issue to ask ability to customize it).
-
-See [OS X options](https://www.npmjs.com/package/appdmg#json-specification) and [Windows options](https://github.com/electronjs/windows-installer#usage).
 
 # Auto Update
 `electron-builder` produces all required artifacts:

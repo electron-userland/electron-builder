@@ -23,7 +23,7 @@ test.ifOsx("mac: one-package.json", async () => {
 })
 
 test("custom app dir", async () => {
-  await assertPack("test-app-one", allPlatformsAndCurrentArch(), true, (projectDir) => {
+  await assertPack("test-app-one", allPlatformsAndCurrentArch(), (projectDir) => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
         data.directories = {
@@ -36,7 +36,7 @@ test("custom app dir", async () => {
 })
 
 test("productName with space", async () => {
-  await assertPack("test-app-one", allPlatformsAndCurrentArch(), true, (projectDir) => {
+  await assertPack("test-app-one", allPlatformsAndCurrentArch(), (projectDir) => {
     return modifyPackageJson(projectDir, data => {
       data.productName = "Test App"
     })
@@ -51,7 +51,7 @@ test("copy extra resource", async () => {
     platform: [platform],
     arch: process.arch,
     dist: false
-  }, true, (projectDir) => {
+  }, (projectDir) => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
         if (data.build == null) {

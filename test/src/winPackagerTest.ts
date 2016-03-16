@@ -14,5 +14,5 @@ test.ifNotCi.serial("win: nsis", async () => {
     platform: ["win32"],
     target: ["nsis"],
     arch: process.arch
-  }, true)
+  })
 })

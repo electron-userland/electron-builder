@@ -4,8 +4,8 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
+import { outputFile, readFile, readdir } from "fs-extra-p"
 import { State as Gm } from "gm"
-import { outputFile, readFile, stat } from "fs-extra-p"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
@@ -67,45 +67,77 @@ Icon=${this.metadata.name}
     return [`${tempFile}=/usr/share/applications/${this.appName}.desktop`]
   }
 
+  // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIconPath(tempDir: string): Promise<Array<string>> {
+    try {
+      const mappings: Array<string> = []
+      const pngIconsDir = path.join(this.buildResourcesDir, "icons")
+      for (let file of (await readdir(pngIconsDir))) {
+        if (file.endsWith(".png") || file.endsWith(".PNG")) {
+          // If parseInt encounters a character that is not a numeral in the specified radix,
+          // it returns the integer value parsed up to that point
+          try {
+            const size = parseInt(file, 10)
+            if (size > 0) {
+              mappings.push(`${pngIconsDir}/${file}=/usr/share/icons/hicolor/${size}x${size}/apps/${this.metadata.name}.png`)
+            }
+          }
+          catch (e) {
+            console.error(e)
+          }
+        }
+      }
+
+      return mappings
+    }
+    catch (e) {
+      return this.createFromIcns(tempDir)
+    }
+  }
+
+  private async createFromIcns(tempDir: string): Promise<Array<string>> {
     const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
-    log(outputs[0].toString())
-    if (!outputs[0].toString().includes("ih32")) {
-      log("48x48 is not found in the icns, 128x128 or 256x256 will be resized")
+    const output = outputs[0].toString()
+    log(output)
 
-      const gm = require("gm")
+    const gm = require("gm")
 
-      // icns doesn't contain required 48x48, use gm to resize
-      function resize(imagePath: string, size: number): BluebirdPromise<any> {
-        return new BluebirdPromise((resolve, reject) => {
-          (<Gm>gm(imagePath))
-            .resize(size, size)
-            .write(path.join(tempDir, `icon_${size}x${size}x32.png`), error => error == null ? resolve() : reject(error))
-        })
-      }
+    const imagePath = path.join(tempDir, "icon_256x256x32.png")
 
-      let imagePath = path.join(tempDir, "icon_128x128x32.png")
-      try {
-        await stat(imagePath)
-      }
-      catch (e) {
-        imagePath = path.join(tempDir, "icon_256x256x32.png")
-        // 128 should be in any case
-        await resize(imagePath, 128)
-      }
-      await resize(imagePath, 48)
+    function resize(size: number): BluebirdPromise<any> {
+      return new BluebirdPromise((resolve, reject) => {
+        (<Gm>gm(imagePath))
+          .resize(size, size)
+          .write(path.join(tempDir, `icon_${size}x${size}x32.png`), error => error == null ? resolve() : reject(error))
+      })
     }
 
-    const name = this.metadata.name
+    const promises: Array<Promise<any>> = [resize(24), resize(96)]
+    if (!output.includes("ih32")) {
+      promises.push(resize(48))
+    }
+    if (!output.toString().includes("icp6")) {
+      promises.push(resize(64))
+    }
+    if (!output.includes("it32")) {
+      promises.push(resize(128))
+    }
+
+    await BluebirdPromise.all(promises)
+
+    const appName = this.metadata.name
 
     function createMapping(size: string) {
-      return `${tempDir}/icon_${size}x${size}x32.png=/usr/share/icons/hicolor/${size}x${size}/apps/${name}.png`
+      return `${tempDir}/icon_${size}x${size}x32.png=/usr/share/icons/hicolor/${size}x${size}/apps/${appName}.png`
     }
 
     return [
       createMapping("16"),
+      createMapping("24"),
       createMapping("32"),
       createMapping("48"),
+      createMapping("64"),
+      createMapping("96"),
       createMapping("128"),
       createMapping("256"),
       createMapping("512"),
@@ -163,7 +195,7 @@ Icon=${this.metadata.name}
 async function writeConfigFile(tempDir: string, templatePath: string, options: any): Promise<string> {
   const config = template(await readFile(templatePath, "utf8"),
     {
-      // set interpolate explicitely to avoid troubles with templating of installer.nsi.tpl
+      // set interpolate explicitly to avoid troubles with templating of installer.nsi.tpl
       interpolate: /<%=([\s\S]+?)%>/g
     })(options)
 

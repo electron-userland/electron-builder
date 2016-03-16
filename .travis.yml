@@ -19,10 +19,12 @@ addons:
   apt:
     packages:
       - icnsutils
+      - graphicsmagick
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns graphicsmagick git-lfs; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git lfs pull; fi
   - gem install --no-rdoc --no-ri fpm
 
 install:
@@ -31,7 +33,6 @@ install:
 - source ~/.nvm/nvm.sh
 - nvm install $NODE_VERSION
 - npm install npm -g
-- npm -v
 - npm prune
 - npm install
 

@@ -19,9 +19,10 @@ let tmpDirCounter = 0
 
 export async function assertPack(fixtureName: string,
                                 packagerOptions: PackagerOptions,
-                                useTempDir?: boolean,
                                 tempDirCreated?: (projectDir: string) => Promise<any>,
                                 packed?: (projectDir: string) => Promise<any>) {
+  const useTempDir = tempDirCreated != null || (packagerOptions != null && packagerOptions.target != null)
+  
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -110,16 +111,14 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
       }
     })
-    // let normalizedAppName = getProductName(packager.metadata).toLowerCase().replace(/ /g, '-')
-    // expectedContents[expectedContents.indexOf("/usr/share/doc/testapp/")] = "/usr/share/doc/" + normalizedAppName + "/"
-    // expectedContents[expectedContents.indexOf("/usr/share/doc/testapp/changelog.Debian.gz")] = "/usr/share/doc/" + normalizedAppName + "/changelog.Debian.gz"
+
+    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
+    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
     assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName)).deepEqual(expectedContents)
     if (packagerOptions == null || packagerOptions.arch === null || packagerOptions.arch === "ia32") {
       assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
     }
-    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb"), null, 2))
-    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb"), null, 2))
   }
   else if (expandedPlatforms.includes("win32") && (packagerOptions == null || packagerOptions.target == null)) {
     await checkWindowsResult(packagerOptions, artifacts.get(Platform.WINDOWS))

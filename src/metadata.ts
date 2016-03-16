@@ -1,7 +1,9 @@
 export interface AppMetadata extends Metadata {
   readonly version: string
 
-  /** The application name */
+  /**
+   * The application name
+   **/
   readonly name: string
 
   /**
