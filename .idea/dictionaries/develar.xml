@@ -32,8 +32,10 @@
       <w>promisify</w>
       <w>repos</w>
       <w>rimraf</w>
+      <w>templating</w>
       <w>testapp</w>
       <w>tsconfig</w>
+      <w>userprofile</w>
       <w>veyor</w>
       <w>winstaller</w>
     </words>
