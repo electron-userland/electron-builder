@@ -12,8 +12,8 @@ import WinPackager from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-Array.isArray(__awaiter)
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -32,7 +32,7 @@ export class Packager implements BuildInfo {
 
   readonly eventEmitter = new EventEmitter()
 
-  //noinspection JSUnusedLocalSymbols
+  //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever = null) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
     this.appDir = this.computeAppDirectory()
@@ -48,17 +48,16 @@ export class Packager implements BuildInfo {
   }
 
   async build(): Promise<any> {
-    const buildPackageFile = this.devPackageFile
-    const appPackageFile = this.projectDir === this.appDir ? buildPackageFile : path.join(this.appDir, "package.json")
+    const devPackageFile = this.devPackageFile
+    const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
     const platforms = normalizePlatforms(this.options.platform)
-    await BluebirdPromise.map(Array.from(new Set([buildPackageFile, appPackageFile])), readPackageJson)
-      .then(result => {
-        this.metadata = result[result.length - 1]
-        this.devMetadata = result[0]
-        this.checkMetadata(appPackageFile, platforms)
 
-        this.electronVersion = getElectronVersion(this.devMetadata, buildPackageFile)
-      })
+    const metadataList = await BluebirdPromise.map(Array.from(new Set([devPackageFile, appPackageFile])), readPackageJson)
+    this.metadata = metadataList[metadataList.length - 1]
+    this.devMetadata = metadataList[0]
+    this.checkMetadata(appPackageFile, devPackageFile, platforms)
+
+    this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
     const cleanupTasks: Array<() => Promise<any>> = []
     return executeFinally(this.doBuild(platforms, cleanupTasks), () => all(cleanupTasks.map(it => it())))
@@ -134,26 +133,29 @@ export class Packager implements BuildInfo {
     return absoluteAppPath
   }
 
-  private checkMetadata(appPackageFile: string, platforms: Array<string>): void {
+  private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<string>): void {
     const reportError = (missedFieldName: string) => {
       throw new Error("Please specify '" + missedFieldName + "' in the application package.json ('" + appPackageFile + "')")
     }
 
-    const metadata = this.metadata
-    if (metadata.name == null) {
+    const appMetadata = this.metadata
+    if (appMetadata.name == null) {
       reportError("name")
     }
-    else if (metadata.description == null) {
+    else if (appMetadata.description == null) {
       reportError("description")
     }
-    else if (metadata.version == null) {
+    else if (appMetadata.version == null) {
       reportError("version")
     }
-    else if (metadata.build == null) {
-      throw new Error(util.format(errorMessages.buildIsMissed, appPackageFile))
+    else if (appMetadata !== this.devMetadata && (<any>appMetadata).build != null) {
+      throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
+    }
+    else if (this.devMetadata.build == null) {
+      throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
     }
     else {
-      const author = metadata.author
+      const author = appMetadata.author
       if (author == null) {
         reportError("author")
       }
@@ -169,7 +171,7 @@ export class Packager implements BuildInfo {
     }
     else {
       log("Skipping app dependencies installation because dev and app dependencies are not separated")
-      return BluebirdPromise.resolve(null)
+      return BluebirdPromise.resolve()
     }
   }
 }

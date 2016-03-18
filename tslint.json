@@ -64,5 +64,8 @@
       "check-separator",
       "check-type"
     ]
-  }
+  },
+  "no-debugger": true,
+  "no-inferrable-types": true,
+  "no-shadowed-variable ": true
 }

@@ -3,6 +3,10 @@ import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
+import { readJson } from "fs-extra-p"
+
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("./awaiter")
 
 export const log = console.log
 
@@ -90,16 +94,25 @@ export function spawn(command: string, args?: string[], options?: SpawnOptions):
   })
 }
 
-export function getElectronVersion(packageData: any, filePath: string): string {
+export async function getElectronVersion(packageData: any, packageJsonPath: string): Promise<string> {
+  try {
+    return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", "electron-prebuilt", "package.json"))).version
+  }
+  catch (e) {
+    // ignore
+  }
+
   const devDependencies = packageData.devDependencies
-  let electronPrebuiltDep = devDependencies == null ? null : devDependencies["electron-prebuilt"]
+  let electronPrebuiltDep: string = devDependencies == null ? null : devDependencies["electron-prebuilt"]
   if (electronPrebuiltDep == null) {
     const dependencies = packageData.dependencies
     electronPrebuiltDep = dependencies == null ? null : dependencies["electron-prebuilt"]
   }
 
   if (electronPrebuiltDep == null) {
-    throw new Error("Cannot find electron-prebuilt dependency to get electron version in the '" + filePath + "'")
+    throw new Error("Cannot find electron-prebuilt dependency to get electron version in the '" + packageJsonPath + "'")
   }
-  return electronPrebuiltDep.substring(1)
+
+  const firstChar = electronPrebuiltDep[0]
+  return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
 }

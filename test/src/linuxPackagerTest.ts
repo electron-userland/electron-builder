@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, platform } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { remove } from "fs-extra-p"
 import * as path from "path"
 
@@ -17,6 +17,10 @@ test.ifNotWindows("linux - icons from ICNS", async () => {
   }, (projectDir) => remove(path.join(projectDir, "build", "icons")))
 })
 
-test.ifNotWindows("no-author-email", async (t) => {
-  t.throws(assertPack("no-author-email", platform("linux")), /Please specify author 'email' in .*/)
+test.ifNotWindows("no-author-email", t => {
+  t.throws(assertPack("test-app-one", platform("linux"), projectDir => {
+      return modifyPackageJson(projectDir, data => {
+        data.author = "Foo"
+      })
+    }), /Please specify author 'email' in .+/)
 })

@@ -1,51 +1,40 @@
+export interface Metadata {
+  readonly repository: string | RepositoryInfo
+}
+
+/*
+  Application `package.json`
+ */
 export interface AppMetadata extends Metadata {
   readonly version: string
 
   /**
-   * The application name
-   **/
+   The application name.
+   */
   readonly name: string
 
   /**
-   * As {@link AppMetadata#name}, but allows you to specify a product name for your executable which contains spaces and other special characters
-   * not allowed in the [name property]{@link https://docs.npmjs.com/files/package.json#name}.
+   As [name](#name), but allows you to specify a product name for your executable which contains spaces and other special characters
+   not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
   readonly productName?: string
 
   readonly description: string
+
   readonly author: AuthorMetadata
-
-  readonly build: BuildMetadata
 }
 
-export function getProductName(metadata: AppMetadata) {
-  return metadata.build.productName || metadata.productName || metadata.name
-}
-
+/*
+  Development `package.json`
+ */
 export interface DevMetadata extends Metadata {
-  readonly build?: DevBuildMetadata
+  readonly build?: BuildMetadata
 
   readonly directories?: MetadataDirectories
 }
 
-export interface BuildMetadata {
-  readonly "app-bundle-id": string
-  readonly "app-category-type": string
-
-  readonly iconUrl: string
-
-  /**
-   * See {@link AppMetadata#productName}.
-   */
-  readonly productName?: string
-}
-
 export interface RepositoryInfo {
   readonly url: string
-}
-
-export interface Metadata {
-  readonly repository: string | RepositoryInfo
 }
 
 export interface AuthorMetadata {
@@ -57,7 +46,17 @@ export interface MetadataDirectories {
   readonly buildResources?: string
 }
 
-export interface DevBuildMetadata {
+export interface BuildMetadata {
+  readonly "app-bundle-id": string
+  readonly "app-category-type": string
+
+  readonly iconUrl: string
+
+  /**
+   See [AppMetadata.productName](#AppMetadata-productName).
+   */
+  readonly productName?: string
+
   readonly osx?: appdmg.Specification
   readonly win?: any,
   readonly linux?: any
@@ -90,4 +89,8 @@ export class Platform {
 
     throw new Error("Unknown platform: " + name)
   }
+}
+
+export function getProductName(metadata: AppMetadata, devMetadata: DevMetadata) {
+  return devMetadata.build.productName || metadata.productName || metadata.name
 }

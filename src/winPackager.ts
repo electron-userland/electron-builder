@@ -15,6 +15,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 
   readonly icon?: string
   readonly iconUrl?: string
+
+  /**
+   Whether to create an MSI installer. Defaults to `true` (MSI is not created).
+   */
+  readonly noMsi?: boolean
 }
 
 export default class WinPackager extends PlatformPackager<WinBuildOptions> {
@@ -60,7 +65,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    let iconUrl = this.metadata.build.iconUrl
+    let iconUrl = this.devMetadata.build.iconUrl
     if (!iconUrl) {
       if (this.customBuildOptions != null) {
         iconUrl = this.customBuildOptions.iconUrl
@@ -98,7 +103,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
       fixUpPaths: false,
-      usePackageJson: false
+      usePackageJson: false,
+      noMsi: true,
     }, this.customBuildOptions)
 
     // we use metadata.name instead of appName because appName can contains unsafe chars
@@ -131,7 +137,6 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     async function changeFileNameInTheReleasesFile(): Promise<void> {
       const data = (await readFile(releasesFile, "utf8")).replace(new RegExp(" " + nupkgPathOriginal + " ", "g"), " " + nupkgPathWithArch + " ")
-      debugger
       await writeFile(releasesFile, data)
     }
 

@@ -20,9 +20,9 @@ let tmpDirCounter = 0
 export async function assertPack(fixtureName: string,
                                 packagerOptions: PackagerOptions,
                                 tempDirCreated?: (projectDir: string) => Promise<any>,
-                                packed?: (projectDir: string) => Promise<any>) {
+                                packed?: (projectDir: string) => Promise<any>): Promise<void> {
   const useTempDir = tempDirCreated != null || (packagerOptions != null && packagerOptions.target != null)
-  
+
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
@@ -99,7 +99,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
     await checkOsXResult(packager, artifacts.get(Platform.OSX))
   }
   else if (expandedPlatforms.includes("linux")) {
-    const productName = getProductName(packager.metadata)
+    const productName = getProductName(packager.metadata, packager.devMetadata)
     const expectedContents = expectedLinuxContents.map(it => {
       if (it === "/opt/TestApp/TestApp") {
         return "/opt/" + productName + "/" + productName
@@ -126,7 +126,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 }
 
 async function checkOsXResult(packager: Packager, artifacts: Array<string>) {
-  const productName = getProductName(packager.metadata)
+  const productName = getProductName(packager.metadata, packager.devMetadata)
   const packedAppDir = path.join(path.dirname(artifacts[0]), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readText(path.join(packedAppDir, "Contents", "Info.plist")))
   assertThat(info).has.properties({
@@ -175,8 +175,8 @@ async function getContents(path: string, productName: string) {
     )
 }
 
-export async function modifyPackageJson(projectDir: string, task: (data: any) => void): Promise<any> {
-  const file = path.join(projectDir, "package.json")
+export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp: boolean = false): Promise<any> {
+  const file = isApp ? path.join(projectDir, "app", "package.json") : path.join(projectDir, "package.json")
   const data = await readJson(file)
   task(data)
   return await writeJson(file, data)

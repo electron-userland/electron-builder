@@ -38,7 +38,7 @@ Why the two package.json structure is ideal and how it solves a lot of issues
 See [options](./docs/options.md), but consider to follow simple 4-step guide outlined below at first.
 
 ## In short
-1. Ensure that required fields are specified in the application `package.json`:
+1. Ensure that required fields are specified in the development `package.json`:
 
    Standard `name`, `description`, `version` and `author`.
 
@@ -54,7 +54,7 @@ See [options](./docs/options.md), but consider to follow simple 4-step guide out
 
 2. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
 
-   Linux icon set will be generated automatically on the fly from the OS X `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
+   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>Linux icon set will be generated automatically on the fly from the OS X `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
 
 3. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
     ```json

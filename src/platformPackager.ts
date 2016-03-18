@@ -72,7 +72,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const buildMetadata: any = info.devMetadata.build
     this.customBuildOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
 
-    this.appName = getProductName(this.metadata)
+    this.appName = getProductName(this.metadata, this.devMetadata)
   }
 
   protected get relativeBuildResourcesDirname() {
@@ -92,6 +92,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       buildVersion += "." + buildNumber
     }
 
+    const electronPackagerOptions = this.devMetadata.build
+    checkConflictingOptions(electronPackagerOptions)
+
     const options = Object.assign({
       dir: this.info.appDir,
       out: outDir,
@@ -104,15 +107,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       overwrite: true,
       "app-version": version,
       "build-version": buildVersion,
+      tmpdir: false,
       "version-string": {
         CompanyName: this.metadata.author.name,
         FileDescription: this.metadata.description,
-        ProductVersion: version,
-        FileVersion: buildVersion,
         ProductName: this.appName,
         InternalName: this.appName,
       }
-    }, this.metadata.build, {"tmpdir": false})
+    }, electronPackagerOptions)
+
+    delete options.osx
+    delete options.win
+    delete options.linux
 
     // this option only for windows-installer
     delete options.iconUrl
@@ -128,8 +134,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     if (extraResources != null) {
       const expandedPatterns = extraResources.map(it => it
-        .replace(/\$\{arch\}/g, arch)
-        .replace(/\$\{os\}/g, this.platform.buildConfigurationKey))
+        .replace(/\$\{arch}/g, arch)
+        .replace(/\$\{os}/g, this.platform.buildConfigurationKey))
       await BluebirdPromise.map(await globby(expandedPatterns, {cwd: this.projectDir}), it => {
         let resourcesDir = appOutDir
         if (platform === "darwin") {
@@ -141,4 +147,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
+}
+
+function checkConflictingOptions(options: any): void {
+  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
+    if (name in options) {
+      throw new Error(`Option ${name} is ignored, do not specify it.`)
+    }
+  }
 }

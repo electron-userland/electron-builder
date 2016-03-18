@@ -36,11 +36,21 @@ test("custom app dir", async () => {
 })
 
 test("productName with space", async () => {
-  await assertPack("test-app-one", allPlatformsAndCurrentArch(), (projectDir) => {
+  await assertPack("test-app-one", allPlatformsAndCurrentArch(), projectDir => {
     return modifyPackageJson(projectDir, data => {
       data.productName = "Test App"
     })
   })
+})
+
+test("build in the app package.json", t => {
+  t.throws(assertPack("test-app", allPlatformsAndCurrentArch(), projectDir => {
+    return modifyPackageJson(projectDir, data => {
+      data.build = {
+        "iconUrl": "bar",
+      }
+    }, true)
+  }), /'build' in the application package\.json .+/)
 })
 
 test("copy extra resource", async () => {

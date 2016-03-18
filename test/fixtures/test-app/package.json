@@ -5,5 +5,14 @@
   },
   "devDependencies": {
     "electron-prebuilt": "^0.37.2"
+  },
+  "build": {
+    "app-bundle-id": "your.id",
+    "app-category-type": "your.app.category.type",
+    "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
+    "linux": {
+      "//": "gz is much faster, in tests we don't need efficient compression",
+      "compression": "gz"
+    }
   }
 }
