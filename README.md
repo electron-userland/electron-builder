@@ -113,9 +113,3 @@ Want more — please file issue.
 
 # Programmatic usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
-
-# Old API (< 2.8)
-Old API is deprecated, but not dropped. You can use it as before. Please note — new API by default produces Squirrel.Windows installer, set `target` to build NSIS:
- ```
- build --target=nsis
- ```

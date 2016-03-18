@@ -3,15 +3,21 @@
   "description": "Complete solution to build ready for distribution and 'auto update' Electron App installers",
   "version": "0.0.0-semantic-release",
   "main": "out/index.js",
+  "files": [
+    "out",
+    "templates"
+  ],
+  "bin": {
+    "build": "./out/build-cli.js",
+    "install-app-deps": "./out/install-app-deps.js"
+  },
   "scripts": {
     "compile": "npm run compile-production && npm run compile-test",
     "compile-production": "tsconfig -i 2 && ts-babel",
     "compile-test": "tsconfig -i 2 test && ts-babel test",
-    "lint": "eslint ./lib cli.js index.js && tslint src/*",
+    "lint": "tslint src/*.ts test/src/*.ts",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
-    "test-nix": "tape ./lib/*.spec.js ./lib/**/*.spec.js && ava",
-    "test-win": "ava",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "validate-commit-msg": "validate-commit-msg"
   },
@@ -41,11 +47,6 @@
     "OS X",
     "Mac"
   ],
-  "bin": {
-    "electron-builder": "cli.js",
-    "install-app-deps": "./out/install-app-deps.js",
-    "build": "./out/build-cli.js"
-  },
   "author": "Stefan Judis",
   "license": "MIT",
   "bugs": "https://github.com/loopline-systems/electron-builder/issues",
@@ -53,7 +54,7 @@
   "dependencies": {
     "bluebird": "^3.3.4",
     "command-line-args": "^2.1.6",
-    "electron-packager-tf": "^5.2.3",
+    "electron-packager-tf": "^5.2.4-beta.0",
     "electron-winstaller-fixed": "^2.0.6-beta.1",
     "fs-extra": "^0.26.7",
     "fs-extra-p": "^0.1.0",
@@ -61,7 +62,6 @@
     "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
     "lodash.template": "^4.2.2",
-    "meow": "^3.7.0",
     "mime": "^1.3.4",
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
@@ -77,20 +77,16 @@
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.7.0",
     "electron-download": "^2.1.0",
-    "eslint": "^2.4.0",
-    "eslint-plugin-ava": "sindresorhus/eslint-plugin-ava",
     "pre-commit": "^1.1.2",
     "json-parse-helpfulerror": "^1.0.3",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
-    "proxyquire": "^1.7.4",
     "semantic-release": "^4.3.5",
     "should": "^8.2.2",
-    "tape": "^4.5.1",
     "ts-babel": "^0.6.1",
     "tsconfig-glob": "^0.4.1",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160313",
+    "typescript": "^1.9.0-dev.20160315",
     "validate-commit-msg": "^2.4.0"
   },
   "babel": {
@@ -103,9 +99,7 @@
     "verbose": true,
     "cache": false,
     "files": [
-      "test/out/*",
-      "test/old-cli-test.js",
-      "test/index.spec.js"
+      "test/out/*"
     ]
   },
   "typings": "./out/electron-builder.d.ts",

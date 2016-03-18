@@ -61,7 +61,6 @@
     "src/metadata.ts",
     "src/packager.ts",
     "src/platformPackager.ts",
-    "src/platforms.ts",
     "src/promise.ts",
     "src/promisifed-fs.ts",
     "src/repositoryInfo.ts",

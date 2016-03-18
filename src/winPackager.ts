@@ -19,21 +19,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 
 export default class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string>
-  isNsis: boolean
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
-
-    // we are not going to support build both nsis and squirrel
-    this.isNsis = this.options.target != null && this.options.target.includes("nsis")
-    if (this.isNsis) {
-      // it is not an optimization, win.js cannot be runned in highly concurrent environment and we get
-      // "Error: EBUSY: resource busy or locked, unlink 'C:\Users\appveyor\AppData\Local\Temp\1\icon.ico'"
-      // on appveyor (well, yes, it is a Windows bug)
-      // Because NSIS support will be dropped some day, correct solution is not implemented
-      const iconPath = this.customBuildOptions == null ? null : this.customBuildOptions.icon
-      require("../lib/win").copyAssetsToTmpFolder(iconPath || path.join(this.buildResourcesDir, "icon.ico"))
-    }
 
     // https://developer.mozilla.org/en-US/docs/Signing_an_executable_with_Authenticode
     // https://github.com/Squirrel/Squirrel.Windows/pull/505
@@ -54,8 +42,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
-    if (this.options.dist && !this.isNsis) {
-      const installerOut = this.computeDistOut(outDir, arch)
+    if (this.options.dist) {
+      const installerOut = WinPackager.computeDistOut(outDir, arch)
       log("Removing %s", installerOut)
       return BluebirdPromise.all([
         super.pack(platform, outDir, appOutDir, arch),
@@ -67,8 +55,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  private computeDistOut(outDir: string, arch: string): string {
-    return path.join(outDir, (this.isNsis ? "nsis" : "win") + (arch === "x64" ? "-x64" : ""))
+  private static computeDistOut(outDir: string, arch: string): string {
+    return path.join(outDir, "win" + (arch === "x64" ? "-x64" : ""))
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
@@ -93,7 +81,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     const certificateFile = await this.certFilePromise
     const version = this.metadata.version
-    const installerOutDir = this.computeDistOut(outDir, arch)
+    const installerOutDir = WinPackager.computeDistOut(outDir, arch)
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const options = Object.assign({
       name: this.metadata.name,
@@ -115,10 +103,6 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     // we use metadata.name instead of appName because appName can contains unsafe chars
     const installerExePath = path.join(installerOutDir, this.metadata.name + "Setup-" + version + archSuffix + ".exe")
-    if (this.isNsis) {
-      return await this.nsis(options, installerExePath)
-    }
-
     try {
       await require("electron-winstaller-fixed").createWindowsInstaller(options)
     }
@@ -173,28 +157,5 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     await BluebirdPromise.all(promises)
-  }
-
-  private async nsis(options: any, installerFile: string) {
-    const build = <(options: any, callback: (error: Error) => void) => void>require("../lib/win").init().build
-    // nsis cannot create dir
-    await emptyDir(options.outputDirectory)
-    return await BluebirdPromise.promisify(build)(Object.assign(options, {
-      log: console.log,
-      appPath: options.appDirectory,
-      out: options.outputDirectory,
-      platform: "win32",
-      outFile: installerFile,
-      copyAssetsToTmpFolder: false,
-      config: {
-        win: Object.assign({
-          title: options.title,
-          version: options.version,
-          icon: options.setupIcon,
-          publisher: options.authors,
-          verbosity: 2
-        }, this.customBuildOptions)
-      }
-    }))
   }
 }

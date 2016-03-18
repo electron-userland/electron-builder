@@ -36,8 +36,6 @@ We use [ESLint](http://eslint.org/) to guarantee a consistent coding style.
 
 I know that it is sometimes unavoidable to go over it. But function arguments and long if-conditions can include line breaks. ;)
 
-#### Please don't forget to add JSDoc to every new implemented function.
-
 ## Git Commit Guidelines
 We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how our git commit messages can be formatted.
 

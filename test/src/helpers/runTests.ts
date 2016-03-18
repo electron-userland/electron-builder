@@ -114,17 +114,19 @@ function install(): void {
 }
 
 function runTests(): void {
-  exec("npm", ["run", "test-" + (process.platform === "win32" ? "win" : "nix")], () => {
+  exec(path.join(rootDir, "node_modules", ".bin", "ava"), [], () => {
   }, {
-    cwd: path.join(__dirname, "..", ".."),
+    cwd: rootDir,
     env: Object.assign({}, process.env, {
       NODE_PATH: path.join(testNodeModules, "electron-builder"),
       TEST_MODE: "true",
-    })
+    }),
+    shell: process.platform === "win32",
   })
 }
 
 function exec(command: string, args: Array<string>, callback: () => void, options?: any) {
+  const isPruneCommand = args != null && args.length > 0 && args[0] === "prune"
   if (command === "npm") {
     const npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
     if (npmExecPath != null) {
@@ -134,7 +136,7 @@ function exec(command: string, args: Array<string>, callback: () => void, option
   }
 
   const effectiveOptions = Object.assign({
-    stdio: "inherit",
+    stdio: isPruneCommand ? ["ignore", "ignore", "inherit"] : "inherit",
     cwd: testPackageDir,
   }, options)
   console.log("Execute " + command + " " + args.join(" ") + " (cwd: " + effectiveOptions.cwd + ")")

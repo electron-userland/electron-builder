@@ -60,7 +60,6 @@
     "src/helpers/packTester.ts",
     "src/helpers/runTests.ts",
     "src/linuxPackagerTest.ts",
-    "src/old-cli-test.ts",
     "src/RepoSlugTest.ts",
     "src/winPackagerTest.ts"
   ]

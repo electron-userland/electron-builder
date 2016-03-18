@@ -4,7 +4,7 @@ os:
 
 env:
   - NODE_VERSION=4
-  - NODE_VERSION=5
+  - NODE_VERSION=5.8
 
 language: ruby
 
@@ -40,7 +40,7 @@ script:
 - npm run test
 
 after_success:
-  - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" ]]; then npm run semantic-release ; fi
+  - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" == "true" ]]; then npm run semantic-release ; fi
 
 branches:
   except:
