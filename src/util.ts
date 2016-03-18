@@ -99,7 +99,9 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
     return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", "electron-prebuilt", "package.json"))).version
   }
   catch (e) {
-    // ignore
+    if (e.code !== "ENOENT") {
+      console.warn("Cannot read electron version from electron-prebuilt package.json" + e.message)
+    }
   }
 
   const devDependencies = packageData.devDependencies

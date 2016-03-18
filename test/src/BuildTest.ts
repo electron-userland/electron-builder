@@ -1,6 +1,6 @@
 import test from "./helpers/avaEx"
 import { assertPack, modifyPackageJson, platform } from "./helpers/packTester"
-import { move, mkdirs, outputFile } from "fs-extra-p"
+import { move, mkdirs, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -51,6 +51,23 @@ test("build in the app package.json", t => {
       }
     }, true)
   }), /'build' in the application package\.json .+/)
+})
+
+test("version from electron-prebuilt dependency", async () => {
+  await assertPack("test-app-one", {
+    platform: [process.platform],
+    arch: process.arch,
+    dist: false
+  }, projectDir => {
+    return BluebirdPromise.all([
+      outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+        version: "0.37.2"
+      }),
+      modifyPackageJson(projectDir, data => {
+        data.devDependencies = {}
+      })
+    ])
+  })
 })
 
 test("copy extra resource", async () => {
