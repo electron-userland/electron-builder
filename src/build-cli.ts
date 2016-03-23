@@ -32,7 +32,7 @@ if (args.help) {
   const version = process.env.npm_package_version || JSON.parse(readFileSync(path.join(__dirname, "..", "package.json"), "utf8")).version
   console.log(cli.getUsage({
     title: "electron-builder " + version,
-    footer: "Project home: [underline]{https://github.com/loopline-systems/electron-builder}"
+    footer: "Project home: [underline]{https://github.com/electron-userland/electron-builder}"
   }))
 }
 else {

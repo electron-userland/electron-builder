@@ -5,8 +5,8 @@ import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
-import { AppMetadata, Platform, DevMetadata } from "./metadata"
-import { PackagerOptions, PlatformPackager, BuildInfo } from "./platformPackager"
+import { AppMetadata, DevMetadata } from "./metadata"
+import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
 import MacPackager from "./macPackager"
 import WinPackager from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -38,7 +38,7 @@ export class Packager implements BuildInfo {
     this.appDir = this.computeAppDirectory()
   }
 
-  artifactCreated(handler: (file: string, platform: Platform) => void): Packager {
+  artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
     addHandler(this.eventEmitter, "artifactCreated", handler)
     return this
   }

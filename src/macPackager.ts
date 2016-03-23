@@ -53,7 +53,7 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
   }
 
   packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
-    const artifactPath = path.join(appOutDir, this.metadata.name + "-" + this.metadata.version + ".dmg")
+    const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
     return BluebirdPromise.all([
       new BluebirdPromise<any>((resolve, reject) => {
         log("Creating DMG")
@@ -83,17 +83,18 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
         emitter.on("error", reject)
         emitter.on("finish", () => resolve())
       })
-        .then(() => this.dispatchArtifactCreated(artifactPath)),
+        .then(() => this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)),
 
       this.zipMacApp(appOutDir)
-        .then(it => this.dispatchArtifactCreated(it))
+        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-mac.zip`))
     ])
   }
 
   private zipMacApp(outDir: string): Promise<string> {
     log("Creating ZIP for Squirrel.Mac")
+    // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
+    const resultPath = `${this.appName}-${this.metadata.version}-mac.zip`
     // -y param is important - "store symbolic links as the link instead of the referenced file"
-    const resultPath = `${this.metadata.name}-${this.metadata.version}-mac.zip`
     const args = ["-ryXq", resultPath, this.appName + ".app"]
 
     // todo move to options

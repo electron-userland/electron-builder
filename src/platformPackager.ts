@@ -80,8 +80,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return (directories == null ? null : directories.buildResources) || "build"
   }
 
-  protected dispatchArtifactCreated(file: string) {
-    this.info.eventEmitter.emit("artifactCreated", file, this.platform)
+  protected dispatchArtifactCreated(file: string, artifactName?: string) {
+    this.info.eventEmitter.emit("artifactCreated", {
+      file: file,
+      artifactName: artifactName,
+      platform: this.platform,
+    })
   }
 
   async pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
@@ -155,4 +159,11 @@ function checkConflictingOptions(options: any): void {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
   }
+}
+
+export interface ArtifactCreated {
+  readonly file: string
+  readonly artifactName?: string
+
+  readonly platform: Platform
 }
