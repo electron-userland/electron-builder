@@ -5,6 +5,9 @@ import { printErrorAndExit } from "./promise"
 import * as path from "path"
 import cla = require("command-line-args")
 
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("./awaiter")
+
 const args = cla(commonArgs.concat({
   name: "arch",
   type: String,
