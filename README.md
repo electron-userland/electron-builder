@@ -26,9 +26,9 @@ We strongly recommend to use **two** package.json files (it is not required, you
   In the `app` directory. *Only this directory is distributed with real application.*
 
 Why the two package.json structure is ideal and how it solves a lot of issues
-([#39](https://github.com/loopline-systems/electron-builder/issues/39),
-[#182](https://github.com/loopline-systems/electron-builder/issues/182),
-[#230](https://github.com/loopline-systems/electron-builder/issues/230))?
+([#39](https://github.com/electron-userland/electron-builder/issues/39),
+[#182](https://github.com/electron-userland/electron-builder/issues/182),
+[#230](https://github.com/electron-userland/electron-builder/issues/230))?
 
 1. Native npm modules (those written in C, not JavaScript) need to be compiled, and here we have two different compilation targets for them. Those used in application need to be compiled against electron runtime, and all `devDependencies` need to be compiled against your locally installed node.js. Thanks to having two files this is trivial.
 2. When you package the app for distribution there is no need to add up to size of the app with your `devDependencies`. Here those are always not included (because reside outside the `app` directory).

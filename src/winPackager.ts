@@ -79,7 +79,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
         }
 
         if (!iconUrl) {
-          throw new Error("iconUrl is not specified, please see https://github.com/loopline-systems/electron-builder#in-short")
+          throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder#in-short")
         }
       }
     }
