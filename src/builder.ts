@@ -76,13 +76,13 @@ export async function build(options: BuildOptions = {}): Promise<void> {
   const packager = new Packager(options, repositoryInfo)
   if (options.publish != null && options.publish !== "never") {
     let publisher: BluebirdPromise<Publisher> = null
-    packager.artifactCreated((file, platform) => {
+    packager.artifactCreated(event => {
       if (publisher == null) {
         publisher = <BluebirdPromise<Publisher>>createPublisher(packager, options, repositoryInfo, isPublishOptionGuessed)
       }
 
       if (publisher != null) {
-        publisher.then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(file)))
+        publisher.then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
       }
     })
   }

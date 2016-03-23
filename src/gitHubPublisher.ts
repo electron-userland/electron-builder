@@ -15,7 +15,7 @@ import ProgressBar = require("progress")
 const __awaiter = require("./awaiter")
 
 export interface Publisher {
-  upload(path: string): Promise<any>
+  upload(file: string, artifactName?: string): Promise<any>
 }
 
 export interface PublishOptions {
@@ -66,15 +66,15 @@ export class GitHubPublisher implements Publisher {
     }
   }
 
-  async upload(path: string): Promise<void> {
-    const fileName = basename(path)
+  async upload(file: string, artifactName?: string): Promise<void> {
+    const fileName = artifactName || basename(file)
     const release = await this.releasePromise
     if (release == null) {
       return null
     }
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
-    const fileStat = await stat(path)
+    const fileStat = await stat(file)
     let badGatewayCount = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       const progressBar = (<ReadStream>process.stdin).isTTY ? new ProgressBar(`Uploading ${fileName} [:bar] :percent :etas`, {
@@ -96,7 +96,7 @@ export class GitHubPublisher implements Publisher {
             "Content-Length": fileStat.size
           }
         }, this.token, (request, reject) => {
-          const fileInputStream = createReadStream(path)
+          const fileInputStream = createReadStream(file)
           fileInputStream.on("error", reject)
           fileInputStream
             .pipe(progressStream({

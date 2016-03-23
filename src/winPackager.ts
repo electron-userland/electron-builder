@@ -107,8 +107,6 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       noMsi: true,
     }, this.customBuildOptions)
 
-    // we use metadata.name instead of appName because appName can contains unsafe chars
-    const installerExePath = path.join(installerOutDir, this.metadata.name + "Setup-" + version + archSuffix + ".exe")
     try {
       await require("electron-winstaller-fixed").createWindowsInstaller(options)
     }
@@ -141,8 +139,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     const promises: Array<Promise<any>> = [
-      rename(path.join(installerOutDir, "Setup.exe"), installerExePath)
-        .then(it => this.dispatchArtifactCreated(it)),
+      rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName}Setup-${version}${archSuffix}.exe`))
+        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}Setup-${version}${archSuffix}.exe`)),
     ]
 
     if (archSuffix === "") {

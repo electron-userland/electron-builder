@@ -5,7 +5,7 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents } from "./expectedContents"
 import { readText } from "out/promisifed-fs"
-import { Packager, PackagerOptions, Platform, getProductName } from "out"
+import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
 import { normalizePlatforms } from "out/packager"
 import { exec } from "out/util"
 import pathSorter = require("path-sort")
@@ -73,15 +73,15 @@ export async function assertPack(fixtureName: string,
 async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions): Promise<void> {
   const packager = new Packager(packagerOptions)
 
-  const artifacts: Map<Platform, Array<string>> = new Map()
-  packager.artifactCreated((file, platform) => {
-    assertThat(path.isAbsolute(file)).true()
-    let list = artifacts.get(platform)
+  const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
+  packager.artifactCreated(event => {
+    assertThat(path.isAbsolute(event.file)).true()
+    let list = artifacts.get(event.platform)
     if (list == null) {
       list = []
-      artifacts.set(platform, list)
+      artifacts.set(event.platform, list)
     }
-    list.push(file)
+    list.push(event)
   })
 
   await packager.build()
@@ -90,44 +90,41 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
     return
   }
 
-  for (let key of artifacts.keys()) {
-    artifacts.set(key, pathSorter(artifacts.get(key)))
-  }
-
-  const expandedPlatforms = normalizePlatforms(packagerOptions.platform)
-  if (expandedPlatforms.includes("darwin")) {
-    await checkOsXResult(packager, artifacts.get(Platform.OSX))
-  }
-  else if (expandedPlatforms.includes("linux")) {
-    const productName = getProductName(packager.metadata, packager.devMetadata)
-    const expectedContents = expectedLinuxContents.map(it => {
-      if (it === "/opt/TestApp/TestApp") {
-        return "/opt/" + productName + "/" + productName
-      }
-      else if (it === "/usr/share/applications/TestApp.desktop") {
-        return `/usr/share/applications/${productName}.desktop`
-      }
-      else {
-        return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
-      }
-    })
-
-    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
-    // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
-
-    assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName)).deepEqual(expectedContents)
-    if (packagerOptions == null || packagerOptions.arch === null || packagerOptions.arch === "ia32") {
-      assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
+  for (let platform of normalizePlatforms(packagerOptions.platform)) {
+    if (platform === "darwin") {
+      await checkOsXResult(packager, artifacts.get(Platform.OSX))
     }
-  }
-  else if (expandedPlatforms.includes("win32") && (packagerOptions == null || packagerOptions.target == null)) {
-    await checkWindowsResult(packagerOptions, artifacts.get(Platform.WINDOWS))
+    else if (platform === "linux") {
+      const productName = getProductName(packager.metadata, packager.devMetadata)
+      const expectedContents = expectedLinuxContents.map(it => {
+        if (it === "/opt/TestApp/TestApp") {
+          return "/opt/" + productName + "/" + productName
+        }
+        else if (it === "/usr/share/applications/TestApp.desktop") {
+          return `/usr/share/applications/${productName}.desktop`
+        }
+        else {
+          return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
+        }
+      })
+
+      // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
+      // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
+
+      assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName)).deepEqual(expectedContents)
+      if (packagerOptions == null || packagerOptions.arch === null || packagerOptions.arch === "ia32") {
+        assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
+      }
+    }
+    else if (platform === "win32" && (packagerOptions == null || packagerOptions.target == null)) {
+      await checkWindowsResult(packager, packagerOptions, artifacts.get(Platform.WINDOWS))
+    }
   }
 }
 
-async function checkOsXResult(packager: Packager, artifacts: Array<string>) {
+async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
-  const packedAppDir = path.join(path.dirname(artifacts[0]), (productName || packager.metadata.name) + ".app")
+  const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readText(path.join(packedAppDir, "Contents", "Info.plist")))
   assertThat(info).has.properties({
     CFBundleDisplayName: productName,
@@ -139,30 +136,43 @@ async function checkOsXResult(packager: Packager, artifacts: Array<string>) {
   const result = await exec("codesign", ["--verify", packedAppDir])
   assertThat(result[0].toString()).not.match(/is not signed at all/)
 
-  assertThat(artifacts.map(it => path.basename((it))).sort()).deepEqual([
+  assertThat(artifacts.map(it => path.basename(it.file)).sort()).deepEqual([
+    `${productName}-1.0.0-mac.zip`,
+    `${productName}-1.0.0.dmg`,
+  ].sort())
+
+  assertThat(artifacts.map(it => it.artifactName).sort()).deepEqual([
     "TestApp-1.0.0-mac.zip",
-    "TestApp-1.0.0.dmg"
+    "TestApp-1.0.0.dmg",
   ].sort())
 }
 
-async function checkWindowsResult(packagerOptions: PackagerOptions, artifacts: Array<string>) {
-  const expected32 = [
-    "RELEASES-ia32",
-    "TestAppSetup-1.0.0-ia32.exe",
-    "TestApp-1.0.0-ia32-full.nupkg",
-  ]
-  const expected64 = [
-    "RELEASES",
-    "TestAppSetup-1.0.0.exe",
-    "TestApp-1.0.0-full.nupkg",
-  ]
-  const expected = packagerOptions != null && packagerOptions.arch === "x64" ? expected64 : expected32.concat(expected64)
-  const filenames = artifacts.map(it => path.basename((it)))
-  assertThat(filenames.slice().sort()).deepEqual(expected.sort())
+async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, artifacts: Array<ArtifactCreated>) {
+  const productName = getProductName(packager.metadata, packager.devMetadata)
+
+  function getWinExpected(archSuffix: string) {
+    return [
+      `RELEASES${archSuffix}`,
+      `${productName}Setup-1.0.0${archSuffix}.exe`,
+      `TestApp-1.0.0${archSuffix}-full.nupkg`,
+    ]
+  }
+
+  const archSuffix = packagerOptions != null && packagerOptions.arch === "x64" ? "" : "-ia32"
+  const expected = archSuffix == "" ? getWinExpected(archSuffix) : getWinExpected(archSuffix).concat(getWinExpected(""))
+
+  const filenames = artifacts.map(it => path.basename(it.file))
+  assertThat(filenames.slice().sort()).deepEqual(expected.slice().sort())
 
   let i = filenames.indexOf("RELEASES-ia32")
   if (i !== -1) {
-    assertThat((await readText(artifacts[i])).indexOf("ia32")).not.equal(-1)
+    assertThat((await readText(artifacts[i].file)).indexOf("ia32")).not.equal(-1)
+  }
+
+  if (archSuffix == "") {
+    const expectedArtifactNames = expected.slice()
+    expectedArtifactNames[1] = `TestAppSetup-1.0.0${archSuffix}.exe`
+    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.0.0${archSuffix}.exe`])
   }
 }
 
