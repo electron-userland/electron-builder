@@ -73,7 +73,7 @@ export class Packager implements BuildInfo {
         const outDir = path.join(this.projectDir, "dist")
         // electron-packager uses productName in the directory name
         const appOutDir = path.join(outDir, helper.appName + "-" + platform + "-" + arch)
-        await helper.pack(platform, outDir, appOutDir, arch)
+        await helper.pack(outDir, appOutDir, arch)
         if (this.options.dist) {
           distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir, arch))
         }

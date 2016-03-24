@@ -3,13 +3,15 @@ import * as assertThat from "should/as-function"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD } from "./codeSignData"
-import { expectedLinuxContents } from "./expectedContents"
+import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { readText } from "out/promisifed-fs"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
 import { normalizePlatforms } from "out/packager"
 import { exec } from "out/util"
 import pathSorter = require("path-sort")
 import { tmpdir } from "os"
+import DecompressZip = require("decompress-zip")
+import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -17,10 +19,14 @@ const __awaiter = require("out/awaiter")
 const tmpDirPrefix = "electron-builder-test-" + process.pid + "-"
 let tmpDirCounter = 0
 
-export async function assertPack(fixtureName: string,
-                                packagerOptions: PackagerOptions,
-                                tempDirCreated?: (projectDir: string) => Promise<any>,
-                                packed?: (projectDir: string) => Promise<any>): Promise<void> {
+interface AssertPackOptions {
+  readonly tempDirCreated?: (projectDir: string) => Promise<any>
+  readonly packed?: (projectDir: string) => Promise<any>
+  readonly expectedContents?: Array<string>
+}
+
+export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
+  const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
   const useTempDir = tempDirCreated != null || (packagerOptions != null && packagerOptions.target != null)
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
@@ -52,10 +58,10 @@ export async function assertPack(fixtureName: string,
       cscLink: CSC_LINK,
       cscKeyPassword: CSC_KEY_PASSWORD,
       dist: true,
-    }, packagerOptions))
+    }, packagerOptions), checkOptions)
 
-    if (packed != null) {
-      await packed(projectDir)
+    if (checkOptions != null && checkOptions.packed != null) {
+      await checkOptions.packed(projectDir)
     }
   }
   finally {
@@ -70,7 +76,7 @@ export async function assertPack(fixtureName: string,
   }
 }
 
-async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions): Promise<void> {
+async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<void> {
   const packager = new Packager(packagerOptions)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -117,7 +123,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       }
     }
     else if (platform === "win32" && (packagerOptions == null || packagerOptions.target == null)) {
-      await checkWindowsResult(packager, packagerOptions, artifacts.get(Platform.WINDOWS))
+      await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
     }
   }
 }
@@ -147,7 +153,7 @@ async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreat
   ].sort())
 }
 
-async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, artifacts: Array<ArtifactCreated>) {
+async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
 
   function getWinExpected(archSuffix: string) {
@@ -174,6 +180,24 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     expectedArtifactNames[1] = `TestAppSetup-1.0.0${archSuffix}.exe`
     assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.0.0${archSuffix}.exe`])
   }
+
+  const files = pathSorter((await new BluebirdPromise<Array<string>>((resolve, reject) => {
+    const unZipper = new DecompressZip(path.join(path.dirname(artifacts[0].file), `TestApp-1.0.0${archSuffix}-full.nupkg`))
+    unZipper.on("list", resolve)
+    unZipper.on('error', reject)
+    unZipper.list()
+  })).map(it => it.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp")))
+
+  // console.log(JSON.stringify(files, null, 2))
+  const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
+  assertThat(files).deepEqual(expectedContents.map(it => {
+    if (it === "lib/net45/TestApp.exe") {
+      return `lib/net45/${productName.replace(/ /g, "%20")}.exe`
+    }
+    else {
+      return it
+    }
+  }))
 }
 
 async function getContents(path: string, productName: string) {

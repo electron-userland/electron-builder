@@ -52,3 +52,30 @@ export const expectedLinuxContents = [
   "/usr/share/icons/hicolor/96x96/apps/",
   "/usr/share/icons/hicolor/96x96/apps/TestApp.png"
 ]
+
+export const expectedWinContents = [
+  "lib/net45/content_resources_200_percent.pak",
+  "lib/net45/content_shell.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE",
+  "lib/net45/msvcp120.dll",
+  "lib/net45/msvcr120.dll",
+  "lib/net45/natives_blob.bin",
+  "lib/net45/node.dll",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/squirrel.exe",
+  "lib/net45/TestApp.exe",
+  "lib/net45/ui_resources_200_percent.pak",
+  "lib/net45/vccorlib120.dll",
+  "lib/net45/xinput1_3.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/app.asar",
+  "lib/net45/resources/atom.asar",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/.rels"
+]

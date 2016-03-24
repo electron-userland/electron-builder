@@ -42,6 +42,7 @@
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",
     "typings/ava.d.ts",
+    "typings/decompress-zip.d.ts",
     "typings/json-parse-helpfulerror.d.ts",
     "typings/path-sort.d.ts",
     "typings/plist.d.ts",

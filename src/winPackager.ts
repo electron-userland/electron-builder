@@ -25,6 +25,8 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 export default class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string>
 
+  extraNuGetFileSources: Promise<Array<string>>
+
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
@@ -46,17 +48,29 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     return Platform.WINDOWS
   }
 
-  pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
     if (this.options.dist) {
       const installerOut = WinPackager.computeDistOut(outDir, arch)
       log("Removing %s", installerOut)
-      return BluebirdPromise.all([
-        super.pack(platform, outDir, appOutDir, arch),
+      await BluebirdPromise.all([
+        this.doPack(outDir, arch),
         emptyDir(installerOut)
       ])
+
+      let extraResources = await this.copyExtraResources(appOutDir, arch)
+      if (extraResources.length > 0) {
+        this.extraNuGetFileSources = BluebirdPromise.map(extraResources, file => {
+          return stat(file)
+            .then(it => {
+              const relativePath = path.relative(appOutDir, file)
+              const src = it.isDirectory() ? `${relativePath}${path.sep}**` : relativePath
+              return `<file src="${src}" target="lib\\net45\\${relativePath.replace(/\//g, "\\")}"/>`
+            })
+        })
+      }
     }
     else {
-      return super.pack(platform, outDir, appOutDir, arch)
+      return super.pack(outDir, appOutDir, arch)
     }
   }
 
@@ -105,6 +119,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       fixUpPaths: false,
       usePackageJson: false,
       noMsi: true,
+      extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n"))
     }, this.customBuildOptions)
 
     try {

@@ -69,11 +69,11 @@ export interface PlatformSpecificBuildOptions {
 }
 
 export class Platform {
-  public static OSX = new Platform("osx", "osx")
-  public static LINUX = new Platform("linux", "linux")
-  public static WINDOWS = new Platform("windows", "win")
+  public static OSX = new Platform("osx", "osx", "darwin")
+  public static LINUX = new Platform("linux", "linux", "linux")
+  public static WINDOWS = new Platform("windows", "win", "win32")
 
-  constructor(public name: string, public buildConfigurationKey: string) {
+  constructor(public name: string, public buildConfigurationKey: string, public nodeName: string) {
   }
 
   toString() {
@@ -82,9 +82,9 @@ export class Platform {
 
   public static fromNodePlatform(name: string): Platform {
     switch (name) {
-      case "darwin": return Platform.OSX
-      case "win32": return Platform.WINDOWS
-      case "linux": return Platform.LINUX
+      case Platform.OSX.nodeName: return Platform.OSX
+      case Platform.WINDOWS.nodeName: return Platform.WINDOWS
+      case Platform.LINUX.nodeName: return Platform.LINUX
     }
 
     throw new Error("Unknown platform: " + name)

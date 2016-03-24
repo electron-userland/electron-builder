@@ -31,9 +31,9 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     return Platform.OSX
   }
 
-  async pack(platform: string, outDir: string, appOutDir: string, arch: string): Promise<any> {
-    await super.pack(platform, outDir, appOutDir, arch)
-    let codeSigningInfo = await this.codeSigningInfo
+  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+    await super.pack(outDir, appOutDir, arch)
+    const codeSigningInfo = await this.codeSigningInfo
     return await this.signMac(path.join(appOutDir, this.appName + ".app"), codeSigningInfo)
   }
 

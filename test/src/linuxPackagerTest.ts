@@ -14,13 +14,15 @@ test.ifNotWindows("linux - icons from ICNS", async () => {
   await assertPack("test-app-one", {
     platform: ["linux"],
     arch: process.arch,
-  }, (projectDir) => remove(path.join(projectDir, "build", "icons")))
+  }, {tempDirCreated: (projectDir) => remove(path.join(projectDir, "build", "icons"))})
 })
 
 test.ifNotWindows("no-author-email", t => {
-  t.throws(assertPack("test-app-one", platform("linux"), projectDir => {
+  t.throws(assertPack("test-app-one", platform("linux"), {
+    tempDirCreated: projectDir => {
       return modifyPackageJson(projectDir, data => {
         data.author = "Foo"
       })
-    }), /Please specify author 'email' in .+/)
+    }
+  }), /Please specify author 'email' in .+/)
 })
