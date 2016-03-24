@@ -2,6 +2,8 @@ os:
   - osx
   - linux
 
+osx_image: xcode7.3
+
 env:
   - NODE_VERSION=4
   - NODE_VERSION=5.8
@@ -28,9 +30,6 @@ before_install:
   - gem install --no-rdoc --no-ri fpm
 
 install:
-- rm -rf ~/.nvm
-- git clone https://github.com/creationix/nvm.git ~/.nvm
-- source ~/.nvm/nvm.sh
 - nvm install $NODE_VERSION
 - npm install npm -g
 - npm prune

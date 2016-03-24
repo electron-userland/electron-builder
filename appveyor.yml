@@ -10,7 +10,6 @@ init:
   - git config --global core.autocrlf false
 
 install:
-  - choco install nsis -y
   - ps: Install-Product node 5 x64
   - npm install npm -g
   - node -v
