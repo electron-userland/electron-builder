@@ -41,13 +41,11 @@ Here documented only `electron-builder` specific options:
 | --- | ---
 | <a class="anchor" href="#AppMetadata-name" aria-hidden="true"></a>name | The application name.
 | <a class="anchor" href="#AppMetadata-productName" aria-hidden="true"></a>productName | <p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
-
 <a class="anchor" href="#DevMetadata" aria-hidden="true"></a>
 # Development `package.json`
 | Name | Description
 | --- | ---
-| <a class="anchor" href="#DevMetadata-build" aria-hidden="true"></a>build | See [build](#BuildMetadata).
-
+| <a class="anchor" href="#DevMetadata-build" aria-hidden="true"></a>build | See [BuildMetadata](#BuildMetadata).
 <a class="anchor" href="#BuildMetadata" aria-hidden="true"></a>
 ## `.build`
 | Name | Description

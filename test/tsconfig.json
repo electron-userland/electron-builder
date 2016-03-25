@@ -61,6 +61,7 @@
     "src/helpers/packTester.ts",
     "src/helpers/runTests.ts",
     "src/linuxPackagerTest.ts",
+    "src/osxPackagerTest.ts",
     "src/RepoSlugTest.ts",
     "src/winPackagerTest.ts"
   ]

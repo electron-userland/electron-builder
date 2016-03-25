@@ -65,6 +65,7 @@ See [options](./docs/options.md), but consider to follow simple 4-step guide out
     }
     ```
     And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. DMG, windows installer, NuGet package)).
+    Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied.
 
 4. Install [required system packages](./docs/multi-platform-build.md).
 

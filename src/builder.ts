@@ -40,7 +40,7 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
     options.dist = true
   }
   else if (options.dist === undefined) {
-    options.dist = lifecycleEvent === "dist" || lifecycleEvent === "build"
+    options.dist = lifecycleEvent === "dist" || lifecycleEvent === "build" || lifecycleEvent.startsWith("dist:")
   }
 
   let isPublishOptionGuessed = false

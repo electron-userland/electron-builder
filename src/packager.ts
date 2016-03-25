@@ -177,7 +177,12 @@ export class Packager implements BuildInfo {
 }
 
 export function normalizeArchs(platform: string, arch?: string) {
-  return platform === "darwin" ? ["x64"] : (arch == null || arch === "all" ? ["ia32", "x64"] : [arch])
+  if (platform === "darwin") {
+    return ["x64"]
+  }
+  else {
+    return arch == null ? [process.arch] : (arch === "all" ? ["ia32", "x64"] : [arch])
+  }
 }
 
 export function normalizePlatforms(platforms: Array<string>): Array<string> {

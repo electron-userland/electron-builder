@@ -13,7 +13,6 @@ test.ifNotWindows("linux", async () => {
 test.ifNotWindows("linux - icons from ICNS", async () => {
   await assertPack("test-app-one", {
     platform: ["linux"],
-    arch: process.arch,
   }, {tempDirCreated: (projectDir) => remove(path.join(projectDir, "build", "icons"))})
 })
 

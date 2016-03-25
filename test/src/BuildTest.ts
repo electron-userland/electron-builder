@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, modifyPackageJson, platform } from "./helpers/packTester"
+import { assertPack, modifyPackageJson } from "./helpers/packTester"
 import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -8,19 +8,6 @@ import { Platform, PackagerOptions } from "out"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
-
-if (process.env.TRAVIS !== "true") {
-  // we don't use CircleCI, so, we can safely set this env
-  process.env.CIRCLE_BUILD_NUM = 42
-}
-
-test.ifOsx("mac: two-package.json", async () => {
-  await assertPack("test-app", platform("darwin"))
-})
-
-test.ifOsx("mac: one-package.json", async () => {
-  await assertPack("test-app-one", platform("darwin"))
-})
 
 test("custom app dir", async () => {
   await assertPack("test-app-one", allPlatformsAndCurrentArch(), {
@@ -62,7 +49,6 @@ test("build in the app package.json", t => {
 test("version from electron-prebuilt dependency", async() => {
   await assertPack("test-app-one", {
     platform: [process.platform],
-    arch: process.arch,
     dist: false
   }, {
     tempDirCreated: projectDir => {
@@ -82,9 +68,9 @@ test("copy extra resource", async () => {
   for (let platform of getPossiblePlatforms()) {
     const osName = Platform.fromNodePlatform(platform).buildConfigurationKey
 
+    //noinspection SpellCheckingInspection
     await assertPack("test-app", {
       platform: [platform],
-      arch: process.arch,
       // to check NuGet package
       dist: platform === "win32"
     }, {
@@ -166,8 +152,6 @@ test("copy extra resource", async () => {
 function allPlatformsAndCurrentArch(): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
-    // speed up tests, we don't need check every arch
-    arch: process.arch,
   }
 }
 

@@ -19,6 +19,11 @@ const __awaiter = require("out/awaiter")
 const tmpDirPrefix = "electron-builder-test-" + process.pid + "-"
 let tmpDirCounter = 0
 
+if (process.env.TRAVIS !== "true") {
+  // we don't use CircleCI, so, we can safely set this env
+  process.env.CIRCLE_BUILD_NUM = 42
+}
+
 interface AssertPackOptions {
   readonly tempDirCreated?: (projectDir: string) => Promise<any>
   readonly packed?: (projectDir: string) => Promise<any>
@@ -27,7 +32,7 @@ interface AssertPackOptions {
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
   const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = tempDirCreated != null || (packagerOptions != null && packagerOptions.target != null)
+  const useTempDir = tempDirCreated != null || packagerOptions.target != null
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
@@ -118,11 +123,11 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
       assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName)).deepEqual(expectedContents)
-      if (packagerOptions == null || packagerOptions.arch === null || packagerOptions.arch === "ia32") {
+      if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
         assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
       }
     }
-    else if (platform === "win32" && (packagerOptions == null || packagerOptions.target == null)) {
+    else if (platform === "win32") {
       await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
     }
   }
@@ -164,7 +169,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     ]
   }
 
-  const archSuffix = packagerOptions != null && packagerOptions.arch === "x64" ? "" : "-ia32"
+  const archSuffix = (packagerOptions.arch || process.arch) === "x64" ? "" : "-ia32"
   const expected = archSuffix == "" ? getWinExpected(archSuffix) : getWinExpected(archSuffix).concat(getWinExpected(""))
 
   const filenames = artifacts.map(it => path.basename(it.file))

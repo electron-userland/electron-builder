@@ -3,7 +3,7 @@ export interface Metadata {
 }
 
 /**
- Application `package.json`
+ # Application `package.json`
  */
 export interface AppMetadata extends Metadata {
   readonly version: string
@@ -25,7 +25,7 @@ export interface AppMetadata extends Metadata {
 }
 
 /**
- Development `package.json`
+ # Development `package.json`
  */
 export interface DevMetadata extends Metadata {
   /**
@@ -50,7 +50,7 @@ export interface MetadataDirectories {
 }
 
 /**
- Development `package.json` `.build`
+ ## `.build`
  */
 export interface BuildMetadata {
   readonly "app-bundle-id": string
