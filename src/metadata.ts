@@ -2,8 +2,8 @@ export interface Metadata {
   readonly repository: string | RepositoryInfo
 }
 
-/*
-  Application `package.json`
+/**
+ Application `package.json`
  */
 export interface AppMetadata extends Metadata {
   readonly version: string
@@ -14,7 +14,7 @@ export interface AppMetadata extends Metadata {
   readonly name: string
 
   /**
-   As [name](#name), but allows you to specify a product name for your executable which contains spaces and other special characters
+   As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
    not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
   readonly productName?: string
@@ -24,10 +24,13 @@ export interface AppMetadata extends Metadata {
   readonly author: AuthorMetadata
 }
 
-/*
-  Development `package.json`
+/**
+ Development `package.json`
  */
 export interface DevMetadata extends Metadata {
+  /**
+   See [BuildMetadata](#BuildMetadata).
+   */
   readonly build?: BuildMetadata
 
   readonly directories?: MetadataDirectories
@@ -46,10 +49,21 @@ export interface MetadataDirectories {
   readonly buildResources?: string
 }
 
+/**
+ Development `package.json` `.build`
+ */
 export interface BuildMetadata {
   readonly "app-bundle-id": string
   readonly "app-category-type": string
 
+  /**
+   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Atom icon.
+
+   Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+
+   * If you don't plan to build windows installer, you can omit it.
+   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${info.user}/${info.project}/master/build/icon.ico` by default.
+   */
   readonly iconUrl: string
 
   /**
@@ -61,6 +75,15 @@ export interface BuildMetadata {
   readonly win?: any,
   readonly linux?: any
 
+  /**
+   A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's directory (`Contents/Resources` for OS X).
+
+   You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
+
+   If directory matched, all contents are copied. So, you can just specify `foo` to copy `<project_dir>/foo` directory.
+
+   May be specified in the platform options (i.e. in the `build.osx`).
+   */
   readonly extraResources?: Array<string>
 }
 

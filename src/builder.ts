@@ -27,28 +27,20 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
-export async function build(options: BuildOptions = {}): Promise<void> {
-  if (options.cscLink == null) {
-    options.cscLink = process.env.CSC_LINK
-  }
-  if (options.csaLink == null) {
-    options.csaLink = process.env.CSA_LINK
-  }
-  if (options.cscKeyPassword == null) {
-    options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
-  }
-
-  if (options.githubToken == null) {
-    options.githubToken = process.env.GH_TOKEN || process.env.GH_TEST_TOKEN
-  }
+export async function build(originalOptions?: BuildOptions): Promise<void> {
+  const options = Object.assign({
+    cscLink: process.env.CSC_LINK,
+    csaLink: process.env.CSA_LINK,
+    cscKeyPassword: process.env.CSC_KEY_PASSWORD,
+    githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
+  }, originalOptions)
 
   const lifecycleEvent = process.env.npm_lifecycle_event
-  if (options.dist === undefined) {
-    options.dist = lifecycleEvent === "dist" || lifecycleEvent === "build"
-  }
-
   if (options.publish) {
     options.dist = true
+  }
+  else if (options.dist === undefined) {
+    options.dist = lifecycleEvent === "dist" || lifecycleEvent === "build"
   }
 
   let isPublishOptionGuessed = false
@@ -56,7 +48,7 @@ export async function build(options: BuildOptions = {}): Promise<void> {
     if (lifecycleEvent === "release") {
       options.publish = "always"
     }
-    else {
+    else if (options.githubToken != null) {
       const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
       if (tag != null && tag.length !== 0) {
         log("Tag %s is defined, so artifacts will be published", tag)
@@ -82,7 +74,8 @@ export async function build(options: BuildOptions = {}): Promise<void> {
       }
 
       if (publisher != null) {
-        publisher.then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
+        publisher
+          .then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
       }
     })
   }

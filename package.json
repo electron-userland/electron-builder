@@ -84,7 +84,7 @@
     "pre-commit": "^1.1.2",
     "semantic-release": "^4.3.5",
     "should": "^8.3.0",
-    "ts-babel": "^0.6.1",
+    "ts-babel": "^0.6.3",
     "tsconfig-glob": "^0.4.2",
     "tslint": "next",
     "typescript": "^1.9.0-dev.20160323",

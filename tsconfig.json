@@ -17,6 +17,7 @@
     "electron-builder": "out/electron-builder.d.ts",
     "": "test/out/electron-builder.d.ts"
   },
+  "docs": "docs/options.md",
   "filesGlob": [
     "src/*.ts",
     "lib/*.d.ts",

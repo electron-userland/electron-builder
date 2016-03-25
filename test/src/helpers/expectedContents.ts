@@ -1,3 +1,4 @@
+//noinspection SpellCheckingInspection
 export const expectedLinuxContents = [
   "/",
   "/opt/",
@@ -53,6 +54,7 @@ export const expectedLinuxContents = [
   "/usr/share/icons/hicolor/96x96/apps/TestApp.png"
 ]
 
+//noinspection SpellCheckingInspection
 export const expectedWinContents = [
   "lib/net45/content_resources_200_percent.pak",
   "lib/net45/content_shell.pak",
