@@ -24,45 +24,39 @@ test("custom app dir", async () => {
   })
 })
 
-test("productName with space", async () => {
-  await assertPack("test-app-one", allPlatformsAndCurrentArch(), {
-    tempDirCreated: projectDir => {
-      return modifyPackageJson(projectDir, data => {
-        data.productName = "Test App"
+test("productName with space", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
+  tempDirCreated: projectDir => {
+    return modifyPackageJson(projectDir, data => {
+      data.productName = "Test App"
+    })
+  }
+}))
+
+test("build in the app package.json", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(), {
+  tempDirCreated: projectDir => {
+    return modifyPackageJson(projectDir, data => {
+      data.build = {
+        "iconUrl": "bar",
+      }
+    }, true)
+  }
+}), /'build' in the application package\.json .+/))
+
+test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
+  platform: [process.platform],
+  dist: false
+}, {
+  tempDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+        version: "0.37.2"
+      }),
+      modifyPackageJson(projectDir, data => {
+        data.devDependencies = {}
       })
-    }
-  })
-})
-
-test("build in the app package.json", t => {
-  t.throws(assertPack("test-app", allPlatformsAndCurrentArch(), {
-    tempDirCreated: projectDir => {
-      return modifyPackageJson(projectDir, data => {
-        data.build = {
-          "iconUrl": "bar",
-        }
-      }, true)
-    }
-  }), /'build' in the application package\.json .+/)
-})
-
-test("version from electron-prebuilt dependency", async() => {
-  await assertPack("test-app-one", {
-    platform: [process.platform],
-    dist: false
-  }, {
-    tempDirCreated: projectDir => {
-      return BluebirdPromise.all([
-        outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
-          version: "0.37.2"
-        }),
-        modifyPackageJson(projectDir, data => {
-          data.devDependencies = {}
-        })
-      ])
-    }
-  })
-})
+    ])
+  }
+}))
 
 test("copy extra resource", async () => {
   for (let platform of getPossiblePlatforms()) {
