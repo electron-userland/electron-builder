@@ -6,9 +6,6 @@ cache:
   - '%APPDATA%\npm-cache'
   - '%USERPROFILE%\.electron'
 
-init:
-  - git config --global core.autocrlf false
-
 install:
   - ps: Install-Product node 5 x64
   - npm install npm -g

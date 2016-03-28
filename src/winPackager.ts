@@ -4,7 +4,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, PlatformSpecificBuildOptions } from "./metadata"
 import * as path from "path"
 import { log } from "./util"
-import { readFile, deleteFile, stat, rename, copy, emptyDir, Stats, writeFile } from "fs-extra-p"
+import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -27,6 +27,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   extraNuGetFileSources: Promise<Array<string>>
 
+  readonly iconPath: Promise<string>
+
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
@@ -42,13 +44,24 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     else {
       this.certFilePromise = BluebirdPromise.resolve(null)
     }
+
+    this.iconPath = this.getValidIconPath()
   }
 
   protected get platform() {
     return Platform.WINDOWS
   }
 
+  private async getValidIconPath(): Promise<string> {
+    const iconPath = path.join(this.buildResourcesDir, "icon.ico")
+    await checkIcon(iconPath)
+    return iconPath
+  }
+
   async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+    // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
+    await this.iconPath
+
     if (this.options.dist) {
       const installerOut = WinPackager.computeDistOut(outDir, arch)
       log("Removing %s", installerOut)
@@ -102,6 +115,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     const version = this.metadata.version
     const installerOutDir = WinPackager.computeDistOut(outDir, arch)
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
+
     const options = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
@@ -113,7 +127,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       description: this.metadata.description,
       authors: this.metadata.author.name,
       iconUrl: iconUrl,
-      setupIcon: path.join(this.buildResourcesDir, "icon.ico"),
+      setupIcon: await this.iconPath,
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
       fixUpPaths: false,
@@ -122,27 +136,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n"))
     }, this.customBuildOptions)
 
-    try {
-      await require("electron-winstaller-fixed").createWindowsInstaller(options)
-    }
-    catch (e) {
-      if (!e.message.includes("Unable to set icon")) {
-        throw e
-      }
-      else {
-        let fileInfo: Stats
-        try {
-          fileInfo = await stat(options.setupIcon)
-        }
-        catch (e) {
-          throw new Error("Please specify correct setupIcon, file " + options.setupIcon + " not found")
-        }
-
-        if (fileInfo.isDirectory()) {
-          throw new Error("Please specify correct setupIcon, " + options.setupIcon + " is a directory")
-        }
-      }
-    }
+    await require("electron-winstaller-fixed").createWindowsInstaller(options)
 
     const releasesFile = path.join(installerOutDir, "RELEASES")
     const nupkgPathOriginal = this.metadata.name + "-" + version + "-full.nupkg"
@@ -176,4 +170,49 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     await BluebirdPromise.all(promises)
   }
+}
+
+async function checkIcon(file: string): Promise<void> {
+  const fd = await open(file, "r")
+  const buffer = new Buffer(512)
+  try {
+    await read(fd, buffer, 0, buffer.length, 0)
+  }
+  finally {
+    await close(fd)
+  }
+
+  const sizes = parseIco(buffer)
+  for (let size of sizes) {
+    if (size.w >= 256 && size.h >= 256) {
+      return
+    }
+  }
+
+  throw new Error("Windows icon image size must be at least 256x256")
+}
+
+interface Size {
+  w: number
+  h: number
+}
+
+function parseIco(buffer: Buffer): Array<Size> {
+  if (!isIco(buffer)) {
+    throw new Error("buffer is not ico")
+  }
+
+  const n = buffer.readUInt16LE(4)
+  const result = new Array<Size>(n)
+  for (let i = 0; i < n; i++) {
+    result[i] = {
+      w: buffer.readUInt8(6 + i * 16) || 256,
+      h: buffer.readUInt8(7 + i * 16) || 256,
+    }
+  }
+  return result
+}
+
+function isIco(buffer: Buffer) {
+  return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
 }
