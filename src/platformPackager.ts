@@ -3,7 +3,7 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getPr
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import packager = require("electron-packager-tf")
+import packager = require("electron-packager")
 import globby = require("globby")
 import { copy } from "fs-extra-p"
 

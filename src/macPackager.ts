@@ -4,6 +4,7 @@ import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
+import { stat } from "fs-extra-p"
 
 const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
@@ -55,14 +56,13 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
   packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
     const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
     return BluebirdPromise.all([
-      new BluebirdPromise<any>((resolve, reject) => {
+      new BluebirdPromise<any>(async (resolve, reject) => {
         log("Creating DMG")
 
         const specification: appdmg.Specification = Object.assign({
           title: this.appName,
           icon: path.join(this.buildResourcesDir, "icon.icns"),
           "icon-size": 80,
-          background: path.join(this.buildResourcesDir, "background.png"),
           contents: [
             {
               "x": 410, "y": 220, "type": "link", "path": "/Applications"
@@ -72,6 +72,18 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
             }
           ]
         }, this.customBuildOptions)
+
+        if (this.customBuildOptions == null || !("background" in this.customBuildOptions)) {
+          const background = path.join(this.buildResourcesDir, "background.png")
+          try {
+            if ((await stat(background)).isFile()) {
+              specification.background = background
+            }
+          }
+          catch (e) {
+            // ignored
+          }
+        }
 
         specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
 
