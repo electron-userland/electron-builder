@@ -2,13 +2,14 @@
   "private": true,
   "name": "TestApp",
   "version": "1.0.0",
+  "homepage": "http://foo.example.com",
   "description": "Test Application",
   "scripts": {
     "start": "electron ."
   },
   "author": "Foo Bar <foo@example.com>",
   "devDependencies": {
-    "electron-prebuilt": "^0.37.2"
+    "electron-prebuilt": "^0.37.3"
   },
   "build": {
     "app-bundle-id": "your.id",

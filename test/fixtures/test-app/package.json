@@ -4,7 +4,7 @@
     "start": "electron ."
   },
   "devDependencies": {
-    "electron-prebuilt": "^0.37.2"
+    "electron-prebuilt": "^0.37.3"
   },
   "build": {
     "app-bundle-id": "your.id",

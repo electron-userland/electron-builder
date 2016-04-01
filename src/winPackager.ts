@@ -115,6 +115,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     const version = this.metadata.version
     const installerOutDir = WinPackager.computeDistOut(outDir, arch)
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
+    const projectUrl = this.devMetadata.homepage
 
     const options = Object.assign({
       name: this.metadata.name,
@@ -133,7 +134,8 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       fixUpPaths: false,
       usePackageJson: false,
       noMsi: true,
-      extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n"))
+      extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n")),
+      extraMetadataSpecs: projectUrl == null ? null : `\n<projectUrl>${projectUrl}</projectUrl>`,
     }, this.customBuildOptions)
 
     await require("electron-winstaller-fixed").createWindowsInstaller(options)

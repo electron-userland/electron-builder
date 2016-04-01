@@ -29,6 +29,11 @@ export interface AppMetadata extends Metadata {
  */
 export interface DevMetadata extends Metadata {
   /**
+   The url to the project homepage (NuGet Package `projectUrl` or Linux Package URL).
+   */
+  readonly homepage?: string
+
+  /**
    See [BuildMetadata](#BuildMetadata).
    */
   readonly build?: BuildMetadata
@@ -71,10 +76,6 @@ export interface BuildMetadata {
    */
   readonly productName?: string
 
-  readonly osx?: appdmg.Specification
-  readonly win?: any,
-  readonly linux?: any
-
   /**
    A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's directory (`Contents/Resources` for OS X).
 
@@ -85,6 +86,18 @@ export interface BuildMetadata {
    May be specified in the platform options (i.e. in the `build.osx`).
    */
   readonly extraResources?: Array<string>
+
+  /**
+   See [OS X options](https://www.npmjs.com/package/appdmg#json-specification)
+   */
+  readonly osx?: appdmg.Specification
+
+  /**
+   See [windows-installer options](https://github.com/electronjs/windows-installer#usage)
+   */
+  readonly win?: any,
+
+  readonly linux?: any
 }
 
 export interface PlatformSpecificBuildOptions {

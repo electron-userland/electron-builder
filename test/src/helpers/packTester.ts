@@ -1,4 +1,4 @@
-import { copy, emptyDir, remove, writeJson, readJson } from "fs-extra-p"
+import { copy, emptyDir, remove, writeJson, readJson, readFile } from "fs-extra-p"
 import * as assertThat from "should/as-function"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
@@ -186,12 +186,11 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.0.0${archSuffix}.exe`])
   }
 
-  const files = pathSorter((await new BluebirdPromise<Array<string>>((resolve, reject) => {
-    const unZipper = new DecompressZip(path.join(path.dirname(artifacts[0].file), `TestApp-1.0.0${archSuffix}-full.nupkg`))
-    unZipper.on("list", resolve)
-    unZipper.on('error', reject)
-    unZipper.list()
-  })).map(it => it.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp")))
+  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.0.0${archSuffix}-full.nupkg`)
+  const unZipper = new DecompressZip(packageFile)
+  const fileDescriptors = await unZipper.getFiles()
+
+  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp")))
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
@@ -203,6 +202,27 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
       return it
     }
   }))
+
+  if (checkOptions == null || checkOptions.expectedContents == null) {
+    await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
+      path: path.dirname(packageFile),
+    })
+    assertThat((await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")).equal(`<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>TestApp</id>
+    <version>1.0.0</version>
+    <title>My App</title>
+    <authors>Foo Bar</authors>
+    <owners>Foo Bar</owners>
+    <projectUrl>http://foo.example.com</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Test Application</description>
+    <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
+  </metadata>
+</package>`)
+  }
 }
 
 async function getContents(path: string, productName: string) {
