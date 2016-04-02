@@ -76,13 +76,13 @@ export function exec(file: string, args?: string[], options?: ExecOptions): Blue
       }
       else {
         if (stdout.length !== 0) {
-          console.error(stdout.toString())
+          console.log(stdout.toString())
         }
-        if (stderr.length !== 0) {
-          reject(new Error(stderr.toString() + "\n" + error.toString()))
+        if (stderr.length === 0) {
+          reject(error)
         }
         else {
-          reject(error)
+          reject(new Error(stderr.toString() + "\n" + error.toString()))
         }
       }
     })

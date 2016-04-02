@@ -215,6 +215,6 @@ function parseIco(buffer: Buffer): Array<Size> {
   return result
 }
 
-function isIco(buffer: Buffer) {
+function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
 }
