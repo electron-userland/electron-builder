@@ -77,6 +77,7 @@
     "ava-tf": "^0.12.4-beta.6",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.7.0",
+    "babel-plugin-transform-es2015-spread": "^6.6.5",
     "decompress-zip": "^0.3.0",
     "electron-download": "^2.1.0",
     "json-parse-helpfulerror": "^1.0.3",
@@ -85,15 +86,16 @@
     "pre-commit": "^1.1.2",
     "semantic-release": "^4.3.5",
     "should": "^8.3.0",
-    "ts-babel": "^0.6.5",
+    "ts-babel": "^0.6.8",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160325",
+    "typescript": "^1.9.0-dev.20160402",
     "validate-commit-msg": "^2.5.0"
   },
   "babel": {
     "plugins": [
       "transform-es2015-parameters",
+      "transform-es2015-spread",
       "array-includes"
     ]
   },

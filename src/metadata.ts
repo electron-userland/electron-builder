@@ -29,12 +29,19 @@ export interface AppMetadata extends Metadata {
  */
 export interface DevMetadata extends Metadata {
   /**
-   The url to the project homepage (NuGet Package `projectUrl` or Linux Package URL).
+   The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
+
+   If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
    */
   readonly homepage?: string
 
   /**
-   See [BuildMetadata](#BuildMetadata).
+   *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name for this package.
+   */
+  readonly license?: string
+
+  /**
+   See [.build](#BuildMetadata).
    */
   readonly build?: BuildMetadata
 
@@ -67,7 +74,7 @@ export interface BuildMetadata {
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
 
    * If you don't plan to build windows installer, you can omit it.
-   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${info.user}/${info.project}/master/build/icon.ico` by default.
+   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${user}/${project}/master/build/icon.ico` by default.
    */
   readonly iconUrl: string
 
@@ -97,7 +104,31 @@ export interface BuildMetadata {
    */
   readonly win?: any,
 
+  /**
+   See [.linux](#DebOptions).
+   */
   readonly linux?: any
+}
+
+/**
+ ### `.build.linux`
+ */
+export interface DebOptions {
+  name: string
+  comment: string
+
+  maintainer: string
+
+  //.desktop file template
+  desktop?: string
+
+  afterInstall?: string
+  afterRemove?: string
+
+  /*
+  *deb-only.* The compression type to use, must be one of gz, bzip2, xz. (default: `xz`)
+   */
+  readonly compression?: string
 }
 
 export interface PlatformSpecificBuildOptions {

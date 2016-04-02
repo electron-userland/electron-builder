@@ -79,9 +79,11 @@ export function exec(file: string, args?: string[], options?: ExecOptions): Blue
           console.error(stdout.toString())
         }
         if (stderr.length !== 0) {
-          console.error(stderr.toString())
+          reject(new Error(stderr.toString() + "\n" + error.toString()))
         }
-        reject(error)
+        else {
+          reject(error)
+        }
       }
     })
   })

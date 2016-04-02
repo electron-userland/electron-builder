@@ -1,7 +1,7 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform } from "./metadata"
+import { Platform, DebOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
@@ -172,7 +172,13 @@ Icon=${this.metadata.name}
     const target = "deb"
     const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}-${archName}.${target}`)
     const scripts = await this.scriptFiles
-    await exec("fpm", [
+
+    const projectUrl = await this.computePackageUrl()
+    if (projectUrl == null) {
+      throw new Error("Please specify project homepage")
+    }
+
+    const args = [
       "-s", "dir",
       "-t", target,
       "--architecture", archName,
@@ -186,9 +192,22 @@ Icon=${this.metadata.name}
       "--version", this.metadata.version,
       "--package", destination,
       "--deb-compression", options.compression || "xz",
-      appOutDir + "/=/opt/" + this.appName,
-    ].concat(await this.packageFiles))
+      "--url", projectUrl,
+    ]
+
+    use(this.devMetadata.license, it => args.push("--license", it))
+    use(this.computeBuildNumber(), it => args.push("--iteration", it))
+
+    args.push(`${appOutDir}/=/opt/${this.appName}`)
+    args.push(...(await this.packageFiles))
+    await exec("fpm", args)
     return destination
+  }
+}
+
+function use<T>(value: T, task: (it: T) => void) {
+  if (value != null) {
+    task(value)
   }
 }
 
@@ -202,21 +221,4 @@ async function writeConfigFile(tempDir: string, templatePath: string, options: a
   const outputPath = path.join(tempDir, path.basename(templatePath, ".tpl"))
   await outputFile(outputPath, config)
   return outputPath
-}
-
-export interface DebOptions {
-  name: string
-  comment: string
-
-  maintainer: string
-
-  /**
-   * .desktop file template
-   */
-  desktop?: string
-
-  afterInstall?: string
-  afterRemove?: string
-
-  compression?: string
 }

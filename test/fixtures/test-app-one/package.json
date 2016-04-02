@@ -8,6 +8,7 @@
     "start": "electron ."
   },
   "author": "Foo Bar <foo@example.com>",
+  "license": "MIT",
   "devDependencies": {
     "electron-prebuilt": "^0.37.3"
   },

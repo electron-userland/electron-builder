@@ -6,7 +6,7 @@ osx_image: xcode7.3
 
 env:
   - NODE_VERSION=4
-  - NODE_VERSION=5.8
+  - NODE_VERSION=5
 
 language: ruby
 
@@ -33,6 +33,7 @@ install:
 - nvm install $NODE_VERSION
 - npm install npm -g
 - npm prune
+- npm install Microsoft/TypeScript
 - npm install
 
 script:

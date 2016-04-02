@@ -96,7 +96,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected async doPack(outDir: string, arch: string) {
     const version = this.metadata.version
     let buildVersion = version
-    const buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
+    const buildNumber = this.computeBuildNumber()
     if (buildNumber != null) {
       buildVersion += "." + buildNumber
     }
@@ -158,11 +158,30 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.platform === Platform.OSX) {
       resourcesDir = path.join(resourcesDir, this.appName + ".app", "Contents", "Resources")
     }
-
     return await BluebirdPromise.map(await this.getExtraResources(arch), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
 
   abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
+
+  protected async computePackageUrl(): Promise<string> {
+    const url = this.devMetadata.homepage
+    if (url != null) {
+      return url
+    }
+
+    if (this.info.repositoryInfo != null) {
+      const info = await this.info.repositoryInfo.getInfo(this)
+      if (info != null) {
+        return `https://github.com/${info.user}/${info.project}`
+      }
+    }
+    return null
+  }
+
+  //noinspection JSMethodCanBeStatic
+  protected computeBuildNumber(): string {
+    return process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
+  }
 }
 
 function checkConflictingOptions(options: any): void {

@@ -115,7 +115,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     const version = this.metadata.version
     const installerOutDir = WinPackager.computeDistOut(outDir, arch)
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
-    const projectUrl = this.devMetadata.homepage
+    const projectUrl = await this.computePackageUrl()
 
     const options = Object.assign({
       name: this.metadata.name,

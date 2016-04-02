@@ -106,31 +106,51 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       await checkOsXResult(packager, artifacts.get(Platform.OSX))
     }
     else if (platform === "linux") {
-      const productName = getProductName(packager.metadata, packager.devMetadata)
-      const expectedContents = expectedLinuxContents.map(it => {
-        if (it === "/opt/TestApp/TestApp") {
-          return "/opt/" + productName + "/" + productName
-        }
-        else if (it === "/usr/share/applications/TestApp.desktop") {
-          return `/usr/share/applications/${productName}.desktop`
-        }
-        else {
-          return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
-        }
-      })
-
-      // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
-      // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
-
-      assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName)).deepEqual(expectedContents)
-      if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
-        assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
-      }
+      await checkLinuxResult(projectDir, packager, packagerOptions)
     }
     else if (platform === "win32") {
       await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
     }
   }
+}
+
+async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions) {
+  const productName = getProductName(packager.metadata, packager.devMetadata)
+  const expectedContents = expectedLinuxContents.map(it => {
+    if (it === "/opt/TestApp/TestApp") {
+      return "/opt/" + productName + "/" + productName
+    }
+    else if (it === "/usr/share/applications/TestApp.desktop") {
+      return `/usr/share/applications/${productName}.desktop`
+    }
+    else {
+      return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
+    }
+  })
+
+  // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
+  // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
+
+  const packageFile = projectDir + "/dist/TestApp-1.0.0-amd64.deb"
+  assertThat(await getContents(packageFile, productName)).deepEqual(expectedContents)
+  if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
+    assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
+  }
+
+  const regexp = /^ *(\w+): *(.+)$/gm
+  const info = (await exec("dpkg", ["--info", packageFile])).toString()
+  let match: Array<string>
+  const metadata: any = {}
+  while ((match = regexp.exec(info)) !== null) {
+    metadata[match[1]] = match[2]
+  }
+  assertThat(metadata).has.properties({
+    License: "MIT",
+    Homepage: "http://foo.example.com",
+    Maintainer: "Foo Bar <foo@example.com>",
+    Package: "testapp",
+    Description: "Test Application",
+  })
 }
 
 async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreated>) {
