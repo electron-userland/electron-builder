@@ -1,4 +1,4 @@
-# Electron-builder [![NPM version][npm-image]][npm-url]
+# electron-builder [![NPM version][npm-image]][npm-url]
 > Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
 
 ```
