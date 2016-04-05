@@ -1,7 +1,7 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, DebOptions } from "./metadata"
+import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
@@ -13,8 +13,8 @@ const __awaiter = require("./awaiter")
 
 const tmpDir = BluebirdPromise.promisify(<(config: TmpOptions, callback: (error: Error, path: string, cleanupCallback: () => void) => void) => void>_tpmDir)
 
-export class LinuxPackager extends PlatformPackager<DebOptions> {
-  private readonly debOptions: DebOptions
+export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
+  private readonly debOptions: LinuxBuildOptions
 
   private readonly packageFiles: Promise<Array<string>>
   private readonly scriptFiles: Promise<Array<string>>
@@ -167,7 +167,7 @@ Icon=${this.metadata.name}
       .then(it => this.dispatchArtifactCreated(it))
   }
 
-  private async buildDeb(options: DebOptions, outDir: string, appOutDir: string, arch: string): Promise<string> {
+  private async buildDeb(options: LinuxBuildOptions, outDir: string, appOutDir: string, arch: string): Promise<string> {
     const archName = arch === "ia32" ? "i386" : "amd64"
     const target = "deb"
     const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}-${archName}.${target}`)
@@ -191,7 +191,7 @@ Icon=${this.metadata.name}
       "--maintainer", options.maintainer || `${this.metadata.author.name} <${this.metadata.author.email}>`,
       "--version", this.metadata.version,
       "--package", destination,
-      "--deb-compression", options.compression || "xz",
+      "--deb-compression", options.compression || (this.devMetadata.build.compression === "store" ? "gz" : "xz"),
       "--url", projectUrl,
     ]
 

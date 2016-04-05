@@ -148,7 +148,7 @@ export class Packager implements BuildInfo {
     else if (appMetadata.version == null) {
       reportError("version")
     }
-    else if (appMetadata !== this.devMetadata && (<any>appMetadata).build != null) {
+    else if ((<any>appMetadata) !== this.devMetadata && (<any>appMetadata).build != null) {
       throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
     }
     else if (this.devMetadata.build == null) {

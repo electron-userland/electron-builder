@@ -1,16 +1,13 @@
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, PlatformSpecificBuildOptions } from "./metadata"
+import { Platform, OsXBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
 import { stat } from "fs-extra-p"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-Array.isArray(__awaiter)
-
-export interface OsXBuildOptions extends PlatformSpecificBuildOptions, appdmg.Specification {
-}
 
 export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
@@ -107,16 +104,17 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
     const resultPath = `${this.appName}-${this.metadata.version}-mac.zip`
     // -y param is important - "store symbolic links as the link instead of the referenced file"
-    const args = ["-ryXq", resultPath, this.appName + ".app"]
-
-    // todo move to options
-    if (process.env.TEST_MODE === "true") {
-      args.unshift("-0")
+    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-r", "-bb0", "-bd"]
+    if (this.devMetadata.build.compression === "maximum") {
+      // http://superuser.com/a/742034
+      //noinspection SpellCheckingInspection
+      args.push("-mfb=258", "-mpass=15")
     }
+    args.push(resultPath, this.appName + ".app")
 
-    return spawn("zip", args, {
+    return spawn(path.join(__dirname, "..", "vendor", "osx", "7za"), args, {
       cwd: outDir,
-      stdio: "inherit",
+      stdio: ["ignore", "ignore", "inherit"],
     })
       .thenReturn(path.join(outDir, resultPath))
   }

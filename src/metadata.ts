@@ -2,18 +2,18 @@ export interface Metadata {
   readonly repository: string | RepositoryInfo
 }
 
-/**
+/*
  # Application `package.json`
  */
 export interface AppMetadata extends Metadata {
   readonly version: string
 
-  /**
+  /*
    The application name.
    */
   readonly name: string
 
-  /**
+  /*
    As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
    not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
@@ -24,27 +24,30 @@ export interface AppMetadata extends Metadata {
   readonly author: AuthorMetadata
 }
 
-/**
+/*
  # Development `package.json`
  */
 export interface DevMetadata extends Metadata {
-  /**
+  /*
    The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
 
    If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
    */
   readonly homepage?: string
 
-  /**
+  /*
    *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name for this package.
    */
   readonly license?: string
 
-  /**
+  /*
    See [.build](#BuildMetadata).
    */
-  readonly build?: BuildMetadata
+  readonly build: BuildMetadata
 
+  /*
+   See [.directories](#MetadataDirectories)
+   */
   readonly directories?: MetadataDirectories
 }
 
@@ -57,18 +60,24 @@ export interface AuthorMetadata {
   readonly email: string
 }
 
-export interface MetadataDirectories {
-  readonly buildResources?: string
-}
-
-/**
+/*
  ## `.build`
  */
 export interface BuildMetadata {
+  /*
+   The bundle identifier to use in the application's plist.
+   */
   readonly "app-bundle-id": string
+  /*
+   The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+
+   For example, `app-category-type=public.app-category.developer-tools` will set the application category to *Developer Tools*.
+
+   Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
+   */
   readonly "app-category-type": string
 
-  /**
+  /*
    *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Atom icon.
 
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
@@ -78,7 +87,7 @@ export interface BuildMetadata {
    */
   readonly iconUrl: string
 
-  /**
+  /*
    See [AppMetadata.productName](#AppMetadata-productName).
    */
   readonly productName?: string
@@ -94,26 +103,48 @@ export interface BuildMetadata {
    */
   readonly extraResources?: Array<string>
 
-  /**
-   See [OS X options](https://www.npmjs.com/package/appdmg#json-specification)
+  /*
+   See [.build.osx](#OsXBuildOptions).
    */
-  readonly osx?: appdmg.Specification
+  readonly osx?: OsXBuildOptions
 
   /**
-   See [windows-installer options](https://github.com/electronjs/windows-installer#usage)
+   See [windows-installer options](https://github.com/electronjs/windows-installer#usage).
    */
   readonly win?: any,
 
-  /**
-   See [.linux](#DebOptions).
+  /*
+   See [.build.linux](#LinuxBuildOptions).
    */
-  readonly linux?: any
+  readonly linux?: LinuxBuildOptions
+
+  /*
+   The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
+   */
+  readonly compression?: "store" | "normal" | "maximum"
 }
 
-/**
+/*
+ ### `.build.osx`
+
+ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
+ */
+export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
+  /*
+   The path to icon, which will be shown when mounted (default: `build/icon.icns`).
+   */
+  icon?: string
+
+  /*
+   The path to background (default: `build/background.png`).
+   */
+  background?: string
+}
+
+/*
  ### `.build.linux`
  */
-export interface DebOptions {
+export interface LinuxBuildOptions {
   name: string
   comment: string
 
@@ -126,9 +157,19 @@ export interface DebOptions {
   afterRemove?: string
 
   /*
-  *deb-only.* The compression type to use, must be one of gz, bzip2, xz. (default: `xz`)
+  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. (default: `xz`).
    */
   readonly compression?: string
+}
+
+/*
+ ## `.directories`
+ */
+export interface MetadataDirectories {
+  /*
+   The path to build resources, default `build`.
+   */
+  readonly buildResources?: string
 }
 
 export interface PlatformSpecificBuildOptions {
