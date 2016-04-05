@@ -1,4 +1,9 @@
-Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
+# Electron-builder [![NPM version][npm-image]][npm-url]
+> Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
+
+```
+$ npm install --save-dev electron-builder
+```
 
 * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
 * [Auto Update](#auto-update) ready application packaging.
@@ -114,3 +119,6 @@ Want more — please file issue.
 
 # Programmatic usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
+
+[npm-url]: https://npmjs.org/package/electron-builder
+[npm-image]: http://img.shields.io/npm/v/electron-builder.svg
