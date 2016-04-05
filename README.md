@@ -1,3 +1,11 @@
+# electron-builder
+
+[![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Dependency Status][depstat-image]][depstat-url]
+
+[![NPM][nodei-image]][nodei-url]
+
 Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
 
 * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
@@ -114,3 +122,15 @@ Want more — please file issue.
 
 # Programmatic usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
+
+[npm-url]: https://npmjs.org/package/electron-builder
+[npm-image]: http://img.shields.io/npm/v/electron-builder.svg
+
+[travis-url]: https://travis-ci.org/electron-userland/electron-builder
+[travis-image]: http://img.shields.io/travis/electron-userland/electron-builder.svg
+
+[depstat-url]: https://david-dm.org/electron-userland/electron-builder
+[depstat-image]: https://img.shields.io/david/electron-userland/electron-builder.svg
+
+[nodei-url]: https://nodei.co/npm/electron-builder
+[nodei-image]: https://nodei.co/npm/electron-builder.png?downloads=true
