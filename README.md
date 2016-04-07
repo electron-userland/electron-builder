@@ -1,8 +1,8 @@
 # electron-builder [![NPM version][npm-image]][npm-url]
-> Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
+Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
 
-```
-$ npm install --save-dev electron-builder
+```sh
+npm install electron-builder --save-dev
 ```
 
 * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
@@ -11,9 +11,9 @@ $ npm install --save-dev electron-builder
 * [Build version management](#build-version-management).
 * [Publishing artifacts to GitHub Releases](./docs/deployment.md).
 
-[electron-packager](https://github.com/maxogden/electron-packager),
+[electron-packager](https://github.com/electron-userland/electron-packager),
 [appdmg](https://github.com/LinusU/node-appdmg) and
-[windows-installer](https://github.com/electronjs/windows-installer) are used under the hood.
+[windows-installer](https://github.com/electron/windows-installer) are used under the hood.
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
@@ -79,7 +79,7 @@ See [options](./docs/options.md), but consider to follow simple 4-step guide out
 
 * `.dmg`: OS X installer, required for OS X user to initial install.
 * `-mac.zip`: required for Squirrel.Mac.
-* `.exe` and `-x64.exe`: Windows installer, required for Windows user to initial install. Please note — [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
+* `.exe` and `-ia32.exe`: Windows installer, required for Windows user to initial install. Please note — [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
 * `.full-nupkg`: required for Squirrel.Windows.
 * `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
 
