@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "TestApp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "homepage": "http://foo.example.com",
   "description": "Test Application",
   "scripts": {
@@ -10,15 +10,12 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "devDependencies": {
-    "electron-prebuilt": "^0.37.3"
+    "electron-prebuilt": "^0.37.5"
   },
   "build": {
     "app-bundle-id": "your.id",
     "app-category-type": "your.app.category.type",
     "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
-    "compression": "store",
-    "win": {
-      "title": "My App"
-    }
+    "compression": "store"
   }
 }

@@ -14,7 +14,7 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "0.37.3"
+const electronVersion = "0.37.5"
 
 BluebirdPromise.all([
     deleteOldElectronVersion(),

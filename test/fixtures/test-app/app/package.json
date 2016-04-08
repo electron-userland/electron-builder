@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "TestApp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Test Application",
   "author": "Foo Bar",
   "homepage": "https://github.com/atom/electron-quick-start#readme",
