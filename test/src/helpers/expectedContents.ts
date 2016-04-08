@@ -17,7 +17,7 @@ export const expectedLinuxContents = [
   "/usr/share/",
   "/opt/TestApp/resources/",
   "/opt/TestApp/resources/app.asar",
-  "/opt/TestApp/resources/atom.asar",
+  "/opt/TestApp/resources/electron.asar",
   "/usr/share/applications/",
   "/usr/share/applications/TestApp.desktop",
   "/usr/share/doc/",
@@ -76,7 +76,7 @@ export const expectedWinContents = [
   "lib/net45/xinput1_3.dll",
   "lib/net45/locales/en-US.pak",
   "lib/net45/resources/app.asar",
-  "lib/net45/resources/atom.asar",
+  "lib/net45/resources/electron.asar",
   "TestApp.nuspec",
   "[Content_Types].xml",
   "_rels/.rels"

@@ -35,7 +35,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = [command, "--production"]
   if (npmExecPath == null) {
-    npmExecPath = "npm"
+    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
   else {
     npmExecArgs.unshift(npmExecPath)

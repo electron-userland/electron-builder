@@ -131,10 +131,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
-  const packageFile = projectDir + "/dist/TestApp-1.0.0-amd64.deb"
+  const packageFile = projectDir + "/dist/TestApp-1.1.0-amd64.deb"
   assertThat(await getContents(packageFile, productName)).deepEqual(expectedContents)
   if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
-    assertThat(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName)).deepEqual(expectedContents)
+    assertThat(await getContents(projectDir + "/dist/TestApp-1.1.0-i386.deb", productName)).deepEqual(expectedContents)
   }
 
   const regexp = /^ *(\w+): *(.+)$/gm
@@ -161,20 +161,20 @@ async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreat
     CFBundleDisplayName: productName,
     CFBundleIdentifier: "your.id",
     LSApplicationCategoryType: "your.app.category.type",
-    CFBundleVersion: "1.0.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
+    CFBundleVersion: "1.1.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
   })
 
   const result = await exec("codesign", ["--verify", packedAppDir])
   assertThat(result[0].toString()).not.match(/is not signed at all/)
 
   assertThat(artifacts.map(it => path.basename(it.file)).sort()).deepEqual([
-    `${productName}-1.0.0-mac.zip`,
-    `${productName}-1.0.0.dmg`,
+    `${productName}-1.1.0-mac.zip`,
+    `${productName}-1.1.0.dmg`,
   ].sort())
 
   assertThat(artifacts.map(it => it.artifactName).sort()).deepEqual([
-    "TestApp-1.0.0-mac.zip",
-    "TestApp-1.0.0.dmg",
+    "TestApp-1.1.0-mac.zip",
+    "TestApp-1.1.0.dmg",
   ].sort())
 }
 
@@ -184,8 +184,8 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
   function getWinExpected(archSuffix: string) {
     return [
       `RELEASES${archSuffix}`,
-      `${productName}Setup-1.0.0${archSuffix}.exe`,
-      `TestApp-1.0.0${archSuffix}-full.nupkg`,
+      `${productName}Setup-1.1.0${archSuffix}.exe`,
+      `TestApp-1.1.0${archSuffix}-full.nupkg`,
     ]
   }
 
@@ -202,11 +202,11 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
 
   if (archSuffix == "") {
     const expectedArtifactNames = expected.slice()
-    expectedArtifactNames[1] = `TestAppSetup-1.0.0${archSuffix}.exe`
-    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.0.0${archSuffix}.exe`])
+    expectedArtifactNames[1] = `TestAppSetup-1.1.0${archSuffix}.exe`
+    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.1.0${archSuffix}.exe`])
   }
 
-  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.0.0${archSuffix}-full.nupkg`)
+  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0${archSuffix}-full.nupkg`)
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
@@ -231,8 +231,8 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
-    <version>1.0.0</version>
-    <title>My App</title>
+    <version>1.1.0</version>
+    <title>${productName}</title>
     <authors>Foo Bar</authors>
     <owners>Foo Bar</owners>
     <projectUrl>http://foo.example.com</projectUrl>

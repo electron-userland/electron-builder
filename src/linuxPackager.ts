@@ -5,7 +5,6 @@ import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
-import { State as Gm } from "gm"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
@@ -100,16 +99,11 @@ Icon=${this.metadata.name}
     const output = outputs[0].toString()
     log(output)
 
-    const gm = require("gm")
-
     const imagePath = path.join(tempDir, "icon_256x256x32.png")
 
     function resize(size: number): BluebirdPromise<any> {
-      return new BluebirdPromise((resolve, reject) => {
-        (<Gm>gm(imagePath))
-          .resize(size, size)
-          .write(path.join(tempDir, `icon_${size}x${size}x32.png`), error => error == null ? resolve() : reject(error))
-      })
+      const sizeArg = `${size}x${size}`
+      return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, `icon_${size}x${size}x32.png`)])
     }
 
     const promises: Array<Promise<any>> = [resize(24), resize(96)]

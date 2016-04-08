@@ -5,6 +5,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
 import { stat } from "fs-extra-p"
+import { path7za } from "7zip-bin"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -112,7 +113,7 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     }
     args.push(resultPath, this.appName + ".app")
 
-    return spawn(path.join(__dirname, "..", "vendor", "osx", "7za"), args, {
+    return spawn(path7za, args, {
       cwd: outDir,
       stdio: ["ignore", "ignore", "inherit"],
     })

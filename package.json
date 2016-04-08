@@ -5,8 +5,7 @@
   "main": "out/index.js",
   "files": [
     "out",
-    "templates",
-    "vendor"
+    "templates"
   ],
   "bin": {
     "build": "./out/build-cli.js",
@@ -55,12 +54,11 @@
   "dependencies": {
     "bluebird": "^3.3.4",
     "command-line-args": "^2.1.6",
-    "electron-packager": "^6.0.0",
-    "electron-winstaller-fixed": "^2.0.6-beta.7",
+    "electron-packager": "^6.0.1",
+    "electron-winstaller-fixed": "^2.0.6-beta.8",
     "fs-extra": "^0.26.7",
     "fs-extra-p": "^0.2.0",
     "globby": "^4.0.0",
-    "gm": "^1.21.1",
     "hosted-git-info": "^2.1.4",
     "image-size": "^0.5.0",
     "lodash.template": "^4.2.4",
@@ -69,7 +67,8 @@
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.3",
     "source-map-support": "^0.4.0",
-    "tmp": "0.0.28"
+    "tmp": "0.0.28",
+    "7zip-bin": "^0.0.3"
   },
   "optionalDependencies": {
     "appdmg": "^0.3.6"
@@ -90,7 +89,7 @@
     "ts-babel": "^0.6.9",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160405",
+    "typescript": "^1.9.0-dev.20160408",
     "validate-commit-msg": "^2.5.0"
   },
   "babel": {

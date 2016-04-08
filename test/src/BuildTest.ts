@@ -9,37 +9,29 @@ import { Platform, PackagerOptions } from "out"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test("custom app dir", async () => {
-  await assertPack("test-app-one", allPlatformsAndCurrentArch(), {
-    tempDirCreated: (projectDir) => {
-      return BluebirdPromise.all([
-        modifyPackageJson(projectDir, data => {
-          data.directories = {
-            buildResources: "custom"
-          }
-        }),
-        move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
-      ])
-    }
-  })
-})
+test("custom buildResources dir", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
+  tempDirCreated: projectDir => BluebirdPromise.all([
+    modifyPackageJson(projectDir, data => {
+      data.directories = {
+        buildResources: "custom"
+      }
+    }),
+    move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
+  ])
+}))
 
 test("productName with space", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
-  tempDirCreated: projectDir => {
-    return modifyPackageJson(projectDir, data => {
-      data.productName = "Test App"
-    })
-  }
+  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.productName = "Test App"
+  })
 }))
 
 test("build in the app package.json", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(), {
-  tempDirCreated: projectDir => {
-    return modifyPackageJson(projectDir, data => {
-      data.build = {
-        "iconUrl": "bar",
-      }
-    }, true)
-  }
+  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.build = {
+      "iconUrl": "bar",
+    }
+  }, true)
 }), /'build' in the application package\.json .+/))
 
 test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
@@ -49,7 +41,7 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
   tempDirCreated: projectDir => {
     return BluebirdPromise.all([
       outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
-        version: "0.37.3"
+        version: "0.37.5"
       }),
       modifyPackageJson(projectDir, data => {
         data.devDependencies = {}
@@ -133,7 +125,7 @@ test("copy extra resource", async () => {
         "lib/net45/foo/nameWithoutDot",
         "lib/net45/locales/en-US.pak",
         "lib/net45/resources/app.asar",
-        "lib/net45/resources/atom.asar",
+        "lib/net45/resources/electron.asar",
         "lib/net45/win/x64.txt",
         "TestApp.nuspec",
         "[Content_Types].xml",
