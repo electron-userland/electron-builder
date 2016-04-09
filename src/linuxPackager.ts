@@ -1,6 +1,6 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, use } from "./platformPackager"
 import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log } from "./util"
@@ -196,12 +196,6 @@ Icon=${this.metadata.name}
     args.push(...(await this.packageFiles))
     await exec("fpm", args)
     return destination
-  }
-}
-
-function use<T>(value: T, task: (it: T) => void) {
-  if (value != null) {
-    task(value)
   }
 }
 

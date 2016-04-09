@@ -86,10 +86,10 @@
     "pre-commit": "^1.1.2",
     "semantic-release": "^4.3.5",
     "should": "^8.3.0",
-    "ts-babel": "^0.6.9",
+    "ts-babel": "^0.7.0",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160408",
+    "typescript": "1.9.0-dev.20160409",
     "validate-commit-msg": "^2.5.0"
   },
   "babel": {

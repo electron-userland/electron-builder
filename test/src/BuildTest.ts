@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, outDirName } from "./helpers/packTester"
 import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -18,6 +18,17 @@ test("custom buildResources dir", () => assertPack("test-app-one", allPlatformsA
     }),
     move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   ])
+}))
+
+test("custom output dir", () => assertPack("test-app-one", allPlatformsAndCurrentArch(false), {
+  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.directories = {
+      output: "customDist"
+    }
+  }),
+  packed: async (projectDir) => {
+    await assertThat(path.join(projectDir, "customDist")).isDirectory()
+  }
 }))
 
 test("productName with space", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
@@ -87,8 +98,8 @@ test("copy extra resource", async () => {
           outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
-      packed: async(projectDir) => {
-        let resourcesDir = path.join(projectDir, "dist", "TestApp-" + platform + "-" + process.arch)
+      packed: async (projectDir) => {
+        let resourcesDir = path.join(projectDir, outDirName, "TestApp-" + platform + "-" + process.arch)
         if (platform === "darwin") {
           resourcesDir = path.join(resourcesDir, "TestApp.app", "Contents", "Resources")
         }
@@ -135,9 +146,10 @@ test("copy extra resource", async () => {
   }
 })
 
-function allPlatformsAndCurrentArch(): PackagerOptions {
+function allPlatformsAndCurrentArch(dist: boolean = true): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
+    dist: dist
   }
 }
 

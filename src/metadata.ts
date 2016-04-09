@@ -78,7 +78,7 @@ export interface BuildMetadata {
   readonly "app-category-type": string
 
   /*
-   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Atom icon.
+   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
 
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
 
@@ -157,7 +157,7 @@ export interface LinuxBuildOptions {
   afterRemove?: string
 
   /*
-  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. (default: `xz`).
+  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
    */
   readonly compression?: string
 }
@@ -170,6 +170,11 @@ export interface MetadataDirectories {
    The path to build resources, default `build`.
    */
   readonly buildResources?: string
+
+  /*
+   The output directory, default `dist`.
+   */
+  readonly output?: string
 }
 
 export interface PlatformSpecificBuildOptions {

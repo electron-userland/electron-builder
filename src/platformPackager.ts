@@ -69,15 +69,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
 
-    const buildMetadata: any = info.devMetadata.build
-    this.customBuildOptions = buildMetadata == null ? buildMetadata : buildMetadata[this.platform.buildConfigurationKey]
+    this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey]
 
     this.appName = getProductName(this.metadata, this.devMetadata)
   }
 
   protected get relativeBuildResourcesDirname() {
-    const directories = this.devMetadata.directories
-    return (directories == null ? null : directories.buildResources) || "build"
+    return use(this.devMetadata.directories, it => it.buildResources) || "build"
   }
 
   protected dispatchArtifactCreated(file: string, artifactName?: string) {
@@ -197,4 +195,8 @@ export interface ArtifactCreated {
   readonly artifactName?: string
 
   readonly platform: Platform
+}
+
+export function use<T, R>(value: T, task: (it: T) => R): R {
+  return value == null ? null : task(value)
 }

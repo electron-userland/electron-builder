@@ -6,7 +6,7 @@ import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata } from "./metadata"
-import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
+import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, use } from "./platformPackager"
 import MacPackager from "./macPackager"
 import WinPackager from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -65,12 +65,12 @@ export class Packager implements BuildInfo {
 
   private async doBuild(platforms: Array<string>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
     const distTasks: Array<Promise<any>> = []
+    const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it.output) || "dist")
+
     for (let platform of platforms) {
       const helper = this.createHelper(platform, cleanupTasks)
       for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(arch)
-
-        const outDir = path.join(this.projectDir, "dist")
         // electron-packager uses productName in the directory name
         const appOutDir = path.join(outDir, helper.appName + "-" + platform + "-" + arch)
         await helper.pack(outDir, appOutDir, arch)

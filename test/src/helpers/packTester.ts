@@ -11,7 +11,6 @@ import { exec } from "out/util"
 import pathSorter = require("path-sort")
 import { tmpdir } from "os"
 import DecompressZip = require("decompress-zip")
-import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -23,6 +22,8 @@ if (process.env.TRAVIS !== "true") {
   // we don't use CircleCI, so, we can safely set this env
   process.env.CIRCLE_BUILD_NUM = 42
 }
+
+export const outDirName = "dist"
 
 interface AssertPackOptions {
   readonly tempDirCreated?: (projectDir: string) => Promise<any>
@@ -47,7 +48,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     await copy(projectDir, dir, {
       filter: it => {
         const basename = path.basename(it)
-        return basename !== "dist" && basename !== "node_modules" && basename[0] !== "."
+        return basename !== outDirName && basename !== "node_modules" && basename[0] !== "."
       }
     })
     projectDir = dir
@@ -131,10 +132,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
-  const packageFile = projectDir + "/dist/TestApp-1.1.0-amd64.deb"
+  const packageFile = `${projectDir}/${outDirName}/TestApp-1.1.0-amd64.deb`
   assertThat(await getContents(packageFile, productName)).deepEqual(expectedContents)
   if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
-    assertThat(await getContents(projectDir + "/dist/TestApp-1.1.0-i386.deb", productName)).deepEqual(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).deepEqual(expectedContents)
   }
 
   const regexp = /^ *(\w+): *(.+)$/gm

@@ -1,5 +1,4 @@
 import { stat } from "fs-extra-p"
-import { AssertionError } from "assert"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -22,7 +21,7 @@ class FileAssertions {
   async isDirectory() {
     const info = await stat(this.path)
     if (!info.isDirectory()) {
-      throw new Error(`Path ${this.path} is not a file`)
+      throw new Error(`Path ${this.path} is not a directory`)
     }
   }
 
