@@ -1,5 +1,3 @@
-# Multi-platform build
-
 Don't expect that you can build app for all platforms on one platform.
 
 * If your app has native dependencies, it can be compiled only on the target platform.

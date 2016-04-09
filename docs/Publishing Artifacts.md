@@ -1,5 +1,3 @@
-# Publishing artifacts
-
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration. For each CI (since AppVeyor can build only Windows and Travis only OS X / Linux).
 
 `electron-builder` allows you to just add `GH_TOKEN` environment variable and that's all.
