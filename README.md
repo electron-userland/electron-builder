@@ -23,12 +23,12 @@ We strongly recommend to use **two** package.json files (it is not required, you
 
 1. For development
 
-  In the root of the project.
+   In the root of the project.
   Here you declare dependencies for your development environment and build scripts.
 
 2. For your application
 
-  In the `app` directory. *Only this directory is distributed with real application.*
+   In the `app` directory. *Only this directory is distributed with real application.*
 
 Why the two package.json structure is ideal and how it solves a lot of issues
 ([#39](https://github.com/electron-userland/electron-builder/issues/39),
@@ -40,28 +40,26 @@ Why the two package.json structure is ideal and how it solves a lot of issues
 
 # Configuration
 
-See [options](./docs/options.md), but consider to follow simple 4-step guide outlined below at first.
+See [options](https://github.com/electron-userland/electron-builder/wiki/Options), but consider to follow simple guide outlined below at first.
 
 ## In short
-1. Ensure that required fields are specified in the development `package.json`:
+1. Specify standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#DevMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#DevMetadata-license) are also required).
 
-   Standard `name`, `description`, `version` and `author`.
-
-   Custom `build` field must be specified:
+2. Specify [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) field in the development `package.json`:
     ```json
     "build": {
       "app-bundle-id": "your.id",
       "app-category-type": "your.app.category.type",
-      "iconUrl": "(windows only) A URL to an ICO file to use as the application icon, see details below"
+      "iconUrl": "(windows only)"
     }
     ```
-   This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
+   See [options](https://github.com/electron-userland/electron-builder/wiki/Options). This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
 
-2. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
+3. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
 
    <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>Linux icon set will be generated automatically on the fly from the OS X `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
 
-3. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
+4. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
     ```json
     "scripts": {
       "postinstall": "install-app-deps",
@@ -69,10 +67,10 @@ See [options](./docs/options.md), but consider to follow simple 4-step guide out
       "dist": "build"
     }
     ```
-    And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. DMG, windows installer, NuGet package)).
+    And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)).
     Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied.
 
-4. Install [required system packages](./docs/multi-platform-build.md).
+5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
 # Auto Update
 `electron-builder` produces all required artifacts:
@@ -85,10 +83,6 @@ See [options](./docs/options.md), but consider to follow simple 4-step guide out
 
 You need to deploy somewhere releases/downloads server.
 Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
-
-In general, there is a possibility to setup it as a service for all (it is boring to setup own if cloud service is possible).
-May be it will be soon (feel free to file an issue to track progress).
-It is safe since you should sign your app in any case (so, even if server will be compromised, users will not be affected because OS X will just block unsigned/unidentified app).
 
 # Code signing
 OS X and Windows code singing is supported.
