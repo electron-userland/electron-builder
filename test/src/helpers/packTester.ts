@@ -98,7 +98,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   await packager.build()
 
-  if (!packagerOptions.dist) {
+  if (!packagerOptions.dist || packagerOptions.platformPackagerFactory != null) {
     return
   }
 

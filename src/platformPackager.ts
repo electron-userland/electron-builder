@@ -3,9 +3,10 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getPr
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import packager = require("electron-packager")
+import packager = require("electron-packager-tf")
 import globby = require("globby")
 import { copy } from "fs-extra-p"
+import { Packager } from "./packager";
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -30,6 +31,8 @@ export interface PackagerOptions {
   cscLink?: string
   csaLink?: string
   cscKeyPassword?: string
+
+  platformPackagerFactory?: (packager: Packager, platform: string, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {
@@ -182,7 +185,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 }
 
-function checkConflictingOptions(options: any): void {
+function checkConflictingOptions(options: any) {
   for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
     if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)

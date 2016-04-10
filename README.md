@@ -84,7 +84,7 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
 You need to deploy somewhere releases/downloads server.
 Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
 
-# Code signing
+# Code Signing
 OS X and Windows code singing is supported.
 On a development machine set environment variable `CSC_NAME` to your identity (recommended). Or pass `--sign` parameter.
 ```
@@ -106,12 +106,12 @@ travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
 # Build Version Management
 `CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
 
-# CLI usage
+# CLI Usage
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 In most cases you should not explicitly pass flags, so, we don't want to promote it here ([npm lifecycle](https://docs.npmjs.com/misc/scripts#current-lifecycle-event) is supported and script name is taken in account).
 Want more — please file issue.
 
-# Programmatic usage
+# Programmatic Usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
 
 [npm-url]: https://npmjs.org/package/electron-builder

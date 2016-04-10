@@ -19,7 +19,9 @@
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "validate-commit-msg": "validate-commit-msg"
+    "validate-commit-msg": "validate-commit-msg",
+    "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
+    "update-wiki": "git subtree split -b wiki --prefix docs/ && git push https://github.com/electron-userland/electron-builder.wiki.git wiki:master"
   },
   "repository": {
     "type": "git",
@@ -54,7 +56,7 @@
   "dependencies": {
     "bluebird": "^3.3.4",
     "command-line-args": "^2.1.6",
-    "electron-packager": "^6.0.1",
+    "electron-packager-tf": "^6.0.3-beta.0",
     "electron-winstaller-fixed": "^2.0.6-beta.8",
     "fs-extra": "^0.26.7",
     "fs-extra-p": "^0.2.0",
@@ -109,8 +111,5 @@
   "typings": "./out/electron-builder.d.ts",
   "precommit": [
     "validate-commit-msg"
-  ],
-  "publishConfig": {
-    "tag": "next"
-  }
+  ]
 }

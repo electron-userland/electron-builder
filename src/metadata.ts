@@ -109,7 +109,7 @@ export interface BuildMetadata {
   readonly osx?: OsXBuildOptions
 
   /**
-   See [windows-installer options](https://github.com/electronjs/windows-installer#usage).
+   See [.build.win](#LinuxBuildOptions).
    */
   readonly win?: any,
 
@@ -139,6 +139,30 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
    The path to background (default: `build/background.png`).
    */
   background?: string
+}
+
+/*
+ ### `.build.win`
+
+ See all [windows-installer options](https://github.com/electron/windows-installer#usage).
+ */
+export interface WinBuildOptions extends PlatformSpecificBuildOptions {
+  readonly certificateFile?: string
+  readonly certificatePassword?: string
+
+  readonly icon?: string
+  readonly iconUrl?: string
+
+  /*
+   The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists
+   (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
+   */
+  readonly loadingGif?: string
+
+  /**
+   Whether to create an MSI installer. Defaults to `true` (MSI is not created).
+   */
+  readonly noMsi?: boolean
 }
 
 /*
