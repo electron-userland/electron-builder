@@ -55,7 +55,7 @@ Here documented only `electron-builder` specific options:
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
 | extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app’s directory (<code>Contents/Resources</code> for OS X).</p> <p>You can use <code>${os}</code> (expanded to osx, linux or win according to current platform) and <code>${arch}</code> in the pattern.</p> <p>If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>&lt;project_dir&gt;/foo</code> directory.</p> <p>May be specified in the platform options (i.e. in the <code>build.osx</code>).</p>
 | osx | <a name="BuildMetadata-osx"></a>See [.build.osx](#OsXBuildOptions).
-| win | <a name="BuildMetadata-win"></a>See [windows-installer options](https://github.com/electronjs/windows-installer#usage).
+| win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 
@@ -68,6 +68,16 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 | --- | ---
 | icon | <a name="OsXBuildOptions-icon"></a>The path to icon, which will be shown when mounted (default: `build/icon.icns`).
 | background | <a name="OsXBuildOptions-background"></a>The path to background (default: `build/background.png`).
+
+<a name="WinBuildOptions"></a>
+### `.build.win`
+
+See all [windows-installer options](https://github.com/electron/windows-installer#usage).
+
+| Name | Description
+| --- | ---
+| loadingGif | <a name="WinBuildOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
+| noMsi | <a name="WinBuildOptions-noMsi"></a>Whether to create an MSI installer. Defaults to `true` (MSI is not created).
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`

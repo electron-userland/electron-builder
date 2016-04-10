@@ -1,7 +1,7 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, PlatformSpecificBuildOptions } from "./metadata"
+import { PlatformPackager, BuildInfo, use } from "./platformPackager"
+import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
@@ -9,23 +9,12 @@ import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, cl
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export interface WinBuildOptions extends PlatformSpecificBuildOptions {
-  readonly certificateFile?: string
-  readonly certificatePassword?: string
-
-  readonly icon?: string
-  readonly iconUrl?: string
-
-  /**
-   Whether to create an MSI installer. Defaults to `true` (MSI is not created).
-   */
-  readonly noMsi?: boolean
-}
-
-export default class WinPackager extends PlatformPackager<WinBuildOptions> {
+export class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string>
 
   extraNuGetFileSources: Promise<Array<string>>
+
+  loadingGifStat: Promise<string>
 
   readonly iconPath: Promise<string>
 
@@ -46,6 +35,20 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     this.iconPath = this.getValidIconPath()
+
+    if (this.options.dist && (this.customBuildOptions == null || this.customBuildOptions.loadingGif == null)) {
+      const installSpinnerPath = path.join(this.buildResourcesDir, "install-spinner.gif")
+      this.loadingGifStat = stat(installSpinnerPath)
+        .then(() => installSpinnerPath)
+        .catch(e => {
+          if (e.code === "ENOENT") {
+            return null
+          }
+          else {
+            throw e
+          }
+        })
+    }
   }
 
   protected get platform() {
@@ -63,7 +66,7 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     await this.iconPath
 
     if (this.options.dist) {
-      const installerOut = WinPackager.computeDistOut(outDir, arch)
+      const installerOut = computeDistOut(outDir, arch)
       log("Removing %s", installerOut)
       await BluebirdPromise.all([
         this.doPack(outDir, arch),
@@ -87,44 +90,35 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  private static computeDistOut(outDir: string, arch: string): string {
-    return path.join(outDir, "win" + (arch === "x64" ? "-x64" : ""))
-  }
-
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string): Promise<any> {
     let iconUrl = this.devMetadata.build.iconUrl
     if (!iconUrl) {
-      if (this.customBuildOptions != null) {
-        iconUrl = this.customBuildOptions.iconUrl
-      }
-      if (!iconUrl) {
-        if (this.info.repositoryInfo != null) {
-          const info = await this.info.repositoryInfo.getInfo(this)
-          if (info != null) {
-            iconUrl = `https://raw.githubusercontent.com/${info.user}/${info.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`
-          }
-        }
+      use(this.customBuildOptions, it => iconUrl = it.iconUrl)
 
-        if (!iconUrl) {
-          throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder#in-short")
-        }
+      if (!iconUrl) {
+        use(this.info.repositoryInfo, async(it) =>
+          use(await it.getInfo(this), it =>
+            iconUrl = `https://raw.githubusercontent.com/${it.user}/${it.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`))
+      }
+
+      if (!iconUrl) {
+        throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder#in-short")
       }
     }
 
     const certificateFile = await this.certFilePromise
-    const version = this.metadata.version
-    const installerOutDir = WinPackager.computeDistOut(outDir, arch)
-    const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const projectUrl = await this.computePackageUrl()
 
-    const options = Object.assign({
+    use(this.customBuildOptions, checkConflictingOptions)
+
+    const options: any = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
       exe: this.appName + ".exe",
       title: this.appName,
       appDirectory: appOutDir,
       outputDirectory: installerOutDir,
-      version: version,
+      version: this.metadata.version,
       description: this.metadata.description,
       authors: this.metadata.author.name,
       iconUrl: iconUrl,
@@ -138,8 +132,19 @@ export default class WinPackager extends PlatformPackager<WinBuildOptions> {
       extraMetadataSpecs: projectUrl == null ? null : `\n<projectUrl>${projectUrl}</projectUrl>`,
     }, this.customBuildOptions)
 
-    await require("electron-winstaller-fixed").createWindowsInstaller(options)
+    if (this.loadingGifStat != null) {
+      options.loadingGif = await this.loadingGifStat
+    }
 
+    return options
+  }
+
+  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+    const installerOutDir = computeDistOut(outDir, arch)
+    await require("electron-winstaller-fixed").createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir))
+
+    const version = this.metadata.version
+    const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const releasesFile = path.join(installerOutDir, "RELEASES")
     const nupkgPathOriginal = this.metadata.name + "-" + version + "-full.nupkg"
     const nupkgPathWithArch = this.metadata.name + "-" + version + archSuffix + "-full.nupkg"
@@ -217,4 +222,16 @@ function parseIco(buffer: Buffer): Array<Size> {
 
 function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
+}
+
+export function computeDistOut(outDir: string, arch: string): string {
+  return path.join(outDir, "win" + (arch === "x64" ? "-x64" : ""))
+}
+
+function checkConflictingOptions(options: any) {
+  for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs"]) {
+    if (name in options) {
+      throw new Error(`Option ${name} is ignored, do not specify it.`)
+    }
+  }
 }

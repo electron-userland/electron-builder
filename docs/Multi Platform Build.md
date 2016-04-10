@@ -39,8 +39,7 @@ To build app in distributable format for Windows on Linux:
   ```
   sudo add-apt-repository ppa:ubuntu-wine/ppa
   sudo apt-get update
-  sudo apt-get install wine1.8 winetricks
-  winetricks -q vcrun2013
+  sudo apt-get install wine1.8
   ```
 
 * Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage):

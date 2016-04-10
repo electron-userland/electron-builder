@@ -8,7 +8,7 @@ import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata } from "./metadata"
 import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, use } from "./platformPackager"
 import MacPackager from "./macPackager"
-import WinPackager from "./winPackager"
+import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 
@@ -84,6 +84,10 @@ export class Packager implements BuildInfo {
   }
 
   private createHelper(platform: string, cleanupTasks: Array<() => Promise<any>>): PlatformPackager<any> {
+    if (this.options.platformPackagerFactory != null) {
+      return this.options.platformPackagerFactory(this,  platform, cleanupTasks)
+    }
+
     switch (platform) {
       case "darwin":
       case "osx":
@@ -96,7 +100,7 @@ export class Packager implements BuildInfo {
       case "win":
       case "windows":
       {
-        const helperClass: typeof WinPackager = require("./winPackager").default
+        const helperClass: typeof WinPackager = require("./winPackager").WinPackager
         return new helperClass(this, cleanupTasks)
       }
 
