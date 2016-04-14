@@ -29,12 +29,12 @@ gem install fpm
 ## Linux
 To build app in distributable format for Linux:
 ```
-sudo apt-get install ruby-dev gcc make icnsutils graphicsmagick
+sudo apt-get install ruby-dev gcc make icnsutils graphicsmagick xz-utils
 gem install fpm
 ```
 
 To build app in distributable format for Windows on Linux:
-* Install Wine:
+* Install Wine (1.8+ is required):
 
   ```
   sudo add-apt-repository ppa:ubuntu-wine/ppa
@@ -42,7 +42,7 @@ To build app in distributable format for Windows on Linux:
   sudo apt-get install wine1.8
   ```
 
-* Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage):
+* Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage) (4.2+ is required):
 
   ```
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
