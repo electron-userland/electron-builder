@@ -23,7 +23,7 @@ export const expectedLinuxContents = [
   "/usr/share/doc/",
   "/usr/share/icons/",
   "/usr/share/doc/testapp/",
-  "/usr/share/doc/testapp/changelog.Debian.gz",
+  "/usr/share/doc/testapp/changelog.gz",
   "/usr/share/icons/hicolor/",
   "/usr/share/icons/hicolor/128x128/",
   "/usr/share/icons/hicolor/16x16/",

@@ -126,6 +126,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       certificateFile: certificateFile,
       certificatePassword: this.options.cscKeyPassword,
       fixUpPaths: false,
+      skipUpdateIcon: true,
       usePackageJson: false,
       noMsi: true,
       extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n")),
@@ -229,7 +230,7 @@ export function computeDistOut(outDir: string, arch: string): string {
 }
 
 function checkConflictingOptions(options: any) {
-  for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs"]) {
+  for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
     if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }

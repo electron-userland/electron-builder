@@ -1,6 +1,6 @@
 ///<reference path="helpers/packTester.ts"/>
 import test from "./helpers/avaEx"
-import { assertPack, platform } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { move } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager, computeDistOut } from "out/winPackager"
@@ -13,14 +13,14 @@ const __awaiter = require("out/awaiter")
 
 test.ifNotTravis("win", () => assertPack("test-app-one", {
     platform: ["win32"],
+  },
+  {
+    tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
+      data.build.win = {
+        remoteReleases: "https://github.com/develar/__test-app-releases",
+      }
+    }) : null
   }
-  // {
-  //   tempDirCreated: it => modifyPackageJson(it, data => {
-  //     data.build.win = {
-  //       remoteReleases: "https://github.com/develar/__test-app-releases",
-  //     }
-  //   })
-  // }
 ))
 
 test("detect install-spinner", () => {
