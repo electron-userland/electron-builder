@@ -1,4 +1,4 @@
-///<reference path="helpers/packTester.ts"/>
+import { Platform } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { move } from "fs-extra-p"
@@ -12,7 +12,7 @@ import * as assertThat from "should/as-function"
 const __awaiter = require("out/awaiter")
 
 test.ifNotTravis("win", () => assertPack("test-app-one", {
-    platform: ["win32"],
+    platform: [Platform.WINDOWS],
   },
   {
     tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
@@ -27,7 +27,7 @@ test("detect install-spinner", () => {
   let platformPackager: CheckingWinPackager = null
   let loadingGifPath: string = null
   return assertPack("test-app-one", {
-    platform: ["win32"],
+    platform: [Platform.WINDOWS],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks),
   }, {
     tempDirCreated: it => {
@@ -41,7 +41,7 @@ test("detect install-spinner", () => {
   })
 })
 
-test.ifNotTravis("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform("win32"), {
+test.ifNotTravis("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
   tempDirCreated: projectDir => move(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"), {clobber: true})
 }), /Windows icon image size must be at least 256x256/))
 

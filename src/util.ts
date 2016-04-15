@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
-import { readJson } from "fs-extra-p"
+import { readJson, stat } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -119,4 +119,18 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
 
   const firstChar = electronPrebuiltDep[0]
   return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
+}
+
+export async function statOrNull(file: string) {
+  try {
+    return await stat(file)
+  }
+  catch (e) {
+    if (e.code === "ENOENT") {
+      return null
+    }
+    else {
+      throw e
+    }
+  }
 }

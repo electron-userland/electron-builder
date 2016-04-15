@@ -21,7 +21,7 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "validate-commit-msg": "validate-commit-msg",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
-    "update-wiki": "git subtree split -b wiki --prefix docs/ && git push https://github.com/electron-userland/electron-builder.wiki.git wiki:master"
+    "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master"
   },
   "repository": {
     "type": "git",
@@ -56,7 +56,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "command-line-args": "^2.1.6",
-    "electron-packager-tf": "^6.0.3-beta.1",
+    "electron-packager-tf": "^6.0.3-beta.3",
     "electron-winstaller-fixed": "^2.2.1-beta.0",
     "fs-extra": "^0.26.7",
     "fs-extra-p": "^0.2.0",
@@ -87,12 +87,12 @@
     "plist": "^1.2.0",
     "pre-commit": "^1.1.2",
     "semantic-release": "^4.3.5",
-    "should": "^8.3.0",
+    "should": "^8.3.1",
     "ts-babel": "^0.7.0",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "1.9.0-dev.20160409",
-    "validate-commit-msg": "^2.5.0"
+    "typescript": "^1.9.0-dev.20160414",
+    "validate-commit-msg": "^2.6.0"
   },
   "babel": {
     "plugins": [

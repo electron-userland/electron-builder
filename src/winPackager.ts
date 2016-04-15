@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, use } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
-import { log } from "./util"
+import { log, statOrNull } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
@@ -38,20 +38,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     if (this.options.dist && (this.customBuildOptions == null || this.customBuildOptions.loadingGif == null)) {
       const installSpinnerPath = path.join(this.buildResourcesDir, "install-spinner.gif")
-      this.loadingGifStat = stat(installSpinnerPath)
-        .then(() => installSpinnerPath)
-        .catch(e => {
-          if (e.code === "ENOENT") {
-            return null
-          }
-          else {
-            throw e
-          }
-        })
+      this.loadingGifStat = statOrNull(installSpinnerPath)
+        .then(it => it != null && !it.isDirectory() ? installSpinnerPath : null)
     }
   }
 
-  protected get platform() {
+  get platform() {
     return Platform.WINDOWS
   }
 
@@ -65,28 +57,28 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
-    if (this.options.dist) {
-      const installerOut = computeDistOut(outDir, arch)
-      log("Removing %s", installerOut)
-      await BluebirdPromise.all([
-        this.doPack(outDir, arch),
+    if (!this.options.dist) {
+      return super.pack(outDir, appOutDir, arch)
+    }
+
+    const installerOut = computeDistOut(outDir, arch)
+    log("Removing %s", installerOut)
+    await
+      BluebirdPromise.all([
+        this.doPack(outDir, appOutDir, arch),
         emptyDir(installerOut)
       ])
 
-      let extraResources = await this.copyExtraResources(appOutDir, arch)
-      if (extraResources.length > 0) {
-        this.extraNuGetFileSources = BluebirdPromise.map(extraResources, file => {
-          return stat(file)
-            .then(it => {
-              const relativePath = path.relative(appOutDir, file)
-              const src = it.isDirectory() ? `${relativePath}${path.sep}**` : relativePath
-              return `<file src="${src}" target="lib\\net45\\${relativePath.replace(/\//g, "\\")}"/>`
-            })
-        })
-      }
-    }
-    else {
-      return super.pack(outDir, appOutDir, arch)
+    const extraResources = await this.copyExtraResources(appOutDir, arch)
+    if (extraResources.length > 0) {
+      this.extraNuGetFileSources = BluebirdPromise.map(extraResources, file => {
+        return stat(file)
+          .then(it => {
+            const relativePath = path.relative(appOutDir, file)
+            const src = it.isDirectory() ? `${relativePath}${path.sep}**` : relativePath
+            return `<file src="${src}" target="lib\\net45\\${relativePath.replace(/\//g, "\\")}"/>`
+          })
+      })
     }
   }
 

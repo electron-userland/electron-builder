@@ -6,7 +6,6 @@ import { CSC_LINK, CSC_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { readText } from "out/promisifed-fs"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
-import { normalizePlatforms } from "out/packager"
 import { exec } from "out/util"
 import pathSorter = require("path-sort")
 import { tmpdir } from "os"
@@ -102,14 +101,14 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
     return
   }
 
-  for (let platform of normalizePlatforms(packagerOptions.platform)) {
-    if (platform === "darwin") {
+  for (let platform of packagerOptions.platform) {
+    if (platform === Platform.OSX) {
       await checkOsXResult(packager, artifacts.get(Platform.OSX))
     }
-    else if (platform === "linux") {
+    else if (platform === Platform.LINUX) {
       await checkLinuxResult(projectDir, packager, packagerOptions)
     }
-    else if (platform === "win32") {
+    else if (platform === Platform.WINDOWS) {
       await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
     }
   }
@@ -262,7 +261,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
   return await writeJson(file, data)
 }
 
-export function platform(platform: string): PackagerOptions {
+export function platform(platform: Platform): PackagerOptions {
   return {
     platform: [platform]
   }

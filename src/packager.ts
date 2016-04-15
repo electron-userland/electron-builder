@@ -5,7 +5,7 @@ import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
-import { AppMetadata, DevMetadata } from "./metadata"
+import { AppMetadata, DevMetadata, Platform } from "./metadata"
 import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, use } from "./platformPackager"
 import MacPackager from "./macPackager"
 import { WinPackager } from "./winPackager"
@@ -50,7 +50,7 @@ export class Packager implements BuildInfo {
   async build(): Promise<any> {
     const devPackageFile = this.devPackageFile
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
-    const platforms = normalizePlatforms(this.options.platform)
+    const platforms = this.options.platform
 
     const metadataList = await BluebirdPromise.map(Array.from(new Set([devPackageFile, appPackageFile])), readPackageJson)
     this.metadata = metadataList[metadataList.length - 1]
@@ -63,7 +63,7 @@ export class Packager implements BuildInfo {
     return executeFinally(this.doBuild(platforms, cleanupTasks), () => all(cleanupTasks.map(it => it())))
   }
 
-  private async doBuild(platforms: Array<string>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
+  private async doBuild(platforms: Array<Platform>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
     const distTasks: Array<Promise<any>> = []
     const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it.output) || "dist")
 
@@ -72,7 +72,7 @@ export class Packager implements BuildInfo {
       for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(arch)
         // electron-packager uses productName in the directory name
-        const appOutDir = path.join(outDir, helper.appName + "-" + platform + "-" + arch)
+        const appOutDir = path.join(outDir, `${helper.appName}-${platform.nodeName}-${arch}`)
         await helper.pack(outDir, appOutDir, arch)
         if (this.options.dist) {
           distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir, arch))
@@ -83,32 +83,29 @@ export class Packager implements BuildInfo {
     return await BluebirdPromise.all(distTasks)
   }
 
-  private createHelper(platform: string, cleanupTasks: Array<() => Promise<any>>): PlatformPackager<any> {
+  private createHelper(platform: Platform, cleanupTasks: Array<() => Promise<any>>): PlatformPackager<any> {
     if (this.options.platformPackagerFactory != null) {
       return this.options.platformPackagerFactory(this,  platform, cleanupTasks)
     }
 
     switch (platform) {
-      case "darwin":
-      case "osx":
+      case Platform.OSX:
       {
         const helperClass: typeof MacPackager = require("./macPackager").default
         return new helperClass(this, cleanupTasks)
       }
 
-      case "win32":
-      case "win":
-      case "windows":
+      case Platform.WINDOWS:
       {
         const helperClass: typeof WinPackager = require("./winPackager").WinPackager
         return new helperClass(this, cleanupTasks)
       }
 
-      case "linux":
+      case Platform.LINUX:
         return new (require("./linuxPackager").LinuxPackager)(this)
 
       default:
-        throw new Error("Unsupported platform: " + platform)
+        throw new Error("Unknown platform: " + platform)
     }
   }
 
@@ -137,7 +134,7 @@ export class Packager implements BuildInfo {
     return absoluteAppPath
   }
 
-  private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<string>): void {
+  private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<Platform>): void {
     const reportError = (missedFieldName: string) => {
       throw new Error("Please specify '" + missedFieldName + "' in the application package.json ('" + appPackageFile + "')")
     }
@@ -163,7 +160,7 @@ export class Packager implements BuildInfo {
       if (author == null) {
         reportError("author")
       }
-      else if (this.options.dist && author.email == null && platforms.includes("linux")) {
+      else if (this.options.dist && author.email == null && platforms.includes(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
     }
@@ -180,8 +177,8 @@ export class Packager implements BuildInfo {
   }
 }
 
-export function normalizeArchs(platform: string, arch?: string) {
-  if (platform === "darwin") {
+export function normalizeArchs(platform: Platform, arch?: string) {
+  if (platform === Platform.OSX) {
     return ["x64"]
   }
   else {
@@ -189,23 +186,23 @@ export function normalizeArchs(platform: string, arch?: string) {
   }
 }
 
-export function normalizePlatforms(platforms: Array<string>): Array<string> {
+export function normalizePlatforms(platforms: Array<string | Platform>): Array<Platform> {
   if (platforms == null || platforms.length === 0) {
-    return [process.platform]
+    return [Platform.fromString(process.platform)]
   }
   else if (platforms[0] === "all") {
-    if (process.platform === "darwin") {
-      return ["darwin", "linux", "win32"]
+    if (process.platform === Platform.OSX.nodeName) {
+      return [Platform.OSX, Platform.LINUX, Platform.WINDOWS]
     }
-    else if (process.platform === "linux") {
+    else if (process.platform === Platform.LINUX.nodeName) {
       // OS X code sign works only on OS X
-      return ["linux", "win32"]
+      return [Platform.LINUX, Platform.WINDOWS]
     }
     else {
-      return ["win32"]
+      return [Platform.WINDOWS]
     }
   }
   else {
-    return platforms
+    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it))
   }
 }

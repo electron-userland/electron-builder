@@ -6,7 +6,8 @@ import * as path from "path"
 import packager = require("electron-packager-tf")
 import globby = require("globby")
 import { copy } from "fs-extra-p"
-import { Packager } from "./packager";
+import { statOrNull } from "./util"
+import { Packager } from "./packager"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -21,7 +22,7 @@ export interface PackagerOptions {
 
   sign?: string
 
-  platform?: Array<string>
+  platform?: Array<Platform>
   target?: Array<string>
 
   appDir?: string
@@ -32,7 +33,7 @@ export interface PackagerOptions {
   csaLink?: string
   cscKeyPassword?: string
 
-  platformPackagerFactory?: (packager: Packager, platform: string, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
+  platformPackagerFactory?: (packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {
@@ -62,7 +63,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appName: string
 
-  protected abstract get platform(): Platform
+  public abstract get platform(): Platform
 
   constructor(protected info: BuildInfo) {
     this.options = info.options
@@ -90,11 +91,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    await this.doPack(outDir, arch)
+    await this.doPack(outDir, appOutDir, arch)
     await this.copyExtraResources(appOutDir, arch)
   }
 
-  protected async doPack(outDir: string, arch: string) {
+  protected async doPack(outDir: string, appOutDir: string, arch: string) {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = this.computeBuildNumber()
@@ -102,8 +103,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       buildVersion += "." + buildNumber
     }
 
-    const electronPackagerOptions = this.devMetadata.build
-    checkConflictingOptions(electronPackagerOptions)
+    checkConflictingOptions(this.devMetadata.build)
 
     const options = Object.assign({
       dir: this.info.appDir,
@@ -124,7 +124,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         ProductName: this.appName,
         InternalName: this.appName,
       }
-    }, electronPackagerOptions)
+    }, this.devMetadata.build)
 
     delete options.osx
     delete options.win
@@ -133,6 +133,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     delete options.iconUrl
 
     await pack(options)
+
+    const outStat = await statOrNull(appOutDir)
+    if (outStat == null) {
+      throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
+    }
+    else if (!outStat.isDirectory()) {
+      throw new Error(`Output directory ${appOutDir} is a file. Seems like a wrong configuration.`)
+    }
   }
 
   protected getExtraResources(arch: string): Promise<Array<string>> {

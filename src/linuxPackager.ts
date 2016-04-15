@@ -36,7 +36,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     }
   }
 
-  protected get platform() {
+  get platform() {
     return Platform.LINUX
   }
 
@@ -50,7 +50,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
     promises.push(this.computeDesktop(tempDir))
 
-    return Array.prototype.concat.apply([], await BluebirdPromise.all(promises))
+    return [].concat(...await BluebirdPromise.all(promises))
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {

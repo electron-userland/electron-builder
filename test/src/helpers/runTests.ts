@@ -70,7 +70,7 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
       downloadPromises.push(downloadElectron({
         version: electronVersion,
         arch: arch,
-        platform: platform,
+        platform: platform.nodeName,
       }))
     }
   }

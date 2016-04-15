@@ -1,4 +1,4 @@
-import { Packager } from "./packager"
+import { Packager, normalizePlatforms } from "./packager"
 import { PackagerOptions } from "./platformPackager"
 import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
 import { executeFinally } from "./promise"
@@ -34,6 +34,8 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
     cscKeyPassword: process.env.CSC_KEY_PASSWORD,
     githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
   }, originalOptions)
+  
+  options.platform = normalizePlatforms(originalOptions.platform)
 
   const lifecycleEvent = process.env.npm_lifecycle_event
   if (options.publish) {

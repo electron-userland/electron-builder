@@ -217,11 +217,19 @@ export class Platform {
     return this.name
   }
 
-  public static fromNodePlatform(name: string): Platform {
+  public static fromString(name: string): Platform {
     switch (name) {
-      case Platform.OSX.nodeName: return Platform.OSX
-      case Platform.WINDOWS.nodeName: return Platform.WINDOWS
-      case Platform.LINUX.nodeName: return Platform.LINUX
+      case Platform.OSX.nodeName:
+      case Platform.OSX.name:
+        return Platform.OSX
+
+      case Platform.WINDOWS.nodeName:
+      case Platform.WINDOWS.name:
+      case Platform.WINDOWS.buildConfigurationKey:
+        return Platform.WINDOWS
+
+      case Platform.LINUX.nodeName:
+        return Platform.LINUX
     }
 
     throw new Error("Unknown platform: " + name)

@@ -46,7 +46,7 @@ test("build in the app package.json", t => t.throws(assertPack("test-app", allPl
 }), /'build' in the application package\.json .+/))
 
 test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
-  platform: [process.platform],
+  platform: [Platform.fromString(process.platform)],
   dist: false
 }, {
   tempDirCreated: projectDir => {
@@ -63,13 +63,13 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
 
 test("copy extra resource", async () => {
   for (let platform of getPossiblePlatforms()) {
-    const osName = Platform.fromNodePlatform(platform).buildConfigurationKey
+    const osName = platform.buildConfigurationKey
 
     //noinspection SpellCheckingInspection
     await assertPack("test-app", {
       platform: [platform],
       // to check NuGet package
-      dist: platform === "win32"
+      dist: platform === Platform.WINDOWS
     }, {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
@@ -99,8 +99,8 @@ test("copy extra resource", async () => {
         ])
       },
       packed: async (projectDir) => {
-        let resourcesDir = path.join(projectDir, outDirName, "TestApp-" + platform + "-" + process.arch)
-        if (platform === "darwin") {
+        let resourcesDir = path.join(projectDir, outDirName, "TestApp-" + platform.nodeName + "-" + process.arch)
+        if (platform === Platform.OSX) {
           resourcesDir = path.join(resourcesDir, "TestApp.app", "Contents", "Resources")
         }
         await assertThat(path.join(resourcesDir, "foo")).isDirectory()
@@ -111,7 +111,7 @@ test("copy extra resource", async () => {
         await assertThat(path.join(resourcesDir, "platformSpecific")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
       },
-      expectedContents: platform === "win32" ? [
+      expectedContents: platform === Platform.WINDOWS ? [
         "lib/net45/content_resources_200_percent.pak",
         "lib/net45/content_shell.pak",
         "lib/net45/d3dcompiler_47.dll",
@@ -146,6 +146,11 @@ test("copy extra resource", async () => {
   }
 })
 
+test("invalid platform", (t) => t.throws(assertPack("test-app-one", {
+  platform: [null],
+  dist: false
+}), "Unknown platform: null"))
+
 function allPlatformsAndCurrentArch(dist: boolean = true): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
@@ -153,16 +158,16 @@ function allPlatformsAndCurrentArch(dist: boolean = true): PackagerOptions {
   }
 }
 
-function getPossiblePlatforms(): Array<string> {
+function getPossiblePlatforms(): Array<Platform> {
   const isCi = process.env.CI != null
-  if (process.platform === "darwin") {
-    return isCi ? ["darwin", "linux"] : ["darwin", "linux", "win32"]
+  if (process.platform === Platform.OSX.nodeName) {
+    return isCi ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS]
   }
-  else if (process.platform === "linux") {
+  else if (process.platform === Platform.LINUX.nodeName) {
     // todo install wine on Linux agent
-    return ["linux"]
+    return [Platform.LINUX]
   }
   else {
-    return ["win32"]
+    return [Platform.WINDOWS]
   }
 }
