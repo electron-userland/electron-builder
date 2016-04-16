@@ -6,6 +6,7 @@ import { log, spawn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
 import { stat } from "fs-extra-p"
 import { path7za } from "7zip-bin"
+import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -57,7 +58,7 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
       new BluebirdPromise<any>(async (resolve, reject) => {
         log("Creating DMG")
 
-        const specification: appdmg.Specification = Object.assign({
+        const specification: appdmg.Specification = deepAssign({
           title: this.appName,
           icon: path.join(this.buildResourcesDir, "icon.icns"),
           "icon-size": 80,

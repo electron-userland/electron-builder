@@ -34,16 +34,34 @@ test.ifNotTravis("noMsi as string", t => t.throws(assertPack("test-app-one", pla
 test("detect install-spinner", () => {
   let platformPackager: CheckingWinPackager = null
   let loadingGifPath: string = null
+
+  // todo all PackagerOptions should be optional otherwise it is not possible to pass only several to override dev package.json
+  const devMetadata: any = {
+    build: {
+      win: {
+        certificatePassword: "pass",
+      }
+    }
+  }
   return assertPack("test-app-one", {
     platform: [Platform.WINDOWS],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks),
+    devMetadata: devMetadata
   }, {
     tempDirCreated: it => {
       loadingGifPath = path.join(it, "build", "install-spinner.gif")
-      return move(path.join(it, "install-spinner.gif"), loadingGifPath)
+      return BluebirdPromise.all([
+        move(path.join(it, "install-spinner.gif"), loadingGifPath),
+        modifyPackageJson(it, data => {
+          data.build.win = {
+            certificateFile: "secretFile",
+            certificatePassword: "mustBeOverridden",
+          }
+        })])
     },
     packed: () => {
       assertThat(platformPackager.effectiveDistOptions.loadingGif).equal(loadingGifPath)
+      assertThat(platformPackager.effectiveDistOptions.certificateFile).equal("secretFile")
       return BluebirdPromise.resolve(null)
     },
   })

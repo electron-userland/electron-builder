@@ -34,7 +34,7 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
     cscKeyPassword: process.env.CSC_KEY_PASSWORD,
     githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
   }, originalOptions)
-  
+
   options.platform = normalizePlatforms(originalOptions.platform)
 
   const lifecycleEvent = process.env.npm_lifecycle_event

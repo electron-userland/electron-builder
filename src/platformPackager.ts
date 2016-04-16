@@ -8,6 +8,7 @@ import globby = require("globby")
 import { copy } from "fs-extra-p"
 import { statOrNull } from "./util"
 import { Packager } from "./packager"
+import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -34,6 +35,13 @@ export interface PackagerOptions {
   cscKeyPassword?: string
 
   platformPackagerFactory?: (packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
+
+  /**
+   * The same as [development package.json](https://github.com/electron-userland/electron-builder/wiki/Options#development-packagejson).
+   *
+   * Development `package.json` will be still read, but options specified in this object will override.
+   */
+  readonly devMetadata?: DevMetadata
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {
@@ -105,7 +113,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     checkConflictingOptions(this.devMetadata.build)
 
-    const options = Object.assign({
+    const options = deepAssign({
       dir: this.info.appDir,
       out: outDir,
       name: this.appName,

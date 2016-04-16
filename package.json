@@ -54,8 +54,10 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
+    "7zip-bin": "^0.0.3",
     "bluebird": "^3.3.5",
     "command-line-args": "^2.1.6",
+    "deep-assign": "^2.0.0",
     "electron-packager-tf": "^6.0.3-beta.3",
     "electron-winstaller-fixed": "^2.2.1-beta.0",
     "fs-extra": "^0.27.0",
@@ -69,8 +71,7 @@
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.3",
     "source-map-support": "^0.4.0",
-    "tmp": "0.0.28",
-    "7zip-bin": "^0.0.3"
+    "tmp": "0.0.28"
   },
   "optionalDependencies": {
     "appdmg": "^0.3.6"

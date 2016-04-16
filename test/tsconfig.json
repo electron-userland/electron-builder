@@ -29,6 +29,7 @@
   "files": [
     "../typings/appdmg.d.ts",
     "../typings/command-line-args.d.ts",
+    "../typings/deep-assign.d.ts",
     "../typings/electron-packager.d.ts",
     "../typings/gh-api.d.ts",
     "../typings/globby.d.ts",

@@ -11,6 +11,7 @@ import MacPackager from "./macPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
+import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -54,7 +55,7 @@ export class Packager implements BuildInfo {
 
     const metadataList = await BluebirdPromise.map(Array.from(new Set([devPackageFile, appPackageFile])), readPackageJson)
     this.metadata = metadataList[metadataList.length - 1]
-    this.devMetadata = metadataList[0]
+    this.devMetadata = deepAssign(metadataList[0], this.options.devMetadata)
     this.checkMetadata(appPackageFile, devPackageFile, platforms)
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
