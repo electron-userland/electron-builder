@@ -51,6 +51,12 @@ To build app in distributable format for Windows on Linux:
   sudo apt-get install mono-complete
   ```
 
+To build app in 32 bit from a machine with 64 bit:
+
+```
+sudo apt-get install -y gcc-multilib g++-multilib
+```
+
 ## Windows
 
 Not documented yet.
