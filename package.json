@@ -58,7 +58,7 @@
     "command-line-args": "^2.1.6",
     "electron-packager-tf": "^6.0.3-beta.3",
     "electron-winstaller-fixed": "^2.2.1-beta.0",
-    "fs-extra": "^0.26.7",
+    "fs-extra": "^0.27.0",
     "fs-extra-p": "^0.2.0",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",

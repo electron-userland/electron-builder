@@ -227,4 +227,9 @@ function checkConflictingOptions(options: any) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
   }
+
+  const noMsi = options.noMsi
+  if (noMsi != null && typeof noMsi !== "boolean") {
+    throw new Error(`noMsi expected to be boolean value, but string '"${noMsi}"' was specified`)
+  }
 }

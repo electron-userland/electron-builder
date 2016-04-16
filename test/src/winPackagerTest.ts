@@ -11,9 +11,7 @@ import * as assertThat from "should/as-function"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotTravis("win", () => assertPack("test-app-one", {
-    platform: [Platform.WINDOWS],
-  },
+test.ifNotTravis("win", () => assertPack("test-app-one", platform(Platform.WINDOWS),
   {
     tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
       data.build.win = {
@@ -22,6 +20,16 @@ test.ifNotTravis("win", () => assertPack("test-app-one", {
     }) : null
   }
 ))
+
+test.ifNotTravis("noMsi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
+  {
+    tempDirCreated: it => modifyPackageJson(it, data => {
+      data.build.win = {
+        noMsi: "false",
+      }
+    })
+  }), `noMsi expected to be boolean value, but string '"false"' was specified`)
+)
 
 test("detect install-spinner", () => {
   let platformPackager: CheckingWinPackager = null
