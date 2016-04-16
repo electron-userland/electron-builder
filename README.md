@@ -9,7 +9,7 @@ npm install electron-builder --save-dev
 * [Auto Update](#auto-update) ready application packaging.
 * [Code Signing](#code-signing) on a CI server or development machine.
 * [Build version management](#build-version-management).
-* [Publishing artifacts to GitHub Releases](./docs/deployment.md).
+* [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
 [electron-packager](https://github.com/electron-userland/electron-packager),
 [appdmg](https://github.com/LinusU/node-appdmg) and
