@@ -138,12 +138,12 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   /*
    The path to icon, which will be shown when mounted (default: `build/icon.icns`).
    */
-  icon?: string
+  readonly icon?: string
 
   /*
    The path to background (default: `build/background.png`).
    */
-  background?: string
+  readonly background?: string
 }
 
 /*

@@ -52,44 +52,46 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
-  packageInDistributableFormat(outDir: string, appOutDir: string): Promise<any> {
+  protected async computeEffectiveDistOptions(appOutDir: string): Promise<appdmg.Specification> {
+    const specification: appdmg.Specification = deepAssign({
+      title: this.appName,
+      icon: path.join(this.buildResourcesDir, "icon.icns"),
+      "icon-size": 80,
+      contents: [
+        {
+          "x": 410, "y": 220, "type": "link", "path": "/Applications"
+        },
+        {
+          "x": 130, "y": 220, "type": "file"
+        }
+      ]
+    }, this.customBuildOptions)
+
+    if (this.customBuildOptions == null || !("background" in this.customBuildOptions)) {
+      const background = path.join(this.buildResourcesDir, "background.png")
+      try {
+        if ((await stat(background)).isFile()) {
+          specification.background = background
+        }
+      }
+      catch (e) {
+        // ignored
+      }
+    }
+
+    specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
+    return specification
+  }
+
+  packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
     const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
     return BluebirdPromise.all([
       new BluebirdPromise<any>(async (resolve, reject) => {
         log("Creating DMG")
-
-        const specification: appdmg.Specification = deepAssign({
-          title: this.appName,
-          icon: path.join(this.buildResourcesDir, "icon.icns"),
-          "icon-size": 80,
-          contents: [
-            {
-              "x": 410, "y": 220, "type": "link", "path": "/Applications"
-            },
-            {
-              "x": 130, "y": 220, "type": "file"
-            }
-          ]
-        }, this.customBuildOptions)
-
-        if (this.customBuildOptions == null || !("background" in this.customBuildOptions)) {
-          const background = path.join(this.buildResourcesDir, "background.png")
-          try {
-            if ((await stat(background)).isFile()) {
-              specification.background = background
-            }
-          }
-          catch (e) {
-            // ignored
-          }
-        }
-
-        specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
-
         const emitter = require("appdmg")({
           target: artifactPath,
           basepath: this.projectDir,
-          specification: specification
+          specification: await this.computeEffectiveDistOptions(appOutDir)
         })
         emitter.on("error", reject)
         emitter.on("finish", () => resolve())
