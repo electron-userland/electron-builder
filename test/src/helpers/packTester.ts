@@ -137,20 +137,33 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
     assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).deepEqual(expectedContents)
   }
 
-  const regexp = /^ *(\w+): *(.+)$/gm
-  const info = (await exec("dpkg", ["--info", packageFile])).toString()
-  let match: Array<string>
-  const metadata: any = {}
-  while ((match = regexp.exec(info)) !== null) {
-    metadata[match[1]] = match[2]
-  }
-  assertThat(metadata).has.properties({
+  assertThat(parseDebControl((await exec("dpkg", ["--info", packageFile])).toString())).has.properties({
     License: "MIT",
     Homepage: "http://foo.example.com",
     Maintainer: "Foo Bar <foo@example.com>",
+    Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
-    Description: "Test Application",
+    Description: " \n   Test Application",
   })
+}
+
+function parseDebControl(info: string): any {
+  const regexp = /([\w]+): *(.+\n)([^:\n]+\n)?/g
+  let match: Array<string>
+  const metadata: any = {}
+  info = info.substring(info.indexOf("Package:"))
+  while ((match = regexp.exec(info)) !== null) {
+    let value = match[2]
+    if (match[3] != null) {
+      value += match[3]
+    }
+
+    if (value[value.length - 1] == "\n") {
+      value = value.substring(0, value.length - 1)
+    }
+    metadata[match[1]] = value
+  }
+  return metadata
 }
 
 async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreated>) {

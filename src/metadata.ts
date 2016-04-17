@@ -19,6 +19,9 @@ export interface AppMetadata extends Metadata {
    */
   readonly productName?: string
 
+  /*
+   The application description.
+   */
   readonly description: string
 
   readonly author: AuthorMetadata
@@ -29,6 +32,11 @@ export interface AppMetadata extends Metadata {
  */
 export interface DevMetadata extends Metadata {
   /*
+   See [.build](#BuildMetadata).
+   */
+  readonly build: BuildMetadata
+
+  /*
    The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
 
    If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
@@ -36,14 +44,9 @@ export interface DevMetadata extends Metadata {
   readonly homepage?: string
 
   /*
-   *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name for this package.
+   *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
    */
   readonly license?: string
-
-  /*
-   See [.build](#BuildMetadata).
-   */
-  readonly build: BuildMetadata
 
   /*
    See [.directories](#MetadataDirectories)
@@ -65,17 +68,17 @@ export interface AuthorMetadata {
  */
 export interface BuildMetadata {
   /*
-   The bundle identifier to use in the application's plist.
+   *OS X-only.* The bundle identifier to use in the application's plist.
    */
-  readonly "app-bundle-id": string
+  readonly "app-bundle-id"?: string
   /*
-   The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+   *OS X-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
    For example, `app-category-type=public.app-category.developer-tools` will set the application category to *Developer Tools*.
 
    Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
    */
-  readonly "app-category-type": string
+  readonly "app-category-type"?: string
 
   /*
    *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
@@ -85,7 +88,7 @@ export interface BuildMetadata {
    * If you don't plan to build windows installer, you can omit it.
    * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${user}/${project}/master/build/icon.ico` by default.
    */
-  readonly iconUrl: string
+  readonly iconUrl?: string
 
   /*
    See [AppMetadata.productName](#AppMetadata-productName).
@@ -122,6 +125,8 @@ export interface BuildMetadata {
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
    */
   readonly compression?: "store" | "normal" | "maximum"
+
+  readonly "build-version": string
 }
 
 /*
@@ -169,10 +174,28 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
  ### `.build.linux`
  */
 export interface LinuxBuildOptions {
-  name: string
-  comment: string
+  /*
+   As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
+   */
+  description?: string
 
-  maintainer: string
+  /*
+   *deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+   */
+  synopsis?: string
+
+  /*
+   The maintainer. Defaults to [author](#AppMetadata-author).
+   */
+  maintainer?: string
+
+  /*
+   The vendor. Defaults to [author](#AppMetadata-author).
+   */
+  vendor?: string
+
+  // should be not documented, only to experiment
+  fpm?: string[]
 
   //.desktop file template
   desktop?: string

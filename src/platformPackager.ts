@@ -195,9 +195,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  //noinspection JSMethodCanBeStatic
   protected computeBuildNumber(): string {
-    return process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
+    return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
   }
 }
 

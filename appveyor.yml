@@ -12,7 +12,6 @@ install:
   - node -v
   - npm -v
   - npm prune
-  - npm install Microsoft/TypeScript
   - npm install
 
 build: off

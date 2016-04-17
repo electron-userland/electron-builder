@@ -23,7 +23,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
     this.debOptions = Object.assign({
       name: this.metadata.name,
-      comment: this.metadata.description,
+      description: this.metadata.description,
     }, this.customBuildOptions)
 
     if (this.options.dist) {
@@ -57,7 +57,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     const tempFile = path.join(tempDir, this.appName + ".desktop")
     await outputFile(tempFile, this.debOptions.desktop || `[Desktop Entry]
 Name=${this.appName}
-Comment=${this.debOptions.comment}
+Comment=${this.debOptions.description}
 Exec="${this.appName}"
 Terminal=false
 Type=Application
@@ -172,6 +172,7 @@ Icon=${this.metadata.name}
       throw new Error("Please specify project homepage")
     }
 
+    const author = options.maintainer || `${this.metadata.author.name} <${this.metadata.author.email}>`
     const args = [
       "-s", "dir",
       "-t", target,
@@ -181,8 +182,9 @@ Icon=${this.metadata.name}
       "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
-      "--description", options.comment,
-      "--maintainer", options.maintainer || `${this.metadata.author.name} <${this.metadata.author.email}>`,
+      "--description", `${options.synopsis || ""}\n ${this.debOptions.description}`,
+      "--maintainer", author,
+      "--vendor", options.vendor || author,
       "--version", this.metadata.version,
       "--package", destination,
       "--deb-compression", options.compression || (this.devMetadata.build.compression === "store" ? "gz" : "xz"),
@@ -191,6 +193,8 @@ Icon=${this.metadata.name}
 
     use(this.devMetadata.license, it => args.push("--license", it))
     use(this.computeBuildNumber(), it => args.push("--iteration", it))
+
+    use(options.fpm, it => args.push(...it))
 
     args.push(`${appOutDir}/=/opt/${this.appName}`)
     args.push(...(await this.packageFiles))

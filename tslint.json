@@ -26,6 +26,7 @@
     ],
     "no-use-before-declare": true,
     "no-internal-module": true,
+    "no-trailing-whitespace": true,
     "no-var-keyword": true,
     "one-line": [
       true,
