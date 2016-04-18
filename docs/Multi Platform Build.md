@@ -29,7 +29,7 @@ gem install fpm
 ## Linux
 To build app in distributable format for Linux:
 ```
-sudo apt-get install ruby-dev gcc make icnsutils graphicsmagick xz-utils
+sudo apt-get install ruby ruby-dev gcc make icnsutils graphicsmagick xz-utils
 gem install fpm
 ```
 
