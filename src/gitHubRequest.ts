@@ -14,7 +14,7 @@ export function gitHubRequest<T>(path: string, token: string, data: { [name: str
     method: method,
     headers: {
       Accept: "application/vnd.github.v3+json",
-      "User-Agent": "electron-complete-builder",
+      "User-Agent": "electron-builder",
     }
   }
 
@@ -37,8 +37,10 @@ export function doGitHubRequest<T>(options: RequestOptions, token: string, reque
       try {
         if (response.statusCode === 404) {
           // error is clear, we don't need to read detailed error description
-          reject(new HttpError(response))
-          return
+          reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
+          
+Please double check that your GitHub Token is correct. Due to security reasons GitHub doesn't report actual status, but 404.
+`))
         }
         else if (response.statusCode === 204) {
           // on DELETE request

@@ -57,6 +57,17 @@ testAndIgnoreApiRate("GitHub upload", async () => {
   }
 })
 
+testAndIgnoreApiRate("GitHub upload org", async () => {
+  //noinspection SpellCheckingInspection
+  const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), token)
+  try {
+    await publisher.upload(iconPath)
+  }
+  finally {
+    await publisher.deleteRelease()
+  }
+})
+
 testAndIgnoreApiRate("GitHub overwrite on upload", async () => {
   const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), token)
   try {

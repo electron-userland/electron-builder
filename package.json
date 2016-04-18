@@ -58,7 +58,7 @@
     "bluebird": "^3.3.5",
     "command-line-args": "^2.1.6",
     "deep-assign": "^2.0.0",
-    "electron-packager-tf": "^6.0.3-beta.3",
+    "electron-packager": "^7.0.0",
     "electron-winstaller-fixed": "^2.2.1-beta.0",
     "fs-extra": "^0.27.0",
     "fs-extra-p": "^0.2.0",

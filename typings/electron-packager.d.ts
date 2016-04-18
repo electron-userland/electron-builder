@@ -105,7 +105,7 @@ declare namespace ElectronPackager {
     }
 }
 
-declare module "electron-packager-tf" {
+declare module "electron-packager" {
     const packager: ElectronPackager.Packager;
     export = packager;
 }
