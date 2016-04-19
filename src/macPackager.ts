@@ -107,8 +107,7 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     log("Creating ZIP for Squirrel.Mac")
     // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
     const resultPath = `${this.appName}-${this.metadata.version}-mac.zip`
-    // -y param is important - "store symbolic links as the link instead of the referenced file"
-    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-r", "-bb0", "-bd"]
+    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-bb0", "-bd"]
     if (this.devMetadata.build.compression === "maximum") {
       // http://superuser.com/a/742034
       //noinspection SpellCheckingInspection

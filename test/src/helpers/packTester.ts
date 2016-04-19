@@ -240,19 +240,20 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
       path: path.dirname(packageFile),
     })
-    assertThat((await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")).equal(`<?xml version="1.0"?>
+    const expectedSpec = await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")
+    assertThat((expectedSpec).replace(/\r\n/g, "\n")).equal(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
-    <version>1.1.0</version>
     <title>${productName}</title>
+    <version>1.1.0</version>
     <authors>Foo Bar</authors>
     <owners>Foo Bar</owners>
-    <projectUrl>http://foo.example.com</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Test Application</description>
     <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
+    <projectUrl>http://foo.example.com</projectUrl>
   </metadata>
 </package>`)
   }
