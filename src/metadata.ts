@@ -25,16 +25,6 @@ export interface AppMetadata extends Metadata {
   readonly description: string
 
   readonly author: AuthorMetadata
-}
-
-/*
- # Development `package.json`
- */
-export interface DevMetadata extends Metadata {
-  /*
-   See [.build](#BuildMetadata).
-   */
-  readonly build: BuildMetadata
 
   /*
    The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
@@ -46,6 +36,22 @@ export interface DevMetadata extends Metadata {
   /*
    *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
    */
+  readonly license?: string
+}
+
+/*
+ # Development `package.json`
+ */
+export interface DevMetadata extends Metadata {
+  /*
+   See [.build](#BuildMetadata).
+   */
+  readonly build: BuildMetadata
+
+  // deprecated
+  readonly homepage?: string
+
+  // deprecated
   readonly license?: string
 
   /*

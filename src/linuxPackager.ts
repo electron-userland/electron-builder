@@ -169,7 +169,7 @@ Icon=${this.metadata.name}
 
     const projectUrl = await this.computePackageUrl()
     if (projectUrl == null) {
-      throw new Error("Please specify project homepage")
+      throw new Error("Please specify project homepage, see https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage")
     }
 
     const author = options.maintainer || `${this.metadata.author.name} <${this.metadata.author.email}>`
@@ -191,7 +191,7 @@ Icon=${this.metadata.name}
       "--url", projectUrl,
     ]
 
-    use(this.devMetadata.license, it => args.push("--license", it))
+    use(this.metadata.license || this.devMetadata.license, it => args.push("--license", it))
     use(this.computeBuildNumber(), it => args.push("--iteration", it))
 
     use(options.fpm, it => args.push(...it))

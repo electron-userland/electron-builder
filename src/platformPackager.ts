@@ -181,7 +181,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
 
   protected async computePackageUrl(): Promise<string> {
-    const url = this.devMetadata.homepage
+    const url = this.metadata.homepage || this.devMetadata.homepage
     if (url != null) {
       return url
     }

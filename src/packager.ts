@@ -150,10 +150,20 @@ export class Packager implements BuildInfo {
     else if (appMetadata.version == null) {
       reportError("version")
     }
-    else if ((<any>appMetadata) !== this.devMetadata && (<any>appMetadata).build != null) {
-      throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
+    else if ((<any>appMetadata) !== this.devMetadata) {
+      if ((<any>appMetadata).build != null) {
+        throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
+      }
+
+      if (this.devMetadata.homepage != null) {
+        console.warn("homepage in the development package.json is deprecated, please move to the application package.json")
+      }
+      if (this.devMetadata.license != null) {
+        console.warn("license in the development package.json is deprecated, please move to the application package.json")
+      }
     }
-    else if (this.devMetadata.build == null) {
+
+    if (this.devMetadata.build == null) {
       throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
     }
     else {

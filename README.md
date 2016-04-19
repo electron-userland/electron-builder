@@ -43,7 +43,7 @@ Why the two package.json structure is ideal and how it solves a lot of issues
 See [options](https://github.com/electron-userland/electron-builder/wiki/Options), but consider to follow simple guide outlined below at first.
 
 ## In short
-1. Specify standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#DevMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#DevMetadata-license) are also required).
+1. Specify standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-license) are also required).
 
 2. Specify [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) field in the development `package.json`:
     ```json
