@@ -161,7 +161,6 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificateFile?: string
   readonly certificatePassword?: string
 
-  readonly icon?: string
   readonly iconUrl?: string
 
   /*
