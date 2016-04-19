@@ -72,6 +72,8 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
+Please note — packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-asar).
+
 # Auto Update
 `electron-builder` produces all required artifacts:
 
