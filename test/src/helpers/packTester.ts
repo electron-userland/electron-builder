@@ -4,7 +4,6 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { readText } from "out/promisifed-fs"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
 import { exec } from "out/util"
 import pathSorter = require("path-sort")
@@ -169,7 +168,7 @@ function parseDebControl(info: string): any {
 async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
-  const info = parsePlist(await readText(path.join(packedAppDir, "Contents", "Info.plist")))
+  const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   assertThat(info).has.properties({
     CFBundleDisplayName: productName,
     CFBundleIdentifier: "your.id",
@@ -210,7 +209,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
 
   let i = filenames.indexOf("RELEASES-ia32")
   if (i !== -1) {
-    assertThat((await readText(artifacts[i].file)).indexOf("ia32")).not.equal(-1)
+    assertThat((await readFile(artifacts[i].file, "utf8")).indexOf("ia32")).not.equal(-1)
   }
 
   if (archSuffix == "") {

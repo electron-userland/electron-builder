@@ -1,5 +1,5 @@
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
-import { readText } from "./promisifed-fs"
+import { readFile } from "fs-extra-p"
 import { AppMetadata, Metadata } from "./metadata"
 import * as path from "path"
 
@@ -30,7 +30,7 @@ export class InfoRetriever {
 async function getGitUrlFromGitConfig(): Promise<string> {
   let data: string = null
   try {
-    data = await readText(path.join(".git", "config"))
+    data = await readFile(path.join(".git", "config"), "utf8")
   }
   catch (e) {
     if (e.code === "ENOENT") {
