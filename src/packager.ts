@@ -1,12 +1,11 @@
-import { accessSync } from "fs"
 import * as path from "path"
-import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion, readPackageJson } from "./util"
+import { computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson, use, warn } from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata, Platform } from "./metadata"
-import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, use } from "./platformPackager"
+import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
 import MacPackager from "./macPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -22,7 +21,7 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
 
 export class Packager implements BuildInfo {
   readonly projectDir: string
-  readonly appDir: string
+  appDir: string
 
   metadata: AppMetadata
   devMetadata: DevMetadata
@@ -36,7 +35,9 @@ export class Packager implements BuildInfo {
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever = null) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-    this.appDir = this.computeAppDirectory()
+    if (this.appDir === this.projectDir) {
+      this.isTwoPackageJsonProjectLayoutUsed = false
+    }
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -50,12 +51,12 @@ export class Packager implements BuildInfo {
 
   async build(): Promise<any> {
     const devPackageFile = this.devPackageFile
-    const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
     const platforms = this.options.platform
 
-    const metadataList = await BluebirdPromise.map(Array.from(new Set([devPackageFile, appPackageFile])), readPackageJson)
-    this.metadata = metadataList[metadataList.length - 1]
-    this.devMetadata = deepAssign(metadataList[0], this.options.devMetadata)
+    this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
+    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it.app) || this.options.appDir)
+    const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
+    this.metadata = appPackageFile === devPackageFile ? this.devMetadata : await readPackageJson(appPackageFile)
     this.checkMetadata(appPackageFile, devPackageFile, platforms)
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
@@ -110,31 +111,6 @@ export class Packager implements BuildInfo {
     }
   }
 
-  // Auto-detect app/ (two package.json project layout (development and app)) or fallback to use working directory if not explicitly specified
-  private computeAppDirectory(): string {
-    let customAppPath = this.options.appDir
-    let required = true
-    if (customAppPath == null) {
-      customAppPath = DEFAULT_APP_DIR_NAME
-      required = false
-    }
-
-    const absoluteAppPath = path.join(this.projectDir, customAppPath)
-    try {
-      accessSync(absoluteAppPath)
-    }
-    catch (e) {
-      if (required) {
-        throw new Error(customAppPath + " doesn't exists, " + e.message)
-      }
-      else {
-        this.isTwoPackageJsonProjectLayoutUsed = false
-        return this.projectDir
-      }
-    }
-    return absoluteAppPath
-  }
-
   private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<Platform>): void {
     const reportError = (missedFieldName: string) => {
       throw new Error("Please specify '" + missedFieldName + "' in the application package.json ('" + appPackageFile + "')")
@@ -156,10 +132,10 @@ export class Packager implements BuildInfo {
       }
 
       if (this.devMetadata.homepage != null) {
-        console.warn("homepage in the development package.json is deprecated, please move to the application package.json")
+        warn("homepage in the development package.json is deprecated, please move to the application package.json")
       }
       if (this.devMetadata.license != null) {
-        console.warn("license in the development package.json is deprecated, please move to the application package.json")
+        warn("license in the development package.json is deprecated, please move to the application package.json")
       }
     }
 

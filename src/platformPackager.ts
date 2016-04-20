@@ -6,7 +6,7 @@ import * as path from "path"
 import packager = require("electron-packager")
 import globby = require("globby")
 import { copy } from "fs-extra-p"
-import { statOrNull } from "./util"
+import { statOrNull, use } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
 
@@ -26,6 +26,7 @@ export interface PackagerOptions {
   platform?: Array<Platform>
   target?: Array<string>
 
+  // deprecated
   appDir?: string
 
   projectDir?: string
@@ -147,7 +148,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
     }
     else if (!outStat.isDirectory()) {
-      throw new Error(`Output directory ${appOutDir} is a file. Seems like a wrong configuration.`)
+      throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
     }
   }
 
@@ -213,8 +214,4 @@ export interface ArtifactCreated {
   readonly artifactName?: string
 
   readonly platform: Platform
-}
-
-export function use<T, R>(value: T, task: (it: T) => R): R {
-  return value == null ? null : task(value)
 }

@@ -97,5 +97,6 @@ See all [windows-installer options](https://github.com/electron/windows-installe
 | --- | ---
 | buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, default `build`.
 | output | <a name="MetadataDirectories-output"></a>The output directory, default `dist`.
+| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), default `app`, `www` or working directory.
 
 <!-- end of generated block -->

@@ -1,9 +1,9 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, use } from "./platformPackager"
+import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
-import { exec, log } from "./util"
+import { exec, log, use } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
 const template = require("lodash.template")
 
@@ -107,6 +107,9 @@ Icon=${this.metadata.name}
     }
 
     const promises: Array<Promise<any>> = [resize(24), resize(96)]
+    if (!output.includes("is32")) {
+      promises.push(resize(16))
+    }
     if (!output.includes("ih32")) {
       promises.push(resize(48))
     }

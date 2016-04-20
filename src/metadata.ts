@@ -233,6 +233,11 @@ export interface MetadataDirectories {
    The output directory, default `dist`.
    */
   readonly output?: string
+
+  /*
+   The application directory (containing the application package.json), default `app`, `www` or working directory.
+   */
+  readonly app?: string
 }
 
 export interface PlatformSpecificBuildOptions {

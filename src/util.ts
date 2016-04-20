@@ -4,24 +4,23 @@ import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
 import { readJson, stat } from "fs-extra-p"
+import { yellow } from "chalk"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 export const log = console.log
 
-export const DEFAULT_APP_DIR_NAME = "app"
+export function warn(message: string) {
+  console.warn(yellow(message))
+}
 
-export const commonArgs: any[] = [{
-  name: "appDir",
-  type: String,
-  description: "Relative (to the working directory) path to the folder containing the application package.json. Working directory or app/ by default."
-}]
+const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
 export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
-  log("Installing app dependencies for arch %s to %s", arch, appDir)
+  log((command === "install" ? "Installing" : "Rebuilding") + " app dependencies for arch %s to %s", arch, appDir)
   const gypHome = path.join(os.homedir(), ".electron-gyp")
   const env = Object.assign({}, process.env, {
     npm_config_disturl: "https://atom.io/download/atom-shell",
@@ -102,7 +101,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
   }
   catch (e) {
     if (e.code !== "ENOENT") {
-      console.warn("Cannot read electron version from electron-prebuilt package.json" + e.message)
+      warn("Cannot read electron version from electron-prebuilt package.json" + e.message)
     }
   }
 
@@ -133,4 +132,31 @@ export async function statOrNull(file: string) {
       throw e
     }
   }
+}
+
+export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string): Promise<string> {
+  if (userAppDir != null) {
+    const absolutePath = path.join(projectDir, userAppDir)
+    const stat = await statOrNull(absolutePath)
+    if (stat == null) {
+      throw new Error(`Application directory ${userAppDir} doesn't exists`)
+    }
+    else if (!stat.isDirectory()) {
+      throw new Error(`Application directory ${userAppDir} is not a directory`)
+    }
+    return absolutePath
+  }
+
+  for (let dir of DEFAULT_APP_DIR_NAMES) {
+    const absolutePath = path.join(projectDir, dir)
+    const stat = await statOrNull(absolutePath)
+    if (stat != null && stat.isDirectory()) {
+      return absolutePath
+    }
+  }
+  return projectDir
+}
+
+export function use<T, R>(value: T, task: (it: T) => R): R {
+  return value == null ? null : task(value)
 }
