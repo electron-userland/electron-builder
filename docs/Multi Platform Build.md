@@ -57,6 +57,13 @@ To build app in 32 bit from a machine with 64 bit:
 sudo apt-get install -y gcc-multilib g++-multilib
 ```
 
+### Travis Linux
+[Trusty](https://docs.travis-ci.com/user/trusty-ci-environment/) is required — default Travis Linux dist is outdated and `icnsutils` version is non-functional.
+```yaml
+sudo: required
+dist: trusty
+```
+
 ## Windows
 
 Not documented yet.
