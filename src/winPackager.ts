@@ -5,6 +5,7 @@ import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
+import { sign } from "signcode"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -21,9 +22,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    // https://developer.mozilla.org/en-US/docs/Signing_an_executable_with_Authenticode
-    // https://github.com/Squirrel/Squirrel.Windows/pull/505
-    if (this.options.cscLink != null && this.options.cscKeyPassword != null && process.platform !== "darwin") {
+    if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
       this.certFilePromise = downloadCertificate(this.options.cscLink)
         .then(path => {
           cleanupTasks.push(() => deleteFile(path, true))
@@ -58,16 +57,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     await this.iconPath
 
     if (!this.options.dist) {
-      return super.pack(outDir, appOutDir, arch)
+      return await super.pack(outDir, appOutDir, arch)
     }
 
     const installerOut = computeDistOut(outDir, arch)
     log("Removing %s", installerOut)
-    await
-      BluebirdPromise.all([
-        this.doPack(outDir, appOutDir, arch),
-        emptyDir(installerOut)
-      ])
+    await BluebirdPromise.all([
+      this.doPack(outDir, appOutDir, arch),
+      emptyDir(installerOut)
+    ])
 
     const extraResources = await this.copyExtraResources(appOutDir, arch)
     if (extraResources.length > 0) {
@@ -78,6 +76,24 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
             const src = it.isDirectory() ? `${relativePath}${path.sep}**` : relativePath
             return `<file src="${src}" target="lib\\net45\\${relativePath.replace(/\//g, "\\")}"/>`
           })
+      })
+    }
+  }
+
+  protected async doPack(outDir: string, appOutDir: string, arch: string) {
+    await super.doPack(outDir, appOutDir, arch)
+
+    if (process.platform === "darwin" && this.options.cscLink != null && this.options.cscKeyPassword != null) {
+      const filename = this.appName + ".exe"
+      log(`Signing ${filename}`)
+      await BluebirdPromise.promisify(sign)({
+        path: path.join(appOutDir, filename),
+        cert: await this.certFilePromise,
+        password: this.options.cscKeyPassword,
+        name: this.appName,
+        site: await this.computePackageUrl(),
+        hash: ["sha256"],
+        overwrite: true,
       })
     }
   }
@@ -98,11 +114,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       }
     }
 
-    const certificateFile = await this.certFilePromise
-    const projectUrl = await this.computePackageUrl()
-
     use(this.customBuildOptions, checkConflictingOptions)
 
+    const projectUrl = await this.computePackageUrl()
     const options: any = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
@@ -115,7 +129,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       authors: this.metadata.author.name,
       iconUrl: iconUrl,
       setupIcon: await this.iconPath,
-      certificateFile: certificateFile,
+      certificateFile: await this.certFilePromise,
       certificatePassword: this.options.cscKeyPassword,
       fixUpPaths: false,
       skipUpdateIcon: true,
@@ -123,6 +137,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       noMsi: true,
       extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n")),
       extraMetadataSpecs: projectUrl == null ? null : `\n<projectUrl>${projectUrl}</projectUrl>`,
+      sign: {
+        name: this.appName,
+        site: projectUrl,
+        hash: ["sha256"],
+        overwrite: true,
+      }
     }, this.customBuildOptions)
 
     if (this.loadingGifStat != null) {

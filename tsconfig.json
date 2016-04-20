@@ -45,6 +45,7 @@
     "typings/node.d.ts",
     "typings/progress-stream.d.ts",
     "typings/read-package-json.d.ts",
+    "typings/signcode.d.ts",
     "node_modules/typescript/lib/lib.es7.d.ts",
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",

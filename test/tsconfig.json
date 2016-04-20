@@ -41,6 +41,7 @@
     "../typings/node.d.ts",
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",
+    "../typings/signcode.d.ts",
     "typings/ava.d.ts",
     "typings/decompress-zip.d.ts",
     "typings/json-parse-helpfulerror.d.ts",
