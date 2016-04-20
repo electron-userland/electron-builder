@@ -1,6 +1,5 @@
-import { accessSync } from "fs"
 import * as path from "path"
-import { DEFAULT_APP_DIR_NAME, installDependencies, log, getElectronVersion, readPackageJson } from "./util"
+import { computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson } from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -36,7 +35,10 @@ export class Packager implements BuildInfo {
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever = null) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-    this.appDir = this.computeAppDirectory()
+    this.appDir = computeDefaultAppDirectory(this.projectDir, options.appDir)
+    if (this.appDir === this.projectDir) {
+      this.isTwoPackageJsonProjectLayoutUsed = false
+    }
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -108,31 +110,6 @@ export class Packager implements BuildInfo {
       default:
         throw new Error("Unknown platform: " + platform)
     }
-  }
-
-  // Auto-detect app/ (two package.json project layout (development and app)) or fallback to use working directory if not explicitly specified
-  private computeAppDirectory(): string {
-    let customAppPath = this.options.appDir
-    let required = true
-    if (customAppPath == null) {
-      customAppPath = DEFAULT_APP_DIR_NAME
-      required = false
-    }
-
-    const absoluteAppPath = path.join(this.projectDir, customAppPath)
-    try {
-      accessSync(absoluteAppPath)
-    }
-    catch (e) {
-      if (required) {
-        throw new Error(customAppPath + " doesn't exists, " + e.message)
-      }
-      else {
-        this.isTwoPackageJsonProjectLayoutUsed = false
-        return this.projectDir
-      }
-    }
-    return absoluteAppPath
   }
 
   private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<Platform>): void {

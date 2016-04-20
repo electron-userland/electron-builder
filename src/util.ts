@@ -3,6 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
+import { accessSync } from "fs"
 import { readJson, stat } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
@@ -10,7 +11,7 @@ const __awaiter = require("./awaiter")
 
 export const log = console.log
 
-export const DEFAULT_APP_DIR_NAME = "app"
+const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
 export const commonArgs: any[] = [{
   name: "appDir",
@@ -133,4 +134,29 @@ export async function statOrNull(file: string) {
       throw e
     }
   }
+}
+
+export function computeDefaultAppDirectory(projectDir: string, userAppDir: string): string {
+  if (userAppDir != null) {
+    let tmp = path.join(projectDir, userAppDir)
+    try {
+      accessSync(tmp)
+      return tmp
+    }
+    catch (e) {
+      throw new Error(userAppDir + " doesn't exists, " + e.message)
+    }
+  }
+
+  for (let dir of DEFAULT_APP_DIR_NAMES) {
+    let tmp = path.join(projectDir, dir)
+    try {
+      accessSync(tmp)
+      return tmp
+    }
+    catch (e) {
+      continue
+    }
+  }
+  return projectDir
 }
