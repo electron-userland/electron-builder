@@ -84,26 +84,42 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 * `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
 
 You need to deploy somewhere releases/downloads server.
-Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
+Consider using [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
 
 # Code Signing
 OS X and Windows code singing is supported.
-On a development machine set environment variable `CSC_NAME` to your identity (recommended). Or pass `--sign` parameter.
+
+## Signing OS X Development Builds
+On a development machine, set environment variable `CSC_NAME` to your identity (recommended). Or pass `--sign` parameter.
 ```
 export CSC_NAME="Developer ID Application: Your Name (code)"
 ```
 
-## Travis, AppVeyor and other CI servers
+This is only required on OS X.
+
+## Signing Production Builds on Travis, AppVeyor and other CI servers
 To sign app on build server:
 
-1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
- [Strong password](http://security.stackexchange.com/a/54773) must be used. Consider to not use special characters (for bash) because “*values are not escaped when your builds are executed*”.
-2. Upload `*.p12` file (e.g. on [Google Drive](http://www.syncwithtech.org/p/direct-download-link-generator.html)).
+> **NOTICE**: When exporting a code signing certificate, a [strong password](http://security.stackexchange.com/a/54773) must be used.
+> Avoid using special characters (for bash) because “*values are not escaped when your builds are executed*”.
+
+1. Get a code signing certificate
+  - OS X
+    - Sign up for an [Apple Developer](https://developer.apple.com/) account.
+    - [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate (Xcode is the easiest way to do this).
+  - Windows
+    - Purchase an Authenticode certificate (either "Standard" or "Extended Validation") from a trusted certificate authority. [See this MSDN page for more information](https://msdn.microsoft.com/en-us/library/windows/hardware/hh801887.aspx).
+    - Export the certificate using the instructions provided by the certificate authority.
+2. Upload the `*.p12` file to a place where it can be directly linked to (e.g. on [Google Drive](http://www.syncwithtech.org/p/direct-download-link-generator.html)).
 3. Set ([Travis](https://docs.travis-ci.com/user/environment-variables/#Encrypted-Variables) or [AppVeyor](https://ci.appveyor.com/tools/encrypt)) `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables:
-```
-travis encrypt "CSC_LINK='https://drive.google.com/uc?export=download&id=***'" --add
-travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
-```
+  - On Windows (AppVeyor), wrap your `CSC_LINK` and `CSC_KEY_PASSWORD` in doublequotes (`"`), not singlequotes (`'`).
+    This avoids problems caused by certain characters common in URLs, such as `&`.
+  ```
+  travis encrypt 'CSC_LINK="https://drive.google.com/uc?export=download&id=***"' --add
+  travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
+  ```
+
+See [`onshape-desktop-shell`](https://github.com/develar/onshape-desktop-shell) for example [`.travis.yml`](https://github.com/develar/onshape-desktop-shell/blob/master/.travis.yml) and [`appveyor.yml`](https://github.com/develar/onshape-desktop-shell/blob/master/appveyor.yml) files.
 
 # Build Version Management
 `CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
