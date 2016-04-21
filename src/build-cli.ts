@@ -21,7 +21,6 @@ const cli = cla([
   {name: "publish", type: String, alias: "p", description: "Publish artifacts (to GitHub Releases): onTag (on tag push only) or onTagOrDraft (on tag push or if draft release exists)."},
   {name: "platform", type: String, multiple: true, description: "darwin, linux, win32 or all. Current platform (" + process.platform + ") by default."},
   {name: "arch", type: String, description: "ia32, x64 or all. Defaults to architecture you're running on."},
-  {name: "target", type: String, multiple: true, description: "Installer or package type."},
   {name: "sign", type: String},
   {name: "help", alias: "h", type: Boolean, description: "Display this usage guide."},
   {name: "appDir", type: String}

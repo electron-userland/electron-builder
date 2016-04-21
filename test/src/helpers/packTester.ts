@@ -24,6 +24,7 @@ if (process.env.TRAVIS !== "true") {
 export const outDirName = "dist"
 
 interface AssertPackOptions {
+  readonly useTempDir?: boolean
   readonly tempDirCreated?: (projectDir: string) => Promise<any>
   readonly packed?: (projectDir: string) => Promise<any>
   readonly expectedContents?: Array<string>
@@ -31,7 +32,7 @@ interface AssertPackOptions {
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
   const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = tempDirCreated != null || packagerOptions.target != null
+  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
@@ -102,7 +103,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   for (let platform of packagerOptions.platform) {
     if (platform === Platform.OSX) {
-      await checkOsXResult(packager, artifacts.get(Platform.OSX))
+      await checkOsXResult(packager, checkOptions, artifacts.get(Platform.OSX))
     }
     else if (platform === Platform.LINUX) {
       await checkLinuxResult(projectDir, packager, packagerOptions)
@@ -165,7 +166,7 @@ function parseDebControl(info: string): any {
   return metadata
 }
 
-async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreated>) {
+async function checkOsXResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
@@ -179,15 +180,21 @@ async function checkOsXResult(packager: Packager, artifacts: Array<ArtifactCreat
   const result = await exec("codesign", ["--verify", packedAppDir])
   assertThat(result[0].toString()).not.match(/is not signed at all/)
 
-  assertThat(artifacts.map(it => path.basename(it.file)).sort()).deepEqual([
-    `${productName}-1.1.0-mac.zip`,
-    `${productName}-1.1.0.dmg`,
-  ].sort())
+  const actualFiles = artifacts.map(it => path.basename(it.file)).sort()
+  if (checkOptions != null && checkOptions.expectedContents != null) {
+    assertThat(actualFiles).deepEqual(checkOptions.expectedContents)
+  }
+  else {
+    assertThat(actualFiles).deepEqual([
+      `${productName}-1.1.0-mac.zip`,
+      `${productName}-1.1.0.dmg`,
+    ].sort())
 
-  assertThat(artifacts.map(it => it.artifactName).sort()).deepEqual([
-    "TestApp-1.1.0-mac.zip",
-    "TestApp-1.1.0.dmg",
-  ].sort())
+    assertThat(artifacts.map(it => it.artifactName).sort()).deepEqual([
+      "TestApp-1.1.0-mac.zip",
+      "TestApp-1.1.0.dmg",
+    ].sort())
+  }
 }
 
 async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {

@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { Platform } from "out"
-import MacPackager from "out/macPackager"
+import OsXPackager from "out/macPackager"
 import { move } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
@@ -11,12 +11,32 @@ import * as assertThat from "should/as-function"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifOsx("mac: two-package.json", () => assertPack("test-app", {
+test.ifOsx("two-package.json", () => assertPack("test-app", {
   platform: [Platform.OSX],
   arch: "all",
 }))
 
-test.ifOsx("mac: one-package.json", () => assertPack("test-app-one", platform(Platform.OSX)))
+test.ifOsx("one-package.json", () => assertPack("test-app-one", platform(Platform.OSX)))
+
+function createTargetTest(target: string, expectedContents: Array<string>) {
+  return () => assertPack("test-app-one", {
+    platform: [Platform.OSX],
+    devMetadata: {
+      build: {
+        osx: {
+          target: [target]
+        }
+      }
+    }
+  }, {
+    useTempDir: true,
+    expectedContents: expectedContents
+  })
+}
+
+test.ifOsx("only dmg", createTargetTest("dmg", ["TestApp-1.1.0.dmg"]))
+test.ifOsx("only zip", createTargetTest("zip", ["TestApp-1.1.0-mac.zip"]))
+test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest("ttt", [])(), "Unknown target: ttt"))
 
 // test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
 //   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
@@ -46,7 +66,7 @@ test.ifOsx("custom background", () => {
   })
 })
 
-class CheckingOsXPackager extends MacPackager {
+class CheckingOsXPackager extends OsXPackager {
   effectiveDistOptions: any
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {

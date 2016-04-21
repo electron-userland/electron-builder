@@ -2,17 +2,18 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, spawn } from "./util"
+import { log, spawn, statOrNull } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
-import { stat } from "fs-extra-p"
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
+export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
+
+  readonly target: Array<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
@@ -25,6 +26,18 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
     else {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
+
+    let target = this.customBuildOptions == null ? null : this.customBuildOptions.target
+    if (target != null) {
+      target = Array.isArray(target) ? target : [target]
+      target = target.map(it => it.toLowerCase().trim())
+      for (let t of target) {
+        if (t !== "default" && t !== "dmg" && t !== "zip") {
+          throw new Error("Unknown target: " + t)
+        }
+      }
+    }
+    this.target = target == null ? ["default"] : target
   }
 
   get platform() {
@@ -68,13 +81,9 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
 
     if (this.customBuildOptions == null || !("background" in this.customBuildOptions)) {
       const background = path.join(this.buildResourcesDir, "background.png")
-      try {
-        if ((await stat(background)).isFile()) {
-          specification.background = background
-        }
-      }
-      catch (e) {
-        // ignored
+      const info = await statOrNull(background)
+      if (info != null && info.isFile()) {
+        specification.background = background
       }
     }
 
@@ -84,8 +93,10 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
 
   packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
     const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
-    return BluebirdPromise.all([
-      new BluebirdPromise<any>(async (resolve, reject) => {
+    const promises: Array<Promise<any>> = []
+
+    if (this.target.includes("dmg") || this.target.includes("default")) {
+      promises.push(new BluebirdPromise<any>(async(resolve, reject) => {
         log("Creating DMG")
         const emitter = require("appdmg")({
           target: artifactPath,
@@ -95,11 +106,15 @@ export default class MacPackager extends PlatformPackager<OsXBuildOptions> {
         emitter.on("error", reject)
         emitter.on("finish", () => resolve())
       })
-        .then(() => this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)),
+        .then(() => this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)))
+    }
 
-      this.zipMacApp(appOutDir)
-        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-mac.zip`))
-    ])
+    if (this.target.includes("zip") || this.target.includes("default")) {
+      promises.push(this.zipMacApp(appOutDir)
+        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-mac.zip`)))
+    }
+
+    return BluebirdPromise.all(promises)
   }
 
   private zipMacApp(outDir: string): Promise<string> {

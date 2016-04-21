@@ -24,7 +24,6 @@ export interface PackagerOptions {
   sign?: string
 
   platform?: Array<Platform>
-  target?: Array<string>
 
   // deprecated
   appDir?: string

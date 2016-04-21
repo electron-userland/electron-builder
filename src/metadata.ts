@@ -1,5 +1,5 @@
 export interface Metadata {
-  readonly repository: string | RepositoryInfo
+  readonly repository?: string | RepositoryInfo
 }
 
 /*
@@ -138,7 +138,7 @@ export interface BuildMetadata {
    */
   readonly compression?: "store" | "normal" | "maximum"
 
-  readonly "build-version": string
+  readonly "build-version"?: string
 }
 
 /*
@@ -156,6 +156,11 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
    The path to background (default: `build/background.png`).
    */
   readonly background?: string
+
+  /*
+   Target package type: list of `default`, `dmg`, `zip`.
+  */
+  readonly target?: Array<string>
 }
 
 /*
