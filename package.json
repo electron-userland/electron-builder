@@ -19,7 +19,6 @@
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "validate-commit-msg": "validate-commit-msg",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master"
   },
@@ -78,6 +77,11 @@
   "optionalDependencies": {
     "appdmg": "^0.3.7"
   },
+  "config": {
+    "pre-git": {
+      "commit-msg": "conventional"
+    }
+  },
   "devDependencies": {
     "ava-tf": "^0.12.4-beta.6",
     "babel-plugin-array-includes": "^2.0.3",
@@ -88,14 +92,13 @@
     "json-parse-helpfulerror": "^1.0.3",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
-    "pre-commit": "^1.1.2",
+    "pre-git": "^3.8.3",
     "semantic-release": "^4.3.5",
     "should": "^8.3.1",
     "ts-babel": "^0.7.0",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160414",
-    "validate-commit-msg": "^2.6.1"
+    "typescript": "^1.9.0-dev.20160414"
   },
   "babel": {
     "plugins": [
@@ -112,9 +115,6 @@
     ]
   },
   "typings": "./out/electron-builder.d.ts",
-  "precommit": [
-    "validate-commit-msg"
-  ],
   "publishConfig": {
     "tag": "next"
   }
