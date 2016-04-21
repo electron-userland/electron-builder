@@ -61,6 +61,15 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
   }
 }))
 
+test("www as default dir", () => assertPack("test-app", {
+  platform: [Platform.fromString(process.platform)],
+  dist: true
+}, {
+  tempDirCreated: projectDir => BluebirdPromise.all([
+    move(path.join(projectDir, "app"), path.join(projectDir, "www"))
+  ])
+}))
+
 test("copy extra resource", async () => {
   for (let platform of getPossiblePlatforms()) {
     const osName = platform.buildConfigurationKey
