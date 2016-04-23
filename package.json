@@ -58,10 +58,9 @@
     "chalk": "^1.1.3",
     "command-line-args": "^2.1.6",
     "deep-assign": "^2.0.0",
-    "electron-packager": "^7.0.0",
+    "electron-packager": "^7.0.1",
     "electron-winstaller-fixed": "~2.3.0-beta.4",
-    "fs-extra": "^0.28.0",
-    "fs-extra-p": "^0.2.0",
+    "fs-extra-p": "^0.3.0",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",
     "image-size": "^0.5.0",
@@ -72,7 +71,8 @@
     "read-package-json": "^2.0.3",
     "signcode": "^0.4.0",
     "source-map-support": "^0.4.0",
-    "tmp": "0.0.28"
+    "tmp": "0.0.28",
+    "typescript": "^1.9.0-dev.20160423"
   },
   "optionalDependencies": {
     "appdmg": "^0.3.7"

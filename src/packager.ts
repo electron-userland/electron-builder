@@ -72,7 +72,7 @@ export class Packager implements BuildInfo {
     for (let platform of platforms) {
       const helper = this.createHelper(platform, cleanupTasks)
       for (let arch of normalizeArchs(platform, this.options.arch)) {
-        await this.installAppDependencies(arch)
+        await this.installAppDependencies(platform, arch)
         // electron-packager uses productName in the directory name
         const appOutDir = path.join(outDir, `${helper.appName}-${platform.nodeName}-${arch}`)
         await helper.pack(outDir, appOutDir, arch)
@@ -153,14 +153,20 @@ export class Packager implements BuildInfo {
     }
   }
 
-  private installAppDependencies(arch: string): Promise<any> {
+  private installAppDependencies(platform: Platform, arch: string): Promise<any> {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      return installDependencies(this.appDir, this.electronVersion, arch, "rebuild")
+      if (platform.nodeName === process.platform) {
+        return installDependencies(this.appDir, this.electronVersion, arch, "rebuild")
+      }
+      else {
+        log("Skip app dependencies rebuild because platform is different")
+      }
     }
     else {
-      log("Skipping app dependencies installation because dev and app dependencies are not separated")
-      return BluebirdPromise.resolve()
+      log("Skip app dependencies rebuild because dev and app dependencies are not separated")
     }
+
+    return BluebirdPromise.resolve()
   }
 }
 

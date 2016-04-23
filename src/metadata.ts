@@ -98,7 +98,7 @@ export interface BuildMetadata {
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
 
    * If you don't plan to build windows installer, you can omit it.
-   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${user}/${project}/master/build/icon.ico` by default.
+   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${u}/${p}/master/build/icon.ico` by default.
    */
   readonly iconUrl?: string
 

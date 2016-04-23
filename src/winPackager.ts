@@ -103,10 +103,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     if (!iconUrl) {
       use(this.customBuildOptions, it => iconUrl = it.iconUrl)
 
-      if (!iconUrl) {
-        use(this.info.repositoryInfo, async(it) =>
-          use(await it.getInfo(this), it =>
-            iconUrl = `https://raw.githubusercontent.com/${it.user}/${it.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`))
+      if (!iconUrl && this.info.repositoryInfo != null) {
+        const info = await this.info.repositoryInfo.getInfo(this)
+        if (info != null) {
+          iconUrl = `https://raw.githubusercontent.com/${info.user}/${info.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`
+        }
       }
 
       if (!iconUrl) {

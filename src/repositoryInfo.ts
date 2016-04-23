@@ -3,8 +3,8 @@ import { readFile } from "fs-extra-p"
 import { AppMetadata, Metadata } from "./metadata"
 import * as path from "path"
 
+//noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-Array.isArray(__awaiter)
 
 export interface ProjectMetadataProvider {
   metadata: AppMetadata

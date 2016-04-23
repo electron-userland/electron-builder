@@ -24,12 +24,17 @@ export function generateKeychainName(): string {
 }
 
 export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, csaLink?: string): Promise<CodeSigningInfo> {
-  const authorityCertPath = path.join(tmpdir(), randomString() + ".cer")
+  const authorityCerts = [csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"]
+  if (csaLink == null) {
+    authorityCerts.push("https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt")
+  }
+  const authorityCertPaths = authorityCerts.map(() => path.join(tmpdir(), randomString() + ".cer"))
+
   const developerCertPath = path.join(tmpdir(), randomString() + ".p12")
 
   const keychainPassword = randomString()
   return executeFinally(BluebirdPromise.all([
-      download(csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer", authorityCertPath),
+      BluebirdPromise.map(authorityCertPaths, (p, i) => download(authorityCerts[i], p)),
       download(cscLink, developerCertPath),
       BluebirdPromise.mapSeries([
         ["create-keychain", "-p", keychainPassword, keychainName],
@@ -37,9 +42,10 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
         ["set-keychain-settings", "-t", "3600", "-u", keychainName]
       ], it => exec("security", it))
     ])
-    .then(() => importCerts(keychainName, authorityCertPath, developerCertPath, cscKeyPassword)),
+    .then(() => importCerts(keychainName, authorityCertPaths, developerCertPath, cscKeyPassword)),
     errorOccurred => {
-      const tasks = [deleteFile(authorityCertPath, true), deleteFile(developerCertPath, true)]
+      const tasks = authorityCertPaths.map(it => deleteFile(it, true))
+      tasks.push(deleteFile(developerCertPath, true))
       if (errorOccurred) {
         tasks.push(deleteKeychain(keychainName))
       }
@@ -47,8 +53,10 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
     })
 }
 
-async function importCerts(keychainName: string, authorityCertPath: string, developerCertPath: string, cscKeyPassword: string): Promise<CodeSigningInfo> {
-  await exec("security", ["import", authorityCertPath, "-k", keychainName, "-T", "/usr/bin/codesign"])
+async function importCerts(keychainName: string, authorityCertPaths: Array<string>, developerCertPath: string, cscKeyPassword: string): Promise<CodeSigningInfo> {
+  for (let p of authorityCertPaths) {
+    await exec("security", ["import", p, "-k", keychainName, "-T", "/usr/bin/codesign"])
+  }
   await exec("security", ["import", developerCertPath, "-k", keychainName, "-T", "/usr/bin/codesign", "-P", cscKeyPassword])
   let cscName = await extractCommonName(cscKeyPassword, developerCertPath)
   return {
