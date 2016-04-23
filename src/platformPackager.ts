@@ -15,6 +15,8 @@ const __awaiter = require("./awaiter")
 
 const pack = BluebirdPromise.promisify(packager)
 
+const asar = require("asar")
+
 export interface PackagerOptions {
   arch?: string
 
@@ -155,14 +157,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     this.beforePack(options)
     await pack(options)
-
-    const outStat = await statOrNull(appOutDir)
-    if (outStat == null) {
-      throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
-    }
-    else if (!outStat.isDirectory()) {
-      throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
-    }
+    await this.sanityCheckPackage(appOutDir, options.asar)
   }
 
   protected getExtraResources(arch: string): Promise<Array<string>> {
@@ -187,7 +182,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected async copyExtraResources(appOutDir: string, arch: string): Promise<Array<string>> {
     let resourcesDir = appOutDir
     if (this.platform === Platform.OSX) {
-      resourcesDir = path.join(resourcesDir, this.appName + ".app", "Contents", "Resources")
+      resourcesDir = this.getOSXResourcesDir(appOutDir)
     }
     return await BluebirdPromise.map(await this.getExtraResources(arch), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
@@ -212,6 +207,39 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected computeBuildNumber(): string {
     return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM
   }
+
+  private getOSXResourcesDir(appOutDir: string): string {
+    return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
+  }
+
+  private async statPackageFile(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
+    const fpath = path.resolve("/", packageFile)
+    const resourcesDir = this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+    if (isAsar) {
+      const appPackage = path.join(resourcesDir, "app.asar")
+      return asar.listPackage(appPackage).indexOf(fpath) !== -1
+    } else {
+      const outStat = await statOrNull(path.join(resourcesDir, fpath))
+      return outStat != null && outStat.isFile()
+    }
+  }
+
+  private async sanityCheckPackage(appOutDir: string, asar: boolean): Promise<any> {
+    const outStat = await statOrNull(appOutDir)
+    if (outStat == null) {
+      throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
+    }
+    else if (!outStat.isDirectory()) {
+      throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
+    }
+
+    const main = this.metadata.main || "index.js"
+    const mainExists = await this.statPackageFile(appOutDir, main, asar)
+    if (!mainExists) {
+      throw new Error(`Application entry file ` + main + ` could not be found in package. Seems like a wrong configuration.`)
+    }
+  }
+
 }
 
 function checkConflictingOptions(options: any) {
