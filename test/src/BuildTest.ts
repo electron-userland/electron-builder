@@ -52,7 +52,7 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
   tempDirCreated: projectDir => {
     return BluebirdPromise.all([
       outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
-        version: "0.37.6"
+        version: "0.37.7"
       }),
       modifyPackageJson(projectDir, data => {
         data.devDependencies = {}

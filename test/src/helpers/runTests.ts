@@ -2,6 +2,7 @@ import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as fs from "fs-extra-p"
+import { Platform } from "out/metadata";
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -14,7 +15,7 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "0.37.6"
+const electronVersion = "0.37.7"
 
 BluebirdPromise.all([
     deleteOldElectronVersion(),
@@ -65,12 +66,18 @@ function deleteOldElectronVersion(): Promise<any> {
 
 function downloadAllRequiredElectronVersions(): Promise<any> {
   const downloadPromises: Array<Promise<any>> = []
-  for (let platform of packager.normalizePlatforms(["all"])) {
-    for (let arch of packager.normalizeArchs(platform)) {
+
+  const platforms = packager.normalizePlatforms(["all"]).map((it: Platform) => it.nodeName)
+  if (process.platform === "darwin") {
+    platforms.push("mas")
+  }
+
+  for (let platform of platforms) {
+    for (let arch of (platform === "mas" || platform === "darwin" ? ["x64"] : ["ia32", "x64"])) {
       downloadPromises.push(downloadElectron({
         version: electronVersion,
         arch: arch,
-        platform: platform.nodeName,
+        platform: platform,
       }))
     }
   }

@@ -29,6 +29,7 @@
       <w>passin</w>
       <w>pkcs</w>
       <w>postinstall</w>
+      <w>productbuild</w>
       <w>promisify</w>
       <w>repos</w>
       <w>rimraf</w>

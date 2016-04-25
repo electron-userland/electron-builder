@@ -11,8 +11,10 @@ import { randomBytes } from "crypto"
 const __awaiter = require("./awaiter")
 
 export interface CodeSigningInfo {
-  cscName: string
-  cscKeychainName?: string
+  name: string
+  keychainName?: string
+
+  installerName?: string
 }
 
 function randomString(): string {
@@ -23,29 +25,30 @@ export function generateKeychainName(): string {
   return "csc-" + randomString() + ".keychain"
 }
 
-export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, csaLink?: string): Promise<CodeSigningInfo> {
-  const authorityCerts = [csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"]
+export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string, cscIKeyPassword?: string, csaLink?: string): Promise<CodeSigningInfo> {
+  const certLinks = [csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"]
   if (csaLink == null) {
-    authorityCerts.push("https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt")
+    certLinks.push("https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt")
   }
-  const authorityCertPaths = authorityCerts.map(() => path.join(tmpdir(), randomString() + ".cer"))
 
-  const developerCertPath = path.join(tmpdir(), randomString() + ".p12")
+  certLinks.push(cscLink)
+  if (cscILink != null) {
+    certLinks.push(cscILink)
+  }
 
+  const certPaths = certLinks.map(it => path.join(tmpdir(), randomString() + (it.endsWith(".cer") ? ".cer" : ".p12")))
   const keychainPassword = randomString()
   return executeFinally(BluebirdPromise.all([
-      BluebirdPromise.map(authorityCertPaths, (p, i) => download(authorityCerts[i], p)),
-      download(cscLink, developerCertPath),
+      BluebirdPromise.map(certPaths, (p, i) => download(certLinks[i], p)),
       BluebirdPromise.mapSeries([
         ["create-keychain", "-p", keychainPassword, keychainName],
         ["unlock-keychain", "-p", keychainPassword, keychainName],
         ["set-keychain-settings", "-t", "3600", "-u", keychainName]
       ], it => exec("security", it))
     ])
-    .then(() => importCerts(keychainName, authorityCertPaths, developerCertPath, cscKeyPassword)),
+    .then(() => importCerts(keychainName, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
     errorOccurred => {
-      const tasks = authorityCertPaths.map(it => deleteFile(it, true))
-      tasks.push(deleteFile(developerCertPath, true))
+      const tasks = certPaths.map(it => deleteFile(it, true))
       if (errorOccurred) {
         tasks.push(deleteKeychain(keychainName))
       }
@@ -53,15 +56,25 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
     })
 }
 
-async function importCerts(keychainName: string, authorityCertPaths: Array<string>, developerCertPath: string, cscKeyPassword: string): Promise<CodeSigningInfo> {
-  for (let p of authorityCertPaths) {
-    await exec("security", ["import", p, "-k", keychainName, "-T", "/usr/bin/codesign"])
+async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
+  for (let f of paths.slice(0, -keyPasswords.length)) {
+    await exec("security", ["import", f, "-k", keychainName, "-T", "/usr/bin/codesign"])
   }
-  await exec("security", ["import", developerCertPath, "-k", keychainName, "-T", "/usr/bin/codesign", "-P", cscKeyPassword])
-  let cscName = await extractCommonName(cscKeyPassword, developerCertPath)
+
+  const namePromises: Array<Promise<string>> = []
+  for (let i = paths.length - keyPasswords.length, j = 0; i < paths.length; i++, j++) {
+    const password = keyPasswords[j]
+    const certPath = paths[i]
+    await exec("security", ["import", certPath, "-k", keychainName, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
+
+    namePromises.push(extractCommonName(password, certPath))
+  }
+
+  const names = await BluebirdPromise.all(namePromises)
   return {
-    cscName: cscName,
-    cscKeychainName: keychainName
+    name: names[0],
+    installerName: names.length > 1 ? names[1] : null,
+    keychainName: keychainName,
   }
 }
 
@@ -79,9 +92,9 @@ function extractCommonName(password: string, certPath: string): BluebirdPromise<
 }
 
 export function sign(path: string, options: CodeSigningInfo): BluebirdPromise<any> {
-  const args = ["--deep", "--force", "--sign", options.cscName, path]
-  if (options.cscKeychainName != null) {
-    args.push("--keychain", options.cscKeychainName)
+  const args = ["--deep", "--force", "--sign", options.name, path]
+  if (options.keychainName != null) {
+    args.push("--keychain", options.keychainName)
   }
   return exec("codesign", args)
 }

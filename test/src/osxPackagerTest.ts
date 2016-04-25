@@ -11,12 +11,12 @@ import * as assertThat from "should/as-function"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifOsx("two-package.json", () => assertPack("test-app", {
+test.ifOsx("two-package", () => assertPack("test-app", {
   platform: [Platform.OSX],
   arch: "all",
 }))
 
-test.ifOsx("one-package.json", () => assertPack("test-app-one", platform(Platform.OSX)))
+test.ifOsx("one-package", () => assertPack("test-app-one", platform(Platform.OSX)))
 
 function createTargetTest(target: string, expectedContents: Array<string>) {
   return () => assertPack("test-app-one", {
@@ -37,6 +37,8 @@ function createTargetTest(target: string, expectedContents: Array<string>) {
 test.ifOsx("only dmg", createTargetTest("dmg", ["TestApp-1.1.0.dmg"]))
 test.ifOsx("only zip", createTargetTest("zip", ["TestApp-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest("ttt", [])(), "Unknown target: ttt"))
+
+test.ifOsx("mas", createTargetTest("mas", ["TestApp-1.1.0.pkg"]))
 
 // test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
 //   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
@@ -73,8 +75,9 @@ class CheckingOsXPackager extends OsXPackager {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, arch: string): Promise<string> {
     // skip pack
+    return this.computeAppOutDir(outDir, arch)
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {

@@ -35,9 +35,6 @@ export class Packager implements BuildInfo {
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever = null) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-    if (this.appDir === this.projectDir) {
-      this.isTwoPackageJsonProjectLayoutUsed = false
-    }
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -55,6 +52,9 @@ export class Packager implements BuildInfo {
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
     this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it.app) || this.options.appDir)
+
+    this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
+
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
     this.metadata = appPackageFile === devPackageFile ? this.devMetadata : await readPackageJson(appPackageFile)
     this.checkMetadata(appPackageFile, devPackageFile, platforms)
@@ -74,8 +74,7 @@ export class Packager implements BuildInfo {
       for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(platform, arch)
         // electron-packager uses productName in the directory name
-        const appOutDir = path.join(outDir, `${helper.appName}-${platform.nodeName}-${arch}`)
-        await helper.pack(outDir, appOutDir, arch)
+        const appOutDir =  await helper.pack(outDir, arch)
         if (this.options.dist) {
           distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir, arch))
         }

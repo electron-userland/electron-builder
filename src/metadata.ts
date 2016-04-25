@@ -158,7 +158,7 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly background?: string
 
   /*
-   Target package type: list of `default`, `dmg`, `zip`.
+   Target package type: list of `default`, `dmg`, `zip`, `mas`.
   */
   readonly target?: Array<string>
 }

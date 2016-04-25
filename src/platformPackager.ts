@@ -3,7 +3,7 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getPr
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import packager = require("electron-packager")
+import packager = require("electron-packager-tf")
 import globby = require("globby")
 import { copy } from "fs-extra-p"
 import { statOrNull, use } from "./util"
@@ -33,6 +33,9 @@ export interface PackagerOptions {
   cscLink?: string
   csaLink?: string
   cscKeyPassword?: string
+
+  cscInstallerLink?: string
+  cscInstallerKeyPassword?: string
 
   platformPackagerFactory?: (packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
 
@@ -90,6 +93,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return use(this.devMetadata.directories, it => it.buildResources) || "build"
   }
 
+  protected computeAppOutDir(outDir: string, arch: string): string {
+    return path.join(outDir, `${this.appName}-${this.platform.nodeName}-${arch}`)
+  }
+
   protected dispatchArtifactCreated(file: string, artifactName?: string) {
     this.info.eventEmitter.emit("artifactCreated", {
       file: file,
@@ -98,12 +105,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, arch: string): Promise<string> {
+    const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(outDir, appOutDir, arch)
     await this.copyExtraResources(appOutDir, arch)
+    return appOutDir
   }
 
-  protected async doPack(outDir: string, appOutDir: string, arch: string) {
+  protected beforePack(options: any): void {
+    // to override
+  }
+
+  protected async doPack(outDir: string, appOutDir: string, arch: string): Promise<any> {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = this.computeBuildNumber()
@@ -140,6 +153,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // this option only for windows-installer
     delete options.iconUrl
 
+    this.beforePack(options)
     await pack(options)
 
     const outStat = await statOrNull(appOutDir)

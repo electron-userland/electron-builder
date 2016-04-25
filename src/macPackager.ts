@@ -3,9 +3,10 @@ import { Platform, OsXBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, spawn, statOrNull } from "./util"
-import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, sign } from "./codeSign"
+import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
+import { sign, flat, BaseSignOptions } from "electron-osx-sign-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -21,7 +22,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
       const keychainName = generateKeychainName()
       cleanupTasks.push(() => deleteKeychain(keychainName))
-      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.csaLink)
+      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.cscInstallerLink, this.options.cscInstallerKeyPassword, this.options.csaLink)
     }
     else {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
@@ -32,7 +33,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       target = Array.isArray(target) ? target : [target]
       target = target.map(it => it.toLowerCase().trim())
       for (let t of target) {
-        if (t !== "default" && t !== "dmg" && t !== "zip") {
+        if (t !== "default" && t !== "dmg" && t !== "zip" && t !== "mas") {
           throw new Error("Unknown target: " + t)
         }
       }
@@ -44,23 +45,63 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     return Platform.OSX
   }
 
-  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    await super.pack(outDir, appOutDir, arch)
-    await this.signMac(path.join(appOutDir, this.appName + ".app"), await this.codeSigningInfo)
+  protected computeAppOutDir(outDir: string, arch: string): string {
+    return this.target.includes("mas") ? path.join(outDir, `${this.appName}-mas-${arch}`) : super.computeAppOutDir(outDir, arch)
   }
 
-  private signMac(distPath: string, codeSigningInfo: CodeSigningInfo): Promise<any> {
+  async doPack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+    await super.doPack(outDir, appOutDir, arch)
+    await this.sign(appOutDir, await this.codeSigningInfo)
+  }
+
+  protected beforePack(options: any): void {
+    if (this.target.includes("mas")) {
+      options.platform = "mas"
+    }
+    // disable warning
+    options["osx-sign"] = false
+  }
+
+  private async sign(appOutDir: string, codeSigningInfo: CodeSigningInfo): Promise<any> {
     if (codeSigningInfo == null) {
-      codeSigningInfo = {cscName: this.options.sign || process.env.CSC_NAME}
+      codeSigningInfo = {
+        name: this.options.sign || process.env.CSC_NAME,
+        installerName: this.options.sign || process.env.CSC_INSTALLER_NAME,
+      }
     }
 
-    if (codeSigningInfo.cscName == null) {
+    if (codeSigningInfo.name == null) {
       log("App is not signed: CSC_LINK or CSC_NAME are not specified")
-      return BluebirdPromise.resolve()
+      return
     }
-    else {
-      log("Signing app")
-      return sign(distPath, codeSigningInfo)
+
+    log("Signing app")
+
+    const isMas = this.target.includes("mas")
+    const baseSignOptions: BaseSignOptions = {
+      app: path.join(appOutDir, this.appName + ".app"),
+      platform: isMas ? "mas" : "darwin"
+    }
+    if (codeSigningInfo.keychainName != null) {
+      baseSignOptions.keychain = codeSigningInfo.keychainName
+    }
+
+    await BluebirdPromise.promisify(sign)(Object.assign({
+      identity: codeSigningInfo.name,
+    }, (<any>this.devMetadata.build)["osx-sign"], baseSignOptions))
+
+    if (isMas) {
+      const installerIdentity = codeSigningInfo.installerName
+      if (installerIdentity == null) {
+        throw new Error("Signing is required for mas builds but CSC_INSTALLER_LINK or CSC_INSTALLER_NAME are not specified")
+      }
+
+      const pkg = path.join(appOutDir, `${this.appName}-${this.metadata.version}.pkg`)
+      await BluebirdPromise.promisify(flat)(Object.assign({
+        pkg: pkg,
+        identity: installerIdentity,
+      }, baseSignOptions))
+      this.dispatchArtifactCreated(pkg, `${this.metadata.name}-${this.metadata.version}.pkg`)
     }
   }
 

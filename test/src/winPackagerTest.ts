@@ -78,8 +78,9 @@ class CheckingWinPackager extends WinPackager {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, arch: string): Promise<string> {
     // skip pack
+    return this.computeAppOutDir(outDir, arch)
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {

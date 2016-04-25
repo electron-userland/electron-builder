@@ -2,7 +2,7 @@ import { copy, emptyDir, remove, writeJson, readJson, readFile } from "fs-extra-
 import * as assertThat from "should/as-function"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
-import { CSC_LINK, CSC_KEY_PASSWORD } from "./codeSignData"
+import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
 import { exec } from "out/util"
@@ -62,6 +62,8 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       projectDir: projectDir,
       cscLink: CSC_LINK,
       cscKeyPassword: CSC_KEY_PASSWORD,
+      cscInstallerLink: CSC_INSTALLER_LINK,
+      cscInstallerKeyPassword: CSC_INSTALLER_KEY_PASSWORD,
       dist: true,
     }, packagerOptions), checkOptions)
 

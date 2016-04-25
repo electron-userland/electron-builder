@@ -28,7 +28,8 @@
     "node_modules/typescript/lib/lib.es7.d.ts",
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
-    "node_modules/fs-extra-p/bluebird.d.ts"
+    "node_modules/fs-extra-p/bluebird.d.ts",
+    "node_modules/electron-osx-sign-tf/index.d.ts"
   ],
   "files": [
     "typings/appdmg.d.ts",
@@ -51,6 +52,7 @@
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/fs-extra-p/bluebird.d.ts",
+    "node_modules/electron-osx-sign-tf/index.d.ts",
     "src/awaiter.ts",
     "src/build-cli.ts",
     "src/builder.ts",

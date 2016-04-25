@@ -52,14 +52,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return iconPath
   }
 
-  async pack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, arch: string): Promise<string> {
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
     if (!this.options.dist) {
-      return await super.pack(outDir, appOutDir, arch)
+      return await super.pack(outDir, arch)
     }
 
+    const appOutDir = this.computeAppOutDir(outDir, arch)
     const installerOut = computeDistOut(outDir, arch)
     log("Removing %s", installerOut)
     await BluebirdPromise.all([
@@ -78,6 +79,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
           })
       })
     }
+
+    return appOutDir
   }
 
   protected async doPack(outDir: string, appOutDir: string, arch: string) {

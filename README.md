@@ -7,7 +7,7 @@ npm install electron-builder --save-dev
 
 * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
 * [Auto Update](#auto-update) ready application packaging.
-* [Code Signing](#code-signing) on a CI server or development machine.
+* [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
 * [Build version management](#build-version-management).
 * [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
@@ -85,25 +85,6 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 
 You need to deploy somewhere releases/downloads server.
 Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
-
-# Code Signing
-OS X and Windows code singing is supported.
-On a development machine set environment variable `CSC_NAME` to your identity (recommended). Or pass `--sign` parameter.
-```
-export CSC_NAME="Developer ID Application: Your Name (code)"
-```
-
-## Travis, AppVeyor and other CI servers
-To sign app on build server:
-
-1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
- [Strong password](http://security.stackexchange.com/a/54773) must be used. Consider to not use special characters (for bash) because “*values are not escaped when your builds are executed*”.
-2. Upload `*.p12` file (e.g. on [Google Drive](http://www.syncwithtech.org/p/direct-download-link-generator.html)).
-3. Set ([Travis](https://docs.travis-ci.com/user/environment-variables/#Encrypted-Variables) or [AppVeyor](https://ci.appveyor.com/tools/encrypt)) `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables:
-```
-travis encrypt "CSC_LINK='https://drive.google.com/uc?export=download&id=***'" --add
-travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
-```
 
 # Build Version Management
 `CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
