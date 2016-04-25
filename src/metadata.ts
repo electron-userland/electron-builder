@@ -24,6 +24,8 @@ export interface AppMetadata extends Metadata {
    */
   readonly description: string
 
+  readonly main?: string
+
   readonly author: AuthorMetadata
 
   /*
