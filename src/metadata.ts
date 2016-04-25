@@ -153,7 +153,7 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly icon?: string
 
   /*
-   The path to background (default: `build/background.png`).
+   The path to background (default: `build/background.png`). The resolution of this file determines the resolution of the installer window.
    */
   readonly background?: string
 
