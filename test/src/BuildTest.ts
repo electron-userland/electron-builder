@@ -45,19 +45,13 @@ test("build in the app package.json", t => t.throws(assertPack("test-app", allPl
   }, true)
 }), /'build' in the application package\.json .+/))
 
-test("invalid main in the app package.json", t => t.throws(assertPack("test-app", {
-  platform: [Platform.fromString(process.platform)],
-  dist: true
-}, {
+test("invalid main in the app package.json", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"
   }, true)
-}), /Application entry file main.js could not be found in package+/))
+}), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
 
-test("invalid main in the app package.json (no asar)", t => t.throws(assertPack("test-app", {
-  platform: [Platform.fromString(process.platform)],
-  dist: true
-}, {
+test("invalid main in the app package.json (no asar)", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(false), {
   tempDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
@@ -68,7 +62,7 @@ test("invalid main in the app package.json (no asar)", t => t.throws(assertPack(
       })
     ])
   }
-}), /Application entry file main.js could not be found in package+/))
+}), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
 
 test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   platform: [Platform.fromString(process.platform)],
@@ -88,7 +82,6 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
 
 test("www as default dir", () => assertPack("test-app", {
   platform: [Platform.fromString(process.platform)],
-  dist: true
 }, {
   tempDirCreated: projectDir => BluebirdPromise.all([
     move(path.join(projectDir, "app"), path.join(projectDir, "www"))

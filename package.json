@@ -74,7 +74,7 @@
     "signcode": "^0.4.0",
     "source-map-support": "^0.4.0",
     "tmp": "0.0.28",
-    "typescript": "^1.9.0-dev.20160423"
+    "typescript": "^1.9.0-dev.20160425"
   },
   "optionalDependencies": {
     "appdmg": "^0.3.7"

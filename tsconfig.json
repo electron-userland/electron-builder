@@ -33,6 +33,7 @@
   ],
   "files": [
     "typings/appdmg.d.ts",
+    "typings/asar.d.ts",
     "typings/command-line-args.d.ts",
     "typings/deep-assign.d.ts",
     "typings/electron-packager.d.ts",

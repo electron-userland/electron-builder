@@ -9,13 +9,12 @@ import { copy } from "fs-extra-p"
 import { statOrNull, use } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
+import { statFile } from "asar"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 const pack = BluebirdPromise.promisify(packager)
-
-const asar = require("asar")
 
 export interface PackagerOptions {
   arch?: string
@@ -212,14 +211,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
   }
 
-  private async statPackageFile(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
-    const fpath = path.resolve("/", packageFile)
+  private async statFileInPackage(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
+    const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, packageFile))
     const resourcesDir = this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
     if (isAsar) {
-      const appPackage = path.join(resourcesDir, "app.asar")
-      return asar.listPackage(appPackage).indexOf(fpath) !== -1
-    } else {
-      const outStat = await statOrNull(path.join(resourcesDir, fpath))
+      try {
+        const fsAsar = statFile(path.join(resourcesDir, "app.asar"), relativeFile)
+        return fsAsar != null
+      }
+      catch (e) {
+        // asar throws error on access to undefined object (info.link)
+        return false
+      }
+    }
+    else {
+      const outStat = await statOrNull(path.join(resourcesDir, relativeFile))
       return outStat != null && outStat.isFile()
     }
   }
@@ -233,13 +239,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
     }
 
-    const main = this.metadata.main || "index.js"
-    const mainExists = await this.statPackageFile(appOutDir, main, asar)
-    if (!mainExists) {
-      throw new Error(`Application entry file ` + main + ` could not be found in package. Seems like a wrong configuration.`)
+    const mainFile = this.metadata.main || "index.js"
+    const mainFileExists = await this.statFileInPackage(appOutDir, mainFile, asar)
+    if (!mainFileExists) {
+      throw new Error(`Application entry file ${mainFile} could not be found in package. Seems like a wrong configuration.`)
     }
   }
-
 }
 
 function checkConflictingOptions(options: any) {
