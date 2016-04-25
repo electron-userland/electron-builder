@@ -101,3 +101,6 @@ See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https:/
 
 [npm-url]: https://npmjs.org/package/electron-builder
 [npm-image]: http://img.shields.io/npm/v/electron-builder.svg
+
+# Further Reading
+See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
