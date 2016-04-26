@@ -83,8 +83,10 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 * `.full-nupkg`: required for Squirrel.Windows.
 * `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
 
-You need to deploy somewhere releases/downloads server.
-Consider to use [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
+For auto updating to work, you must implement and configure Electron's [`autoUpdater`](http://electron.atom.io/docs/latest/api/auto-updater/) module ([example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts)).
+You also need to deploy your releases to a server.
+Consider using [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
+See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for information on configuring your CI environment for automatic deployment.
 
 # Build Version Management
 `CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
@@ -99,3 +101,6 @@ See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https:/
 
 [npm-url]: https://npmjs.org/package/electron-builder
 [npm-image]: http://img.shields.io/npm/v/electron-builder.svg
+
+# Further Reading
+See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
