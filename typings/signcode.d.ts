@@ -1,4 +1,4 @@
-declare module "signcode" {
+declare module "signcode-tf" {
   export interface SignOptions {
     path: string
     cert: string

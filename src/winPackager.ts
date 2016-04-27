@@ -5,7 +5,7 @@ import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull, use } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
-import { sign } from "signcode"
+import { sign } from "signcode-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
