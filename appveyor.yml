@@ -1,10 +1,10 @@
 platform:
   - x64
 
-cache:
-  - node_modules
-  - '%APPDATA%\npm-cache'
-  - '%USERPROFILE%\.electron'
+#cache:
+#  - node_modules
+#  - '%APPDATA%\npm-cache'
+#  - '%USERPROFILE%\.electron'
 
 install:
   - ps: Install-Product node 6 x64

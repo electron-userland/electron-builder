@@ -10,12 +10,12 @@ env:
 
 language: ruby
 
-cache:
-  directories:
-    - node_modules
-    - test/testApp/node_modules
-    - $HOME/.electron
-    - $HOME/.npm
+#cache:
+#  directories:
+#    - node_modules
+#    - test/testApp/node_modules
+#    - $HOME/.electron
+#    - $HOME/.npm
 
 addons:
   apt:
