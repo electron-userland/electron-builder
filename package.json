@@ -78,7 +78,7 @@
     "typescript": "1.9.0-dev.20160425"
   },
   "optionalDependencies": {
-    "appdmg": "^0.3.7"
+    "appdmg-tf": "^0.3.11"
   },
   "config": {
     "pre-git": {

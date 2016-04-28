@@ -139,13 +139,30 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     if (this.target.includes("dmg") || this.target.includes("default")) {
       promises.push(new BluebirdPromise<any>(async(resolve, reject) => {
         log("Creating DMG")
-        const emitter = require("appdmg")({
+        const dmgOptions = {
           target: artifactPath,
           basepath: this.projectDir,
-          specification: await this.computeEffectiveDistOptions(appOutDir)
+          specification: await this.computeEffectiveDistOptions(appOutDir),
+          compression: this.devMetadata.build.compression === "store" ? "NONE" : "UDBZ"
+        }
+
+        if (debug.enabled) {
+          debug(`appdmg: ${JSON.stringify(dmgOptions, null, 2)}`)
+        }
+
+        const emitter = require("appdmg-tf")(dmgOptions)
+        emitter.on("error", (e: Error) => {
+          console.error(e)
+          reject(e)
         })
-        emitter.on("error", reject)
         emitter.on("finish", () => resolve())
+        if (debug.enabled) {
+          emitter.on("progress", (info: any) => {
+            if (info.type === "step-begin") {
+              debug(`appdmg: [${info.current}] ${info.title}`)
+            }
+          })
+        }
       })
         .then(() => this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)))
     }

@@ -6,7 +6,7 @@ osx_image: xcode7.3
 
 env:
   - NODE_VERSION=4
-  - NODE_VERSION=5
+  - NODE_VERSION=6
 
 language: ruby
 
