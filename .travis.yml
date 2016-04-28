@@ -6,16 +6,16 @@ osx_image: xcode7.3
 
 env:
   - NODE_VERSION=4
-  - NODE_VERSION=5
+  - NODE_VERSION=6
 
 language: ruby
 
-cache:
-  directories:
-    - node_modules
-    - test/testApp/node_modules
-    - $HOME/.electron
-    - $HOME/.npm
+#cache:
+#  directories:
+#    - node_modules
+#    - test/testApp/node_modules
+#    - $HOME/.electron
+#    - $HOME/.npm
 
 addons:
   apt:
