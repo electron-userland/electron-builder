@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { Platform } from "out"
-import OsXPackager from "out/macPackager"
+import OsXPackager from "out/osxPackager"
 import { move } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"

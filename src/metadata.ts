@@ -76,7 +76,7 @@ export interface AuthorMetadata {
  */
 export interface BuildMetadata {
   /*
-   *OS X-only.* The bundle identifier to use in the application's plist.
+   *OS X-only.* The app bundle ID. See [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
    */
   readonly "app-bundle-id"?: string
   /*

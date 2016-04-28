@@ -6,7 +6,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata, Platform } from "./metadata"
 import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
-import MacPackager from "./macPackager"
+import OsXPackager from "./osxPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
@@ -92,7 +92,7 @@ export class Packager implements BuildInfo {
     switch (platform) {
       case Platform.OSX:
       {
-        const helperClass: typeof MacPackager = require("./macPackager").default
+        const helperClass: typeof OsXPackager = require("./osxPackager").default
         return new helperClass(this, cleanupTasks)
       }
 
