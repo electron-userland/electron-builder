@@ -44,6 +44,7 @@
     "typings/main/ambient/progress/progress.d.ts",
     "typings/main/ambient/tmp/tmp.d.ts",
     "typings/main/definitions/chalk/index.d.ts",
+    "typings/main/definitions/debug/index.d.ts",
     "typings/main/definitions/source-map-support/source-map-support.d.ts",
     "typings/node.d.ts",
     "typings/progress-stream.d.ts",

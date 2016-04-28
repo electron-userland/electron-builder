@@ -2,7 +2,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, spawn, statOrNull } from "./util"
+import { log, debug, spawn, statOrNull } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
@@ -162,7 +162,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     log("Creating ZIP for Squirrel.Mac")
     // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
     const resultPath = `${this.appName}-${this.metadata.version}-mac.zip`
-    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-bb0", "-bd"]
+    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-bb" + (debug.enabled ? "3" : "0"), "-bd"]
     if (this.devMetadata.build.compression === "maximum") {
       // http://superuser.com/a/742034
       //noinspection SpellCheckingInspection
@@ -172,7 +172,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
     return spawn(path7za, args, {
       cwd: outDir,
-      stdio: ["ignore", "ignore", "inherit"],
+      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
     })
       .thenReturn(path.join(outDir, resultPath))
   }

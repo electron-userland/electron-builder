@@ -5,11 +5,15 @@ import * as os from "os"
 import * as path from "path"
 import { readJson, stat } from "fs-extra-p"
 import { yellow } from "chalk"
+import debugFactory = require("debug")
+import { Debugger } from "~debug/node"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 export const log = console.log
+
+export const debug: Debugger = debugFactory("electron-builder")
 
 export function warn(message: string) {
   console.warn(yellow(message))
@@ -68,6 +72,10 @@ export interface SpawnOptions extends BaseExecOptions {
 }
 
 export function exec(file: string, args?: string[], options?: ExecOptions): BluebirdPromise<Buffer[]> {
+  if (debug.enabled) {
+    debug(`Executing ${file} ${args.join(" ")}`)
+  }
+
   return new BluebirdPromise<Buffer[]>((resolve, reject) => {
     execFile(file, args, options, function (error, stdout, stderr) {
       if (error == null) {
@@ -89,6 +97,10 @@ export function exec(file: string, args?: string[], options?: ExecOptions): Blue
 }
 
 export function spawn(command: string, args?: string[], options?: SpawnOptions): BluebirdPromise<any> {
+  if (debug.enabled) {
+    debug(`Spawning ${command} ${args.join(" ")}`)
+  }
+
   return new BluebirdPromise<any>((resolve, reject) => {
     const p = _spawn(command, args, options)
     p.on("close", (code: number) => code === 0 ? resolve() : reject(new Error(command + " exited with code " + code)))
