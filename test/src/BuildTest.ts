@@ -64,6 +64,20 @@ test("invalid main in the app package.json (no asar)", t => t.throws(assertPack(
   }
 }), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
 
+test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatformsAndCurrentArch(false), {
+  tempDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
+      modifyPackageJson(projectDir, data => {
+        data.main = "main.js"
+      }, true),
+      modifyPackageJson(projectDir, data => {
+        data.build.asar = false
+      })
+    ])
+  }
+}))
+
 test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   platform: [Platform.fromString(process.platform)],
   dist: false

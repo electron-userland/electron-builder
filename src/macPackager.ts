@@ -151,10 +151,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         }
 
         const emitter = require("appdmg-tf")(dmgOptions)
-        emitter.on("error", (e: Error) => {
-          console.error(e)
-          reject(e)
-        })
+        emitter.on("error", reject)
         emitter.on("finish", () => resolve())
         if (debug.enabled) {
           emitter.on("progress", (info: any) => {

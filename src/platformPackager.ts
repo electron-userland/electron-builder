@@ -225,7 +225,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
     else {
-      const outStat = await statOrNull(path.join(resourcesDir, relativeFile))
+      const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
       return outStat != null && outStat.isFile()
     }
   }
