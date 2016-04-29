@@ -64,11 +64,12 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
     "scripts": {
       "postinstall": "install-app-deps",
       "pack": "build",
-      "dist": "build"
+      "dist": "build",
+      "myDistributionCmd": "build --dist"
     }
     ```
     And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)).
-    Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied.
+    Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied. And if you do not name your script `dist` or prefix it with `dist:` and you don't pass `--dist` flag you will spend 24 hours ripping your hair out because OH MY GOD IT WAS JUST THAT?!?!
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
