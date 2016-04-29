@@ -78,7 +78,6 @@ test("main in the app package.json (no asar)", () => assertPack("test-app", allP
   }
 }))
 
-
 test("relative index", () => assertPack("test-app", allPlatformsAndCurrentArch(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
@@ -89,24 +88,20 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
   platform: [Platform.fromString(process.platform)],
   dist: false
 }, {
-  tempDirCreated: projectDir => {
-    return BluebirdPromise.all([
-      outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
-        version: "0.37.7"
-      }),
-      modifyPackageJson(projectDir, data => {
-        data.devDependencies = {}
-      })
-    ])
-  }
+  tempDirCreated: projectDir => BluebirdPromise.all([
+    outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
+      version: "0.37.7"
+    }),
+    modifyPackageJson(projectDir, data => {
+      data.devDependencies = {}
+    })
+  ])
 }))
 
 test("www as default dir", () => assertPack("test-app", {
   platform: [Platform.fromString(process.platform)],
 }, {
-  tempDirCreated: projectDir => BluebirdPromise.all([
-    move(path.join(projectDir, "app"), path.join(projectDir, "www"))
-  ])
+  tempDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test("copy extra resource", async () => {
