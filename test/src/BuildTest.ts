@@ -78,6 +78,13 @@ test("main in the app package.json (no asar)", () => assertPack("test-app", allP
   }
 }))
 
+
+test("relative index", () => assertPack("test-app", allPlatformsAndCurrentArch(false), {
+  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.main = "./index.js"
+  }, true)
+}))
+
 test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   platform: [Platform.fromString(process.platform)],
   dist: false
