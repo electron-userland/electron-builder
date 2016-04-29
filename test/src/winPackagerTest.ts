@@ -78,13 +78,13 @@ class CheckingWinPackager extends WinPackager {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, arch: string): Promise<string> {
+  async pack(outDir: string, arch: string): Promise<any> {
     // skip pack
-    return this.computeAppOutDir(outDir, arch)
+    const installerOutDir = computeDistOut(outDir, arch)
+    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch), installerOutDir)
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    const installerOutDir = computeDistOut(outDir, arch)
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir)
+    // skip
   }
 }

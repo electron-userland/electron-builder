@@ -31,6 +31,7 @@
       <w>postinstall</w>
       <w>productbuild</w>
       <w>promisify</w>
+      <w>psmdcp</w>
       <w>repos</w>
       <w>rimraf</w>
       <w>templating</w>

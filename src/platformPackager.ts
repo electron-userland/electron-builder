@@ -10,6 +10,7 @@ import { statOrNull, use } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
 import { statFile } from "asar"
+import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -106,26 +107,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  async pack(outDir: string, arch: string): Promise<string> {
+  pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, arch)
+    return this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, postAsyncTasks)
+  }
+
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, postAsyncTasks: Array<Promise<any>> = null) {
+    await this.packApp(options, appOutDir)
     await this.copyExtraResources(appOutDir, arch)
-    return appOutDir
+    if (postAsyncTasks != null && this.options.dist) {
+      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+    }
   }
 
-  protected beforePack(options: any): void {
-    // to override
-  }
-
-  protected async doPack(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  protected computePackOptions(outDir: string, arch: string): ElectronPackagerOptions {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = this.computeBuildNumber()
     if (buildNumber != null) {
       buildVersion += "." + buildNumber
     }
-
-    checkConflictingOptions(this.devMetadata.build)
 
     const options = deepAssign({
       dir: this.info.appDir,
@@ -153,8 +154,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     delete options.linux
     // this option only for windows-installer
     delete options.iconUrl
+    return options
+  }
 
-    this.beforePack(options)
+  protected async packApp(options: ElectronPackagerOptions, appOutDir: string): Promise<any> {
     await pack(options)
     await this.sanityCheckPackage(appOutDir, options.asar)
   }
@@ -186,7 +189,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return await BluebirdPromise.map(await this.getExtraResources(arch), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
 
-  abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
+  protected abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
 
   protected async computePackageUrl(): Promise<string> {
     const url = this.metadata.homepage || this.devMetadata.homepage
@@ -247,17 +250,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 }
 
-function checkConflictingOptions(options: any) {
-  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
-    if (name in options) {
-      throw new Error(`Option ${name} is ignored, do not specify it.`)
-    }
-  }
-}
-
 export interface ArtifactCreated {
   readonly file: string
   readonly artifactName?: string
 
   readonly platform: Platform
+}
+
+export function normalizeTargets(targets: Array<string> | string): Array<string> {
+  if (targets == null) {
+    return null
+  }
+  else {
+    return (Array.isArray(targets) ? targets : [targets]).map(it => it.toLowerCase().trim())
+  }
 }

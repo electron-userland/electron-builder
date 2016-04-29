@@ -67,5 +67,9 @@
   },
   "no-debugger": true,
   "no-inferrable-types": true,
-  "no-shadowed-variable ": true
+  "no-shadowed-variable": true,
+  "no-invalid-this": true,
+  "no-reference": true,
+  "semicolon": "never",
+  "prefer-const": "true"
 }

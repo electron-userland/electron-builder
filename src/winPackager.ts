@@ -52,19 +52,19 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return iconPath
   }
 
-  async pack(outDir: string, arch: string): Promise<string> {
+  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
     if (!this.options.dist) {
-      return await super.pack(outDir, arch)
+      return await super.pack(outDir, arch, postAsyncTasks)
     }
 
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const installerOut = computeDistOut(outDir, arch)
     log("Removing %s", installerOut)
     await BluebirdPromise.all([
-      this.doPack(outDir, appOutDir, arch),
+      this.packApp(this.computePackOptions(outDir, arch), appOutDir),
       emptyDir(installerOut)
     ])
 
@@ -80,11 +80,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       })
     }
 
-    return appOutDir
+    if (this.options.dist) {
+      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+    }
   }
 
-  protected async doPack(outDir: string, appOutDir: string, arch: string) {
-    await super.doPack(outDir, appOutDir, arch)
+  protected async packApp(options: any, appOutDir: string) {
+    await super.packApp(options, appOutDir)
 
     if (process.platform === "darwin" && this.options.cscLink != null && this.options.cscKeyPassword != null) {
       const filename = this.appName + ".exe"

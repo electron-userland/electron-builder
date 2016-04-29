@@ -70,7 +70,7 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 | --- | ---
 | icon | <a name="OsXBuildOptions-icon"></a>The path to icon, which will be shown when mounted (default: `build/icon.icns`).
 | background | <a name="OsXBuildOptions-background"></a>The path to background (default: `build/background.png`). The resolution of this file determines the resolution of the installer window.
-| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`.
+| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`.
 
 <a name="WinBuildOptions"></a>
 ### `.build.win`

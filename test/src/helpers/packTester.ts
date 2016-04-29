@@ -39,7 +39,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(tmpdir(), tmpDirPrefix + fixtureName + "-" + tmpDirCounter++) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? path.join(tmpdir(), `${tmpDirPrefix}${fixtureName}-${tmpDirCounter++}}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
       console.log("Custom temp dir used: %s", customTmpDir)
     }
@@ -105,7 +105,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   for (let platform of packagerOptions.platform) {
     if (platform === Platform.OSX) {
-      await checkOsXResult(packager, checkOptions, artifacts.get(Platform.OSX))
+      await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
     }
     else if (platform === Platform.LINUX) {
       await checkLinuxResult(projectDir, packager, packagerOptions)
@@ -168,7 +168,7 @@ function parseDebControl(info: string): any {
   return metadata
 }
 
-async function checkOsXResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
@@ -179,8 +179,10 @@ async function checkOsXResult(packager: Packager, checkOptions: AssertPackOption
     CFBundleVersion: "1.1.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
   })
 
-  const result = await exec("codesign", ["--verify", packedAppDir])
-  assertThat(result[0].toString()).not.match(/is not signed at all/)
+  if (packagerOptions.csaLink != null) {
+    const result = await exec("codesign", ["--verify", packedAppDir])
+    assertThat(result[0].toString()).not.match(/is not signed at all/)
+  }
 
   const actualFiles = artifacts.map(it => path.basename(it.file)).sort()
   if (checkOptions != null && checkOptions.expectedContents != null) {

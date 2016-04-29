@@ -18,13 +18,13 @@ test.ifOsx("two-package", () => assertPack("test-app", {
 
 test.ifOsx("one-package", () => assertPack("test-app-one", platform(Platform.OSX)))
 
-function createTargetTest(target: string, expectedContents: Array<string>) {
+function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
   return () => assertPack("test-app-one", {
     platform: [Platform.OSX],
     devMetadata: {
       build: {
         osx: {
-          target: [target]
+          target: target
         }
       }
     }
@@ -34,11 +34,12 @@ function createTargetTest(target: string, expectedContents: Array<string>) {
   })
 }
 
-test.ifOsx("only dmg", createTargetTest("dmg", ["TestApp-1.1.0.dmg"]))
-test.ifOsx("only zip", createTargetTest("zip", ["TestApp-1.1.0-mac.zip"]))
-test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest("ttt", [])(), "Unknown target: ttt"))
+test.ifOsx("only dmg", createTargetTest(["dmg"], ["TestApp-1.1.0.dmg"]))
+test.ifOsx("only zip", createTargetTest(["zip"], ["TestApp-1.1.0-osx.zip"]))
+test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
-test.ifOsx("mas", createTargetTest("mas", ["TestApp-1.1.0.pkg"]))
+test.ifOsx("mas", createTargetTest(["mas"], ["TestApp-1.1.0.pkg"]))
+test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["TestApp-1.1.0-osx.7z", "TestApp-1.1.0.pkg"]))
 
 // test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
 //   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
@@ -75,12 +76,12 @@ class CheckingOsXPackager extends OsXPackager {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, arch: string): Promise<string> {
+  async pack(outDir: string, arch: string): Promise<any> {
     // skip pack
-    return this.computeAppOutDir(outDir, arch)
+    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch))
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir)
+    // skip
   }
 }

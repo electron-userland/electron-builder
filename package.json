@@ -63,7 +63,7 @@
     "electron-osx-sign-tf": "^0.4.0-beta.0",
     "electron-packager-tf": "^7.0.2-beta.0",
     "electron-winstaller-fixed": "~2.4.0-beta.0",
-    "fs-extra-p": "^0.3.0",
+    "fs-extra-p": "^0.4.0",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",
     "image-size": "^0.5.0",

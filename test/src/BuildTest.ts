@@ -197,7 +197,10 @@ test("invalid platform", (t) => t.throws(assertPack("test-app-one", {
 function allPlatformsAndCurrentArch(dist: boolean = true): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
-    dist: dist
+    dist: dist,
+    // speed up tests
+    cscLink: null,
+    cscInstallerLink: null,
   }
 }
 

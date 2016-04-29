@@ -58,6 +58,7 @@ export class Packager implements BuildInfo {
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
     this.metadata = appPackageFile === devPackageFile ? this.devMetadata : await readPackageJson(appPackageFile)
     this.checkMetadata(appPackageFile, devPackageFile, platforms)
+    checkConflictingOptions(this.devMetadata.build)
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
@@ -74,11 +75,7 @@ export class Packager implements BuildInfo {
       for (let arch of normalizeArchs(platform, this.options.arch)) {
         await this.installAppDependencies(platform, arch)
         // electron-packager uses productName in the directory name
-        const appOutDir =  await helper.pack(outDir, arch)
-        if (this.options.dist) {
-          distTasks.push(helper.packageInDistributableFormat(outDir, appOutDir, arch))
-        }
-      }
+        await helper.pack(outDir, arch, distTasks)}
     }
 
     return await BluebirdPromise.all(distTasks)
@@ -196,5 +193,13 @@ export function normalizePlatforms(platforms: Array<string | Platform>): Array<P
   }
   else {
     return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it))
+  }
+}
+
+function checkConflictingOptions(options: any) {
+  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
+    if (name in options) {
+      throw new Error(`Option ${name} is ignored, do not specify it.`)
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, normalizeTargets } from "./platformPackager"
 import { Platform, OsXBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -14,7 +14,7 @@ const __awaiter = require("./awaiter")
 export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
 
-  readonly target: Array<string>
+  readonly targets: Array<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
@@ -28,41 +28,45 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
 
-    let target = this.customBuildOptions == null ? null : this.customBuildOptions.target
-    if (target != null) {
-      target = Array.isArray(target) ? target : [target]
-      target = target.map(it => it.toLowerCase().trim())
-      for (let t of target) {
-        if (t !== "default" && t !== "dmg" && t !== "zip" && t !== "mas") {
-          throw new Error("Unknown target: " + t)
+    const targets = normalizeTargets(this.customBuildOptions == null ? null : this.customBuildOptions.target)
+    if (targets != null) {
+      for (let target of targets) {
+        if (target !== "default" && target !== "dmg" && target !== "zip" && target !== "mas" && target !== "7z") {
+          throw new Error("Unknown target: " + target)
         }
       }
     }
-    this.target = target == null ? ["default"] : target
+    this.targets = targets == null ? ["default"] : targets
   }
 
   get platform() {
     return Platform.OSX
   }
 
-  protected computeAppOutDir(outDir: string, arch: string): string {
-    return this.target.includes("mas") ? path.join(outDir, `${this.appName}-mas-${arch}`) : super.computeAppOutDir(outDir, arch)
-  }
-
-  async doPack(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    await super.doPack(outDir, appOutDir, arch)
-    await this.sign(appOutDir, await this.codeSigningInfo)
-  }
-
-  protected beforePack(options: any): void {
-    if (this.target.includes("mas")) {
-      options.platform = "mas"
+  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    const packOptions = this.computePackOptions(outDir, arch)
+    let nonMasPromise: Promise<any> = null
+    if (this.targets.length > 1 || this.targets[0] !== "mas") {
+      const appOutDir = this.computeAppOutDir(outDir, arch)
+      nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch)
+        .then(() => this.sign(appOutDir, false))
+        .then(() => postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch)))
     }
-    // disable warning
-    options["osx-sign"] = false
+
+    if (this.targets.includes("mas")) {
+      // osx-sign - disable warning
+      const appOutDir = path.join(outDir, `${this.appName}-mas-${arch}`)
+      await this.doPack(Object.assign({}, packOptions, {platform: "mas", "osx-sign": false}), outDir, appOutDir, arch)
+      await this.sign(appOutDir, true)
+    }
+
+    if (nonMasPromise != null) {
+      await nonMasPromise
+    }
   }
 
-  private async sign(appOutDir: string, codeSigningInfo: CodeSigningInfo): Promise<any> {
+  private async sign(appOutDir: string, isMas: boolean): Promise<any> {
+    let codeSigningInfo = await this.codeSigningInfo
     if (codeSigningInfo == null) {
       codeSigningInfo = {
         name: this.options.sign || process.env.CSC_NAME,
@@ -77,7 +81,6 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
     log("Signing app")
 
-    const isMas = this.target.includes("mas")
     const baseSignOptions: BaseSignOptions = {
       app: path.join(appOutDir, this.appName + ".app"),
       platform: isMas ? "mas" : "darwin"
@@ -133,10 +136,10 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   }
 
   packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
     const promises: Array<Promise<any>> = []
 
-    if (this.target.includes("dmg") || this.target.includes("default")) {
+    if (this.targets.includes("dmg") || this.targets.includes("default")) {
+      const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
       promises.push(new BluebirdPromise<any>(async(resolve, reject) => {
         log("Creating DMG")
         const dmgOptions = {
@@ -164,24 +167,34 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         .then(() => this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)))
     }
 
-    if (this.target.includes("zip") || this.target.includes("default")) {
-      promises.push(this.zipMacApp(appOutDir)
-        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-mac.zip`)))
+    for (let target of this.targets) {
+      if (target !== "mas" && target !== "dmg") {
+        const format = target === "default" ? "zip" : target
+        log("Creating OS X " + format)
+        // for default we use mac to be compatible with Squirrel.Mac
+        const classifier = target === "default" ? "mac" : "osx"
+        promises.push(this.archiveApp(appOutDir, format, classifier)
+          .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-${classifier}.${format}`)))
+      }
     }
-
     return BluebirdPromise.all(promises)
   }
 
-  private zipMacApp(outDir: string): Promise<string> {
-    log("Creating ZIP for Squirrel.Mac")
-    // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-    const resultPath = `${this.appName}-${this.metadata.version}-mac.zip`
-    const args = ["a", "-mm=" + (this.devMetadata.build.compression === "store" ? "Copy" : "Deflate"), "-bb" + (debug.enabled ? "3" : "0"), "-bd"]
-    if (this.devMetadata.build.compression === "maximum") {
+  private archiveApp(outDir: string, format: string, classifier: string): Promise<string> {
+    const args = ["a", "-bb" + (debug.enabled ? "3" : "0"), "-bd"]
+    const compression = this.devMetadata.build.compression
+    const storeOnly = compression === "store"
+    if (format === "zip" || storeOnly) {
+      args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
+    }
+    if (compression === "maximum") {
       // http://superuser.com/a/742034
       //noinspection SpellCheckingInspection
       args.push("-mfb=258", "-mpass=15")
     }
+
+    // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
+    const resultPath = `${this.appName}-${this.metadata.version}-${classifier}.${format}`
     args.push(resultPath, this.appName + ".app")
 
     return spawn(path7za, args, {
