@@ -70,6 +70,8 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
     And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)).
     Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied.
 
+    Please note — if you don't name your script `dist` or prefix it with `dist:` and you don't pass `--dist` flag, application will be not packed in a distributable format.
+
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
 Please note — packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-asar).
