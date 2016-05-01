@@ -1,9 +1,5 @@
-# electron-builder [![NPM version][npm-image]][npm-url]
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder)
 Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
-
-```sh
-npm install electron-builder --save-dev
-```
 
 * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
 * [Auto Update](#auto-update) ready application packaging.
@@ -50,7 +46,9 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
     "build": {
       "app-bundle-id": "your.id",
       "app-category-type": "your.app.category.type",
-      "iconUrl": "(windows only)"
+      "win": {
+        "iconUrl": "(windows-only) https link to icon"
+      }
     }
     ```
    See [options](https://github.com/electron-userland/electron-builder/wiki/Options). This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
@@ -103,8 +101,26 @@ Want more — please file issue.
 # Programmatic Usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
 
-[npm-url]: https://npmjs.org/package/electron-builder
-[npm-image]: http://img.shields.io/npm/v/electron-builder.svg
+```js
+"use strict"
+
+const builder = require("electron-builder")
+
+// Promise is returned
+builder.build({
+  platform: [builder.Platform.OSX],
+  "//": "platform, arch and other properties, see PackagerOptions in the node_modules/electron-builder/out/electron-builder.d.ts",
+  devMetadata: {
+    "//": "build and other properties, see https://goo.gl/5jVxoO"
+  }
+})
+  .then(() => {
+    // handle result
+  })
+  .catch((error) => {
+    // handle error
+  })
+```
 
 # Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.

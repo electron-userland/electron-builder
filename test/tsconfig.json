@@ -24,7 +24,8 @@
     "src/**/*.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/fs-extra-p/bluebird.d.ts",
-    "out/electron-builder.d.ts"
+    "out/electron-builder.d.ts",
+    "../node_modules/electron-osx-sign-tf/index.d.ts"
   ],
   "files": [
     "../typings/appdmg.d.ts",
@@ -55,6 +56,7 @@
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/fs-extra-p/bluebird.d.ts",
     "out/electron-builder.d.ts",
+    "../node_modules/electron-osx-sign-tf/index.d.ts",
     "src/ArtifactPublisherTest.ts",
     "src/BuildTest.ts",
     "src/CodeSignTest.ts",

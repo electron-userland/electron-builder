@@ -44,7 +44,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     const tempDir = await tempDirPromise
 
     const promises: Array<Promise<Array<string>>> = []
-    if (this.customBuildOptions == null || this.customBuildOptions.desktop == null) {
+    if (this.customBuildOptions.desktop == null) {
       promises.push(this.computeDesktopIconPath(tempDir))
     }
 

@@ -53,10 +53,10 @@ Here documented only `electron-builder` specific options:
 | app-bundle-id | <a name="BuildMetadata-app-bundle-id"></a>*OS X-only.* The app bundle ID. See [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
 | app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*OS X-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p>
-| iconUrl | <a name="BuildMetadata-iconUrl"></a><p>*windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://raw.githubusercontent.com/${u}/${p}/master/build/icon.ico</code> by default.</li> </ul>
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
 | extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app’s directory (<code>Contents/Resources</code> for OS X).</p> <p>You can use <code>${os}</code> (expanded to osx, linux or win according to current platform) and <code>${arch}</code> in the pattern.</p> <p>If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>&lt;project_dir&gt;/foo</code> directory.</p> <p>May be specified in the platform options (i.e. in the <code>build.osx</code>).</p>
 | osx | <a name="BuildMetadata-osx"></a>See [.build.osx](#OsXBuildOptions).
+| mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
@@ -70,7 +70,21 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 | --- | ---
 | icon | <a name="OsXBuildOptions-icon"></a>The path to icon, which will be shown when mounted (default: `build/icon.icns`).
 | background | <a name="OsXBuildOptions-background"></a>The path to background (default: `build/background.png`). The resolution of this file determines the resolution of the installer window.
-| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`.
+| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+| identity | <a name="OsXBuildOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
+| entitlements | <a name="OsXBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/osx.entitlements</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
+| entitlementsInherit | <a name="OsXBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/osx.inherit.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.darwin.inherit.entitlements).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
+
+<a name="MasBuildOptions"></a>
+### `.build.mas`
+
+MAS (Mac Application Store) specific options (in addition to `build.osx`).
+
+| Name | Description
+| --- | ---
+| identity | <a name="MasBuildOptions-identity"></a>The name of certificate to use when signing. Consider using environment variables [CSC_INSTALLER_LINK or CSC_INSTALLER_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+| entitlements | <a name="MasBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/mas.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).</p>
+| entitlementsInherit | <a name="MasBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/mas.inherit.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.inherit.entitlements).</p>
 
 <a name="WinBuildOptions"></a>
 ### `.build.win`
@@ -79,7 +93,8 @@ See all [windows-installer options](https://github.com/electron/windows-installe
 
 | Name | Description
 | --- | ---
-| loadingGif | <a name="WinBuildOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
+| iconUrl | <a name="WinBuildOptions-iconUrl"></a><p>*windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
+| loadingGif | <a name="WinBuildOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
 | noMsi | <a name="WinBuildOptions-noMsi"></a>Whether to create an MSI installer. Defaults to `true` (MSI is not created).
 
 <a name="LinuxBuildOptions"></a>

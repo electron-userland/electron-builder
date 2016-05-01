@@ -24,8 +24,10 @@
       <w>nokeys</w>
       <w>nomacver</w>
       <w>nsis</w>
+      <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
+      <w>packagejson</w>
       <w>passin</w>
       <w>pkcs</w>
       <w>postinstall</w>

@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
-import { log, statOrNull, use } from "./util"
+import { log, statOrNull } from "./util"
 import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
 import { sign } from "signcode-tf"
 
@@ -35,7 +35,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     this.iconPath = this.getValidIconPath()
 
-    if (this.options.dist && (this.customBuildOptions == null || this.customBuildOptions.loadingGif == null)) {
+    if (this.options.dist && this.customBuildOptions.loadingGif == null) {
       const installSpinnerPath = path.join(this.buildResourcesDir, "install-spinner.gif")
       this.loadingGifStat = statOrNull(installSpinnerPath)
         .then(it => it != null && !it.isDirectory() ? installSpinnerPath : null)
@@ -68,7 +68,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       emptyDir(installerOut)
     ])
 
-    const extraResources = await this.copyExtraResources(appOutDir, arch)
+    const extraResources = await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
     if (extraResources.length > 0) {
       this.extraNuGetFileSources = BluebirdPromise.map(extraResources, file => {
         return stat(file)
@@ -104,23 +104,21 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string): Promise<any> {
-    let iconUrl = this.devMetadata.build.iconUrl
-    if (!iconUrl) {
-      use(this.customBuildOptions, it => iconUrl = it.iconUrl)
-
-      if (!iconUrl && this.info.repositoryInfo != null) {
+    let iconUrl = this.customBuildOptions.iconUrl || this.devMetadata.build.iconUrl
+    if (iconUrl == null) {
+      if (this.info.repositoryInfo != null) {
         const info = await this.info.repositoryInfo.getInfo(this)
         if (info != null) {
-          iconUrl = `https://raw.githubusercontent.com/${info.user}/${info.project}/master/${this.relativeBuildResourcesDirname}/icon.ico`
+          iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${this.relativeBuildResourcesDirname}/icon.ico?raw=true`
         }
       }
 
-      if (!iconUrl) {
-        throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder#in-short")
+      if (iconUrl == null) {
+        throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-iconUrl")
       }
     }
 
-    use(this.customBuildOptions, checkConflictingOptions)
+    checkConflictingOptions(this.customBuildOptions)
 
     const projectUrl = await this.computePackageUrl()
     const options: any = Object.assign({

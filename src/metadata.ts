@@ -94,14 +94,7 @@ export interface BuildMetadata {
    */
   readonly asar?: boolean
 
-  /*
-   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
-
-   Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
-
-   * If you don't plan to build windows installer, you can omit it.
-   * If your project repository is public on GitHub, it will be `https://raw.githubusercontent.com/${u}/${p}/master/build/icon.ico` by default.
-   */
+  // deprecated
   readonly iconUrl?: string
 
   /*
@@ -124,6 +117,11 @@ export interface BuildMetadata {
    See [.build.osx](#OsXBuildOptions).
    */
   readonly osx?: OsXBuildOptions
+
+  /*
+   See [.build.mas](#MasBuildOptions).
+   */
+  readonly mas?: MasBuildOptions
 
   /**
    See [.build.win](#LinuxBuildOptions).
@@ -160,9 +158,53 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly background?: string
 
   /*
-   Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`.
+   Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
   readonly target?: Array<string>
+
+  /*
+   The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).
+   */
+  readonly identity?: string
+
+  /*
+   The path to entitlements file for signing the app. `build/osx.entitlements` will be used if exists (it is a recommended way to set).
+   MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
+   */
+  readonly entitlements?: string
+
+  /*
+   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/osx.inherit.entitlements` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.darwin.inherit.entitlements).
+
+   This option only applies when signing with `entitlements` provided.
+   */
+  readonly entitlementsInherit?: string
+}
+
+/*
+ ### `.build.mas`
+
+ MAS (Mac Application Store) specific options (in addition to `build.osx`).
+ */
+export interface MasBuildOptions extends OsXBuildOptions {
+  /*
+   The name of certificate to use when signing. Consider using environment variables [CSC_INSTALLER_LINK or CSC_INSTALLER_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+  */
+  readonly identity?: string
+
+  /*
+   The path to entitlements file for signing the app. `build/mas.entitlements` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).
+   */
+  readonly entitlements?: string
+
+  /*
+   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/mas.inherit.entitlements` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.inherit.entitlements).
+   */
+  readonly entitlementsInherit?: string
 }
 
 /*
@@ -174,10 +216,18 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificateFile?: string
   readonly certificatePassword?: string
 
+  /*
+   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+
+   Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+
+   * If you don't plan to build windows installer, you can omit it.
+   * If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
+   */
   readonly iconUrl?: string
 
   /*
-   The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists
+   The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
    (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
    */
   readonly loadingGif?: string

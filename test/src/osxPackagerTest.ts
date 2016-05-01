@@ -7,6 +7,9 @@ import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
+import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
+import { OsXBuildOptions } from "out/metadata"
+import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -19,7 +22,7 @@ test.ifOsx("two-package", () => assertPack("test-app", {
 test.ifOsx("one-package", () => assertPack("test-app-one", platform(Platform.OSX)))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
-  return () => assertPack("test-app-one", {
+  const options = {
     platform: [Platform.OSX],
     devMetadata: {
       build: {
@@ -28,8 +31,8 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
         }
       }
     }
-  }, {
-    useTempDir: true,
+  }
+  return () => assertPack("test-app-one", options, {
     expectedContents: expectedContents
   })
 }
@@ -40,6 +43,69 @@ test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(
 
 test.ifOsx("mas", createTargetTest(["mas"], ["TestApp-1.1.0.pkg"]))
 test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["TestApp-1.1.0-osx.7z", "TestApp-1.1.0.pkg"]))
+
+test.ifOsx("custom mas", () => {
+  let platformPackager: CheckingOsXPackager = null
+  return assertPack("test-app-one", {
+    platform: [Platform.OSX],
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
+    cscLink: null,
+    cscInstallerLink: null,
+    devMetadata: {
+      build: {
+        osx: {
+          identity: "osx",
+          target: ["mas"]
+        },
+        mas: {
+          identity: "MAS",
+          entitlements: "mas-entitlements file path",
+          entitlementsInherit: "mas-entitlementsInherit file path",
+        }
+      }
+    }
+  }, {
+    packed: () => {
+      assertThat(platformPackager.effectiveSignOptions).has.properties({
+        identity: "osx",
+        entitlements: "mas-entitlements file path",
+        "entitlements-inherit": "mas-entitlementsInherit file path",
+      })
+      assertThat(platformPackager.effectiveFlatOptions).has.properties({
+        identity: "MAS",
+      })
+      return BluebirdPromise.resolve(null)
+    }
+  })
+})
+
+test.ifOsx("identity in package.json", () => {
+  let platformPackager: CheckingOsXPackager = null
+  return assertPack("test-app-one", {
+    platform: [Platform.OSX],
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
+    cscLink: null,
+    cscInstallerLink: null,
+    devMetadata: {
+      build: {
+        osx: {
+          identity: "osx",
+          entitlements: "osx-entitlements file path",
+          entitlementsInherit: "osx-entitlementsInherit file path",
+        }
+      }
+    }
+  }, {
+    packed: () => {
+      assertThat(platformPackager.effectiveSignOptions).has.properties({
+        identity: "osx",
+        entitlements: "osx-entitlements file path",
+        "entitlements-inherit": "osx-entitlementsInherit file path",
+      })
+      return BluebirdPromise.resolve(null)
+    }
+  })
+})
 
 // test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
 //   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
@@ -71,14 +137,24 @@ test.ifOsx("custom background", () => {
 
 class CheckingOsXPackager extends OsXPackager {
   effectiveDistOptions: any
+  effectiveSignOptions: SignOptions
+  effectiveFlatOptions: FlatOptions
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, arch: string): Promise<any> {
+  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: OsXBuildOptions, postAsyncTasks: Array<Promise<any>> = null) {
     // skip pack
     this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch))
+  }
+
+  async doSign(opts: SignOptions): Promise<any> {
+    this.effectiveSignOptions = opts
+  }
+
+  async doFlat(opts: FlatOptions): Promise<any> {
+    this.effectiveFlatOptions = opts
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {

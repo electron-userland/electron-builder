@@ -72,7 +72,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly metadata: AppMetadata
   readonly devMetadata: DevMetadata
 
-  customBuildOptions: DC
+  readonly customBuildOptions: DC
 
   readonly appName: string
 
@@ -85,9 +85,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.devMetadata = info.devMetadata
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
-
-    this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey]
-
+    this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
     this.appName = getProductName(this.metadata, this.devMetadata)
   }
 
@@ -109,12 +107,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    return this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, postAsyncTasks)
+    return this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions, postAsyncTasks)
   }
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, postAsyncTasks: Array<Promise<any>> = null) {
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC, postAsyncTasks: Array<Promise<any>> = null) {
     await this.packApp(options, appOutDir)
-    await this.copyExtraResources(appOutDir, arch)
+    await this.copyExtraResources(appOutDir, arch, customBuildOptions)
     if (postAsyncTasks != null && this.options.dist) {
       postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
     }
@@ -162,11 +160,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, options.asar)
   }
 
-  protected getExtraResources(arch: string): Promise<Array<string>> {
+  private getExtraResources(arch: string, customBuildOptions: DC): Promise<Array<string>> {
     const buildMetadata: any = this.devMetadata.build
     let extraResources: Array<string> = buildMetadata == null ? null : buildMetadata.extraResources
 
-    const platformSpecificExtraResources = this.customBuildOptions == null ? null : this.customBuildOptions.extraResources
+    const platformSpecificExtraResources = customBuildOptions.extraResources
     if (platformSpecificExtraResources != null) {
       extraResources = extraResources == null ? platformSpecificExtraResources : extraResources.concat(platformSpecificExtraResources)
     }
@@ -181,12 +179,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return globby(expandedPatterns, {cwd: this.projectDir})
   }
 
-  protected async copyExtraResources(appOutDir: string, arch: string): Promise<Array<string>> {
+  protected async copyExtraResources(appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {
     let resourcesDir = appOutDir
     if (this.platform === Platform.OSX) {
       resourcesDir = this.getOSXResourcesDir(appOutDir)
     }
-    return await BluebirdPromise.map(await this.getExtraResources(arch), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
+    return await BluebirdPromise.map(await this.getExtraResources(arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
 
   protected abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>

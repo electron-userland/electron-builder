@@ -24,7 +24,6 @@ if (process.env.TRAVIS !== "true") {
 export const outDirName = "dist"
 
 interface AssertPackOptions {
-  readonly useTempDir?: boolean
   readonly tempDirCreated?: (projectDir: string) => Promise<any>
   readonly packed?: (projectDir: string) => Promise<any>
   readonly expectedContents?: Array<string>

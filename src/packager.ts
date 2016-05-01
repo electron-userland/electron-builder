@@ -175,7 +175,8 @@ export function normalizeArchs(platform: Platform, arch?: string) {
   }
 }
 
-export function normalizePlatforms(platforms: Array<string | Platform>): Array<Platform> {
+export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform): Array<Platform> {
+  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (<Array<string | Platform>>rawPlatforms) : [rawPlatforms]
   if (platforms == null || platforms.length === 0) {
     return [Platform.fromString(process.platform)]
   }
