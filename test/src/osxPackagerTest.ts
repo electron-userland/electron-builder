@@ -2,7 +2,7 @@ import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
 import { Platform } from "out"
 import OsXPackager from "out/osxPackager"
-import { move } from "fs-extra-p"
+import { move, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -101,6 +101,36 @@ test.ifOsx("identity in package.json", () => {
         identity: "osx",
         entitlements: "osx-entitlements file path",
         "entitlements-inherit": "osx-entitlementsInherit file path",
+      })
+      return BluebirdPromise.resolve(null)
+    }
+  })
+})
+
+test.ifOsx("entitlements in build dir", () => {
+  let platformPackager: CheckingOsXPackager = null
+  return assertPack("test-app-one", {
+    platform: [Platform.OSX],
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
+    cscLink: null,
+    cscInstallerLink: null,
+    devMetadata: {
+      build: {
+        osx: {
+          identity: "osx",
+        }
+      }
+    }
+  }, {
+    tempDirCreated: projectDir => BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "osx.entitlements"), ""),
+      writeFile(path.join(projectDir, "build", "osx.inherit.entitlements"), ""),
+    ]),
+    packed: projectDir => {
+      assertThat(platformPackager.effectiveSignOptions).has.properties({
+        identity: "osx",
+        entitlements: path.join(projectDir, "build", "osx.entitlements"),
+        "entitlements-inherit": path.join(projectDir, "build", "osx.inherit.entitlements"),
       })
       return BluebirdPromise.resolve(null)
     }

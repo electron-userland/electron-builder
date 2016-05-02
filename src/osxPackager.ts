@@ -7,6 +7,7 @@ import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName }
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
 import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { readdir } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -15,6 +16,8 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
 
   readonly targets: Array<string>
+
+  readonly resourceList: Promise<Array<string>>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
@@ -37,6 +40,8 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
     }
     this.targets = targets == null ? ["default"] : targets
+
+    this.resourceList = readdir(this.buildResourcesDir)
   }
 
   get platform() {
@@ -94,12 +99,27 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       identity: codeSigningInfo.name,
     }, (<any>this.devMetadata.build)["osx-sign"], baseSignOptions)
 
+    const resourceList = await this.resourceList
+
     const customSignOptions = masOptions || this.customBuildOptions
     if (customSignOptions.entitlements != null) {
       signOptions.entitlements = customSignOptions.entitlements
     }
+    else {
+      const p = `${masOptions == null ? "osx" : "mas"}.entitlements`
+      if (resourceList.includes(p)) {
+        signOptions.entitlements = path.join(this.buildResourcesDir, p)
+      }
+    }
+
     if (customSignOptions.entitlementsInherit != null) {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
+    }
+    else {
+      const p = `${masOptions == null ? "osx" : "mas"}.inherit.entitlements`
+      if (resourceList.includes(p)) {
+        signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
+      }
     }
 
     await this.doSign(signOptions)
