@@ -209,15 +209,13 @@ export interface MasBuildOptions extends OsXBuildOptions {
 
 /*
  ### `.build.win`
-
- See all [windows-installer options](https://github.com/electron/windows-installer#usage).
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificateFile?: string
   readonly certificatePassword?: string
 
   /*
-   *windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+   A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
 
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
 
@@ -232,10 +230,20 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly loadingGif?: string
 
-  /**
+  /*
    Whether to create an MSI installer. Defaults to `true` (MSI is not created).
    */
   readonly noMsi?: boolean
+
+  /*
+   A URL to your existing updates. If given, these will be downloaded to create delta updates.
+   */
+  readonly remoteReleases?: string
+
+  /*
+   Authentication token for remote updates
+   */
+  readonly remoteToken?: string
 }
 
 /*
