@@ -19,19 +19,19 @@ export interface Publisher {
 }
 
 export interface PublishOptions {
-  publish?: "onTag" | "onTagOrDraft" | "always" | "never"
-  githubToken?: string
+  publish?: "onTag" | "onTagOrDraft" | "always" | "never" | null
+  githubToken?: string | null
 }
 
 export class GitHubPublisher implements Publisher {
   private tag: string
   private _releasePromise: BluebirdPromise<Release>
 
-  get releasePromise(): Promise<Release> {
+  get releasePromise(): Promise<Release | null> {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, version: string, private token: string, private createReleaseIfNotExists: boolean = true) {
+  constructor(private owner: string, private repo: string, version: string, private token: string | null, private createReleaseIfNotExists: boolean = true) {
     if (token == null || token.length === 0) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
@@ -40,12 +40,12 @@ export class GitHubPublisher implements Publisher {
     this._releasePromise = <BluebirdPromise<Release>>this.init()
   }
 
-  private async init(): Promise<Release> {
+  private async init(): Promise<Release | null> {
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await gitHubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
     for (let release of releases) {
-      if (release.tag_name === this.tag) {
-        if (!release.draft) {
+      if (release!.tag_name === this.tag) {
+        if (!release!.draft) {
           if (this.createReleaseIfNotExists) {
             throw new Error("Release must be a draft")
           }
@@ -53,7 +53,7 @@ export class GitHubPublisher implements Publisher {
             return null
           }
         }
-        return release
+        return release!
       }
     }
 
@@ -70,7 +70,7 @@ export class GitHubPublisher implements Publisher {
     const fileName = artifactName || basename(file)
     const release = await this.releasePromise
     if (release == null) {
-      return null
+      return
     }
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
@@ -113,8 +113,8 @@ export class GitHubPublisher implements Publisher {
             log("Artifact %s already exists, overwrite one", fileName)
             const assets = await gitHubRequest<Array<Asset>>(`/repos/${this.owner}/${this.repo}/releases/${release.id}/assets`, this.token)
             for (let asset of assets) {
-              if (asset.name === fileName) {
-                await gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/assets/${asset.id}`, this.token, null, "DELETE")
+              if (asset!.name === fileName) {
+                await gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
                 continue uploadAttempt
               }
             }

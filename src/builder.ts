@@ -9,7 +9,7 @@ import { log } from "./util"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export async function createPublisher(packager: Packager, options: BuildOptions, repoSlug: InfoRetriever, isPublishOptionGuessed: boolean = false): Promise<Publisher> {
+export async function createPublisher(packager: Packager, options: BuildOptions, repoSlug: InfoRetriever, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const info = await repoSlug.getInfo(packager)
   if (info == null) {
     if (isPublishOptionGuessed) {
@@ -20,7 +20,7 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
     throw new Error("Please specify 'repository' in the dev package.json ('" + packager.devPackageFile + "')")
   }
   else {
-    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken, options.publish !== "onTagOrDraft")
+    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken!, options.publish !== "onTagOrDraft")
   }
 }
 
@@ -28,14 +28,14 @@ export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
 export async function build(originalOptions?: BuildOptions): Promise<void> {
-  const options = Object.assign({
+  const options: BuildOptions = Object.assign({
     cscLink: process.env.CSC_LINK,
     csaLink: process.env.CSA_LINK,
     cscKeyPassword: process.env.CSC_KEY_PASSWORD,
     githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
   }, originalOptions)
 
-  options.platform = normalizePlatforms(originalOptions.platform)
+  options.platform = normalizePlatforms(options.platform)
 
   const lifecycleEvent = process.env.npm_lifecycle_event
   if (options.publish) {
@@ -69,13 +69,13 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
   const repositoryInfo = new InfoRetriever()
   const packager = new Packager(options, repositoryInfo)
   if (options.publish != null && options.publish !== "never") {
-    let publisher: BluebirdPromise<Publisher> = null
+    let publisher: Promise<Publisher> | null = null
     packager.artifactCreated(event => {
       if (publisher == null) {
-        publisher = <BluebirdPromise<Publisher>>createPublisher(packager, options, repositoryInfo, isPublishOptionGuessed)
+        publisher = createPublisher(packager, options, repositoryInfo, isPublishOptionGuessed)
       }
 
-      if (publisher != null) {
+      if (publisher) {
         publisher
           .then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
       }
@@ -85,7 +85,7 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
   await executeFinally(packager.build(), errorOccurred => {
     if (errorOccurred) {
       for (let task of publishTasks) {
-        task.cancel()
+        task!.cancel()
       }
       return BluebirdPromise.resolve(null)
     }

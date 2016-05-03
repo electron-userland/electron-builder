@@ -5,7 +5,7 @@ import { red } from "chalk"
 const __awaiter = require("./awaiter")
 
 export function printErrorAndExit(error: Error) {
-  console.error(red(error.stack.toString() || error.message || error.toString()))
+  console.error(red((error.stack || error).toString()))
   process.exit(-1)
 }
 
@@ -41,7 +41,7 @@ export class NestedError extends Error {
     let i = 1
     for (let error of errors) {
       const prefix = "Error #" + i++ + " "
-      m += "\n\n" + prefix + "-".repeat(80) + "\n" + error.stack
+      m += "\n\n" + prefix + "-".repeat(80) + "\n" + error!.stack
     }
     super(m)
   }

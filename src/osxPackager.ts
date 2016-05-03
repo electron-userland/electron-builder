@@ -13,7 +13,7 @@ import { readdir } from "fs-extra-p"
 const __awaiter = require("./awaiter")
 
 export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
-  codeSigningInfo: Promise<CodeSigningInfo>
+  codeSigningInfo: Promise<CodeSigningInfo | null>
 
   readonly targets: Array<string>
 
@@ -50,7 +50,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
   async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const packOptions = this.computePackOptions(outDir, arch)
-    let nonMasPromise: Promise<any> = null
+    let nonMasPromise: Promise<any> | null = null
     if (this.targets.length > 1 || this.targets[0] !== "mas") {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
@@ -71,7 +71,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
-  private async sign(appOutDir: string, masOptions: MasBuildOptions): Promise<any> {
+  private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
     let codeSigningInfo = await this.codeSigningInfo
     if (codeSigningInfo == null) {
       codeSigningInfo = {
@@ -80,12 +80,13 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
     }
 
-    if (codeSigningInfo.name == null) {
+    const identity = codeSigningInfo.name
+    if (<string | null>identity == null) {
       log("App is not signed: CSC_LINK or CSC_NAME are not specified")
       return
     }
 
-    log(`Signing app (${codeSigningInfo.name})`)
+    log(`Signing app (${identity})`)
 
     const baseSignOptions: BaseSignOptions = {
       app: path.join(appOutDir, this.appName + ".app"),
@@ -96,7 +97,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
 
     const signOptions = Object.assign({
-      identity: codeSigningInfo.name,
+      identity: identity,
     }, (<any>this.devMetadata.build)["osx-sign"], baseSignOptions)
 
     const resourceList = await this.resourceList
@@ -189,7 +190,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         }
 
         if (debug.enabled) {
-          debug(`appdmg: ${JSON.stringify(dmgOptions, null, 2)}`)
+          debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
         }
 
         const emitter = require("appdmg-tf")(dmgOptions)
@@ -208,7 +209,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
     for (let target of this.targets) {
       if (target !== "mas" && target !== "dmg") {
-        const format = target === "default" ? "zip" : target
+        const format = target === "default" ? "zip" : target!
         log("Creating OS X " + format)
         // for default we use mac to be compatible with Squirrel.Mac
         const classifier = target === "default" ? "mac" : "osx"

@@ -72,11 +72,11 @@ Icon=${this.metadata.name}
       const mappings: Array<string> = []
       const pngIconsDir = path.join(this.buildResourcesDir, "icons")
       for (let file of (await readdir(pngIconsDir))) {
-        if (file.endsWith(".png") || file.endsWith(".PNG")) {
+        if (file!.endsWith(".png") || file!.endsWith(".PNG")) {
           // If parseInt encounters a character that is not a numeral in the specified radix,
           // it returns the integer value parsed up to that point
           try {
-            const size = parseInt(file, 10)
+            const size = parseInt(file!, 10)
             if (size > 0) {
               mappings.push(`${pngIconsDir}/${file}=/usr/share/icons/hicolor/${size}x${size}/apps/${this.metadata.name}.png`)
             }
@@ -194,13 +194,13 @@ Icon=${this.metadata.name}
       "--url", projectUrl,
     ]
 
-    use(this.metadata.license || this.devMetadata.license, it => args.push("--license", it))
-    use(this.computeBuildNumber(), it => args.push("--iteration", it))
+    use(this.metadata.license || this.devMetadata.license, it => args.push("--license", it!))
+    use(this.computeBuildNumber(), it => args.push("--iteration", it!))
 
-    use(options.fpm, it => args.push(...it))
+    use(options.fpm, it => args.push(...<any>it))
 
     args.push(`${appOutDir}/=/opt/${this.appName}`)
-    args.push(...(await this.packageFiles))
+    args.push(...<any>(await this.packageFiles)!)
     await exec("fpm", args)
     return destination
   }

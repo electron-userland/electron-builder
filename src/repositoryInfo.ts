@@ -17,9 +17,9 @@ export interface RepositorySlug {
 }
 
 export class InfoRetriever {
-  _info: Promise<Info>
+  _info: Promise<Info> | null
 
-  getInfo(provider?: ProjectMetadataProvider): Promise<Info> {
+  getInfo(provider?: ProjectMetadataProvider): Promise<Info | null> {
     if (this._info == null) {
       this._info = getInfo(provider)
     }
@@ -27,8 +27,8 @@ export class InfoRetriever {
   }
 }
 
-async function getGitUrlFromGitConfig(): Promise<string> {
-  let data: string = null
+async function getGitUrlFromGitConfig(): Promise<string | null> {
+  let data: string | null = null
   try {
     data = await readFile(path.join(".git", "config"), "utf8")
   }
@@ -55,13 +55,13 @@ async function getGitUrlFromGitConfig(): Promise<string> {
   return null
 }
 
-async function getInfo(provider?: ProjectMetadataProvider): Promise<RepositorySlug> {
+async function getInfo(provider?: ProjectMetadataProvider | null): Promise<RepositorySlug | null> {
   const repo = provider == null ? null : (provider.devMetadata.repository || provider.metadata.repository)
   if (repo == null) {
     let url = process.env.TRAVIS_REPO_SLUG
     if (url == null) {
-      const user: string = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
-      const project: string = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
+      const user: string | null = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
+      const project: string | null = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
       if (user != null && project != null) {
         return {
           user: user,

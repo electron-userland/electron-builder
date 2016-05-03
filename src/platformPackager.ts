@@ -18,28 +18,28 @@ const __awaiter = require("./awaiter")
 const pack = BluebirdPromise.promisify(packager)
 
 export interface PackagerOptions {
-  arch?: string
+  arch?: string | null
 
-  dist?: boolean
-  githubToken?: string
+  dist?: boolean | null
+  githubToken?: string | null
 
-  sign?: string
+  sign?: string | null
 
-  platform?: Array<Platform>
+  platform?: Array<Platform> | null
 
   // deprecated
-  appDir?: string
+  appDir?: string | null
 
-  projectDir?: string
+  projectDir?: string | null
 
-  cscLink?: string
-  csaLink?: string
-  cscKeyPassword?: string
+  cscLink?: string | null
+  csaLink?: string | null
+  cscKeyPassword?: string | null
 
-  cscInstallerLink?: string
-  cscInstallerKeyPassword?: string
+  cscInstallerLink?: string | null
+  cscInstallerKeyPassword?: string | null
 
-  platformPackagerFactory?: (packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>
+  platformPackagerFactory?: ((packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | n
 
   /**
    * The same as [development package.json](https://github.com/electron-userland/electron-builder/wiki/Options#development-packagejson).
@@ -59,7 +59,7 @@ export interface BuildInfo extends ProjectMetadataProvider {
 
   electronVersion: string
 
-  repositoryInfo: InfoRetriever
+  repositoryInfo: InfoRetriever | n
   eventEmitter: EventEmitter
 }
 
@@ -90,7 +90,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected get relativeBuildResourcesDirname() {
-    return use(this.devMetadata.directories, it => it.buildResources) || "build"
+    return use(this.devMetadata.directories, it => it!.buildResources) || "build"
   }
 
   protected computeAppOutDir(outDir: string, arch: string): string {
@@ -110,7 +110,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions, postAsyncTasks)
   }
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC, postAsyncTasks: Array<Promise<any>> = null) {
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC, postAsyncTasks: Array<Promise<any>> | null = null) {
     await this.packApp(options, appOutDir)
     await this.copyExtraResources(appOutDir, arch, customBuildOptions)
     if (postAsyncTasks != null && this.options.dist) {
@@ -157,12 +157,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async packApp(options: ElectronPackagerOptions, appOutDir: string): Promise<any> {
     await pack(options)
-    await this.sanityCheckPackage(appOutDir, options.asar)
+    await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
   private getExtraResources(arch: string, customBuildOptions: DC): Promise<Array<string>> {
     const buildMetadata: any = this.devMetadata.build
-    let extraResources: Array<string> = buildMetadata == null ? null : buildMetadata.extraResources
+    let extraResources: Array<string> | n = buildMetadata == null ? null : buildMetadata.extraResources
 
     const platformSpecificExtraResources = customBuildOptions.extraResources
     if (platformSpecificExtraResources != null) {
@@ -189,7 +189,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
 
-  protected async computePackageUrl(): Promise<string> {
+  protected async computePackageUrl(): Promise<string | null> {
     const url = this.metadata.homepage || this.devMetadata.homepage
     if (url != null) {
       return url
@@ -204,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  protected computeBuildNumber(): string {
+  protected computeBuildNumber(): string | null {
     return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
   }
 
@@ -217,8 +217,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourcesDir = this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
     if (isAsar) {
       try {
-        const fsAsar = statFile(path.join(resourcesDir, "app.asar"), relativeFile)
-        return fsAsar != null
+        return statFile(path.join(resourcesDir, "app.asar"), relativeFile) != null
       }
       catch (e) {
         // asar throws error on access to undefined object (info.link)
@@ -255,7 +254,7 @@ export interface ArtifactCreated {
   readonly platform: Platform
 }
 
-export function normalizeTargets(targets: Array<string> | string): Array<string> {
+export function normalizeTargets(targets: Array<string> | string | null | undefined): Array<string> | null {
   if (targets == null) {
     return null
   }

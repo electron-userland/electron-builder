@@ -2,12 +2,12 @@ declare module "signcode-tf" {
   export interface SignOptions {
     path: string
     cert: string
-    name?: string
+    name?: string | null
     password: string
-    site?: string
-    hash?: Array<string>
+    site?: string | null
+    hash?: Array<string> | null
     overwrite?: boolean
   }
 
-  export function sign(options: SignOptions, callback: (error: Error) => void): void
+  export function sign(options: SignOptions, callback: (error: Error | null) => void): void
 }

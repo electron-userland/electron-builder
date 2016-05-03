@@ -11,11 +11,11 @@ import { sign } from "signcode-tf"
 const __awaiter = require("./awaiter")
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
-  certFilePromise: Promise<string>
+  certFilePromise: Promise<string | null>
 
-  extraNuGetFileSources: Promise<Array<string>>
+  extraNuGetFileSources: Promise<Array<string>> | null
 
-  loadingGifStat: Promise<string>
+  loadingGifStat: Promise<string> | null
 
   readonly iconPath: Promise<string>
 
@@ -93,7 +93,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       log(`Signing ${filename}`)
       await BluebirdPromise.promisify(sign)({
         path: path.join(appOutDir, filename),
-        cert: await this.certFilePromise,
+        cert: (await this.certFilePromise)!,
         password: this.options.cscKeyPassword,
         name: this.appName,
         site: await this.computePackageUrl(),
@@ -208,7 +208,7 @@ async function checkIcon(file: string): Promise<void> {
 
   const sizes = parseIco(buffer)
   for (let size of sizes) {
-    if (size.w >= 256 && size.h >= 256) {
+    if (size!.w >= 256 && size!.h >= 256) {
       return
     }
   }
@@ -247,7 +247,7 @@ export function computeDistOut(outDir: string, arch: string): string {
 
 function checkConflictingOptions(options: any) {
   for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
-    if (name in options) {
+    if (name! in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
   }

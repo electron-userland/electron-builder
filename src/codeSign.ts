@@ -12,9 +12,9 @@ const __awaiter = require("./awaiter")
 
 export interface CodeSigningInfo {
   name: string
-  keychainName?: string
+  keychainName?: string | null
 
-  installerName?: string
+  installerName?: string | null
 }
 
 function randomString(): string {
@@ -25,7 +25,7 @@ export function generateKeychainName(): string {
   return "csc-" + randomString() + ".keychain"
 }
 
-export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string, cscIKeyPassword?: string, csaLink?: string): Promise<CodeSigningInfo> {
+export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null, csaLink?: string | null): Promise<CodeSigningInfo> {
   const certLinks = [csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"]
   if (csaLink == null) {
     certLinks.push("https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt")
@@ -56,14 +56,14 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
     })
 }
 
-async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
+async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>): Promise<CodeSigningInfo> {
   for (let f of paths.slice(0, -keyPasswords.length)) {
-    await exec("security", ["import", f, "-k", keychainName, "-T", "/usr/bin/codesign"])
+    await exec("security", ["import", f!, "-k", keychainName, "-T", "/usr/bin/codesign"])
   }
 
   const namePromises: Array<Promise<string>> = []
   for (let i = paths.length - keyPasswords.length, j = 0; i < paths.length; i++, j++) {
-    const password = keyPasswords[j]
+    const password = keyPasswords[j]!
     const certPath = paths[i]
     await exec("security", ["import", certPath, "-k", keychainName, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
 
@@ -81,12 +81,12 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
 function extractCommonName(password: string, certPath: string): BluebirdPromise<string> {
   return exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", "pass:" + password, "-nomacver", "-clcerts", "-in", certPath])
     .then(result => {
-      const match = result[0].toString().match(/^subject.*\/CN=([^\/\n]+)/m)
+      const match = <Array<string | null> | null>(result[0].toString().match(/^subject.*\/CN=([^\/\n]+)/m))
       if (match == null || match[1] == null) {
         throw new Error("Cannot extract common name from p12")
       }
       else {
-        return match[1]
+        return match[1]!
       }
     })
 }

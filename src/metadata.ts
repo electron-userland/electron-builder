@@ -1,5 +1,5 @@
 export interface Metadata {
-  readonly repository?: string | RepositoryInfo
+  readonly repository?: string | RepositoryInfo | null
 }
 
 /*
@@ -17,14 +17,14 @@ export interface AppMetadata extends Metadata {
    As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
    not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
-  readonly productName?: string
+  readonly productName?: string | null
 
   /*
    The application description.
    */
   readonly description: string
 
-  readonly main?: string
+  readonly main?: string | null
 
   readonly author: AuthorMetadata
 
@@ -33,12 +33,12 @@ export interface AppMetadata extends Metadata {
 
    If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
    */
-  readonly homepage?: string
+  readonly homepage?: string | null
 
   /*
    *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
    */
-  readonly license?: string
+  readonly license?: string | null
 }
 
 /*
@@ -51,15 +51,15 @@ export interface DevMetadata extends Metadata {
   readonly build: BuildMetadata
 
   // deprecated
-  readonly homepage?: string
+  readonly homepage?: string | null
 
   // deprecated
-  readonly license?: string
+  readonly license?: string | null
 
   /*
    See [.directories](#MetadataDirectories)
    */
-  readonly directories?: MetadataDirectories
+  readonly directories?: MetadataDirectories | null
 }
 
 export interface RepositoryInfo {
@@ -78,7 +78,7 @@ export interface BuildMetadata {
   /*
    *OS X-only.* The app bundle ID. See [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
    */
-  readonly "app-bundle-id"?: string
+  readonly "app-bundle-id"?: string | null
   /*
    *OS X-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
@@ -86,7 +86,7 @@ export interface BuildMetadata {
 
    Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
    */
-  readonly "app-category-type"?: string
+  readonly "app-category-type"?: string | null
 
   /*
    Whether to package the application's source code into an archive, using [Electron's archive format](https://github.com/electron/asar). Defaults to `true`.
@@ -95,12 +95,12 @@ export interface BuildMetadata {
   readonly asar?: boolean
 
   // deprecated
-  readonly iconUrl?: string
+  readonly iconUrl?: string | null
 
   /*
    See [AppMetadata.productName](#AppMetadata-productName).
    */
-  readonly productName?: string
+  readonly productName?: string | null
 
   /**
    A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's directory (`Contents/Resources` for OS X).
@@ -111,34 +111,34 @@ export interface BuildMetadata {
 
    May be specified in the platform options (i.e. in the `build.osx`).
    */
-  readonly extraResources?: Array<string>
+  readonly extraResources?: Array<string> | null
 
   /*
    See [.build.osx](#OsXBuildOptions).
    */
-  readonly osx?: OsXBuildOptions
+  readonly osx?: OsXBuildOptions | null
 
   /*
    See [.build.mas](#MasBuildOptions).
    */
-  readonly mas?: MasBuildOptions
+  readonly mas?: MasBuildOptions | null
 
   /**
    See [.build.win](#LinuxBuildOptions).
    */
-  readonly win?: any,
+  readonly win?: WinBuildOptions  | null
 
   /*
    See [.build.linux](#LinuxBuildOptions).
    */
-  readonly linux?: LinuxBuildOptions
+  readonly linux?: LinuxBuildOptions | null
 
   /*
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
    */
-  readonly compression?: "store" | "normal" | "maximum"
+  readonly compression?: "store" | "normal" | "maximum" | null
 
-  readonly "build-version"?: string
+  readonly "build-version"?: string | null
 }
 
 /*
@@ -150,29 +150,29 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   /*
    The path to icon, which will be shown when mounted (default: `build/icon.icns`).
    */
-  readonly icon?: string
+  readonly icon?: string | null
 
   /*
    The path to background (default: `build/background.png`). The resolution of this file determines the resolution of the installer window.
    */
-  readonly background?: string
+  readonly background?: string | null
 
   /*
    Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
-  readonly target?: Array<string>
+  readonly target?: Array<string> | null
 
   /*
    The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
    MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).
    */
-  readonly identity?: string
+  readonly identity?: string | null
 
   /*
    The path to entitlements file for signing the app. `build/osx.entitlements` will be used if exists (it is a recommended way to set).
    MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
    */
-  readonly entitlements?: string
+  readonly entitlements?: string | null
 
   /*
    The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/osx.inherit.entitlements` will be used if exists (it is a recommended way to set).
@@ -180,7 +180,7 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
 
    This option only applies when signing with `entitlements` provided.
    */
-  readonly entitlementsInherit?: string
+  readonly entitlementsInherit?: string | null
 }
 
 /*
@@ -192,19 +192,19 @@ export interface MasBuildOptions extends OsXBuildOptions {
   /*
    The name of certificate to use when signing. Consider using environment variables [CSC_INSTALLER_LINK or CSC_INSTALLER_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
   */
-  readonly identity?: string
+  readonly identity?: string | null
 
   /*
    The path to entitlements file for signing the app. `build/mas.entitlements` will be used if exists (it is a recommended way to set).
    Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).
    */
-  readonly entitlements?: string
+  readonly entitlements?: string | null
 
   /*
    The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/mas.inherit.entitlements` will be used if exists (it is a recommended way to set).
    Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.inherit.entitlements).
    */
-  readonly entitlementsInherit?: string
+  readonly entitlementsInherit?: string | null
 }
 
 /*
@@ -222,13 +222,13 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    * If you don't plan to build windows installer, you can omit it.
    * If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
    */
-  readonly iconUrl?: string
+  readonly iconUrl?: string | null
 
   /*
    The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
    (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
    */
-  readonly loadingGif?: string
+  readonly loadingGif?: string | null
 
   /*
    Whether to create an MSI installer. Defaults to `true` (MSI is not created).
@@ -238,12 +238,12 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
    A URL to your existing updates. If given, these will be downloaded to create delta updates.
    */
-  readonly remoteReleases?: string
+  readonly remoteReleases?: string | null
 
   /*
    Authentication token for remote updates
    */
-  readonly remoteToken?: string
+  readonly remoteToken?: string | null
 }
 
 /*
@@ -253,36 +253,36 @@ export interface LinuxBuildOptions {
   /*
    As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
    */
-  description?: string
+  description?: string | null
 
   /*
    *deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
    */
-  synopsis?: string
+  synopsis?: string | null
 
   /*
    The maintainer. Defaults to [author](#AppMetadata-author).
    */
-  maintainer?: string
+  maintainer?: string | null
 
   /*
    The vendor. Defaults to [author](#AppMetadata-author).
    */
-  vendor?: string
+  vendor?: string | null
 
   // should be not documented, only to experiment
-  fpm?: string[]
+  fpm?: Array<string> | null
 
   //.desktop file template
-  desktop?: string
+  desktop?: string | null
 
-  afterInstall?: string
-  afterRemove?: string
+  afterInstall?: string | null
+  afterRemove?: string | null
 
   /*
   *deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
    */
-  readonly compression?: string
+  readonly compression?: string | null
 }
 
 /*
@@ -292,21 +292,21 @@ export interface MetadataDirectories {
   /*
    The path to build resources, default `build`.
    */
-  readonly buildResources?: string
+  readonly buildResources?: string | null
 
   /*
    The output directory, default `dist`.
    */
-  readonly output?: string
+  readonly output?: string | null
 
   /*
    The application directory (containing the application package.json), default `app`, `www` or working directory.
    */
-  readonly app?: string
+  readonly app?: string | null
 }
 
 export interface PlatformSpecificBuildOptions {
-  readonly extraResources?: Array<string>
+  readonly extraResources?: Array<string> | null
 }
 
 export class Platform {

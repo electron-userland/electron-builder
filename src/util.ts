@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
-import { readJson, stat } from "fs-extra-p"
+import { readJson, stat, Stats } from "fs-extra-p"
 import { yellow } from "chalk"
 import debugFactory = require("debug")
 import { Debugger } from "~debug/node"
@@ -71,9 +71,9 @@ export interface SpawnOptions extends BaseExecOptions {
   detached?: boolean
 }
 
-export function exec(file: string, args?: string[], options?: ExecOptions): BluebirdPromise<Buffer[]> {
+export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<Buffer[]> {
   if (debug.enabled) {
-    debug(`Executing ${file} ${args.join(" ")}`)
+    debug(`Executing ${file} ${args == null ? "" : args.join(" ")}`)
   }
 
   return new BluebirdPromise<Buffer[]>((resolve, reject) => {
@@ -96,9 +96,9 @@ export function exec(file: string, args?: string[], options?: ExecOptions): Blue
   })
 }
 
-export function spawn(command: string, args?: string[], options?: SpawnOptions): BluebirdPromise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
   if (debug.enabled) {
-    debug(`Spawning ${command} ${args.join(" ")}`)
+    debug(`Spawning ${command} ${args == null ? "" : args.join(" ")}`)
   }
 
   return new BluebirdPromise<any>((resolve, reject) => {
@@ -118,7 +118,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
   }
 
   const devDependencies = packageData.devDependencies
-  let electronPrebuiltDep: string = devDependencies == null ? null : devDependencies["electron-prebuilt"]
+  let electronPrebuiltDep = devDependencies == null ? null : devDependencies["electron-prebuilt"]
   if (electronPrebuiltDep == null) {
     const dependencies = packageData.dependencies
     electronPrebuiltDep = dependencies == null ? null : dependencies["electron-prebuilt"]
@@ -132,7 +132,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
   return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
 }
 
-export async function statOrNull(file: string) {
+export async function statOrNull(file: string): Promise<Stats | null> {
   try {
     return await stat(file)
   }
@@ -146,7 +146,7 @@ export async function statOrNull(file: string) {
   }
 }
 
-export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string): Promise<string> {
+export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
   if (userAppDir != null) {
     const absolutePath = path.join(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)
@@ -169,6 +169,6 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
   return projectDir
 }
 
-export function use<T, R>(value: T, task: (it: T) => R): R {
+export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
   return value == null ? null : task(value)
 }

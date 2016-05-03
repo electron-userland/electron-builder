@@ -7,5 +7,5 @@ declare module "asar" {
   export function listPackage(archive: string): Array<string>
 
   // followLinks defaults to true
-  export function statFile(archive: string, filename: string, followLinks?: boolean): Info
+  export function statFile(archive: string, filename: string, followLinks?: boolean): Info | null
 }

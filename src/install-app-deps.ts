@@ -18,7 +18,7 @@ const devPackageFile = path.join(projectDir, "package.json")
 async function main() {
   const devMetadata: DevMetadata = await readPackageJson(devPackageFile)
   const results: Array<string> = await BluebirdPromise.all([
-    computeDefaultAppDirectory(projectDir, use(devMetadata.directories, it => it.app) || args.appDir),
+    computeDefaultAppDirectory(projectDir, use(devMetadata.directories, it => it!.app) || args.appDir),
     getElectronVersion(devMetadata, devPackageFile)
   ])
 

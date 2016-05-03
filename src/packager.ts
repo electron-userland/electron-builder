@@ -1,5 +1,8 @@
 import * as path from "path"
-import { computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson, use, warn } from "./util"
+import {
+  computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson, use, warn,
+  exec
+} from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -11,6 +14,7 @@ import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 import deepAssign = require("deep-assign")
+import compareVersions = require("compare-versions")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -33,7 +37,7 @@ export class Packager implements BuildInfo {
   readonly eventEmitter = new EventEmitter()
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever = null) {
+  constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever | null = null) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
   }
 
@@ -48,10 +52,10 @@ export class Packager implements BuildInfo {
 
   async build(): Promise<any> {
     const devPackageFile = this.devPackageFile
-    const platforms = this.options.platform
+    const platforms = this.options.platform!
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
-    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it.app) || this.options.appDir)
+    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app) || this.options.appDir)
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
@@ -68,14 +72,27 @@ export class Packager implements BuildInfo {
 
   private async doBuild(platforms: Array<Platform>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
     const distTasks: Array<Promise<any>> = []
-    const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it.output) || "dist")
+    const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it!.output) || "dist")
 
+    // custom packager - don't check wine
+    let checkWine = this.options.platformPackagerFactory == null
     for (let platform of platforms) {
-      const helper = this.createHelper(platform, cleanupTasks)
-      for (let arch of normalizeArchs(platform, this.options.arch)) {
-        await this.installAppDependencies(platform, arch)
+      let wineCheck: Promise<Buffer[]> | null = null
+      if (checkWine && process.platform !== "win32" && platform === Platform.WINDOWS) {
+        wineCheck = exec("wine", ["--version"])
+      }
+
+      const helper = this.createHelper(platform!, cleanupTasks)
+      for (let arch of normalizeArchs(platform!, this.options.arch)) {
+        await this.installAppDependencies(platform!, arch!)
+
+        if (checkWine && wineCheck != null) {
+          checkWine = false
+          checkWineVersion(wineCheck)
+        }
+
         // electron-packager uses productName in the directory name
-        await helper.pack(outDir, arch, distTasks)}
+        await helper.pack(outDir, arch!, distTasks)}
     }
 
     return await BluebirdPromise.all(distTasks)
@@ -83,7 +100,7 @@ export class Packager implements BuildInfo {
 
   private createHelper(platform: Platform, cleanupTasks: Array<() => Promise<any>>): PlatformPackager<any> {
     if (this.options.platformPackagerFactory != null) {
-      return this.options.platformPackagerFactory(this,  platform, cleanupTasks)
+      return this.options.platformPackagerFactory!(this,  platform, cleanupTasks)
     }
 
     switch (platform) {
@@ -113,13 +130,13 @@ export class Packager implements BuildInfo {
     }
 
     const appMetadata = this.metadata
-    if (appMetadata.name == null) {
+    if (<any>appMetadata.name == null) {
       reportError("name")
     }
-    else if (appMetadata.description == null) {
+    else if (<any>appMetadata.description == null) {
       reportError("description")
     }
-    else if (appMetadata.version == null) {
+    else if (<any>appMetadata.version == null) {
       reportError("version")
     }
     else if ((<any>appMetadata) !== this.devMetadata) {
@@ -135,15 +152,15 @@ export class Packager implements BuildInfo {
       }
     }
 
-    if (this.devMetadata.build == null) {
+    if (<any>this.devMetadata.build == null) {
       throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
     }
     else {
       const author = appMetadata.author
-      if (author == null) {
+      if (<any>author == null) {
         reportError("author")
       }
-      else if (this.options.dist && author.email == null && platforms.includes(Platform.LINUX)) {
+      else if (this.options.dist && <any>author.email == null && platforms.includes(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
     }
@@ -166,7 +183,7 @@ export class Packager implements BuildInfo {
   }
 }
 
-export function normalizeArchs(platform: Platform, arch?: string) {
+export function normalizeArchs(platform: Platform, arch?: string | n) {
   if (platform === Platform.OSX) {
     return ["x64"]
   }
@@ -175,9 +192,9 @@ export function normalizeArchs(platform: Platform, arch?: string) {
   }
 }
 
-export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform): Array<Platform> {
-  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (<Array<string | Platform>>rawPlatforms) : [rawPlatforms]
-  if (platforms == null || platforms.length === 0) {
+export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | n): Array<Platform> {
+  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (<Array<string | Platform | n>>rawPlatforms) : [rawPlatforms]
+  if (<any>platforms == null || platforms.length === 0) {
     return [Platform.fromString(process.platform)]
   }
   else if (platforms[0] === "all") {
@@ -193,14 +210,41 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
     }
   }
   else {
-    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it))
+    return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
   }
 }
 
 function checkConflictingOptions(options: any) {
   for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
-    if (name in options) {
+    if (name! in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
+  }
+}
+
+async function checkWineVersion(checkPromise: Promise<Buffer[]>) {
+  function wineError(prefix: string): string {
+    return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "os-x")}`
+  }
+
+  let wineVersion: string
+  try {
+    wineVersion = (await checkPromise)[0].toString().trim()
+  }
+  catch (e) {
+    if (e.code === "ENOENT") {
+      throw new Error(wineError("wine is required"))
+    }
+    else {
+      throw new Error("Cannot check wine version: " + e)
+    }
+  }
+
+  if (wineVersion.startsWith("wine-")) {
+    wineVersion = wineVersion.substring("wine-".length)
+  }
+
+  if (compareVersions(wineVersion, "1.8") === -1) {
+    throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
 }

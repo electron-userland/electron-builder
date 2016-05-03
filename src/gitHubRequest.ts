@@ -7,7 +7,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 const __awaiter = require("./awaiter")
 Array.isArray(__awaiter)
 
-export function gitHubRequest<T>(path: string, token: string, data: { [name: string]: any; } = null, method: string = "GET"): BluebirdPromise<T> {
+export function gitHubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
   const options: any = {
     hostname: "api.github.com",
     path: path,
@@ -27,7 +27,7 @@ export function gitHubRequest<T>(path: string, token: string, data: { [name: str
   return doGitHubRequest<T>(options, token, it => it.end(encodedData))
 }
 
-export function doGitHubRequest<T>(options: RequestOptions, token: string, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
+export function doGitHubRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
   if (token != null) {
     (<any>options.headers).authorization = "token " + token
   }
@@ -80,12 +80,12 @@ Please double check that your GitHub Token is correct. Due to security reasons G
     addTimeOutHandler(request, reject)
     request.on("error", reject)
     requestProcessor(request, reject)
-    onCancel(() => request.abort())
+    onCancel!(() => request.abort())
   })
 }
 
 export class HttpError extends Error {
   constructor(public response: IncomingMessage, public description: any = null) {
-    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
+    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, <any>null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, <any>null, "  "))
   }
 }

@@ -13,10 +13,10 @@ function _download(url: string, destination: string, callback: (error: Error) =>
   doDownload(url, destination, 0, callback)
 }
 
-export function addTimeOutHandler(request: ClientRequest, callback: (error: Error | string) => void) {
+export function addTimeOutHandler(request: ClientRequest, callback: (error: Error) => void) {
   request.on("socket", function (socket: Socket) {
     socket.setTimeout(60 * 1000, () => {
-      callback("Request timed out")
+      callback(new Error("Request timed out"))
       request.abort()
     })
   })
