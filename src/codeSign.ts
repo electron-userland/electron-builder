@@ -54,7 +54,7 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
 
 async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>, importAppleCerts: boolean): Promise<CodeSigningInfo> {
   for (let f of paths.slice(0, -keyPasswords.length)) {
-    await exec("security", ["import", f, "-k", keychainName, "-T", "/usr/bin/codesign"])
+    await exec("security", ["import", f!, "-k", keychainName, "-T", "/usr/bin/codesign"])
   }
 
   if (importAppleCerts) {

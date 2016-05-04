@@ -180,10 +180,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async copyExtraResources(appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {
-    let resourcesDir = appOutDir
-    if (this.platform === Platform.OSX) {
-      resourcesDir = this.getOSXResourcesDir(appOutDir)
-    }
+    let resourcesDir = this.getResourcesDir(appOutDir)
     return await BluebirdPromise.map(await this.getExtraResources(arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
 
@@ -208,13 +205,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
   }
 
-  private getOSXResourcesDir(appOutDir: string): string {
-    return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
+  private getResourcesDir(appOutDir: string): string {
+    if (this.platform === Platform.OSX) {
+      return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
+    }
+    return path.join(appOutDir, "resources")
   }
 
   private async statFileInPackage(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, packageFile))
-    const resourcesDir = this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+    const resourcesDir = this.getResourcesDir(appOutDir)
     if (isAsar) {
       try {
         return statFile(path.join(resourcesDir, "app.asar"), relativeFile) != null
