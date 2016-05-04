@@ -209,7 +209,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (this.platform === Platform.OSX) {
       return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
     }
-    return path.join(appOutDir, 'resources')
+    return path.join(appOutDir, "resources")
   }
 
   private async statFileInPackage(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
