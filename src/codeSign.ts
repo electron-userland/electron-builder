@@ -26,11 +26,7 @@ export function generateKeychainName(): string {
 }
 
 export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null, csaLink?: string | null): Promise<CodeSigningInfo> {
-  const certLinks = [csaLink || "https://developer.apple.com/certificationauthority/AppleWWDRCA.cer"]
-  if (csaLink == null) {
-    certLinks.push("https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt")
-  }
-
+  const certLinks = csaLink == null ? ["https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt"] : [csaLink]
   certLinks.push(cscLink)
   if (cscILink != null) {
     certLinks.push(cscILink)
@@ -46,7 +42,7 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
         ["set-keychain-settings", "-t", "3600", "-u", keychainName]
       ], it => exec("security", it))
     ])
-    .then(() => importCerts(keychainName, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
+    .then(() => importCerts(keychainName, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null), csaLink == null)),
     errorOccurred => {
       const tasks = certPaths.map(it => deleteFile(it, true))
       if (errorOccurred) {
@@ -56,9 +52,13 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
     })
 }
 
-async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>): Promise<CodeSigningInfo> {
+async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>, importAppleCerts: boolean): Promise<CodeSigningInfo> {
   for (let f of paths.slice(0, -keyPasswords.length)) {
-    await exec("security", ["import", f!, "-k", keychainName, "-T", "/usr/bin/codesign"])
+    await exec("security", ["import", f, "-k", keychainName, "-T", "/usr/bin/codesign"])
+  }
+
+  if (importAppleCerts) {
+    await exec("security", ["import", path.join(__dirname, "..", "certs", "AppleWWDRCA.cer"), "-k", keychainName, "-T", "/usr/bin/codesign"])
   }
 
   const namePromises: Array<Promise<string>> = []

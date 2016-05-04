@@ -5,7 +5,8 @@
   "main": "out/index.js",
   "files": [
     "out",
-    "templates"
+    "templates",
+    "certs"
   ],
   "bin": {
     "build": "./out/build-cli.js",
@@ -62,7 +63,7 @@
     "compare-versions": "^2.0.1",
     "debug": "^2.2.0",
     "deep-assign": "^2.0.0",
-    "electron-osx-sign-tf": "~0.5.0-beta.0",
+    "electron-osx-sign-tf": "0.4.0-beta.0",
     "electron-packager-tf": "^7.0.2-beta.0",
     "electron-winstaller-fixed": "~2.4.0-beta.1",
     "fs-extra-p": "^1.0.1",
@@ -76,8 +77,7 @@
     "read-package-json": "^2.0.4",
     "signcode-tf": "^0.5.0",
     "source-map-support": "^0.4.0",
-    "tmp": "0.0.28",
-    "typescript": "^1.9.0-dev.20160503"
+    "tmp": "0.0.28"
   },
   "optionalDependencies": {
     "appdmg-tf": "^0.3.11"
@@ -106,7 +106,7 @@
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160414",
+    "typescript": "^1.9.0-dev.20160504",
     "whitespace": "^2.0.0"
   },
   "babel": {
@@ -123,8 +123,5 @@
       "test/out/*"
     ]
   },
-  "typings": "./out/electron-builder.d.ts",
-  "publishConfig": {
-    "tag": "next"
-  }
+  "typings": "./out/electron-builder.d.ts"
 }
