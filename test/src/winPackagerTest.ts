@@ -11,7 +11,7 @@ import * as assertThat from "should/as-function"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotTravis("win", () => assertPack("test-app-one", platform(Platform.WINDOWS),
+test.ifNotCiOsx("win", () => assertPack("test-app-one", platform(Platform.WINDOWS),
   {
     tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
       data.build.win = {
@@ -21,7 +21,7 @@ test.ifNotTravis("win", () => assertPack("test-app-one", platform(Platform.WINDO
   }
 ))
 
-test.ifNotTravis("noMsi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
+test.ifNotCiOsx("noMsi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
   {
     tempDirCreated: it => modifyPackageJson(it, data => {
       data.build.win = {
@@ -67,7 +67,7 @@ test("detect install-spinner", () => {
   })
 })
 
-test.ifNotTravis("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+test.ifNotCiOsx("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
   tempDirCreated: projectDir => move(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"), {clobber: true})
 }), /Windows icon image size must be at least 256x256/))
 

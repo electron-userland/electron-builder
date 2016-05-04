@@ -8,7 +8,6 @@
     <CLASSES>
       <root url="file://$PROJECT_DIR$/test/out/electron-builder.d.ts" />
     </CLASSES>
-    <JAVADOC />
     <SOURCES />
   </library>
 </component>

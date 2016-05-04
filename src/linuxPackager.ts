@@ -5,6 +5,7 @@ import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
 import { exec, log, use } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
+import { downloadFpm } from "./fpmDownload"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
@@ -17,6 +18,8 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
   private readonly packageFiles: Promise<Array<string>>
   private readonly scriptFiles: Promise<Array<string>>
+
+  private readonly fpmPath: Promise<string>
 
   constructor(info: BuildInfo) {
     super(info)
@@ -33,6 +36,13 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       })
       this.packageFiles = this.computePackageFiles(tempDir)
       this.scriptFiles = this.createScripts(tempDir)
+
+      if (process.platform === "darwin" && process.env.USE_SYSTEM_FPM !== "true") {
+        this.fpmPath = downloadFpm("1.5.0-1")
+      }
+      else {
+        this.fpmPath = BluebirdPromise.resolve("fpm")
+      }
     }
   }
 
@@ -201,7 +211,7 @@ Icon=${this.metadata.name}
 
     args.push(`${appOutDir}/=/opt/${this.appName}`)
     args.push(...<any>(await this.packageFiles)!)
-    await exec("fpm", args)
+    await exec(await this.fpmPath, args)
     return destination
   }
 }

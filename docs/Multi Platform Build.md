@@ -22,8 +22,7 @@ brew install Caskroom/cask/xquartz wine mono
 
 To build app in distributable format for Linux on OS X:
 ```
-brew install ruby gnu-tar libicns graphicsmagick
-gem install fpm
+brew install gnu-tar libicns graphicsmagick
 ```
 
 ## Linux

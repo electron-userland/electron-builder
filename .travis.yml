@@ -11,14 +11,15 @@ env:
   - NODE_VERSION=4
   - NODE_VERSION=6
 
-language: ruby
+language: c
 
 cache:
+  apt: true
+  bundler: true
   directories:
     - node_modules
     - test/testApp/node_modules
     - $HOME/.electron
-    - $HOME/.npm
 
 addons:
   apt:
@@ -33,7 +34,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns graphicsmagick git-lfs; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git lfs pull; fi
-  - gem install --no-rdoc --no-ri fpm
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/install-linux-dependencies.sh; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -L https://github.com/github/git-lfs/releases/download/v1.2.0/git-lfs-linux-amd64-1.2.0.tar.gz | tar -xz; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git-lfs-1.2.0/git-lfs pull; fi
@@ -41,8 +41,8 @@ before_install:
 install:
 - nvm install $NODE_VERSION
 - npm install npm -g
-- npm prune
 - npm install
+- npm prune
 
 script:
 - npm run test

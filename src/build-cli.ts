@@ -38,7 +38,7 @@ if (args.help) {
 }
 else {
   if (args.appDir) {
-    warn(`-appDir CLI parameter is deprecated, please configure build.directories.app instead 
+    warn(`-appDir CLI parameter is deprecated, please configure build.directories.app instead
 See https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-app`)
   }
 

@@ -61,6 +61,7 @@
     "src/builder.ts",
     "src/codeSign.ts",
     "src/errorMessages.ts",
+    "src/fpmDownload.ts",
     "src/gitHubPublisher.ts",
     "src/gitHubRequest.ts",
     "src/httpRequest.ts",

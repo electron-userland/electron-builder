@@ -29,7 +29,7 @@ function doDownload(url: string, destination: string, redirectCount: number, cal
     hostname: parsedUrl.hostname,
     path: parsedUrl.path,
     headers: {
-      "User-Agent": "electron-complete-builder"
+      "User-Agent": "electron-builder"
     }
   }, (response: IncomingMessage) => {
     if (response.statusCode >= 400) {

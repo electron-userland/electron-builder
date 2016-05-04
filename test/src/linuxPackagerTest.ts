@@ -7,9 +7,7 @@ import { Platform } from "out"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotWindows("linux", async () => {
-  await assertPack("test-app-one", platform(Platform.LINUX))
-})
+test.ifNotWindows("linux", () => assertPack("test-app-one", platform(Platform.LINUX)))
 
 test.ifNotWindows("linux - icons from ICNS", async () => {
   await assertPack("test-app-one", {

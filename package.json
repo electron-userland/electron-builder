@@ -20,7 +20,8 @@
     "test": "node ./test/out/helpers/runTests.js",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
-    "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master"
+    "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master",
+    "whitespace": "whitespace src/*.ts"
   },
   "repository": {
     "type": "git",
@@ -64,7 +65,7 @@
     "electron-osx-sign-tf": "~0.5.0-beta.0",
     "electron-packager-tf": "^7.0.2-beta.0",
     "electron-winstaller-fixed": "~2.4.0-beta.1",
-    "fs-extra-p": "^1.0.0",
+    "fs-extra-p": "^1.0.1",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",
     "image-size": "^0.5.0",
@@ -76,7 +77,7 @@
     "signcode-tf": "^0.5.0",
     "source-map-support": "^0.4.0",
     "tmp": "0.0.28",
-    "typescript": "^1.9.0-dev.20160502"
+    "typescript": "^1.9.0-dev.20160503"
   },
   "optionalDependencies": {
     "appdmg-tf": "^0.3.11"
@@ -84,7 +85,10 @@
   "config": {
     "pre-git": {
       "commit-msg": "conventional"
-    }
+    },
+    "pre-commit": [
+      "npm run whitespace"
+    ]
   },
   "devDependencies": {
     "ava-tf": "^0.12.4-beta.6",
@@ -102,7 +106,8 @@
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
     "tslint": "next",
-    "typescript": "^1.9.0-dev.20160414"
+    "typescript": "^1.9.0-dev.20160414",
+    "whitespace": "^2.0.0"
   },
   "babel": {
     "plugins": [
@@ -118,5 +123,8 @@
       "test/out/*"
     ]
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }
