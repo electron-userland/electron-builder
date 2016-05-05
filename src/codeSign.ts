@@ -26,7 +26,7 @@ export function generateKeychainName(): string {
 }
 
 export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null, csaLink?: string | null): Promise<CodeSigningInfo> {
-  const certLinks = csaLink == null ? ["https://startssl.com/certs/sca.code2.crt", "https://startssl.com/certs/sca.code3.crt"] : [csaLink]
+  const certLinks = csaLink == null ? [] : [csaLink]
   certLinks.push(cscLink)
   if (cscILink != null) {
     certLinks.push(cscILink)
@@ -52,13 +52,19 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
     })
 }
 
-async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>, importAppleCerts: boolean): Promise<CodeSigningInfo> {
-  for (let f of paths.slice(0, -keyPasswords.length)) {
-    await exec("security", ["import", f, "-k", keychainName, "-T", "/usr/bin/codesign"])
+async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string | null | undefined>, importBundledCerts: boolean): Promise<CodeSigningInfo> {
+  const certFiles = paths.slice(0, -keyPasswords.length)
+  if (importBundledCerts) {
+    const bundledCertsPath = path.join(__dirname, "..", "certs")
+    certFiles.push(
+      path.join(bundledCertsPath, "AppleWWDRCA.cer"),
+      path.join(bundledCertsPath, "sca.code2.crt"),
+      path.join(bundledCertsPath, "sca.code3.crt")
+    )
   }
 
-  if (importAppleCerts) {
-    await exec("security", ["import", path.join(__dirname, "..", "certs", "AppleWWDRCA.cer"), "-k", keychainName, "-T", "/usr/bin/codesign"])
+  for (let file of certFiles) {
+    await exec("security", ["import", file, "-k", keychainName, "-T", "/usr/bin/codesign"])
   }
 
   const namePromises: Array<Promise<string>> = []
