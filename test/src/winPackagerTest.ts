@@ -1,7 +1,7 @@
 import { Platform } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
-import { move } from "fs-extra-p"
+import { move, outputFile } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager, computeDistOut } from "out/winPackager"
 import { BuildInfo } from "out/platformPackager"
@@ -69,7 +69,11 @@ test("detect install-spinner", () => {
 
 test.ifNotCiOsx("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
   tempDirCreated: projectDir => move(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"), {clobber: true})
-}), /Windows icon image size must be at least 256x256/))
+}), /Windows icon size must be at least 256x256, please fix ".+/))
+
+test.ifNotCiOsx("icon not an image", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+  tempDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
+}), /Windows icon is not valid ico file, please fix ".+/))
 
 class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

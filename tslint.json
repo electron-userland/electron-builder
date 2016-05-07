@@ -71,5 +71,6 @@
   "no-invalid-this": true,
   "no-reference": true,
   "semicolon": "never",
-  "prefer-const": "true"
+  "prefer-const": "true",
+  "one-variable-per-declaration": "true"
 }

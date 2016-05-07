@@ -105,8 +105,8 @@
     "should": "^8.3.1",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
-    "tslint": "next",
-    "typescript": "1.9.0-dev.20160505",
+    "tslint": "^3.9.0-dev.0",
+    "typescript": "1.9.0-dev.20160507",
     "whitespace": "^2.0.0"
   },
   "babel": {

@@ -206,6 +206,10 @@ async function checkIcon(file: string): Promise<void> {
     await close(fd)
   }
 
+  if (!isIco(buffer)) {
+    throw new Error(`Windows icon is not valid ico file, please fix "${file}"`)
+  }
+
   const sizes = parseIco(buffer)
   for (let size of sizes) {
     if (size!.w >= 256 && size!.h >= 256) {
@@ -213,7 +217,7 @@ async function checkIcon(file: string): Promise<void> {
     }
   }
 
-  throw new Error("Windows icon image size must be at least 256x256")
+  throw new Error(`Windows icon size must be at least 256x256, please fix "${file}"`)
 }
 
 interface Size {
