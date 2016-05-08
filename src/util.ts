@@ -1,4 +1,4 @@
-import { execFile, spawn as _spawn } from "child_process"
+import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
 import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
@@ -14,6 +14,7 @@ const __awaiter = require("./awaiter")
 export const log = console.log
 
 export const debug: Debugger = debugFactory("electron-builder")
+export const debug7z: Debugger = debugFactory("electron-builder:7z")
 
 export function warn(message: string) {
   console.warn(yellow(message))
@@ -66,20 +67,15 @@ export interface ExecOptions extends BaseExecOptions {
   killSignal?: string
 }
 
-export interface SpawnOptions extends BaseExecOptions {
-  custom?: any
-  detached?: boolean
-}
-
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<Buffer[]> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : args.join(" ")}`)
   }
 
   return new BluebirdPromise<Buffer[]>((resolve, reject) => {
-    execFile(file, args, options, function (error, stdout, stderr) {
+    execFile(file, <any>args, options, function (error, stdout, stderr) {
       if (error == null) {
-        resolve([stdout, stderr])
+        resolve(<any>[stdout, stderr])
       }
       else {
         if (stdout.length !== 0) {
@@ -96,14 +92,19 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, processConsumer?: (it: ChildProcess, reject: (error: Error) => void) => void): BluebirdPromise<any> {
+  const notNullArgs = args || []
   if (debug.enabled) {
-    debug(`Spawning ${command} ${args == null ? "" : args.join(" ")}`)
+    debug(`Spawning ${command} ${notNullArgs.join(" ")}`)
   }
 
   return new BluebirdPromise<any>((resolve, reject) => {
-    const p = _spawn(command, args, options)
+    const p = _spawn(command, notNullArgs, options)
+    p.on("error", reject)
     p.on("close", (code: number) => code === 0 ? resolve() : reject(new Error(command + " exited with code " + code)))
+    if (processConsumer != null) {
+      processConsumer(p, reject)
+    }
   })
 }
 

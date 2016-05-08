@@ -20,6 +20,7 @@
       <w>globby</w>
       <w>hicolor</w>
       <w>libgcrypt</w>
+      <w>lzma</w>
       <w>makedeb</w>
       <w>nokeys</w>
       <w>nomacver</w>

@@ -20,6 +20,7 @@ cache:
     - node_modules
     - test/testApp/node_modules
     - $HOME/.electron
+    - $HOME/.cache/fpm
 
 addons:
   apt:

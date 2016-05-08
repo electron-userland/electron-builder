@@ -55,7 +55,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "7zip-bin": "^0.0.4",
+    "7zip-bin": "^0.3.0",
     "asar": "^0.11.0",
     "bluebird": "^3.3.5",
     "chalk": "^1.1.3",
@@ -106,7 +106,7 @@
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
     "tslint": "^3.9.0-dev.0",
-    "typescript": "1.9.0-dev.20160507",
+    "typescript": "1.9.0-dev.20160509",
     "whitespace": "^2.0.0"
   },
   "babel": {
@@ -123,5 +123,8 @@
       "test/out/*"
     ]
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }

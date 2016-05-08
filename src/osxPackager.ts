@@ -2,7 +2,7 @@ import { PlatformPackager, BuildInfo, normalizeTargets } from "./platformPackage
 import { Platform, OsXBuildOptions, MasBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, debug, spawn, statOrNull } from "./util"
+import { log, debug, debug7z, spawn, statOrNull } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
@@ -221,7 +221,14 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   }
 
   private archiveApp(outDir: string, format: string, classifier: string): Promise<string> {
-    const args = ["a", "-bb" + (debug.enabled ? "3" : "0"), "-bd"]
+    const args = ["a", "-bd"]
+    if (debug7z.enabled) {
+      args.push("-bb3")
+    }
+    else if (!debug.enabled) {
+      args.push("-bb0")
+    }
+
     const compression = this.devMetadata.build.compression
     const storeOnly = compression === "store"
     if (format === "zip" || storeOnly) {
@@ -230,7 +237,12 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     if (compression === "maximum") {
       // http://superuser.com/a/742034
       //noinspection SpellCheckingInspection
-      args.push("-mfb=258", "-mpass=15")
+      if (format === "zip") {
+        args.push("-mfb=258", "-mpass=15")
+      }
+      else if (format === "7z") {
+        args.push("-m0=lzma2", "-mx=9", "-mfb=64", "-md=32m", "-ms=on")
+      }
     }
 
     // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204

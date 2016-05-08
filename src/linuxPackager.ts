@@ -37,8 +37,8 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       this.packageFiles = this.computePackageFiles(tempDir)
       this.scriptFiles = this.createScripts(tempDir)
 
-      if (process.platform === "darwin" && process.env.USE_SYSTEM_FPM !== "true") {
-        this.fpmPath = downloadFpm("1.5.0-1")
+      if (process.platform !== "win32" && process.env.USE_SYSTEM_FPM !== "true") {
+        this.fpmPath = downloadFpm(process.platform === "darwin" ? "1.5.0-1" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
       }
       else {
         this.fpmPath = BluebirdPromise.resolve("fpm")
