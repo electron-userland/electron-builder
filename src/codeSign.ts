@@ -30,7 +30,7 @@ function downloadUrlOrBase64(urlOrBase64: string, destination: string): Bluebird
     return download(urlOrBase64, destination)
   }
   else {
-    return outputFile(destination, Buffer.from(urlOrBase64, "base64"))
+    return outputFile(destination, new Buffer(urlOrBase64, "base64"))
   }
 }
 

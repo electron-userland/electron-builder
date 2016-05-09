@@ -1,10 +1,11 @@
 import { statOrNull, spawn, debug, debug7z } from "./util"
-import { readdir, mkdirs, move, remove } from "fs-extra-p"
+import {  rename, remove } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
 import { Promise as BluebirdPromise } from "bluebird"
+import { writeFile } from "fs"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -47,9 +48,6 @@ async function doDownloadFpm(version: string, osAndArch: string): Promise<string
     return path.join(fpmDir, "fpm")
   }
 
-  // the only version currently supported (i.e. all clients are consumed the same version
-  await emptyDir(cacheDir, dirName)
-
   // 7z cannot be extracted from the input stream, temp file is required
   const tempName = getTempName()
   const archiveName = path.join(cacheDir, tempName + ".7z")
@@ -68,27 +66,18 @@ async function doDownloadFpm(version: string, osAndArch: string): Promise<string
     stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
 
-  await BluebirdPromise.all([move(path.join(tempUnpackDir, dirName), fpmDir, {clobber: true}), remove(archiveName)])
-  await remove(tempUnpackDir)
+  await BluebirdPromise.all<any>([
+    rename(path.join(tempUnpackDir, dirName), fpmDir)
+      .catch(e => {
+        console.warn("Cannot move downloaded fpm into final location (another process downloaded faster?): " + e)
+      }),
+    remove(archiveName),
+  ])
+  await BluebirdPromise.all([
+    remove(tempUnpackDir),
+    writeFile(path.join(fpmDir, ".lastUsed"), Date.now().toString())
+  ])
 
   debug(`fpm downloaded to ${fpmDir}`)
   return path.join(fpmDir, "fpm")
-}
-
-// prefix to not delete dir or archived dir (.7z)
-async function emptyDir(dir: string, excludeNamePrefix: string) {
-  let items: string[] | null = null
-  try {
-    items = await readdir(dir)
-  }
-  catch (e) {
-    await mkdirs(dir)
-    return
-  }
-
-  items = items!
-    .filter(it => !it.startsWith(excludeNamePrefix))
-    .map(it => path.join(dir, it))
-
-  await BluebirdPromise.map(items, remove)
 }

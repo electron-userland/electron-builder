@@ -59,6 +59,7 @@
     "src/awaiter.ts",
     "src/build-cli.ts",
     "src/builder.ts",
+    "src/cleanup.ts",
     "src/codeSign.ts",
     "src/errorMessages.ts",
     "src/fpmDownload.ts",
