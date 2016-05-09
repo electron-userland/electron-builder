@@ -17,7 +17,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 * If CI server detected, — `onTagOrDraft`.
 
- > **NOTICE**: _This is the recommended workflow._
+  **NOTICE**: _This is the recommended workflow._
 
  1. [Draft a new release](https://help.github.com/articles/creating-releases/). Set the "Tag version" to the value of `version` in your application `package.json`, and prefix it with `v`. "Release title" can be anything you want.
    - For example, if your application `package.json` version is `1.0`, your draft's "Tag version" would be `v1.0`.

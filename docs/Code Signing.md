@@ -4,9 +4,9 @@ On a development machine set environment variable `CSC_NAME` (and `CSC_INSTALLER
 
 | Env name       |  Description
 | -------------- | -----------
-| `CSC_LINK`                   | The HTTPS link to certificate (`*.p12` file).
+| `CSC_LINK`                   | The HTTPS link (or base64-encoded data) to certificate (`*.p12` file).
 | `CSC_KEY_PASSWORD`           | The password to decrypt the certificate given in `CSC_LINK`.
-| `CSC_INSTALLER_LINK`         | *osx-only* The HTTPS link to certificate to sign Mac App Store build (`*.p12` file).
+| `CSC_INSTALLER_LINK`         | *osx-only* The HTTPS link (or base64-encoded data) to certificate to sign Mac App Store build (`*.p12` file).
 | `CSC_INSTALLER_KEY_PASSWORD` | *osx-only* The password to decrypt the certificate given in `CSC_INSTALLER_LINK`.
 | `CSC_NAME`                   | *osx-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI).
 | `CSC_INSTALLER_NAME`         | *osx-only* Name of installer certificate (to retrieve from login.keychain). Useful on a development machine (not on CI).
@@ -26,3 +26,8 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and 
 travis encrypt "CSC_LINK='https://drive.google.com/uc?export=download&id=***'" --add
 travis encrypt 'CSC_KEY_PASSWORD=beAwareAboutBashEscaping!!!' --add
 ```
+
+# Where to buy certificate
+
+[StartSSL](https://startssl.com/Support?v=34) is recommended.
+It can be used to sign OS X app also, so, you don't need to buy Apple Certificate in addition (please note, it works, but we are waiting official confirmation).

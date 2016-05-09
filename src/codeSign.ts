@@ -1,5 +1,5 @@
 import { exec } from "./util"
-import { deleteFile } from "fs-extra-p"
+import { deleteFile, outputFile } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { tmpdir } from "os"
 import * as path from "path"
@@ -25,6 +25,15 @@ export function generateKeychainName(): string {
   return "csc-" + randomString() + ".keychain"
 }
 
+function downloadUrlOrBase64(urlOrBase64: string, destination: string): BluebirdPromise<any> {
+  if (urlOrBase64.startsWith("https://")) {
+    return download(urlOrBase64, destination)
+  }
+  else {
+    return outputFile(destination, Buffer.from(urlOrBase64, "base64"))
+  }
+}
+
 export function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null, csaLink?: string | null): Promise<CodeSigningInfo> {
   const certLinks = csaLink == null ? [] : [csaLink]
   certLinks.push(cscLink)
@@ -35,7 +44,7 @@ export function createKeychain(keychainName: string, cscLink: string, cscKeyPass
   const certPaths = certLinks.map(it => path.join(tmpdir(), randomString() + (it.endsWith(".cer") ? ".cer" : ".p12")))
   const keychainPassword = randomString()
   return executeFinally(BluebirdPromise.all([
-      BluebirdPromise.map(certPaths, (p, i) => download(certLinks[i], p)),
+      BluebirdPromise.map(certPaths, (p, i) => downloadUrlOrBase64(certLinks[i], p)),
       BluebirdPromise.mapSeries([
         ["create-keychain", "-p", keychainPassword, keychainName],
         ["unlock-keychain", "-p", keychainPassword, keychainName],
@@ -121,6 +130,6 @@ export function deleteKeychain(keychainName: string, ignoreNotFound: boolean = t
 
 export function downloadCertificate(cscLink: string): Promise<string> {
   const certPath = path.join(tmpdir(), randomString() + ".p12")
-  return download(cscLink, certPath)
+  return downloadUrlOrBase64(cscLink, certPath)
     .thenReturn(certPath)
 }

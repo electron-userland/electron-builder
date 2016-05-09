@@ -14,7 +14,7 @@ function versionNumber() {
   return getRandomInt(0, 99) + "." + Date.now() + "." + getRandomInt(0, 9)
 }
 
-const token = new Buffer("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
+const token = Buffer.from("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 
 //test("GitHub unauthorized", async (t) => {
