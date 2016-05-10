@@ -140,7 +140,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       usePackageJson: false,
       noMsi: true,
       extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n")),
-      extraMetadataSpecs: projectUrl == null ? null : `\n<projectUrl>${projectUrl}</projectUrl>`,
+      extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       sign: {
         name: this.appName,
         site: projectUrl,

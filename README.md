@@ -7,9 +7,8 @@ Complete solution to build ready for distribution and "auto update" installers o
 * [Build version management](#build-version-management).
 * [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
-[electron-packager](https://github.com/electron-userland/electron-packager),
-[appdmg](https://github.com/LinusU/node-appdmg) and
-[windows-installer](https://github.com/electron/windows-installer) are used under the hood.
+[electron-packager](https://github.com/electron-userland/electron-packager) and
+[appdmg](https://github.com/LinusU/node-appdmg) are used under the hood.
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
