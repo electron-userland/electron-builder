@@ -102,12 +102,12 @@
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "pre-git": "^3.8.4",
-    "semantic-release": "^4.3.5",
+    "semantic-release": "^6.2.2",
     "should": "^8.3.1",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
     "tslint": "^3.9.0-dev.0",
-    "typescript": "1.9.0-dev.20160509",
+    "typescript": "1.9.0-dev.20160511",
     "whitespace": "^2.0.0"
   },
   "babel": {

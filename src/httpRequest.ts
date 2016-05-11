@@ -1,9 +1,10 @@
 import { Socket } from "net"
 import { IncomingMessage, ClientRequest } from "http"
 import * as https from "https"
-import { createWriteStream } from "fs"
+import { createWriteStream, ensureDir } from "fs-extra-p"
 import { parse as parseUrl } from "url"
 import { Promise as BluebirdPromise } from "bluebird"
+import * as path from "path"
 
 const maxRedirects = 10
 
@@ -23,6 +24,8 @@ export function addTimeOutHandler(request: ClientRequest, callback: (error: Erro
 }
 
 function doDownload(url: string, destination: string, redirectCount: number, callback: (error: Error) => void) {
+  const ensureDirPromise = ensureDir(path.dirname(destination))
+
   const parsedUrl = parseUrl(url)
   // user-agent must be specified, otherwise some host can return 401 unauthorised
   const request = https.request({
@@ -48,9 +51,13 @@ function doDownload(url: string, destination: string, redirectCount: number, cal
       return
     }
 
-    const downloadStream = createWriteStream(destination)
-    response.pipe(downloadStream)
-    downloadStream.on("finish", () => downloadStream.close(callback))
+    ensureDirPromise
+      .then(() => {
+        const downloadStream = createWriteStream(destination)
+        response.pipe(downloadStream)
+        downloadStream.on("finish", () => downloadStream.close(callback))
+      })
+      .catch(callback)
 
     let ended = false
     response.on("end", () => {

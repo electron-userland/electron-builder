@@ -1,11 +1,10 @@
 import { statOrNull, spawn, debug, debug7z } from "./util"
-import {  rename, remove } from "fs-extra-p"
+import { writeFile, rename, remove } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
 import { Promise as BluebirdPromise } from "bluebird"
-import { writeFile } from "fs"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
