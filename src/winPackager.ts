@@ -88,7 +88,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   protected async packApp(options: any, appOutDir: string) {
     await super.packApp(options, appOutDir)
 
-    if (process.platform === "darwin" && this.options.cscLink != null && this.options.cscKeyPassword != null) {
+    if (process.platform !== "linux" && this.options.cscLink != null && this.options.cscKeyPassword != null) {
       const filename = this.appName + ".exe"
       log(`Signing ${filename}`)
       await BluebirdPromise.promisify(sign)({
@@ -97,7 +97,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         password: this.options.cscKeyPassword,
         name: this.appName,
         site: await this.computePackageUrl(),
-        hash: ["sha256"],
         overwrite: true,
       })
     }
@@ -144,7 +143,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       sign: {
         name: this.appName,
         site: projectUrl,
-        hash: ["sha256"],
         overwrite: true,
       }
     }, this.customBuildOptions)

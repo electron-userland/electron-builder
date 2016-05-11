@@ -66,7 +66,7 @@
     "deep-assign": "^2.0.0",
     "electron-osx-sign-tf": "0.4.0-beta.0",
     "electron-packager-tf": "^7.0.2-beta.0",
-    "electron-winstaller-fixed": "~2.5.0",
+    "electron-winstaller-fixed": "~2.6.2",
     "fs-extra-p": "^1.0.1",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",
@@ -76,7 +76,7 @@
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.4",
-    "signcode-tf": "^0.5.0",
+    "signcode-tf": "^0.6.3",
     "source-map-support": "^0.4.0",
     "tmp": "0.0.28"
   },

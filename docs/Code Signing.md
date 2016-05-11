@@ -1,4 +1,4 @@
-OS X and Windows code singing is supported.
+OS X and Windows code signing is supported. Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
 
 On a development machine set environment variable `CSC_NAME` (and `CSC_INSTALLER_NAME` if you build for Mac App Store) to your identity.
 
