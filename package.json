@@ -56,7 +56,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "7zip-bin": "^0.3.0",
+    "7zip-bin": "^1.0.0",
     "asar": "^0.11.0",
     "bluebird": "^3.3.5",
     "chalk": "^1.1.3",
@@ -66,7 +66,7 @@
     "deep-assign": "^2.0.0",
     "electron-osx-sign-tf": "0.4.0-beta.0",
     "electron-packager-tf": "^7.0.2-beta.0",
-    "electron-winstaller-fixed": "~2.6.2",
+    "electron-winstaller-fixed": "~2.7.0",
     "fs-extra-p": "^1.0.1",
     "globby": "^4.0.0",
     "hosted-git-info": "^2.1.4",
@@ -106,7 +106,7 @@
     "should": "^8.3.1",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
-    "tslint": "^3.9.0-dev.0",
+    "tslint": "^3.10.0-dev.1",
     "typescript": "1.9.0-dev.20160511",
     "whitespace": "^2.0.0"
   },

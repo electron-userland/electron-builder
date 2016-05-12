@@ -49,6 +49,11 @@ To build app in distributable format for Windows on Linux:
   sudo apt-get install mono-devel -y
   ```
 
+* Install zip.
+  ```
+  apt-get install zip
+  ```
+
 To build app in 32 bit from a machine with 64 bit:
 
 ```

@@ -4,16 +4,15 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull } from "./util"
-import { readFile, deleteFile, stat, rename, copy, emptyDir, writeFile, open, close, read } from "fs-extra-p"
+import { readFile, deleteFile, rename, copy, emptyDir, writeFile, open, close, read, move } from "fs-extra-p"
 import { sign } from "signcode-tf"
+import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string | null>
-
-  extraNuGetFileSources: Promise<Array<string>> | null
 
   loadingGifStat: Promise<string> | null
 
@@ -56,32 +55,30 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
+    let appOutDir = this.computeAppOutDir(outDir, arch)
+    const packOptions = this.computePackOptions(outDir, arch)
+
     if (!this.options.dist) {
-      return await super.pack(outDir, arch, postAsyncTasks)
+      await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
+      return
     }
 
-    const appOutDir = this.computeAppOutDir(outDir, arch)
+    const unpackedDir = path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`)
+    const finalAppOut = path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`, "lib", "net45")
     const installerOut = computeDistOut(outDir, arch)
-    log("Removing %s", installerOut)
+    log("Removing %s and %s", path.relative(this.projectDir, installerOut), path.relative(this.projectDir, unpackedDir))
     await BluebirdPromise.all([
-      this.packApp(this.computePackOptions(outDir, arch), appOutDir),
-      emptyDir(installerOut)
+      this.packApp(packOptions, appOutDir),
+      emptyDir(installerOut),
+      emptyDir(unpackedDir)
     ])
 
-    const extraResources = await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
-    if (extraResources.length > 0) {
-      this.extraNuGetFileSources = BluebirdPromise.map(extraResources, file => {
-        return stat(file)
-          .then(it => {
-            const relativePath = path.relative(appOutDir, file)
-            const src = it.isDirectory() ? `${relativePath}${path.sep}**` : relativePath
-            return `<file src="${src}" target="lib\\net45\\${relativePath.replace(/\//g, "\\")}"/>`
-          })
-      })
-    }
+    await move(appOutDir, finalAppOut)
+    appOutDir = finalAppOut
 
+    await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
     if (this.options.dist) {
-      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, packOptions))
     }
   }
 
@@ -102,7 +99,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string): Promise<any> {
+  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions): Promise<any> {
     let iconUrl = this.customBuildOptions.iconUrl || this.devMetadata.build.iconUrl
     if (iconUrl == null) {
       if (this.info.repositoryInfo != null) {
@@ -120,6 +117,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     checkConflictingOptions(this.customBuildOptions)
 
     const projectUrl = await this.computePackageUrl()
+    const rceditOptions = {
+      "version-string": packOptions["version-string"],
+      "file-version": packOptions["build-version"],
+      "product-version": packOptions["app-version"],
+    }
+    rceditOptions["version-string"]!.LegalCopyright = packOptions["app-copyright"]
+
     const options: any = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
@@ -138,13 +142,14 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       skipUpdateIcon: true,
       usePackageJson: false,
       noMsi: true,
-      extraFileSpecs: this.extraNuGetFileSources == null ? null : ("\n" + (await this.extraNuGetFileSources).join("\n")),
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
+      copyright: packOptions["app-copyright"],
       sign: {
         name: this.appName,
         site: projectUrl,
         overwrite: true,
-      }
+      },
+      rcedit: rceditOptions,
     }, this.customBuildOptions)
 
     if (this.loadingGifStat != null) {
@@ -154,9 +159,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return options
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     const installerOutDir = computeDistOut(outDir, arch)
-    await require("electron-winstaller-fixed").createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir))
+    await require("electron-winstaller-fixed").createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions))
 
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
@@ -170,8 +175,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     const promises: Array<Promise<any>> = [
-      rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName}Setup-${version}${archSuffix}.exe`))
-        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}Setup-${version}${archSuffix}.exe`)),
+      rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName} Setup ${version}${archSuffix}.exe`))
+        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-Setup-${version}${archSuffix}.exe`)),
     ]
 
     if (archSuffix === "") {
@@ -244,7 +249,7 @@ function isIco(buffer: Buffer): boolean {
 }
 
 export function computeDistOut(outDir: string, arch: string): string {
-  return path.join(outDir, "win" + (arch === "x64" ? "-x64" : ""))
+  return path.join(outDir, "win" + (arch === "x64" ? "" : "-arch"))
 }
 
 function checkConflictingOptions(options: any) {

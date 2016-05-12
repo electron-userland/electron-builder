@@ -144,7 +144,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
     Maintainer: "Foo Bar <foo@example.com>",
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
-    Description: " \n   Test Application",
+    Description: " \n   Test Application (test quite \" #378)",
   })
 }
 
@@ -206,7 +206,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
   function getWinExpected(archSuffix: string) {
     return [
       `RELEASES${archSuffix}`,
-      `${productName}Setup-1.1.0${archSuffix}.exe`,
+      `${productName} Setup 1.1.0${archSuffix}.exe`,
       `TestApp-1.1.0${archSuffix}-full.nupkg`,
     ]
   }
@@ -225,7 +225,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
   if (archSuffix == "") {
     const expectedArtifactNames = expected.slice()
     expectedArtifactNames[1] = `TestAppSetup-1.1.0${archSuffix}.exe`
-    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestAppSetup-1.1.0${archSuffix}.exe`])
+    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestApp-Setup-1.1.0${archSuffix}.exe`])
   }
 
   const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0${archSuffix}-full.nupkg`)
@@ -238,7 +238,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
   assertThat(files).deepEqual(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
-      return `lib/net45/${productName.replace(/ /g, "%20")}.exe`
+      return `lib/net45/${productName}.exe`
     }
     else {
       return it
@@ -260,7 +260,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     <owners>Foo Bar</owners>
     <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application</description>
+    <description>Test Application (test quite \" #378)</description>
     <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
     <projectUrl>http://foo.example.com</projectUrl>
   </metadata>

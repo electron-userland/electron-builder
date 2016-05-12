@@ -1,10 +1,12 @@
 import test from "./helpers/avaEx"
 import { assertPack, modifyPackageJson, outDirName } from "./helpers/packTester"
+import { expectedWinContents } from "./helpers/expectedContents"
 import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, PackagerOptions } from "out"
+import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -112,7 +114,9 @@ test("copy extra resource", async () => {
     await assertPack("test-app", {
       platform: [platform],
       // to check NuGet package
-      dist: platform === Platform.WINDOWS
+      dist: platform === Platform.WINDOWS,
+      cscLink: null,
+      cscInstallerLink: null,
     }, {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
@@ -146,6 +150,9 @@ test("copy extra resource", async () => {
         if (platform === Platform.OSX) {
           resourcesDir = path.join(resourcesDir, "TestApp.app", "Contents", "Resources")
         }
+        else if (platform === Platform.WINDOWS) {
+          resourcesDir = path.join(projectDir, outDirName, "win-unpacked", "lib", "net45")
+        }
         await assertThat(path.join(resourcesDir, "foo")).isDirectory()
         await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()
         await assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile()
@@ -154,39 +161,14 @@ test("copy extra resource", async () => {
         await assertThat(path.join(resourcesDir, "platformSpecific")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
       },
-      expectedContents: platform === Platform.WINDOWS ? [
-        "lib/net45/content_resources_200_percent.pak",
-        "lib/net45/content_shell.pak",
-        "lib/net45/d3dcompiler_47.dll",
-        "lib/net45/ffmpeg.dll",
-        "lib/net45/icudtl.dat",
-        "lib/net45/libEGL.dll",
-        "lib/net45/libGLESv2.dll",
-        "lib/net45/LICENSE",
-        "lib/net45/LICENSES.chromium.html",
-        "lib/net45/msvcp120.dll",
-        "lib/net45/msvcr120.dll",
-        "lib/net45/natives_blob.bin",
-        "lib/net45/node.dll",
-        "lib/net45/platformSpecific",
-        "lib/net45/snapshot_blob.bin",
-        "lib/net45/TestApp.exe",
-        "lib/net45/ui_resources_200_percent.pak",
-        "lib/net45/Update.exe",
-        "lib/net45/vccorlib120.dll",
-        "lib/net45/version",
-        "lib/net45/xinput1_3.dll",
+      expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         "lib/net45/bar/hello.txt",
         "lib/net45/bar/x64.txt",
         "lib/net45/foo/nameWithoutDot",
-        "lib/net45/locales/en-US.pak",
-        "lib/net45/resources/app.asar",
-        "lib/net45/resources/electron.asar",
-        "lib/net45/win/x64.txt",
-        "TestApp.nuspec",
-        "[Content_Types].xml",
-        "_rels/.rels"
-      ] : null,
+        "lib/net45/platformSpecific",
+        "lib/net45/win/",
+        "lib/net45/win/x64.txt"
+      )) : null,
     })
   }
 })

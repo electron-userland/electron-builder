@@ -105,17 +105,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.computeAppOutDir(outDir, arch)
-    return this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions, postAsyncTasks)
-  }
+  abstract pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC, postAsyncTasks: Array<Promise<any>> | null = null) {
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC) {
     await this.packApp(options, appOutDir)
     await this.copyExtraResources(appOutDir, arch, customBuildOptions)
-    if (postAsyncTasks != null && this.options.dist) {
-      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
-    }
   }
 
   protected computePackOptions(outDir: string, arch: string): ElectronPackagerOptions {
@@ -137,6 +131,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       asar: true,
       overwrite: true,
       "app-version": version,
+      "app-copyright": `Copyright © ${new Date().getFullYear()} ${this.metadata.author.name || this.appName}`,
       "build-version": buildVersion,
       tmpdir: false,
       "version-string": {
@@ -186,8 +181,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return await BluebirdPromise.map(await this.getExtraResources(arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
   }
-
-  protected abstract packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any>
 
   protected async computePackageUrl(): Promise<string | null> {
     const url = this.metadata.homepage || this.devMetadata.homepage

@@ -63,6 +63,15 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return [].concat(...await BluebirdPromise.all(promises))
   }
 
+  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    const appOutDir = this.computeAppOutDir(outDir, arch)
+    await this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
+
+    if (this.options.dist) {
+      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+    }
+  }
+
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
     const tempFile = path.join(tempDir, this.appName + ".desktop")
     await outputFile(tempFile, this.debOptions.desktop || `[Desktop Entry]

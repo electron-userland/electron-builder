@@ -57,6 +57,8 @@ declare namespace ElectronPackager {
       "asar-unpack"?: string;
     /** Should contain the identity to be used when running `codesign` (OS X only). */
     sign?: string;
+    
+    "app-copyright"?: string
   }
 
   /** Object hash of application metadata to embed into the executable (Windows only). */

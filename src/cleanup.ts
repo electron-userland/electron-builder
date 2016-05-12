@@ -46,7 +46,7 @@ async function main() {
 async function isRecentlyUsed(dir: string) {
   try {
     const lastUsed = parseInt(await readFile(path.join(dir, ".lastUsed"), "utf8"), 10)
-    if (!isNaN(lastUsed) && (Date.now() - lastUsed) < 3600000) {
+    if (!isNaN(lastUsed) && (Date.now() - lastUsed) < (3600000 * 2)) {
       return true
     }
   }
