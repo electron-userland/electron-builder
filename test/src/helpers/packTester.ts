@@ -27,6 +27,7 @@ interface AssertPackOptions {
   readonly tempDirCreated?: (projectDir: string) => Promise<any>
   readonly packed?: (projectDir: string) => Promise<any>
   readonly expectedContents?: Array<string>
+  readonly expectedArtifacts?: Array<string>
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
@@ -210,12 +211,15 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
       `TestApp-1.1.0${archSuffix}-full.nupkg`,
     ]
   }
-
   const archSuffix = (packagerOptions.arch || process.arch) === "x64" ? "" : "-ia32"
-  const expected = archSuffix == "" ? getWinExpected(archSuffix) : getWinExpected(archSuffix).concat(getWinExpected(""))
+  const expected =  checkOptions == null || checkOptions.expectedArtifacts == null ? (archSuffix == "" ? getWinExpected(archSuffix) : getWinExpected(archSuffix).concat(getWinExpected(""))) : checkOptions.expectedArtifacts
 
   const filenames = artifacts.map(it => path.basename(it.file))
   assertThat(filenames.slice().sort()).deepEqual(expected.slice().sort())
+
+  if (checkOptions != null && checkOptions.expectedArtifacts != null) {
+    return
+  }
 
   let i = filenames.indexOf("RELEASES-ia32")
   if (i !== -1) {

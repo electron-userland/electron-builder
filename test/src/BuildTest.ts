@@ -166,7 +166,6 @@ test("copy extra resource", async () => {
         "lib/net45/bar/x64.txt",
         "lib/net45/foo/nameWithoutDot",
         "lib/net45/platformSpecific",
-        "lib/net45/win/",
         "lib/net45/win/x64.txt"
       )) : null,
     })

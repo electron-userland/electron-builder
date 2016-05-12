@@ -22,6 +22,25 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", platform(Platform.WINDOW
   }
 ))
 
+test.ifNotCiOsx("win f", () => {
+  const metadata: any = {
+    version: "3.0.0-beta.2"
+  }
+
+  return assertPack("test-app-one", {
+      platform: [Platform.WINDOWS],
+      cscLink: null,
+      cscInstallerLink: null,
+      devMetadata: metadata
+    }, {
+    expectedArtifacts: [
+      "RELEASES",
+      "TestApp Setup 3.0.0-beta.2.exe",
+      "TestApp-3.0.0-beta2-full.nupkg"
+    ]
+  })
+})
+
 test.ifNotCiOsx("noMsi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
   {
     tempDirCreated: it => modifyPackageJson(it, data => {

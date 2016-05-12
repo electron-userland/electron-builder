@@ -26,6 +26,7 @@
       <w>mkdirp</w>
       <w>nokeys</w>
       <w>nomacver</w>
+      <w>noninteractive</w>
       <w>nsis</w>
       <w>nuget</w>
       <w>nupkg</w>

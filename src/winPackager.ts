@@ -161,13 +161,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     const installerOutDir = computeDistOut(outDir, arch)
-    await require("electron-winstaller-fixed").createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions))
+    const winstaller = require("electron-winstaller-fixed")
+    await winstaller.createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions))
 
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const releasesFile = path.join(installerOutDir, "RELEASES")
-    const nupkgPathOriginal = this.metadata.name + "-" + version + "-full.nupkg"
-    const nupkgPathWithArch = this.metadata.name + "-" + version + archSuffix + "-full.nupkg"
+    const nupkgVersion = winstaller.convertVersion(version)
+    const nupkgPathOriginal = `${this.metadata.name}-${nupkgVersion}-full.nupkg`
+    const nupkgPathWithArch = `${this.metadata.name}-${nupkgVersion}${archSuffix}-full.nupkg`
 
     async function changeFileNameInTheReleasesFile(): Promise<void> {
       const data = (await readFile(releasesFile, "utf8")).replace(new RegExp(" " + nupkgPathOriginal + " ", "g"), " " + nupkgPathWithArch + " ")
