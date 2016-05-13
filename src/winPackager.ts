@@ -230,7 +230,7 @@ function isIco(buffer: Buffer): boolean {
 }
 
 export function computeDistOut(outDir: string, arch: string): string {
-  return path.join(outDir, "win" + (arch === "x64" ? "" : "-arch"))
+  return path.join(outDir, `win${arch === "x64" ? "" : `-${arch}` }`)
 }
 
 function checkConflictingOptions(options: any) {

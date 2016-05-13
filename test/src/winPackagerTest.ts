@@ -12,13 +12,24 @@ import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotCiOsx("win", () => assertPack("test-app-one", signed(platform(Platform.WINDOWS)),
+test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
+    platform: [Platform.WINDOWS],
+    arch: "all",
+  }),
   {
     tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
       data.build.win = {
         remoteReleases: "https://github.com/develar/__test-app-releases",
       }
-    }) : null
+    }) : null,
+    expectedArtifacts: [
+      "RELEASES",
+      "RELEASES",
+      "TestApp Setup 1.1.0-ia32.exe",
+      "TestApp Setup 1.1.0.exe",
+      "TestApp-1.1.0-full.nupkg",
+      "TestApp-1.1.0-full.nupkg"
+    ],
   }
 ))
 

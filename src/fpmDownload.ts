@@ -1,5 +1,5 @@
 import { statOrNull, spawn, debug, debug7z } from "./util"
-import { writeFile, rename, remove } from "fs-extra-p"
+import { writeFile, rename, remove, stat, emptyDir } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
@@ -41,25 +41,31 @@ async function doDownloadFpm(version: string, osAndArch: string): Promise<string
   const cacheDir = path.join(homedir(), ".cache", "fpm")
   const fpmDir = path.join(cacheDir, dirName)
 
-  const stat = await statOrNull(fpmDir)
-  if (stat != null && stat.isDirectory()) {
+  const fpmDirStat = await statOrNull(fpmDir)
+  if (fpmDirStat != null && fpmDirStat.isDirectory()) {
     debug(`Found existing fpm ${fpmDir}`)
     return path.join(fpmDir, "fpm")
   }
 
   // 7z cannot be extracted from the input stream, temp file is required
   const tempName = getTempName()
-  const archiveName = path.join(cacheDir, tempName + ".7z")
-  debug(`Download fpm from ${url} to ${archiveName}`)
-  await download(url, archiveName)
+  const archiveName = path.join(cacheDir, `${tempName}.7z`)
   const tempUnpackDir = path.join(cacheDir, tempName)
-  const args = ["x", archiveName, "-o" + tempName, "-bd"]
+  debug(`Download fpm from ${url} to ${archiveName}`)
+  await BluebirdPromise.all<any>([download(url, archiveName), emptyDir(tempUnpackDir)])
+
+  if (debug.enabled && (!(await stat(archiveName)).isFile())) {
+    throw new Error(`${archiveName} was not downloaded correctly`)
+  }
+
+  const args = ["x", archiveName, "-o" + tempUnpackDir, "-bd"]
   if (debug7z.enabled) {
     args.push("-bb3")
   }
   else if (!debug.enabled) {
     args.push("-bb0")
   }
+
   await spawn(path7za, args, {
     cwd: cacheDir,
     stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
