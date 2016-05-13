@@ -1,10 +1,10 @@
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
 import { Platform } from "out"
 import OsXPackager from "out/osxPackager"
 import { move, writeFile } from "fs-extra-p"
 import * as path from "path"
-import { BuildInfo } from "out/platformPackager"
+import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
 import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
@@ -14,15 +14,15 @@ import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifOsx("two-package", () => assertPack("test-app", {
+test.ifOsx("two-package", () => assertPack("test-app", signed({
   platform: [Platform.OSX],
   arch: "all",
-}))
+})))
 
-test.ifOsx("one-package", () => assertPack("test-app-one", platform(Platform.OSX)))
+test.ifOsx("one-package", () => assertPack("test-app-one", signed(platform(Platform.OSX))))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
-  const options = {
+  let options: PackagerOptions = {
     platform: [Platform.OSX],
     devMetadata: {
       build: {
@@ -32,6 +32,10 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
       }
     }
   }
+  if (target.includes("mas")) {
+    options = signed(options)
+  }
+
   return () => assertPack("test-app-one", options, {
     expectedContents: expectedContents
   })
@@ -49,8 +53,6 @@ test.ifOsx("custom mas", () => {
   return assertPack("test-app-one", {
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
-    cscLink: null,
-    cscInstallerLink: null,
     devMetadata: {
       build: {
         osx: {
@@ -84,8 +86,6 @@ test.ifOsx("identity in package.json", () => {
   return assertPack("test-app-one", {
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
-    cscLink: null,
-    cscInstallerLink: null,
     devMetadata: {
       build: {
         osx: {
@@ -112,8 +112,6 @@ test.ifOsx("entitlements in build dir", () => {
   return assertPack("test-app-one", {
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
-    cscLink: null,
-    cscInstallerLink: null,
     devMetadata: {
       build: {
         osx: {

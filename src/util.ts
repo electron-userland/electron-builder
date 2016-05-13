@@ -17,7 +17,7 @@ export const debug: Debugger = debugFactory("electron-builder")
 export const debug7z: Debugger = debugFactory("electron-builder:7z")
 
 export function warn(message: string) {
-  console.warn(yellow(message))
+  console.warn(yellow(`Warning: ${message}`))
 }
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]

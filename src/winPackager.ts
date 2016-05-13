@@ -3,8 +3,8 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
-import { log, statOrNull } from "./util"
-import { readFile, deleteFile, rename, copy, emptyDir, writeFile, open, close, read, move } from "fs-extra-p"
+import { log, statOrNull, warn } from "./util"
+import { deleteFile, rename, emptyDir, open, close, read, move } from "fs-extra-p"
 import { sign } from "signcode-tf"
 import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 
@@ -52,6 +52,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    if (arch === "ia32") {
+      warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
+    }
+
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
@@ -64,7 +68,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     const unpackedDir = path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`)
-    const finalAppOut = path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`, "lib", "net45")
+    const finalAppOut = path.join(unpackedDir, "lib", "net45")
     const installerOut = computeDistOut(outDir, arch)
     log("Removing %s and %s", path.relative(this.projectDir, installerOut), path.relative(this.projectDir, unpackedDir))
     await BluebirdPromise.all([
@@ -166,38 +170,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
-    const releasesFile = path.join(installerOutDir, "RELEASES")
-    const nupkgVersion = winstaller.convertVersion(version)
-    const nupkgPathOriginal = `${this.metadata.name}-${nupkgVersion}-full.nupkg`
-    const nupkgPathWithArch = `${this.metadata.name}-${nupkgVersion}${archSuffix}-full.nupkg`
+    const nupkgPath = `${this.metadata.name}-${winstaller.convertVersion(version)}-full.nupkg`
 
-    async function changeFileNameInTheReleasesFile(): Promise<void> {
-      const data = (await readFile(releasesFile, "utf8")).replace(new RegExp(" " + nupkgPathOriginal + " ", "g"), " " + nupkgPathWithArch + " ")
-      await writeFile(releasesFile, data)
-    }
+    this.dispatchArtifactCreated(path.join(installerOutDir, nupkgPath))
+    this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
 
-    const promises: Array<Promise<any>> = [
-      rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName} Setup ${version}${archSuffix}.exe`))
-        .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-Setup-${version}${archSuffix}.exe`)),
-    ]
-
-    if (archSuffix === "") {
-      this.dispatchArtifactCreated(path.join(installerOutDir, nupkgPathOriginal))
-      this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
-    }
-    else {
-      promises.push(
-        rename(path.join(installerOutDir, nupkgPathOriginal), path.join(installerOutDir, nupkgPathWithArch))
-          .then(it => this.dispatchArtifactCreated(it))
-      )
-      promises.push(
-        changeFileNameInTheReleasesFile()
-          .then(() => copy(releasesFile, path.join(installerOutDir, "RELEASES-ia32")))
-          .then(it => this.dispatchArtifactCreated(it))
-      )
-    }
-
-    await BluebirdPromise.all(promises)
+    await rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName} Setup ${version}${archSuffix}.exe`))
+      .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-Setup-${version}${archSuffix}.exe`))
   }
 }
 

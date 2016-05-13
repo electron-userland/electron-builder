@@ -60,10 +60,6 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
     await packAndCheck(projectDir, Object.assign({
       projectDir: projectDir,
-      cscLink: CSC_LINK,
-      cscKeyPassword: CSC_KEY_PASSWORD,
-      cscInstallerLink: CSC_INSTALLER_LINK,
-      cscInstallerKeyPassword: CSC_INSTALLER_KEY_PASSWORD,
       dist: true,
     }, packagerOptions), checkOptions)
 
@@ -206,7 +202,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
 
   function getWinExpected(archSuffix: string) {
     return [
-      `RELEASES${archSuffix}`,
+      `RELEASES`,
       `${productName} Setup 1.1.0${archSuffix}.exe`,
       `TestApp-1.1.0${archSuffix}-full.nupkg`,
     ]
@@ -221,16 +217,9 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     return
   }
 
-  let i = filenames.indexOf("RELEASES-ia32")
-  if (i !== -1) {
-    assertThat((await readFile(artifacts[i].file, "utf8")).indexOf("ia32")).not.equal(-1)
-  }
-
-  if (archSuffix == "") {
-    const expectedArtifactNames = expected.slice()
-    expectedArtifactNames[1] = `TestAppSetup-1.1.0${archSuffix}.exe`
-    assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestApp-Setup-1.1.0${archSuffix}.exe`])
-  }
+  const expectedArtifactNames = expected.slice()
+  expectedArtifactNames[1] = `TestAppSetup-1.1.0${archSuffix}.exe`
+  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestApp-Setup-1.1.0${archSuffix}.exe`])
 
   const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0${archSuffix}-full.nupkg`)
   const unZipper = new DecompressZip(packageFile)
@@ -292,4 +281,12 @@ export function platform(platform: Platform): PackagerOptions {
   return {
     platform: [platform]
   }
+}
+
+export function signed(packagerOptions: PackagerOptions): PackagerOptions {
+  packagerOptions.cscLink = CSC_LINK
+  packagerOptions.cscKeyPassword = CSC_KEY_PASSWORD
+  packagerOptions.cscInstallerLink = CSC_INSTALLER_LINK
+  packagerOptions.cscInstallerKeyPassword = CSC_INSTALLER_KEY_PASSWORD
+  return packagerOptions
 }

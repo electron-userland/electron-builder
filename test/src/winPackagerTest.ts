@@ -1,6 +1,6 @@
 import { Platform } from "out"
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
 import { move, outputFile } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager, computeDistOut } from "out/winPackager"
@@ -12,7 +12,7 @@ import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotCiOsx("win", () => assertPack("test-app-one", platform(Platform.WINDOWS),
+test.ifNotCiOsx("win", () => assertPack("test-app-one", signed(platform(Platform.WINDOWS)),
   {
     tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
       data.build.win = {
@@ -22,17 +22,15 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", platform(Platform.WINDOW
   }
 ))
 
-test.ifNotCiOsx("win f", () => {
+test.ifDevOrWinCi("win f", () => {
   const metadata: any = {
     version: "3.0.0-beta.2"
   }
 
   return assertPack("test-app-one", {
-      platform: [Platform.WINDOWS],
-      cscLink: null,
-      cscInstallerLink: null,
-      devMetadata: metadata
-    }, {
+    platform: [Platform.WINDOWS],
+    devMetadata: metadata
+  }, {
     expectedArtifacts: [
       "RELEASES",
       "TestApp Setup 3.0.0-beta.2.exe",

@@ -24,6 +24,7 @@
       <w>lzma</w>
       <w>makedeb</w>
       <w>mkdirp</w>
+      <w>mpass</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
