@@ -67,8 +67,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
     const bundledCertsPath = path.join(__dirname, "..", "certs")
     certFiles.push(
       path.join(bundledCertsPath, "AppleWWDRCA.cer"),
-      path.join(bundledCertsPath, "sca.code2.crt"),
-      path.join(bundledCertsPath, "sca.code3.crt")
+      path.join(bundledCertsPath, "bundle.crt")
     )
   }
 
