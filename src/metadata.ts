@@ -231,9 +231,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly loadingGif?: string | null
 
   /*
-   Whether to create an MSI installer. Defaults to `true` (MSI is not created).
+   Whether to create an MSI installer. Defaults to `false` (MSI is not created).
    */
-  readonly noMsi?: boolean
+  readonly msi?: boolean
 
   /*
    A URL to your existing updates. If given, these will be downloaded to create delta updates.

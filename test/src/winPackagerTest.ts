@@ -50,14 +50,14 @@ test.ifDevOrWinCi("win f", () => {
   })
 })
 
-test.ifNotCiOsx("noMsi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
+test.ifNotCiOsx("msi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
   {
     tempDirCreated: it => modifyPackageJson(it, data => {
       data.build.win = {
-        noMsi: "false",
+        msi: "false",
       }
     })
-  }), `noMsi expected to be boolean value, but string '"false"' was specified`)
+  }), `msi expected to be boolean value, but string '"false"' was specified`)
 )
 
 test("detect install-spinner", () => {
@@ -115,7 +115,7 @@ class CheckingWinPackager extends WinPackager {
     // skip pack
     const installerOutDir = computeDistOut(outDir, arch)
     const packOptions = this.computePackOptions(outDir, arch)
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch), installerOutDir, packOptions)
+    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch), installerOutDir, packOptions, "Foo.exe")
   }
 
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {

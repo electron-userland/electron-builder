@@ -4,7 +4,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull, warn } from "./util"
-import { deleteFile, rename, emptyDir, open, close, read, move } from "fs-extra-p"
+import { deleteFile, emptyDir, open, close, read, move } from "fs-extra-p"
 import { sign } from "signcode-tf"
 import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 
@@ -103,7 +103,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<any> {
     let iconUrl = this.customBuildOptions.iconUrl || this.devMetadata.build.iconUrl
     if (iconUrl == null) {
       if (this.info.repositoryInfo != null) {
@@ -132,6 +132,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       name: this.metadata.name,
       productName: this.appName,
       exe: this.appName + ".exe",
+      setupExe: setupExeName,
       title: this.appName,
       appDirectory: appOutDir,
       outputDirectory: installerOutDir,
@@ -145,7 +146,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       fixUpPaths: false,
       skipUpdateIcon: true,
       usePackageJson: false,
-      noMsi: true,
+      msi: false,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: packOptions["app-copyright"],
       sign: {
@@ -166,17 +167,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     const installerOutDir = computeDistOut(outDir, arch)
     const winstaller = require("electron-winstaller-fixed")
-    await winstaller.createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions))
-
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
-    const nupkgPath = `${this.metadata.name}-${winstaller.convertVersion(version)}-full.nupkg`
+    const setupExeName = `${this.appName} Setup ${version}${archSuffix}.exe`
 
-    this.dispatchArtifactCreated(path.join(installerOutDir, nupkgPath))
+    await winstaller.createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, setupExeName))
+
+    this.dispatchArtifactCreated(path.join(installerOutDir, setupExeName), `${this.metadata.name}-Setup-${version}${archSuffix}.exe`)
+    this.dispatchArtifactCreated(path.join(installerOutDir, `${this.metadata.name}-${winstaller.convertVersion(version)}-full.nupkg`))
     this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
-
-    await rename(path.join(installerOutDir, "Setup.exe"), path.join(installerOutDir, `${this.appName} Setup ${version}${archSuffix}.exe`))
-      .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-Setup-${version}${archSuffix}.exe`))
   }
 }
 
@@ -235,13 +234,18 @@ export function computeDistOut(outDir: string, arch: string): string {
 
 function checkConflictingOptions(options: any) {
   for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
-    if (name! in options) {
+    if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
   }
 
-  const noMsi = options.noMsi
-  if (noMsi != null && typeof noMsi !== "boolean") {
-    throw new Error(`noMsi expected to be boolean value, but string '"${noMsi}"' was specified`)
+  if ("noMsi" in options) {
+    warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
+    options.msi = !options.noMsi
+  }
+
+  const msi = options.msi
+  if (msi != null && typeof msi !== "boolean") {
+    throw new Error(`msi expected to be boolean value, but string '"${msi}"' was specified`)
   }
 }

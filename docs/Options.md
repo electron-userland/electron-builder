@@ -92,7 +92,7 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | --- | ---
 | iconUrl | <a name="WinBuildOptions-iconUrl"></a><p>A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
 | loadingGif | <a name="WinBuildOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
-| noMsi | <a name="WinBuildOptions-noMsi"></a>Whether to create an MSI installer. Defaults to `true` (MSI is not created).
+| msi | <a name="WinBuildOptions-msi"></a>Whether to create an MSI installer. Defaults to `false` (MSI is not created).
 | remoteReleases | <a name="WinBuildOptions-remoteReleases"></a>A URL to your existing updates. If given, these will be downloaded to create delta updates.
 | remoteToken | <a name="WinBuildOptions-remoteToken"></a>Authentication token for remote updates
 
