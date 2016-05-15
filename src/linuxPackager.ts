@@ -214,6 +214,23 @@ Icon=${this.metadata.name}
       "--url", projectUrl,
     ]
 
+    let depends = options.depends
+    if (depends == null) {
+      depends = ["libappindicator1", "libnotify"]
+    }
+    else if (!Array.isArray(depends)) {
+      if (typeof depends === "string") {
+        depends = [<string>depends]
+      }
+      else {
+        throw new Error(`depends must be Array or String, but specified as: ${depends}`)
+      }
+    }
+
+    for (let dep of depends) {
+      args.push("--depends", dep)
+    }
+
     use(this.metadata.license || this.devMetadata.license, it => args.push("--license", it!))
     use(this.computeBuildNumber(), it => args.push("--iteration", it!))
 

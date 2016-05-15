@@ -20,7 +20,9 @@
       <w>globaldots</w>
       <w>globby</w>
       <w>hicolor</w>
+      <w>libappindicator</w>
       <w>libgcrypt</w>
+      <w>libnotify</w>
       <w>lzma</w>
       <w>makedeb</w>
       <w>mkdirp</w>

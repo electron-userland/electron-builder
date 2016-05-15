@@ -28,6 +28,8 @@ interface AssertPackOptions {
   readonly packed?: (projectDir: string) => Promise<any>
   readonly expectedContents?: Array<string>
   readonly expectedArtifacts?: Array<string>
+
+  readonly expectedDepends?: string
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
@@ -104,7 +106,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
     }
     else if (platform === Platform.LINUX) {
-      await checkLinuxResult(projectDir, packager, packagerOptions)
+      await checkLinuxResult(projectDir, packager, packagerOptions, checkOptions)
     }
     else if (platform === Platform.WINDOWS) {
       await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
@@ -112,7 +114,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
   }
 }
 
-async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions) {
+async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const expectedContents = expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
@@ -142,6 +144,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
     Description: " \n   Test Application (test quite \" #378)",
+    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify" : checkOptions.expectedDepends,
   })
 }
 

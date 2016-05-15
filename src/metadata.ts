@@ -283,6 +283,11 @@ export interface LinuxBuildOptions {
   *deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
    */
   readonly compression?: string | null
+
+  /*
+   Package dependencies. Defaults to `["libappindicator1", "libnotify"]`.
+   */
+  readonly depends?: string[] | null
 }
 
 /*

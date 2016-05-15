@@ -9,11 +9,25 @@ const __awaiter = require("out/awaiter")
 
 test.ifNotWindows("linux", () => assertPack("test-app-one", platform(Platform.LINUX)))
 
-test.ifNotWindows("linux - icons from ICNS", async () => {
-  await assertPack("test-app-one", {
+test.ifNotWindows("icons from ICNS", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+}, {
+  tempDirCreated: it => remove(path.join(it, "build", "icons"))
+}))
+
+test.ifNotWindows("custom configuration", () => assertPack("test-app-one", {
     platform: [Platform.LINUX],
-  }, {tempDirCreated: (projectDir) => remove(path.join(projectDir, "build", "icons"))})
-})
+    devMetadata: {
+      build: {
+        linux: {
+          depends: ["foo"],
+        }
+      }
+    }
+  },
+  {
+    expectedDepends: "foo"
+  }))
 
 test.ifNotWindows("no-author-email", t => {
   t.throws(assertPack("test-app-one", platform(Platform.LINUX), {
