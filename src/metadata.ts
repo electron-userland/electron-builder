@@ -285,7 +285,7 @@ export interface LinuxBuildOptions {
   readonly compression?: string | null
 
   /*
-   Package dependencies. Defaults to `["libappindicator1", "libnotify"]`.
+   Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
    */
   readonly depends?: string[] | null
 }
