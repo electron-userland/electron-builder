@@ -216,7 +216,7 @@ Icon=${this.metadata.name}
 
     let depends = options.depends
     if (depends == null) {
-      depends = ["libappindicator1", "libnotify"]
+      depends = ["libappindicator1", "libnotify-bin"]
     }
     else if (!Array.isArray(depends)) {
       if (typeof depends === "string") {

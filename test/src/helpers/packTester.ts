@@ -144,7 +144,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
     Description: " \n   Test Application (test quite \" #378)",
-    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify" : checkOptions.expectedDepends,
+    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify-bin" : checkOptions.expectedDepends,
   })
 }
 
