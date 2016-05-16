@@ -15,7 +15,7 @@ declare namespace appdmg {
   }
 }
 
-declare module "appdmg-tf" {
+declare module "appdmg" {
   import { EventEmitter } from "events"
 
   function appdmg(options: appdmg.Options): EventEmitter

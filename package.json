@@ -81,7 +81,7 @@
     "tmp": "0.0.28"
   },
   "optionalDependencies": {
-    "appdmg-tf": "^0.3.11"
+    "appdmg": "^0.4.2"
   },
   "config": {
     "pre-git": {

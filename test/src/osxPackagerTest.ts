@@ -2,7 +2,7 @@ import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
 import { Platform } from "out"
 import OsXPackager from "out/osxPackager"
-import { move, writeFile } from "fs-extra-p"
+import { move, writeFile, deleteFile } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -135,9 +135,9 @@ test.ifOsx("entitlements in build dir", () => {
   })
 })
 
-// test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
-//   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
-// }))
+test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
+  tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
+}))
 
 test.ifOsx("custom background", () => {
   let platformPackager: CheckingOsXPackager = null

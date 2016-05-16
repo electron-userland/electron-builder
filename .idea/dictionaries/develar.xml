@@ -6,6 +6,7 @@
       <w>archs</w>
       <w>authenticode</w>
       <w>awaiter</w>
+      <w>buildpack</w>
       <w>circleci</w>
       <w>clcerts</w>
       <w>cleanuper</w>
@@ -19,14 +20,19 @@
       <w>github</w>
       <w>globaldots</w>
       <w>globby</w>
+      <w>graphicsmagick</w>
       <w>hicolor</w>
+      <w>icnsutils</w>
+      <w>keyserver</w>
       <w>libappindicator</w>
       <w>libgcrypt</w>
+      <w>libgnome</w>
       <w>libnotify</w>
       <w>lzma</w>
       <w>makedeb</w>
       <w>mkdirp</w>
       <w>mpass</w>
+      <w>multilib</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
@@ -50,6 +56,8 @@
       <w>userprofile</w>
       <w>veyor</w>
       <w>winstaller</w>
+      <w>xamarin</w>
+      <w>xenial</w>
     </words>
   </dictionary>
 </component>

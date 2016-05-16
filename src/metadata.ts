@@ -153,7 +153,8 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   /*
-   The path to background (default: `build/background.png`). The resolution of this file determines the resolution of the installer window.
+   The path to background (default: `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
+   If background is not specified, use `window.size`, see [specification](https://github.com/LinusU/node-appdmg#json-specification).
    */
   readonly background?: string | null
 

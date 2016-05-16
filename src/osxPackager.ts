@@ -164,7 +164,8 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         {
           "x": 130, "y": 220, "type": "file"
         }
-      ]
+      ],
+      format: this.devMetadata.build.compression === "store" ? "UDRO" : "UDBZ",
     }, this.customBuildOptions)
 
     if (!("background" in this.customBuildOptions)) {
@@ -190,14 +191,13 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
           target: artifactPath,
           basepath: this.projectDir,
           specification: await this.computeEffectiveDistOptions(appOutDir),
-          compression: this.devMetadata.build.compression === "store" ? "NONE" : "UDBZ"
         }
 
         if (debug.enabled) {
           debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
         }
 
-        const emitter = require("appdmg-tf")(dmgOptions)
+        const emitter = require("appdmg")(dmgOptions)
         emitter.on("error", reject)
         emitter.on("finish", () => resolve())
         if (debug.enabled) {
