@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, LinuxBuildOptions } from "./metadata"
 import { dir as _tpmDir, TmpOptions } from "tmp"
-import { exec, log, use } from "./util"
+import { exec, debug, use } from "./util"
 import { outputFile, readFile, readdir } from "fs-extra-p"
 import { downloadFpm } from "./fpmDownload"
 const template = require("lodash.template")
@@ -117,7 +117,7 @@ Icon=${this.metadata.name}
   private async createFromIcns(tempDir: string): Promise<Array<string>> {
     const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
     const output = outputs[0].toString()
-    log(output)
+    debug(output)
 
     const imagePath = path.join(tempDir, "icon_256x256x32.png")
 

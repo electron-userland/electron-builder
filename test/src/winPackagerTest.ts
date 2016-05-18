@@ -25,7 +25,7 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
   }
 ))
 
-test.ifNotCiOsx("delta", () => assertPack("test-app-one", {
+test.ifDevOrWinCi("delta", () => assertPack("test-app-one", {
     platform: [Platform.WINDOWS],
     arch: "ia32",
     devMetadata: {
@@ -46,7 +46,7 @@ test.ifNotCiOsx("delta", () => assertPack("test-app-one", {
   }
 ))
 
-test.ifDevOrWinCi("win f", () => {
+test.ifDevOrWinCi("beta version", () => {
   const metadata: any = {
     version: "3.0.0-beta.2"
   }

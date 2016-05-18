@@ -1,6 +1,6 @@
 os:
-  - osx
   - linux
+  - osx
 
 osx_image: xcode7
 

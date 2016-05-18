@@ -41,6 +41,7 @@
       <w>nupkg</w>
       <w>nuspec</w>
       <w>packagejson</w>
+      <w>pacman</w>
       <w>passin</w>
       <w>pkcs</w>
       <w>postinstall</w>

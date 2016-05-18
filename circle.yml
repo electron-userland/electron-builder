@@ -1,0 +1,21 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  cache_directories:
+    - "~/.electron"
+    - "~/.cache"
+
+  # https://discuss.circleci.com/t/installing-git-lfs/867
+  # circleci doesn't cache after test, only after deps, so, we do test in this phase
+  override:
+    - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+    - sudo apt-get install git-lfs=1.2.0
+    - ssh git@github.com git-lfs-authenticate $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git download
+    - git lfs pull
+    - docker run --rm -v ${PWD}:/project -v ~/.electron:/root/.electron -v ~/.cache:/root/.cache electronuserland/electron-builder:wine /test.sh
+
+test:
+  override:
+    - echo "done"

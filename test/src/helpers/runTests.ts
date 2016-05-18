@@ -1,7 +1,7 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import * as fs from "fs-extra-p"
+import { copy, readJson, emptyDir, unlink, readdir, outputFile, readFileSync } from "fs-extra-p"
 import { Platform } from "out/metadata"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
@@ -23,7 +23,7 @@ async function main() {
   await BluebirdPromise.all([
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
-    fs.outputFile(path.join(testPackageDir, "package.json"), `{
+    outputFile(path.join(testPackageDir, "package.json"), `{
       "private": true,
       "version": "1.0.0",
       "name": "test",
@@ -56,10 +56,10 @@ async function deleteOldElectronVersion(): Promise<any> {
   const cacheDir = path.join(require("os").homedir(), ".electron")
   try {
     const deletePromises: Array<Promise<any>> = []
-    for (let file of (await fs.readdir(cacheDir))) {
+    for (let file of (await readdir(cacheDir))) {
       if (file.endsWith(".zip") && !file.includes(electronVersion)) {
         console.log("Remove old electron " + file)
-        deletePromises.push(fs.unlink(path.join(cacheDir, file)))
+        deletePromises.push(unlink(path.join(cacheDir, file)))
       }
     }
     return BluebirdPromise.all(deletePromises)
@@ -96,8 +96,8 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
 
 // npm is very slow and not reliable - so, just copy and then prune dev dependencies
 async function copyDependencies() {
-  await fs.emptyDir(testNodeModules)
-  const devDeps = Object.keys((await fs.readJson(path.join(rootDir, "package.json"), "utf-8")).devDependencies)
+  await emptyDir(testNodeModules)
+  const devDeps = Object.keys((await readJson(path.join(rootDir, "package.json"), "utf-8")).devDependencies)
   const filtered = new Set()
   /*eslint prefer-const: 0*/
   for (let name of devDeps) {
@@ -106,7 +106,7 @@ async function copyDependencies() {
 
   filtered.add(path.join(rootDir, "node_modules", ".bin"))
 
-  return fs.copy(path.join(rootDir, "node_modules"), testNodeModules, {
+  return copy(path.join(rootDir, "node_modules"), testNodeModules, {
     filter: it => {
       if (it.includes("node_modules" + path.sep + "babel-")) {
         return false
@@ -151,7 +151,7 @@ function exec(command: string, args: Array<string>) {
       else {
         if (command === "npm") {
           try {
-            console.error(fs.readFileSync(path.join(testPackageDir, "npm-debug.log"), "utf8"))
+            console.error(readFileSync(path.join(testPackageDir, "npm-debug.log"), "utf8"))
           }
           catch (e) {
             // ignore

@@ -8,10 +8,14 @@ import * as path from "path"
 
 const maxRedirects = 10
 
-export const download = BluebirdPromise.promisify(_download)
+export const download = <(url: string, destination: string, isCreateDir?: boolean | undefined) => BluebirdPromise<any>>(BluebirdPromise.promisify(_download))
 
-function _download(url: string, destination: string, callback: (error: Error) => void): void {
-  doDownload(url, destination, 0, callback)
+function _download(url: string, destination: string, isCreateDir: boolean | undefined, callback: (error: Error) => void): void {
+  if (callback == null) {
+    callback = <any>isCreateDir
+    isCreateDir = true
+  }
+  doDownload(url, destination, 0, isCreateDir === undefined ? true : isCreateDir, callback)
 }
 
 export function addTimeOutHandler(request: ClientRequest, callback: (error: Error) => void) {
@@ -23,8 +27,8 @@ export function addTimeOutHandler(request: ClientRequest, callback: (error: Erro
   })
 }
 
-function doDownload(url: string, destination: string, redirectCount: number, callback: (error: Error) => void) {
-  const ensureDirPromise = ensureDir(path.dirname(destination))
+function doDownload(url: string, destination: string, redirectCount: number, isCreateDir: boolean, callback: (error: Error) => void) {
+  const ensureDirPromise = isCreateDir ? ensureDir(path.dirname(destination)) : BluebirdPromise.resolve()
 
   const parsedUrl = parseUrl(url)
   // user-agent must be specified, otherwise some host can return 401 unauthorised
@@ -43,7 +47,7 @@ function doDownload(url: string, destination: string, redirectCount: number, cal
     const redirectUrl = response.headers.location
     if (redirectUrl != null) {
       if (redirectCount < maxRedirects) {
-        doDownload(redirectUrl, destination, redirectCount++, callback)
+        doDownload(redirectUrl, destination, redirectCount++, isCreateDir, callback)
       }
       else {
         callback(new Error("Too many redirects (> " + maxRedirects + ")"))

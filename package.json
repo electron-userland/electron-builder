@@ -20,10 +20,12 @@
     "lint": "tslint src/*.ts test/src/*.ts",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
+    "ci-test": "git-lfs pull && npm install && npm prune && npm run test",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master",
-    "whitespace": "whitespace src/*.ts"
+    "whitespace": "whitespace src/*.ts",
+    "docker-images": "docker build -t electronuserland/electron-builder docker && docker build -t electronuserland/electron-builder:wine docker/wine"
   },
   "repository": {
     "type": "git",
