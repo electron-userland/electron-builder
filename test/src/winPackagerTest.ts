@@ -14,20 +14,33 @@ const __awaiter = require("out/awaiter")
 
 test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
     platform: [Platform.WINDOWS],
-    arch: "all",
+    arch: "x64",
   }),
   {
-    tempDirCreated: process.env.TEST_DELTA ? it => modifyPackageJson(it, data => {
-      data.build.win = {
-        remoteReleases: "https://github.com/develar/__test-app-releases",
-      }
-    }) : null,
     expectedArtifacts: [
       "RELEASES",
+      "TestApp Setup 1.1.0.exe",
+      "TestApp-1.1.0-full.nupkg"
+    ],
+  }
+))
+
+test.ifNotCiOsx("delta", () => assertPack("test-app-one", {
+    platform: [Platform.WINDOWS],
+    arch: "ia32",
+    devMetadata: {
+      build: {
+        win: {
+          remoteReleases: "https://github.com/develar/__test-app-releases",
+        }
+      }
+    },
+  },
+  {
+    expectedArtifacts: [
       "RELEASES",
       "TestApp Setup 1.1.0-ia32.exe",
-      "TestApp Setup 1.1.0.exe",
-      "TestApp-1.1.0-full.nupkg",
+      "TestApp-1.1.0-delta.nupkg",
       "TestApp-1.1.0-full.nupkg"
     ],
   }

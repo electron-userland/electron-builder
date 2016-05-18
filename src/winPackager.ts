@@ -103,7 +103,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<any> {
+  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<WinBuildOptions> {
     let iconUrl = this.customBuildOptions.iconUrl || this.devMetadata.build.iconUrl
     if (iconUrl == null) {
       if (this.info.repositoryInfo != null) {
@@ -171,10 +171,16 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
     const setupExeName = `${this.appName} Setup ${version}${archSuffix}.exe`
 
-    await winstaller.createWindowsInstaller(await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, setupExeName))
-
+    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, setupExeName)
+    await winstaller.createWindowsInstaller(distOptions)
     this.dispatchArtifactCreated(path.join(installerOutDir, setupExeName), `${this.metadata.name}-Setup-${version}${archSuffix}.exe`)
-    this.dispatchArtifactCreated(path.join(installerOutDir, `${this.metadata.name}-${winstaller.convertVersion(version)}-full.nupkg`))
+
+    const packagePrefix = `${this.metadata.name}-${winstaller.convertVersion(version)}-`
+    this.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`))
+    if (distOptions.remoteReleases != null) {
+      this.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`))
+    }
+
     this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
   }
 }
