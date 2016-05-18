@@ -9,7 +9,7 @@ import { copy } from "fs-extra-p"
 import { statOrNull, use } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
-import { statFile } from "asar"
+import { listPackage, statFile } from "asar"
 import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 
 //noinspection JSUnusedLocalSymbols
@@ -201,13 +201,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
   }
 
+  private getResourcesDir(appOutDir: string): string {
+    return this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+  }
+
   private getOSXResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
   }
 
-  private async statFileInPackage(appOutDir: string, packageFile: string, isAsar: boolean): Promise<any> {
+  private async statFileInPackage(resourcesDir: string, packageFile: string, isAsar: boolean): Promise<any> {
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, packageFile))
-    const resourcesDir = this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
     if (isAsar) {
       try {
         return statFile(path.join(resourcesDir, "app.asar"), relativeFile) != null
@@ -223,8 +226,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async sanityCheckPackage(appOutDir: string, asar: boolean): Promise<any> {
+  private async sanityCheckAsar(asarFile: string): Promise<any> {
+    const outStat = await statOrNull(asarFile)
+
+    if (outStat == null) {
+      throw new Error(`Package file ${asarFile} was not created.`)
+    }
+
+    try {
+      listPackage(asarFile)
+    }
+    catch (e) {
+      throw new Error(`Package file ${asarFile} is corrupted.`)
+    }
+  }
+
+  private async sanityCheckPackage(appOutDir: string, isAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
+
     if (outStat == null) {
       throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
     }
@@ -232,8 +251,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
     }
 
+    const resourcesDir = this.getResourcesDir(appOutDir)
+    if (isAsar) {
+      await this.sanityCheckAsar(path.join(resourcesDir, "app.asar"))
+    }
+
     const mainFile = this.metadata.main || "index.js"
-    const mainFileExists = await this.statFileInPackage(appOutDir, mainFile, asar)
+    const mainFileExists = await this.statFileInPackage(resourcesDir, mainFile, isAsar)
     if (!mainFileExists) {
       throw new Error(`Application entry file ${mainFile} could not be found in package. Seems like a wrong configuration.`)
     }
