@@ -3,6 +3,7 @@ import { stat } from "fs-extra-p"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
+// http://joel-costigliola.github.io/assertj/
 export function assertThat(path: string) {
   return new FileAssertions(path)
 }

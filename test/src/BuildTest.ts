@@ -106,6 +106,28 @@ test("www as default dir", () => assertPack("test-app", {
   tempDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
+test("afterPack", t => {
+  let called = false
+  return assertPack("test-app", {
+    // linux pack is very fast, so, we use it :)
+    platform: [Platform.LINUX],
+    dist: true,
+    devMetadata: {
+      build: {
+        afterPack: () => {
+          called = true
+          return Promise.resolve()
+        }
+      }
+    }
+  }, {
+    packed: () => {
+      t.true(called)
+      return Promise.resolve()
+    }
+  })
+})
+
 test("copy extra resource", async () => {
   for (let platform of getPossiblePlatforms()) {
     const osName = platform.buildConfigurationKey
@@ -172,7 +194,7 @@ test("copy extra resource", async () => {
   }
 })
 
-test("invalid platform", (t) => t.throws(assertPack("test-app-one", {
+test("invalid platform", t => t.throws(assertPack("test-app-one", {
   platform: [null],
   dist: false
 }), "Unknown platform: null"))

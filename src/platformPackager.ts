@@ -152,6 +152,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async packApp(options: ElectronPackagerOptions, appOutDir: string): Promise<any> {
     await pack(options)
+
+    const afterPack = this.devMetadata.build.afterPack
+    if (afterPack != null) {
+      await afterPack({
+        appOutDir: appOutDir,
+        options: options,
+      })
+    }
+
     await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
@@ -226,7 +235,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async sanityCheckAsar(asarFile: string): Promise<any> {
+  private static async sanityCheckAsar(asarFile: string): Promise<any> {
     const outStat = await statOrNull(asarFile)
 
     if (outStat == null) {
@@ -253,7 +262,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesDir = this.getResourcesDir(appOutDir)
     if (isAsar) {
-      await this.sanityCheckAsar(path.join(resourcesDir, "app.asar"))
+      await PlatformPackager.sanityCheckAsar(path.join(resourcesDir, "app.asar"))
     }
 
     const mainFile = this.metadata.main || "index.js"

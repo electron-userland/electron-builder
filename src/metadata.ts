@@ -1,3 +1,4 @@
+import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
 }
@@ -139,6 +140,16 @@ export interface BuildMetadata {
   readonly compression?: "store" | "normal" | "maximum" | null
 
   readonly "build-version"?: string | null
+
+  /*
+   *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+   */
+  readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
+}
+
+export interface AfterPackContext {
+  readonly appOutDir: string
+  readonly options: ElectronPackagerOptions
 }
 
 /*

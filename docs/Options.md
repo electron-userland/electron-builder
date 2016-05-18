@@ -60,6 +60,7 @@ Here documented only `electron-builder` specific options:
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
+| afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
 
 <a name="OsXBuildOptions"></a>
 ### `.build.osx`
