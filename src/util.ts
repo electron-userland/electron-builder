@@ -109,6 +109,9 @@ export function spawn(command: string, args?: Array<string> | null, options?: Sp
 }
 
 export async function getElectronVersion(packageData: any, packageJsonPath: string): Promise<string> {
+  if (packageData.config['electron-version']) {
+    return packageData.config['electron-version']
+  }
   try {
     return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", "electron-prebuilt", "package.json"))).version
   }
