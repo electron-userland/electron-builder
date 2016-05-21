@@ -71,7 +71,7 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 | --- | ---
 | icon | <a name="OsXBuildOptions-icon"></a>The path to icon, which will be shown when mounted (default: `build/icon.icns`).
 | background | <a name="OsXBuildOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
-| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`, `tar.xz`, `tar.gz`, `tar.bz2`, `tar.7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
 | identity | <a name="OsXBuildOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
 | entitlements | <a name="OsXBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/osx.entitlements</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
 | entitlementsInherit | <a name="OsXBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/osx.inherit.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.darwin.inherit.entitlements).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
@@ -107,6 +107,7 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
+| target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>default</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>. Defaults to <code>default</code> (<code>deb</code>).</p> <p>Only <code>deb</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
 
 <a name="MetadataDirectories"></a>
 ## `.directories`

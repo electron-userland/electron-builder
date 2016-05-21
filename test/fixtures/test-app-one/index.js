@@ -1,6 +1,6 @@
 'use strict'
 
-const app = require('app')
+const app = require('electron').app
 
 // this should be placed at top of main.js to handle setup events quickly
 if (handleSquirrelEvent()) {

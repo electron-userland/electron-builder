@@ -7,6 +7,8 @@ declare module "ava-tf" {
     export const ifNotCi: typeof test;
     export const ifNotCiOsx: typeof test;
     export const ifDevOrWinCi: typeof test;
+    export const ifWinCi: typeof test;
+    export const ifDevOrLinuxCi: typeof test;
     export const ifNotTravis: typeof test;
   }
   
@@ -44,6 +46,16 @@ Object.defineProperties(test, {
   "ifDevOrWinCi": {
     get: function () {
       return !process.env.CI || process.platform === "win32" ? this : this.skip
+    }
+  },
+  "ifDevOrLinuxCi": {
+    get: function () {
+      return !process.env.CI || process.platform === "linux" ? this : this.skip
+    }
+  },
+  "ifWinCi": {
+    get: function () {
+      return process.env.CI && process.platform === "win32" ? this : this.skip
     }
   }
 })

@@ -170,7 +170,7 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly background?: string | null
 
   /*
-   Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+   Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`, `tar.xz`, `tar.gz`, `tar.bz2`, `tar.7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
   readonly target?: Array<string> | null
 
@@ -261,7 +261,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 /*
  ### `.build.linux`
  */
-export interface LinuxBuildOptions {
+export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   /*
    As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
    */
@@ -300,6 +300,13 @@ export interface LinuxBuildOptions {
    Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
    */
   readonly depends?: string[] | null
+
+  /*
+   Target package type: list of `default`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (`deb`).
+
+   Only `deb` is tested. Feel free to file issues for `rpm` and other package formats.
+   */
+  readonly target?: Array<string> | null
 }
 
 /*
@@ -324,6 +331,8 @@ export interface MetadataDirectories {
 
 export interface PlatformSpecificBuildOptions {
   readonly extraResources?: Array<string> | null
+
+  readonly target?: Array<string> | null
 }
 
 export class Platform {

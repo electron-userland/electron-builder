@@ -1,8 +1,7 @@
 {
   "ambientDependencies": {
     "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#cb5206a8ac1c9a3ddfd126f5ecea6729b2361452",
-    "progress": "github:DefinitelyTyped/DefinitelyTyped/progress/progress.d.ts#d54b18e0ac3277376700b6026ef9e9e3f380df50",
-    "tmp": "github:DefinitelyTyped/DefinitelyTyped/tmp/tmp.d.ts#48f20e97bfaf70fc1a9537b38aed98e9749be0ae"
+    "progress": "github:DefinitelyTyped/DefinitelyTyped/progress/progress.d.ts#d54b18e0ac3277376700b6026ef9e9e3f380df50"
   },
   "dependencies": {
     "source-map-support": "github:typed-typings/npm-source-map-support#900ed4180a22285bce4bbabc0760427e71a59eca"

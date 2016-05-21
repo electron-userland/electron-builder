@@ -5,17 +5,30 @@ import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import packager = require("electron-packager-tf")
 import globby = require("globby")
-import { copy } from "fs-extra-p"
-import { statOrNull, use } from "./util"
+import { copy, unlink } from "fs-extra-p"
+import { statOrNull, use, spawn, debug7zArgs, debug } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
 import { listPackage, statFile } from "asar"
 import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
+import { path7za } from "7zip-bin"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
 const pack = BluebirdPromise.promisify(packager)
+
+class CompressionDescriptor {
+  constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
+  }
+}
+
+const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
+  "tar.xz": new CompressionDescriptor("--xz", "XZ_OPT", "-0", "-9e"),
+  "tar.lz": new CompressionDescriptor("--lzip", "LZOP", "-0"),
+  "tar.gz": new CompressionDescriptor("--gz", "GZIP", "-1"),
+  "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
+}
 
 export interface PackagerOptions {
   arch?: string | null
@@ -76,6 +89,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appName: string
 
+  readonly targets: Array<string>
+
   public abstract get platform(): Platform
 
   constructor(protected info: BuildInfo) {
@@ -87,11 +102,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
     this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
     this.appName = getProductName(this.metadata, this.devMetadata)
+
+    const targets = normalizeTargets(this.customBuildOptions.target)
+    if (targets != null) {
+      const supportedTargets = this.supportedTargets.concat("default", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2")
+      for (let target of targets) {
+        if (!supportedTargets.includes(target)) {
+          throw new Error("Unknown target: " + target)
+        }
+      }
+    }
+    this.targets = targets == null ? ["default"] : targets
   }
 
   protected get relativeBuildResourcesDirname() {
     return use(this.devMetadata.directories, it => it!.buildResources) || "build"
   }
+
+  protected abstract get supportedTargets(): Array<string>
 
   protected computeAppOutDir(outDir: string, arch: string): string {
     return path.join(outDir, `${this.appName}-${this.platform.nodeName}-${arch}`)
@@ -136,7 +164,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       tmpdir: false,
       "version-string": {
         CompanyName: this.metadata.author.name,
-        FileDescription: this.metadata.description,
+        FileDescription: smarten(this.metadata.description),
         ProductName: this.appName,
         InternalName: this.appName,
       }
@@ -271,6 +299,74 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Application entry file ${mainFile} could not be found in package. Seems like a wrong configuration.`)
     }
   }
+
+  protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
+    const compression = this.devMetadata.build.compression
+    const storeOnly = compression === "store"
+
+    const fileToArchive = this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir
+    const baseDir = path.dirname(fileToArchive)
+    if (format.startsWith("tar.")) {
+      // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on OS X and often hangs on Linux (even if use pipe-io lib)
+      // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
+      const info = extToCompressionDescriptor[format]
+      let tarEnv = process.env
+      if (compression != null && compression !== "normal") {
+        tarEnv = Object.assign({}, process.env)
+        tarEnv[info.env] = storeOnly ? info.minLevel : info.maxLevel
+      }
+
+      await spawn(process.platform === "darwin" ? "/usr/local/opt/gnu-tar/libexec/gnubin/tar" : "tar", [info.flag, "-cf", outFile, fileToArchive], {
+        cwd: baseDir,
+        stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
+        env: tarEnv
+      })
+      return
+    }
+
+    const args = debug7zArgs("a")
+    if (compression === "maximum") {
+      if (format === "7z" || format.endsWith(".7z")) {
+        args.push("-mx=9", "-mfb=64", "-md=32m", "-ms=on")
+      }
+      else if (format === "zip") {
+        // http://superuser.com/a/742034
+        //noinspection SpellCheckingInspection
+        args.push("-mfb=258", "-mpass=15")
+      }
+      else {
+        args.push("-mx=9")
+      }
+    }
+    else if (storeOnly) {
+      if (format !== "zip") {
+        args.push("-mx=1")
+      }
+    }
+
+    // remove file before - 7z doesn't overwrite file, but update
+    try {
+      await unlink(outFile)
+    }
+    catch (e) {
+      // ignore
+    }
+
+    if (format === "zip" || storeOnly) {
+      args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
+    }
+
+    args.push(outFile, fileToArchive)
+
+    await spawn(path7za, args, {
+      cwd: baseDir,
+      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
+    })
+  }
+}
+
+export function archSuffix(arch: string) {
+  return arch === "x64" ? "" : `-${arch}`
 }
 
 export interface ArtifactCreated {
@@ -287,4 +383,18 @@ export function normalizeTargets(targets: Array<string> | string | null | undefi
   else {
     return (Array.isArray(targets) ? targets : [targets]).map(it => it.toLowerCase().trim())
   }
+}
+
+// fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
+// http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
+export function smarten(s: string): string {
+  // opening singles
+  s = s.replace(/(^|[-\u2014\s(\["])'/g, "$1\u2018")
+  // closing singles & apostrophes
+  s = s.replace(/'/g, "\u2019")
+  // opening doubles
+  s = s.replace(/(^|[-\u2014/\[(\u2018\s])"/g, "$1\u201c")
+  // closing doubles
+  s = s.replace(/"/g, "\u201d")
+  return s
 }

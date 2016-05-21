@@ -7,6 +7,9 @@ osx_image: xcode7
 dist: trusty
 sudo: required
 
+services:
+  - docker
+
 env:
   - NODE_VERSION=4
   - NODE_VERSION=6
@@ -14,28 +17,16 @@ env:
 language: c
 
 cache:
-  apt: true
-  bundler: true
   directories:
     - node_modules
     - test/testApp/node_modules
     - $HOME/.electron
     - $HOME/.cache/fpm
 
-addons:
-  apt:
-    sources:
-      - mono
-    packages:
-      - icnsutils
-      - graphicsmagick
-      - mono-devel
-
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns graphicsmagick git-lfs; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns graphicsmagick git-lfs lzip; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then git lfs pull; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then test/install-linux-dependencies.sh; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl -L https://github.com/github/git-lfs/releases/download/v1.2.0/git-lfs-linux-amd64-1.2.0.tar.gz | tar -xz; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git-lfs-1.2.0/git-lfs pull; fi
 
@@ -46,7 +37,8 @@ install:
 - npm prune
 
 script:
-- npm run test
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run --rm -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh ; fi
 
 after_success:
 - node out/cleanup.js

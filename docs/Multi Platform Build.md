@@ -25,11 +25,17 @@ To build app in distributable format for Linux on OS X:
 brew install gnu-tar libicns graphicsmagick
 ```
 
+To build rpm: `brew install rpm`.
+
 ## Linux
 To build app in distributable format for Linux:
 ```
-sudo apt-get install icnsutils graphicsmagick xz-utils
+sudo apt-get install --no-install-recommends -y icnsutils graphicsmagick xz-utils
 ```
+
+To build rpm: `sudo apt-get install --no-install-recommends -y rpm`.
+
+To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
 To build app in distributable format for Windows on Linux:
 * Install Wine (1.8+ is required):
@@ -37,7 +43,7 @@ To build app in distributable format for Windows on Linux:
   ```
   sudo add-apt-repository ppa:ubuntu-wine/ppa -y
   sudo apt-get update
-  sudo apt-get install wine1.8 -y
+  sudo apt-get install --no-install-recommends -y wine1.8
   ```
 
 * Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage) (4.2+ is required):
@@ -46,18 +52,18 @@ To build app in distributable format for Windows on Linux:
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
   echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
   sudo apt-get update
-  sudo apt-get install mono-devel ca-certificates-mono -y
+  sudo apt-get install --no-install-recommends -y mono-devel ca-certificates-mono
   ```
 
 * Install zip.
   ```
-  apt-get install zip
+  apt-get install --no-install-recommends -y zip
   ```
 
 To build app in 32 bit from a machine with 64 bit:
 
 ```
-sudo apt-get install -y gcc-multilib g++-multilib
+sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
 ### Travis Linux

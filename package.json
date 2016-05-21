@@ -14,13 +14,12 @@
     "install-app-deps": "./out/install-app-deps.js"
   },
   "scripts": {
-    "compile": "npm run compile-production && npm run compile-test",
+    "compile": "npm run whitespace && npm run compile-production && npm run compile-test",
     "compile-production": "tsconfig -i 2 && ts-babel",
     "compile-test": "tsconfig -i 2 test && ts-babel test",
     "lint": "tslint src/*.ts test/src/*.ts",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
-    "ci-test": "git-lfs pull && npm install && npm prune && npm run test",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master",
@@ -70,7 +69,7 @@
     "electron-packager-tf": "~7.1.0",
     "electron-winstaller-fixed": "~2.8.3",
     "fs-extra-p": "^1.0.1",
-    "globby": "^4.0.0",
+    "globby": "^4.1.0",
     "hosted-git-info": "^2.1.5",
     "image-size": "^0.5.0",
     "lodash.template": "^4.2.5",
@@ -79,11 +78,10 @@
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.4",
     "signcode-tf": "^0.6.3",
-    "source-map-support": "^0.4.0",
-    "tmp": "0.0.28"
+    "source-map-support": "^0.4.0"
   },
   "optionalDependencies": {
-    "appdmg": "^0.4.3"
+    "appdmg": "^0.4.5"
   },
   "config": {
     "pre-git": {
@@ -105,11 +103,11 @@
     "plist": "^1.2.0",
     "pre-git": "^3.8.4",
     "semantic-release": "^6.2.2",
-    "should": "^8.3.1",
+    "should": "^8.4.0",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
-    "tslint": "3.10.2",
-    "typescript": "1.9.0-dev.20160515",
+    "tslint": "3.10.0-dev.2",
+    "typescript": "1.9.0-dev.20160520-1.0",
     "whitespace": "^2.0.0"
   },
   "babel": {

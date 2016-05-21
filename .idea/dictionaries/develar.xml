@@ -20,15 +20,19 @@
       <w>github</w>
       <w>globaldots</w>
       <w>globby</w>
+      <w>gnubin</w>
       <w>graphicsmagick</w>
       <w>hicolor</w>
       <w>icnsutils</w>
       <w>keyserver</w>
       <w>libappindicator</w>
+      <w>libexec</w>
       <w>libgcrypt</w>
       <w>libgnome</w>
       <w>libnotify</w>
+      <w>lzip</w>
       <w>lzma</w>
+      <w>lzop</w>
       <w>makedeb</w>
       <w>mkdirp</w>
       <w>mpass</w>

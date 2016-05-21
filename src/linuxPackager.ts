@@ -1,50 +1,55 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPackager"
 import { Platform, LinuxBuildOptions } from "./metadata"
-import { dir as _tpmDir, TmpOptions } from "tmp"
-import { exec, debug, use } from "./util"
-import { outputFile, readFile, readdir } from "fs-extra-p"
+import { exec, debug, use, getTempName } from "./util"
+import { outputFile, readFile, remove, readdir, emptyDir } from "fs-extra-p"
 import { downloadFpm } from "./fpmDownload"
+import { tmpdir } from "os"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-const tmpDir = BluebirdPromise.promisify(<(config: TmpOptions, callback: (error: Error, path: string, cleanupCallback: () => void) => void) => void>_tpmDir)
 const installPrefix = "/opt"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
-  private readonly debOptions: LinuxBuildOptions
+  private readonly buildOptions: LinuxBuildOptions
 
   private readonly packageFiles: Promise<Array<string>>
   private readonly scriptFiles: Promise<Array<string>>
 
   private readonly fpmPath: Promise<string>
 
-  constructor(info: BuildInfo) {
+  constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    this.debOptions = Object.assign({
+    this.buildOptions = Object.assign({
       name: this.metadata.name,
       description: this.metadata.description,
     }, this.customBuildOptions)
 
     if (this.options.dist) {
-      const tempDir = tmpDir({
-        unsafeCleanup: true,
-        prefix: "electron-builder-"
-      })
-      this.packageFiles = this.computePackageFiles(tempDir)
-      this.scriptFiles = this.createScripts(tempDir)
+      const tempDir = path.join(tmpdir(), getTempName("electron-builder-linux"))
+      const tempDirPromise = emptyDir(tempDir)
+        .then(() => {
+          cleanupTasks.push(() => remove(tempDir))
+          return tempDir
+        })
+      this.packageFiles = this.computePackageFiles(tempDirPromise)
+      this.scriptFiles = this.createScripts(tempDirPromise)
 
-      if (process.platform !== "win32" && process.env.USE_SYSTEM_FPM !== "true") {
-        this.fpmPath = downloadFpm(process.platform === "darwin" ? "1.5.0-1" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
-      }
-      else {
+      if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
         this.fpmPath = BluebirdPromise.resolve("fpm")
       }
+      else {
+        this.fpmPath = downloadFpm(process.platform === "darwin" ? "1.5.0-1" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
+      }
     }
+  }
+
+  protected get supportedTargets(): Array<string> {
+    return ["deb", "rpm", "sh", "freebsd", "pacman", "apk", "p5p"]
   }
 
   get platform() {
@@ -69,15 +74,23 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     await this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
 
     if (this.options.dist) {
+      for (let target of this.targets) {
+        if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
+          const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
+          postAsyncTasks.push(this.archiveApp(target, appOutDir, destination)
+            .then(() => this.dispatchArtifactCreated(destination)))
+        }
+      }
+
       postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
     }
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
     const tempFile = path.join(tempDir, this.appName + ".desktop")
-    await outputFile(tempFile, this.debOptions.desktop || `[Desktop Entry]
+    await outputFile(tempFile, this.buildOptions.desktop || `[Desktop Entry]
 Name=${this.appName}
-Comment=${this.debOptions.description}
+Comment=${this.buildOptions.description}
 Exec="${installPrefix}/${this.appName}/${this.appName}"
 Terminal=false
 Type=Application
@@ -168,26 +181,30 @@ Icon=${this.metadata.name}
     const templateOptions = Object.assign({
       // old API compatibility
       executable: this.appName,
-    }, this.debOptions)
+    }, this.buildOptions)
 
-    const afterInstallTemplate = this.debOptions.afterInstall || path.join(defaultTemplatesDir, "after-install.tpl")
+    const afterInstallTemplate = this.buildOptions.afterInstall || path.join(defaultTemplatesDir, "after-install.tpl")
     const afterInstallFilePath = writeConfigFile(tempDir, afterInstallTemplate, templateOptions)
 
-    const afterRemoveTemplate = this.debOptions.afterRemove || path.join(defaultTemplatesDir, "after-remove.tpl")
+    const afterRemoveTemplate = this.buildOptions.afterRemove || path.join(defaultTemplatesDir, "after-remove.tpl")
     const afterRemoveFilePath = writeConfigFile(tempDir, afterRemoveTemplate, templateOptions)
 
     return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
-    return await this.buildDeb(this.debOptions, outDir, appOutDir, arch)
-      .then(it => this.dispatchArtifactCreated(it))
+  protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+    // todo fix fpm - if we run in parallel, get strange tar errors
+    for (let target of this.targets) {
+      target = target === "default" ? "deb" : target
+      if (target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
+        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
+        await this.buildPackage(destination, target, this.buildOptions, appOutDir, arch)
+          .then(() => this.dispatchArtifactCreated(destination))
+      }
+    }
   }
 
-  private async buildDeb(options: LinuxBuildOptions, outDir: string, appOutDir: string, arch: string): Promise<string> {
-    const archName = arch === "ia32" ? "i386" : "amd64"
-    const target = "deb"
-    const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}-${archName}.${target}`)
+  private async buildPackage(destination: string, target: string, options: LinuxBuildOptions, appOutDir: string, arch: string): Promise<any> {
     const scripts = await this.scriptFiles
 
     const projectUrl = await this.computePackageUrl()
@@ -196,23 +213,34 @@ Icon=${this.metadata.name}
     }
 
     const author = options.maintainer || `${this.metadata.author.name} <${this.metadata.author.email}>`
+    const synopsis = options.synopsis
     const args = [
       "-s", "dir",
       "-t", target,
-      "--architecture", archName,
-      "--rpm-os", "linux",
+      "--architecture", arch === "ia32" ? "i386" : "amd64",
       "--name", this.metadata.name,
       "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
-      "--description", `${options.synopsis || ""}\n ${this.debOptions.description}`,
+      "--description", smarten(target === "rpm" ? this.buildOptions.description! : `${synopsis || ""}\n ${this.buildOptions.description}`),
       "--maintainer", author,
       "--vendor", options.vendor || author,
       "--version", this.metadata.version,
       "--package", destination,
-      "--deb-compression", options.compression || (this.devMetadata.build.compression === "store" ? "gz" : "xz"),
       "--url", projectUrl,
     ]
+
+    if (target === "deb") {
+      args.push("--deb-compression", options.compression || (this.devMetadata.build.compression === "store" ? "gz" : "xz"))
+    }
+    else if (target === "rpm") {
+      // args.push("--rpm-compression", options.compression || (this.devMetadata.build.compression === "store" ? "none" : "xz"))
+      args.push("--rpm-os", "linux")
+
+      if (synopsis != null) {
+        args.push("--rpm-summary", smarten(synopsis))
+      }
+    }
 
     let depends = options.depends
     if (depends == null) {
@@ -239,7 +267,6 @@ Icon=${this.metadata.name}
     args.push(`${appOutDir}/=${installPrefix}/${this.appName}`)
     args.push(...<any>(await this.packageFiles)!)
     await exec(await this.fpmPath, args)
-    return destination
   }
 }
 

@@ -1,10 +1,9 @@
-import { PlatformPackager, BuildInfo, normalizeTargets } from "./platformPackager"
+import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions, MasBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, debug, debug7z, spawn, statOrNull, warn } from "./util"
+import { log, debug, statOrNull, warn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
-import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
 import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
 import { readdir } from "fs-extra-p"
@@ -14,8 +13,6 @@ const __awaiter = require("./awaiter")
 
 export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   codeSigningInfo: Promise<CodeSigningInfo | null>
-
-  readonly targets: Array<string>
 
   readonly resourceList: Promise<Array<string>>
 
@@ -31,21 +28,15 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
 
-    const targets = normalizeTargets(this.customBuildOptions.target)
-    if (targets != null) {
-      for (let target of targets) {
-        if (target !== "default" && target !== "dmg" && target !== "zip" && target !== "mas" && target !== "7z") {
-          throw new Error("Unknown target: " + target)
-        }
-      }
-    }
-    this.targets = targets == null ? ["default"] : targets
-
     this.resourceList = readdir(this.buildResourcesDir)
   }
 
   get platform() {
     return Platform.OSX
+  }
+
+  protected get supportedTargets(): Array<string> {
+    return ["dmg", "mas"]
   }
 
   async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
@@ -217,46 +208,12 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         log("Creating OS X " + format)
         // for default we use mac to be compatible with Squirrel.Mac
         const classifier = target === "default" ? "mac" : "osx"
-        promises.push(this.archiveApp(appOutDir, format, classifier)
-          .then(it => this.dispatchArtifactCreated(it, `${this.metadata.name}-${this.metadata.version}-${classifier}.${format}`)))
+        // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
+        const outFile = path.join(appOutDir, `${this.appName}-${this.metadata.version}-${classifier}.${format}`)
+        promises.push(this.archiveApp(format, appOutDir, outFile)
+          .then(() => this.dispatchArtifactCreated(outFile, `${this.metadata.name}-${this.metadata.version}-${classifier}.${format}`)))
       }
     }
     return BluebirdPromise.all(promises)
-  }
-
-  private archiveApp(outDir: string, format: string, classifier: string): Promise<string> {
-    const args = ["a", "-bd"]
-    if (debug7z.enabled) {
-      args.push("-bb3")
-    }
-    else if (!debug.enabled) {
-      args.push("-bb0")
-    }
-
-    const compression = this.devMetadata.build.compression
-    const storeOnly = compression === "store"
-    if (format === "zip" || storeOnly) {
-      args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
-    }
-    if (compression === "maximum") {
-      // http://superuser.com/a/742034
-      //noinspection SpellCheckingInspection
-      if (format === "zip") {
-        args.push("-mfb=258", "-mpass=15")
-      }
-      else if (format === "7z") {
-        args.push("-m0=lzma2", "-mx=9", "-mfb=64", "-md=32m", "-ms=on")
-      }
-    }
-
-    // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-    const resultPath = `${this.appName}-${this.metadata.version}-${classifier}.${format}`
-    args.push(resultPath, this.appName + ".app")
-
-    return spawn(path7za, args, {
-      cwd: outDir,
-      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
-    })
-      .thenReturn(path.join(outDir, resultPath))
   }
 }

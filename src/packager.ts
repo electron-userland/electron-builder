@@ -117,10 +117,10 @@ export class Packager implements BuildInfo {
       }
 
       case Platform.LINUX:
-        return new (require("./linuxPackager").LinuxPackager)(this)
+        return new (require("./linuxPackager").LinuxPackager)(this, cleanupTasks)
 
       default:
-        throw new Error("Unknown platform: " + platform)
+        throw new Error(`Unknown platform: ${platform}`)
     }
   }
 

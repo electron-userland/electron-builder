@@ -7,7 +7,42 @@ import { Platform } from "out"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotWindows("linux", () => assertPack("test-app-one", platform(Platform.LINUX)))
+test.ifNotWindows("deb", () => assertPack("test-app-one", platform(Platform.LINUX)))
+
+test.ifDevOrLinuxCi("rpm", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  devMetadata: {
+    build: {
+      linux: {
+        target: ["rpm"]
+      }
+    }
+  }
+}))
+
+test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  devMetadata: {
+    build: {
+      linux: {
+        // "apk" is very slow, don't test for now
+        target: ["sh", "freebsd", "pacman", "zip", "7z"],
+      }
+    }
+  }
+}))
+
+test.ifDevOrLinuxCi("tar", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  devMetadata: {
+    build: {
+      linux: {
+        // "apk" is very slow, don't test for now
+        target: ["tar.xz", "tar.lz", "tar.gz", "tar.bz2"],
+      }
+    }
+  }
+}))
 
 test.ifNotWindows("icons from ICNS", () => assertPack("test-app-one", {
   platform: [Platform.LINUX],

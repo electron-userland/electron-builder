@@ -1,6 +1,6 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull, warn } from "./util"
@@ -43,6 +43,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   get platform() {
     return Platform.WINDOWS
+  }
+
+  protected get supportedTargets(): Array<string> {
+    return []
   }
 
   private async getValidIconPath(): Promise<string> {
@@ -137,7 +141,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       appDirectory: appOutDir,
       outputDirectory: installerOutDir,
       version: this.metadata.version,
-      description: this.metadata.description,
+      description: smarten(this.metadata.description),
       authors: this.metadata.author.name,
       iconUrl: iconUrl,
       setupIcon: await this.iconPath,
@@ -235,7 +239,7 @@ function isIco(buffer: Buffer): boolean {
 }
 
 export function computeDistOut(outDir: string, arch: string): string {
-  return path.join(outDir, `win${arch === "x64" ? "" : `-${arch}` }`)
+  return path.join(outDir, `win${archSuffix(arch)}`)
 }
 
 function checkConflictingOptions(options: any) {

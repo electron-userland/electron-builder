@@ -15,17 +15,11 @@ const __awaiter = require("out/awaiter")
 test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
     platform: [Platform.WINDOWS],
     arch: "x64",
-  }),
-  {
-    expectedArtifacts: [
-      "RELEASES",
-      "TestApp Setup 1.1.0.exe",
-      "TestApp-1.1.0-full.nupkg"
-    ],
-  }
+  })
 ))
 
-test.ifDevOrWinCi("delta", () => assertPack("test-app-one", {
+// very slow
+test.ifWinCi("delta", () => assertPack("test-app-one", {
     platform: [Platform.WINDOWS],
     arch: "ia32",
     devMetadata: {
@@ -35,14 +29,6 @@ test.ifDevOrWinCi("delta", () => assertPack("test-app-one", {
         }
       }
     },
-  },
-  {
-    expectedArtifacts: [
-      "RELEASES",
-      "TestApp Setup 1.1.0-ia32.exe",
-      "TestApp-1.1.0-delta.nupkg",
-      "TestApp-1.1.0-full.nupkg"
-    ],
   }
 ))
 

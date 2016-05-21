@@ -92,18 +92,33 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, processConsumer?: (it: ChildProcess, reject: (error: Error) => void) => void): BluebirdPromise<any> {
-  const notNullArgs = args || []
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions): ChildProcess {
   if (debug.enabled) {
-    debug(`Spawning ${command} ${notNullArgs.join(" ")}`)
+    debug(`Spawning ${command} ${args.join(" ")}`)
   }
+  return _spawn(command, args, options)
+}
 
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    const p = _spawn(command, notNullArgs, options)
-    p.on("error", reject)
-    p.on("close", (code: number) => code === 0 ? resolve() : reject(new Error(command + " exited with code " + code)))
-    if (processConsumer != null) {
-      processConsumer(p, reject)
+    const notNullArgs = args || []
+    const childProcess = doSpawn(command, notNullArgs, options)
+    handleProcess("close", childProcess, command, resolve, reject)
+  })
+}
+
+export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
+  childProcess.on("error", reject)
+  childProcess.on(event, (code: number) => {
+    if (debug.enabled) {
+      debug(`${command} (${childProcess.pid}) exited with code ${code}`)
+    }
+
+    if (code !== 0) {
+      reject(new Error(`${command} exited with code ${code}`))
+    }
+    else if (resolve != null) {
+      resolve()
     }
   })
 }
@@ -172,4 +187,21 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
 
 export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
   return value == null ? null : task(value)
+}
+
+export function debug7zArgs(command: "a" | "x"): Array<string> {
+  const args = [command, "-bd"]
+  if (debug7z.enabled) {
+    args.push("-bb3")
+  }
+  else if (!debug.enabled) {
+    args.push("-bb0")
+  }
+  return args
+}
+
+let tmpDirCounter = 0
+
+export function getTempName(prefix?: string | n): string {
+  return `${prefix == null ? "" : prefix + "-"}${process.pid}-${tmpDirCounter++}-${Date.now()}`
 }

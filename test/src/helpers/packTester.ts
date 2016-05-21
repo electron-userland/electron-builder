@@ -106,7 +106,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
     }
     else if (platform === Platform.LINUX) {
-      await checkLinuxResult(projectDir, packager, packagerOptions, checkOptions)
+      await checkLinuxResult(projectDir, packager, packagerOptions, checkOptions, artifacts.get(Platform.LINUX))
     }
     else if (platform === Platform.WINDOWS) {
       await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
@@ -114,7 +114,24 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
   }
 }
 
-async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
+async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+  const customBuildOptions = packager.devMetadata.build.linux
+  const targets = customBuildOptions == null || customBuildOptions.target == null ? ["default"] : customBuildOptions.target
+
+  function getExpected(): Array<string> {
+    const result: Array<string> = []
+    for (let target of targets) {
+      result.push(`TestApp-1.1.0.${target === "default" ? "deb" : target}`)
+    }
+    return result
+  }
+
+  assertThat(getFileNames(artifacts)).deepEqual((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts.slice()).sort())
+
+  if (!targets.includes("deb") || !targets.includes("default")) {
+    return
+  }
+
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const expectedContents = expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
@@ -143,7 +160,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
     Maintainer: "Foo Bar <foo@example.com>",
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
-    Description: " \n   Test Application (test quite \" #378)",
+    Description: " \n   Test Application (test quite “ #378)",
     Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify-bin" : checkOptions.expectedDepends,
   })
 }
@@ -200,31 +217,36 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   }
 }
 
+function getFileNames(list: Array<ArtifactCreated>): Array<string> {
+  return list.map(it => path.basename(it.file)).sort()
+}
+
 async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
 
-  function getWinExpected(archSuffix: string) {
-    return [
+  function getExpectedFileNames(archSuffix: string) {
+    const result = [
       `RELEASES`,
       `${productName} Setup 1.1.0${archSuffix}.exe`,
-      `TestApp-1.1.0${archSuffix}-full.nupkg`,
+      `TestApp-1.1.0-full.nupkg`,
     ]
+    const buildOptions = packager.devMetadata.build.win
+    if (buildOptions != null && buildOptions.remoteReleases != null) {
+      result.push(`${productName}-1.1.0-delta.nupkg`)
+    }
+    return result
   }
-  const archSuffix = (packagerOptions.arch || process.arch) === "x64" ? "" : "-ia32"
-  const expected =  checkOptions == null || checkOptions.expectedArtifacts == null ? (archSuffix == "" ? getWinExpected(archSuffix) : getWinExpected(archSuffix).concat(getWinExpected(""))) : checkOptions.expectedArtifacts
 
-  const filenames = artifacts.map(it => path.basename(it.file))
-  assertThat(filenames.slice().sort()).deepEqual(expected.slice().sort())
+  const archSuffix = (packagerOptions.arch || process.arch) === "x64" ? "" : "-ia32"
+  assertThat(getFileNames(artifacts)).deepEqual((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpectedFileNames(archSuffix) : checkOptions.expectedArtifacts.slice()).sort())
 
   if (checkOptions != null && checkOptions.expectedArtifacts != null) {
     return
   }
 
-  const expectedArtifactNames = expected.slice()
-  expectedArtifactNames[1] = `TestAppSetup-1.1.0${archSuffix}.exe`
   assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestApp-Setup-1.1.0${archSuffix}.exe`])
 
-  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0${archSuffix}-full.nupkg`)
+  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0-full.nupkg`)
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
@@ -257,7 +279,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     <owners>Foo Bar</owners>
     <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Test Application (test quite \" #378)</description>
+    <description>Test Application (test quite “ #378)</description>
     <copyright>Copyright © ${new Date().getFullYear()} Foo Bar</copyright>
     <projectUrl>http://foo.example.com</projectUrl>
   </metadata>

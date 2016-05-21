@@ -39,7 +39,6 @@
     "../typings/lib.es2016.array.include.d.ts",
     "../typings/main/ambient/mime/mime.d.ts",
     "../typings/main/ambient/progress/progress.d.ts",
-    "../typings/main/ambient/tmp/tmp.d.ts",
     "../typings/main/definitions/chalk/index.d.ts",
     "../typings/main/definitions/debug/index.d.ts",
     "../typings/main/definitions/source-map-support/source-map-support.d.ts",
