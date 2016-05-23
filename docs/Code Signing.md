@@ -30,4 +30,3 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and 
 
 # Where to Buy Code Signing Certificate
 [StartSSL](https://startssl.com/Support?v=34) is recommended.
-It can be used to sign OS X app also, so, you don't need to buy Apple Certificate in addition.

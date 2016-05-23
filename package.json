@@ -6,7 +6,7 @@
   "files": [
     "out",
     "templates",
-    "certs"
+    "certs/root_certs.keychain"
   ],
   "bin": {
     "build": "./out/build-cli.js",
