@@ -76,24 +76,8 @@ The footer should contain any information about **Breaking Changes** and is also
 
 A detailed explanation can be found in this [document](https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit#).
 
-# Publishing to NPM
-We use [semantic-release](https://github.com/semantic-release/semantic-release) to fully automate package publishing.
-Every successful continuous integration build of the master branch is analyzed and
-new version will be published if `fix`, `feat` or `BREAKING CHANGE` [detected](https://github.com/semantic-release/semantic-release#patch-release).
-
 # Documentation
 
 Don't edit wiki directly. Instead, edit files in the `/docs`.
 
 `/docs` is synced to wiki using git subtree merge when `next` release is marked as `latest` and available for all users.
-
-## Sync wiki
-Only if you have write access. Create pull request otherwise.
-
-To add `wiki` upstream:
-```
-git remote add upstream https://github.com/electron-userland/electron-builder.wiki.git
-```
-
-To sync docs: `npm run update-wiki`
-
