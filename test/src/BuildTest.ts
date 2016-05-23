@@ -11,7 +11,7 @@ import pathSorter = require("path-sort")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test("custom buildResources dir", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
+test("custom buildResources dir", () => assertPack("test-app-one", allPlatforms(), {
   tempDirCreated: projectDir => BluebirdPromise.all([
     modifyPackageJson(projectDir, data => {
       data.directories = {
@@ -22,7 +22,7 @@ test("custom buildResources dir", () => assertPack("test-app-one", allPlatformsA
   ])
 }))
 
-test("custom output dir", () => assertPack("test-app-one", allPlatformsAndCurrentArch(false), {
+test("custom output dir", () => assertPack("test-app-one", allPlatforms(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.directories = {
       output: "customDist"
@@ -33,27 +33,35 @@ test("custom output dir", () => assertPack("test-app-one", allPlatformsAndCurren
   }
 }))
 
-test("productName with space", () => assertPack("test-app-one", allPlatformsAndCurrentArch(), {
+test("productName with space", () => assertPack("test-app-one", allPlatforms(), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
-    data.productName = "Test App"
+    data.productName = "Test App Cool"
   })
 }))
 
-test("build in the app package.json", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(), {
-  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+test("build in the app package.json", t => t.throws(assertPack("test-app", allPlatforms(), {
+  tempDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
       "iconUrl": "bar",
     }
   }, true)
 }), /'build' in the application package\.json .+/))
 
-test("invalid main in the app package.json", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(false), {
+test("name in the build", t => t.throws(assertPack("test-app-one", currentPlatform(), {
+  tempDirCreated: it => modifyPackageJson(it, data => {
+    data.build = {
+      "name": "Cool App",
+    }
+  })
+}), /'name' in the 'build' is forbidden/))
+
+test("invalid main in the app package.json", t => t.throws(assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"
   }, true)
 }), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
 
-test("invalid main in the app package.json (no asar)", t => t.throws(assertPack("test-app", allPlatformsAndCurrentArch(false), {
+test("invalid main in the app package.json (no asar)", t => t.throws(assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
@@ -66,7 +74,7 @@ test("invalid main in the app package.json (no asar)", t => t.throws(assertPack(
   }
 }), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
 
-test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatformsAndCurrentArch(false), {
+test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => {
     return BluebirdPromise.all([
       move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
@@ -80,16 +88,13 @@ test("main in the app package.json (no asar)", () => assertPack("test-app", allP
   }
 }))
 
-test("relative index", () => assertPack("test-app", allPlatformsAndCurrentArch(false), {
+test("relative index", () => assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
   }, true)
 }))
 
-test("version from electron-prebuilt dependency", () => assertPack("test-app-one", {
-  platform: [Platform.fromString(process.platform)],
-  dist: false
-}, {
+test("version from electron-prebuilt dependency", () => assertPack("test-app-one", currentPlatform(false), {
   tempDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
       version: "0.37.8"
@@ -100,15 +105,13 @@ test("version from electron-prebuilt dependency", () => assertPack("test-app-one
   ])
 }))
 
-test("www as default dir", () => assertPack("test-app", {
-  platform: [Platform.fromString(process.platform)],
-}, {
+test("www as default dir", () => assertPack("test-app", currentPlatform(), {
   tempDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test("afterPack", t => {
   let called = false
-  return assertPack("test-app", {
+  return assertPack("test-app-one", {
     // linux pack is very fast, so, we use it :)
     platform: [Platform.LINUX],
     dist: true,
@@ -199,13 +202,17 @@ test("invalid platform", t => t.throws(assertPack("test-app-one", {
   dist: false
 }), "Unknown platform: null"))
 
-function allPlatformsAndCurrentArch(dist: boolean = true): PackagerOptions {
+function allPlatforms(dist: boolean = true): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
     dist: dist,
-    // speed up tests
-    cscLink: null,
-    cscInstallerLink: null,
+  }
+}
+
+function currentPlatform(dist: boolean = true): PackagerOptions {
+  return {
+    platform: [Platform.fromString(process.platform)],
+    dist: dist,
   }
 }
 

@@ -163,6 +163,10 @@ export class Packager implements BuildInfo {
       else if (this.options.dist && <any>author.email == null && platforms.includes(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
+
+      if ((<any>this.devMetadata.build).name != null) {
+        throw new Error(util.format(errorMessages.nameInBuildSpecified, appPackageFile))
+      }
     }
   }
 
@@ -215,8 +219,8 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
 }
 
 function checkConflictingOptions(options: any) {
-  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch"]) {
-    if (name! in options) {
+  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name"]) {
+    if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
   }

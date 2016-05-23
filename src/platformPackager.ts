@@ -152,6 +152,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       dir: this.info.appDir,
       out: outDir,
       name: this.appName,
+      productName: this.appName,
       platform: this.platform.nodeName,
       arch: arch,
       version: this.info.electronVersion,

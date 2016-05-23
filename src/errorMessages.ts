@@ -22,3 +22,8 @@ export const buildInAppSpecified = `'build' in the application package.json ('%s
 
 Please move 'build' into the development package.json ('%s')
 `
+
+export const nameInBuildSpecified = `'name' in the 'build' is forbidden
+
+Please move 'name' from 'build' into the application package.json ('%s')
+`
