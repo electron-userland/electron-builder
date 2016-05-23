@@ -55,6 +55,13 @@ test("name in the build", t => t.throws(assertPack("test-app-one", currentPlatfo
   })
 }), /'name' in the 'build' is forbidden/))
 
+test("empty description", t => t.throws(assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  devMetadata: <any>{
+    description: "",
+  }
+}), /Please specify 'description'/))
+
 test("invalid main in the app package.json", t => t.throws(assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"

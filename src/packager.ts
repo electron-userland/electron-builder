@@ -126,20 +126,22 @@ export class Packager implements BuildInfo {
 
   private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<Platform>): void {
     const reportError = (missedFieldName: string) => {
-      throw new Error("Please specify '" + missedFieldName + "' in the application package.json ('" + appPackageFile + "')")
+      throw new Error(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
+    }
+
+    const checkNotEmpty = (name: string, value: string) => {
+      if (isEmptyOrSpaces(value)) {
+        reportError(name)
+      }
     }
 
     const appMetadata = this.metadata
-    if (<any>appMetadata.name == null) {
-      reportError("name")
-    }
-    else if (<any>appMetadata.description == null) {
-      reportError("description")
-    }
-    else if (<any>appMetadata.version == null) {
-      reportError("version")
-    }
-    else if ((<any>appMetadata) !== this.devMetadata) {
+
+    checkNotEmpty("name", appMetadata.name)
+    checkNotEmpty("description", appMetadata.description)
+    checkNotEmpty("version", appMetadata.version)
+
+    if ((<any>appMetadata) !== this.devMetadata) {
       if ((<any>appMetadata).build != null) {
         throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
       }
@@ -251,4 +253,8 @@ async function checkWineVersion(checkPromise: Promise<Buffer[]>) {
   if (compareVersions(wineVersion, "1.8") === -1) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
+}
+
+function isEmptyOrSpaces(s: string | n) {
+  return s == null || s.trim().length === 0
 }
