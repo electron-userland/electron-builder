@@ -6,6 +6,7 @@ declare module "signcode-tf" {
     password: string
     site?: string | null
     hash?: Array<string> | null
+    signcodePath?: string | null
     overwrite?: boolean
   }
 

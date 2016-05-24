@@ -48,10 +48,11 @@ export interface PackagerOptions {
   cscLink?: string | null
   csaLink?: string | null
   cscKeyPassword?: string | null
+  cscSigntoolPath?: string | null
 
   cscInstallerLink?: string | null
   cscInstallerKeyPassword?: string | null
-
+  
   platformPackagerFactory?: ((packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | n
 
   /**
