@@ -32,6 +32,7 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
     cscLink: process.env.CSC_LINK,
     csaLink: process.env.CSA_LINK,
     cscKeyPassword: process.env.CSC_KEY_PASSWORD,
+    cscSigntoolPath: process.env.CSC_SIGNTOOL_PATH,
     githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
   }, originalOptions)
 

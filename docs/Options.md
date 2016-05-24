@@ -97,7 +97,6 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | remoteReleases | <a name="WinBuildOptions-remoteReleases"></a>A URL to your existing updates. If given, these will be downloaded to create delta updates.
 | remoteToken | <a name="WinBuildOptions-remoteToken"></a>Authentication token for remote updates
 | signingHashAlgorithms | array of signing algorithms used. Defaults to `[ 'sha1', 'sha256' ]`
-| signcodePath | path to codesigning tool. Defaults to bundled `signtool.exe`.
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`

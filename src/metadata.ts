@@ -258,7 +258,6 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly remoteToken?: string | null
   
   readonly signingHashAlgorithms?: Array<string> | null
-  readonly signcodePath?: string | null
 }
 
 /*
