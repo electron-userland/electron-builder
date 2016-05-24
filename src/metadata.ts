@@ -256,6 +256,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    Authentication token for remote updates
    */
   readonly remoteToken?: string | null
+  
+  readonly signingHashAlgorithms?: Array<string> | null
+  readonly signcodePath?: string | null
 }
 
 /*

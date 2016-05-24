@@ -103,6 +103,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         name: this.appName,
         site: await this.computePackageUrl(),
         overwrite: true,
+        hash: this.customBuildOptions.signingHashAlgorithms,
+        signcodePath: this.customBuildOptions.signcodePath
       })
     }
   }
@@ -157,6 +159,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         name: this.appName,
         site: projectUrl,
         overwrite: true,
+        hash: this.customBuildOptions.signingHashAlgorithms,
+        signcodePath: this.customBuildOptions.signcodePath
       },
       rcedit: rceditOptions,
     }, this.customBuildOptions)
