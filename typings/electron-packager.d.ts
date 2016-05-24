@@ -1,4 +1,4 @@
-declare namespace ElectronPackager {
+declare module "electron-packager-tf" {
   /** Electron-packager Options. */
   export interface ElectronPackagerOptions {
     /** The source directory. */
@@ -57,8 +57,10 @@ declare namespace ElectronPackager {
       "asar-unpack"?: string;
     /** Should contain the identity to be used when running `codesign` (OS X only). */
     sign?: string;
-    
+
     "app-copyright"?: string
+
+    generateFinalBasename: (context: any) => void
   }
 
   /** Object hash of application metadata to embed into the executable (Windows only). */
@@ -72,23 +74,6 @@ declare namespace ElectronPackager {
     ProductName?: string;
     InternalName?: string;
   }
-
-  export interface Packager {
-    /**
-     * This will:
-     * - Find or download the correct release of Electron
-     * - Use that version of electron to create a app in <out>/<appname>-<platform>-<arch>
-     *
-     * You should be able to launch the app on the platform you built for. If not, check your settings and try again.
-     *
-     * @param opts - Options to configure packaging.
-     * @param callback - Callback which is called when packaging is done or an error occured.
-     */
-    (opts: ElectronPackagerOptions, callback: (err: Error, appPath: string) => void): void;
-  }
-}
-
-declare module "electron-packager-tf" {
-  const packager: ElectronPackager.Packager;
-  export = packager;
+  
+  export function pack(opts: ElectronPackagerOptions): Promise<string[]>
 }

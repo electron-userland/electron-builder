@@ -2,7 +2,7 @@ declare namespace appdmg {
   interface Specification {
     title: string
     background?: string
-    icon: string
+    icon?: string
     "icon-size": number
 
     contents: Array<any>

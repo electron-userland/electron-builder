@@ -4,9 +4,9 @@ import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPack
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
 import { log, statOrNull, warn } from "./util"
-import { deleteFile, emptyDir, open, close, read, move } from "fs-extra-p"
+import { deleteFile, emptyDir, open, close, read } from "fs-extra-p"
 import { sign } from "signcode-tf"
-import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
+import { ElectronPackagerOptions } from "electron-packager-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -63,31 +63,28 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
     await this.iconPath
 
-    let appOutDir = this.computeAppOutDir(outDir, arch)
-    const packOptions = this.computePackOptions(outDir, arch)
+    const appOutDir = this.computeAppOutDir(outDir, arch)
+    const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
     if (!this.options.dist) {
       await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
       return
     }
 
-    const unpackedDir = path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`)
-    const finalAppOut = path.join(unpackedDir, "lib", "net45")
-    const installerOut = computeDistOut(outDir, arch)
-    log("Removing %s and %s", path.relative(this.projectDir, installerOut), path.relative(this.projectDir, unpackedDir))
+    const installerOut = this.options.dist ? computeDistOut(outDir, arch) : null
     await BluebirdPromise.all([
       this.packApp(packOptions, appOutDir),
-      emptyDir(installerOut),
-      emptyDir(unpackedDir)
+      installerOut == null ? BluebirdPromise.resolve() : emptyDir(installerOut)
     ])
-
-    await move(appOutDir, finalAppOut)
-    appOutDir = finalAppOut
 
     await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
     if (this.options.dist) {
-      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, packOptions))
+      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, installerOut!, arch, packOptions))
     }
+  }
+
+  protected computeAppOutDir(outDir: string, arch: string): string {
+    return path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`)
   }
 
   protected async packApp(options: any, appOutDir: string) {
@@ -103,6 +100,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         name: this.appName,
         site: await this.computePackageUrl(),
         overwrite: true,
+        hash: this.customBuildOptions.signingHashAlgorithms,
       })
     }
   }
@@ -157,6 +155,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         name: this.appName,
         site: projectUrl,
         overwrite: true,
+        hash: this.customBuildOptions.signingHashAlgorithms,
       },
       rcedit: rceditOptions,
     }, this.customBuildOptions)
@@ -168,8 +167,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return options
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
-    const installerOutDir = computeDistOut(outDir, arch)
+  protected async packageInDistributableFormat(outDir: string, appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     const winstaller = require("electron-winstaller-fixed")
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)

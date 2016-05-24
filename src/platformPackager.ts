@@ -3,20 +3,17 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getPr
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import packager = require("electron-packager-tf")
+import { pack, ElectronPackagerOptions } from "electron-packager-tf"
 import globby = require("globby")
 import { copy, unlink } from "fs-extra-p"
 import { statOrNull, use, spawn, debug7zArgs, debug } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
 import { listPackage, statFile } from "asar"
-import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
 import { path7za } from "7zip-bin"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-
-const pack = BluebirdPromise.promisify(packager)
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
@@ -46,7 +43,6 @@ export interface PackagerOptions {
   projectDir?: string | null
 
   cscLink?: string | null
-  csaLink?: string | null
   cscKeyPassword?: string | null
 
   cscInstallerLink?: string | null
@@ -122,7 +118,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected abstract get supportedTargets(): Array<string>
 
   protected computeAppOutDir(outDir: string, arch: string): string {
-    return path.join(outDir, `${this.appName}-${this.platform.nodeName}-${arch}`)
+    return path.join(outDir, `${this.platform.buildConfigurationKey}${arch === "x64" ? "" : `-${arch}`}`)
   }
 
   protected dispatchArtifactCreated(file: string, artifactName?: string) {
@@ -140,7 +136,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.copyExtraResources(appOutDir, arch, customBuildOptions)
   }
 
-  protected computePackOptions(outDir: string, arch: string): ElectronPackagerOptions {
+  protected computePackOptions(outDir: string, appOutDir: string, arch: string): ElectronPackagerOptions {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = this.computeBuildNumber()
@@ -163,6 +159,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       "app-copyright": `Copyright © ${new Date().getFullYear()} ${this.metadata.author.name || this.appName}`,
       "build-version": buildVersion,
       tmpdir: false,
+      generateFinalBasename: () => path.basename(appOutDir),
       "version-string": {
         CompanyName: this.metadata.author.name,
         FileDescription: smarten(this.metadata.description),

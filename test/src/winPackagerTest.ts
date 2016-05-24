@@ -7,7 +7,7 @@ import { WinPackager, computeDistOut } from "out/winPackager"
 import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
-import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
+import { ElectronPackagerOptions } from "electron-packager-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -113,11 +113,12 @@ class CheckingWinPackager extends WinPackager {
   async pack(outDir: string, arch: string): Promise<any> {
     // skip pack
     const installerOutDir = computeDistOut(outDir, arch)
-    const packOptions = this.computePackOptions(outDir, arch)
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch), installerOutDir, packOptions, "Foo.exe")
+    const appOutDir = this.computeAppOutDir(outDir, arch)
+    const packOptions = this.computePackOptions(outDir, appOutDir, arch)
+    this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, "Foo.exe")
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     // skip
   }
 }

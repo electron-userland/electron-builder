@@ -71,7 +71,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
   async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(this.computePackOptions(outDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
+    await this.doPack(this.computePackOptions(outDir, appOutDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
 
     if (this.options.dist) {
       for (let target of this.targets) {

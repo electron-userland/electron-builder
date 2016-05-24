@@ -195,7 +195,7 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
     CFBundleVersion: "1.1.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
   })
 
-  if (packagerOptions.csaLink != null) {
+  if (packagerOptions.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
     assertThat(result[0].toString()).not.match(/is not signed at all/)
   }
@@ -256,7 +256,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
   assertThat(files).deepEqual(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
-      return `lib/net45/${productName}.exe`
+      return `lib/net45/${encodeURI(productName)}.exe`
     }
     else {
       return it

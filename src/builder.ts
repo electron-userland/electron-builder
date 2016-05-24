@@ -30,7 +30,6 @@ export interface BuildOptions extends PackagerOptions, PublishOptions {
 export async function build(originalOptions?: BuildOptions): Promise<void> {
   const options: BuildOptions = Object.assign({
     cscLink: process.env.CSC_LINK,
-    csaLink: process.env.CSA_LINK,
     cscKeyPassword: process.env.CSC_KEY_PASSWORD,
     githubToken: process.env.GH_TOKEN || process.env.GH_TEST_TOKEN,
   }, originalOptions)

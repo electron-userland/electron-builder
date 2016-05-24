@@ -62,7 +62,7 @@ async function deleteOldElectronVersion(): Promise<any> {
         deletePromises.push(unlink(path.join(cacheDir, file)))
       }
     }
-    return BluebirdPromise.all(deletePromises)
+    return await BluebirdPromise.all(deletePromises)
   }
   catch (e) {
     if (e.code === "ENOENT") {
@@ -139,10 +139,10 @@ function exec(command: string, args: Array<string>) {
     }
 
     const effectiveOptions = {
-      stdio: isPruneCommand ? ["ignore", "ignore", "inherit"] : "inherit",
+      stdio: isPruneCommand ? ["ignore", "ignore", "inherit"] : ["ignore", "inherit", "inherit"],
       cwd: testPackageDir,
     }
-    console.log("Execute " + command + " " + args.join(" ") + " (cwd: " + effectiveOptions.cwd + ")")
+    console.log(`Execute ${command} ${args.join(" ")} (cwd: ${effectiveOptions.cwd})`)
     const child = spawn(command, args, effectiveOptions)
     child.on("close", (code: number) => {
       if (code === 0) {

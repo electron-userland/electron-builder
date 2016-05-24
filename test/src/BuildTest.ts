@@ -116,12 +116,12 @@ test("www as default dir", () => assertPack("test-app", currentPlatform(), {
   tempDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
-test("afterPack", t => {
+test.ifDevOrLinuxCi("afterPack", t => {
   let called = false
   return assertPack("test-app-one", {
     // linux pack is very fast, so, we use it :)
     platform: [Platform.LINUX],
-    dist: true,
+    dist: false,
     devMetadata: {
       build: {
         afterPack: () => {
@@ -147,8 +147,6 @@ test("copy extra resource", async () => {
       platform: [platform],
       // to check NuGet package
       dist: platform === Platform.WINDOWS,
-      cscLink: null,
-      cscInstallerLink: null,
     }, {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
@@ -178,12 +176,12 @@ test("copy extra resource", async () => {
         ])
       },
       packed: async (projectDir) => {
-        let resourcesDir = path.join(projectDir, outDirName, "TestApp-" + platform.nodeName + "-" + process.arch)
+        let resourcesDir = path.join(projectDir, outDirName, platform.buildConfigurationKey)
         if (platform === Platform.OSX) {
           resourcesDir = path.join(resourcesDir, "TestApp.app", "Contents", "Resources")
         }
         else if (platform === Platform.WINDOWS) {
-          resourcesDir = path.join(projectDir, outDirName, "win-unpacked", "lib", "net45")
+          resourcesDir = path.join(projectDir, outDirName, "win-unpacked")
         }
         await assertThat(path.join(resourcesDir, "foo")).isDirectory()
         await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()

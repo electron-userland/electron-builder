@@ -2,7 +2,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions, MasBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, debug, statOrNull, warn } from "./util"
+import { log, debug, warn } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
@@ -22,13 +22,19 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
       const keychainName = generateKeychainName()
       cleanupTasks.push(() => deleteKeychain(keychainName))
-      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.cscInstallerLink, this.options.cscInstallerKeyPassword, this.options.csaLink)
+      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
     }
     else {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
 
     this.resourceList = readdir(this.buildResourcesDir)
+      .catch(e => {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
+        return []
+      })
   }
 
   get platform() {
@@ -40,7 +46,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   }
 
   async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const packOptions = this.computePackOptions(outDir, arch)
+    const packOptions = this.computePackOptions(outDir, this.computeAppOutDir(outDir, arch), arch)
     let nonMasPromise: Promise<any> | null = null
     if (this.targets.length > 1 || this.targets[0] !== "mas") {
       const appOutDir = this.computeAppOutDir(outDir, arch)
@@ -51,9 +57,9 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
     if (this.targets.includes("mas")) {
       // osx-sign - disable warning
-      const appOutDir = path.join(outDir, `${this.appName}-mas-${arch}`)
+      const appOutDir = path.join(outDir, "mas")
       const masBuildOptions = deepAssign({}, this.customBuildOptions, (<any>this.devMetadata.build)["mas"])
-      await this.doPack(Object.assign({}, packOptions, {platform: "mas", "osx-sign": false}), outDir, appOutDir, arch, masBuildOptions)
+      await this.doPack(Object.assign({}, packOptions, {platform: "mas", "osx-sign": false, generateFinalBasename: function () { return "mas" }}), outDir, appOutDir, arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)
     }
 
@@ -146,7 +152,6 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   protected async computeEffectiveDistOptions(appOutDir: string): Promise<appdmg.Specification> {
     const specification: appdmg.Specification = deepAssign({
       title: this.appName,
-      icon: path.join(this.buildResourcesDir, "icon.icns"),
       "icon-size": 80,
       contents: [
         {
@@ -159,11 +164,20 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       format: this.devMetadata.build.compression === "store" ? "UDRO" : "UDBZ",
     }, this.customBuildOptions)
 
+    if (!("icon" in this.customBuildOptions)) {
+      const resourceList = await this.resourceList
+      if (resourceList.includes("icon.icns")) {
+        specification.icon = path.join(this.buildResourcesDir, "icon.icns")
+      }
+      else {
+        warn("Application icon is not set, default Electron icon will be used")
+      }
+    }
+
     if (!("background" in this.customBuildOptions)) {
-      const background = path.join(this.buildResourcesDir, "background.png")
-      const info = await statOrNull(background)
-      if (info != null && info.isFile()) {
-        specification.background = background
+      const resourceList = await this.resourceList
+      if (resourceList.includes("background.png")) {
+        specification.background = path.join(this.buildResourcesDir, "background.png")
       }
     }
 
