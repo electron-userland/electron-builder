@@ -32,9 +32,8 @@ before_install:
 
 install:
 - nvm install $NODE_VERSION
-- npm install npm -g
-- npm install
-- npm prune
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" || "$NODE_VERSION" == "6" ]]; then npm install && npm prune ; fi
 
 script:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test ; fi
@@ -42,7 +41,7 @@ script:
 
 after_success:
 - node out/cleanup.js
-- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" ]]; then npm run semantic-release ; fi
+- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" && "$NODE_VERSION" == "6" ]]; then npm run semantic-release ; fi
 
 branches:
   except:

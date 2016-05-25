@@ -66,8 +66,8 @@
     "debug": "^2.2.0",
     "deep-assign": "^2.0.0",
     "electron-osx-sign-tf": "0.4.0-beta.0",
-    "electron-packager-tf": "~7.1.0",
-    "electron-winstaller-fixed": "~2.9.0",
+    "electron-packager-tf": "~7.2.0",
+    "electron-winstaller-fixed": "~2.9.3",
     "fs-extra-p": "^1.0.1",
     "globby": "^4.1.0",
     "hosted-git-info": "^2.1.5",
@@ -77,7 +77,7 @@
     "progress": "^1.1.8",
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.4",
-    "signcode-tf": "^0.6.3",
+    "signcode-tf": "~0.7.3",
     "source-map-support": "^0.4.0"
   },
   "optionalDependencies": {
@@ -92,7 +92,7 @@
     ]
   },
   "devDependencies": {
-    "ava-tf": "^0.12.4-beta.6",
+    "ava-tf": "^0.15",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-parameters": "^6.9.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",

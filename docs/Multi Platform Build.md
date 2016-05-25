@@ -55,9 +55,9 @@ To build app in distributable format for Windows on Linux:
   sudo apt-get install --no-install-recommends -y mono-devel ca-certificates-mono
   ```
 
-* Install zip.
+* Install osslsigncode.
   ```
-  apt-get install --no-install-recommends -y zip
+  apt-get install --no-install-recommends -y osslsigncode
   ```
 
 To build app in 32 bit from a machine with 64 bit:

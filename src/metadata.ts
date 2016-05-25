@@ -1,4 +1,5 @@
-import ElectronPackagerOptions = ElectronPackager.ElectronPackagerOptions
+import { ElectronPackagerOptions } from "electron-packager-tf"
+
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
 }
@@ -256,6 +257,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    Authentication token for remote updates
    */
   readonly remoteToken?: string | null
+
+  readonly signingHashAlgorithms?: Array<string> | null
+  readonly signcodePath?: string | null
 }
 
 /*
