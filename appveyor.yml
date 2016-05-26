@@ -9,10 +9,8 @@ cache:
 install:
   - ps: Install-Product node 6 x64
   - npm install npm -g
-  - node -v
-  - npm -v
-  - npm prune
   - npm install
+  - npm prune
 
 build: off
 

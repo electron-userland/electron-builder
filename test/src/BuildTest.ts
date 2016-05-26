@@ -101,15 +101,30 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
   }, true)
 }))
 
-test("version from electron-prebuilt dependency", () => assertPack("test-app-one", currentPlatform(false), {
+const electronVersion = "0.37.8"
+
+test("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  dist: false,
+}, {
   tempDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
-      version: "0.37.8"
+      version: electronVersion
     }),
     modifyPackageJson(projectDir, data => {
       data.devDependencies = {}
     })
   ])
+}))
+
+test("electron version from build", () => assertPack("test-app-one", {
+  platform: [Platform.LINUX],
+  dist: false,
+}, {
+  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.devDependencies = {}
+    data.build.electronVersion = electronVersion
+  })
 }))
 
 test("www as default dir", () => assertPack("test-app", currentPlatform(), {
