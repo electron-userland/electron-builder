@@ -131,23 +131,24 @@ test("www as default dir", () => assertPack("test-app", currentPlatform(), {
   tempDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
-test.ifDevOrLinuxCi("afterPack", t => {
-  let called = false
+test("afterPack", t => {
+  const possiblePlatforms = process.env.CI ? [Platform.fromString(process.platform)] : getPossiblePlatforms()
+  let called = 0
   return assertPack("test-app-one", {
     // linux pack is very fast, so, we use it :)
-    platform: [Platform.LINUX],
+    platform: possiblePlatforms,
     dist: false,
     devMetadata: {
       build: {
         afterPack: () => {
-          called = true
+          called++
           return Promise.resolve()
         }
       }
     }
   }, {
     packed: () => {
-      t.true(called)
+      t.is(called, possiblePlatforms.length)
       return Promise.resolve()
     }
   })
@@ -237,13 +238,11 @@ function currentPlatform(dist: boolean = true): PackagerOptions {
 }
 
 function getPossiblePlatforms(): Array<Platform> {
-  const isCi = process.env.CI != null
   if (process.platform === Platform.OSX.nodeName) {
-    return isCi ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS]
+    return process.env.CI ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS]
   }
   else if (process.platform === Platform.LINUX.nodeName) {
-    // todo install wine on Linux agent
-    return [Platform.LINUX]
+    return [Platform.LINUX, Platform.WINDOWS]
   }
   else {
     return [Platform.WINDOWS]

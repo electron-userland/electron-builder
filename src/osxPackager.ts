@@ -52,7 +52,11 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
         .then(() => this.sign(appOutDir, null))
-        .then(() => postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch)))
+        .then(() => {
+          if (this.options.dist) {
+            postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+          }
+        })
     }
 
     if (this.targets.includes("mas")) {
