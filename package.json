@@ -61,11 +61,10 @@
     "asar": "^0.11.0",
     "bluebird": "^3.4.0",
     "chalk": "^1.1.3",
-    "command-line-args": "^2.1.6",
     "compare-versions": "^2.0.1",
     "debug": "^2.2.0",
     "deep-assign": "^2.0.0",
-    "electron-osx-sign-tf": "0.4.0-beta.0",
+    "electron-osx-sign-tf": "0.5.1",
     "electron-packager-tf": "~7.2.0",
     "electron-winstaller-fixed": "~2.9.3",
     "fs-extra-p": "^1.0.1",
@@ -78,7 +77,8 @@
     "progress-stream": "^1.2.0",
     "read-package-json": "^2.0.4",
     "signcode-tf": "~0.7.3",
-    "source-map-support": "^0.4.0"
+    "source-map-support": "^0.4.0",
+    "yargs": "^4.7.1"
   },
   "optionalDependencies": {
     "appdmg": "^0.4.5"
@@ -102,7 +102,7 @@
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
     "pre-git": "^3.8.4",
-    "semantic-release": "^6.2.2",
+    "semantic-release": "^6.3.0",
     "should": "^8.4.0",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",

@@ -63,14 +63,11 @@ It costs only $59 (and 2 weeks), see [Where to buy code signing certificate](htt
     ```json
     "scripts": {
       "postinstall": "install-app-deps",
-      "pack": "build",
+      "pack": "build --target dir",
       "dist": "build"
     }
     ```
-    And then you can run `npm run pack` or `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)).
-    Both scripts are the same because If script named `dist` or name has prefix `dist:`, flag `--dist` is implied.
-
-    Please note — if you don't name your script `dist` or prefix it with `dist:` and you don't pass `--dist` flag, application will be not packed in a distributable format.
+    And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack`.
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 

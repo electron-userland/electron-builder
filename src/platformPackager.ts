@@ -5,7 +5,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions } from "electron-packager-tf"
 import globby = require("globby")
-import { copy, unlink } from "fs-extra-p"
+import { readdir, copy, unlink } from "fs-extra-p"
 import { statOrNull, use, spawn, debug7zArgs, debug } from "./util"
 import { Packager } from "./packager"
 import deepAssign = require("deep-assign")
@@ -27,18 +27,19 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
   "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
 }
 
+export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"]
+
+// class Target {
+//   constructor(public platform: Platform, arch?: "ia32" | "x64")
+// }
+//
+export const DIR_TARGET = "dir"
+
 export interface PackagerOptions {
-  arch?: string | null
-
-  dist?: boolean | null
-  githubToken?: string | null
-
-  sign?: string | null
+  target?: Array<string> | null
 
   platform?: Array<Platform> | null
-
-  // deprecated
-  appDir?: string | null
+  arch?: string | null
 
   projectDir?: string | null
 
@@ -48,7 +49,7 @@ export interface PackagerOptions {
   cscInstallerLink?: string | null
   cscInstallerKeyPassword?: string | null
 
-  platformPackagerFactory?: ((packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | n
+  platformPackagerFactory?: ((packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | null
 
   /**
    * The same as [development package.json](https://github.com/electron-userland/electron-builder/wiki/Options#development-packagejson).
@@ -87,6 +88,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly targets: Array<string>
 
+  readonly resourceList: Promise<Array<string>>
+
   public abstract get platform(): Platform
 
   constructor(protected info: BuildInfo) {
@@ -99,16 +102,33 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
     this.appName = getProductName(this.metadata, this.devMetadata)
 
-    const targets = normalizeTargets(this.customBuildOptions.target)
+    let targets = normalizeTargets(this.customBuildOptions.target)
+    const cliTargets = normalizeTargets(this.options.target)
+    if (cliTargets != null) {
+      targets = cliTargets
+    }
+
     if (targets != null) {
-      const supportedTargets = this.supportedTargets.concat("default", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2")
+      const supportedTargets = this.supportedTargets.concat(commonTargets)
       for (let target of targets) {
-        if (!supportedTargets.includes(target)) {
-          throw new Error("Unknown target: " + target)
+        if (target !== "default" && !supportedTargets.includes(target)) {
+          throw new Error(`Unknown target: ${target}`)
         }
       }
     }
     this.targets = targets == null ? ["default"] : targets
+
+    this.resourceList = readdir(this.buildResourcesDir)
+      .catch(e => {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
+        return []
+      })
+  }
+
+  protected hasOnlyDirTarget(): boolean {
+    return this.targets.length === 1 && this.targets[0] === "dir"
   }
 
   protected get relativeBuildResourcesDirname() {

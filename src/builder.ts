@@ -36,17 +36,9 @@ export async function build(originalOptions?: BuildOptions): Promise<void> {
 
   options.platform = normalizePlatforms(options.platform)
 
-  const lifecycleEvent = process.env.npm_lifecycle_event
-  if (options.publish) {
-    options.dist = true
-  }
-  else if (options.dist === undefined) {
-    options.dist = lifecycleEvent === "dist" || lifecycleEvent === "build" || (lifecycleEvent != null && lifecycleEvent.startsWith("dist:"))
-  }
-
   let isPublishOptionGuessed = false
   if (options.publish === undefined) {
-    if (lifecycleEvent === "release") {
+    if (process.env.npm_lifecycle_event === "release") {
       options.publish = "always"
     }
     else if (options.githubToken != null) {

@@ -29,7 +29,6 @@
   "files": [
     "../typings/appdmg.d.ts",
     "../typings/asar.d.ts",
-    "../typings/command-line-args.d.ts",
     "../typings/compareVersions.d.ts",
     "../typings/deep-assign.d.ts",
     "../typings/electron-packager.d.ts",
@@ -46,6 +45,7 @@
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",
     "../typings/signcode.d.ts",
+    "../typings/yargs.d.ts",
     "typings/ava.d.ts",
     "typings/decompress-zip.d.ts",
     "typings/json-parse-helpfulerror.d.ts",

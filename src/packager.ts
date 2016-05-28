@@ -55,7 +55,7 @@ export class Packager implements BuildInfo {
     const platforms = this.options.platform!
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
-    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app) || this.options.appDir)
+    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
@@ -162,7 +162,7 @@ export class Packager implements BuildInfo {
       if (<any>author == null) {
         reportError("author")
       }
-      else if (this.options.dist && <any>author.email == null && platforms.includes(Platform.LINUX)) {
+      else if (<any>author.email == null && platforms.includes(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
 

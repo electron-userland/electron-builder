@@ -62,7 +62,6 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
     await packAndCheck(projectDir, Object.assign({
       projectDir: projectDir,
-      dist: true,
     }, packagerOptions), checkOptions)
 
     if (checkOptions != null && checkOptions.packed != null) {
@@ -97,7 +96,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   await packager.build()
 
-  if (!packagerOptions.dist || packagerOptions.platformPackagerFactory != null) {
+  if ((packagerOptions.target != null && packagerOptions.target.length === 1 && packagerOptions.target[0] === "dir") || packagerOptions.platformPackagerFactory != null) {
     return
   }
 

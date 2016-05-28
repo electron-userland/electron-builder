@@ -29,7 +29,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       description: this.metadata.description,
     }, this.customBuildOptions)
 
-    if (this.options.dist) {
+    if (!this.hasOnlyDirTarget()) {
       const tempDir = path.join(tmpdir(), getTempName("electron-builder-linux"))
       const tempDirPromise = emptyDir(tempDir)
         .then(() => {
@@ -73,17 +73,15 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(this.computePackOptions(outDir, appOutDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
 
-    if (this.options.dist) {
-      for (let target of this.targets) {
-        if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
-          const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
-          postAsyncTasks.push(this.archiveApp(target, appOutDir, destination)
-            .then(() => this.dispatchArtifactCreated(destination)))
-        }
+    for (let target of this.targets) {
+      if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
+        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
+        postAsyncTasks.push(this.archiveApp(target, appOutDir, destination)
+          .then(() => this.dispatchArtifactCreated(destination)))
       }
-
-      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
     }
+
+    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
@@ -196,10 +194,10 @@ Icon=${this.metadata.name}
     // todo fix fpm - if we run in parallel, get strange tar errors
     for (let target of this.targets) {
       target = target === "default" ? "deb" : target
-      if (target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
+      if (target !== "dir" && target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
         const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
         await this.buildPackage(destination, target, this.buildOptions, appOutDir, arch)
-          .then(() => this.dispatchArtifactCreated(destination))
+        this.dispatchArtifactCreated(destination)
       }
     }
   }

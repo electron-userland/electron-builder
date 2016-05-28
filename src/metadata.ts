@@ -171,7 +171,7 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly background?: string | null
 
   /*
-   Target package type: list of `default`, `dmg`, `zip`, `mas`, `7z`, `tar.xz`, `tar.gz`, `tar.bz2`, `tar.7z`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+   Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
   readonly target?: Array<string> | null
 

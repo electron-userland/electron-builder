@@ -5,7 +5,7 @@ import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, PackagerOptions } from "out"
+import { Platform, PackagerOptions, DIR_TARGET } from "out"
 import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
@@ -105,7 +105,7 @@ const electronVersion = "0.37.8"
 
 test("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   platform: [Platform.LINUX],
-  dist: false,
+  target: ["dir"],
 }, {
   tempDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
@@ -119,7 +119,7 @@ test("electron version from electron-prebuilt dependency", () => assertPack("tes
 
 test("electron version from build", () => assertPack("test-app-one", {
   platform: [Platform.LINUX],
-  dist: false,
+  target: [DIR_TARGET],
 }, {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.devDependencies = {}
@@ -137,7 +137,7 @@ test("afterPack", t => {
   return assertPack("test-app-one", {
     // linux pack is very fast, so, we use it :)
     platform: possiblePlatforms,
-    dist: false,
+    target: [DIR_TARGET],
     devMetadata: {
       build: {
         afterPack: () => {
@@ -162,7 +162,7 @@ test("copy extra resource", async () => {
     await assertPack("test-app", {
       platform: [platform],
       // to check NuGet package
-      dist: platform === Platform.WINDOWS,
+      target: platform === Platform.WINDOWS ? null : [DIR_TARGET],
     }, {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
@@ -220,20 +220,20 @@ test("copy extra resource", async () => {
 
 test("invalid platform", t => t.throws(assertPack("test-app-one", {
   platform: [null],
-  dist: false
+  target: [DIR_TARGET]
 }), "Unknown platform: null"))
 
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {
     platform: getPossiblePlatforms(),
-    dist: dist,
+    target: dist ? null : [DIR_TARGET],
   }
 }
 
 function currentPlatform(dist: boolean = true): PackagerOptions {
   return {
     platform: [Platform.fromString(process.platform)],
-    dist: dist,
+    target: dist ? null : [DIR_TARGET],
   }
 }
 

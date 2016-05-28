@@ -103,11 +103,7 @@ ENV BUNDLE_PATH="$GEM_HOME" \
 ENV PATH $BUNDLE_BIN:$PATH
 RUN mkdir -p "$GEM_HOME" "$BUNDLE_BIN" \
 	&& chmod 777 "$GEM_HOME" "$BUNDLE_BIN" \
-  && mkdir -p /tmp/fpm && curl -L https://github.com/jordansissel/fpm/archive/6e2514df27664912826b4fcd89affa19df0e713b.tar.gz | tar -xz -C /tmp/fpm --strip-components 1 && cd /tmp/fpm && bundle install && make install && cd .. && rm -rf /tmp/fpm
-
-# use fpm commit https://github.com/jordansissel/fpm/commit/6e2514df27664912826b4fcd89affa19df0e713b because of some important unreleased fixes:
-# https://github.com/jordansissel/fpm/commit/94be82c0a23c8cd641ab9e60f3eb4a8db445fff0
-# https://github.com/jordansissel/fpm/commit/77b95747b9cc01ca420ee24084a449b3ac19e6d5
+  && mkdir -p /tmp/fpm && curl -L https://github.com/jordansissel/fpm/archive/5719990e1bbc3deeaea8a196d6aaa51421a058bd.tar.gz | tar -xz -C /tmp/fpm --strip-components 1 && cd /tmp/fpm && bundle install && make install && cd .. && rm -rf /tmp/fpm
 
 # we don't use our bundled fpm because it is better to build ruby & tools for specific platform - not generic. And easy to maintain (update ruby and so on).
 ENV USE_SYSTEM_FPM true

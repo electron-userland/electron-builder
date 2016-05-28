@@ -34,7 +34,6 @@
   "files": [
     "typings/appdmg.d.ts",
     "typings/asar.d.ts",
-    "typings/command-line-args.d.ts",
     "typings/compareVersions.d.ts",
     "typings/deep-assign.d.ts",
     "typings/electron-packager.d.ts",
@@ -51,6 +50,7 @@
     "typings/progress-stream.d.ts",
     "typings/read-package-json.d.ts",
     "typings/signcode.d.ts",
+    "typings/yargs.d.ts",
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/fs-extra-p/bluebird.d.ts",

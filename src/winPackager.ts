@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPackager"
 import { Platform, WinBuildOptions } from "./metadata"
 import * as path from "path"
-import { log, statOrNull, warn } from "./util"
+import { log, warn } from "./util"
 import { deleteFile, emptyDir, open, close, read } from "fs-extra-p"
 import { sign } from "signcode-tf"
 import { ElectronPackagerOptions } from "electron-packager-tf"
@@ -33,12 +33,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     this.iconPath = this.getValidIconPath()
-
-    if (this.options.dist && this.customBuildOptions.loadingGif == null) {
-      const installSpinnerPath = path.join(this.buildResourcesDir, "install-spinner.gif")
-      this.loadingGifStat = statOrNull(installSpinnerPath)
-        .then(it => it != null && !it.isDirectory() ? installSpinnerPath : null)
-    }
   }
 
   get platform() {
@@ -66,21 +60,19 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
-    if (!this.options.dist) {
+    if (!this.targets.includes("default")) {
       await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
       return
     }
 
-    const installerOut = this.options.dist ? computeDistOut(outDir, arch) : null
+    const installerOut = computeDistOut(outDir, arch)
     await BluebirdPromise.all([
       this.packApp(packOptions, appOutDir),
-      installerOut == null ? BluebirdPromise.resolve() : emptyDir(installerOut)
+      emptyDir(installerOut)
     ])
 
     await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
-    if (this.options.dist) {
-      postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, installerOut!, arch, packOptions))
-    }
+    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, installerOut!, arch, packOptions))
   }
 
   protected computeAppOutDir(outDir: string, arch: string): string {
@@ -160,8 +152,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       rcedit: rceditOptions,
     }, this.customBuildOptions)
 
-    if (this.loadingGifStat != null) {
-      options.loadingGif = await this.loadingGifStat
+    if (!("loadingGif" in options)) {
+      const resourceList = await this.resourceList
+      if (resourceList.includes("install-spinner.gif")) {
+        options.loadingGif = path.join(this.buildResourcesDir, "install-spinner.gif")
+      }
     }
 
     return options
