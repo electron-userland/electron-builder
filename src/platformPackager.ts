@@ -57,6 +57,8 @@ export interface PackagerOptions {
    * Development `package.json` will be still read, but options specified in this object will override.
    */
   readonly devMetadata?: DevMetadata
+
+  readonly npmRebuild?: boolean
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {
@@ -230,8 +232,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async copyExtraFiles(appOutDir: string, arch: string, customBuildOptions: DC): Promise<any> {
-    await this.doCopyExtraFiles(true, appOutDir, arch, this.customBuildOptions)
-    await this.doCopyExtraFiles(false, appOutDir, arch, this.customBuildOptions)
+    await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
+    await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
   }
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {

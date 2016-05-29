@@ -64,6 +64,11 @@ const args = <CliOptions>(yargs
   .option("arch", {
     choices: ["ia32", "x64", "all"],
   })
+  .option("npmRebuild", {
+    describe: "Runs npm rebuild before starting to package the app.",
+    default: true,
+    type: "boolean",
+  })
   .strict()
   .help()
   .epilog(`Project home: ${underline("https://github.com/electron-userland/electron-builder")}`)

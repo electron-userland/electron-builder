@@ -173,7 +173,10 @@ export class Packager implements BuildInfo {
   }
 
   private installAppDependencies(platform: Platform, arch: string): Promise<any> {
-    if (this.isTwoPackageJsonProjectLayoutUsed) {
+    if (!this.options.npmRebuild) {
+      log("Skip app dependencies rebuild because npmRebuild is set to false")
+    }
+    else if (this.isTwoPackageJsonProjectLayoutUsed) {
       if (platform.nodeName === process.platform) {
         return installDependencies(this.appDir, this.electronVersion, arch, "rebuild")
       }
