@@ -118,7 +118,7 @@ class CheckingWinPackager extends WinPackager {
     this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, "Foo.exe")
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     // skip
   }
 }

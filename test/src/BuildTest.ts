@@ -154,9 +154,11 @@ test("afterPack", t => {
   })
 })
 
-test("copy extra resource", async () => {
+test("copy extra content", async () => {
   for (let platform of getPossiblePlatforms()) {
     const osName = platform.buildConfigurationKey
+
+    const winDirPrefix = "lib/net45/resources/"
 
     //noinspection SpellCheckingInspection
     await assertPack("test-app", {
@@ -167,9 +169,6 @@ test("copy extra resource", async () => {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
           modifyPackageJson(projectDir, data => {
-            if (data.build == null) {
-              data.build = {}
-            }
             data.build.extraResources = [
               "foo",
               "bar/hello.txt",
@@ -179,40 +178,44 @@ test("copy extra resource", async () => {
 
             data.build[osName] = {
               extraResources: [
-                "platformSpecific"
-              ]
+                "platformSpecificR"
+              ],
+              extraFiles: [
+                "platformSpecificF"
+              ],
             }
           }),
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
-          outputFile(path.join(projectDir, "platformSpecific"), "platformSpecific"),
+          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
           outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
       packed: async (projectDir) => {
-        let resourcesDir = path.join(projectDir, outDirName, platform.buildConfigurationKey)
+        const base = path.join(projectDir, outDirName, platform.buildConfigurationKey)
+        let resourcesDir = path.join(base, "resources")
         if (platform === Platform.OSX) {
-          resourcesDir = path.join(resourcesDir, "TestApp.app", "Contents", "Resources")
+          resourcesDir = path.join(base, "TestApp.app", "Contents", "Resources")
         }
         else if (platform === Platform.WINDOWS) {
-          resourcesDir = path.join(projectDir, outDirName, "win-unpacked")
+          resourcesDir = path.join(base + "-unpacked", "resources")
         }
         await assertThat(path.join(resourcesDir, "foo")).isDirectory()
         await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()
         await assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile()
         await assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile()
         await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
-        await assertThat(path.join(resourcesDir, "platformSpecific")).isFile()
+        await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
-        "lib/net45/bar/hello.txt",
-        "lib/net45/bar/x64.txt",
-        "lib/net45/foo/nameWithoutDot",
-        "lib/net45/platformSpecific",
-        "lib/net45/win/x64.txt"
+        winDirPrefix + "bar/hello.txt",
+        winDirPrefix + "bar/x64.txt",
+        winDirPrefix + "foo/nameWithoutDot",
+        winDirPrefix + "platformSpecificR",
+        winDirPrefix + "win/x64.txt"
       )) : null,
     })
   }

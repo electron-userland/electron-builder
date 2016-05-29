@@ -105,7 +105,7 @@ export interface BuildMetadata {
   readonly productName?: string | null
 
   /**
-   A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's directory (`Contents/Resources` for OS X).
+   A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for OS X, `resources` for Linux/Windows).
 
    You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
 
@@ -114,6 +114,11 @@ export interface BuildMetadata {
    May be specified in the platform options (i.e. in the `build.osx`).
    */
   readonly extraResources?: Array<string> | null
+
+  /**
+   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, `` for Linux/Windows).
+   */
+  readonly extraFiles?: Array<string> | null
 
   /*
    See [.build.osx](#OsXBuildOptions).
@@ -334,6 +339,7 @@ export interface MetadataDirectories {
 }
 
 export interface PlatformSpecificBuildOptions {
+  readonly extraFiles?: Array<string> | null
   readonly extraResources?: Array<string> | null
 
   readonly target?: Array<string> | null

@@ -153,7 +153,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC) {
     await this.packApp(options, appOutDir)
-    await this.copyExtraResources(appOutDir, arch, customBuildOptions)
+    await this.copyExtraFiles(appOutDir, arch, customBuildOptions)
   }
 
   protected computePackOptions(outDir: string, appOutDir: string, arch: string): ElectronPackagerOptions {
@@ -210,31 +210,33 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
-  private getExtraResources(arch: string, customBuildOptions: DC): Promise<Array<string>> {
+  private getExtraResources(isResources: boolean, arch: string, customBuildOptions: DC): Promise<Array<string>> {
     const buildMetadata: any = this.devMetadata.build
-    let extraResources: Array<string> | n = buildMetadata == null ? null : buildMetadata.extraResources
+    let extra: Array<string> | n = buildMetadata == null ? null : buildMetadata[isResources ? "extraResources" : "extraFiles"]
 
-    const platformSpecificExtraResources = customBuildOptions.extraResources
-    if (platformSpecificExtraResources != null) {
-      extraResources = extraResources == null ? platformSpecificExtraResources : extraResources.concat(platformSpecificExtraResources)
+    const platformSpecificExtra = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
+    if (platformSpecificExtra != null) {
+      extra = extra == null ? platformSpecificExtra : extra.concat(platformSpecificExtra)
     }
 
-    if (extraResources == null) {
+    if (extra == null) {
       return BluebirdPromise.resolve([])
     }
 
-    const expandedPatterns = extraResources.map(it => it
+    const expandedPatterns = extra.map(it => it
       .replace(/\$\{arch}/g, arch)
       .replace(/\$\{os}/g, this.platform.buildConfigurationKey))
     return globby(expandedPatterns, {cwd: this.projectDir})
   }
 
-  protected async copyExtraResources(appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {
-    let resourcesDir = appOutDir
-    if (this.platform === Platform.OSX) {
-      resourcesDir = this.getOSXResourcesDir(appOutDir)
-    }
-    return await BluebirdPromise.map(await this.getExtraResources(arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(resourcesDir, it)))
+  protected async copyExtraFiles(appOutDir: string, arch: string, customBuildOptions: DC): Promise<any> {
+    await this.doCopyExtraFiles(true, appOutDir, arch, this.customBuildOptions)
+    await this.doCopyExtraFiles(false, appOutDir, arch, this.customBuildOptions)
+  }
+
+  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {
+    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`, "Contents") : appOutDir
+    return await BluebirdPromise.map(await this.getExtraResources(isResources, arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(base, it)))
   }
 
   protected async computePackageUrl(): Promise<string | null> {
@@ -261,7 +263,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getOSXResourcesDir(appOutDir: string): string {
-    return path.join(appOutDir, this.appName + ".app", "Contents", "Resources")
+    return path.join(appOutDir, `${this.appName}.app`, "Contents", "Resources")
   }
 
   private async statFileInPackage(resourcesDir: string, packageFile: string, isAsar: boolean): Promise<any> {

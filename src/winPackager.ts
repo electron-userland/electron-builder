@@ -14,8 +14,6 @@ const __awaiter = require("./awaiter")
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
   certFilePromise: Promise<string | null>
 
-  loadingGifStat: Promise<string> | null
-
   readonly iconPath: Promise<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
@@ -67,12 +65,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     const installerOut = computeDistOut(outDir, arch)
     await BluebirdPromise.all([
-      this.packApp(packOptions, appOutDir),
+      this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions),
       emptyDir(installerOut)
     ])
 
-    await this.copyExtraResources(appOutDir, arch, this.customBuildOptions)
-    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, installerOut!, arch, packOptions))
+    postAsyncTasks.push(this.packageInDistributableFormat(appOutDir, installerOut, arch, packOptions))
   }
 
   protected computeAppOutDir(outDir: string, arch: string): string {
@@ -162,7 +159,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return options
   }
 
-  protected async packageInDistributableFormat(outDir: string, appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  protected async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
     const winstaller = require("electron-winstaller-fixed")
     const version = this.metadata.version
     const archSuffix = arch === "x64" ? "" : ("-" + arch)
