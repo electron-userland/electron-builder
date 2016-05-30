@@ -137,7 +137,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       fixUpPaths: false,
       skipUpdateIcon: true,
       usePackageJson: false,
-      msi: false,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: packOptions["app-copyright"],
       sign: {

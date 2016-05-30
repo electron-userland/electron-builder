@@ -77,7 +77,7 @@ export class Packager implements BuildInfo {
     // custom packager - don't check wine
     let checkWine = this.options.platformPackagerFactory == null
     for (let platform of platforms) {
-      let wineCheck: Promise<string[]> | null = null
+      let wineCheck: Promise<string> | null = null
       if (checkWine && process.platform !== "win32" && platform === Platform.WINDOWS) {
         wineCheck = exec("wine", ["--version"])
       }
@@ -231,14 +231,14 @@ function checkConflictingOptions(options: any) {
   }
 }
 
-async function checkWineVersion(checkPromise: Promise<string[]>) {
+async function checkWineVersion(checkPromise: Promise<string>) {
   function wineError(prefix: string): string {
     return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "os-x")}`
   }
 
   let wineVersion: string
   try {
-    wineVersion = (await checkPromise)[0].trim()
+    wineVersion = (await checkPromise).trim()
   }
   catch (e) {
     if (e.code === "ENOENT") {

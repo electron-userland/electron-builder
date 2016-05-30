@@ -1,6 +1,6 @@
 OS X and Windows code signing is supported. Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
 
-On a development machine set environment variable `CSC_NAME` (and `CSC_INSTALLER_NAME` if you build for Mac App Store) to your identity.
+On a OS X development machine valid and appropriate identity from your keychain will be automatically used.
 
 | Env name       |  Description
 | -------------- | -----------
@@ -8,12 +8,7 @@ On a development machine set environment variable `CSC_NAME` (and `CSC_INSTALLER
 | `CSC_KEY_PASSWORD`           | The password to decrypt the certificate given in `CSC_LINK`.
 | `CSC_INSTALLER_LINK`         | *osx-only* The HTTPS link (or base64-encoded data) to certificate to sign Mac App Store build (`*.p12` file).
 | `CSC_INSTALLER_KEY_PASSWORD` | *osx-only* The password to decrypt the certificate given in `CSC_INSTALLER_LINK`.
-| `CSC_NAME`                   | *osx-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI).
-| `CSC_INSTALLER_NAME`         | *osx-only* Name of installer certificate (to retrieve from login.keychain). Useful on a development machine (not on CI).
-
-```
-export CSC_NAME="Developer ID Application: Your Name (code)"
-```
+| `CSC_NAME`                   | *osx-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI) if you have several identities (otherwise don't specify it).
 
 ## Travis, AppVeyor and other CI Servers
 To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and `CSC_INSTALLER_LINK`, `CSC_INSTALLER_KEY_PASSWORD` if you build for Mac App Store):
@@ -30,3 +25,4 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and 
 
 # Where to Buy Code Signing Certificate
 [StartSSL](https://startssl.com/Support?v=34) is recommended.
+Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).

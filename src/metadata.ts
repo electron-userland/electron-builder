@@ -208,11 +208,6 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
  */
 export interface MasBuildOptions extends OsXBuildOptions {
   /*
-   The name of certificate to use when signing. Consider using environment variables [CSC_INSTALLER_LINK or CSC_INSTALLER_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
-  */
-  readonly identity?: string | null
-
-  /*
    The path to entitlements file for signing the app. `build/mas.entitlements` will be used if exists (it is a recommended way to set).
    Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).
    */
@@ -263,6 +258,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly remoteToken?: string | null
 
+  /*
+   Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
+   */
   readonly signingHashAlgorithms?: Array<string> | null
   readonly signcodePath?: string | null
 }

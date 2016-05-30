@@ -126,8 +126,7 @@ Icon=${this.metadata.name}
   }
 
   private async createFromIcns(tempDir: string): Promise<Array<string>> {
-    const outputs = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
-    const output = outputs[0].toString()
+    const output = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.buildResourcesDir, "icon.icns")])
     debug(output)
 
     const imagePath = path.join(tempDir, "icon_256x256x32.png")

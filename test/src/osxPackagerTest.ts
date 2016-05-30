@@ -50,55 +50,49 @@ test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["TestApp-1.1.0-osx.7z"
 
 test.ifOsx("custom mas", () => {
   let platformPackager: CheckingOsXPackager = null
-  return assertPack("test-app-one", {
+  return assertPack("test-app-one", signed({
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
         osx: {
-          identity: "osx",
-          target: ["mas"]
+          target: ["mas"],
+          identity: "Test Test",
         },
         mas: {
-          identity: "MAS",
           entitlements: "mas-entitlements file path",
           entitlementsInherit: "mas-entitlementsInherit file path",
         }
       }
     }
-  }, {
+  }), {
     packed: () => {
       assertThat(platformPackager.effectiveSignOptions).has.properties({
-        identity: "osx",
+        identity: "Test Test",
         entitlements: "mas-entitlements file path",
         "entitlements-inherit": "mas-entitlementsInherit file path",
-      })
-      assertThat(platformPackager.effectiveFlatOptions).has.properties({
-        identity: "MAS",
       })
       return BluebirdPromise.resolve(null)
     }
   })
 })
 
-test.ifOsx("identity in package.json", () => {
+test.ifOsx("entitlements in the package.json", () => {
   let platformPackager: CheckingOsXPackager = null
-  return assertPack("test-app-one", {
+  return assertPack("test-app-one", signed({
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
         osx: {
-          identity: "osx",
           entitlements: "osx-entitlements file path",
           entitlementsInherit: "osx-entitlementsInherit file path",
         }
       }
     }
-  }, {
+  }), {
     packed: () => {
       assertThat(platformPackager.effectiveSignOptions).has.properties({
-        identity: "osx",
         entitlements: "osx-entitlements file path",
         "entitlements-inherit": "osx-entitlementsInherit file path",
       })
@@ -109,24 +103,16 @@ test.ifOsx("identity in package.json", () => {
 
 test.ifOsx("entitlements in build dir", () => {
   let platformPackager: CheckingOsXPackager = null
-  return assertPack("test-app-one", {
+  return assertPack("test-app-one", signed({
     platform: [Platform.OSX],
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
-    devMetadata: {
-      build: {
-        osx: {
-          identity: "osx",
-        }
-      }
-    }
-  }, {
+  }), {
     tempDirCreated: projectDir => BluebirdPromise.all([
       writeFile(path.join(projectDir, "build", "osx.entitlements"), ""),
       writeFile(path.join(projectDir, "build", "osx.inherit.entitlements"), ""),
     ]),
     packed: projectDir => {
       assertThat(platformPackager.effectiveSignOptions).has.properties({
-        identity: "osx",
         entitlements: path.join(projectDir, "build", "osx.entitlements"),
         "entitlements-inherit": path.join(projectDir, "build", "osx.inherit.entitlements"),
       })

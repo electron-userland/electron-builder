@@ -67,15 +67,15 @@ export interface ExecOptions extends BaseExecOptions {
   killSignal?: string
 }
 
-export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<string[]> {
+export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : args.join(" ")}`)
   }
 
-  return new BluebirdPromise<string[]>((resolve, reject) => {
+  return new BluebirdPromise<string>((resolve, reject) => {
     execFile(file, <any>args, options, function (error, stdout, stderr) {
       if (error == null) {
-        resolve(<any>[stdout, stderr])
+        resolve(stdout)
       }
       else {
         if (stdout.length !== 0) {
@@ -217,5 +217,5 @@ export function debug7zArgs(command: "a" | "x"): Array<string> {
 let tmpDirCounter = 0
 
 export function getTempName(prefix?: string | n): string {
-  return `${prefix == null ? "" : prefix + "-"}${process.pid}-${tmpDirCounter++}-${Date.now()}`
+  return `${prefix == null ? "" : prefix + "-"}${process.pid}-${tmpDirCounter++}`
 }

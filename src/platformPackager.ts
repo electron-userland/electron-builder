@@ -275,6 +275,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return statFile(path.join(resourcesDir, "app.asar"), relativeFile) != null
       }
       catch (e) {
+        const asarFile = path.join(resourcesDir, "app.asar")
+        const fileStat = await statOrNull(asarFile)
+        if (fileStat == null) {
+          throw new Error(`File "${asarFile}" does not exist. Seems like a wrong configuration.`)
+        }
+
+        try {
+          listPackage(asarFile)
+        }
+        catch (e) {
+          throw new Error(`File "${asarFile}" is corrupted: ${e}`)
+        }
+
         // asar throws error on access to undefined object (info.link)
         return false
       }
@@ -285,36 +298,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private static async sanityCheckAsar(asarFile: string): Promise<any> {
-    const outStat = await statOrNull(asarFile)
-
-    if (outStat == null) {
-      throw new Error(`Package file ${asarFile} was not created.`)
-    }
-
-    try {
-      listPackage(asarFile)
-    }
-    catch (e) {
-      throw new Error(`Package file ${asarFile} is corrupted.`)
-    }
-  }
-
   private async sanityCheckPackage(appOutDir: string, isAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
 
     if (outStat == null) {
-      throw new Error(`Output directory ${appOutDir} does not exists. Seems like a wrong configuration.`)
+      throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
     }
     else if (!outStat.isDirectory()) {
-      throw new Error(`Output directory ${appOutDir} is not a directory. Seems like a wrong configuration.`)
+      throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
     }
 
     const resourcesDir = this.getResourcesDir(appOutDir)
-    if (isAsar) {
-      await PlatformPackager.sanityCheckAsar(path.join(resourcesDir, "app.asar"))
-    }
-
     const mainFile = this.metadata.main || "index.js"
     const mainFileExists = await this.statFileInPackage(resourcesDir, mainFile, isAsar)
     if (!mainFileExists) {

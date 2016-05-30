@@ -3,7 +3,7 @@ import { Platform, OsXBuildOptions, MasBuildOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, debug, warn } from "./util"
-import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName } from "./codeSign"
+import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
 
@@ -16,13 +16,17 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
+    if (this.options.cscLink == null) {
+      this.codeSigningInfo = BluebirdPromise.resolve(null)
+    }
+    else {
+      if (this.options.cscKeyPassword == null) {
+        throw new Error("cscLink is set, but cscKeyPassword not")
+      }
+
       const keychainName = generateKeychainName()
       cleanupTasks.push(() => deleteKeychain(keychainName))
       this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
-    }
-    else {
-      this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
   }
 
@@ -59,33 +63,77 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
+  private static async findIdentity(certType: string, name?: string | null): Promise<string | null> {
+    let identity = process.env.CSC_NAME || name
+    if (identity == null || identity.trim().length === 0) {
+      return await findIdentity(certType)
+    }
+    else {
+      identity = identity.trim()
+      checkPrefix(identity, "Developer ID Application:")
+      checkPrefix(identity, "3rd Party Mac Developer Application:")
+      checkPrefix(identity, "Developer ID Installer:")
+      checkPrefix(identity, "3rd Party Mac Developer Installer:")
+      const result = await findIdentity(certType, identity)
+      if (result == null) {
+        throw new Error(`Identity name "${identity}" is specified, but no valid identity with this name in the keychain`)
+      }
+      return result
+    }
+  }
+
   private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
     let codeSigningInfo = await this.codeSigningInfo
     if (codeSigningInfo == null) {
-      codeSigningInfo = {
-        name:  process.env.CSC_NAME || this.customBuildOptions.identity,
-        installerName: process.env.CSC_INSTALLER_NAME || (masOptions == null ? null : masOptions.identity),
+      if (process.env.CSC_LINK != null) {
+        throw new Error("codeSigningInfo is null, but CSC_LINK defined")
+      }
+
+      const identity = await OsXPackager.findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", this.customBuildOptions.identity)
+      if (identity == null) {
+        const message = "App is not signed: CSC_LINK or CSC_NAME are not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
+        if (masOptions == null) {
+          warn(message)
+          return
+        }
+        else {
+          throw new Error(message)
+        }
+      }
+
+      if (masOptions != null) {
+        const installerName = masOptions == null ? null : (await OsXPackager.findIdentity("3rd Party Mac Developer Installer", this.customBuildOptions.identity))
+        if (installerName == null) {
+          throw new Error("Cannot find valid installer certificate: CSC_LINK or CSC_NAME are not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
+        }
+
+        codeSigningInfo = {
+          name: identity,
+          installerName: installerName,
+        }
+      }
+      else {
+        codeSigningInfo = {
+          name: identity,
+        }
+      }
+    }
+    else {
+      if (codeSigningInfo.name == null && masOptions == null) {
+        throw new Error("codeSigningInfo.name is null, but CSC_LINK defined")
+      }
+      if (masOptions != null && codeSigningInfo.installerName == null) {
+        throw new Error("Signing is required for mas builds but CSC_INSTALLER_LINK is not specified")
       }
     }
 
     const identity = codeSigningInfo.name
-    if (<string | null>identity == null) {
-      const message = "App is not signed: CSC_LINK or CSC_NAME are not specified, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
-      if (masOptions != null) {
-        throw new Error(message)
-      }
-      warn(message)
-      return
-    }
-
     log(`Signing app (identity: ${identity})`)
 
     const baseSignOptions: BaseSignOptions = {
-      app: path.join(appOutDir, this.appName + ".app"),
-      platform: masOptions == null ? "darwin" : "mas"
-    }
-    if (codeSigningInfo.keychainName != null) {
-      baseSignOptions.keychain = codeSigningInfo.keychainName
+      app: path.join(appOutDir, `${this.appName}.app`),
+      platform: masOptions == null ? "darwin" : "mas",
+      keychain: <any>codeSigningInfo.keychainName,
     }
 
     const signOptions = Object.assign({
@@ -118,15 +166,10 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     await this.doSign(signOptions)
 
     if (masOptions != null) {
-      const installerIdentity = codeSigningInfo.installerName
-      if (installerIdentity == null) {
-        throw new Error("Signing is required for mas builds but CSC_INSTALLER_LINK or CSC_INSTALLER_NAME are not specified")
-      }
-
       const pkg = path.join(appOutDir, `${this.appName}-${this.metadata.version}.pkg`)
       await this.doFlat(Object.assign({
         pkg: pkg,
-        identity: installerIdentity,
+        identity: codeSigningInfo.installerName,
       }, baseSignOptions))
       this.dispatchArtifactCreated(pkg, `${this.metadata.name}-${this.metadata.version}.pkg`)
     }
@@ -224,5 +267,11 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     })
 
     this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)
+  }
+}
+
+function checkPrefix(name: string, prefix: string) {
+  if (name.startsWith(prefix)) {
+    throw new Error(`Please remove prefix "${prefix}" from the specified name — appropriate certificate will be chosen automatically`)
   }
 }

@@ -18,12 +18,8 @@ export interface CodeSigningInfo {
   installerName?: string | null
 }
 
-function randomString(): string {
-  return randomBytes(8).toString("hex")
-}
-
 export function generateKeychainName(): string {
-  return "csc-" + randomString() + ".keychain"
+  return path.join(tmpdir(), getTempName("csc") + ".keychain")
 }
 
 function downloadUrlOrBase64(urlOrBase64: string, destination: string): BluebirdPromise<any> {
@@ -35,37 +31,39 @@ function downloadUrlOrBase64(urlOrBase64: string, destination: string): Bluebird
   }
 }
 
-let bundledCertKeychainAdded = false
+let bundledCertKeychainAdded: Promise<any> | null = null
+
+// "Note that filename will not be searched to resolve the signing identity's certificate chain unless it is also on the user's keychain search list."
+// but "security list-keychains" doesn't support add - we should 1) get current list 2) set new list - it is very bad http://stackoverflow.com/questions/10538942/add-a-keychain-to-search-list
+// "overly complicated and introduces a race condition."
+// https://github.com/electron-userland/electron-builder/issues/398
+async function createCustomCertKeychain() {
+  // copy to temp and then atomic rename to final path
+  const tmpKeychainPath = path.join(homedir(), ".cache", getTempName("electron_builder_root_certs"))
+  const keychainPath = path.join(homedir(), ".cache", "electron_builder_root_certs.keychain")
+  const results = await BluebirdPromise.all<string>([
+    exec("security", ["list-keychains"]),
+    copy(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
+      .then(() => rename(tmpKeychainPath, keychainPath)),
+  ])
+  const list = results[0]
+    .split("\n")
+    .map(it => {
+      let r = it.trim()
+      return r.substring(1, r.length - 1)
+    })
+    .filter(it => it.length > 0)
+
+  if (!list.includes(keychainPath)) {
+    await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
+  }
+}
 
 export async function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null): Promise<CodeSigningInfo> {
-  if (!bundledCertKeychainAdded) {
-    // "Note that filename will not be searched to resolve the signing identity's certificate chain unless it is also on the user's keychain search list."
-    // but "security list-keychains" doesn't support add - we should 1) get current list 2) set new list - it is very bad http://stackoverflow.com/questions/10538942/add-a-keychain-to-search-list
-    // "overly complicated and introduces a race condition."
-    // https://github.com/electron-userland/electron-builder/issues/398
-
-    bundledCertKeychainAdded = true
-
-    // copy to temp and then atomic rename to final path
-    const tmpKeychainPath = path.join(homedir(), ".cache", getTempName("electron_builder_root_certs"))
-    const keychainPath = path.join(homedir(), ".cache", "electron_builder_root_certs.keychain")
-    const results = await BluebirdPromise.all<Array<string> | string>([
-      exec("security", ["list-keychains"]),
-      copy(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
-        .then(() => rename(tmpKeychainPath, keychainPath)),
-    ])
-    const list = (<string[]>results[0])[0]
-      .split("\n")
-      .map(it => {
-        let r = it.trim()
-        return r.substring(1, r.length - 1)
-      })
-      .filter(it => it.length > 0)
-
-    if (!list.includes(keychainPath)) {
-      await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
-    }
+  if (bundledCertKeychainAdded == null) {
+    bundledCertKeychainAdded = createCustomCertKeychain()
   }
+  await bundledCertKeychainAdded
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -73,10 +71,10 @@ export async function createKeychain(keychainName: string, cscLink: string, cscK
   }
 
   const certPaths = new Array(certLinks.length)
-  const keychainPassword = randomString()
+  const keychainPassword = randomBytes(8).toString("hex")
   return await executeFinally(BluebirdPromise.all([
       BluebirdPromise.map(certLinks, (link, i) => {
-        const tempFile = path.join(tmpdir(), `${randomString()}.p12`)
+        const tempFile = path.join(tmpdir(), `${getTempName()}.p12`)
         certPaths[i] = tempFile
         return downloadUrlOrBase64(link, tempFile)
       }),
@@ -117,7 +115,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
 function extractCommonName(password: string, certPath: string): BluebirdPromise<string> {
   return exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", "pass:" + password, "-nomacver", "-clcerts", "-in", certPath])
     .then(result => {
-      const match = <Array<string | null> | null>(result[0].toString().match(/^subject.*\/CN=([^\/\n]+)/m))
+      const match = <Array<string | null> | null>(result.match(/^subject.*\/CN=([^\/\n]+)/m))
       if (match == null || match[1] == null) {
         throw new Error("Cannot extract common name from p12")
       }
@@ -136,8 +134,7 @@ export function sign(path: string, options: CodeSigningInfo): BluebirdPromise<an
 }
 
 export function deleteKeychain(keychainName: string, ignoreNotFound: boolean = true): BluebirdPromise<any> {
-  // exec("security", ["delete-keychain", keychainName])
-  const result = BluebirdPromise.resolve()
+  const result = exec("security", ["delete-keychain", keychainName])
   if (ignoreNotFound) {
     return result.catch(error => {
       if (!error.message.includes("The specified keychain could not be found.")) {
@@ -151,7 +148,28 @@ export function deleteKeychain(keychainName: string, ignoreNotFound: boolean = t
 }
 
 export function downloadCertificate(cscLink: string): Promise<string> {
-  const certPath = path.join(tmpdir(), randomString() + ".p12")
+  const certPath = path.join(tmpdir(), `${getTempName()}.p12`)
   return downloadUrlOrBase64(cscLink, certPath)
     .thenReturn(certPath)
+}
+
+let findIdentityRawResult: Promise<string> | null = null
+
+export async function findIdentity(namePrefix: string, qualifier?: string): Promise<string | null> {
+  if (findIdentityRawResult == null) {
+    findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning"])
+  }
+
+  const lines = (await findIdentityRawResult).split("\n")
+  for (let line of lines) {
+    if (qualifier != null && !line.includes(qualifier)) {
+      continue
+    }
+
+    const location = line.indexOf(namePrefix)
+    if (location >= 0) {
+      return line.substring(location, line.lastIndexOf('"'))
+    }
+  }
+  return null
 }

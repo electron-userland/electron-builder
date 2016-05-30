@@ -84,7 +84,6 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 
 | Name | Description
 | --- | ---
-| identity | <a name="MasBuildOptions-identity"></a>The name of certificate to use when signing. Consider using environment variables [CSC_INSTALLER_LINK or CSC_INSTALLER_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
 | entitlements | <a name="MasBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/mas.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).</p>
 | entitlementsInherit | <a name="MasBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/mas.inherit.entitlements</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.inherit.entitlements).</p>
 
@@ -97,6 +96,7 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | msi | <a name="WinBuildOptions-msi"></a>Whether to create an MSI installer. Defaults to `false` (MSI is not created).
 | remoteReleases | <a name="WinBuildOptions-remoteReleases"></a>A URL to your existing updates. If given, these will be downloaded to create delta updates.
 | remoteToken | <a name="WinBuildOptions-remoteToken"></a>Authentication token for remote updates
+| signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`
