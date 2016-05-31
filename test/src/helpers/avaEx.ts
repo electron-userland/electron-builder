@@ -45,17 +45,18 @@ Object.defineProperties(test, {
   },
   "ifDevOrWinCi": {
     get: function () {
-      return !process.env.CI || process.platform === "win32" ? this : this.skip
+      console.log(process.env)
+      return process.env.CI == null || process.platform === "win32" ? this : this.skip
     }
   },
   "ifDevOrLinuxCi": {
     get: function () {
-      return !process.env.CI || process.platform === "linux" ? this : this.skip
+      return process.env.CI == null || process.platform === "linux" ? this : this.skip
     }
   },
   "ifWinCi": {
     get: function () {
-      return process.env.CI && process.platform === "win32" ? this : this.skip
+      return (process.env.CI || "").toLowerCase() === "true" && process.platform === "win32" ? this : this.skip
     }
   }
 })

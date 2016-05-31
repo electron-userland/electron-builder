@@ -192,7 +192,7 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
         options.publish = "onTag"
         isPublishOptionGuessed = true
       }
-      else if ((process.env.TRAVIS || process.env.APPVEYOR || process.env.CIRCLECI || "").toLowerCase() === "true") {
+      else if ((process.env.CI || "").toLowerCase() === "true") {
         log("CI detected, so artifacts will be published if draft release exists")
         options.publish = "onTagOrDraft"
         isPublishOptionGuessed = true

@@ -38,7 +38,7 @@ install:
 
 script:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run --rm -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run --rm -e CI -e TRAVIS -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh ; fi
 
 after_success:
 - node out/cleanup.js
