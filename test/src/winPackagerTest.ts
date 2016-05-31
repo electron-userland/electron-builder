@@ -13,7 +13,7 @@ import { Arch } from "out"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
+test.ifDevOrWinCi("win", () => assertPack("test-app-one", signed({
     targets: Platform.WINDOWS.createTarget(),
   })
 ))

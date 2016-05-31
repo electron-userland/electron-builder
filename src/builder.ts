@@ -4,7 +4,7 @@ import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
 import { executeFinally } from "./promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
-import { log } from "./util"
+import { log, warn } from "./util"
 import { Platform, Arch, archFromString } from "./metadata"
 
 //noinspection JSUnusedLocalSymbols
@@ -17,10 +17,11 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
       return null
     }
 
-    log("Cannot detect repository by .git/config")
-    throw new Error("Please specify 'repository' in the dev package.json ('" + packager.devPackageFile + "')")
+    warn("Cannot detect repository by .git/config")
+    throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
   }
   else {
+    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${packager.metadata.version}`)
     return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken!, options.publish!)
   }
 }

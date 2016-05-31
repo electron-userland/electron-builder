@@ -168,6 +168,6 @@ export class GitHubPublisher implements Publisher {
       }
     }
 
-    log("WARN: Cannot delete release " + this._releasePromise.value().id)
+    warn(`Cannot delete release ${this._releasePromise.value().id}`)
   }
 }
