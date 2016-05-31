@@ -1,5 +1,5 @@
 import { Release, Asset } from "gh-release"
-import { log } from "./util"
+import { log, warn } from "./util"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
@@ -31,7 +31,7 @@ export class GitHubPublisher implements Publisher {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, version: string, private token: string | null, private createReleaseIfNotExists: boolean = true) {
+  constructor(private owner: string, private repo: string, version: string, private token: string | null, private policy: string = "always") {
     if (token == null || token.length === 0) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
@@ -41,15 +41,23 @@ export class GitHubPublisher implements Publisher {
   }
 
   private async init(): Promise<Release | null> {
+    const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await gitHubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
     for (let release of releases) {
-      if (release!.tag_name === this.tag) {
-        if (!release!.draft) {
-          if (this.createReleaseIfNotExists) {
+      if (release.tag_name === this.tag) {
+        if (!release.draft) {
+          if (this.policy === "onTag") {
             throw new Error("Release must be a draft")
           }
           else {
+            const message = `Release ${this.tag} is not a draft, artifacts will be not published`
+            if (this.policy === "always") {
+              warn(message)
+            }
+            else {
+              log(message)
+            }
             return null
           }
         }
@@ -57,7 +65,7 @@ export class GitHubPublisher implements Publisher {
       }
     }
 
-    if (this.createReleaseIfNotExists) {
+    if (createReleaseIfNotExists) {
       log("Release %s doesn't exists, creating one", this.tag)
       return this.createRelease()
     }

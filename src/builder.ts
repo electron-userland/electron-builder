@@ -21,7 +21,7 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
     throw new Error("Please specify 'repository' in the dev package.json ('" + packager.devPackageFile + "')")
   }
   else {
-    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken!, options.publish !== "onTagOrDraft")
+    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken!, options.publish!)
   }
 }
 
