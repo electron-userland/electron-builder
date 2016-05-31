@@ -18,6 +18,11 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
   })
 ))
 
+test.ifNotCiOsx("win 32", () => assertPack("test-app-one", signed({
+    targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
+  })
+))
+
 // very slow
 test.ifWinCi("delta", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),

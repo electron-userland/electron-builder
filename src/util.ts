@@ -215,7 +215,8 @@ export function debug7zArgs(command: "a" | "x"): Array<string> {
 }
 
 let tmpDirCounter = 0
+const pidAsString = process.pid.toString(36)
 
 export function getTempName(prefix?: string | n): string {
-  return `${prefix == null ? "" : prefix + "-"}${process.pid}-${tmpDirCounter++}`
+  return `${prefix == null ? "" : prefix + "-"}${pidAsString}-${tmpDirCounter++}-${Date.now().toString(36)}`
 }

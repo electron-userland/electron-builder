@@ -5,7 +5,7 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, Arch, DIR_TARGET } from "out"
-import { exec } from "out/util"
+import { exec, getTempName } from "out/util"
 import { tmpdir } from "os"
 import DecompressZip = require("decompress-zip")
 import { getArchSuffix } from "out/platformPackager"
@@ -13,9 +13,6 @@ import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
-
-const tmpDirPrefix = "electron-builder-test-" + process.pid + "-"
-let tmpDirCounter = 0
 
 if (process.env.TRAVIS !== "true") {
   // we don't use CircleCI, so, we can safely set this env
@@ -42,7 +39,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(tmpdir(), `${tmpDirPrefix}${fixtureName}-${tmpDirCounter++}`) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}-${fixtureName}}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
       console.log("Custom temp dir used: %s", customTmpDir)
     }

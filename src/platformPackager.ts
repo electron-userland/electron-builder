@@ -151,8 +151,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: DC) {
-    await this.packApp(options, appOutDir)
+    await pack(options)
     await this.copyExtraFiles(appOutDir, arch, customBuildOptions)
+
+    const afterPack = this.devMetadata.build.afterPack
+    if (afterPack != null) {
+      await afterPack({
+        appOutDir: appOutDir,
+        options: options,
+      })
+    }
+
+    await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
   protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
@@ -193,20 +203,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // this option only for windows-installer
     delete options.iconUrl
     return options
-  }
-
-  protected async packApp(options: ElectronPackagerOptions, appOutDir: string): Promise<any> {
-    await pack(options)
-
-    const afterPack = this.devMetadata.build.afterPack
-    if (afterPack != null) {
-      await afterPack({
-        appOutDir: appOutDir,
-        options: options,
-      })
-    }
-
-    await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
   private getExtraResources(isResources: boolean, arch: Arch, customBuildOptions: DC): Promise<Array<string>> {

@@ -76,16 +76,17 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
   }
 
-  protected async packApp(options: any, appOutDir: string) {
-    await super.packApp(options, appOutDir)
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: WinBuildOptions) {
+    await super.doPack(options, outDir, appOutDir, arch, customBuildOptions)
 
-    if (process.platform !== "linux" && this.options.cscLink != null && this.options.cscKeyPassword != null) {
-      const filename = this.appName + ".exe"
+    const cert = await this.certFilePromise
+    if (cert != null) {
+      const filename = `${this.appName}.exe`
       log(`Signing ${filename}`)
       await BluebirdPromise.promisify(sign)({
         path: path.join(appOutDir, filename),
-        cert: (await this.certFilePromise)!,
-        password: this.options.cscKeyPassword,
+        cert: cert,
+        password: this.options.cscKeyPassword!,
         name: this.appName,
         site: await this.computePackageUrl(),
         overwrite: true,
