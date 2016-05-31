@@ -1,5 +1,5 @@
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, OsXBuildOptions, MasBuildOptions } from "./metadata"
+import { Platform, OsXBuildOptions, MasBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, debug, warn } from "./util"
@@ -38,19 +38,19 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     return ["dmg", "mas"]
   }
 
-  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const packOptions = this.computePackOptions(outDir, this.computeAppOutDir(outDir, arch), arch)
     let nonMasPromise: Promise<any> | null = null
-    if (this.targets.length > 1 || this.targets[0] !== "mas") {
+    if (targets.length > 1 || targets[0] !== "mas") {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
         .then(() => this.sign(appOutDir, null))
         .then(() => {
-          postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+          postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, targets))
         })
     }
 
-    if (this.targets.includes("mas")) {
+    if (targets.includes("mas")) {
       // osx-sign - disable warning
       const appOutDir = path.join(outDir, "mas")
       const masBuildOptions = deepAssign({}, this.customBuildOptions, (<any>this.devMetadata.build)["mas"])
@@ -219,9 +219,9 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     return specification
   }
 
-  packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  protected packageInDistributableFormat(outDir: string, appOutDir: string, targets: Array<string>): Promise<any> {
     const promises: Array<Promise<any>> = []
-    for (let target of this.targets) {
+    for (let target of targets) {
       if (target === "dmg" || target === "default") {
         promises.push(this.createDmg(appOutDir))
       }

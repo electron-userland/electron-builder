@@ -1,7 +1,7 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPackager"
-import { Platform, WinBuildOptions } from "./metadata"
+import { PlatformPackager, BuildInfo, smarten, getArchSuffix } from "./platformPackager"
+import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, warn } from "./util"
 import { deleteFile, emptyDir, open, close, read } from "fs-extra-p"
@@ -47,8 +47,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return iconPath
   }
 
-  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    if (arch === "ia32") {
+  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    if (arch === Arch.ia32) {
       warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }
 
@@ -58,7 +58,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
-    if (!this.targets.includes("default")) {
+    if (!targets.includes("default")) {
       await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
       return
     }
@@ -72,8 +72,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     postAsyncTasks.push(this.packageInDistributableFormat(appOutDir, installerOut, arch, packOptions))
   }
 
-  protected computeAppOutDir(outDir: string, arch: string): string {
-    return path.join(outDir, `win${arch === "x64" ? "" : `-${arch}`}-unpacked`)
+  protected computeAppOutDir(outDir: string, arch: Arch): string {
+    return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
   }
 
   protected async packApp(options: any, appOutDir: string) {
@@ -158,10 +158,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return options
   }
 
-  protected async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  protected async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions): Promise<any> {
     const winstaller = require("electron-winstaller-fixed")
     const version = this.metadata.version
-    const archSuffix = arch === "x64" ? "" : ("-" + arch)
+    const archSuffix = getArchSuffix(arch)
     const setupExeName = `${this.appName} Setup ${version}${archSuffix}.exe`
 
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, setupExeName)
@@ -227,8 +227,8 @@ function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
 }
 
-export function computeDistOut(outDir: string, arch: string): string {
-  return path.join(outDir, `win${archSuffix(arch)}`)
+export function computeDistOut(outDir: string, arch: Arch): string {
+  return path.join(outDir, `win${getArchSuffix(arch)}`)
 }
 
 function checkConflictingOptions(options: any) {

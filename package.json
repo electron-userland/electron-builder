@@ -94,6 +94,7 @@
   "devDependencies": {
     "ava-tf": "^0.15",
     "babel-plugin-array-includes": "^2.0.3",
+    "babel-plugin-transform-es2015-destructuring": "^6.9.0",
     "babel-plugin-transform-es2015-parameters": "^6.9.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",
     "decompress-zip": "^0.3.0",
@@ -103,7 +104,7 @@
     "plist": "^1.2.0",
     "pre-git": "^3.8.4",
     "semantic-release": "^6.3.0",
-    "should": "^8.4.0",
+    "should": "^9.0.0",
     "ts-babel": "^0.8.6",
     "tsconfig-glob": "^0.4.3",
     "tslint": "3.10.0-dev.2",
@@ -114,6 +115,7 @@
     "plugins": [
       "transform-es2015-parameters",
       "transform-es2015-spread",
+      "transform-es2015-destructuring",
       "array-includes"
     ]
   },

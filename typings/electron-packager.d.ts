@@ -60,7 +60,7 @@ declare module "electron-packager-tf" {
 
     "app-copyright"?: string
 
-    generateFinalBasename: (context: any) => void
+    generateFinalBasename?: (context: any) => void
   }
 
   /** Object hash of application metadata to embed into the executable (Windows only). */

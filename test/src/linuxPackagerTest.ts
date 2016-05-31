@@ -10,7 +10,7 @@ const __awaiter = require("out/awaiter")
 test.ifNotWindows("deb", () => assertPack("test-app-one", platform(Platform.LINUX)))
 
 test.ifDevOrLinuxCi("rpm", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
+  targets: Platform.LINUX.createTarget(),
   devMetadata: {
     build: {
       linux: {
@@ -21,7 +21,7 @@ test.ifDevOrLinuxCi("rpm", () => assertPack("test-app-one", {
 }))
 
 test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
+  targets: Platform.LINUX.createTarget(),
   devMetadata: {
     build: {
       linux: {
@@ -33,7 +33,7 @@ test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
 }))
 
 test.ifDevOrLinuxCi("tar", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
+  targets: Platform.LINUX.createTarget(),
   devMetadata: {
     build: {
       linux: {
@@ -45,13 +45,13 @@ test.ifDevOrLinuxCi("tar", () => assertPack("test-app-one", {
 }))
 
 test.ifNotWindows("icons from ICNS", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
+  targets: Platform.LINUX.createTarget(),
 }, {
   tempDirCreated: it => remove(path.join(it, "build", "icons"))
 }))
 
 test.ifNotWindows("custom configuration", () => assertPack("test-app-one", {
-    platform: [Platform.LINUX],
+    targets: Platform.LINUX.createTarget(),
     devMetadata: {
       build: {
         linux: {

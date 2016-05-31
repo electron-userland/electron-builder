@@ -7,7 +7,7 @@ import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
-import { AppMetadata, DevMetadata, Platform } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
 import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
 import OsXPackager from "./osxPackager"
 import { WinPackager } from "./winPackager"
@@ -52,7 +52,6 @@ export class Packager implements BuildInfo {
 
   async build(): Promise<any> {
     const devPackageFile = this.devPackageFile
-    const platforms = this.options.platform!
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
     this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
@@ -61,30 +60,31 @@ export class Packager implements BuildInfo {
 
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
     this.metadata = appPackageFile === devPackageFile ? this.devMetadata : await readPackageJson(appPackageFile)
-    this.checkMetadata(appPackageFile, devPackageFile, platforms)
+
+    this.checkMetadata(appPackageFile, devPackageFile)
     checkConflictingOptions(this.devMetadata.build)
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
     const cleanupTasks: Array<() => Promise<any>> = []
-    return executeFinally(this.doBuild(platforms, cleanupTasks), () => all(cleanupTasks.map(it => it())))
+    return executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it())))
   }
 
-  private async doBuild(platforms: Array<Platform>, cleanupTasks: Array<() => Promise<any>>): Promise<any> {
+  private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<any> {
     const distTasks: Array<Promise<any>> = []
     const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it!.output) || "dist")
 
     // custom packager - don't check wine
     let checkWine = this.options.platformPackagerFactory == null
-    for (let platform of platforms) {
+    for (let [platform, archToType] of this.options.targets!) {
       let wineCheck: Promise<string> | null = null
       if (checkWine && process.platform !== "win32" && platform === Platform.WINDOWS) {
         wineCheck = exec("wine", ["--version"])
       }
 
-      const helper = this.createHelper(platform!, cleanupTasks)
-      for (let arch of normalizeArchs(platform!, this.options.arch)) {
-        await this.installAppDependencies(platform!, arch!)
+      const helper = this.createHelper(platform, cleanupTasks)
+      for (let [arch, targets] of archToType) {
+        await this.installAppDependencies(platform, arch)
 
         if (checkWine && wineCheck != null) {
           checkWine = false
@@ -92,7 +92,7 @@ export class Packager implements BuildInfo {
         }
 
         // electron-packager uses productName in the directory name
-        await helper.pack(outDir, arch!, distTasks)}
+        await helper.pack(outDir, arch, helper.computeEffectiveTargets(targets), distTasks)}
     }
 
     return await BluebirdPromise.all(distTasks)
@@ -124,7 +124,7 @@ export class Packager implements BuildInfo {
     }
   }
 
-  private checkMetadata(appPackageFile: string, devAppPackageFile: string, platforms: Array<Platform>): void {
+  private checkMetadata(appPackageFile: string, devAppPackageFile: string): void {
     const reportError = (missedFieldName: string) => {
       throw new Error(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
     }
@@ -162,7 +162,7 @@ export class Packager implements BuildInfo {
       if (<any>author == null) {
         reportError("author")
       }
-      else if (<any>author.email == null && platforms.includes(Platform.LINUX)) {
+      else if (<any>author.email == null && this.options.targets!.has(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
 
@@ -172,13 +172,13 @@ export class Packager implements BuildInfo {
     }
   }
 
-  private installAppDependencies(platform: Platform, arch: string): Promise<any> {
-    if (!this.options.npmRebuild) {
-      log("Skip app dependencies rebuild because npmRebuild is set to false")
-    }
-    else if (this.isTwoPackageJsonProjectLayoutUsed) {
-      if (platform.nodeName === process.platform) {
-        return installDependencies(this.appDir, this.electronVersion, arch, "rebuild")
+  private installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
+    if (this.isTwoPackageJsonProjectLayoutUsed) {
+      if (this.options.npmRebuild === false) {
+        log("Skip app dependencies rebuild because npmRebuild is set to false")
+      }
+      else if (platform.nodeName === process.platform) {
+        return installDependencies(this.appDir, this.electronVersion, Arch[arch], "rebuild")
       }
       else {
         log("Skip app dependencies rebuild because platform is different")
@@ -189,15 +189,6 @@ export class Packager implements BuildInfo {
     }
 
     return BluebirdPromise.resolve()
-  }
-}
-
-export function normalizeArchs(platform: Platform, arch?: string | n) {
-  if (platform === Platform.OSX) {
-    return ["x64"]
-  }
-  else {
-    return arch == null ? [process.arch] : (arch === "all" ? ["ia32", "x64"] : [arch])
   }
 }
 
@@ -258,6 +249,6 @@ async function checkWineVersion(checkPromise: Promise<string>) {
   }
 }
 
-function isEmptyOrSpaces(s: string | n) {
+export function isEmptyOrSpaces(s: string | n) {
   return s == null || s.trim().length === 0
 }

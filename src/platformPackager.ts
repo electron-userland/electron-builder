@@ -1,5 +1,5 @@
 import { InfoRetriever, ProjectMetadataProvider } from "./repositoryInfo"
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getProductName } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getProductName, Arch } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -29,17 +29,10 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
 
 export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"]
 
-// class Target {
-//   constructor(public platform: Platform, arch?: "ia32" | "x64")
-// }
-//
 export const DIR_TARGET = "dir"
 
 export interface PackagerOptions {
-  target?: Array<string> | null
-
-  platform?: Array<Platform> | null
-  arch?: string | null
+  targets?: Map<Platform, Map<Arch, string[]>>
 
   projectDir?: string | null
 
@@ -88,8 +81,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appName: string
 
-  readonly targets: Array<string>
-
   readonly resourceList: Promise<Array<string>>
 
   public abstract get platform(): Platform
@@ -104,22 +95,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
     this.appName = getProductName(this.metadata, this.devMetadata)
 
-    let targets = normalizeTargets(this.customBuildOptions.target)
-    const cliTargets = normalizeTargets(this.options.target)
-    if (cliTargets != null) {
-      targets = cliTargets
-    }
-
-    if (targets != null) {
-      const supportedTargets = this.supportedTargets.concat(commonTargets)
-      for (let target of targets) {
-        if (target !== "default" && !supportedTargets.includes(target)) {
-          throw new Error(`Unknown target: ${target}`)
-        }
-      }
-    }
-    this.targets = targets == null ? ["default"] : targets
-
     this.resourceList = readdir(this.buildResourcesDir)
       .catch(e => {
         if (e.code !== "ENOENT") {
@@ -129,8 +104,30 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
   }
 
+  public computeEffectiveTargets(rawList: Array<string>): Array<string> {
+    let targets = normalizeTargets(rawList.length === 0 ? this.customBuildOptions.target : rawList)
+    if (targets != null) {
+      const supportedTargets = this.supportedTargets.concat(commonTargets)
+      for (let target of targets) {
+        if (target !== "default" && !supportedTargets.includes(target)) {
+          throw new Error(`Unknown target: ${target}`)
+        }
+      }
+    }
+    return targets == null ? ["default"] : targets
+  }
+
   protected hasOnlyDirTarget(): boolean {
-    return this.targets.length === 1 && this.targets[0] === "dir"
+    for (let targets of this.options.targets!.get(this.platform)!.values()) {
+      for (let t of targets) {
+        if (t !== "dir") {
+          return false
+        }
+      }
+    }
+
+    const targets = normalizeTargets(this.customBuildOptions.target)
+    return targets != null && targets.length === 1 && targets[0] === "dir"
   }
 
   protected get relativeBuildResourcesDirname() {
@@ -139,8 +136,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected abstract get supportedTargets(): Array<string>
 
-  protected computeAppOutDir(outDir: string, arch: string): string {
-    return path.join(outDir, `${this.platform.buildConfigurationKey}${arch === "x64" ? "" : `-${arch}`}`)
+  protected computeAppOutDir(outDir: string, arch: Arch): string {
+    return path.join(outDir, `${this.platform.buildConfigurationKey}${arch === Arch.x64 ? "" : `-${Arch[arch]}`}`)
   }
 
   protected dispatchArtifactCreated(file: string, artifactName?: string) {
@@ -151,14 +148,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  abstract pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any>
+  abstract pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: DC) {
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: DC) {
     await this.packApp(options, appOutDir)
     await this.copyExtraFiles(appOutDir, arch, customBuildOptions)
   }
 
-  protected computePackOptions(outDir: string, appOutDir: string, arch: string): ElectronPackagerOptions {
+  protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
     const version = this.metadata.version
     let buildVersion = version
     const buildNumber = this.computeBuildNumber()
@@ -172,7 +169,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       name: this.appName,
       productName: this.appName,
       platform: this.platform.nodeName,
-      arch: arch,
+      arch: Arch[arch],
       version: this.info.electronVersion,
       icon: path.join(this.buildResourcesDir, "icon"),
       asar: true,
@@ -212,7 +209,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
   }
 
-  private getExtraResources(isResources: boolean, arch: string, customBuildOptions: DC): Promise<Array<string>> {
+  private getExtraResources(isResources: boolean, arch: Arch, customBuildOptions: DC): Promise<Array<string>> {
     const buildMetadata: any = this.devMetadata.build
     let extra: Array<string> | n = buildMetadata == null ? null : buildMetadata[isResources ? "extraResources" : "extraFiles"]
 
@@ -226,17 +223,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const expandedPatterns = extra.map(it => it
-      .replace(/\$\{arch}/g, arch)
+      .replace(/\$\{arch}/g, Arch[arch])
       .replace(/\$\{os}/g, this.platform.buildConfigurationKey))
     return globby(expandedPatterns, {cwd: this.projectDir})
   }
 
-  protected async copyExtraFiles(appOutDir: string, arch: string, customBuildOptions: DC): Promise<any> {
+  protected async copyExtraFiles(appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
   }
 
-  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: string, customBuildOptions: DC): Promise<Array<string>> {
+  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<Array<string>> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`, "Contents") : appOutDir
     return await BluebirdPromise.map(await this.getExtraResources(isResources, arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(base, it)))
   }
@@ -381,8 +378,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 }
 
-export function archSuffix(arch: string) {
-  return arch === "x64" ? "" : `-${arch}`
+export function getArchSuffix(arch: Arch): string {
+  return arch === Arch.x64 ? "" : `-${Arch[arch]}`
 }
 
 export interface ArtifactCreated {

@@ -355,6 +355,10 @@ export class Platform {
     return this.name
   }
 
+  public createTarget(type?: string | null, arch: Arch = archFromString(process.arch)): Map<Platform, Map<Arch, Array<string>>> {
+    return new Map([[this, new Map([[arch, type == null ? [] : [type]]])]])
+  }
+
   public static fromString(name: string): Platform {
     switch (name) {
       case Platform.OSX.nodeName:
@@ -372,6 +376,21 @@ export class Platform {
 
     throw new Error("Unknown platform: " + name)
   }
+}
+
+export enum Arch {
+  ia32, x64
+}
+
+export function archFromString(name: string): Arch {
+  if (name === "x64") {
+    return Arch.x64
+  }
+  if (name === "ia32") {
+    return Arch.ia32
+  }
+
+  throw new Error(`Unsupported arch ${name}`)
 }
 
 export function getProductName(metadata: AppMetadata, devMetadata: DevMetadata) {

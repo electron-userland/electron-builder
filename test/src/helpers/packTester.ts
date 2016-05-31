@@ -4,11 +4,12 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated } from "out"
+import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, Arch, DIR_TARGET } from "out"
 import { exec } from "out/util"
-import pathSorter = require("path-sort")
 import { tmpdir } from "os"
 import DecompressZip = require("decompress-zip")
+import { getArchSuffix } from "out/platformPackager"
+import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -96,24 +97,30 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   await packager.build()
 
-  if ((packagerOptions.target != null && packagerOptions.target.length === 1 && packagerOptions.target[0] === "dir") || packagerOptions.platformPackagerFactory != null) {
+  if (packagerOptions.platformPackagerFactory != null) {
     return
   }
 
-  for (let platform of packagerOptions.platform) {
-    if (platform === Platform.OSX) {
-      await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
-    }
-    else if (platform === Platform.LINUX) {
-      await checkLinuxResult(projectDir, packager, packagerOptions, checkOptions, artifacts.get(Platform.LINUX))
-    }
-    else if (platform === Platform.WINDOWS) {
-      await checkWindowsResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.WINDOWS))
+  c: for (let [platform, archToType] of packagerOptions.targets) {
+    for (let [arch, targets] of archToType) {
+      if (targets.length === 1 && targets[0] === DIR_TARGET) {
+        continue c
+      }
+
+      if (platform === Platform.OSX) {
+        await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
+      }
+      else if (platform === Platform.LINUX) {
+        await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch)
+      }
+      else if (platform === Platform.WINDOWS) {
+        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch)
+      }
     }
   }
 }
 
-async function checkLinuxResult(projectDir: string, packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+async function checkLinuxResult(projectDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
   const customBuildOptions = packager.devMetadata.build.linux
   const targets = customBuildOptions == null || customBuildOptions.target == null ? ["default"] : customBuildOptions.target
 
@@ -149,7 +156,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, packager
 
   const packageFile = `${projectDir}/${outDirName}/TestApp-1.1.0-amd64.deb`
   assertThat(await getContents(packageFile, productName)).deepEqual(expectedContents)
-  if (packagerOptions.arch === "all" || packagerOptions.arch === "ia32") {
+  if (arch === Arch.ia32) {
     assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).deepEqual(expectedContents)
   }
 
@@ -220,7 +227,7 @@ function getFileNames(list: Array<ArtifactCreated>): Array<string> {
   return list.map(it => path.basename(it.file)).sort()
 }
 
-async function checkWindowsResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
 
   function getExpectedFileNames(archSuffix: string) {
@@ -236,7 +243,7 @@ async function checkWindowsResult(packager: Packager, packagerOptions: PackagerO
     return result
   }
 
-  const archSuffix = (packagerOptions.arch || process.arch) === "x64" ? "" : "-ia32"
+  const archSuffix = getArchSuffix(arch)
   assertThat(getFileNames(artifacts)).deepEqual((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpectedFileNames(archSuffix) : checkOptions.expectedArtifacts.slice()).sort())
 
   if (checkOptions != null && checkOptions.expectedArtifacts != null) {
@@ -304,7 +311,7 @@ export async function modifyPackageJson(projectDir: string, task: (data: any) =>
 
 export function platform(platform: Platform): PackagerOptions {
   return {
-    platform: [platform]
+    targets: platform.createTarget()
   }
 }
 

@@ -8,20 +8,19 @@ import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
 import { ElectronPackagerOptions } from "electron-packager-tf"
+import { Arch } from "out"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
 test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
-    platform: [Platform.WINDOWS],
-    arch: "x64",
+    targets: Platform.WINDOWS.createTarget(),
   })
 ))
 
 // very slow
 test.ifWinCi("delta", () => assertPack("test-app-one", {
-    platform: [Platform.WINDOWS],
-    arch: "ia32",
+    targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
     devMetadata: {
       build: {
         win: {
@@ -38,7 +37,7 @@ test.ifDevOrWinCi("beta version", () => {
   }
 
   return assertPack("test-app-one", {
-    platform: [Platform.WINDOWS],
+    targets: Platform.WINDOWS.createTarget(),
     devMetadata: metadata
   }, {
     expectedArtifacts: [
@@ -72,7 +71,7 @@ test("detect install-spinner", () => {
     }
   }
   return assertPack("test-app-one", {
-    platform: [Platform.WINDOWS],
+    targets: Platform.WINDOWS.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks),
     devMetadata: devMetadata
   }, {
@@ -110,7 +109,7 @@ class CheckingWinPackager extends WinPackager {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, arch: string): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
     const installerOutDir = computeDistOut(outDir, arch)
     const appOutDir = this.computeAppOutDir(outDir, arch)
@@ -118,7 +117,7 @@ class CheckingWinPackager extends WinPackager {
     this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, "Foo.exe")
   }
 
-  async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: string, packOptions: ElectronPackagerOptions): Promise<any> {
+  async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions): Promise<any> {
     // skip
   }
 }

@@ -1,6 +1,5 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
-import { Platform } from "out"
 import OsXPackager from "out/osxPackager"
 import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
@@ -8,22 +7,22 @@ import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
 import { ElectronPackagerOptions } from "electron-packager-tf"
-import { OsXBuildOptions } from "out/metadata"
+import { Platform, OsXBuildOptions, createTargets } from "out"
 import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { Arch } from "out"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
 test.ifOsx("two-package", () => assertPack("test-app", signed({
-  platform: [Platform.OSX],
-  arch: "all",
+  targets: createTargets([Platform.OSX], null, "all"),
 })))
 
 test.ifOsx("one-package", () => assertPack("test-app-one", signed(platform(Platform.OSX))))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
   let options: PackagerOptions = {
-    platform: [Platform.OSX],
+    targets: Platform.OSX.createTarget(),
     devMetadata: {
       build: {
         osx: {
@@ -51,7 +50,7 @@ test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["TestApp-1.1.0-osx.7z"
 test.ifOsx("custom mas", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    platform: [Platform.OSX],
+    targets: Platform.OSX.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
@@ -80,7 +79,7 @@ test.ifOsx("custom mas", () => {
 test.ifOsx("entitlements in the package.json", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    platform: [Platform.OSX],
+    targets: Platform.OSX.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
@@ -104,7 +103,7 @@ test.ifOsx("entitlements in the package.json", () => {
 test.ifOsx("entitlements in build dir", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    platform: [Platform.OSX],
+    targets: Platform.OSX.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
   }), {
     tempDirCreated: projectDir => BluebirdPromise.all([
@@ -133,7 +132,7 @@ test.ifOsx("custom background", () => {
   let platformPackager: CheckingOsXPackager = null
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
-    platform: [Platform.OSX],
+    targets: Platform.OSX.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks)
   }, {
     tempDirCreated: projectDir => BluebirdPromise.all([
@@ -162,7 +161,7 @@ class CheckingOsXPackager extends OsXPackager {
     super(info, cleanupTasks)
   }
 
-  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: string, customBuildOptions: OsXBuildOptions, postAsyncTasks: Array<Promise<any>> = null) {
+  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: OsXBuildOptions, postAsyncTasks: Array<Promise<any>> = null) {
     // skip pack
     this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch))
   }
@@ -175,7 +174,7 @@ class CheckingOsXPackager extends OsXPackager {
     this.effectiveFlatOptions = opts
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  async packageInDistributableFormat(outDir: string, appOutDir: string, targets: Array<string>): Promise<any> {
     // skip
   }
 }

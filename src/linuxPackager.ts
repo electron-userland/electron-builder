@@ -1,7 +1,7 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, smarten, archSuffix } from "./platformPackager"
-import { Platform, LinuxBuildOptions } from "./metadata"
+import { PlatformPackager, BuildInfo, smarten, getArchSuffix } from "./platformPackager"
+import { Platform, LinuxBuildOptions, Arch } from "./metadata"
 import { exec, debug, use, getTempName } from "./util"
 import { outputFile, readFile, remove, readdir, emptyDir } from "fs-extra-p"
 import { downloadFpm } from "./fpmDownload"
@@ -69,19 +69,19 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return [].concat(...await BluebirdPromise.all(promises))
   }
 
-  async pack(outDir: string, arch: string, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(this.computePackOptions(outDir, appOutDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
 
-    for (let target of this.targets) {
+    for (let target of targets) {
       if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
-        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
+        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
         postAsyncTasks.push(this.archiveApp(target, appOutDir, destination)
           .then(() => this.dispatchArtifactCreated(destination)))
       }
     }
 
-    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch))
+    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, targets))
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
@@ -189,19 +189,19 @@ Icon=${this.metadata.name}
     return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
   }
 
-  protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: string): Promise<any> {
+  protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>): Promise<any> {
     // todo fix fpm - if we run in parallel, get strange tar errors
-    for (let target of this.targets) {
+    for (let target of targets) {
       target = target === "default" ? "deb" : target
       if (target !== "dir" && target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
-        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${archSuffix(arch)}.${target}`)
+        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
         await this.buildPackage(destination, target, this.buildOptions, appOutDir, arch)
         this.dispatchArtifactCreated(destination)
       }
     }
   }
 
-  private async buildPackage(destination: string, target: string, options: LinuxBuildOptions, appOutDir: string, arch: string): Promise<any> {
+  private async buildPackage(destination: string, target: string, options: LinuxBuildOptions, appOutDir: string, arch: Arch): Promise<any> {
     const scripts = await this.scriptFiles
 
     const projectUrl = await this.computePackageUrl()
@@ -214,7 +214,7 @@ Icon=${this.metadata.name}
     const args = [
       "-s", "dir",
       "-t", target,
-      "--architecture", arch === "ia32" ? "i386" : "amd64",
+      "--architecture", arch === Arch.ia32 ? "i386" : "amd64",
       "--name", this.metadata.name,
       "--force",
       "--after-install", scripts[0],

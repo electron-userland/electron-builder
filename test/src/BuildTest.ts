@@ -5,11 +5,41 @@ import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, PackagerOptions, DIR_TARGET } from "out"
+import { Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
 import pathSorter = require("path-sort")
+import { normalizeOptions } from "out/builder"
+import { createYargs } from "out/build-cli"
+import { BuildOptions } from "out/builder"
+import { archFromString } from "out/metadata"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
+
+test("cli", (t) => {
+  const yargs = createYargs()
+
+  const base = {
+    publish: <string>undefined,
+    npmRebuild: true,
+  }
+
+  function expected(opt: PackagerOptions): any {
+    return Object.assign(base, opt)
+  }
+
+  function parse(input: string): BuildOptions {
+    return normalizeOptions(yargs.parse(input.split(" ")))
+  }
+
+  t.deepEqual(parse("--osx"), expected({targets: Platform.OSX.createTarget()}))
+  t.deepEqual(parse("--linux"), expected({targets: Platform.LINUX.createTarget()}))
+  t.deepEqual(parse("--win"), expected({targets: Platform.WINDOWS.createTarget()}))
+  t.deepEqual(parse("-owl"), expected({targets: createTargets([Platform.OSX, Platform.WINDOWS, Platform.LINUX])}))
+  t.deepEqual(parse("-l tar.gz:ia32"), expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.ia32)}))
+  t.deepEqual(parse("-l tar.gz:x64"), expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
+  t.deepEqual(parse("-l tar.gz"), expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
+  t.deepEqual(parse("-w tar.gz:x64"), expected({targets: Platform.WINDOWS.createTarget("tar.gz", Arch.x64)}))
+})
 
 test("custom buildResources dir", () => assertPack("test-app-one", allPlatforms(), {
   tempDirCreated: projectDir => BluebirdPromise.all([
@@ -56,7 +86,7 @@ test("name in the build", t => t.throws(assertPack("test-app-one", currentPlatfo
 }), /'name' in the 'build' is forbidden/))
 
 test("empty description", t => t.throws(assertPack("test-app-one", {
-  platform: [Platform.LINUX],
+  targets: Platform.LINUX.createTarget(),
   devMetadata: <any>{
     description: "",
   }
@@ -104,8 +134,7 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
 const electronVersion = "0.37.8"
 
 test.ifNotWindows("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
-  target: ["dir"],
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   tempDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
@@ -118,8 +147,7 @@ test.ifNotWindows("electron version from electron-prebuilt dependency", () => as
 }))
 
 test.ifNotWindows("electron version from build", () => assertPack("test-app-one", {
-  platform: [Platform.LINUX],
-  target: [DIR_TARGET],
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.devDependencies = {}
@@ -132,12 +160,10 @@ test("www as default dir", () => assertPack("test-app", currentPlatform(), {
 }))
 
 test("afterPack", t => {
-  const possiblePlatforms = process.env.CI ? [Platform.fromString(process.platform)] : getPossiblePlatforms()
+  const targets = process.env.CI ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms()
   let called = 0
   return assertPack("test-app-one", {
-    // linux pack is very fast, so, we use it :)
-    platform: possiblePlatforms,
-    target: [DIR_TARGET],
+    targets: targets,
     devMetadata: {
       build: {
         afterPack: () => {
@@ -148,23 +174,22 @@ test("afterPack", t => {
     }
   }, {
     packed: () => {
-      t.is(called, possiblePlatforms.length)
+      t.is(called, targets.size)
       return Promise.resolve()
     }
   })
 })
 
 test("copy extra content", async () => {
-  for (let platform of getPossiblePlatforms()) {
+  for (let platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
 
     const winDirPrefix = "lib/net45/resources/"
 
     //noinspection SpellCheckingInspection
     await assertPack("test-app", {
-      platform: [platform],
       // to check NuGet package
-      target: platform === Platform.WINDOWS ? null : [DIR_TARGET],
+      targets: platform.createTarget(platform === Platform.WINDOWS ? null : DIR_TARGET),
     }, {
       tempDirCreated: (projectDir) => {
         return BluebirdPromise.all([
@@ -221,33 +246,26 @@ test("copy extra content", async () => {
   }
 })
 
-test("invalid platform", t => t.throws(assertPack("test-app-one", {
-  platform: [null],
-  target: [DIR_TARGET]
-}), "Unknown platform: null"))
-
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {
-    platform: getPossiblePlatforms(),
-    target: dist ? null : [DIR_TARGET],
+    targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
   }
 }
 
 function currentPlatform(dist: boolean = true): PackagerOptions {
   return {
-    platform: [Platform.fromString(process.platform)],
-    target: dist ? null : [DIR_TARGET],
+    targets: Platform.fromString(process.platform).createTarget(dist ? null : DIR_TARGET),
   }
 }
 
-function getPossiblePlatforms(): Array<Platform> {
+function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
   if (process.platform === Platform.OSX.nodeName) {
-    return process.env.CI ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS]
+    return createTargets(process.env.CI ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS], type)
   }
   else if (process.platform === Platform.LINUX.nodeName) {
-    return [Platform.LINUX, Platform.WINDOWS]
+    return createTargets([Platform.LINUX, Platform.WINDOWS], type)
   }
   else {
-    return [Platform.WINDOWS]
+    return createTargets([Platform.WINDOWS], type)
   }
 }
