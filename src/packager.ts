@@ -1,7 +1,7 @@
 import * as path from "path"
 import {
   computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson, use, warn,
-  exec
+  exec, isEmptyOrSpaces
 } from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
@@ -174,7 +174,7 @@ export class Packager implements BuildInfo {
 
   private installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      if (this.options.npmRebuild === false) {
+      if (this.devMetadata.build.npmRebuild === false) {
         log("Skip app dependencies rebuild because npmRebuild is set to false")
       }
       else if (platform.nodeName === process.platform) {
@@ -247,8 +247,4 @@ async function checkWineVersion(checkPromise: Promise<string>) {
   if (compareVersions(wineVersion, "1.8") === -1) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
-}
-
-export function isEmptyOrSpaces(s: string | n) {
-  return s == null || s.trim().length === 0
 }

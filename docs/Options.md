@@ -62,6 +62,7 @@ Here documented only `electron-builder` specific options:
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+| npmRebuild | <a name="BuildMetadata-npmRebuild"></a>Whether to rebuild native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
 
 <a name="OsXBuildOptions"></a>
 ### `.build.osx`
@@ -70,7 +71,7 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 
 | Name | Description
 | --- | ---
-| icon | <a name="OsXBuildOptions-icon"></a>The path to icon, which will be shown when mounted (default: `build/icon.icns`).
+| icon | <a name="OsXBuildOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
 | background | <a name="OsXBuildOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
 | target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
 | identity | <a name="OsXBuildOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>

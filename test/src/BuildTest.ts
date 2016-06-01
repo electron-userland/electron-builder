@@ -5,12 +5,10 @@ import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
+import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
 import pathSorter = require("path-sort")
 import { normalizeOptions } from "out/builder"
-import { createYargs } from "out/build-cli"
-import { BuildOptions } from "out/builder"
-import { archFromString } from "out/metadata"
+import { createYargs } from "out/cliOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -20,7 +18,6 @@ test("cli", (t) => {
 
   const base = {
     publish: <string>undefined,
-    npmRebuild: true,
   }
 
   function expected(opt: PackagerOptions): any {

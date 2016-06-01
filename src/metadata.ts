@@ -151,6 +151,11 @@ export interface BuildMetadata {
    *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
+
+  /*
+   Whether to rebuild native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+   */
+  readonly npmRebuild?: boolean
 }
 
 export interface AfterPackContext {
@@ -165,7 +170,7 @@ export interface AfterPackContext {
  */
 export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   The path to icon, which will be shown when mounted (default: `build/icon.icns`).
+   The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
    */
   readonly icon?: string | null
 

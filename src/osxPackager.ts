@@ -2,7 +2,7 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions, MasBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, debug, warn } from "./util"
+import { log, debug, warn, isEmptyOrSpaces } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
@@ -65,7 +65,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
   private static async findIdentity(certType: string, name?: string | null): Promise<string | null> {
     let identity = process.env.CSC_NAME || name
-    if (identity == null || identity.trim().length === 0) {
+    if (isEmptyOrSpaces(identity)) {
       return await findIdentity(certType)
     }
     else {

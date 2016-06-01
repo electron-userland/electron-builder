@@ -1,10 +1,10 @@
-import { Packager, normalizePlatforms, isEmptyOrSpaces } from "./packager"
+import { Packager, normalizePlatforms } from "./packager"
 import { PackagerOptions } from "./platformPackager"
 import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
 import { executeFinally } from "./promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
-import { log, warn } from "./util"
+import { log, warn, isEmptyOrSpaces } from "./util"
 import { Platform, Arch, archFromString } from "./metadata"
 
 //noinspection JSUnusedLocalSymbols

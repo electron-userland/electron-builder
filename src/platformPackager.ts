@@ -50,8 +50,6 @@ export interface PackagerOptions {
    * Development `package.json` will be still read, but options specified in this object will override.
    */
   readonly devMetadata?: DevMetadata
-
-  readonly npmRebuild?: boolean
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {

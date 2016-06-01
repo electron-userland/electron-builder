@@ -45,7 +45,6 @@ Object.defineProperties(test, {
   },
   "ifDevOrWinCi": {
     get: function () {
-      console.log(process.env)
       return process.env.CI == null || process.platform === "win32" ? this : this.skip
     }
   },
