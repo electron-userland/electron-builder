@@ -24,7 +24,7 @@
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push wiki wiki:master",
     "whitespace": "whitespace src/*.ts",
-    "docker-images": "docker build -t electronuserland/electron-builder docker && docker build -t electronuserland/electron-builder:wine docker/wine"
+    "docker-images": "docker/build.sh"
   },
   "repository": {
     "type": "git",
