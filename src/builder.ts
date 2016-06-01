@@ -134,16 +134,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   const result = Object.assign({}, args)
   result.targets = targets
 
-  if (result.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
-    result.cscLink = process.env.CSC_LINK
-  }
-  if (result.cscKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_KEY_PASSWORD)) {
-    result.cscKeyPassword = process.env.CSC_KEY_PASSWORD
-  }
-  if (result.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
-    result.githubToken = process.env.GH_TOKEN
-  }
-
   delete result.osx
   delete result.linux
   delete result.win
@@ -180,6 +170,17 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
 
 export async function build(rawOptions?: CliOptions): Promise<void> {
   const options = normalizeOptions(rawOptions || {})
+
+  if (options.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
+    options.cscLink = process.env.CSC_LINK
+  }
+  if (options.cscKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_KEY_PASSWORD)) {
+    options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
+  }
+  if (options.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
+    options.githubToken = process.env.GH_TOKEN
+  }
+
   let isPublishOptionGuessed = false
   if (options.publish === undefined) {
     if (process.env.npm_lifecycle_event === "release") {

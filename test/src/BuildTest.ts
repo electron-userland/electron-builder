@@ -256,13 +256,17 @@ function currentPlatform(dist: boolean = true): PackagerOptions {
 }
 
 function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
+  const platforms = [Platform.fromString(process.platform)]
   if (process.platform === Platform.OSX.nodeName) {
-    return createTargets(process.env.CI ? [Platform.OSX, Platform.LINUX] : [Platform.OSX, Platform.LINUX, Platform.WINDOWS], type)
+    if (process.env.LINUX_SKIP == null) {
+      platforms.push(Platform.LINUX)
+    }
+    if (process.env.CI == null) {
+      platforms.push(Platform.WINDOWS)
+    }
   }
-  else if (process.platform === Platform.LINUX.nodeName) {
-    return createTargets([Platform.LINUX, Platform.WINDOWS], type)
+  else if (process.platform === Platform.LINUX.nodeName && process.env.SKIP_WIN == null) {
+    platforms.push(Platform.WINDOWS)
   }
-  else {
-    return createTargets([Platform.WINDOWS], type)
-  }
+  return createTargets(platforms, type)
 }
