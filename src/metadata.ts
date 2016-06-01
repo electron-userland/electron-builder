@@ -360,6 +360,10 @@ export class Platform {
     return this.name
   }
 
+  toJSON() {
+    return this.name
+  }
+
   public createTarget(type?: string | null, arch: Arch = archFromString(process.arch)): Map<Platform, Map<Arch, Array<string>>> {
     return new Map([[this, new Map([[arch, type == null ? [] : [type]]])]])
   }

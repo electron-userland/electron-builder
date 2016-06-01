@@ -13,7 +13,7 @@ import { createYargs } from "out/cliOptions"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test("cli", (t) => {
+test("cli", () => {
   const yargs = createYargs()
 
   const base = {
@@ -28,14 +28,14 @@ test("cli", (t) => {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
-  t.deepEqual(parse("--osx"), expected({targets: Platform.OSX.createTarget()}))
-  t.deepEqual(parse("--linux"), expected({targets: Platform.LINUX.createTarget()}))
-  t.deepEqual(parse("--win"), expected({targets: Platform.WINDOWS.createTarget()}))
-  t.deepEqual(parse("-owl"), expected({targets: createTargets([Platform.OSX, Platform.WINDOWS, Platform.LINUX])}))
-  t.deepEqual(parse("-l tar.gz:ia32"), expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.ia32)}))
-  t.deepEqual(parse("-l tar.gz:x64"), expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
-  t.deepEqual(parse("-l tar.gz"), expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
-  t.deepEqual(parse("-w tar.gz:x64"), expected({targets: Platform.WINDOWS.createTarget("tar.gz", Arch.x64)}))
+  assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
+  assertThat(parse("--linux")).isEqualTo(expected({targets: Platform.LINUX.createTarget()}))
+  assertThat(parse("--win")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget()}))
+  assertThat(parse("-owl")).isEqualTo(expected({targets: createTargets([Platform.OSX, Platform.WINDOWS, Platform.LINUX])}))
+  assertThat(parse("-l tar.gz:ia32")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.ia32)}))
+  assertThat(parse("-l tar.gz:x64")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
+  assertThat(parse("-l tar.gz")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
+  assertThat(parse("-w tar.gz:x64")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget("tar.gz", Arch.x64)}))
 })
 
 test("custom buildResources dir", () => assertPack("test-app-one", allPlatforms(), {
