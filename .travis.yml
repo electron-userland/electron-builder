@@ -15,10 +15,11 @@ matrix:
       env: CIRCLE_NODE_INDEX=1 NODE_VERSION=6
 
     - os: osx
-      env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=6
+      env: NODE_VERSION=6
+      #env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=6
 
-    - os: osx
-      env: TEST_FILES=linuxPackagerTest,BuildTest NODE_VERSION=6
+#    - os: osx
+#      env: TEST_FILES=linuxPackagerTest,BuildTest NODE_VERSION=6
 
     - os: osx
       env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=4
@@ -33,7 +34,7 @@ cache:
     - $HOME/.cache/fpm
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$TEST_FILES" == l* ]]; then brew install gnu-tar dpkg libicns graphicsmagick lzip; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnu-tar dpkg libicns graphicsmagick lzip; fi
   - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v1.2.0/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-1.2.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
 
 install:
