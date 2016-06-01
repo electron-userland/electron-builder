@@ -6,9 +6,9 @@ import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
-import pathSorter = require("path-sort")
 import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cliOptions"
+import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -128,7 +128,7 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
   }, true)
 }))
 
-const electronVersion = "0.37.8"
+const electronVersion = "1.2.1"
 
 test.ifNotWindows("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(DIR_TARGET),

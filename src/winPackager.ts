@@ -140,6 +140,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       usePackageJson: false,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: packOptions["app-copyright"],
+      packageCompressionLevel: this.devMetadata.build.compression === "store" ? 0 : 9,
       sign: {
         name: this.appName,
         site: projectUrl,

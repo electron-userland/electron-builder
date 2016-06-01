@@ -5,7 +5,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { log, debug, warn, isEmptyOrSpaces } from "./util"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity } from "./codeSign"
 import deepAssign = require("deep-assign")
-import { sign, flat, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -134,6 +134,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       app: path.join(appOutDir, `${this.appName}.app`),
       platform: masOptions == null ? "darwin" : "mas",
       keychain: <any>codeSigningInfo.keychainName,
+      version: this.info.electronVersion
     }
 
     const signOptions = Object.assign({
@@ -176,11 +177,11 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   }
 
   protected async doSign(opts: SignOptions): Promise<any> {
-    return BluebirdPromise.promisify(sign)(opts)
+    return signAsync(opts)
   }
 
   protected async doFlat(opts: FlatOptions): Promise<any> {
-    return BluebirdPromise.promisify(flat)(opts)
+    return flatAsync(opts)
   }
 
   protected async computeEffectiveDistOptions(appOutDir: string): Promise<appdmg.Specification> {

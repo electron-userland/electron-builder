@@ -3,6 +3,7 @@ import * as json8 from "json8"
 import { green, red, gray } from "chalk"
 import { diffJson } from "diff"
 import { AssertionError } from "assert"
+import * as path from "path"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -28,6 +29,12 @@ class Assertions {
       throw new AssertionError({
         message: prettyDiff(JSON.parse(JSON.stringify(this.actual, jsonReplacer)), JSON.parse(JSON.stringify(expected, jsonReplacer)))
       })
+    }
+  }
+
+  isAbsolute() {
+    if (!path.isAbsolute(this.actual)) {
+      throw new Error(`Path ${this.actual} is not absolute`)
     }
   }
 

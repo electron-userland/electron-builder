@@ -10,7 +10,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "devDependencies": {
-    "electron-prebuilt": "^0.37.8"
+    "electron-prebuilt": "^1.2.1"
   },
   "build": {
     "app-bundle-id": "your.id",

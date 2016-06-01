@@ -1,5 +1,6 @@
 import { copy, emptyDir, remove, writeJson, readJson, readFile } from "fs-extra-p"
-import * as assertThat from "should/as-function"
+import * as assertThat2 from "should/as-function"
+import { assertThat } from "./fileAssert"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
@@ -7,9 +8,9 @@ import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, Arch, DIR_TARGET } from "out"
 import { exec, getTempName } from "out/util"
 import { tmpdir } from "os"
-import DecompressZip = require("decompress-zip")
 import { getArchSuffix } from "out/platformPackager"
 import pathSorter = require("path-sort")
+import DecompressZip = require("decompress-zip")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -83,7 +84,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
-    assertThat(path.isAbsolute(event.file)).true()
+    assertThat(event.file).isAbsolute()
     let list = artifacts.get(event.platform)
     if (list == null) {
       list = []
@@ -129,7 +130,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     return result
   }
 
-  assertThat(getFileNames(artifacts)).deepEqual((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts.slice()).sort())
+  assertThat(getFileNames(artifacts)).isEqualTo((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts.slice()).sort())
 
   if (!targets.includes("deb") || !targets.includes("default")) {
     return
@@ -152,12 +153,12 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
   const packageFile = `${projectDir}/${outDirName}/TestApp-1.1.0-amd64.deb`
-  assertThat(await getContents(packageFile, productName)).deepEqual(expectedContents)
+  assertThat(await getContents(packageFile, productName)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).deepEqual(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).isEqualTo(expectedContents)
   }
 
-  assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
+  assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
     License: "MIT",
     Homepage: "http://foo.example.com",
     Maintainer: "Foo Bar <foo@example.com>",
@@ -191,7 +192,7 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   const productName = getProductName(packager.metadata, packager.devMetadata)
   const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
-  assertThat(info).has.properties({
+  assertThat2(info).has.properties({
     CFBundleDisplayName: productName,
     CFBundleIdentifier: "your.id",
     LSApplicationCategoryType: "your.app.category.type",
@@ -200,20 +201,20 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
 
   if (packagerOptions.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
-    assertThat(result).not.match(/is not signed at all/)
+    assertThat2(result).not.match(/is not signed at all/)
   }
 
   const actualFiles = artifacts.map(it => path.basename(it.file)).sort()
   if (checkOptions != null && checkOptions.expectedContents != null) {
-    assertThat(actualFiles).deepEqual(checkOptions.expectedContents)
+    assertThat(actualFiles).isEqualTo(checkOptions.expectedContents)
   }
   else {
-    assertThat(actualFiles).deepEqual([
+    assertThat(actualFiles).isEqualTo([
       `${productName}-1.1.0-mac.zip`,
       `${productName}-1.1.0.dmg`,
     ].sort())
 
-    assertThat(artifacts.map(it => it.artifactName).sort()).deepEqual([
+    assertThat(artifacts.map(it => it.artifactName).sort()).isEqualTo([
       "TestApp-1.1.0-mac.zip",
       "TestApp-1.1.0.dmg",
     ].sort())
@@ -241,13 +242,13 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 
   const archSuffix = getArchSuffix(arch)
-  assertThat(getFileNames(artifacts)).deepEqual((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpectedFileNames(archSuffix) : checkOptions.expectedArtifacts.slice()).sort())
+  assertThat(getFileNames(artifacts)).isEqualTo((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpectedFileNames(archSuffix) : checkOptions.expectedArtifacts.slice()).sort())
 
   if (checkOptions != null && checkOptions.expectedArtifacts != null) {
     return
   }
 
-  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).deepEqual([`TestApp-Setup-1.1.0${archSuffix}.exe`])
+  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).isEqualTo([`TestApp-Setup-1.1.0${archSuffix}.exe`])
 
   const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0-full.nupkg`)
   const unZipper = new DecompressZip(packageFile)
@@ -257,7 +258,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
-  assertThat(files).deepEqual(expectedContents.map(it => {
+  assertThat(files).isEqualTo(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
       return `lib/net45/${encodeURI(productName)}.exe`
     }
@@ -272,7 +273,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     })
     const expectedSpec = (await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
     // console.log(expectedSpec)
-    assertThat(expectedSpec).equal(`<?xml version="1.0"?>
+    assertThat(expectedSpec).isEqualTo(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
