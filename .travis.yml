@@ -20,12 +20,8 @@ matrix:
     - os: osx
       env: TEST_FILES=linuxPackagerTest,BuildTest NODE_VERSION=6
 
-    # the same for nodejs 4
     - os: osx
       env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=4
-
-    - os: osx
-      env: TEST_FILES=linuxPackagerTest,BuildTest NODE_VERSION=4
 
 language: c
 
