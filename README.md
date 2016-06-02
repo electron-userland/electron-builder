@@ -33,12 +33,13 @@ Why the two package.json structure is ideal and how it solves a lot of issues
 1. Native npm modules (those written in C, not JavaScript) need to be compiled, and here we have two different compilation targets for them. Those used in application need to be compiled against electron runtime, and all `devDependencies` need to be compiled against your locally installed node.js. Thanks to having two files this is trivial.
 2. When you package the app for distribution there is no need to add up to size of the app with your `devDependencies`. Here those are always not included (because reside outside the `app` directory).
 
+Please see [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881) and [#326](https://github.com/electron-userland/electron-builder/issues/326#issuecomment-211124807).
+
 # Configuration
 
 See [options](https://github.com/electron-userland/electron-builder/wiki/Options), but consider to follow simple guide outlined below at first.
 
-For a production app you need to sign your application.
-It costs only $59 (and 2 weeks), see [Where to buy code signing certificate](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
+For a production app you need to sign your application, see [Where to buy code signing certificate](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
 
 ## In short
 1. Specify standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-license) are also required).
