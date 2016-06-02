@@ -107,13 +107,13 @@ test.ifOsx("entitlements in build dir", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
   }), {
     tempDirCreated: projectDir => BluebirdPromise.all([
-      writeFile(path.join(projectDir, "build", "osx.entitlements"), ""),
-      writeFile(path.join(projectDir, "build", "osx.inherit.entitlements"), ""),
+      writeFile(path.join(projectDir, "build", "entitlements.osx.plist"), ""),
+      writeFile(path.join(projectDir, "build", "entitlements.osx.inherit.plist"), ""),
     ]),
     packed: projectDir => {
       assertThat(platformPackager.effectiveSignOptions).has.properties({
-        entitlements: path.join(projectDir, "build", "osx.entitlements"),
-        "entitlements-inherit": path.join(projectDir, "build", "osx.inherit.entitlements"),
+        entitlements: path.join(projectDir, "build", "entitlements.osx.plist"),
+        "entitlements-inherit": path.join(projectDir, "build", "entitlements.osx.inherit.plist"),
       })
       return BluebirdPromise.resolve(null)
     }

@@ -148,7 +148,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       signOptions.entitlements = customSignOptions.entitlements
     }
     else {
-      const p = `${masOptions == null ? "osx" : "mas"}.entitlements`
+      const p = `entitlements.${masOptions == null ? "osx" : "mas"}.plist`
       if (resourceList.includes(p)) {
         signOptions.entitlements = path.join(this.buildResourcesDir, p)
       }
@@ -158,7 +158,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
     }
     else {
-      const p = `${masOptions == null ? "osx" : "mas"}.inherit.entitlements`
+      const p = `entitlements.${masOptions == null ? "osx" : "mas"}.inherit.plist`
       if (resourceList.includes(p)) {
         signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
       }

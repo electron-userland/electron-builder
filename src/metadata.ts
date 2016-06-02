@@ -192,14 +192,14 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
   readonly identity?: string | null
 
   /*
-   The path to entitlements file for signing the app. `build/osx.entitlements` will be used if exists (it is a recommended way to set).
+   The path to entitlements file for signing the app. `build/entitlements.osx.plist` will be used if exists (it is a recommended way to set).
    MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
    */
   readonly entitlements?: string | null
 
   /*
-   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/osx.inherit.entitlements` will be used if exists (it is a recommended way to set).
-   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.darwin.inherit.entitlements).
+   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.osx.inherit.plist` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
 
    This option only applies when signing with `entitlements` provided.
    */
@@ -213,14 +213,14 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
  */
 export interface MasBuildOptions extends OsXBuildOptions {
   /*
-   The path to entitlements file for signing the app. `build/mas.entitlements` will be used if exists (it is a recommended way to set).
-   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.entitlements).
+   The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
    */
   readonly entitlements?: string | null
 
   /*
-   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/mas.inherit.entitlements` will be used if exists (it is a recommended way to set).
-   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.mas.inherit.entitlements).
+   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set).
+   Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
    */
   readonly entitlementsInherit?: string | null
 }
