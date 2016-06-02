@@ -1,28 +1,10 @@
+os: osx
+
 osx_image: xcode7
 
-dist: trusty
-sudo: required
-
-services:
-  - docker
-
-matrix:
-  include:
-    - os: linux
-      env: CIRCLE_NODE_INDEX=0 NODE_VERSION=6
-
-    - os: linux
-      env: CIRCLE_NODE_INDEX=1 NODE_VERSION=6
-
-    - os: osx
-      env: NODE_VERSION=6
-      #env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=6
-
-#    - os: osx
-#      env: TEST_FILES=linuxPackagerTest,BuildTest NODE_VERSION=6
-
-    - os: osx
-      env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=4
+env:
+  - NODE_VERSION=6
+  - NODE_VERSION=4
 
 language: c
 
@@ -40,15 +22,15 @@ before_install:
 install:
 - nvm install $NODE_VERSION
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm install && npm prune ; fi
+- npm install
+- npm prune
 
 script:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then npm run test ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$CIRCLE_NODE_INDEX" == "0" ]]; then docker run --rm --env-file ./test/docker-env.list -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:latest /bin/bash -c "/test.sh && ./test/release.sh" ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$CIRCLE_NODE_INDEX" == "1" ]]; then docker run --rm --env-file ./test/docker-env.list -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /bin/bash -c "/test.sh && ./test/release.sh" ; fi
+- npm run test
 
 after_success:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then node out/cleanup.js && ./test/release.sh ; fi
+- node out/cleanup.js
+- if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" ]]; then npm run semantic-release ; fi
 
 branches:
   except:
