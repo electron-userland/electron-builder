@@ -119,7 +119,7 @@ async function copyDependencies() {
 }
 
 /**
- * CIRCLE_NODE_INDEX=3 — test nodejs 4 (on Circle).
+ * CIRCLE_NODE_INDEX=2 — test nodejs 4 (on Circle).
  */
 function runTests(): BluebirdPromise<any> {
   const args: Array<string> = []
@@ -139,7 +139,7 @@ function runTests(): BluebirdPromise<any> {
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
-    if (circleNodeIndex === 0 || circleNodeIndex === 3) {
+    if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
       args.push(path.join(baseDir, "linuxPackagerTest.js"), path.join(baseDir, "BuildTest.js"))
     }

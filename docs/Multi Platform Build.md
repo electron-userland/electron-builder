@@ -3,7 +3,7 @@ Don't expect that you can build app for all platforms on one platform.
 * If your app has native dependencies, it can be compiled only on the target platform.
 [prebuild](https://www.npmjs.com/package/prebuild) is a solution, but most node modules [don't provide](https://github.com/atom/node-keytar/issues/27) prebuilt binaries.
 
-* OS Code Signing works only OS X. [Cannot be fixed](http://stackoverflow.com/a/12156576).
+* OS Code Signing works only on OS X. [Cannot be fixed](http://stackoverflow.com/a/12156576).
 * Windows Code Signing doesn't work on Linux. We are going to fix it soon.
 
 Don't think that mentioned issues are major, you should use build servers — e.g. [AppVeyor](http://www.appveyor.com/) to build Windows app and [Travis](https://travis-ci.org) to build OS X/Linux apps.

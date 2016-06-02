@@ -77,6 +77,10 @@ export class Packager implements BuildInfo {
     // custom packager - don't check wine
     let checkWine = this.options.platformPackagerFactory == null
     for (let [platform, archToType] of this.options.targets!) {
+      if (platform === Platform.OSX && process.platform === Platform.WINDOWS.nodeName) {
+        throw new Error("Build for OS X is supported only on OS X, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
+      }
+
       let wineCheck: Promise<string> | null = null
       if (checkWine && process.platform !== "win32" && platform === Platform.WINDOWS) {
         wineCheck = exec("wine", ["--version"])

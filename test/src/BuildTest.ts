@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, modifyPackageJson, outDirName } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, outDirName, platform } from "./helpers/packTester"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { move, outputFile, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -242,6 +242,8 @@ test("copy extra content", async () => {
     })
   }
 })
+
+test.ifWinCi("Build OS X on Windows is not supported", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.OSX)), /Build for OS X is supported only on OS X.+/))
 
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {
