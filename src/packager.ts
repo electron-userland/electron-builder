@@ -30,7 +30,7 @@ export class Packager implements BuildInfo {
   metadata: AppMetadata
   devMetadata: DevMetadata
 
-  private isTwoPackageJsonProjectLayoutUsed = true
+  isTwoPackageJsonProjectLayoutUsed = true
 
   electronVersion: string
 

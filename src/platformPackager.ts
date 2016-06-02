@@ -4,13 +4,14 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions } from "electron-packager-tf"
-import globby = require("globby")
-import { readdir, copy, unlink } from "fs-extra-p"
-import { statOrNull, use, spawn, debug7zArgs, debug } from "./util"
+import { globby } from "./globby"
+import { readdir, copy, unlink, lstat, remove } from "fs-extra-p"
+import { statOrNull, use, spawn, debug7zArgs, debug, warn } from "./util"
 import { Packager } from "./packager"
-import deepAssign = require("deep-assign")
-import { listPackage, statFile } from "asar"
+import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOptions } from "asar"
 import { path7za } from "7zip-bin"
+import deepAssign = require("deep-assign")
+import { Glob } from "glob"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -64,6 +65,8 @@ export interface BuildInfo extends ProjectMetadataProvider {
 
   repositoryInfo: InfoRetriever | n
   eventEmitter: EventEmitter
+
+  isTwoPackageJsonProjectLayoutUsed: boolean
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements ProjectMetadataProvider {
@@ -149,7 +152,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: DC) {
+    const asar = options.asar
+    options.asar = false
     await pack(options)
+    options.asar = asar
+
+    const asarOptions = this.computeAsarOptions(customBuildOptions)
+    if (asarOptions != null) {
+      await this.createAsarArchive(appOutDir, asarOptions)
+    }
+
     await this.copyExtraFiles(appOutDir, arch, customBuildOptions)
 
     const afterPack = this.devMetadata.build.afterPack
@@ -160,7 +172,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
     }
 
-    await this.sanityCheckPackage(appOutDir, <boolean>options.asar)
+    await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
   protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
@@ -171,7 +183,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       buildVersion += "." + buildNumber
     }
 
-    const options = deepAssign({
+    //noinspection JSUnusedGlobalSymbols
+    const options: any = deepAssign({
       dir: this.info.appDir,
       out: outDir,
       name: this.appName,
@@ -180,7 +193,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       arch: Arch[arch],
       version: this.info.electronVersion,
       icon: path.join(this.buildResourcesDir, "icon"),
-      asar: true,
       overwrite: true,
       "app-version": version,
       "app-copyright": `Copyright © ${new Date().getFullYear()} ${this.metadata.author.name || this.appName}`,
@@ -195,6 +207,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }, this.devMetadata.build)
 
+    if (!this.info.isTwoPackageJsonProjectLayoutUsed && typeof options.ignore !== "function") {
+      const defaultIgnores = ["/node_modules/electron-builder($|/)", path.relative(this.projectDir, this.buildResourcesDir) + "($|/)"]
+      if (options.ignore != null && !Array.isArray(options.ignore)) {
+        options.ignore = [options.ignore]
+      }
+      options.ignore = options.ignore == null ? defaultIgnores : options.ignore.concat(defaultIgnores)
+    }
+
     delete options.osx
     delete options.win
     delete options.linux
@@ -203,23 +223,89 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options
   }
 
-  private getExtraResources(isResources: boolean, arch: Arch, customBuildOptions: DC): Promise<Array<string>> {
-    const buildMetadata: any = this.devMetadata.build
-    let extra: Array<string> | n = buildMetadata == null ? null : buildMetadata[isResources ? "extraResources" : "extraFiles"]
+  private getExtraResources(isResources: boolean, arch: Arch, customBuildOptions: DC): Promise<Set<string>> {
+    let patterns: Array<string> | n = (<any>this.devMetadata.build)[isResources ? "extraResources" : "extraFiles"]
+    const platformSpecificPatterns = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
+    if (platformSpecificPatterns != null) {
+      patterns = patterns == null ? platformSpecificPatterns : patterns.concat(platformSpecificPatterns)
+    }
+    return patterns == null ? BluebirdPromise.resolve(new Set()) : globby(this.expandPatterns(patterns, arch), {cwd: this.projectDir});
+  }
 
-    const platformSpecificExtra = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
-    if (platformSpecificExtra != null) {
-      extra = extra == null ? platformSpecificExtra : extra.concat(platformSpecificExtra)
+  private computeAsarOptions(customBuildOptions: DC): AsarOptions | null {
+    let result = this.devMetadata.build.asar
+    let platformSpecific = customBuildOptions.asar
+    if (platformSpecific != null) {
+      result = platformSpecific
     }
 
-    if (extra == null) {
-      return BluebirdPromise.resolve([])
+    if (result === false) {
+      return null
     }
 
-    const expandedPatterns = extra.map(it => it
+    const buildMetadata = <ElectronPackagerOptions>this.devMetadata.build
+    if (buildMetadata["asar-unpack"] != null) {
+      warn("asar-unpack is deprecated, please set as asar.unpack")
+    }
+    if (buildMetadata["asar-unpack-dir"] != null) {
+      warn("asar-unpack-dir is deprecated, please set as asar.unpackDir")
+    }
+
+    if (result == null || result === true) {
+      return {
+        unpack: buildMetadata["asar-unpack"],
+        unpackDir: buildMetadata["asar-unpack-dir"]
+      }
+    }
+    else {
+      return result
+    }
+  }
+
+  private async createAsarArchive(appOutDir: string, options: AsarOptions): Promise<any> {
+    const src = path.join(this.getResourcesDir(appOutDir), "app")
+
+    let glob: Glob | null = null
+    const files = (await new BluebirdPromise<Array<string>>((resolve, reject) => {
+      glob = new Glob("**/*", {
+        cwd: src,
+        // dot: true as in the asar by default
+        dot: true,
+        ignore: "**/.DS_Store",
+      }, (error, matches) => {
+        if (error == null) {
+          resolve(matches)
+        }
+        else {
+          reject(error)
+        }
+      })
+    })).map(it => path.join(src, it))
+
+    const stats = await BluebirdPromise.map(files, it => {
+      // const stat = glob!.statCache[it]
+      // return stat == null ? lstat(it) : <any>stat
+      // todo check is it safe to reuse glob stat
+      return lstat(it)
+    })
+
+    const metadata: { [key: string]: AsarFileMetadata; } = {}
+    for (let i = 0, n = files.length; i < n; i++) {
+      const stat = stats[i]
+      metadata[files[i]] = {
+        type: stat.isFile() ? "file" : (stat.isDirectory() ? "directory" : "link"),
+        stat: stat,
+      }
+    }
+
+    await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(this.getResourcesDir(appOutDir), "app.asar"), files, metadata, options)
+    await remove(src)
+  }
+
+  private expandPatterns(list: Array<string>, arch: Arch): Array<string> {
+    return list.map(it => it
       .replace(/\$\{arch}/g, Arch[arch])
       .replace(/\$\{os}/g, this.platform.buildConfigurationKey))
-    return globby(expandedPatterns, {cwd: this.projectDir})
   }
 
   protected async copyExtraFiles(appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {

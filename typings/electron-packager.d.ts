@@ -2,9 +2,9 @@ declare module "electron-packager-tf" {
   /** Electron-packager Options. */
   export interface ElectronPackagerOptions {
     /** The source directory. */
-    dir: string;
+    dir?: string;
     /** The application name. */
-    name: string;
+    name?: string;
     /**
      * Allowed values: linux, win32, darwin, all. Not required if `all` is used.
      * Arbitrary combinations of individual platforms are also supported via a comma-delimited string or array of strings.
@@ -13,7 +13,7 @@ declare module "electron-packager-tf" {
     /** Allowed values: ia32, x64, all Not required if `all` is used. */
     arch?: string;
     /** Electron version (without the "v"). See https://github.com/atom/electron/releases. */
-    version: string;
+    version?: string;
 
     /** Shortcut for `--arch=all --platform=all`. */
     all?: boolean;
@@ -33,20 +33,20 @@ declare module "electron-packager-tf" {
     icon?: string;
 
     /** The bundle identifier to use in the app plist. */
-      "app-bundle-id"?: string;
+      "app-bundle-id"?: string | null;
     /** The release version to set for the app. */
       "app-version"?: string;
     /** The build version to set for the app (OS X only). */
-      "build-version"?: string;
+      "build-version"?: string | null;
     /** The bundle identifier to use in the app helper plist. */
-      "helper-bundle-id"?: string;
+      "helper-bundle-id"?: string | null;
     /** Object hash of application metadata to embed into the executable (Windows only). */
       "version-string"?: VersionString;
 
     /** The directory of cached electron downloads. Defaults to "$HOME/.electron". */
     cache?: string;
     /** Do not copy files into App whose filenames regex .match this string. */
-    ignore?: RegExp;
+    ignore?: RegExp | Array<RegExp>;
     /** Runs `npm prune --production` on the app. */
     prune?: boolean;
     /** If output directory for a platform already exists, replaces it rather than skipping it. */
@@ -54,7 +54,8 @@ declare module "electron-packager-tf" {
     /** Packages the source code within your app into an archive. */
     asar?: boolean;
     /** Unpacks the files to app.asar.unpacked directory whose filenames regex .match this string. */
-      "asar-unpack"?: string;
+    "asar-unpack"?: string;
+    "asar-unpack-dir"?: string;
     /** Should contain the identity to be used when running `codesign` (OS X only). */
     sign?: string;
 
@@ -74,6 +75,6 @@ declare module "electron-packager-tf" {
     ProductName?: string;
     InternalName?: string;
   }
-  
+
   export function pack(opts: ElectronPackagerOptions): Promise<string[]>
 }

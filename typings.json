@@ -4,6 +4,7 @@
     "progress": "github:DefinitelyTyped/DefinitelyTyped/progress/progress.d.ts#d54b18e0ac3277376700b6026ef9e9e3f380df50"
   },
   "dependencies": {
+    "glob": "registry:npm/glob#6.0.0+20160211003958",
     "source-map-support": "github:typed-typings/npm-source-map-support#900ed4180a22285bce4bbabc0760427e71a59eca"
   }
 }

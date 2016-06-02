@@ -1,4 +1,5 @@
 import { ElectronPackagerOptions } from "electron-packager-tf"
+import { AsarOptions } from "asar"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -92,9 +93,11 @@ export interface BuildMetadata {
 
   /*
    Whether to package the application's source code into an archive, using [Electron's archive format](https://github.com/electron/asar). Defaults to `true`.
-    Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).
+   Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).
+
+   Or you can pass object of any asar options.
    */
-  readonly asar?: boolean
+  readonly asar?: AsarOptions | boolean | null
 
   // deprecated
   readonly iconUrl?: string | null
@@ -344,6 +347,8 @@ export interface MetadataDirectories {
 export interface PlatformSpecificBuildOptions {
   readonly extraFiles?: Array<string> | null
   readonly extraResources?: Array<string> | null
+
+  readonly asar?: AsarOptions | boolean
 
   readonly target?: Array<string> | null
 }
