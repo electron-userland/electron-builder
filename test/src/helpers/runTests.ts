@@ -141,7 +141,7 @@ function runTests(): BluebirdPromise<any> {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
-      args.push(path.join(baseDir, "linuxPackagerTest.js"), path.join(baseDir, "BuildTest.js"))
+      args.push(path.join(baseDir, "linuxPackagerTest.js"), path.join(baseDir, "BuildTest.js"), path.join(baseDir, "globTest.js"))
     }
     else {
       args.push(path.join(baseDir, "winPackagerTest.js"))

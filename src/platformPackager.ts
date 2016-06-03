@@ -208,7 +208,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }, this.devMetadata.build)
 
     if (!this.info.isTwoPackageJsonProjectLayoutUsed && typeof options.ignore !== "function") {
-      const defaultIgnores = ["/node_modules/electron-builder($|/)", path.relative(this.projectDir, this.buildResourcesDir) + "($|/)"]
+      const defaultIgnores = ["/node_modules/electron-builder($|/)", "^/" + path.relative(this.projectDir, this.buildResourcesDir) + "($|/)"]
       if (options.ignore != null && !Array.isArray(options.ignore)) {
         options.ignore = [options.ignore]
       }

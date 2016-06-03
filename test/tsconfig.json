@@ -61,6 +61,7 @@
     "src/ArtifactPublisherTest.ts",
     "src/BuildTest.ts",
     "src/CodeSignTest.ts",
+    "src/globTest.ts",
     "src/helpers/avaEx.ts",
     "src/helpers/codeSignData.ts",
     "src/helpers/expectedContents.ts",

@@ -7,6 +7,7 @@ import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSW
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, Arch, DIR_TARGET } from "out"
 import { exec, getTempName } from "out/util"
+import { createTargets } from "out"
 import { tmpdir } from "os"
 import { getArchSuffix } from "out/platformPackager"
 import pathSorter = require("path-sort")
@@ -319,4 +320,26 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   packagerOptions.cscInstallerLink = CSC_INSTALLER_LINK
   packagerOptions.cscInstallerKeyPassword = CSC_INSTALLER_KEY_PASSWORD
   return packagerOptions
+}
+
+export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
+  const platforms = [Platform.fromString(process.platform)]
+  if (process.platform === Platform.OSX.nodeName) {
+    if (process.env.LINUX_SKIP == null) {
+      platforms.push(Platform.LINUX)
+    }
+    if (process.env.CI == null) {
+      platforms.push(Platform.WINDOWS)
+    }
+  }
+  else if (process.platform === Platform.LINUX.nodeName && process.env.SKIP_WIN == null) {
+    platforms.push(Platform.WINDOWS)
+  }
+  return createTargets(platforms, type)
+}
+
+export function currentPlatform(dist: boolean = true): PackagerOptions {
+  return {
+    targets: Platform.fromString(process.platform).createTarget(dist ? null : DIR_TARGET),
+  }
 }

@@ -26,7 +26,6 @@ test.ifDevOrLinuxCi("tar", () => assertPack("test-app-one", {
   devMetadata: {
     build: {
       linux: {
-        // "apk" is very slow, don't test for now
         target: ["tar.xz", "tar.lz", "tar.bz2"],
       }
     }
