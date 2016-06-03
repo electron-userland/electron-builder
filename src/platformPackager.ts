@@ -397,8 +397,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const compression = this.devMetadata.build.compression
     const storeOnly = compression === "store"
 
-    const fileToArchive = this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir
-    const baseDir = path.dirname(fileToArchive)
+    const dirToArchive = this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir
     if (format.startsWith("tar.")) {
       // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on OS X and often hangs on Linux (even if use pipe-io lib)
       // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
@@ -409,8 +408,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         tarEnv[info.env] = storeOnly ? info.minLevel : info.maxLevel
       }
 
-      await spawn(process.platform === "darwin" ? "/usr/local/opt/gnu-tar/libexec/gnubin/tar" : "tar", [info.flag, "-cf", outFile, fileToArchive], {
-        cwd: baseDir,
+      await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", [info.flag, "--transform", `s,^\.,${path.basename(outFile, "." + format)},`, "-cf", outFile, "."], {
+        cwd: dirToArchive,
         stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
         env: tarEnv
       })
@@ -449,10 +448,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
     }
 
-    args.push(outFile, fileToArchive)
+    args.push(outFile, dirToArchive)
 
     await spawn(path7za, args, {
-      cwd: baseDir,
+      cwd: path.dirname(dirToArchive),
       stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
     })
   }

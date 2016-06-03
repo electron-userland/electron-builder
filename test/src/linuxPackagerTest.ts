@@ -9,17 +9,6 @@ const __awaiter = require("out/awaiter")
 
 test.ifNotWindows("deb", () => assertPack("test-app-one", platform(Platform.LINUX)))
 
-test.ifDevOrLinuxCi("rpm", () => assertPack("test-app-one", {
-  targets: Platform.LINUX.createTarget(),
-  devMetadata: {
-    build: {
-      linux: {
-        target: ["rpm"]
-      }
-    }
-  }
-}))
-
 test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(),
   devMetadata: {
@@ -38,7 +27,20 @@ test.ifDevOrLinuxCi("tar", () => assertPack("test-app-one", {
     build: {
       linux: {
         // "apk" is very slow, don't test for now
-        target: ["tar.xz", "tar.lz", "tar.gz", "tar.bz2"],
+        target: ["tar.xz", "tar.lz", "tar.bz2"],
+      }
+    }
+  }
+}))
+
+// https://github.com/electron-userland/electron-builder/issues/460
+// for some reasons in parallel to fmp we cannot use tar
+test.ifDevOrLinuxCi("rpm and tar.gz", () => assertPack("test-app-one", {
+  targets: Platform.LINUX.createTarget(),
+  devMetadata: {
+    build: {
+      linux: {
+        target: ["rpm", "tar.gz"],
       }
     }
   }

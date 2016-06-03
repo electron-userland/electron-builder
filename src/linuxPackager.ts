@@ -43,7 +43,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
         this.fpmPath = BluebirdPromise.resolve("fpm")
       }
       else {
-        this.fpmPath = downloadFpm(process.platform === "darwin" ? "1.5.0-1" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
+        this.fpmPath = downloadFpm(process.platform === "darwin" ? "1.5.1-20150715-2.2.2" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
       }
     }
   }
@@ -72,14 +72,6 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(this.computePackOptions(outDir, appOutDir, arch), outDir, appOutDir, arch, this.customBuildOptions)
-
-    for (let target of targets) {
-      if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
-        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
-        postAsyncTasks.push(this.archiveApp(target, appOutDir, destination)
-          .then(() => this.dispatchArtifactCreated(destination)))
-      }
-    }
 
     postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, targets))
   }
@@ -190,7 +182,7 @@ Icon=${this.metadata.name}
   }
 
   protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>): Promise<any> {
-    // todo fix fpm - if we run in parallel, get strange tar errors
+    // todo fix fpm - if run in parallel, get strange tar errors
     for (let target of targets) {
       target = target === "default" ? "deb" : target
       if (target !== "dir" && target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
@@ -198,6 +190,21 @@ Icon=${this.metadata.name}
         await this.buildPackage(destination, target, this.buildOptions, appOutDir, arch)
         this.dispatchArtifactCreated(destination)
       }
+    }
+
+    const promises: Array<Promise<any>> = []
+    // https://github.com/electron-userland/electron-builder/issues/460
+    // for some reasons in parallel to fmp we cannot use tar
+    for (let target of targets) {
+      if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
+        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
+        promises.push(this.archiveApp(target, appOutDir, destination)
+          .then(() => this.dispatchArtifactCreated(destination)))
+      }
+    }
+
+    if (promises.length > 0) {
+      await BluebirdPromise.all(promises)
     }
   }
 
