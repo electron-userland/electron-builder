@@ -369,8 +369,16 @@ export class Platform {
     return this.name
   }
 
-  public createTarget(type?: string | null, arch: Arch = archFromString(process.arch)): Map<Platform, Map<Arch, Array<string>>> {
-    return new Map([[this, new Map([[arch, type == null ? [] : [type]]])]])
+  public createTarget(type?: string | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
+    const archToType = new Map()
+    for (let arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
+      archToType.set(arch, type == null ? [] : [type])
+    }
+    return new Map([[this, archToType]])
+  }
+
+  public static current(): Platform {
+    return Platform.fromString(process.platform)
   }
 
   public static fromString(name: string): Platform {

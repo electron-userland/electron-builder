@@ -68,14 +68,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     function commonArch(): Array<Arch> {
-      if (args.ia32) {
+      if (args.ia32 && args.x64) {
+        return [Arch.x64, Arch.ia32]
+      }
+      else if (args.ia32) {
         return [Arch.ia32]
       }
       else if (args.x64) {
         return [Arch.x64]
-      }
-      else if (args.ia32 && args.x64) {
-        return [Arch.x64, Arch.ia32]
       }
       else {
         return [archFromString(process.arch)]
@@ -128,7 +128,12 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   }
 
   if (targets.size === 0) {
-    targets = createTargets(normalizePlatforms(args.platform), null, args.arch)
+    if (args.platform == null) {
+      processTargets(Platform.current(), [])
+    }
+    else {
+      targets = createTargets(normalizePlatforms(args.platform), null, args.arch)
+    }
   }
 
   const result = Object.assign({}, args)
@@ -158,7 +163,7 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
   for (let platform of platforms) {
     const archs = platform === Platform.OSX ? [Arch.x64] : (arch === "all" ? [Arch.x64, Arch.ia32] : [archFromString(arch == null ? process.arch : arch)])
-    let archToType = new Map<Arch, Array<string>>()
+    const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 
     for (let arch of archs) {

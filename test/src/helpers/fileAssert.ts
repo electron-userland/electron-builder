@@ -26,8 +26,12 @@ class Assertions {
 
   isEqualTo(expected: any) {
     if (!json8.equal(this.actual, expected)) {
+      const actualJson = JSON.stringify(this.actual, jsonReplacer, 2)
+      const expectedJson = JSON.stringify(expected, jsonReplacer, 2)
       throw new AssertionError({
-        message: prettyDiff(JSON.parse(JSON.stringify(this.actual, jsonReplacer)), JSON.parse(JSON.stringify(expected, jsonReplacer)))
+        message: `Expected \n${expectedJson}\n\nis not equal to\n\n${actualJson}\n\n${prettyDiff(JSON.parse(actualJson), JSON.parse(expectedJson))}`,
+        actual: this.actual,
+        expected: expected,
       })
     }
   }
