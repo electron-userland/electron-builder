@@ -11,6 +11,10 @@ import { homedir } from "os"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
+export const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
+
+export type CertType = "Developer ID Application" | "3rd Party Mac Developer Application" | "Developer ID Installer" | "3rd Party Mac Developer Installer"
+
 export interface CodeSigningInfo {
   name: string
   keychainName?: string | null
@@ -153,22 +157,42 @@ export function downloadCertificate(cscLink: string): Promise<string> {
     .thenReturn(certPath)
 }
 
-let findIdentityRawResult: Promise<string> | null = null
+export let findIdentityRawResult: Promise<string> | null = null
 
-export async function findIdentity(namePrefix: string, qualifier?: string): Promise<string | null> {
+export async function findIdentity(namePrefix: CertType, qualifier?: string): Promise<string | null> {
   if (findIdentityRawResult == null) {
-    findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning"])
+      findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning"])
   }
 
-  const lines = (await findIdentityRawResult).split("\n")
+  const lines = (await findIdentityRawResult).trim().split("\n")
+  // ignore last line valid identities found
+  lines.length = lines.length - 1
+
   for (let line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
       continue
     }
 
-    const location = line.indexOf(namePrefix)
-    if (location >= 0) {
-      return line.substring(location, line.lastIndexOf('"'))
+    if (line.includes(namePrefix)) {
+      return line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'))
+    }
+  }
+
+  if (namePrefix === "Developer ID Application") {
+    // find non-Apple certificate
+    // https://github.com/electron-userland/electron-builder/issues/458
+    l: for (let line of lines) {
+      if (qualifier != null && !line.includes(qualifier)) {
+        continue
+      }
+
+      for (let prefix of appleCertificatePrefixes) {
+        if (line.includes(prefix)) {
+          continue l
+        }
+      }
+
+      return line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'))
     }
   }
   return null

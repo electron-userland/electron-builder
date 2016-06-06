@@ -3,7 +3,7 @@ import { Platform, OsXBuildOptions, MasBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, debug, warn, isEmptyOrSpaces } from "./util"
-import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity } from "./codeSign"
+import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity, appleCertificatePrefixes, CertType } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
 
@@ -59,17 +59,16 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
-  private static async findIdentity(certType: string, name?: string | null): Promise<string | null> {
+  private static async findIdentity(certType: CertType, name?: string | null): Promise<string | null> {
     let identity = process.env.CSC_NAME || name
     if (isEmptyOrSpaces(identity)) {
       return await findIdentity(certType)
     }
     else {
       identity = identity.trim()
-      checkPrefix(identity, "Developer ID Application:")
-      checkPrefix(identity, "3rd Party Mac Developer Application:")
-      checkPrefix(identity, "Developer ID Installer:")
-      checkPrefix(identity, "3rd Party Mac Developer Installer:")
+      for (let prefix of appleCertificatePrefixes) {
+        checkPrefix(identity, prefix)
+      }
       const result = await findIdentity(certType, identity)
       if (result == null) {
         throw new Error(`Identity name "${identity}" is specified, but no valid identity with this name in the keychain`)
