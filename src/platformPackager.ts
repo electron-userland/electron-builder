@@ -6,7 +6,7 @@ import * as path from "path"
 import { pack, ElectronPackagerOptions } from "electron-packager-tf"
 import { globby } from "./globby"
 import { readdir, copy, unlink, lstat, remove } from "fs-extra-p"
-import { statOrNull, use, spawn, debug7zArgs, debug, warn } from "./util"
+import { statOrNull, use, spawn, debug7zArgs, debug, warn, log } from "./util"
 import { Packager } from "./packager"
 import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOptions } from "asar"
 import { path7za } from "7zip-bin"
@@ -103,6 +103,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
         return []
       })
+  }
+
+  protected getCscPassword(): string {
+    const password = this.options.cscKeyPassword
+    if (password == null) {
+      log("CSC_KEY_PASSWORD is not defined, empty password will be used")
+      return ""
+    }
+    else {
+      return password.trim()
+    }
   }
 
   public computeEffectiveTargets(rawList: Array<string>): Array<string> {

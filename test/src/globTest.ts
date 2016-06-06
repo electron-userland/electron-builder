@@ -24,7 +24,7 @@ test.ifDevOrLinuxCi("ignore build resources", () => {
       return outputFile(path.join(projectDir, "one/build/foo.txt"), "data")
     },
     packed: projectDir => {
-      return assertThat(path.join(projectDir, "dist", "linux", "resources", "app", "one", "build", "foo.txt")).isFile()
+      return assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "one", "build", "foo.txt")).isFile()
     },
   })
 })

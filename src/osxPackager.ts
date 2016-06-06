@@ -20,13 +20,9 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       this.codeSigningInfo = BluebirdPromise.resolve(null)
     }
     else {
-      if (this.options.cscKeyPassword == null) {
-        throw new Error("cscLink is set, but cscKeyPassword not")
-      }
-
       const keychainName = generateKeychainName()
       cleanupTasks.push(() => deleteKeychain(keychainName))
-      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.options.cscKeyPassword, this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
+      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.getCscPassword(), this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
     }
   }
 

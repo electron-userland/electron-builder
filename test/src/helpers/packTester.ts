@@ -41,7 +41,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}-${fixtureName}}`) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
       console.log("Custom temp dir used: %s", customTmpDir)
     }

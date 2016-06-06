@@ -5,29 +5,45 @@ import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, warn } from "./util"
 import { deleteFile, emptyDir, open, close, read } from "fs-extra-p"
-import { sign } from "signcode-tf"
+import { sign, SignOptions } from "signcode-tf"
 import { ElectronPackagerOptions } from "electron-packager-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export class WinPackager extends PlatformPackager<WinBuildOptions> {
-  certFilePromise: Promise<string | null>
+interface FileCodeSigningInfo {
+  readonly file: string
+  readonly password?: string | null
+}
 
-  readonly iconPath: Promise<string>
+export class WinPackager extends PlatformPackager<WinBuildOptions> {
+  private readonly cscInfo: Promise<FileCodeSigningInfo | null>
+
+  private readonly iconPath: Promise<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    if (this.options.cscLink != null && this.options.cscKeyPassword != null) {
-      this.certFilePromise = downloadCertificate(this.options.cscLink)
+    const certificateFile = this.customBuildOptions.certificateFile
+    if (certificateFile != null) {
+      const certificatePassword = this.customBuildOptions.certificatePassword
+      this.cscInfo = BluebirdPromise.resolve({
+        file: certificateFile,
+        password: certificatePassword == null ? null : certificatePassword.trim(),
+      })
+    }
+    else if (this.options.cscLink != null) {
+      this.cscInfo = downloadCertificate(this.options.cscLink)
         .then(path => {
           cleanupTasks.push(() => deleteFile(path, true))
-          return path
+          return {
+            file: path,
+            password: this.getCscPassword(),
+          }
         })
     }
     else {
-      this.certFilePromise = BluebirdPromise.resolve(null)
+      this.cscInfo = BluebirdPromise.resolve(null)
     }
 
     this.iconPath = this.getValidIconPath()
@@ -78,21 +94,28 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: WinBuildOptions) {
     await super.doPack(options, outDir, appOutDir, arch, customBuildOptions)
+    await this.sign(appOutDir)
+  }
 
-    const cert = await this.certFilePromise
-    if (cert != null) {
+  protected async sign(appOutDir: string) {
+    const cscInfo = await this.cscInfo
+    if (cscInfo != null) {
       const filename = `${this.appName}.exe`
-      log(`Signing ${filename}`)
-      await BluebirdPromise.promisify(sign)({
+      log(`Signing ${filename} (certificate file "${cscInfo.file}")`)
+      await this.doSign({
         path: path.join(appOutDir, filename),
-        cert: cert,
-        password: this.options.cscKeyPassword!,
+        cert: cscInfo.file,
+        password: cscInfo.password!,
         name: this.appName,
         site: await this.computePackageUrl(),
         overwrite: true,
         hash: this.customBuildOptions.signingHashAlgorithms,
       })
     }
+  }
+
+  protected async doSign(opts: SignOptions): Promise<any> {
+    return BluebirdPromise.promisify(sign)(opts)
   }
 
   protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<WinBuildOptions> {
@@ -120,6 +143,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
     rceditOptions["version-string"]!.LegalCopyright = packOptions["app-copyright"]
 
+    const cscInfo = await this.cscInfo
     const options: any = Object.assign({
       name: this.metadata.name,
       productName: this.appName,
@@ -133,8 +157,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       authors: this.metadata.author.name,
       iconUrl: iconUrl,
       setupIcon: await this.iconPath,
-      certificateFile: await this.certFilePromise,
-      certificatePassword: this.options.cscKeyPassword,
+      certificateFile: cscInfo == null ? null : cscInfo.file,
+      certificatePassword: cscInfo == null ? null : cscInfo.password,
       fixUpPaths: false,
       skipUpdateIcon: true,
       usePackageJson: false,
