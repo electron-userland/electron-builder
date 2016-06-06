@@ -26,7 +26,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     const certificateFile = this.customBuildOptions.certificateFile
     if (certificateFile != null) {
-      const certificatePassword = this.customBuildOptions.certificatePassword
+      const certificatePassword = this.customBuildOptions.certificatePassword || this.getCscPassword()
       this.cscInfo = BluebirdPromise.resolve({
         file: certificateFile,
         password: certificatePassword == null ? null : certificatePassword.trim(),
