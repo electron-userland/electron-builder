@@ -26,7 +26,9 @@ test("cli", () => {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
+  assertThat(parse("--platform osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
   assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
+  assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
   assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
   assertThat(parse("--linux")).isEqualTo(expected({targets: Platform.LINUX.createTarget()}))
   assertThat(parse("--win")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget()}))

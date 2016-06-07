@@ -27,20 +27,17 @@ export function createYargs(): any {
       describe: "Build for ia32",
       type: "boolean",
     })
-    // .option("target", {
-    //   alias: "t",
-    //   describe: "Target package types",
-    //   choices: commonTargets,
-    // })
     .option("publish", {
       alias: "p",
       describe: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never"],
     })
     .option("platform", {
+      describe: "The target platform (preferred to use --osx, --win or --linux)",
       choices: ["osx", "win", "linux", "darwin", "win32", "all"],
     })
     .option("arch", {
+      describe: "The target arch (preferred to use --x64 or --ia32)",
       choices: ["ia32", "x64", "all"],
     })
     .strict()

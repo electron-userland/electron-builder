@@ -1,10 +1,17 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder)
-Complete solution to build ready for distribution and "auto update" installers of your app for OS X, Windows and Linux.
+Complete solution to package and build ready for distribution and "auto update" Electron app for OS X, Windows and Linux.
 
-* [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
-* [Auto Update](#auto-update) ready application packaging.
+* NPM packages management:
+  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
+  * Development dependencies are never included. You don't need to ignore it explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
+* [Auto Update](#auto-update) ready application packaging.
 * [Build version management](#build-version-management).
+* Numerous target formats:
+  * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`.
+  * [OS X](https://github.com/electron-userland/electron-builder/wiki/Options#OsXBuildOptions-target): `dmg`, `mas`.
+  * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+  * Windows: Squirrel.Windows. NSIS will be supported soon.
 * [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
 [electron-packager](https://github.com/electron-userland/electron-packager) and
@@ -14,26 +21,22 @@ Real project example — [onshape-desktop-shell](https://github.com/develar/onsh
 
 # Two package.json structure
 
-We strongly recommend to use **two** package.json files (it is not required, you can build project with any structure).
+We recommend to use two package.json files (it is not required, you can build project with any structure).
 
 1. For development
 
-   In the root of the project.
-  Here you declare dependencies for your development environment and build scripts.
+   In the root of the project. Here you declare dependencies for your development environment and build scripts.
 
 2. For your application
 
    In the `app` directory. *Only this directory is distributed with real application.*
 
-Why the two package.json structure is ideal and how it solves a lot of issues
-([#39](https://github.com/electron-userland/electron-builder/issues/39),
-[#182](https://github.com/electron-userland/electron-builder/issues/182),
-[#230](https://github.com/electron-userland/electron-builder/issues/230))?
+Why?
 
-1. Native npm modules (those written in C, not JavaScript) need to be compiled, and here we have two different compilation targets for them. Those used in application need to be compiled against electron runtime, and all `devDependencies` need to be compiled against your locally installed node.js. Thanks to having two files this is trivial.
-2. When you package the app for distribution there is no need to add up to size of the app with your `devDependencies`. Here those are always not included (because reside outside the `app` directory).
+1. Native npm modules (those written in C, not JavaScript) need to be compiled, and here we have two different compilation targets for them. Those used in application need to be compiled against electron runtime, and all `devDependencies` need to be compiled against your locally installed node.js. Thanks to having two files this is trivial (see [#39](https://github.com/electron-userland/electron-builder/issues/39)).
+2. No need to specify which [files](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files) to include in the app (because development files reside outside the `app` directory).
 
-Please see [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881) and [#326](https://github.com/electron-userland/electron-builder/issues/326#issuecomment-211124807).
+Please see [Loading App Dependencies Manually](https://github.com/electron-userland/electron-builder/wiki/Loading-App-Dependencies-Manually) and [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881).
 
 # Configuration
 
@@ -81,7 +84,6 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 * `-mac.zip`: required for Squirrel.Mac.
 * `.exe` and `-ia32.exe`: Windows installer, required for Windows user to initial install. Please note — [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
 * `.full-nupkg`: required for Squirrel.Windows.
-* `-amd64.deb` and `-i386.deb`: Linux Debian package. Please note — by default the most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used.
 
 For auto updating to work, you must implement and configure Electron's [`autoUpdater`](http://electron.atom.io/docs/latest/api/auto-updater/) module ([example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts)).
 You also need to deploy your releases to a server.

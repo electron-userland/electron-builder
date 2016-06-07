@@ -337,7 +337,9 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly depends?: string[] | null
 
   /*
-   Target package type: list of `default`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (`deb`).
+   Target package type: list of `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `deb`.
+
+   The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
 
    Only `deb` is tested. Feel free to file issues for `rpm` and other package formats.
    */

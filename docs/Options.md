@@ -109,7 +109,7 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
-| target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>default</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>. Defaults to <code>default</code> (<code>deb</code>).</p> <p>Only <code>deb</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
+| target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>. Defaults to <code>deb</code>.</p> <p>The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.</p> <p>Only <code>deb</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
 
 <a name="MetadataDirectories"></a>
 ## `.directories`

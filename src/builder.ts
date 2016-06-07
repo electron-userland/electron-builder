@@ -128,7 +128,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   }
 
   if (targets.size === 0) {
-    if (args.platform == null) {
+    if (args.platform == null && args.arch == null) {
       processTargets(Platform.current(), [])
     }
     else {

@@ -128,8 +128,5 @@
       "test/out/*"
     ]
   },
-  "typings": "./out/electron-builder.d.ts",
-  "publishConfig": {
-    "tag": "next"
-  }
+  "typings": "./out/electron-builder.d.ts"
 }
