@@ -5,6 +5,7 @@
   },
   "dependencies": {
     "glob": "registry:npm/glob#6.0.0+20160211003958",
+    "minimatch": "registry:npm/minimatch#3.0.0+20160211003958",
     "source-map-support": "github:typed-typings/npm-source-map-support#900ed4180a22285bce4bbabc0760427e71a59eca"
   }
 }

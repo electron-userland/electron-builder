@@ -66,7 +66,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
     promises.push(this.computeDesktop(tempDir))
 
-    return [].concat(...await BluebirdPromise.all(promises))
+    return Array.prototype.concat.apply([], await BluebirdPromise.all(promises))
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {

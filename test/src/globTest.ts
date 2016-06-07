@@ -29,7 +29,7 @@ test.ifDevOrLinuxCi("ignore build resources", () => {
   })
 })
 
-test("copy extra content", async () => {
+test("extraResources", async () => {
   for (let platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
 

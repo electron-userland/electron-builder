@@ -37,6 +37,7 @@
       <w>lzma</w>
       <w>lzop</w>
       <w>makedeb</w>
+      <w>minimatch</w>
       <w>mkdirp</w>
       <w>mpass</w>
       <w>multilib</w>

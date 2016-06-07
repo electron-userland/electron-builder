@@ -54,7 +54,7 @@ Here documented only `electron-builder` specific options:
 | app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*OS X-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p> <p>Or you can pass object of any asar options.</p>
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
-| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for OS X, <code>resources</code> for Linux/Windows).</p> <p>You can use <code>${os}</code> (expanded to osx, linux or win according to current platform) and <code>${arch}</code> in the pattern.</p> <p>If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>&lt;project_dir&gt;/foo</code> directory.</p> <p>May be specified in the platform options (i.e. in the <code>build.osx</code>).</p>
+| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for OS X, <code>resources</code> for Linux/Windows). [Multiple patterns](#multiple-glob-patterns) are supported.</p> <p>You can use <code>${os}</code> (expanded to osx, linux or win according to current platform) and <code>${arch}</code> in the pattern.</p> <p>If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>&lt;project_dir&gt;/foo</code> directory.</p> <p>May be specified in the platform options (e.g. in the <code>build.osx</code>).</p>
 | extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, `` for Linux/Windows).
 | osx | <a name="BuildMetadata-osx"></a>See [.build.osx](#OsXBuildOptions).
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
@@ -107,7 +107,7 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | synopsis | <a name="LinuxBuildOptions-synopsis"></a>*deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
 | maintainer | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author).
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
-| compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
+| compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
 | target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>default</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>. Defaults to <code>default</code> (<code>deb</code>).</p> <p>Only <code>deb</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
 
@@ -115,8 +115,23 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 ## `.directories`
 | Name | Description
 | --- | ---
-| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, default `build`.
-| output | <a name="MetadataDirectories-output"></a>The output directory, default `dist`.
-| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), default `app`, `www` or working directory.
+| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
+| output | <a name="MetadataDirectories-output"></a>The output directory, defaults to `dist`.
+| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 <!-- end of generated block -->
+
+
+# Multiple Glob Patterns
+ ```js
+ [
+   // match all files
+   "**/*",
+
+   // except for js files in the foo/ directory
+   "!foo/*.js",
+
+   // unless it's foo/bar.js
+   "foo/bar.js",
+ ]
+ ```

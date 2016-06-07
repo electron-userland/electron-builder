@@ -1,0 +1,11 @@
+{
+  "resolution": "main",
+  "tree": {
+    "src": "https://raw.githubusercontent.com/typed-typings/npm-minimatch/74f47de8acb42d668491987fc6bc144e7d9aa891/typings.json",
+    "raw": "registry:npm/minimatch#3.0.0+20160211003958",
+    "main": "minimatch.d.ts",
+    "global": false,
+    "name": "minimatch",
+    "type": "typings"
+  }
+}

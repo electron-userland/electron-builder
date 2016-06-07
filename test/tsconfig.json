@@ -42,6 +42,7 @@
     "../typings/main/definitions/debug/index.d.ts",
     "../typings/main/definitions/source-map-support/source-map-support.d.ts",
     "../typings/modules/glob/index.d.ts",
+    "../typings/modules/minimatch/index.d.ts",
     "../typings/node.d.ts",
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",

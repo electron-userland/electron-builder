@@ -4,7 +4,6 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions } from "electron-packager-tf"
-import { globby } from "./globby"
 import { readdir, copy, unlink, lstat, remove } from "fs-extra-p"
 import { statOrNull, use, spawn, debug7zArgs, debug, warn, log } from "./util"
 import { Packager } from "./packager"
@@ -12,6 +11,7 @@ import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOp
 import { path7za } from "7zip-bin"
 import deepAssign = require("deep-assign")
 import { Glob } from "glob"
+import { Minimatch } from "minimatch"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -234,15 +234,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options
   }
 
-  private getExtraResources(isResources: boolean, arch: Arch, customBuildOptions: DC): Promise<Set<string>> {
-    let patterns: Array<string> | n = (<any>this.devMetadata.build)[isResources ? "extraResources" : "extraFiles"]
-    const platformSpecificPatterns = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
-    if (platformSpecificPatterns != null) {
-      patterns = patterns == null ? platformSpecificPatterns : patterns.concat(platformSpecificPatterns)
-    }
-    return patterns == null ? BluebirdPromise.resolve(new Set()) : globby(this.expandPatterns(patterns, arch), {cwd: this.projectDir});
-  }
-
   private computeAsarOptions(customBuildOptions: DC): AsarOptions | null {
     let result = this.devMetadata.build.asar
     let platformSpecific = customBuildOptions.asar
@@ -313,10 +304,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await remove(src)
   }
 
-  private expandPatterns(list: Array<string>, arch: Arch): Array<string> {
-    return list.map(it => it
+  private expandPattern(pattern: string, arch: Arch): string {
+    return pattern
       .replace(/\$\{arch}/g, Arch[arch])
-      .replace(/\$\{os}/g, this.platform.buildConfigurationKey))
+      .replace(/\$\{os}/g, this.platform.buildConfigurationKey)
   }
 
   protected async copyExtraFiles(appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
@@ -324,9 +315,39 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
   }
 
-  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<Array<string>> {
+  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`, "Contents") : appOutDir
-    return await BluebirdPromise.map(await this.getExtraResources(isResources, arch, customBuildOptions), it => copy(path.join(this.projectDir, it), path.join(base, it)))
+
+    let patterns: Array<string> | n = (<any>this.devMetadata.build)[isResources ? "extraResources" : "extraFiles"]
+    const platformSpecificPatterns = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
+    if (platformSpecificPatterns != null) {
+      patterns = patterns == null ? platformSpecificPatterns : patterns.concat(platformSpecificPatterns)
+    }
+
+    if (patterns == null) {
+      return
+    }
+
+    const minimatchOptions = {}
+    const parsedPatterns: Array<Minimatch> = []
+    for (let i = 0; i < patterns.length; i++) {
+      parsedPatterns[i] = new Minimatch(this.expandPattern(patterns[i], arch), minimatchOptions)
+    }
+
+    const src = this.projectDir
+    return copy(src, base, {
+      filter: (it) => {
+        if (src === it) {
+          return true
+        }
+
+        let relative = it.substring(src.length + 1)
+        if (path.sep === "\\") {
+          relative = relative.replace(/\\/g, "/")
+        }
+        return minimatchAll(relative, parsedPatterns)
+      }
+    })
   }
 
   protected async computePackageUrl(): Promise<string | null> {
@@ -500,4 +521,29 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
+}
+
+// https://github.com/joshwnj/minimatch-all/blob/master/index.js
+function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
+  let match = false
+  for (let pattern of patterns) {
+    // If we've got a match, only re-test for exclusions.
+    // if we don't have a match, only re-test for inclusions.
+    if (match !== pattern.negate) {
+      continue
+    }
+
+    // partial match — pattern: foo/bar.txt path: foo — we must allow foo
+    match = pattern.match(path, true)
+    if (!match && !pattern.negate) {
+      const rawPattern = pattern.pattern
+      // 1 - slash
+      const patternLengthPlusSlash = rawPattern.length + 1
+      if (path.length > patternLengthPlusSlash) {
+        // foo: include all directory content
+        match = path[rawPattern.length] === "/" && path.startsWith(rawPattern)
+      }
+    }
+  }
+  return match
 }

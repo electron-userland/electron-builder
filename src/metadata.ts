@@ -109,12 +109,13 @@ export interface BuildMetadata {
 
   /**
    A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for OS X, `resources` for Linux/Windows).
+   [Multiple patterns](#multiple-glob-patterns) are supported.
 
    You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
 
    If directory matched, all contents are copied. So, you can just specify `foo` to copy `<project_dir>/foo` directory.
 
-   May be specified in the platform options (i.e. in the `build.osx`).
+   May be specified in the platform options (e.g. in the `build.osx`).
    */
   readonly extraResources?: Array<string> | null
 
@@ -307,7 +308,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   afterRemove?: string | null
 
   /*
-  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz` (default: `xz`).
+  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
    */
   readonly compression?: string | null
 
@@ -329,17 +330,17 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
  */
 export interface MetadataDirectories {
   /*
-   The path to build resources, default `build`.
+   The path to build resources, defaults to `build`.
    */
   readonly buildResources?: string | null
 
   /*
-   The output directory, default `dist`.
+   The output directory, defaults to `dist`.
    */
   readonly output?: string | null
 
   /*
-   The application directory (containing the application package.json), default `app`, `www` or working directory.
+   The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
    */
   readonly app?: string | null
 }
