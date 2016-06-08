@@ -74,6 +74,8 @@ export interface AuthorMetadata {
   readonly email: string
 }
 
+export type CompressionLevel = "store" | "normal" | "maximum"
+
 /*
  ## `.build`
  */
@@ -156,7 +158,7 @@ export interface BuildMetadata {
   /*
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
    */
-  readonly compression?: "store" | "normal" | "maximum" | null
+  readonly compression?: CompressionLevel | null
 
   readonly "build-version"?: string | null
 
@@ -171,7 +173,7 @@ export interface BuildMetadata {
   //  */
   // readonly npmPrune?: boolean
   // deprecated
-  readonly prune?: boolean
+  // readonly prune?: boolean
 
   /*
    Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.

@@ -58,7 +58,14 @@ test.ifDevOrLinuxCi("ignore node_modules known dev dep", () => {
     }
   }, {
     tempDirCreated: projectDir => {
-      return outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "foo.js"), "")
+      return BluebirdPromise.all([
+        modifyPackageJson(projectDir, data => {
+          data.devDependencies = Object.assign({
+              "electron-osx-sign": "*",
+            }, data.devDependencies)
+        }),
+        outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
+      ])
     },
     packed: projectDir => {
       return assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "node_modules", "electron-osx-sign")).doesNotExist()

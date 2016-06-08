@@ -4,29 +4,17 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
-import { readdir, copy, unlink, lstat, remove } from "fs-extra-p"
-import { statOrNull, use, spawn, debug7zArgs, debug, warn, log, spawnNpmProduction } from "./util"
+import { readdir, copy, unlink, lstat, remove, realpath } from "fs-extra-p"
+import { statOrNull, use, warn, log, exec } from "./util"
 import { Packager } from "./packager"
 import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOptions } from "asar"
-import { path7za } from "7zip-bin"
+import { archiveApp } from "./targets/archive"
 import { Glob } from "glob"
 import { Minimatch } from "minimatch"
 import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-
-class CompressionDescriptor {
-  constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
-  }
-}
-
-const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
-  "tar.xz": new CompressionDescriptor("--xz", "XZ_OPT", "-0", "-9e"),
-  "tar.lz": new CompressionDescriptor("--lzip", "LZOP", "-0"),
-  "tar.gz": new CompressionDescriptor("--gz", "GZIP", "-1"),
-  "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
-}
 
 export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"]
 
@@ -168,18 +156,32 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         promise = copy(this.info.appDir, appPath, {filter: userIgnoreFilter(opts), dereference: true})
       }
       else {
+        const ignoreFiles = new Set([path.relative(this.info.appDir, opts.out!), path.relative(this.info.appDir, this.buildResourcesDir)])
+        if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+          const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
+          const productionDepsSet = new Set(result[1])
+
+          // npm returns real path, so, we should use relative path to avoid any mismatch
+          const realAppDirPath = await realpath(this.info.appDir)
+
+          for (let it of result[0]) {
+            if (!productionDepsSet.has(it)) {
+              if (it.startsWith(realAppDirPath)) {
+                it = it.substring(realAppDirPath.length + 1)
+              }
+              else if (it.startsWith(this.info.appDir)) {
+                it = it.substring(this.info.appDir.length + 1)
+              }
+              ignoreFiles.add(it)
+            }
+          }
+        }
+
         let patterns = this.getFilePatterns("files", customBuildOptions)
         if (patterns == null || patterns.length === 0) {
           patterns = ["**/*"]
         }
-
-        const parsedPatterns = this.getParsedPatterns(patterns, arch)
-        if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-          const dotOptions = {dot: true}
-          parsedPatterns.push(new Minimatch("!node_modules/@(appdmg|electron-download|electron-builder|electron-prebuilt|electron-packager-tf|electron-winstaller-fixed|electron-osx-sign-tf|electron-osx-sign){,/**/*}", dotOptions))
-          parsedPatterns.push(new Minimatch(`!@(${path.relative(this.info.appDir, this.buildResourcesDir)}|${path.relative(this.info.appDir, opts.out!)}){,/**/*}`, dotOptions))
-        }
-        promise = copyFiltered(this.info.appDir, appPath, parsedPatterns, true)
+        promise = copyFiltered(this.info.appDir, appPath, this.getParsedPatterns(patterns, arch), true, ignoreFiles)
       }
 
       const promises = [promise]
@@ -193,24 +195,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       await BluebirdPromise.all(promises)
 
-      let npmPrune = this.devMetadata.build.npmPrune
-      if (npmPrune == null) {
-        npmPrune = this.devMetadata.build.prune
-        if (npmPrune != null) {
-          warn("prune is deprecated and renamed to npmPrune, please specify as npmPrune")
-        }
-      }
-
-      if (npmPrune == null) {
-        npmPrune = !this.info.isTwoPackageJsonProjectLayoutUsed
-      }
-      else if (typeof npmPrune !== "boolean") {
-        throw new Error(`npmPrune expected to be boolean value, but string '"${npmPrune}"' was specified`)
-      }
-
-      if (npmPrune) {
-        log("Pruning app dependencies")
-        await spawnNpmProduction("prune", appPath)
+      if (opts.prune != null) {
+        warn("prune is deprecated — development dependencies are never copied in any case")
       }
 
       if (asarOptions != null) {
@@ -469,66 +455,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    const compression = this.devMetadata.build.compression
-    const storeOnly = compression === "store"
-
-    const dirToArchive = this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir
-    if (format.startsWith("tar.")) {
-      // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on OS X and often hangs on Linux (even if use pipe-io lib)
-      // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
-      const info = extToCompressionDescriptor[format]
-      let tarEnv = process.env
-      if (compression != null && compression !== "normal") {
-        tarEnv = Object.assign({}, process.env)
-        tarEnv[info.env] = storeOnly ? info.minLevel : info.maxLevel
-      }
-
-      await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", [info.flag, "--transform", `s,^\.,${path.basename(outFile, "." + format)},`, "-cf", outFile, "."], {
-        cwd: dirToArchive,
-        stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
-        env: tarEnv
-      })
-      return
-    }
-
-    const args = debug7zArgs("a")
-    if (compression === "maximum") {
-      if (format === "7z" || format.endsWith(".7z")) {
-        args.push("-mx=9", "-mfb=64", "-md=32m", "-ms=on")
-      }
-      else if (format === "zip") {
-        // http://superuser.com/a/742034
-        //noinspection SpellCheckingInspection
-        args.push("-mfb=258", "-mpass=15")
-      }
-      else {
-        args.push("-mx=9")
-      }
-    }
-    else if (storeOnly) {
-      if (format !== "zip") {
-        args.push("-mx=1")
-      }
-    }
-
-    // remove file before - 7z doesn't overwrite file, but update
-    try {
-      await unlink(outFile)
-    }
-    catch (e) {
-      // ignore
-    }
-
-    if (format === "zip" || storeOnly) {
-      args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
-    }
-
-    args.push(outFile, dirToArchive)
-
-    await spawn(path7za, args, {
-      cwd: path.dirname(dirToArchive),
-      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
-    })
+    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir)
   }
 }
 
@@ -592,15 +519,21 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
   return match
 }
 
-function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false): Promise<any> {
+// we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
+function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false, ignoreFiles?: Set<string>): Promise<any> {
   return copy(src, destination, {
     dereference: dereference,
     filter: it => {
       if (src === it) {
         return true
       }
-
       let relative = it.substring(src.length + 1)
+
+      // yes, check before path sep normalization
+      if (ignoreFiles != null && ignoreFiles.has(relative)) {
+        return false
+      }
+
       if (path.sep === "\\") {
         relative = relative.replace(/\\/g, "/")
       }
@@ -612,4 +545,29 @@ function copyFiltered(src: string, destination: string, patterns: Array<Minimatc
 export function computeEffectiveTargets(rawList: Array<string>, targetsFromMetadata: Array<string> | n): Array<string> {
   let targets = normalizeTargets(rawList.length === 0 ? targetsFromMetadata : rawList)
   return targets == null ? ["default"] : targets
+}
+
+async function listDependencies(appDir: string, production: boolean): Promise<Array<string>> {
+  let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
+  const npmExecArgs = ["ls", production ? "--production" : "--dev", "--parseable"]
+  if (npmExecPath == null) {
+    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
+  }
+  else {
+    npmExecArgs.unshift(npmExecPath)
+    npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
+  }
+
+  const result = (await exec(npmExecPath, npmExecArgs, {
+    cwd: appDir,
+    stdio: "inherit",
+    maxBuffer: 1024 * 1024,
+  })).trim().split("\n")
+  if (result.length > 0 && !result[0].includes("/node_modules/")) {
+    // first line is a project dir
+    const lastIndex = result.length - 1
+    result[0] = result[lastIndex]
+    result.length = result.length - 1
+  }
+  return result
 }

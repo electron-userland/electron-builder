@@ -107,7 +107,7 @@
     "pre-git": "^3.8.4",
     "semantic-release": "^6.3.0",
     "should": "^9.0.0",
-    "ts-babel": "^1.0.0",
+    "ts-babel": "^1.0.2",
     "tsconfig-glob": "^0.4.3",
     "tslint": "3.10.0-dev.2",
     "typescript": "1.9.0-dev.20160607-1.0",
