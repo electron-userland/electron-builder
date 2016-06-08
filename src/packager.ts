@@ -8,7 +8,7 @@ import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
-import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
+import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, computeEffectiveTargets, commonTargets } from "./platformPackager"
 import OsXPackager from "./osxPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -96,7 +96,15 @@ export class Packager implements BuildInfo {
         }
 
         // electron-packager uses productName in the directory name
-        await helper.pack(outDir, arch, helper.computeEffectiveTargets(targets), distTasks)}
+        const effectiveTargets = computeEffectiveTargets(targets, helper.customBuildOptions.target)
+        const supportedTargets = helper.supportedTargets.concat(commonTargets)
+        for (let target of effectiveTargets) {
+          if (target !== "default" && !supportedTargets.includes(target)) {
+            throw new Error(`Unknown target: ${target}`)
+          }
+        }
+        await helper.pack(outDir, arch, effectiveTargets, distTasks)
+      }
     }
 
     return await BluebirdPromise.all(distTasks)

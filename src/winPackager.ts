@@ -1,25 +1,26 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, smarten, getArchSuffix } from "./platformPackager"
+import { PlatformPackager, BuildInfo, getArchSuffix } from "./platformPackager"
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, warn } from "./util"
-import { deleteFile, emptyDir, open, close, read } from "fs-extra-p"
+import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
 import { ElectronPackagerOptions } from "electron-packager-tf"
+import SquirrelWindowsTarget from "./targets/squirrelWindows"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-interface FileCodeSigningInfo {
+export interface FileCodeSigningInfo {
   readonly file: string
   readonly password?: string | null
 }
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
-  private readonly cscInfo: Promise<FileCodeSigningInfo | null>
+  readonly cscInfo: Promise<FileCodeSigningInfo | null>
 
-  private readonly iconPath: Promise<string>
+  readonly iconPath: Promise<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
@@ -53,8 +54,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return Platform.WINDOWS
   }
 
-  protected get supportedTargets(): Array<string> {
-    return []
+  get supportedTargets(): Array<string> {
+    return ["squirrel"]
   }
 
   private async getValidIconPath(): Promise<string> {
@@ -74,27 +75,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
-    if (!targets.includes("default")) {
-      await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
-      return
-    }
-
-    const installerOut = computeDistOut(outDir, arch)
-    await BluebirdPromise.all([
-      this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions),
-      emptyDir(installerOut)
-    ])
-
-    postAsyncTasks.push(this.packageInDistributableFormat(appOutDir, installerOut, arch, packOptions))
+    await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
+    await this.sign(appOutDir)
+    this.packageInDistributableFormat(outDir, appOutDir, arch, packOptions, targets, postAsyncTasks)
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
     return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
-  }
-
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: WinBuildOptions) {
-    await super.doPack(options, outDir, appOutDir, arch, customBuildOptions)
-    await this.sign(appOutDir)
   }
 
   protected async sign(appOutDir: string) {
@@ -118,89 +105,20 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return BluebirdPromise.promisify(sign)(opts)
   }
 
-  protected async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<WinBuildOptions> {
-    let iconUrl = this.customBuildOptions.iconUrl || this.devMetadata.build.iconUrl
-    if (iconUrl == null) {
-      if (this.info.repositoryInfo != null) {
-        const info = await this.info.repositoryInfo.getInfo(this)
-        if (info != null) {
-          iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${this.relativeBuildResourcesDirname}/icon.ico?raw=true`
-        }
+  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions, targets: Array<string>, promises: Array<Promise<any>>): void {
+    for (let target of targets) {
+      if (target === "squirrel.windows" || target === "default") {
+        const helperClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
+        promises.push(new helperClass(this, appOutDir, arch).build(packOptions))
       }
-
-      if (iconUrl == null) {
-        throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-iconUrl")
-      }
-    }
-
-    checkConflictingOptions(this.customBuildOptions)
-
-    const projectUrl = await this.computePackageUrl()
-    const rceditOptions = {
-      "version-string": packOptions["version-string"],
-      "file-version": packOptions["build-version"],
-      "product-version": packOptions["app-version"],
-    }
-    rceditOptions["version-string"]!.LegalCopyright = packOptions["app-copyright"]
-
-    const cscInfo = await this.cscInfo
-    const options: any = Object.assign({
-      name: this.metadata.name,
-      productName: this.appName,
-      exe: this.appName + ".exe",
-      setupExe: setupExeName,
-      title: this.appName,
-      appDirectory: appOutDir,
-      outputDirectory: installerOutDir,
-      version: this.metadata.version,
-      description: smarten(this.metadata.description),
-      authors: this.metadata.author.name,
-      iconUrl: iconUrl,
-      setupIcon: await this.iconPath,
-      certificateFile: cscInfo == null ? null : cscInfo.file,
-      certificatePassword: cscInfo == null ? null : cscInfo.password,
-      fixUpPaths: false,
-      skipUpdateIcon: true,
-      usePackageJson: false,
-      extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
-      copyright: packOptions["app-copyright"],
-      packageCompressionLevel: this.devMetadata.build.compression === "store" ? 0 : 9,
-      sign: {
-        name: this.appName,
-        site: projectUrl,
-        overwrite: true,
-        hash: this.customBuildOptions.signingHashAlgorithms,
-      },
-      rcedit: rceditOptions,
-    }, this.customBuildOptions)
-
-    if (!("loadingGif" in options)) {
-      const resourceList = await this.resourceList
-      if (resourceList.includes("install-spinner.gif")) {
-        options.loadingGif = path.join(this.buildResourcesDir, "install-spinner.gif")
+      else {
+        log(`Creating Windows ${target}`)
+        // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
+        const outFile = path.join(outDir, `${this.appName}-${this.metadata.version}${getArchSuffix(arch)}-win.${target}`)
+        promises.push(this.archiveApp(target, appOutDir, outFile)
+          .then(() => this.dispatchArtifactCreated(outFile, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}-win.${target}`)))
       }
     }
-
-    return options
-  }
-
-  protected async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions): Promise<any> {
-    const winstaller = require("electron-winstaller-fixed")
-    const version = this.metadata.version
-    const archSuffix = getArchSuffix(arch)
-    const setupExeName = `${this.appName} Setup ${version}${archSuffix}.exe`
-
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, setupExeName)
-    await winstaller.createWindowsInstaller(distOptions)
-    this.dispatchArtifactCreated(path.join(installerOutDir, setupExeName), `${this.metadata.name}-Setup-${version}${archSuffix}.exe`)
-
-    const packagePrefix = `${this.metadata.name}-${winstaller.convertVersion(version)}-`
-    this.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`))
-    if (distOptions.remoteReleases != null) {
-      this.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`))
-    }
-
-    this.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
   }
 }
 
@@ -251,26 +169,4 @@ function parseIco(buffer: Buffer): Array<Size> {
 
 function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
-}
-
-export function computeDistOut(outDir: string, arch: Arch): string {
-  return path.join(outDir, `win${getArchSuffix(arch)}`)
-}
-
-function checkConflictingOptions(options: any) {
-  for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
-    if (name in options) {
-      throw new Error(`Option ${name} is ignored, do not specify it.`)
-    }
-  }
-
-  if ("noMsi" in options) {
-    warn(`noMsi is deprecated, please specify as "msi": true if you want to create an MSI installer`)
-    options.msi = !options.noMsi
-  }
-
-  const msi = options.msi
-  if (msi != null && typeof msi !== "boolean") {
-    throw new Error(`msi expected to be boolean value, but string '"${msi}"' was specified`)
-  }
 }

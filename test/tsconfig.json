@@ -33,6 +33,7 @@
     "../typings/compareVersions.d.ts",
     "../typings/deep-assign.d.ts",
     "../typings/electron-packager.d.ts",
+    "../typings/electron-winstaller-fixed.d.ts",
     "../typings/gh-api.d.ts",
     "../typings/hosted-git-info.d.ts",
     "../typings/lib.es2016.array.include.d.ts",

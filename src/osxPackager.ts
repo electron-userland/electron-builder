@@ -30,7 +30,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     return Platform.OSX
   }
 
-  protected get supportedTargets(): Array<string> {
+  get supportedTargets(): Array<string> {
     return ["dmg", "mas"]
   }
 
@@ -42,7 +42,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
         .then(() => this.sign(appOutDir, null))
         .then(() => {
-          postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, targets))
+          this.packageInDistributableFormat(appOutDir, targets, postAsyncTasks)
         })
     }
 
@@ -215,8 +215,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     return specification
   }
 
-  protected packageInDistributableFormat(outDir: string, appOutDir: string, targets: Array<string>): Promise<any> {
-    const promises: Array<Promise<any>> = []
+  protected packageInDistributableFormat(appOutDir: string, targets: Array<string>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
       if (target === "dmg" || target === "default") {
         promises.push(this.createDmg(appOutDir))
@@ -233,7 +232,6 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
           .then(() => this.dispatchArtifactCreated(outFile, `${this.metadata.name}-${this.metadata.version}-${classifier}.${format}`)))
       }
     }
-    return BluebirdPromise.all(promises)
   }
 
   private async createDmg(appOutDir: string) {

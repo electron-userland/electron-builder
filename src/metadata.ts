@@ -110,8 +110,9 @@ export interface BuildMetadata {
   /**
    A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `\*\*\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
 
-   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
+   Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
+   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
    If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
    Remember that default pattern `\*\*\/\*` is not added to your custom, so, you have to add it explicitly — e.g. `["\*\*\/\*", "!ignoreMe${/\*}"]`.
@@ -164,11 +165,11 @@ export interface BuildMetadata {
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
-  /*
-   Whether to [prune](https://docs.npmjs.com/cli/prune) native dependencies (`npm prune --production`) before starting to package the app.
-   Defaults to `true` if [two package.json structure](https://github.com/electron-userland/electron-builder#two-packagejson-structure) is not used.
-   */
-  readonly npmPrune?: boolean
+  // /*
+  //  Whether to [prune](https://docs.npmjs.com/cli/prune) dependencies (`npm prune --production`) before starting to package the app.
+  //  Defaults to `false`.
+  //  */
+  // readonly npmPrune?: boolean
   // deprecated
   readonly prune?: boolean
 
@@ -372,9 +373,9 @@ export interface PlatformSpecificBuildOptions {
 }
 
 export class Platform {
-  public static OSX = new Platform("osx", "osx", "darwin")
-  public static LINUX = new Platform("linux", "linux", "linux")
-  public static WINDOWS = new Platform("windows", "win", "win32")
+  static OSX = new Platform("osx", "osx", "darwin")
+  static LINUX = new Platform("linux", "linux", "linux")
+  static WINDOWS = new Platform("windows", "win", "win32")
 
   constructor(public name: string, public buildConfigurationKey: string, public nodeName: string) {
   }
@@ -387,19 +388,19 @@ export class Platform {
     return this.name
   }
 
-  public createTarget(type?: string | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
+  createTarget(type?: string | Array<string> | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
     const archToType = new Map()
     for (let arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
-      archToType.set(arch, type == null ? [] : [type])
+      archToType.set(arch, type == null ? [] : (Array.isArray(type) ? type : [type]))
     }
     return new Map([[this, archToType]])
   }
 
-  public static current(): Platform {
+  static current(): Platform {
     return Platform.fromString(process.platform)
   }
 
-  public static fromString(name: string): Platform {
+  static fromString(name: string): Platform {
     switch (name) {
       case Platform.OSX.nodeName:
       case Platform.OSX.name:

@@ -174,7 +174,7 @@ class CheckingOsXPackager extends OsXPackager {
     this.effectiveFlatOptions = opts
   }
 
-  async packageInDistributableFormat(outDir: string, appOutDir: string, targets: Array<string>): Promise<any> {
+  packageInDistributableFormat(appOutDir: string, targets: Array<string>, promises: Array<Promise<any>>): void {
     // skip
   }
 }

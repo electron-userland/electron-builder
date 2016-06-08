@@ -25,15 +25,11 @@ class Assertions {
   }
 
   isEqualTo(expected: any) {
-    if (!json8.equal(this.actual, expected)) {
-      const actualJson = JSON.stringify(this.actual, jsonReplacer, 2)
-      const expectedJson = JSON.stringify(expected, jsonReplacer, 2)
-      throw new AssertionError({
-        message: `Expected \n${expectedJson}\n\nis not equal to\n\n${actualJson}\n\n${prettyDiff(JSON.parse(actualJson), JSON.parse(expectedJson))}`,
-        actual: this.actual,
-        expected: expected,
-      })
-    }
+    compare(this.actual, expected)
+  }
+
+  containsAll<T>(expected: Iterable<T>) {
+    compare(this.actual.slice().sort(), Array.from(expected).slice().sort())
   }
 
   isAbsolute() {
@@ -76,4 +72,17 @@ function prettyDiff(actual: any, expected: any): string {
     return gray(part.value.replace(/.+/g, '    | $&'))
   }).join('')
   return `\n${diff}\n`
+}
+
+function compare(actual: any, expected: any) {
+  if (!json8.equal(actual, expected)) {
+    const actualJson = JSON.stringify(actual, jsonReplacer, 2)
+    const expectedJson = JSON.stringify(expected, jsonReplacer, 2)
+    const stack = new Error().stack
+    throw new AssertionError({
+      message: `Expected \n${expectedJson}\n\nis not equal to\n\n${actualJson}\n\n${prettyDiff(JSON.parse(actualJson), JSON.parse(expectedJson))}\n${stack.split("\n")[3].trim()}`,
+      actual: actual,
+      expected: expected,
+    })
+  }
 }

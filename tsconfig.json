@@ -20,7 +20,7 @@
   },
   "docs": "docs/Options.md",
   "filesGlob": [
-    "src/*.ts",
+    "src/**/*.ts",
     "lib/*.d.ts",
     "typings/**/*.d.ts",
     "!typings/browser/**/*.d.ts",
@@ -37,6 +37,7 @@
     "typings/compareVersions.d.ts",
     "typings/deep-assign.d.ts",
     "typings/electron-packager.d.ts",
+    "typings/electron-winstaller-fixed.d.ts",
     "typings/gh-api.d.ts",
     "typings/hosted-git-info.d.ts",
     "typings/lib.es2016.array.include.d.ts",
@@ -76,6 +77,7 @@
     "src/platformPackager.ts",
     "src/promise.ts",
     "src/repositoryInfo.ts",
+    "src/targets/squirrelWindows.ts",
     "src/util.ts",
     "src/winPackager.ts"
   ]

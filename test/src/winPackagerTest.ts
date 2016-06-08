@@ -3,17 +3,18 @@ import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
 import { move, outputFile } from "fs-extra-p"
 import * as path from "path"
-import { WinPackager, computeDistOut } from "out/winPackager"
+import { WinPackager } from "out/winPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import { ElectronPackagerOptions } from "electron-packager-tf"
 import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "signcode-tf"
+import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
 test.ifDevOrWinCi("win", () => assertPack("test-app-one", signed({
-    targets: Platform.WINDOWS.createTarget(),
+    targets: Platform.WINDOWS.createTarget(["default", "zip"]),
   })
 ))
 
@@ -115,15 +116,16 @@ class CheckingWinPackager extends WinPackager {
 
   async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    const installerOutDir = computeDistOut(outDir, arch)
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, packOptions, "Foo.exe")
+
+    const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
+    this.effectiveDistOptions = await (new helperClass(this, appOutDir, arch).computeEffectiveDistOptions("foo", packOptions, "Foo.exe"))
 
     await this.sign(appOutDir)
   }
 
-  async packageInDistributableFormat(appOutDir: string, installerOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions): Promise<any> {
+  packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions, targets: Array<string>, promises: Array<Promise<any>>): void {
     // skip
   }
 

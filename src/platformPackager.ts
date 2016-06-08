@@ -73,7 +73,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected readonly options: PackagerOptions
 
   protected readonly projectDir: string
-  protected readonly buildResourcesDir: string
+  readonly buildResourcesDir: string
 
   readonly metadata: AppMetadata
   readonly devMetadata: DevMetadata
@@ -86,7 +86,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   public abstract get platform(): Platform
 
-  constructor(protected info: BuildInfo) {
+  constructor(public info: BuildInfo) {
     this.options = info.options
     this.projectDir = info.projectDir
     this.metadata = info.metadata
@@ -116,19 +116,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  public computeEffectiveTargets(rawList: Array<string>): Array<string> {
-    let targets = normalizeTargets(rawList.length === 0 ? this.customBuildOptions.target : rawList)
-    if (targets != null) {
-      const supportedTargets = this.supportedTargets.concat(commonTargets)
-      for (let target of targets) {
-        if (target !== "default" && !supportedTargets.includes(target)) {
-          throw new Error(`Unknown target: ${target}`)
-        }
-      }
-    }
-    return targets == null ? ["default"] : targets
-  }
-
   protected hasOnlyDirTarget(): boolean {
     for (let targets of this.options.targets!.get(this.platform)!.values()) {
       for (let t of targets) {
@@ -142,17 +129,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return targets != null && targets.length === 1 && targets[0] === "dir"
   }
 
-  protected get relativeBuildResourcesDirname() {
+  get relativeBuildResourcesDirname() {
     return use(this.devMetadata.directories, it => it!.buildResources) || "build"
   }
 
-  protected abstract get supportedTargets(): Array<string>
+  abstract get supportedTargets(): Array<string>
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
     return path.join(outDir, `${this.platform.buildConfigurationKey}${arch === Arch.x64 ? "" : `-${Arch[arch]}`}`)
   }
 
-  protected dispatchArtifactCreated(file: string, artifactName?: string) {
+  dispatchArtifactCreated(file: string, artifactName?: string) {
     this.info.eventEmitter.emit("artifactCreated", {
       file: file,
       artifactName: artifactName,
@@ -406,7 +393,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return patterns
   }
 
-  protected async computePackageUrl(): Promise<string | null> {
+  async computePackageUrl(): Promise<string | null> {
     const url = this.metadata.homepage || this.devMetadata.homepage
     if (url != null) {
       return url
@@ -620,4 +607,9 @@ function copyFiltered(src: string, destination: string, patterns: Array<Minimatc
       return minimatchAll(relative, patterns)
     }
   })
+}
+
+export function computeEffectiveTargets(rawList: Array<string>, targetsFromMetadata: Array<string> | n): Array<string> {
+  let targets = normalizeTargets(rawList.length === 0 ? targetsFromMetadata : rawList)
+  return targets == null ? ["default"] : targets
 }

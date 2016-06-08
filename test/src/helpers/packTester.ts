@@ -9,7 +9,7 @@ import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, A
 import { exec, getTempName } from "out/util"
 import { createTargets } from "out"
 import { tmpdir } from "os"
-import { getArchSuffix } from "out/platformPackager"
+import { getArchSuffix, computeEffectiveTargets } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
 
@@ -43,7 +43,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
     const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
-      console.log("Custom temp dir used: %s", customTmpDir)
+      console.log(`Custom temp dir used: ${customTmpDir}`)
     }
     await emptyDir(dir)
     await copy(projectDir, dir, {
@@ -113,7 +113,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch)
+        await checkWindowsResult(packager, targets, checkOptions, artifacts.get(Platform.WINDOWS), arch)
       }
     }
   }
@@ -131,7 +131,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     return result
   }
 
-  assertThat(getFileNames(artifacts)).isEqualTo((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts.slice()).sort())
+  assertThat(getFileNames(artifacts)).containsAll(checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts)
 
   if (!targets.includes("deb") || !targets.includes("default")) {
     return
@@ -223,35 +223,44 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
 }
 
 function getFileNames(list: Array<ArtifactCreated>): Array<string> {
-  return list.map(it => path.basename(it.file)).sort()
+  return list.map(it => path.basename(it.file))
 }
 
-async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
+async function checkWindowsResult(packager: Packager, targets: Array<string>, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
   const productName = getProductName(packager.metadata, packager.devMetadata)
+  let squirrel = false
 
-  function getExpectedFileNames(archSuffix: string) {
-    const result = [
-      `RELEASES`,
-      `${productName} Setup 1.1.0${archSuffix}.exe`,
-      `TestApp-1.1.0-full.nupkg`,
-    ]
-    const buildOptions = packager.devMetadata.build.win
-    if (buildOptions != null && buildOptions.remoteReleases != null) {
-      result.push(`${productName}-1.1.0-delta.nupkg`)
+  const artifactNames: Array<string> = []
+  const expectedFileNames: Array<string> = []
+  const archSuffix = getArchSuffix(arch)
+  const buildOptions = packager.devMetadata.build.win
+  for (let target of computeEffectiveTargets(targets, buildOptions == null ? null : buildOptions.target)) {
+    if (target === "default" || target === "squirrel") {
+      squirrel = true
+      expectedFileNames.push("RELEASES", `${productName} Setup 1.1.0${archSuffix}.exe`, `TestApp-1.1.0-full.nupkg`)
+
+      if (buildOptions != null && buildOptions.remoteReleases != null) {
+        expectedFileNames.push(`${productName}-1.1.0-delta.nupkg`)
+      }
+
+      artifactNames.push(`TestApp-Setup-1.1.0${archSuffix}.exe`)
     }
-    return result
+    else {
+      expectedFileNames.push(`${productName}-1.1.0${archSuffix}-win.${target}`)
+
+      artifactNames.push(`TestApp-1.1.0${archSuffix}-win.${target}`)
+    }
   }
 
-  const archSuffix = getArchSuffix(arch)
-  assertThat(getFileNames(artifacts)).isEqualTo((checkOptions == null || checkOptions.expectedArtifacts == null ? getExpectedFileNames(archSuffix) : checkOptions.expectedArtifacts.slice()).sort())
+  assertThat(getFileNames(artifacts)).containsAll(checkOptions == null || checkOptions.expectedArtifacts == null ? expectedFileNames : checkOptions.expectedArtifacts)
 
-  if (checkOptions != null && checkOptions.expectedArtifacts != null) {
+  if (!squirrel || (checkOptions != null && checkOptions.expectedArtifacts != null)) {
     return
   }
 
-  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).isEqualTo([`TestApp-Setup-1.1.0${archSuffix}.exe`])
+  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).containsAll(artifactNames)
 
-  const packageFile = path.join(path.dirname(artifacts[0].file), `TestApp-1.1.0-full.nupkg`)
+  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 

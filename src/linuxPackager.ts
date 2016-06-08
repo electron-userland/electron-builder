@@ -48,7 +48,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     }
   }
 
-  protected get supportedTargets(): Array<string> {
+  get supportedTargets(): Array<string> {
     return ["deb", "rpm", "sh", "freebsd", "pacman", "apk", "p5p"]
   }
 
