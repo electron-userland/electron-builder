@@ -8,7 +8,7 @@ declare module "asar" {
 
   interface AsarFileMetadata {
     type: "file" | "directory" | "link"
-    stat: Stats
+    stat?: Stats
   }
 
   interface AsarOptions {

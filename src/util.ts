@@ -25,17 +25,20 @@ const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
-  log((command === "install" ? "Installing" : "Rebuilding") + " app dependencies for arch %s to %s", arch, appDir)
+  log(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`)
   const gypHome = path.join(os.homedir(), ".electron-gyp")
-  const env = Object.assign({}, process.env, {
-    npm_config_disturl: "https://atom.io/download/atom-shell",
-    npm_config_target: electronVersion,
-    npm_config_runtime: "electron",
-    npm_config_arch: arch,
-    HOME: gypHome,
-    USERPROFILE: gypHome,
-  })
+  return spawnNpmProduction(command, appDir, Object.assign({}, process.env, {
+      npm_config_disturl: "https://atom.io/download/atom-shell",
+      npm_config_target: electronVersion,
+      npm_config_runtime: "electron",
+      npm_config_arch: arch,
+      HOME: gypHome,
+      USERPROFILE: gypHome,
+    })
+  )
+}
 
+export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = [command, "--production"]
   if (npmExecPath == null) {
@@ -49,7 +52,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
   return spawn(npmExecPath, npmExecArgs, {
     cwd: appDir,
     stdio: "inherit",
-    env: env
+    env: env || process.env
   })
 }
 

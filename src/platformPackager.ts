@@ -3,15 +3,15 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getPr
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import { pack, ElectronPackagerOptions } from "electron-packager-tf"
+import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
 import { readdir, copy, unlink, lstat, remove } from "fs-extra-p"
-import { statOrNull, use, spawn, debug7zArgs, debug, warn, log } from "./util"
+import { statOrNull, use, spawn, debug7zArgs, debug, warn, log, spawnNpmProduction } from "./util"
 import { Packager } from "./packager"
 import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOptions } from "asar"
 import { path7za } from "7zip-bin"
-import deepAssign = require("deep-assign")
 import { Glob } from "glob"
 import { Minimatch } from "minimatch"
+import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -163,17 +163,77 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: DC) {
-    const asar = options.asar
-    options.asar = false
-    await pack(options)
-    options.asar = asar
-
     const asarOptions = this.computeAsarOptions(customBuildOptions)
-    if (asarOptions != null) {
-      await this.createAsarArchive(appOutDir, asarOptions)
-    }
+    options.initializeApp = async (opts, buildDir, appRelativePath) => {
+      const appPath = path.join(buildDir, appRelativePath)
+      const resourcesPath = path.dirname(appPath)
 
-    await this.copyExtraFiles(appOutDir, arch, customBuildOptions)
+      let promise: Promise<any> | null = null
+      const deprecatedIgnore = (<any>this.devMetadata.build).ignore
+      if (deprecatedIgnore) {
+        if (typeof deprecatedIgnore === "function") {
+          log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        }
+        else {
+          warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        }
+
+        promise = copy(this.info.appDir, appPath, {filter: userIgnoreFilter(opts), dereference: true})
+      }
+      else {
+        let patterns = this.getFilePatterns("files", customBuildOptions)
+        if (patterns == null || patterns.length === 0) {
+          patterns = ["**/*"]
+        }
+
+        const parsedPatterns = this.getParsedPatterns(patterns, arch)
+        if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+          const dotOptions = {dot: true}
+          parsedPatterns.push(new Minimatch("!node_modules/@(appdmg|electron-download|electron-builder|electron-prebuilt|electron-packager-tf|electron-winstaller-fixed|electron-osx-sign-tf|electron-osx-sign){,/**/*}", dotOptions))
+          parsedPatterns.push(new Minimatch(`!@(${path.relative(this.info.appDir, this.buildResourcesDir)}|${path.relative(this.info.appDir, opts.out!)}){,/**/*}`, dotOptions))
+        }
+        promise = copyFiltered(this.info.appDir, appPath, parsedPatterns, true)
+      }
+
+      const promises = [promise]
+      if (this.info.electronVersion[0] === "0") {
+        // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
+        promises.push(remove(path.join(resourcesPath, "default_app.asar")), remove(path.join(resourcesPath, "default_app")))
+      }
+      else {
+        promises.push(unlink(path.join(resourcesPath, "default_app.asar")))
+      }
+
+      await BluebirdPromise.all(promises)
+
+      let npmPrune = this.devMetadata.build.npmPrune
+      if (npmPrune == null) {
+        npmPrune = this.devMetadata.build.prune
+        if (npmPrune != null) {
+          warn("prune is deprecated and renamed to npmPrune, please specify as npmPrune")
+        }
+      }
+
+      if (npmPrune == null) {
+        npmPrune = !this.info.isTwoPackageJsonProjectLayoutUsed
+      }
+      else if (typeof npmPrune !== "boolean") {
+        throw new Error(`npmPrune expected to be boolean value, but string '"${npmPrune}"' was specified`)
+      }
+
+      if (npmPrune) {
+        log("Pruning app dependencies")
+        await spawnNpmProduction("prune", appPath)
+      }
+
+      if (asarOptions != null) {
+        await this.createAsarArchive(appPath, resourcesPath, asarOptions)
+      }
+    }
+    await pack(options)
+
+    await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
+    await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -218,14 +278,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }, this.devMetadata.build)
 
-    if (!this.info.isTwoPackageJsonProjectLayoutUsed && typeof options.ignore !== "function") {
-      const defaultIgnores = ["/node_modules/electron-builder($|/)", "^/" + path.relative(this.projectDir, this.buildResourcesDir) + "($|/)"]
-      if (options.ignore != null && !Array.isArray(options.ignore)) {
-        options.ignore = [options.ignore]
-      }
-      options.ignore = options.ignore == null ? defaultIgnores : options.ignore.concat(defaultIgnores)
-    }
-
     delete options.osx
     delete options.win
     delete options.linux
@@ -264,16 +316,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async createAsarArchive(appOutDir: string, options: AsarOptions): Promise<any> {
-    const src = path.join(this.getResourcesDir(appOutDir), "app")
-
+  private async createAsarArchive(src: string, resourcesPath: string, options: AsarOptions): Promise<any> {
+    // dot: true as in the asar by default by we use glob default - do not copy hidden files
     let glob: Glob | null = null
     const files = (await new BluebirdPromise<Array<string>>((resolve, reject) => {
       glob = new Glob("**/*", {
         cwd: src,
-        // dot: true as in the asar by default
-        dot: true,
-        ignore: "**/.DS_Store",
       }, (error, matches) => {
         if (error == null) {
           resolve(matches)
@@ -284,23 +332,39 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       })
     })).map(it => path.join(src, it))
 
+    const metadata: { [key: string]: AsarFileMetadata; } = {}
+
     const stats = await BluebirdPromise.map(files, it => {
-      // const stat = glob!.statCache[it]
-      // return stat == null ? lstat(it) : <any>stat
-      // todo check is it safe to reuse glob stat
-      return lstat(it)
+      if (glob!.symlinks[it]) {
+        // asar doesn't use stat for link
+        metadata[it] = {
+          type: "link",
+        }
+      }
+      else if (glob!.cache[it] === "FILE") {
+        const stat = glob!.statCache[it]
+        return stat == null ? lstat(it) : <any>stat
+      }
+      else {
+        // asar doesn't use stat for dir
+        metadata[it] = {
+          type: "directory",
+        }
+      }
+      return null
     })
 
-    const metadata: { [key: string]: AsarFileMetadata; } = {}
     for (let i = 0, n = files.length; i < n; i++) {
       const stat = stats[i]
-      metadata[files[i]] = {
-        type: stat.isFile() ? "file" : (stat.isDirectory() ? "directory" : "link"),
-        stat: stat,
+      if (stat != null) {
+        metadata[files[i]] = {
+          type: "file",
+          stat: stat,
+        }
       }
     }
 
-    await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(this.getResourcesDir(appOutDir), "app.asar"), files, metadata, options)
+    await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(resourcesPath, "app.asar"), files, metadata, options)
     await remove(src)
   }
 
@@ -308,46 +372,38 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return pattern
       .replace(/\$\{arch}/g, Arch[arch])
       .replace(/\$\{os}/g, this.platform.buildConfigurationKey)
-  }
-
-  protected async copyExtraFiles(appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
-    await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
-    await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
+      .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
   }
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`, "Contents") : appOutDir
+    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
+    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, this.getParsedPatterns(patterns, arch))
+  }
 
-    let patterns: Array<string> | n = (<any>this.devMetadata.build)[isResources ? "extraResources" : "extraFiles"]
-    const platformSpecificPatterns = isResources ? customBuildOptions.extraResources : customBuildOptions.extraFiles
-    if (platformSpecificPatterns != null) {
-      patterns = patterns == null ? platformSpecificPatterns : patterns.concat(platformSpecificPatterns)
-    }
-
-    if (patterns == null) {
-      return
-    }
-
+  private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {
     const minimatchOptions = {}
     const parsedPatterns: Array<Minimatch> = []
     for (let i = 0; i < patterns.length; i++) {
       parsedPatterns[i] = new Minimatch(this.expandPattern(patterns[i], arch), minimatchOptions)
     }
+    return parsedPatterns
+  }
 
-    const src = this.projectDir
-    return copy(src, base, {
-      filter: (it) => {
-        if (src === it) {
-          return true
-        }
+  private getFilePatterns(name: "files" | "extraFiles" | "extraResources", customBuildOptions: DC): Array<string> | n {
+    let patterns: Array<string> | string | n = (<any>this.devMetadata.build)[name]
+    if (patterns != null && !Array.isArray(patterns)) {
+      patterns = [patterns]
+    }
 
-        let relative = it.substring(src.length + 1)
-        if (path.sep === "\\") {
-          relative = relative.replace(/\\/g, "/")
-        }
-        return minimatchAll(relative, parsedPatterns)
+    let platformSpecificPatterns: Array<string> | string | n = (<any>customBuildOptions)[name]
+    if (platformSpecificPatterns != null) {
+      if (!Array.isArray(platformSpecificPatterns)) {
+        platformSpecificPatterns = [platformSpecificPatterns]
       }
-    })
+      return patterns == null ? platformSpecificPatterns : Array.from(new Set(patterns.concat(platformSpecificPatterns)))
+    }
+    return patterns
   }
 
   protected async computePackageUrl(): Promise<string | null> {
@@ -534,7 +590,8 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
     }
 
     // partial match — pattern: foo/bar.txt path: foo — we must allow foo
-    match = pattern.match(path, true)
+    // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron-prebuilt)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
+    match = pattern.match(path, !pattern.negate)
     if (!match && !pattern.negate) {
       const rawPattern = pattern.pattern
       // 1 - slash
@@ -546,4 +603,21 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
     }
   }
   return match
+}
+
+function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false): Promise<any> {
+  return copy(src, destination, {
+    dereference: dereference,
+    filter: it => {
+      if (src === it) {
+        return true
+      }
+
+      let relative = it.substring(src.length + 1)
+      if (path.sep === "\\") {
+        relative = relative.replace(/\\/g, "/")
+      }
+      return minimatchAll(relative, patterns)
+    }
+  })
 }

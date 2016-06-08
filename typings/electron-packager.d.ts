@@ -62,6 +62,8 @@ declare module "electron-packager-tf" {
     "app-copyright"?: string
 
     generateFinalBasename?: (context: any) => void
+
+    initializeApp?: (opts: ElectronPackagerOptions, buildDir: string, appRelativePath: string) => Promise<any>
   }
 
   /** Object hash of application metadata to embed into the executable (Windows only). */
@@ -75,6 +77,8 @@ declare module "electron-packager-tf" {
     ProductName?: string;
     InternalName?: string;
   }
+
+  export function userIgnoreFilter(opts: ElectronPackagerOptions): any
 
   export function pack(opts: ElectronPackagerOptions): Promise<string[]>
 }

@@ -108,21 +108,29 @@ export interface BuildMetadata {
   readonly productName?: string | null
 
   /**
-   A [glob expression](https://www.npmjs.com/package/glob#glob-primer), when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for OS X, `resources` for Linux/Windows).
-   [Multiple patterns](#multiple-glob-patterns) are supported.
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `\*\*\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
 
-   You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
+   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
 
-   If directory matched, all contents are copied. So, you can just specify `foo` to copy `<project_dir>/foo` directory.
+   If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
+
+   Remember that default pattern `\*\*\/\*` is not added to your custom, so, you have to add it explicitly — e.g. `["\*\*\/\*", "!ignoreMe${/\*}"]`.
 
    May be specified in the platform options (e.g. in the `build.osx`).
    */
-  readonly extraResources?: Array<string> | null
+  readonly files?: Array<string> | string | null
 
   /**
-   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, `` for Linux/Windows).
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for OS X, `resources` for Linux/Windows).
+
+   Glob rules the same as for [files](#BuildMetadata-files).
    */
-  readonly extraFiles?: Array<string> | null
+  readonly extraResources?: Array<string> | string | null
+
+  /**
+   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, root directory for Linux/Windows).
+   */
+  readonly extraFiles?: Array<string> | string | null
 
   /*
    See [.build.osx](#OsXBuildOptions).
@@ -157,7 +165,15 @@ export interface BuildMetadata {
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
   /*
-   Whether to rebuild native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+   Whether to [prune](https://docs.npmjs.com/cli/prune) native dependencies (`npm prune --production`) before starting to package the app.
+   Defaults to `true` if [two package.json structure](https://github.com/electron-userland/electron-builder#two-packagejson-structure) is not used.
+   */
+  readonly npmPrune?: boolean
+  // deprecated
+  readonly prune?: boolean
+
+  /*
+   Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */
   readonly npmRebuild?: boolean
 }
@@ -346,6 +362,7 @@ export interface MetadataDirectories {
 }
 
 export interface PlatformSpecificBuildOptions {
+  readonly files?: Array<string> | null
   readonly extraFiles?: Array<string> | null
   readonly extraResources?: Array<string> | null
 

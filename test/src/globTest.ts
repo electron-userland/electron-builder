@@ -29,6 +29,43 @@ test.ifDevOrLinuxCi("ignore build resources", () => {
   })
 })
 
+test.ifDevOrLinuxCi("files", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    devMetadata: {
+      build: {
+        asar: false,
+        files: ["**/*", "!ignoreMe${/*}"]
+      }
+    }
+  }, {
+    tempDirCreated: projectDir => {
+      return outputFile(path.join(projectDir, "ignoreMe", "foo"), "data")
+    },
+    packed: projectDir => {
+      return assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "ignoreMe")).doesNotExist()
+    },
+  })
+})
+
+test.ifDevOrLinuxCi("ignore node_modules known dev dep", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    devMetadata: {
+      build: {
+        asar: false,
+      }
+    }
+  }, {
+    tempDirCreated: projectDir => {
+      return outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "foo.js"), "")
+    },
+    packed: projectDir => {
+      return assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "node_modules", "electron-osx-sign")).doesNotExist()
+    },
+  })
+})
+
 test("extraResources", async () => {
   for (let platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
