@@ -161,7 +161,8 @@ export let findIdentityRawResult: Promise<string> | null = null
 
 export async function findIdentity(namePrefix: CertType, qualifier?: string): Promise<string | null> {
   if (findIdentityRawResult == null) {
-      findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning"])
+    // -p codesigning must be not specified - installer identities is not listed if specified
+    findIdentityRawResult = exec("security", ["find-identity", "-v"])
   }
 
   const lines = (await findIdentityRawResult).trim().split("\n")
