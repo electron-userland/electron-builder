@@ -256,6 +256,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificatePassword?: string
 
   /*
+   Target package type: list of `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
+  */
+  readonly target?: Array<string> | null
+
+  /*
    A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
 
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.

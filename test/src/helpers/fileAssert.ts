@@ -80,7 +80,7 @@ function compare(actual: any, expected: any) {
     const expectedJson = JSON.stringify(expected, jsonReplacer, 2)
     const stack = new Error().stack
     throw new AssertionError({
-      message: `Expected \n${expectedJson}\n\nis not equal to\n\n${actualJson}\n\n${prettyDiff(JSON.parse(actualJson), JSON.parse(expectedJson))}\n${stack.split("\n")[3].trim()}`,
+      message: `Expected \n${expectedJson}\n\nis not equal to\n\n${actualJson}\n\n${prettyDiff(JSON.parse(expectedJson), JSON.parse(actualJson))}\n${stack.split("\n")[3].trim()}`,
       actual: actual,
       expected: expected,
     })
