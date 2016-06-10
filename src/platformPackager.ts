@@ -4,13 +4,13 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
-import { readdir, copy, unlink, lstat, remove, realpath } from "fs-extra-p"
+import { readdir, copy, unlink, remove, realpath } from "fs-extra-p"
 import { statOrNull, use, warn, log, exec } from "./util"
 import { Packager } from "./packager"
-import { listPackage, statFile, AsarFileMetadata, createPackageFromFiles, AsarOptions } from "asar"
+import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
-import { Glob } from "glob"
 import { Minimatch } from "minimatch"
+import { checkFileInPackage, createAsarArchive } from "./asarUtil"
 import deepAssign = require("deep-assign")
 
 //noinspection JSUnusedLocalSymbols
@@ -200,7 +200,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       if (asarOptions != null) {
-        await this.createAsarArchive(appPath, resourcesPath, asarOptions)
+        await createAsarArchive(appPath, resourcesPath, asarOptions)
       }
     }
     await pack(options)
@@ -289,58 +289,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private async createAsarArchive(src: string, resourcesPath: string, options: AsarOptions): Promise<any> {
-    // dot: true as in the asar by default by we use glob default - do not copy hidden files
-    let glob: Glob | null = null
-    const files = (await new BluebirdPromise<Array<string>>((resolve, reject) => {
-      glob = new Glob("**/*", {
-        cwd: src,
-      }, (error, matches) => {
-        if (error == null) {
-          resolve(matches)
-        }
-        else {
-          reject(error)
-        }
-      })
-    })).map(it => path.join(src, it))
-
-    const metadata: { [key: string]: AsarFileMetadata; } = {}
-
-    const stats = await BluebirdPromise.map(files, it => {
-      if (glob!.symlinks[it]) {
-        // asar doesn't use stat for link
-        metadata[it] = {
-          type: "link",
-        }
-      }
-      else if (glob!.cache[it] === "FILE") {
-        const stat = glob!.statCache[it]
-        return stat == null ? lstat(it) : <any>stat
-      }
-      else {
-        // asar doesn't use stat for dir
-        metadata[it] = {
-          type: "directory",
-        }
-      }
-      return null
-    })
-
-    for (let i = 0, n = files.length; i < n; i++) {
-      const stat = stats[i]
-      if (stat != null) {
-        metadata[files[i]] = {
-          type: "file",
-          stat: stat,
-        }
-      }
-    }
-
-    await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(resourcesPath, "app.asar"), files, metadata, options)
-    await remove(src)
-  }
-
   private expandPattern(pattern: string, arch: Arch): string {
     return pattern
       .replace(/\$\{arch}/g, Arch[arch])
@@ -406,33 +354,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appName}.app`, "Contents", "Resources")
   }
 
-  private async statFileInPackage(resourcesDir: string, packageFile: string, isAsar: boolean): Promise<any> {
-    const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, packageFile))
+  private async checkFileInPackage(resourcesDir: string, file: string, isAsar: boolean) {
+    const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      try {
-        return statFile(path.join(resourcesDir, "app.asar"), relativeFile) != null
-      }
-      catch (e) {
-        const asarFile = path.join(resourcesDir, "app.asar")
-        const fileStat = await statOrNull(asarFile)
-        if (fileStat == null) {
-          throw new Error(`File "${asarFile}" does not exist. Seems like a wrong configuration.`)
-        }
-
-        try {
-          listPackage(asarFile)
-        }
-        catch (e) {
-          throw new Error(`File "${asarFile}" is corrupted: ${e}`)
-        }
-
-        // asar throws error on access to undefined object (info.link)
-        return false
-      }
+      await checkFileInPackage(path.join(resourcesDir, "app.asar"), relativeFile)
     }
     else {
       const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
-      return outStat != null && outStat.isFile()
+      if (outStat == null) {
+        throw new Error(`Application entry file "${relativeFile}" does not exist. Seems like a wrong configuration.`)
+      }
+      else if (!outStat.isFile()) {
+        throw new Error(`Application entry file "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+      }
     }
   }
 
@@ -446,12 +380,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
     }
 
-    const resourcesDir = this.getResourcesDir(appOutDir)
     const mainFile = this.metadata.main || "index.js"
-    const mainFileExists = await this.statFileInPackage(resourcesDir, mainFile, isAsar)
-    if (!mainFileExists) {
-      throw new Error(`Application entry file ${mainFile} could not be found in package. Seems like a wrong configuration.`)
-    }
+    await this.checkFileInPackage(this.getResourcesDir(appOutDir), mainFile, isAsar)
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {

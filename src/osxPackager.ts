@@ -62,6 +62,9 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
   private static async findIdentity(certType: CertType, name?: string | null): Promise<string | null> {
     let identity = process.env.CSC_NAME || name
     if (isEmptyOrSpaces(identity)) {
+      if (process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
+        return null
+      }
       return await findIdentity(certType)
     }
     else {

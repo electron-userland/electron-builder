@@ -57,6 +57,7 @@
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/fs-extra-p/bluebird.d.ts",
     "node_modules/electron-osx-sign-tf/index.d.ts",
+    "src/asarUtil.ts",
     "src/awaiter.ts",
     "src/build-cli.ts",
     "src/builder.ts",

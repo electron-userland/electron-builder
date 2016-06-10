@@ -155,6 +155,7 @@ function runTests(): BluebirdPromise<any> {
     env: Object.assign({}, process.env, {
       NODE_PATH: path.join(testNodeModules, "electron-builder"),
       SKIP_WIN: skipWin,
+      CSC_IDENTITY_AUTO_DISCOVERY: "false",
     }),
     shell: process.platform === "win32",
     stdio: "inherit"

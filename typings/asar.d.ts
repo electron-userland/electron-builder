@@ -1,7 +1,7 @@
 declare module "asar" {
   import { Stats } from "fs"
 
-  interface Info {
+  interface AsarFileInfo {
     offset: number
     size: number
   }
@@ -19,7 +19,7 @@ declare module "asar" {
   export function listPackage(archive: string): Array<string>
 
   // followLinks defaults to true
-  export function statFile(archive: string, filename: string, followLinks?: boolean): Info | null
+  export function statFile(archive: string, filename: string, followLinks?: boolean): AsarFileInfo | null
 
   export function createPackageFromFiles(src: string, dest: string, filenames: Array<string>, metadata: { [key: string]: AsarFileMetadata;}, options: AsarOptions, callback: (error?: Error) => void): void
 }

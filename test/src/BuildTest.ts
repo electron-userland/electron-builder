@@ -94,7 +94,7 @@ test("invalid main in the app package.json", t => t.throws(assertPack("test-app"
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"
   }, true)
-}), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
+}), /Application entry file "main.js" in the /))
 
 test("invalid main in the app package.json (no asar)", t => t.throws(assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => {
@@ -107,7 +107,7 @@ test("invalid main in the app package.json (no asar)", t => t.throws(assertPack(
       })
     ])
   }
-}), "Application entry file main.js could not be found in package. Seems like a wrong configuration."))
+}), `Application entry file "main.js" does not exist. Seems like a wrong configuration.`))
 
 test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatforms(false), {
   tempDirCreated: projectDir => {
