@@ -161,13 +161,15 @@ export let findIdentityRawResult: Promise<string> | null = null
 
 export async function findIdentity(namePrefix: CertType, qualifier?: string): Promise<string | null> {
   if (findIdentityRawResult == null) {
-    // -p codesigning must be not specified - installer identities is not listed if specified
-    findIdentityRawResult = exec("security", ["find-identity", "-v"])
+    // https://github.com/electron-userland/electron-builder/issues/481
+    findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning", "-p", "appleID"])
   }
 
-  const lines = (await findIdentityRawResult).trim().split("\n")
-  // ignore last line valid identities found
-  lines.length = lines.length - 1
+  // https://github.com/electron-userland/electron-builder/issues/484
+  const lines = (await findIdentityRawResult)
+    .trim()
+    .split("\n")
+    .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone "))
 
   for (let line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
