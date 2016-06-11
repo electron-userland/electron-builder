@@ -2,6 +2,7 @@ import test from "./helpers/avaEx"
 import { GitHubPublisher } from "out/gitHubPublisher"
 import { HttpError } from "out/gitHubRequest"
 import { join } from "path"
+import * as assertThat from "should/as-function"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -48,7 +49,9 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 }
 
 testAndIgnoreApiRate("GitHub upload", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), token)
+  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
+    githubToken: token
+  })
   try {
     await publisher.upload(iconPath)
   }
@@ -57,9 +60,30 @@ testAndIgnoreApiRate("GitHub upload", async () => {
   }
 })
 
+testAndIgnoreApiRate("prerelease", async () => {
+  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
+    githubToken: token,
+    draft: false,
+    prerelease: true,
+  })
+  try {
+    await publisher.upload(iconPath)
+    const r = await publisher.getRelease()
+    assertThat(r).has.properties({
+      prerelease: true,
+      draft: true,
+    })
+  }
+  finally {
+    await publisher.deleteRelease()
+  }
+})
+
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
-  const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), token)
+  const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), {
+      githubToken: token
+    })
   try {
     await publisher.upload(iconPath)
   }
@@ -69,7 +93,9 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
 })
 
 testAndIgnoreApiRate("GitHub overwrite on upload", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), token)
+  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
+      githubToken: token
+    })
   try {
     await publisher.upload(iconPath)
     await publisher.upload(iconPath)

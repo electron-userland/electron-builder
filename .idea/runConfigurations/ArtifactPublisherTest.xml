@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ArtifactPublisherTest" type="NodeJSConfigurationType" factoryName="Node.js" singleton="true" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/ArtifactPublisherTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters --harmony_array_includes" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="ArtifactPublisherTest" type="NodeJSConfigurationType" factoryName="Node.js" singleton="true" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/ArtifactPublisherTest.js" node-parameters="--harmony_default_parameters" working-dir="$PROJECT_DIR$">
     <envs>
       <env name="NODE_PATH" value="." />
     </envs>

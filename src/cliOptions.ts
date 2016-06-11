@@ -31,6 +31,16 @@ export function createYargs(): any {
       describe: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never"],
     })
+    .option("draft", {
+      describe: "Create a draft (unpublished) release",
+      type: "boolean",
+      default: undefined,
+    })
+    .option("prerelease", {
+      describe: "Identify the release as a prerelease",
+      type: "boolean",
+      default: undefined,
+    })
     .option("platform", {
       describe: "The target platform (preferred to use --osx, --win or --linux)",
       choices: ["osx", "win", "linux", "darwin", "win32", "all"],

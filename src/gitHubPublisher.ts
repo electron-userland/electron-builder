@@ -1,5 +1,5 @@
 import { Release, Asset } from "gh-release"
-import { log, warn } from "./util"
+import { log, warn, isEmptyOrSpaces } from "./util"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
@@ -21,20 +21,27 @@ export interface Publisher {
 export interface PublishOptions {
   publish?: "onTag" | "onTagOrDraft" | "always" | "never" | null
   githubToken?: string | null
+
+  draft?: boolean
+  prerelease?: boolean
 }
 
 export class GitHubPublisher implements Publisher {
   private tag: string
   private _releasePromise: BluebirdPromise<Release>
 
+  private readonly token: string
+
   get releasePromise(): Promise<Release | null> {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, version: string, private token: string | null, private policy: string = "always") {
-    if (token == null || token.length === 0) {
+  constructor(private owner: string, private repo: string, version: string, private options: PublishOptions, private policy: string = "always") {
+    if (isEmptyOrSpaces(options.githubToken)) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
+
+    this.token = options.githubToken!
 
     this.tag = "v" + version
     this._releasePromise = <BluebirdPromise<Release>>this.init()
@@ -144,20 +151,25 @@ export class GitHubPublisher implements Publisher {
     return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.tag,
-      draft: true,
+      draft: this.options.draft == null || this.options.draft,
+      prerelease: this.options.prerelease != null && this.options.prerelease,
     })
   }
 
+  // test only
+  async getRelease(): Promise<any> {
+    return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token)
+  }
+
   //noinspection JSUnusedGlobalSymbols
-  async deleteRelease(): Promise<void> {
+  async deleteRelease(): Promise<any> {
     if (!this._releasePromise.isFulfilled()) {
       return BluebirdPromise.resolve()
     }
 
     for (let i = 0; i < 3; i++) {
       try {
-        return await
-          gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token, null, "DELETE")
+        return await gitHubRequest(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token, null, "DELETE")
       }
       catch (e) {
         if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {

@@ -4,7 +4,7 @@ import { move, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
+import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets, PublishOptions } from "out"
 import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cliOptions"
 
@@ -14,8 +14,10 @@ const __awaiter = require("out/awaiter")
 test("cli", () => {
   const yargs = createYargs()
 
-  const base = {
-    publish: <string>undefined,
+  const base: PublishOptions = {
+    publish: undefined,
+    draft: undefined,
+    prerelease: undefined,
   }
 
   function expected(opt: PackagerOptions): any {

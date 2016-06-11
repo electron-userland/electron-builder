@@ -10,7 +10,7 @@ import { Platform, Arch, archFromString } from "./metadata"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export async function createPublisher(packager: Packager, options: BuildOptions, repoSlug: InfoRetriever, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+export async function createPublisher(packager: Packager, options: PublishOptions, repoSlug: InfoRetriever, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const info = await repoSlug.getInfo(packager)
   if (info == null) {
     if (isPublishOptionGuessed) {
@@ -22,7 +22,7 @@ export async function createPublisher(packager: Packager, options: BuildOptions,
   }
   else {
     log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${packager.metadata.version}`)
-    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options.githubToken!, options.publish!)
+    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options, options.publish!)
   }
 }
 
@@ -185,6 +185,13 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   }
   if (options.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
     options.githubToken = process.env.GH_TOKEN
+  }
+
+  if (options.draft === undefined && !isEmptyOrSpaces(process.env.EP_DRAFT)) {
+    options.draft = process.env.EP_DRAFT.toLowerCase() === "true"
+  }
+  if (options.prerelease === undefined && !isEmptyOrSpaces(process.env.EP_PRELEASE)) {
+    options.prerelease = process.env.EP_PRELEASE.toLowerCase() === "true"
   }
 
   let isPublishOptionGuessed = false
