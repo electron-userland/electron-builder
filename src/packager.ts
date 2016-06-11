@@ -59,7 +59,7 @@ export class Packager implements BuildInfo {
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
-    this.metadata = appPackageFile === devPackageFile ? this.devMetadata : await readPackageJson(appPackageFile)
+    this.metadata = appPackageFile === devPackageFile ? (this.options.appMetadata || this.devMetadata) : deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata)
 
     this.checkMetadata(appPackageFile, devPackageFile)
     checkConflictingOptions(this.devMetadata.build)

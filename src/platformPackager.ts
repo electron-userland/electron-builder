@@ -39,6 +39,13 @@ export interface PackagerOptions {
    * Development `package.json` will be still read, but options specified in this object will override.
    */
   readonly devMetadata?: DevMetadata
+
+  /**
+   * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).
+   *
+   * Application `package.json` will be still read, but options specified in this object will override.
+   */
+  readonly appMetadata?: DevMetadata
 }
 
 export interface BuildInfo extends ProjectMetadataProvider {

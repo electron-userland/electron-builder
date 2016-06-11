@@ -71,7 +71,7 @@ testAndIgnoreApiRate("prerelease", async () => {
     const r = await publisher.getRelease()
     assertThat(r).has.properties({
       prerelease: true,
-      draft: true,
+      draft: false,
     })
   }
   finally {

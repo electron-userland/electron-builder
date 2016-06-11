@@ -85,9 +85,10 @@ test("name in the build", t => t.throws(assertPack("test-app-one", currentPlatfo
   })
 }), /'name' in the 'build' is forbidden/))
 
-test("empty description", t => t.throws(assertPack("test-app-one", {
+// this test also test appMetadata, so, we must use test-app here
+test("empty description", t => t.throws(assertPack("test-app", {
   targets: Platform.LINUX.createTarget(),
-  devMetadata: <any>{
+  appMetadata: <any>{
     description: "",
   }
 }), /Please specify 'description'/))
