@@ -141,3 +141,6 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+
+# Build Version Management
+`CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

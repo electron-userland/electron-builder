@@ -145,14 +145,15 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.platform
   delete result.arch
 
-  delete (<any>result)["o"]
-  delete (<any>result)["l"]
-  delete (<any>result)["w"]
-  delete (<any>result)["windows"]
-  delete (<any>result)["$0"]
-  delete (<any>result)["_"]
-  delete (<any>result).version
-  delete (<any>result).help
+  const r = <any>result
+  delete r.o
+  delete r.l
+  delete r.w
+  delete r.windows
+  delete r["$0"]
+  delete r._
+  delete r.version
+  delete r.help
 
   delete result.ia32
   delete result.x64

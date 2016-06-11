@@ -3,7 +3,6 @@ import yargs = require("yargs")
 
 export function createYargs(): any {
   return yargs
-    .version()
     .option("osx", {
       alias: "o",
       describe: "Build for OS X",
@@ -42,5 +41,6 @@ export function createYargs(): any {
     })
     .strict()
     .help()
+    .version()
     .epilog(`Project home: ${underline("https://github.com/electron-userland/electron-builder")}`)
 }

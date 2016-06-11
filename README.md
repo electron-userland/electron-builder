@@ -6,7 +6,7 @@ Complete solution to package and build ready for distribution and "auto update" 
   * Development dependencies are never included. You don't need to ignore it explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
 * [Auto Update](#auto-update) ready application packaging.
-* [Build version management](#build-version-management).
+* [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`.
   * [OS X](https://github.com/electron-userland/electron-builder/wiki/Options#OsXBuildOptions-target): `dmg`, `mas`.
@@ -92,13 +92,25 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 
 For windows consider only [distributing 64-bit versions](https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130).
 
-# Build Version Management
-`CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
-
 # CLI Usage
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
-In most cases you should not explicitly pass flags, so, we don't want to promote it here ([npm lifecycle](https://docs.npmjs.com/misc/scripts#current-lifecycle-event) is supported and script name is taken in account).
-Want more — please file issue.
+```
+--osx, -o             Build for OS X                                   [array]
+--linux, -l           Build for Linux                                  [array]
+--win, -w, --windows  Build for Windows                                [array]
+--x64                 Build for x64                                  [boolean]
+--ia32                Build for ia32                                 [boolean]
+--publish, -p         Publish artifacts (to GitHub Releases), see
+                      https://goo.gl/WMlr4n
+                         [choices: "onTag", "onTagOrDraft", "always", "never"]
+--platform            The target platform (preferred to use --osx, --win or
+                      --linux)
+                    [choices: "osx", "win", "linux", "darwin", "win32", "all"]
+--arch                The target arch (preferred to use --x64 or --ia32)
+                                               [choices: "ia32", "x64", "all"]
+--help                Show help                                      [boolean]
+--version             Show version number                            [boolean]
+```
 
 # Programmatic Usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.

@@ -104,13 +104,13 @@
     "json8": "^0.9.0",
     "path-sort": "^0.1.0",
     "plist": "^1.2.0",
-    "pre-git": "^3.8.4",
+    "pre-git": "^3.9.0",
     "semantic-release": "^6.3.0",
-    "should": "^9.0.0",
+    "should": "^9.0.2",
     "ts-babel": "^1.0.2",
     "tsconfig-glob": "^0.4.3",
-    "tslint": "3.10.0-dev.2",
-    "typescript": "1.9.0-dev.20160607-1.0",
+    "tslint": "3.11.0-dev.0",
+    "typescript": "^1.9.0-dev.20160611-1.0",
     "whitespace": "^2.0.0"
   },
   "babel": {
