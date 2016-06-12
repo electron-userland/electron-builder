@@ -29,6 +29,7 @@ test("cli", () => {
   }
 
   assertThat(parse("--platform osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
+  assertThat(parse("-owl --x64 --ia32")).isEqualTo(expected({targets: new Map([...Platform.OSX.createTarget(null, Arch.x64), ...Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), ...Platform.LINUX.createTarget(null, Arch.x64, Arch.ia32)])}))
   assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
   assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
   assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))

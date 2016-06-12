@@ -399,6 +399,10 @@ export class Platform {
 
   createTarget(type?: string | Array<string> | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
     const archToType = new Map()
+    if (this === Platform.OSX) {
+      archs = [Arch.x64]
+    }
+
     for (let arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
       archToType.set(arch, type == null ? [] : (Array.isArray(type) ? type : [type]))
     }

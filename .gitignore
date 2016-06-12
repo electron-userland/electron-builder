@@ -11,3 +11,4 @@ dist/
 /typings/browser.d.ts
 /typings/main.d.ts
 .DS_Store
+.idea/shelf/

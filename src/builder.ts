@@ -89,8 +89,13 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     if (types.length === 0) {
-      for (let arch of commonArch()) {
-        archToType.set(arch, [])
+      if (platform === Platform.OSX) {
+        archToType.set(Arch.x64, [])
+      }
+      else {
+        for (let arch of commonArch()) {
+          archToType.set(arch, [])
+        }
       }
       return
     }
