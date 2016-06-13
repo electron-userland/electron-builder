@@ -50,7 +50,7 @@ Here documented only `electron-builder` specific options:
 ## `.build`
 | Name | Description
 | --- | ---
-| app-bundle-id | <a name="BuildMetadata-app-bundle-id"></a>*OS X-only.* The app bundle ID. See [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
+| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for OS X and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.</p> <p>For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
 | app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*OS X-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p> <p>Or you can pass object of any asar options.</p>
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
@@ -60,6 +60,7 @@ Here documented only `electron-builder` specific options:
 | osx | <a name="BuildMetadata-osx"></a>See [.build.osx](#OsXBuildOptions).
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
+| nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
@@ -99,6 +100,17 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 | remoteReleases | <a name="WinBuildOptions-remoteReleases"></a>A URL to your existing updates. If given, these will be downloaded to create delta updates.
 | remoteToken | <a name="WinBuildOptions-remoteToken"></a>Authentication token for remote updates
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
+
+<a name="NsisOptions"></a>
+### `.build.nsis`
+
+NSIS target support in progress — not polished and not fully tested and checked.
+
+| Name | Description
+| --- | ---
+| perMachine | <a name="NsisOptions-perMachine"></a>Mark "all users" (per-machine) as default. Not recommended. Defaults to `false`.
+| allowElevation | <a name="NsisOptions-allowElevation"></a>Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
+| oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`

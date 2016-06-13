@@ -52,6 +52,7 @@
     "typings/progress-stream.d.ts",
     "typings/read-package-json.d.ts",
     "typings/signcode.d.ts",
+    "typings/uuid-1345.d.ts",
     "typings/yargs.d.ts",
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
@@ -79,6 +80,7 @@
     "src/promise.ts",
     "src/repositoryInfo.ts",
     "src/targets/archive.ts",
+    "src/targets/nsis.ts",
     "src/targets/squirrelWindows.ts",
     "src/util.ts",
     "src/winPackager.ts"

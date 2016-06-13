@@ -4,8 +4,10 @@
       <w>actperepo</w>
       <w>appveyor</w>
       <w>archs</w>
+      <w>aspx</w>
       <w>authenticode</w>
       <w>awaiter</w>
+      <w>bintray</w>
       <w>buildpack</w>
       <w>circleci</w>
       <w>clcerts</w>
@@ -27,6 +29,9 @@
       <w>gtar</w>
       <w>hicolor</w>
       <w>icnsutils</w>
+      <w>inno</w>
+      <w>installmode</w>
+      <w>instdir</w>
       <w>keyserver</w>
       <w>libappindicator</w>
       <w>libexec</w>
@@ -37,10 +42,12 @@
       <w>lzma</w>
       <w>lzop</w>
       <w>makedeb</w>
+      <w>makensis</w>
       <w>minimatch</w>
       <w>mkdirp</w>
       <w>mpass</w>
       <w>multilib</w>
+      <w>multiuser</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
@@ -54,6 +61,7 @@
       <w>pkcs</w>
       <w>postinstall</w>
       <w>productbuild</w>
+      <w>progexe</w>
       <w>promisify</w>
       <w>psmdcp</w>
       <w>repos</w>
@@ -63,7 +71,9 @@
       <w>tsconfig</w>
       <w>udbz</w>
       <w>udro</w>
+      <w>unicon</w>
       <w>userprofile</w>
+      <w>valuename</w>
       <w>veyor</w>
       <w>winstaller</w>
       <w>xamarin</w>

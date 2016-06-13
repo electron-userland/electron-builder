@@ -8,6 +8,7 @@ import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
 import { ElectronPackagerOptions } from "electron-packager-tf"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
+import NsisTarget from "./targets/nsis"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -55,7 +56,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   get supportedTargets(): Array<string> {
-    return ["squirrel"]
+    return ["squirrel", "nsis"]
   }
 
   private async getValidIconPath(): Promise<string> {
@@ -76,7 +77,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
     await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
-    await this.sign(appOutDir)
+    await this.sign(path.join(appOutDir, `${this.appName}.exe`))
     this.packageInDistributableFormat(outDir, appOutDir, arch, packOptions, targets, postAsyncTasks)
   }
 
@@ -84,13 +85,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
   }
 
-  protected async sign(appOutDir: string) {
+  async sign(file: string) {
     const cscInfo = await this.cscInfo
     if (cscInfo != null) {
-      const filename = `${this.appName}.exe`
-      log(`Signing ${filename} (certificate file "${cscInfo.file}")`)
+      log(`Signing ${path.basename(file)} (certificate file "${cscInfo.file}")`)
       await this.doSign({
-        path: path.join(appOutDir, filename),
+        path: file,
         cert: cscInfo.file,
         password: cscInfo.password!,
         name: this.appName,
@@ -107,9 +107,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions, targets: Array<string>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
-      if (target === "squirrel.windows" || target === "default") {
+      if (target === "squirrel" || target === "default") {
         const helperClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-        promises.push(new helperClass(this, appOutDir, arch).build(packOptions))
+        promises.push(new helperClass(this, appOutDir).build(packOptions, arch))
+      }
+      else if (target === "nsis") {
+        const helperClass: typeof NsisTarget = require("./targets/nsis").default
+        promises.push(new helperClass(this, outDir, appOutDir).build(arch))
       }
       else {
         log(`Creating Windows ${target}`)

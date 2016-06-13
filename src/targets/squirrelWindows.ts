@@ -11,20 +11,20 @@ import { emptyDir } from "fs-extra-p"
 const __awaiter = require("../awaiter")
 
 export default class SquirrelWindowsTarget {
-  constructor(private packager: WinPackager, private appOutDir: string, private arch: Arch) {
+  constructor(private packager: WinPackager, private appOutDir: string) {
   }
 
-  async build(packOptions: ElectronPackagerOptions) {
+  async build(packOptions: ElectronPackagerOptions, arch: Arch) {
     const version = this.packager.metadata.version
-    const archSuffix = getArchSuffix(this.arch)
-    const setupExeName = `${this.packager.appName} Setup ${version}${archSuffix}.exe`
+    const archSuffix = getArchSuffix(arch)
+    const setupFileName = `${this.packager.appName} Setup ${version}${archSuffix}.exe`
 
-    const installerOutDir = path.join(this.appOutDir, "..", `win${getArchSuffix(this.arch)}`)
+    const installerOutDir = path.join(this.appOutDir, "..", `win${getArchSuffix(arch)}`)
     await emptyDir(installerOutDir)
 
-    const distOptions = await this.computeEffectiveDistOptions(installerOutDir, packOptions, setupExeName)
+    const distOptions = await this.computeEffectiveDistOptions(installerOutDir, packOptions, setupFileName)
     await createWindowsInstaller(distOptions)
-    this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupExeName), `${this.packager.metadata.name}-Setup-${version}${archSuffix}.exe`)
+    this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${this.packager.metadata.name}-Setup-${version}${archSuffix}.exe`)
 
     const packagePrefix = `${this.packager.metadata.name}-${convertVersion(version)}-`
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`))
@@ -65,7 +65,7 @@ export default class SquirrelWindowsTarget {
     const options: any = Object.assign({
       name: packager.metadata.name,
       productName: packager.appName,
-      exe: packager.appName + ".exe",
+      exe: `${packager.appName}.exe`,
       setupExe: setupExeName,
       title: packager.appName,
       appDirectory: this.appOutDir,

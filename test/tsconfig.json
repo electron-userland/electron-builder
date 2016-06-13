@@ -48,6 +48,7 @@
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",
     "../typings/signcode.d.ts",
+    "../typings/uuid-1345.d.ts",
     "../typings/yargs.d.ts",
     "typings/decompress-zip.d.ts",
     "typings/diff.d.ts",
