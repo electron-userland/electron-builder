@@ -30,11 +30,13 @@ interface AssertPackOptions {
   readonly expectedArtifacts?: Array<string>
 
   readonly expectedDepends?: string
+
+  readonly useTempDir?: boolean
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
   const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null
+  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir)
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
@@ -195,7 +197,7 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   assertThat2(info).has.properties({
     CFBundleDisplayName: productName,
-    CFBundleIdentifier: "your.id",
+    CFBundleIdentifier: "org.electron-builder.testApp",
     LSApplicationCategoryType: "your.app.category.type",
     CFBundleVersion: "1.1.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
   })
@@ -243,6 +245,10 @@ async function checkWindowsResult(packager: Packager, targets: Array<string>, ch
         expectedFileNames.push(`${productName}-1.1.0-delta.nupkg`)
       }
 
+      artifactNames.push(`TestApp-Setup-1.1.0${archSuffix}.exe`)
+    }
+    else if (target === "nsis") {
+      expectedFileNames.push(`${productName} Setup 1.1.0${archSuffix}.exe`)
       artifactNames.push(`TestApp-Setup-1.1.0${archSuffix}.exe`)
     }
     else {

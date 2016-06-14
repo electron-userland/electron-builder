@@ -41,6 +41,22 @@ export class Packager implements BuildInfo {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
   }
 
+  get appId(): string {
+    const appId = this.devMetadata.build["app-bundle-id"]
+    if (appId != null) {
+      warn("app-bundle-id is deprecated, please use appId")
+    }
+
+    if (this.devMetadata.build.appId != null) {
+      return this.devMetadata.build.appId
+    }
+
+    if (appId == null) {
+      return `com.electron.${this.metadata.name.toLowerCase()}`
+    }
+    return appId
+  }
+
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
     addHandler(this.eventEmitter, "artifactCreated", handler)
     return this
@@ -172,7 +188,7 @@ export class Packager implements BuildInfo {
     else {
       const author = appMetadata.author
       if (<any>author == null) {
-        reportError("author")
+        throw new Error(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name.`)
       }
       else if (<any>author.email == null && this.options.targets!.has(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))

@@ -81,9 +81,19 @@ export type CompressionLevel = "store" | "normal" | "maximum"
  */
 export interface BuildMetadata {
   /*
-   *OS X-only.* The app bundle ID. See [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
+  The application id. Used as
+  [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for OS X and as
+  [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.
+
+  For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.
+
+  Defaults to `com.electron.${name}`. It is strongly recommended that an explicit ID be set.
    */
+  readonly appId?: string | null
+
+  // deprecated
   readonly "app-bundle-id"?: string | null
+
   /*
    *OS X-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
@@ -149,6 +159,11 @@ export interface BuildMetadata {
    See [.build.win](#LinuxBuildOptions).
    */
   readonly win?: WinBuildOptions  | null
+
+  /**
+   See [.build.nsis](#NsisOptions).
+   */
+  readonly nsis?: NsisOptions  | null
 
   /*
    See [.build.linux](#LinuxBuildOptions).
@@ -296,6 +311,30 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly signingHashAlgorithms?: Array<string> | null
   readonly signcodePath?: string | null
+}
+
+/*
+ ### `.build.nsis`
+
+ NSIS target support in progress — not polished and not fully tested and checked.
+ */
+export interface NsisOptions {
+  /*
+  Mark "all users" (per-machine) as default. Not recommended. Defaults to `false`.
+   */
+  readonly perMachine?: boolean | null
+
+  /*
+   Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
+   */
+  readonly allowElevation?: boolean | null
+
+  readonly guid?: string | null
+
+  /*
+  One-click installation. Defaults to `true`.
+   */
+  readonly oneClick?: boolean | null
 }
 
 /*

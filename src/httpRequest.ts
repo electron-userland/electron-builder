@@ -8,14 +8,19 @@ import * as path from "path"
 
 const maxRedirects = 10
 
-export const download = <(url: string, destination: string, isCreateDir?: boolean | undefined) => BluebirdPromise<any>>(BluebirdPromise.promisify(_download))
+export interface DownloadOptions {
+  skipDirCreation?: boolean
+  sha2?: string
+}
 
-function _download(url: string, destination: string, isCreateDir: boolean | undefined, callback: (error: Error) => void): void {
+export const download = <(url: string, destination: string, options?: DownloadOptions) => BluebirdPromise<any>>(BluebirdPromise.promisify(_download))
+
+function _download(url: string, destination: string, options: DownloadOptions | n, callback: (error: Error) => void): void {
   if (callback == null) {
-    callback = <any>isCreateDir
-    isCreateDir = true
+    callback = <any>options
+    options = null
   }
-  doDownload(url, destination, 0, isCreateDir === undefined ? true : isCreateDir, callback)
+  doDownload(url, destination, 0, options || {}, callback)
 }
 
 export function addTimeOutHandler(request: ClientRequest, callback: (error: Error) => void) {
@@ -27,8 +32,8 @@ export function addTimeOutHandler(request: ClientRequest, callback: (error: Erro
   })
 }
 
-function doDownload(url: string, destination: string, redirectCount: number, isCreateDir: boolean, callback: (error: Error) => void) {
-  const ensureDirPromise = isCreateDir ? ensureDir(path.dirname(destination)) : BluebirdPromise.resolve()
+function doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error) => void) {
+  const ensureDirPromise = options.skipDirCreation ? BluebirdPromise.resolve() : ensureDir(path.dirname(destination))
 
   const parsedUrl = parseUrl(url)
   // user-agent must be specified, otherwise some host can return 401 unauthorised
@@ -47,12 +52,23 @@ function doDownload(url: string, destination: string, redirectCount: number, isC
     const redirectUrl = response.headers.location
     if (redirectUrl != null) {
       if (redirectCount < maxRedirects) {
-        doDownload(redirectUrl, destination, redirectCount++, isCreateDir, callback)
+        doDownload(redirectUrl, destination, redirectCount++, options, callback)
       }
       else {
         callback(new Error("Too many redirects (> " + maxRedirects + ")"))
       }
       return
+    }
+
+    const sha1Header = response.headers["X-Checksum-Sha1"]
+    if (sha1Header != null && options.sha2 != null) {
+      // todo why bintray doesn't send this header always
+      if (sha1Header == null) {
+        throw new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header")
+      }
+      else if (sha1Header !== options.sha2) {
+        throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha1Header} (X-Checksum-Sha2 header)`)
+      }
     }
 
     ensureDirPromise

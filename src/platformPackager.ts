@@ -62,6 +62,9 @@ export interface BuildInfo extends ProjectMetadataProvider {
   eventEmitter: EventEmitter
 
   isTwoPackageJsonProjectLayoutUsed: boolean
+
+  // computed final effective appId
+  appId: string
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements ProjectMetadataProvider {
@@ -237,6 +240,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     //noinspection JSUnusedGlobalSymbols
     const options: any = deepAssign({
       dir: this.info.appDir,
+      "app-bundle-id": this.info.appId,
       out: outDir,
       name: this.appName,
       productName: this.appName,

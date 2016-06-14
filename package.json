@@ -79,6 +79,7 @@
     "read-package-json": "^2.0.4",
     "signcode-tf": "~0.7.3",
     "source-map-support": "^0.4.0",
+    "uuid-1345": "^0.99.6",
     "yargs": "^4.7.1"
   },
   "optionalDependencies": {
@@ -128,5 +129,8 @@
       "test/out/*"
     ]
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }

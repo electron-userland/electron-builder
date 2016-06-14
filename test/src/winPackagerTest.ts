@@ -1,4 +1,4 @@
-import { Platform, Arch, BuildInfo } from "out"
+import { Platform, Arch, BuildInfo, PackagerOptions } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
 import { move, outputFile } from "fs-extra-p"
@@ -13,9 +13,24 @@ import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
 
-test.ifDevOrWinCi("win", () => assertPack("test-app-one", signed({
+function _signed(packagerOptions: PackagerOptions): PackagerOptions {
+  if (process.platform !== "win32") {
+    // todo Linux  Signing failed with SIGBUS
+    return packagerOptions
+  }
+  return signed(packagerOptions)
+}
+
+test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
     targets: Platform.WINDOWS.createTarget(["default", "zip"]),
   })
+))
+
+test.ifNotCiOsx("nsis", () => assertPack("test-app-one", _signed({
+    targets: Platform.WINDOWS.createTarget(["nsis"]),
+  }), {
+  useTempDir: true,
+  }
 ))
 
 // test.ifNotCiOsx("win 32", () => assertPack("test-app-one", signed({
@@ -24,7 +39,7 @@ test.ifDevOrWinCi("win", () => assertPack("test-app-one", signed({
 // ))
 
 // very slow
-test.ifWinCi("delta", () => assertPack("test-app-one", {
+test.skip("delta", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
     devMetadata: {
       build: {
@@ -120,7 +135,7 @@ class CheckingWinPackager extends WinPackager {
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this, appOutDir, arch).computeEffectiveDistOptions("foo", packOptions, "Foo.exe"))
+    this.effectiveDistOptions = await (new helperClass(this, appOutDir).computeEffectiveDistOptions("foo", packOptions, "Foo.exe"))
 
     await this.sign(appOutDir)
   }
