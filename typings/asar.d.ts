@@ -14,6 +14,7 @@ declare module "asar" {
   interface AsarOptions {
     unpack?: string
     unpackDir?: string
+    dot?: boolean
   }
 
   export function listPackage(archive: string): Array<string>
