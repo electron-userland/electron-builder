@@ -14,6 +14,7 @@ export async function createAsarArchive(src: string, resourcesPath: string, opti
   const files = (await new BluebirdPromise<Array<string>>((resolve, reject) => {
     glob = new Glob("**/*", {
       cwd: src,
+      dot: options.dot
     }, (error, matches) => {
       if (error == null) {
         resolve(matches)
