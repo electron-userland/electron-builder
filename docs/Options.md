@@ -106,6 +106,8 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 
 NSIS target support in progress — not polished and not fully tested and checked.
 
+See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
+
 | Name | Description
 | --- | ---
 | perMachine | <a name="NsisOptions-perMachine"></a>Mark "all users" (per-machine) as default. Not recommended. Defaults to `false`.

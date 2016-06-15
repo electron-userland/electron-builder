@@ -23,6 +23,7 @@ Var desktopLink
 Function .onInit
   !insertmacro MULTIUSER_INIT
   !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+  !insertmacro CHECK_APP_RUNNING "install"
 FunctionEnd
 
 Function un.onInit
@@ -31,7 +32,7 @@ FunctionEnd
 
 # default section start
 Section "install"
-  !insertmacro CHECK_APP_RUNNING "install"
+  SetDetailsPrint none
 
   # delete the installed files
   RMDir /r $INSTDIR
@@ -39,8 +40,12 @@ Section "install"
   # define the path to which the installer should install
   SetOutPath $INSTDIR
 
-  # specify the files to go in the output path
-  File /r "${APP_BUILD_DIR}\*"
+  SetCompress off
+  File /oname=app.7z "${APP_ARCHIVE}"
+  SetCompress "${COMPRESS}"
+
+  Nsis7z::Extract "app.7z"
+  Delete "app.7z"
 
 #  <% if(fileAssociation){ %>
     # specify file association

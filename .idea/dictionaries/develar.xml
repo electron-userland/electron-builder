@@ -27,7 +27,9 @@
       <w>gnubin</w>
       <w>graphicsmagick</w>
       <w>gtar</w>
+      <w>guid</w>
       <w>hicolor</w>
+      <w>hrtime</w>
       <w>icnsutils</w>
       <w>inno</w>
       <w>installmode</w>
@@ -48,6 +50,7 @@
       <w>mpass</w>
       <w>multilib</w>
       <w>multiuser</w>
+      <w>nevershow</w>
       <w>nokeys</w>
       <w>nomacver</w>
       <w>noninteractive</w>
@@ -60,12 +63,14 @@
       <w>passin</w>
       <w>pkcs</w>
       <w>postinstall</w>
+      <w>prerelease</w>
       <w>productbuild</w>
       <w>progexe</w>
       <w>promisify</w>
       <w>psmdcp</w>
       <w>repos</w>
       <w>rimraf</w>
+      <w>semver</w>
       <w>templating</w>
       <w>testapp</w>
       <w>tsconfig</w>

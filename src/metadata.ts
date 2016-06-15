@@ -317,6 +317,8 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
  ### `.build.nsis`
 
  NSIS target support in progress — not polished and not fully tested and checked.
+
+ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
  */
 export interface NsisOptions {
   /*
@@ -484,8 +486,4 @@ export function archFromString(name: string): Arch {
   }
 
   throw new Error(`Unsupported arch ${name}`)
-}
-
-export function getProductName(metadata: AppMetadata, devMetadata: DevMetadata) {
-  return devMetadata.build.productName || metadata.productName || metadata.name
 }

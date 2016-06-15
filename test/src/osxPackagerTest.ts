@@ -40,12 +40,12 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
   })
 }
 
-test.ifOsx("only dmg", createTargetTest(["dmg"], ["TestApp-1.1.0.dmg"]))
-test.ifOsx("only zip", createTargetTest(["zip"], ["TestApp-1.1.0-osx.zip"]))
+test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App-1.1.0.dmg"]))
+test.ifOsx("only zip", createTargetTest(["zip"], ["Test App-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
-test.ifOsx("mas", createTargetTest(["mas"], ["TestApp-1.1.0.pkg"]))
-test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["TestApp-1.1.0-osx.7z", "TestApp-1.1.0.pkg"]))
+test.ifOsx("mas", createTargetTest(["mas"], ["Test App-1.1.0.pkg"]))
+test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App-1.1.0-mac.7z", "Test App-1.1.0.pkg"]))
 
 test.ifOsx("custom mas", () => {
   let platformPackager: CheckingOsXPackager = null

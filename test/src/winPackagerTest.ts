@@ -5,7 +5,6 @@ import { move, outputFile } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
 import { Promise as BluebirdPromise } from "bluebird"
-import { ElectronPackagerOptions } from "electron-packager-tf"
 import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
@@ -28,6 +27,11 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
 
 test.ifNotCiOsx("nsis", () => assertPack("test-app-one", _signed({
     targets: Platform.WINDOWS.createTarget(["nsis"]),
+    devMetadata: {
+      build: {
+        productName: "Test App"
+      }
+    }
   }), {
   useTempDir: true,
   }
@@ -55,16 +59,9 @@ test.ifDevOrWinCi("beta version", () => {
   const metadata: any = {
     version: "3.0.0-beta.2"
   }
-
   return assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(),
+    targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
     devMetadata: metadata
-  }, {
-    expectedArtifacts: [
-      "RELEASES",
-      "TestApp Setup 3.0.0-beta.2.exe",
-      "TestApp-3.0.0-beta2-full.nupkg"
-    ]
   })
 })
 
@@ -132,15 +129,14 @@ class CheckingWinPackager extends WinPackager {
   async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this, appOutDir).computeEffectiveDistOptions("foo", packOptions, "Foo.exe"))
+    this.effectiveDistOptions = await (new helperClass(this, appOutDir).computeEffectiveDistOptions("foo", "Foo.exe"))
 
     await this.sign(appOutDir)
   }
 
-  packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions, targets: Array<string>, promises: Array<Promise<any>>): void {
+  packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>, promises: Array<Promise<any>>): void {
     // skip
   }
 

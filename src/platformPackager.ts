@@ -1,17 +1,18 @@
-import { InfoRetriever, ProjectMetadataProvider } from "./repositoryInfo"
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, getProductName, Arch } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
 import { readdir, copy, unlink, remove, realpath } from "fs-extra-p"
-import { statOrNull, use, warn, log, exec } from "./util"
+import { statOrNull, use, exec } from "./util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInPackage, createAsarArchive } from "./asarUtil"
 import deepAssign = require("deep-assign")
+import { warn, log, task } from "./log"
+import { AppInfo } from "./appInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -45,10 +46,10 @@ export interface PackagerOptions {
    *
    * Application `package.json` will be still read, but options specified in this object will override.
    */
-  readonly appMetadata?: DevMetadata
+  readonly appMetadata?: AppMetadata
 }
 
-export interface BuildInfo extends ProjectMetadataProvider {
+export interface BuildInfo {
   options: PackagerOptions
 
   devMetadata: DevMetadata
@@ -58,16 +59,15 @@ export interface BuildInfo extends ProjectMetadataProvider {
 
   electronVersion: string
 
-  repositoryInfo: InfoRetriever | n
   eventEmitter: EventEmitter
 
   isTwoPackageJsonProjectLayoutUsed: boolean
 
   // computed final effective appId
-  appId: string
+  appInfo: AppInfo
 }
 
-export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements ProjectMetadataProvider {
+export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   protected readonly options: PackagerOptions
 
   protected readonly projectDir: string
@@ -78,21 +78,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly customBuildOptions: DC
 
-  readonly appName: string
-
   readonly resourceList: Promise<Array<string>>
 
-  public abstract get platform(): Platform
+  abstract get platform(): Platform
+
+  readonly appInfo: AppInfo
 
   constructor(public info: BuildInfo) {
+    this.appInfo = info.appInfo
     this.options = info.options
     this.projectDir = info.projectDir
-    this.metadata = info.metadata
+    this.metadata = info.appInfo.metadata
     this.devMetadata = info.devMetadata
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
     this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
-    this.appName = getProductName(this.metadata, this.devMetadata)
 
     this.resourceList = readdir(this.buildResourcesDir)
       .catch(e => {
@@ -213,7 +213,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         await createAsarArchive(appPath, resourcesPath, asarOptions)
       }
     }
-    await pack(options)
+    await task(`Packaging for platform ${options.platform} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
 
     await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
@@ -230,37 +230,28 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
-    const version = this.metadata.version
-    let buildVersion = version
-    const buildNumber = this.computeBuildNumber()
-    if (buildNumber != null) {
-      buildVersion += "." + buildNumber
-    }
-
     //noinspection JSUnusedGlobalSymbols
     const options: any = deepAssign({
       dir: this.info.appDir,
-      "app-bundle-id": this.info.appId,
+      "app-bundle-id": this.appInfo.id,
       out: outDir,
-      name: this.appName,
-      productName: this.appName,
+      name: this.appInfo.productName,
+      productName: this.appInfo.productName,
       platform: this.platform.nodeName,
       arch: Arch[arch],
       version: this.info.electronVersion,
       icon: path.join(this.buildResourcesDir, "icon"),
       overwrite: true,
-      "app-version": version,
-      "app-copyright": `Copyright © ${new Date().getFullYear()} ${this.metadata.author.name || this.appName}`,
-      "build-version": buildVersion,
+      "app-version": this.appInfo.version,
+      "app-copyright": this.appInfo.copyright,
+      "build-version": this.appInfo.buildVersion,
       tmpdir: false,
       generateFinalBasename: () => path.basename(appOutDir),
-      "version-string": {
-        CompanyName: this.metadata.author.name,
-        FileDescription: smarten(this.metadata.description),
-        ProductName: this.appName,
-        InternalName: this.appName,
-      }
     }, this.devMetadata.build)
+
+    if (this.platform === Platform.WINDOWS) {
+      options["version-string"] = this.appInfo.versionString
+    }
 
     delete options.osx
     delete options.win
@@ -308,7 +299,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
-    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents") : appOutDir
     const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
     return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, this.getParsedPatterns(patterns, arch))
   }
@@ -338,31 +329,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return patterns
   }
 
-  async computePackageUrl(): Promise<string | null> {
-    const url = this.metadata.homepage || this.devMetadata.homepage
-    if (url != null) {
-      return url
-    }
-
-    if (this.info.repositoryInfo != null) {
-      const info = await this.info.repositoryInfo.getInfo(this)
-      if (info != null) {
-        return `https://github.com/${info.user}/${info.project}`
-      }
-    }
-    return null
-  }
-
-  protected computeBuildNumber(): string | null {
-    return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
-  }
-
   private getResourcesDir(appOutDir: string): string {
     return this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
 
   private getOSXResourcesDir(appOutDir: string): string {
-    return path.join(appOutDir, `${this.appName}.app`, "Contents", "Resources")
+    return path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents", "Resources")
   }
 
   private async checkFileInPackage(resourcesDir: string, file: string, isAsar: boolean) {
@@ -396,7 +368,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.OSX ? path.join(appOutDir, `${this.appName}.app`) : appOutDir)
+    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.OSX ? path.join(appOutDir, `${this.appInfo.productName}.app`) : appOutDir)
+  }
+
+  generateName(ext: string, arch: Arch, deployment: boolean): string {
+    return this.generateName2(ext, arch === Arch.x64 ? null : Arch[arch], deployment)
+  }
+
+  generateName1(ext: string, arch: Arch, classifier: string, deployment: boolean): string {
+    let c = arch === Arch.x64 ? null : Arch[arch]
+    if (c == null) {
+      c = classifier
+    }
+    else {
+      c += `-${classifier}`
+    }
+    return this.generateName2(ext, c, deployment)
+  }
+
+  generateName2(ext: string, classifier: string | n, deployment: boolean): string {
+    return `${deployment ? this.appInfo.name : this.appInfo.productName}-${this.metadata.version}${classifier == null ? "" : `-${classifier}`}.${ext}`
   }
 }
 

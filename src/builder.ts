@@ -3,15 +3,16 @@ import { PackagerOptions } from "./platformPackager"
 import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
 import { executeFinally } from "./promise"
 import { Promise as BluebirdPromise } from "bluebird"
-import { InfoRetriever } from "./repositoryInfo"
-import { log, warn, isEmptyOrSpaces } from "./util"
+import { isEmptyOrSpaces } from "./util"
+import { log, warn } from "./log"
 import { Platform, Arch, archFromString } from "./metadata"
+import { getRepositoryInfo } from "./repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export async function createPublisher(packager: Packager, options: PublishOptions, repoSlug: InfoRetriever, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
-  const info = await repoSlug.getInfo(packager)
+export async function createPublisher(packager: Packager, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+  const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
   if (info == null) {
     if (isPublishOptionGuessed) {
       return null
@@ -207,7 +208,7 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
     else if (options.githubToken != null) {
       const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
       if (tag != null && tag.length !== 0) {
-        log("Tag %s is defined, so artifacts will be published", tag)
+        log(`Tag ${tag} is defined, so artifacts will be published`)
         options.publish = "onTag"
         isPublishOptionGuessed = true
       }
@@ -220,13 +221,12 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   }
 
   const publishTasks: Array<BluebirdPromise<any>> = []
-  const repositoryInfo = new InfoRetriever()
-  const packager = new Packager(options, repositoryInfo)
+  const packager = new Packager(options)
   if (options.publish != null && options.publish !== "never") {
     let publisher: Promise<Publisher> | null = null
     packager.artifactCreated(event => {
       if (publisher == null) {
-        publisher = createPublisher(packager, options, repositoryInfo, isPublishOptionGuessed)
+        publisher = createPublisher(packager, options, isPublishOptionGuessed)
       }
 
       if (publisher) {

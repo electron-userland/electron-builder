@@ -3,10 +3,9 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, getArchSuffix } from "./platformPackager"
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
-import { log, warn } from "./util"
+import { log, warn, task } from "./log"
 import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
-import { ElectronPackagerOptions } from "electron-packager-tf"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
 
@@ -77,8 +76,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const packOptions = this.computePackOptions(outDir, appOutDir, arch)
 
     await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
-    await this.sign(path.join(appOutDir, `${this.appName}.exe`))
-    this.packageInDistributableFormat(outDir, appOutDir, arch, packOptions, targets, postAsyncTasks)
+    await this.sign(path.join(appOutDir, `${this.appInfo.productName}.exe`))
+    this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
@@ -93,8 +92,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         path: file,
         cert: cscInfo.file,
         password: cscInfo.password!,
-        name: this.appName,
-        site: await this.computePackageUrl(),
+        name: this.appInfo.productName,
+        site: await this.appInfo.computePackageUrl(),
         overwrite: true,
         hash: this.customBuildOptions.signingHashAlgorithms,
       })
@@ -105,11 +104,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return BluebirdPromise.promisify(sign)(opts)
   }
 
-  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, packOptions: ElectronPackagerOptions, targets: Array<string>, promises: Array<Promise<any>>): void {
+  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
+      if (target === "dir") {
+        continue
+      }
+
       if (target === "squirrel" || target === "default") {
         const helperClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-        promises.push(new helperClass(this, appOutDir).build(packOptions, arch))
+        promises.push(task(`Building NSIS installer`, new helperClass(this, appOutDir).build(arch)))
       }
       else if (target === "nsis") {
         const helperClass: typeof NsisTarget = require("./targets/nsis").default
@@ -118,9 +121,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       else {
         log(`Creating Windows ${target}`)
         // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(outDir, `${this.appName}-${this.metadata.version}${getArchSuffix(arch)}-win.${target}`)
+        const outFile = path.join(outDir, this.generateName1(target, arch, "win", false))
         promises.push(this.archiveApp(target, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}-win.${target}`)))
+          .then(() => this.dispatchArtifactCreated(outFile, this.generateName1(target, arch, "win", true))))
       }
     }
   }

@@ -1,11 +1,11 @@
 import { WinPackager } from "../winPackager"
-import { getArchSuffix, smarten } from "../platformPackager"
-import { ElectronPackagerOptions } from "electron-packager-tf"
+import { getArchSuffix } from "../platformPackager"
 import { Arch, WinBuildOptions } from "../metadata"
 import { createWindowsInstaller, convertVersion } from "electron-winstaller-fixed"
 import * as path from "path"
-import { warn } from "../util"
+import { warn } from "../log"
 import { emptyDir } from "fs-extra-p"
+import { getRepositoryInfo } from "../repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../awaiter")
@@ -14,19 +14,20 @@ export default class SquirrelWindowsTarget {
   constructor(private packager: WinPackager, private appOutDir: string) {
   }
 
-  async build(packOptions: ElectronPackagerOptions, arch: Arch) {
-    const version = this.packager.metadata.version
+  async build(arch: Arch) {
+    const appInfo = this.packager.appInfo
+    const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
-    const setupFileName = `${this.packager.appName} Setup ${version}${archSuffix}.exe`
+    const setupFileName = `${appInfo.productName} Setup ${version}${archSuffix}.exe`
 
     const installerOutDir = path.join(this.appOutDir, "..", `win${getArchSuffix(arch)}`)
     await emptyDir(installerOutDir)
 
-    const distOptions = await this.computeEffectiveDistOptions(installerOutDir, packOptions, setupFileName)
+    const distOptions = await this.computeEffectiveDistOptions(installerOutDir, setupFileName)
     await createWindowsInstaller(distOptions)
-    this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${this.packager.metadata.name}-Setup-${version}${archSuffix}.exe`)
+    this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 
-    const packagePrefix = `${this.packager.metadata.name}-${convertVersion(version)}-`
+    const packagePrefix = `${appInfo.name}-${convertVersion(version)}-`
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`))
     if (distOptions.remoteReleases != null) {
       this.packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`))
@@ -35,15 +36,13 @@ export default class SquirrelWindowsTarget {
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
   }
 
-  async computeEffectiveDistOptions(installerOutDir: string, packOptions: ElectronPackagerOptions, setupExeName: string): Promise<WinBuildOptions> {
+  async computeEffectiveDistOptions(installerOutDir: string, setupExeName: string): Promise<WinBuildOptions> {
     const packager = this.packager
     let iconUrl = packager.customBuildOptions.iconUrl || packager.devMetadata.build.iconUrl
     if (iconUrl == null) {
-      if (packager.info.repositoryInfo != null) {
-        const info = await packager.info.repositoryInfo.getInfo(packager)
-        if (info != null) {
-          iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
-        }
+      const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+      if (info != null) {
+        iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
 
       if (iconUrl == null) {
@@ -53,26 +52,26 @@ export default class SquirrelWindowsTarget {
 
     checkConflictingOptions(packager.customBuildOptions)
 
-    const projectUrl = await packager.computePackageUrl()
+    const appInfo = packager.appInfo
+    const projectUrl = await appInfo.computePackageUrl()
     const rceditOptions = {
-      "version-string": packOptions["version-string"],
-      "file-version": packOptions["build-version"],
-      "product-version": packOptions["app-version"],
+      "version-string": appInfo.versionString,
+      "file-version": appInfo.buildVersion,
+      "product-version": appInfo.version,
     }
-    rceditOptions["version-string"]!.LegalCopyright = packOptions["app-copyright"]
 
     const cscInfo = await packager.cscInfo
     const options: any = Object.assign({
-      name: packager.metadata.name,
-      productName: packager.appName,
-      exe: `${packager.appName}.exe`,
+      name: appInfo.name,
+      productName: appInfo.productName,
+      exe: `${appInfo.productName}.exe`,
       setupExe: setupExeName,
-      title: packager.appName,
+      title: appInfo.productName,
       appDirectory: this.appOutDir,
       outputDirectory: installerOutDir,
-      version: packager.metadata.version,
-      description: smarten(packager.metadata.description),
-      authors: packager.metadata.author.name,
+      version: appInfo.version,
+      description: appInfo.description,
+      authors: appInfo.companyName,
       iconUrl: iconUrl,
       setupIcon: await packager.iconPath,
       certificateFile: cscInfo == null ? null : cscInfo.file,
@@ -81,10 +80,10 @@ export default class SquirrelWindowsTarget {
       skipUpdateIcon: true,
       usePackageJson: false,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
-      copyright: packOptions["app-copyright"],
+      copyright: appInfo.copyright,
       packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
       sign: {
-        name: packager.appName,
+        name: appInfo.productName,
         site: projectUrl,
         overwrite: true,
         hash: packager.customBuildOptions.signingHashAlgorithms,

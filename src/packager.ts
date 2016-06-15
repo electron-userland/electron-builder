@@ -1,12 +1,11 @@
 import * as path from "path"
 import {
-  computeDefaultAppDirectory, installDependencies, log, getElectronVersion, readPackageJson, use, warn,
+  computeDefaultAppDirectory, installDependencies, getElectronVersion, readPackageJson, use,
   exec, isEmptyOrSpaces
 } from "./util"
 import { all, executeFinally } from "./promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
-import { InfoRetriever } from "./repositoryInfo"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
 import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, computeEffectiveTargets, commonTargets } from "./platformPackager"
 import OsXPackager from "./osxPackager"
@@ -15,6 +14,8 @@ import * as errorMessages from "./errorMessages"
 import * as util from "util"
 import deepAssign = require("deep-assign")
 import compareVersions = require("compare-versions")
+import { warn, log } from "./log"
+import { AppInfo } from "./appInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -36,25 +37,11 @@ export class Packager implements BuildInfo {
 
   readonly eventEmitter = new EventEmitter()
 
+  appInfo: AppInfo
+
   //noinspection JSUnusedGlobalSymbols
-  constructor(public options: PackagerOptions, public repositoryInfo: InfoRetriever | null = null) {
+  constructor(public options: PackagerOptions) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-  }
-
-  get appId(): string {
-    const appId = this.devMetadata.build["app-bundle-id"]
-    if (appId != null) {
-      warn("app-bundle-id is deprecated, please use appId")
-    }
-
-    if (this.devMetadata.build.appId != null) {
-      return this.devMetadata.build.appId
-    }
-
-    if (appId == null) {
-      return `com.electron.${this.metadata.name.toLowerCase()}`
-    }
-    return appId
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -82,6 +69,7 @@ export class Packager implements BuildInfo {
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
+    this.appInfo = new AppInfo(this.metadata, this.devMetadata)
     const cleanupTasks: Array<() => Promise<any>> = []
     return executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it())))
   }

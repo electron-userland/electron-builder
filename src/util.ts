@@ -4,30 +4,24 @@ import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
 import { readJson, stat, Stats } from "fs-extra-p"
-import { yellow } from "chalk"
+import { yellow, red } from "chalk"
 import debugFactory = require("debug")
 import { Debugger } from "~debug/node"
+import { warn, task } from "./log"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export const log = console.log
-
 export const debug: Debugger = debugFactory("electron-builder")
 export const debug7z: Debugger = debugFactory("electron-builder:7z")
-
-export function warn(message: string) {
-  console.warn(yellow(`Warning: ${message}`))
-}
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
 export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
-  log(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`)
   const gypHome = path.join(os.homedir(), ".electron-gyp")
-  return spawnNpmProduction(command, appDir, Object.assign({}, process.env, {
+  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, Object.assign({}, process.env, {
       npm_config_disturl: "https://atom.io/download/atom-shell",
       npm_config_target: electronVersion,
       npm_config_runtime: "electron",
@@ -35,7 +29,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
       HOME: gypHome,
       USERPROFILE: gypHome,
     })
-  )
+  ))
 }
 
 export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
@@ -81,15 +75,15 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
         resolve(stdout)
       }
       else {
+        let message = red(error.message)
         if (stdout.length !== 0) {
-          console.log(stdout.toString())
+          message += `\n${yellow(stdout)}`
         }
-        if (stderr.length === 0) {
-          reject(error)
+        if (stderr.length !== 0) {
+          message += `\n${red(stderr)}`
         }
-        else {
-          reject(new Error(stderr.toString() + "\n" + error.toString()))
-        }
+
+        reject(new Error(message))
       }
     })
   })
@@ -137,7 +131,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
   }
   catch (e) {
     if (e.code !== "ENOENT") {
-      warn("Cannot read electron version from electron-prebuilt package.json" + e.message)
+      warn(`Cannot read electron version from electron-prebuilt package.json: ${e.message}`)
     }
   }
 

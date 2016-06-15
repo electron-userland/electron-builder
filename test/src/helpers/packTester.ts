@@ -5,13 +5,15 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, getProductName, ArtifactCreated, Arch, DIR_TARGET } from "out"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
 import { exec, getTempName } from "out/util"
+import { log } from "out/log"
 import { createTargets } from "out"
 import { tmpdir } from "os"
 import { getArchSuffix, computeEffectiveTargets } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
+import { convertVersion } from "electron-winstaller-fixed"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -45,7 +47,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
     const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
-      console.log(`Custom temp dir used: ${customTmpDir}`)
+      log(`Custom temp dir used: ${customTmpDir}`)
     }
     await emptyDir(dir)
     await copy(projectDir, dir, {
@@ -128,18 +130,18 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
   function getExpected(): Array<string> {
     const result: Array<string> = []
     for (let target of targets) {
-      result.push(`TestApp-1.1.0.${target === "default" ? "deb" : target}`)
+      result.push(`TestApp-${packager.appInfo.version}.${target === "default" ? "deb" : target}`)
     }
     return result
   }
 
-  assertThat(getFileNames(artifacts)).containsAll(checkOptions == null || checkOptions.expectedArtifacts == null ? getExpected() : checkOptions.expectedArtifacts)
+  assertThat(getFileNames(artifacts)).containsAll(getExpected())
 
   if (!targets.includes("deb") || !targets.includes("default")) {
     return
   }
 
-  const productName = getProductName(packager.metadata, packager.devMetadata)
+  const productName = packager.appInfo.productName
   const expectedContents = expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
       return "/opt/" + productName + "/" + productName
@@ -155,10 +157,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
-  const packageFile = `${projectDir}/${outDirName}/TestApp-1.1.0-amd64.deb`
+  const packageFile = `${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-amd64.deb`
   assertThat(await getContents(packageFile, productName)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-1.1.0-i386.deb`, productName)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`, productName)).isEqualTo(expectedContents)
   }
 
   assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
@@ -192,14 +194,15 @@ function parseDebControl(info: string): any {
 }
 
 async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
-  const productName = getProductName(packager.metadata, packager.devMetadata)
+  const appInfo = packager.appInfo
+  const productName = appInfo.productName
   const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   assertThat2(info).has.properties({
     CFBundleDisplayName: productName,
     CFBundleIdentifier: "org.electron-builder.testApp",
     LSApplicationCategoryType: "your.app.category.type",
-    CFBundleVersion: "1.1.0" + "." + (process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)
+    CFBundleVersion: `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
   })
 
   if (packagerOptions.cscLink != null) {
@@ -213,13 +216,13 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   }
   else {
     assertThat(actualFiles).isEqualTo([
-      `${productName}-1.1.0-mac.zip`,
-      `${productName}-1.1.0.dmg`,
+      `${productName}-${appInfo.version}-mac.zip`,
+      `${productName}-${appInfo.version}.dmg`,
     ].sort())
 
     assertThat(artifacts.map(it => it.artifactName).sort()).isEqualTo([
-      "TestApp-1.1.0-mac.zip",
-      "TestApp-1.1.0.dmg",
+      `TestApp-${appInfo.version}-mac.zip`,
+      `TestApp-${appInfo.version}.dmg`,
     ].sort())
   }
 }
@@ -229,7 +232,8 @@ function getFileNames(list: Array<ArtifactCreated>): Array<string> {
 }
 
 async function checkWindowsResult(packager: Packager, targets: Array<string>, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
-  const productName = getProductName(packager.metadata, packager.devMetadata)
+  const appInfo = packager.appInfo
+  const productName = appInfo.productName
   let squirrel = false
 
   const artifactNames: Array<string> = []
@@ -239,28 +243,27 @@ async function checkWindowsResult(packager: Packager, targets: Array<string>, ch
   for (let target of computeEffectiveTargets(targets, buildOptions == null ? null : buildOptions.target)) {
     if (target === "default" || target === "squirrel") {
       squirrel = true
-      expectedFileNames.push("RELEASES", `${productName} Setup 1.1.0${archSuffix}.exe`, `TestApp-1.1.0-full.nupkg`)
+      expectedFileNames.push("RELEASES", `${productName} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
 
       if (buildOptions != null && buildOptions.remoteReleases != null) {
-        expectedFileNames.push(`${productName}-1.1.0-delta.nupkg`)
+        expectedFileNames.push(`${appInfo.name}-${convertVersion(appInfo.version)}-delta.nupkg`)
       }
 
-      artifactNames.push(`TestApp-Setup-1.1.0${archSuffix}.exe`)
+      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
     }
     else if (target === "nsis") {
-      expectedFileNames.push(`${productName} Setup 1.1.0${archSuffix}.exe`)
-      artifactNames.push(`TestApp-Setup-1.1.0${archSuffix}.exe`)
+      expectedFileNames.push(`${productName} Setup ${appInfo.version}${archSuffix}.exe`)
+      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
     }
     else {
-      expectedFileNames.push(`${productName}-1.1.0${archSuffix}-win.${target}`)
-
-      artifactNames.push(`TestApp-1.1.0${archSuffix}-win.${target}`)
+      expectedFileNames.push(`${productName}-${appInfo.version}${archSuffix}-win.${target}`)
+      artifactNames.push(`${appInfo.name}-${appInfo.version}${archSuffix}-win.${target}`)
     }
   }
 
-  assertThat(getFileNames(artifacts)).containsAll(checkOptions == null || checkOptions.expectedArtifacts == null ? expectedFileNames : checkOptions.expectedArtifacts)
+  assertThat(getFileNames(artifacts)).containsAll(expectedFileNames)
 
-  if (!squirrel || (checkOptions != null && checkOptions.expectedArtifacts != null)) {
+  if (!squirrel) {
     return
   }
 
@@ -293,7 +296,7 @@ async function checkWindowsResult(packager: Packager, targets: Array<string>, ch
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
-    <version>1.1.0</version>
+    <version>${convertVersion(appInfo.version)}</version>
     <title>${productName}</title>
     <authors>Foo Bar</authors>
     <owners>Foo Bar</owners>

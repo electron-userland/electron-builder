@@ -1,5 +1,6 @@
 import { Release, Asset } from "gh-release"
-import { log, warn, isEmptyOrSpaces } from "./util"
+import { isEmptyOrSpaces } from "./util"
+import { log, warn } from "./log"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
@@ -73,7 +74,7 @@ export class GitHubPublisher implements Publisher {
     }
 
     if (createReleaseIfNotExists) {
-      log("Release %s doesn't exists, creating one", this.tag)
+      log(`Release this.tag doesn't exists, creating one`)
       return this.createRelease()
     }
     else {
@@ -117,7 +118,11 @@ export class GitHubPublisher implements Publisher {
             .pipe(progressStream({
               length: fileStat.size,
               time: 1000
-            }, progress => progressBar == null ? console.log(".") : progressBar.tick(progress.delta)))
+            }, progress => {
+              if (progressBar != null) {
+                progressBar.tick(progress.delta)
+              }
+            }))
             .pipe(request)
         })
       }
@@ -125,7 +130,7 @@ export class GitHubPublisher implements Publisher {
         if (e instanceof HttpError) {
           if (e.response.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
-            log("Artifact %s already exists, overwrite one", fileName)
+            log(`Artifact ${fileName} already exists, overwrite one`)
             const assets = await gitHubRequest<Array<Asset>>(`/repos/${this.owner}/${this.repo}/releases/${release.id}/assets`, this.token)
             for (let asset of assets) {
               if (asset!.name === fileName) {
@@ -134,7 +139,7 @@ export class GitHubPublisher implements Publisher {
               }
             }
 
-            log("Artifact %s not found, trying to upload again", fileName)
+            log(`Artifact ${fileName} not found, trying to upload again`)
             continue
           }
           else if (e.response.statusCode === 502 && badGatewayCount++ < 3) {

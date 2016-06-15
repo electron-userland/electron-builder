@@ -64,12 +64,6 @@ test("custom output dir", () => assertPack("test-app-one", allPlatforms(false), 
   }
 }))
 
-test("productName with space", () => assertPack("test-app-one", allPlatforms(), {
-  tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
-    data.productName = "Test App Cool"
-  })
-}))
-
 test("build in the app package.json", t => t.throws(assertPack("test-app", allPlatforms(), {
   tempDirCreated: it => modifyPackageJson(it, data => {
     data.build = {

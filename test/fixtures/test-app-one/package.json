@@ -1,6 +1,7 @@
 {
   "private": true,
   "name": "TestApp",
+  "productName": "Test App",
   "version": "1.1.0",
   "homepage": "http://foo.example.com",
   "description": "Test Application (test quite \" #378)",

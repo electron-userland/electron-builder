@@ -28,6 +28,7 @@
     "../node_modules/electron-osx-sign-tf/index.d.ts"
   ],
   "files": [
+    "../typings/ansi-escapes.d.ts",
     "../typings/appdmg.d.ts",
     "../typings/asar.d.ts",
     "../typings/compareVersions.d.ts",
@@ -45,8 +46,10 @@
     "../typings/modules/glob/index.d.ts",
     "../typings/modules/minimatch/index.d.ts",
     "../typings/node.d.ts",
+    "../typings/pretty-ms.d.ts",
     "../typings/progress-stream.d.ts",
     "../typings/read-package-json.d.ts",
+    "../typings/sanitize-filename.d.ts",
     "../typings/signcode.d.ts",
     "../typings/uuid-1345.d.ts",
     "../typings/yargs.d.ts",

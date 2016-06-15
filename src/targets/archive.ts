@@ -19,7 +19,7 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
   "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
 }
 
-export async function archiveApp(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string): Promise<any> {
+export async function archiveApp(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<any> {
   const storeOnly = compression === "store"
 
   if (format.startsWith("tar.")) {
@@ -41,23 +41,21 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
   }
 
   const args = debug7zArgs("a")
-  if (compression === "maximum") {
-    if (format === "7z" || format.endsWith(".7z")) {
-      args.push("-mx=9", "-mfb=64", "-md=32m", "-ms=on")
+  if (format === "7z" || format.endsWith(".7z")) {
+    if (!storeOnly) {
+      // 7z is very fast, so, use ultra compression
+      args.push("-mx=9", "-mfb=64", "-md=64m", "-ms=on")
     }
-    else if (format === "zip") {
+  }
+  else if (format === "zip") {
+    if (compression === "maximum") {
       // http://superuser.com/a/742034
       //noinspection SpellCheckingInspection
       args.push("-mfb=258", "-mpass=15")
     }
-    else {
-      args.push("-mx=9")
-    }
   }
-  else if (storeOnly) {
-    if (format !== "zip") {
-      args.push("-mx=1")
-    }
+  else if (compression === "maximum") {
+    args.push("-mx=9")
   }
 
   // remove file before - 7z doesn't overwrite file, but update
@@ -72,10 +70,10 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
     args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
   }
 
-  args.push(outFile, dirToArchive)
+  args.push(outFile, withoutDir ? "." : dirToArchive)
 
   await spawn(path7za, args, {
-    cwd: path.dirname(dirToArchive),
+    cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
     stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
 }

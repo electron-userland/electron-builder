@@ -6,25 +6,18 @@ import * as path from "path"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export interface ProjectMetadataProvider {
-  metadata: AppMetadata
-  devMetadata: Metadata
-}
-
 export interface RepositorySlug {
   user: string
   project: string
 }
 
-export class InfoRetriever {
-  _info: Promise<Info> | null
+let info: Promise<Info> | null
 
-  getInfo(provider?: ProjectMetadataProvider): Promise<Info | null> {
-    if (this._info == null) {
-      this._info = getInfo(provider)
-    }
-    return this._info
+export function getRepositoryInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<Info | null> {
+  if (info == null) {
+    info = _getInfo(metadata, devMetadata)
   }
+  return info
 }
 
 async function getGitUrlFromGitConfig(): Promise<string | null> {
@@ -55,8 +48,8 @@ async function getGitUrlFromGitConfig(): Promise<string | null> {
   return null
 }
 
-async function getInfo(provider?: ProjectMetadataProvider | null): Promise<RepositorySlug | null> {
-  const repo = provider == null ? null : (provider.devMetadata.repository || provider.metadata.repository)
+async function _getInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<RepositorySlug | null> {
+  const repo = metadata == null ? null : (devMetadata!.repository || metadata!.repository)
   if (repo == null) {
     let url = process.env.TRAVIS_REPO_SLUG
     if (url == null) {

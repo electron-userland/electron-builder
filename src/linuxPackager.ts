@@ -1,6 +1,6 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, smarten, getArchSuffix } from "./platformPackager"
+import { PlatformPackager, BuildInfo, smarten } from "./platformPackager"
 import { Platform, LinuxBuildOptions, Arch } from "./metadata"
 import { exec, debug, use, getTempName } from "./util"
 import { outputFile, readFile, remove, readdir, emptyDir } from "fs-extra-p"
@@ -25,8 +25,8 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     super(info)
 
     this.buildOptions = Object.assign({
-      name: this.metadata.name,
-      description: this.metadata.description,
+      name: this.appInfo.name,
+      description: this.appInfo.description,
     }, this.customBuildOptions)
 
     if (!this.hasOnlyDirTarget()) {
@@ -77,16 +77,16 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
-    const tempFile = path.join(tempDir, this.appName + ".desktop")
+    const tempFile = path.join(tempDir, this.appInfo.productName + ".desktop")
     await outputFile(tempFile, this.buildOptions.desktop || `[Desktop Entry]
-Name=${this.appName}
+Name=${this.appInfo.productName}
 Comment=${this.buildOptions.description}
-Exec="${installPrefix}/${this.appName}/${this.appName}"
+Exec="${installPrefix}/${this.appInfo.productName}/${this.appInfo.productName}"
 Terminal=false
 Type=Application
-Icon=${this.metadata.name}
+Icon=${this.appInfo.name}
 `)
-    return [`${tempFile}=/usr/share/applications/${this.appName}.desktop`]
+    return [`${tempFile}=/usr/share/applications/${this.appInfo.productName}.desktop`]
   }
 
   // must be name without spaces and other special characters, but not product name used
@@ -101,7 +101,7 @@ Icon=${this.metadata.name}
           try {
             const size = parseInt(file!, 10)
             if (size > 0) {
-              mappings.push(`${pngIconsDir}/${file}=/usr/share/icons/hicolor/${size}x${size}/apps/${this.metadata.name}.png`)
+              mappings.push(`${pngIconsDir}/${file}=/usr/share/icons/hicolor/${size}x${size}/apps/${this.appInfo.name}.png`)
             }
           }
           catch (e) {
@@ -144,7 +144,7 @@ Icon=${this.metadata.name}
 
     await BluebirdPromise.all(promises)
 
-    const appName = this.metadata.name
+    const appName = this.appInfo.name
 
     function createMapping(size: string) {
       return `${tempDir}/icon_${size}x${size}x32.png=/usr/share/icons/hicolor/${size}x${size}/apps/${appName}.png`
@@ -169,7 +169,7 @@ Icon=${this.metadata.name}
 
     const templateOptions = Object.assign({
       // old API compatibility
-      executable: this.appName,
+      executable: this.appInfo.productName,
     }, this.buildOptions)
 
     const afterInstallTemplate = this.buildOptions.afterInstall || path.join(defaultTemplatesDir, "after-install.tpl")
@@ -186,9 +186,9 @@ Icon=${this.metadata.name}
     for (let target of targets) {
       target = target === "default" ? "deb" : target
       if (target !== "dir" && target !== "zip" && target !== "7z" && !target.startsWith("tar.")) {
-        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
+        const destination = path.join(outDir, this.generateName(target, arch, true /* on Linux we use safe name — without space */))
         await this.buildPackage(destination, target, this.buildOptions, appOutDir, arch)
-        this.dispatchArtifactCreated(destination)
+        this.dispatchArtifactCreated(destination, this.generateName(target, arch, true))
       }
     }
 
@@ -197,9 +197,9 @@ Icon=${this.metadata.name}
     // for some reasons in parallel to fmp we cannot use tar
     for (let target of targets) {
       if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
-        const destination = path.join(outDir, `${this.metadata.name}-${this.metadata.version}${getArchSuffix(arch)}.${target}`)
+        const destination = path.join(outDir, this.generateName(target, arch, true))
         promises.push(this.archiveApp(target, appOutDir, destination)
-          .then(() => this.dispatchArtifactCreated(destination)))
+          .then(() => this.dispatchArtifactCreated(destination, this.generateName(target, arch, true))))
       }
     }
 
@@ -211,7 +211,7 @@ Icon=${this.metadata.name}
   private async buildPackage(destination: string, target: string, options: LinuxBuildOptions, appOutDir: string, arch: Arch): Promise<any> {
     const scripts = await this.scriptFiles
 
-    const projectUrl = await this.computePackageUrl()
+    const projectUrl = await this.appInfo.computePackageUrl()
     if (projectUrl == null) {
       throw new Error("Please specify project homepage, see https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage")
     }
@@ -222,14 +222,14 @@ Icon=${this.metadata.name}
       "-s", "dir",
       "-t", target,
       "--architecture", arch === Arch.ia32 ? "i386" : "amd64",
-      "--name", this.metadata.name,
+      "--name", this.appInfo.name,
       "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
       "--description", smarten(target === "rpm" ? this.buildOptions.description! : `${synopsis || ""}\n ${this.buildOptions.description}`),
       "--maintainer", author,
       "--vendor", options.vendor || author,
-      "--version", this.metadata.version,
+      "--version", this.appInfo.version,
       "--package", destination,
       "--url", projectUrl,
     ]
@@ -269,11 +269,11 @@ Icon=${this.metadata.name}
     }
 
     use(this.metadata.license || this.devMetadata.license, it => args.push("--license", it!))
-    use(this.computeBuildNumber(), it => args.push("--iteration", it!))
+    use(this.appInfo.buildNumber, it => args.push("--iteration", it!))
 
     use(options.fpm, it => args.push(...<any>it))
 
-    args.push(`${appOutDir}/=${installPrefix}/${this.appName}`)
+    args.push(`${appOutDir}/=${installPrefix}/${this.appInfo.productName}`)
     args.push(...<any>(await this.packageFiles)!)
     await exec(await this.fpmPath, args)
   }

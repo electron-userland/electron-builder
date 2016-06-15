@@ -2,7 +2,8 @@ import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, OsXBuildOptions, MasBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { log, debug, warn, isEmptyOrSpaces } from "./util"
+import { debug, isEmptyOrSpaces } from "./util"
+import { log, warn, task } from "./log"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity, appleCertificatePrefixes, CertType } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
@@ -50,6 +51,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       // osx-sign - disable warning
       const appOutDir = path.join(outDir, "mas")
       const masBuildOptions = deepAssign({}, this.customBuildOptions, (<any>this.devMetadata.build)["mas"])
+      //noinspection JSUnusedGlobalSymbols
       await this.doPack(Object.assign({}, packOptions, {platform: "mas", "osx-sign": false, generateFinalBasename: function () { return "mas" }}), outDir, appOutDir, arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)
     }
@@ -126,10 +128,9 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
 
     const identity = codeSigningInfo.name
-    log(`Signing app (identity: ${identity})`)
 
     const baseSignOptions: BaseSignOptions = {
-      app: path.join(appOutDir, `${this.appName}.app`),
+      app: path.join(appOutDir, `${this.appInfo.productName}.app`),
       platform: masOptions == null ? "darwin" : "mas",
       keychain: <any>codeSigningInfo.keychainName,
       version: this.info.electronVersion
@@ -162,15 +163,15 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
     }
 
-    await this.doSign(signOptions)
+    await task(`Signing app (identity: ${identity})`, this.doSign(signOptions))
 
     if (masOptions != null) {
-      const pkg = path.join(appOutDir, `${this.appName}-${this.metadata.version}.pkg`)
+      const pkg = path.join(appOutDir, `${this.appInfo.productName}-${this.appInfo.version}.pkg`)
       await this.doFlat(Object.assign({
         pkg: pkg,
         identity: codeSigningInfo.installerName,
       }, baseSignOptions))
-      this.dispatchArtifactCreated(pkg, `${this.metadata.name}-${this.metadata.version}.pkg`)
+      this.dispatchArtifactCreated(pkg, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
     }
   }
 
@@ -184,7 +185,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
   protected async computeEffectiveDistOptions(appOutDir: string): Promise<appdmg.Specification> {
     const specification: appdmg.Specification = deepAssign({
-      title: this.appName,
+      title: this.appInfo.productName,
       "icon-size": 80,
       contents: [
         {
@@ -214,12 +215,16 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
     }
 
-    specification.contents[1].path = path.join(appOutDir, this.appName + ".app")
+    specification.contents[1].path = path.join(appOutDir, this.appInfo.productName + ".app")
     return specification
   }
 
   protected packageInDistributableFormat(appOutDir: string, targets: Array<string>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
+      if (target === "dir") {
+        continue
+      }
+
       if (target === "dmg" || target === "default") {
         promises.push(this.createDmg(appOutDir))
       }
@@ -227,18 +232,16 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       if (target !== "mas" && target !== "dmg") {
         const format = target === "default" ? "zip" : target
         log(`Creating OS X ${format}`)
-        // for default we use mac to be compatible with Squirrel.Mac
-        const classifier = target === "default" ? "mac" : "osx"
         // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(appOutDir, `${this.appName}-${this.metadata.version}-${classifier}.${format}`)
+        const outFile = path.join(appOutDir, this.generateName2(format, "mac", false))
         promises.push(this.archiveApp(format, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, `${this.metadata.name}-${this.metadata.version}-${classifier}.${format}`)))
+          .then(() => this.dispatchArtifactCreated(outFile, this.generateName2(format, "mac", true))))
       }
     }
   }
 
   private async createDmg(appOutDir: string) {
-    const artifactPath = path.join(appOutDir, `${this.appName}-${this.metadata.version}.dmg`)
+    const artifactPath = path.join(appOutDir, `${this.appInfo.productName}-${this.appInfo.version}.dmg`)
     await new BluebirdPromise<any>(async(resolve, reject) => {
       log("Creating DMG")
       const dmgOptions = {
@@ -263,7 +266,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
     })
 
-    this.dispatchArtifactCreated(artifactPath, `${this.metadata.name}-${this.metadata.version}.dmg`)
+    this.dispatchArtifactCreated(artifactPath, `${this.appInfo.name}-${this.appInfo.version}.dmg`)
   }
 }
 
