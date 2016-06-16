@@ -181,7 +181,7 @@ export async function statOrNull(file: string): Promise<Stats | null> {
 
 export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
   if (userAppDir != null) {
-    const absolutePath = path.join(projectDir, userAppDir)
+    const absolutePath = path.resolve(projectDir, userAppDir)
     const stat = await statOrNull(absolutePath)
     if (stat == null) {
       throw new Error(`Application directory ${userAppDir} doesn't exists`)
