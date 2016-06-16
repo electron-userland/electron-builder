@@ -166,10 +166,11 @@ export async function findIdentity(namePrefix: CertType, qualifier?: string): Pr
   }
 
   // https://github.com/electron-userland/electron-builder/issues/484
+  //noinspection SpellCheckingInspection
   const lines = (await findIdentityRawResult)
     .trim()
     .split("\n")
-    .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone "))
+    .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
 
   for (let line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
