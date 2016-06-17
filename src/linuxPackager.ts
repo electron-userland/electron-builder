@@ -4,7 +4,7 @@ import { PlatformPackager, BuildInfo, smarten } from "./platformPackager"
 import { Platform, LinuxBuildOptions, Arch } from "./metadata"
 import { exec, debug, use, getTempName } from "./util"
 import { outputFile, readFile, remove, readdir, emptyDir } from "fs-extra-p"
-import { downloadFpm } from "./fpmDownload"
+import { downloadFpm } from "./util/binDownload"
 import { tmpdir } from "os"
 const template = require("lodash.template")
 

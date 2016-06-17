@@ -252,12 +252,16 @@ async function checkWineVersion(checkPromise: Promise<string>) {
       throw new Error(wineError("wine is required"))
     }
     else {
-      throw new Error("Cannot check wine version: " + e)
+      throw new Error(`Cannot check wine version: ${e}`)
     }
   }
 
   if (wineVersion.startsWith("wine-")) {
     wineVersion = wineVersion.substring("wine-".length)
+  }
+
+  if (wineVersion.split(".").length === 2) {
+    wineVersion += ".0"
   }
 
   if (semver.lt(wineVersion, "1.8.0")) {

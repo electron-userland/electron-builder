@@ -12,5 +12,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="electron-builder-for-tests" level="project" />
+    <orderEntry type="library" name="libs" level="project" />
   </component>
 </module>

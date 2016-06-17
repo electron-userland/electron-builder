@@ -71,7 +71,6 @@
     "src/cliOptions.ts",
     "src/codeSign.ts",
     "src/errorMessages.ts",
-    "src/fpmDownload.ts",
     "src/gitHubPublisher.ts",
     "src/gitHubRequest.ts",
     "src/httpRequest.ts",
@@ -89,6 +88,7 @@
     "src/targets/nsis.ts",
     "src/targets/squirrelWindows.ts",
     "src/util.ts",
+    "src/util/binDownload.ts",
     "src/util/filter.ts",
     "src/winPackager.ts"
   ]

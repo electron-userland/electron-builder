@@ -1,13 +1,13 @@
-import { statOrNull, spawn, debug, debug7zArgs, getTempName } from "./util"
-import { writeFile, rename, remove, unlink, emptyDir } from "fs-extra-p"
-import { download } from "./httpRequest"
+import { statOrNull, spawn, debug, debug7zArgs, getTempName } from "../util"
+import { rename, remove, unlink, emptyDir } from "fs-extra-p"
+import { download } from "../httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
 import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("../awaiter")
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 
@@ -66,11 +66,7 @@ async function doGetBin(name: string, dirName: string, url: string, sha2?: strin
       }),
     unlink(archiveName),
   ])
-  await BluebirdPromise.all([
-    remove(tempUnpackDir),
-    writeFile(path.join(dirPath, ".lastUsed"), Date.now().toString())
-  ])
-
+  await remove(tempUnpackDir)
   debug(`${name}} downloaded to ${dirPath}`)
   return dirPath
 }

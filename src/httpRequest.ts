@@ -5,6 +5,8 @@ import { createWriteStream, ensureDir } from "fs-extra-p"
 import { parse as parseUrl } from "url"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
+import { createHash } from "crypto"
+import { Transform } from "stream"
 
 const maxRedirects = 10
 
@@ -32,7 +34,7 @@ export function addTimeOutHandler(request: ClientRequest, callback: (error: Erro
   })
 }
 
-function doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error) => void) {
+function doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
   const ensureDirPromise = options.skipDirCreation ? BluebirdPromise.resolve() : ensureDir(path.dirname(destination))
 
   const parsedUrl = parseUrl(url)
@@ -45,7 +47,7 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
     }
   }, (response: IncomingMessage) => {
     if (response.statusCode >= 400) {
-      callback(new Error("Request error, status " + response.statusCode + ": " + response.statusMessage))
+      callback(new Error(`Cannot download "${url}", status ${response.statusCode}: ${response.statusMessage}`))
       return
     }
 
@@ -60,7 +62,7 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
       return
     }
 
-    const sha1Header = response.headers["X-Checksum-Sha1"]
+    const sha1Header = response.headers["X-Checksum-Sha2"]
     if (sha1Header != null && options.sha2 != null) {
       // todo why bintray doesn't send this header always
       if (sha1Header == null) {
@@ -73,9 +75,17 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
 
     ensureDirPromise
       .then(() => {
-        const downloadStream = createWriteStream(destination)
-        response.pipe(downloadStream)
-        downloadStream.on("finish", callback)
+        const fileOut = createWriteStream(destination)
+        if (options.sha2 == null) {
+          response.pipe(fileOut)
+        }
+        else {
+          response
+            .pipe(new DigestTransform(options.sha2))
+            .pipe(fileOut)
+        }
+
+        fileOut.on("finish", callback)
       })
       .catch(callback)
 
@@ -93,4 +103,22 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
   addTimeOutHandler(request, callback)
   request.on("error", callback)
   request.end()
+}
+
+class DigestTransform extends Transform {
+  readonly digester = createHash("sha256")
+
+  constructor(private expected: string) {
+   super()
+  }
+
+  _transform(chunk: any, encoding: string, callback: Function) {
+    this.digester.update(chunk)
+    callback(null, chunk)
+  }
+
+  _flush(callback: Function): void {
+    const hash = this.digester.digest("hex")
+    callback(hash === this.expected ? null : new Error(`SHA2 checksum mismatch, expected ${this.expected}, got ${hash}`))
+  }
 }

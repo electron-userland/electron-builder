@@ -3,7 +3,7 @@ import { Arch, NsisOptions } from "../metadata"
 import { exec, debug } from "../util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { getBin } from "../fpmDownload"
+import { getBin } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { getArchSuffix } from "../platformPackager"
 import { archiveApp } from "./archive"
@@ -14,13 +14,12 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../awaiter")
 
-const NSIS_VERSION = "3.0rc1"
-const NSIS_SHA2 = "d9f8ad16d516f907db59814da4bc5da53619365ed8de42e21db69d3cd2afd8ec"
+const NSIS_SHA2 = "9ab9b92197c97fc910b506fa85225f7f41a80914fecadb9ae4aa496e7c2cc9a8"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-const nsisPathPromise = getBin("nsis", `nsis-${NSIS_VERSION}`, `https://dl.bintray.com/electron-userland/bin/nsis-${NSIS_VERSION}.7z`, NSIS_SHA2)
+const nsisPathPromise = getBin("nsis", `nsis-3.0rc1`, `https://dl.bintray.com/electron-userland/bin/nsis-3.0.0-rc.1.1.7z`, NSIS_SHA2)
 
 export default class NsisTarget {
   private readonly nsisOptions: NsisOptions
@@ -152,7 +151,7 @@ export default class NsisTarget {
 
     args.push(path.join(__dirname, "..", "..", "templates", "nsis", "installer.nsi"))
 
-    const binDir = process.platform === "darwin" ? "osx" : (process.platform === "win32" ? "Bin" : "linux")
+    const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
     const nsisPath = await nsisPathPromise
     // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as OS X/Windows version, so, we explicitly set NSISDIR
 

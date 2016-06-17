@@ -29,6 +29,14 @@ mv a/Plugins/x86-unicode/WinShell.dll Plugins/x86-unicode/WinShell.dll
 unlink a.zip
 rm -rf a
 
+# 7z
+curl -L http://nsis.sourceforge.net/mediawiki/images/9/93/Nsis7z.zip > a.zip
+7za x a.zip -oa
+mv a/Plugins/x86-unicode/nsis7z.dll Plugins/x86-unicode/nsis7z.dll
+unlink a.zip
+rm -rf a
+
+
 dir=${PWD##*/}
 cd ..
 rm -rf ${dir}.7z
