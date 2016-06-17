@@ -153,7 +153,33 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const appPath = path.join(buildDir, appRelativePath)
       const resourcesPath = path.dirname(appPath)
 
-      let promise: Promise<any> | null = null
+      const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
+      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+        const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
+        const productionDepsSet = new Set(result[1])
+
+        // npm returns real path, so, we should use relative path to avoid any mismatch
+        const realAppDirPath = await realpath(this.info.appDir)
+
+        for (let it of result[0]) {
+          if (!productionDepsSet.has(it)) {
+            if (it.startsWith(realAppDirPath)) {
+              it = it.substring(realAppDirPath.length + 1)
+            }
+            else if (it.startsWith(this.info.appDir)) {
+              it = it.substring(this.info.appDir.length + 1)
+            }
+            ignoreFiles.add(it)
+          }
+        }
+      }
+
+      let patterns = this.getFilePatterns("files", customBuildOptions)
+      if (patterns == null || patterns.length === 0) {
+        patterns = ["**/*"]
+      }
+
+      let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
       if (deprecatedIgnore) {
         if (typeof deprecatedIgnore === "function") {
@@ -162,37 +188,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         else {
           warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
-
-        promise = copy(this.info.appDir, appPath, {filter: userIgnoreFilter(opts), dereference: true})
+        rawFilter = userIgnoreFilter(opts)
       }
-      else {
-        const ignoreFiles = new Set([path.relative(this.info.appDir, opts.out!), path.relative(this.info.appDir, this.buildResourcesDir)])
-        if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-          const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
-          const productionDepsSet = new Set(result[1])
 
-          // npm returns real path, so, we should use relative path to avoid any mismatch
-          const realAppDirPath = await realpath(this.info.appDir)
-
-          for (let it of result[0]) {
-            if (!productionDepsSet.has(it)) {
-              if (it.startsWith(realAppDirPath)) {
-                it = it.substring(realAppDirPath.length + 1)
-              }
-              else if (it.startsWith(this.info.appDir)) {
-                it = it.substring(this.info.appDir.length + 1)
-              }
-              ignoreFiles.add(it)
-            }
-          }
-        }
-
-        let patterns = this.getFilePatterns("files", customBuildOptions)
-        if (patterns == null || patterns.length === 0) {
-          patterns = ["**/*"]
-        }
-        promise = copyFiltered(this.info.appDir, appPath, this.getParsedPatterns(patterns, arch), true, ignoreFiles)
-      }
+      const promise = copyFiltered(this.info.appDir, appPath, this.getParsedPatterns(patterns, arch), true, ignoreFiles, rawFilter)
 
       const promises = [promise]
       if (this.info.electronVersion[0] === "0") {
@@ -452,13 +451,18 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
 }
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
-function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false, ignoreFiles?: Set<string>): Promise<any> {
+function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean): Promise<any> {
   return copy(src, destination, {
     dereference: dereference,
     filter: it => {
       if (src === it) {
         return true
       }
+
+      if (rawFilter != null && !rawFilter(it)) {
+        return false
+      }
+
       let relative = it.substring(src.length + 1)
 
       // yes, check before path sep normalization

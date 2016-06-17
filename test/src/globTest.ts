@@ -48,13 +48,19 @@ test.ifDevOrLinuxCi("files", () => {
   })
 })
 
-test.ifDevOrLinuxCi("ignore node_modules known dev dep", () => {
+// skip on OS X because we want test only / and \
+test.ifNotCiOsx("ignore node_modules known dev dep", () => {
+  const build: any = {
+    asar: false,
+    ignore: (file: string) => {
+      return file === "/ignoreMe"
+    }
+  }
+
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     devMetadata: {
-      build: {
-        asar: false,
-      }
+      build: build
     }
   }, {
     tempDirCreated: projectDir => {
@@ -65,10 +71,14 @@ test.ifDevOrLinuxCi("ignore node_modules known dev dep", () => {
             }, data.devDependencies)
         }),
         outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
+        outputFile(path.join(projectDir, "ignoreMe"), ""),
       ])
     },
     packed: projectDir => {
-      return assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "node_modules", "electron-osx-sign")).doesNotExist()
+      return BluebirdPromise.all([
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "node_modules", "electron-osx-sign")).doesNotExist(),
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app", "ignoreMe")).doesNotExist(),
+      ])
     },
   })
 })
