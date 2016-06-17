@@ -6,14 +6,14 @@ import * as path from "path"
 import { readJson, stat, Stats } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import debugFactory = require("debug")
-import { Debugger } from "~debug/node"
+import IDebugger = debug.IDebugger
 import { warn, task } from "./log"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export const debug: Debugger = debugFactory("electron-builder")
-export const debug7z: Debugger = debugFactory("electron-builder:7z")
+export const debug: IDebugger = debugFactory("electron-builder")
+export const debug7z: IDebugger = debugFactory("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 

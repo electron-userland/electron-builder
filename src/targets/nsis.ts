@@ -20,19 +20,12 @@ const NSIS_SHA2 = "d9f8ad16d516f907db59814da4bc5da53619365ed8de42e21db69d3cd2afd
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-export default class NsisTarget {
-  private readonly nsisPath: Promise<string>
+const nsisPathPromise = getBin("nsis", `nsis-${NSIS_VERSION}`, `https://dl.bintray.com/electron-userland/bin/nsis-${NSIS_VERSION}.7z`, NSIS_SHA2)
 
+export default class NsisTarget {
   private readonly nsisOptions: NsisOptions
 
   constructor(private packager: WinPackager, private outDir: string, private appOutDir: string) {
-    if (process.env.USE_SYSTEM_MAKENSIS) {
-      this.nsisPath = BluebirdPromise.resolve("makensis")
-    }
-    else {
-      this.nsisPath = getBin("nsis", `nsis-${NSIS_VERSION}`, `https://dl.bintray.com/electron-userland/bin/nsis-${NSIS_VERSION}.7z`, NSIS_SHA2)
-    }
-
     this.nsisOptions = packager.info.devMetadata.build.nsis || Object.create(null)
   }
 
@@ -160,7 +153,7 @@ export default class NsisTarget {
     args.push(path.join(__dirname, "..", "..", "templates", "nsis", "installer.nsi"))
 
     const binDir = process.platform === "darwin" ? "osx" : (process.platform === "win32" ? "Bin" : "linux")
-    const nsisPath = await this.nsisPath
+    const nsisPath = await nsisPathPromise
     // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as OS X/Windows version, so, we explicitly set NSISDIR
 
     await exec(path.join(nsisPath, binDir, process.platform === "win32" ? "makensis.exe" : "makensis"), args, {

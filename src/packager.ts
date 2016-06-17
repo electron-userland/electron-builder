@@ -13,7 +13,7 @@ import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 import deepAssign = require("deep-assign")
-import compareVersions = require("compare-versions")
+import semver = require("semver")
 import { warn, log } from "./log"
 import { AppInfo } from "./appInfo"
 
@@ -260,7 +260,7 @@ async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion = wineVersion.substring("wine-".length)
   }
 
-  if (compareVersions(wineVersion, "1.8") === -1) {
+  if (semver.lt(wineVersion, "1.8.0")) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
 }

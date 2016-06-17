@@ -112,11 +112,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
       if (target === "squirrel" || target === "default") {
         const helperClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-        promises.push(task(`Building NSIS installer`, new helperClass(this, appOutDir).build(arch)))
+        promises.push(task(`Building Squirrel.Windows installer`, new helperClass(this, appOutDir).build(arch)))
       }
       else if (target === "nsis") {
         const helperClass: typeof NsisTarget = require("./targets/nsis").default
-        promises.push(new helperClass(this, outDir, appOutDir).build(arch))
+        promises.push(task(`Building NSIS installer`, new helperClass(this, outDir, appOutDir).build(arch)))
       }
       else {
         log(`Creating Windows ${target}`)

@@ -3,8 +3,8 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
-import { readdir, copy, unlink, remove, realpath } from "fs-extra-p"
-import { statOrNull, use, exec } from "./util"
+import { readdir, unlink, remove, realpath } from "fs-extra-p"
+import { statOrNull, use } from "./util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
@@ -13,6 +13,7 @@ import { checkFileInPackage, createAsarArchive } from "./asarUtil"
 import deepAssign = require("deep-assign")
 import { warn, log, task } from "./log"
 import { AppInfo } from "./appInfo"
+import { listDependencies, createFilter, copyFiltered } from "./util/filter"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -191,7 +192,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         rawFilter = userIgnoreFilter(opts)
       }
 
-      const promise = copyFiltered(this.info.appDir, appPath, this.getParsedPatterns(patterns, arch), true, ignoreFiles, rawFilter)
+      const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
+      const promise = asarOptions == null ?
+        copyFiltered(this.info.appDir, appPath, filter, true)
+        : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise]
       if (this.info.electronVersion[0] === "0") {
@@ -203,14 +207,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       await BluebirdPromise.all(promises)
-
-      if (opts.prune != null) {
-        warn("prune is deprecated — development dependencies are never copied in any case")
-      }
-
-      if (asarOptions != null) {
-        await createAsarArchive(appPath, resourcesPath, asarOptions)
-      }
     }
     await task(`Packaging for platform ${options.platform} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
 
@@ -229,6 +225,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
+    if ((<any>this.devMetadata.build).prune != null) {
+      warn("prune is deprecated — development dependencies are never copied in any case")
+    }
+
     //noinspection JSUnusedGlobalSymbols
     const options: any = deepAssign({
       dir: this.info.appDir,
@@ -300,7 +300,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents") : appOutDir
     const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, this.getParsedPatterns(patterns, arch))
+    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)))
   }
 
   private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {
@@ -424,86 +424,7 @@ export function smarten(s: string): string {
   return s
 }
 
-// https://github.com/joshwnj/minimatch-all/blob/master/index.js
-function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
-  let match = false
-  for (let pattern of patterns) {
-    // If we've got a match, only re-test for exclusions.
-    // if we don't have a match, only re-test for inclusions.
-    if (match !== pattern.negate) {
-      continue
-    }
-
-    // partial match — pattern: foo/bar.txt path: foo — we must allow foo
-    // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron-prebuilt)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
-    match = pattern.match(path, !pattern.negate)
-    if (!match && !pattern.negate) {
-      const rawPattern = pattern.pattern
-      // 1 - slash
-      const patternLengthPlusSlash = rawPattern.length + 1
-      if (path.length > patternLengthPlusSlash) {
-        // foo: include all directory content
-        match = path[rawPattern.length] === "/" && path.startsWith(rawPattern)
-      }
-    }
-  }
-  return match
-}
-
-// we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
-function copyFiltered(src: string, destination: string, patterns: Array<Minimatch>, dereference: boolean = false, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean): Promise<any> {
-  return copy(src, destination, {
-    dereference: dereference,
-    filter: it => {
-      if (src === it) {
-        return true
-      }
-
-      if (rawFilter != null && !rawFilter(it)) {
-        return false
-      }
-
-      let relative = it.substring(src.length + 1)
-
-      // yes, check before path sep normalization
-      if (ignoreFiles != null && ignoreFiles.has(relative)) {
-        return false
-      }
-
-      if (path.sep === "\\") {
-        relative = relative.replace(/\\/g, "/")
-      }
-      return minimatchAll(relative, patterns)
-    }
-  })
-}
-
 export function computeEffectiveTargets(rawList: Array<string>, targetsFromMetadata: Array<string> | n): Array<string> {
   let targets = normalizeTargets(rawList.length === 0 ? targetsFromMetadata : rawList)
   return targets == null ? ["default"] : targets
-}
-
-async function listDependencies(appDir: string, production: boolean): Promise<Array<string>> {
-  let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = ["ls", production ? "--production" : "--dev", "--parseable"]
-  if (npmExecPath == null) {
-    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
-  }
-  else {
-    npmExecArgs.unshift(npmExecPath)
-    npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
-  }
-
-  const result = (await exec(npmExecPath, npmExecArgs, {
-    cwd: appDir,
-    stdio: "inherit",
-    maxBuffer: 1024 * 1024,
-  })).trim().split("\n")
-  if (result.length > 0 && !result[0].includes("/node_modules/")) {
-    // first line is a project dir
-    const lastIndex = result.length - 1
-    result[0] = result[lastIndex]
-    result.length = result.length - 1
-  }
-  return result
 }
