@@ -19,7 +19,7 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "1.2.1"
+const electronVersion = "1.2.3"
 
 async function main() {
   await BluebirdPromise.all([

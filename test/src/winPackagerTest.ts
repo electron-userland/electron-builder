@@ -25,7 +25,7 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
   })
 ))
 
-test.ifNotCiOsx("nsis", () => assertPack("test-app-one", _signed({
+test("nsis", () => assertPack("test-app-one", _signed({
     targets: Platform.WINDOWS.createTarget(["nsis"]),
     devMetadata: {
       build: {

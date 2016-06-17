@@ -11,7 +11,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "devDependencies": {
-    "electron-prebuilt": "^1.2.1"
+    "electron-prebuilt": "^1.2.3"
   },
   "build": {
     "appId": "org.electron-builder.testApp",
