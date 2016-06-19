@@ -276,7 +276,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly target?: Array<string> | null
 
   /*
-   A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+   *Squirrel.Windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
 
    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
 
@@ -286,23 +286,23 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly iconUrl?: string | null
 
   /*
-   The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
+   *Squirrel.Windows-only.* The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
    (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
    */
   readonly loadingGif?: string | null
 
   /*
-   Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+   *Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
    */
   readonly msi?: boolean
 
   /*
-   A URL to your existing updates. If given, these will be downloaded to create delta updates.
+   *Squirrel.Windows-only.* A URL to your existing updates. If given, these will be downloaded to create delta updates.
    */
   readonly remoteReleases?: string | null
 
   /*
-   Authentication token for remote updates
+   *Squirrel.Windows-only.* Authentication token for remote updates
    */
   readonly remoteToken?: string | null
 

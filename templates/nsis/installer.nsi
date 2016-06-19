@@ -1,3 +1,4 @@
+!include "common.nsh"
 !include "MUI2.nsh"
 !include "NsisMultiUser.nsh"
 !include "nsProcess.nsh"
@@ -8,13 +9,12 @@ Function StartApp
   ExecShell "" "$SMPROGRAMS\${PRODUCT_NAME}.lnk"
 FunctionEnd
 
-!ifndef ONE_CLICK
-  !include "boring-installer.nsh"
-!endif
-
 !ifdef ONE_CLICK
+  AutoCloseWindow true
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_UNPAGE_INSTFILES
+!else
+  !include "boring-installer.nsh"
 !endif
 
 Var startMenuLink
@@ -23,7 +23,11 @@ Var desktopLink
 Function .onInit
   !insertmacro MULTIUSER_INIT
   !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
-  !insertmacro CHECK_APP_RUNNING "install"
+
+  InitPluginsDir
+  SetCompress off
+  File /oname=$PLUGINSDIR\app.7z "${APP_ARCHIVE}"
+  SetCompress "${COMPRESS}"
 FunctionEnd
 
 Function un.onInit
@@ -34,18 +38,16 @@ FunctionEnd
 Section "install"
   SetDetailsPrint none
 
-  # delete the installed files
-  RMDir /r $INSTDIR
+  !ifdef ONE_CLICK
+    SpiderBanner::Show /MODERN
+  !endif
 
-  # define the path to which the installer should install
+  !insertmacro CHECK_APP_RUNNING "install"
+
+  RMDir /r $INSTDIR
   SetOutPath $INSTDIR
 
-  SetCompress off
-  File /oname=app.7z "${APP_ARCHIVE}"
-  SetCompress "${COMPRESS}"
-
-  Nsis7z::Extract "app.7z"
-  Delete "app.7z"
+  Nsis7z::Extract "$PLUGINSDIR\app.7z"
 
 #  <% if(fileAssociation){ %>
     # specify file association
@@ -92,7 +94,7 @@ Section "un.install"
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
 
   !ifdef ONE_CLICK
-    # strange, AutoCloseWindow=true doesn't work for uninstaller, so, just quit
+    # strange, AutoCloseWindow true doesn't work for uninstaller, so, just quit
     Quit
   !endif
 SectionEnd

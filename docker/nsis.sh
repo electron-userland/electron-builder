@@ -5,6 +5,7 @@ rm -rf Docs
 rm -rf NSIS.chm
 rm -rf Examples
 rm -rf Plugins/x86-ansi
+unlink makensisw.exe
 
 # nsProcess plugin
 curl -L http://nsis.sourceforge.net/mediawiki/images/1/18/NsProcess.zip > a.zip
@@ -36,8 +37,14 @@ mv a/Plugins/x86-unicode/nsis7z.dll Plugins/x86-unicode/nsis7z.dll
 unlink a.zip
 rm -rf a
 
+# http://nsis.sourceforge.net/SpiderBanner_plug-in
+curl -L http://nsis.sourceforge.net/mediawiki/images/4/4c/SpiderBanner_plugin.zip > a.zip
+7za x a.zip -oa
+mv a/Plugins/x86-unicode/SpiderBanner.dll Plugins/x86-unicode/SpiderBanner.dll
+unlink a.zip
+rm -rf a
+
 
 dir=${PWD##*/}
-cd ..
-rm -rf ${dir}.7z
-7za a -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on ${dir}.7z ${dir}
+rm -rf ../${dir}.7z
+7za a -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on ../${dir}.7z .

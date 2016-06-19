@@ -27,13 +27,22 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
 
 test("nsis", () => assertPack("test-app-one", _signed({
     targets: Platform.WINDOWS.createTarget(["nsis"]),
+  }), {
+  useTempDir: true,
+  }
+))
+
+test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
+    targets: Platform.WINDOWS.createTarget(["nsis"]),
     devMetadata: {
       build: {
-        productName: "Test App"
+        nsis: {
+          oneClick: false,
+        }
       }
     }
   }), {
-  useTempDir: true,
+    useTempDir: true,
   }
 ))
 

@@ -2,7 +2,7 @@
 !macro ALLOW_ONLY_ONE_INSTALLER_INSTACE
   BringToFront
   !define /ifndef SYSTYPE_PTR p ; NSIS v3.0+
-  System::Call 'kernel32::CreateMutex(${SYSTYPE_PTR}0, i1, t"${APP_ID}")?e'
+  System::Call 'kernel32::CreateMutex(${SYSTYPE_PTR}0, i1, t"${APP_GUID}")?e'
   Pop $0
   IntCmpU $0 183 0 launch launch ; ERROR_ALREADY_EXISTS
     StrLen $0 "$(^SetupCaption)"

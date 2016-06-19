@@ -17,14 +17,14 @@ export function downloadFpm(version: string, osAndArch: string): Promise<string>
     .then(it => path.join(it, "fpm"))
 }
 
-export function getBin(name: string, dirName: string, url: string, sha1?: string): Promise<string> {
+export function getBin(name: string, dirName: string, url: string, sha2?: string): Promise<string> {
   let promise = versionToPromise.get(dirName)
   // if rejected, we will try to download again
   if (promise != null && !promise.isRejected()) {
     return promise
   }
 
-  promise = <BluebirdPromise<string>>doGetBin(name, dirName, url, sha1)
+  promise = <BluebirdPromise<string>>doGetBin(name, dirName, url, sha2)
   versionToPromise.set(dirName, promise)
   return promise
 }
@@ -59,14 +59,20 @@ async function doGetBin(name: string, dirName: string, url: string, sha2?: strin
     stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
 
+  const isOldMethod = sha2 == null
+
   await BluebirdPromise.all([
-    rename(path.join(tempUnpackDir, dirName), dirPath)
+    rename(isOldMethod ? path.join(tempUnpackDir, dirName) : tempUnpackDir, dirPath)
       .catch(e => {
         console.warn(`Cannot move downloaded ${name} into final location (another process downloaded faster?): ${e}`)
       }),
     unlink(archiveName),
   ])
-  await remove(tempUnpackDir)
+
+  if (isOldMethod) {
+    await remove(tempUnpackDir)
+  }
+
   debug(`${name}} downloaded to ${dirPath}`)
   return dirPath
 }

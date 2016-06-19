@@ -14,12 +14,13 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../awaiter")
 
-const NSIS_SHA2 = "9ab9b92197c97fc910b506fa85225f7f41a80914fecadb9ae4aa496e7c2cc9a8"
+const NSIS_VERSION = "nsis-3.0.0-rc.1.2"
+const NSIS_SHA2 = "d96f714ba552a5ebccf2593ed3fee1b072b67e7bfd1b90d66a5eb0cd3ca41d16"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-const nsisPathPromise = getBin("nsis", `nsis-3.0rc1`, `https://dl.bintray.com/electron-userland/bin/nsis-3.0.0-rc.1.1.7z`, NSIS_SHA2)
+const nsisPathPromise = getBin("nsis", NSIS_VERSION, `https://dl.bintray.com/electron-userland/bin/${NSIS_VERSION}.7z`, NSIS_SHA2)
 
 export default class NsisTarget {
   private readonly nsisOptions: NsisOptions
@@ -43,6 +44,7 @@ export default class NsisTarget {
     const productName = appInfo.productName
     const defines: any = {
       APP_ID: appInfo.id,
+      APP_GUID: guid,
       PRODUCT_NAME: productName,
       INST_DIR_NAME: sanitizeFileName(productName),
       APP_DESCRIPTION: appInfo.description,
@@ -53,13 +55,6 @@ export default class NsisTarget {
       MUI_UNICON: iconPath,
 
       COMPANY_NAME: appInfo.companyName,
-      APP_EXECUTABLE_FILENAME: `${appInfo.productName}.exe`,
-      UNINSTALL_FILENAME: `Uninstall ${productName}.exe`,
-      MULTIUSER_INSTALLMODE_INSTDIR: guid,
-      MULTIUSER_INSTALLMODE_INSTALL_REGISTRY_KEY: guid,
-      MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY: guid,
-      MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME: "UninstallString",
-      MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME: "InstallLocation",
     }
 
     if (this.nsisOptions.perMachine === true) {
@@ -77,10 +72,7 @@ export default class NsisTarget {
     // so, we must strip beta
     const parsedVersion = new semver.SemVer(appInfo.version)
     const commands: any = {
-      FileBufSize: "64",
-      Name: `"${productName}"`,
       OutFile: `"${installerPath}"`,
-      Unicode: "true",
       // LoadLanguageFile: '"${NSISDIR}/Contrib/Language files/English.nlf"',
       VIProductVersion: `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${appInfo.buildNumber || "0"}`,
       // VIFileVersion: packager.appInfo.buildVersion,
@@ -91,9 +83,6 @@ export default class NsisTarget {
         `FileDescription "${appInfo.description}"`,
         `FileVersion "${appInfo.buildVersion}"`,
       ],
-      ShowInstDetails: "nevershow",
-      ShowUninstDetails: "nevershow",
-      BrandingText: `" "`,
     }
 
     if (packager.devMetadata.build.compression === "store") {
@@ -113,19 +102,18 @@ export default class NsisTarget {
     const oneClick = this.nsisOptions.oneClick !== false
     if (oneClick) {
       defines.ONE_CLICK = null
-      commands.AutoCloseWindow = "true"
     }
 
     debug(defines)
     debug(commands)
 
-    await subTask(`Executing makensis`, this.executeMakensis(defines, commands))
+    await subTask(`Executing makensis`, NsisTarget.executeMakensis(defines, commands))
     await packager.sign(installerPath)
 
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
   }
 
-  private async executeMakensis(defines: any, commands: any) {
+  private static async executeMakensis(defines: any, commands: any) {
     const args: Array<string> = []
     for (let name of Object.keys(defines)) {
       const value = defines[name]

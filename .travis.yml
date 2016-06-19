@@ -15,17 +15,6 @@ cache:
     - node_modules
     - $HOME/.electron
     - $HOME/.cache/fpm
-    - /usr/local/Cellar/wine
-    - /usr/local/Cellar/mono
-    - /usr/local/Cellar/graphicsmagick
-    - /usr/local/Cellar/freetype
-    - /usr/local/Cellar/gmp
-    - /usr/local/Cellar/openssl
-    - /usr/local/Cellar/lzip
-    - /usr/local/Cellar/libtiff
-    - /usr/local/Cellar/libtool
-    - /usr/local/Cellar/libicns
-    - /usr/local/Cellar/dpkg
 
 before_install:
   - brew install --ignore-dependencies --force-bottle gnu-tar dpkg libicns graphicsmagick lzip freetype
