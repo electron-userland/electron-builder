@@ -4,6 +4,7 @@ import { lstat, readdir } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { Stats } from "fs"
+import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -43,7 +44,8 @@ export async function createAsarArchive(src: string, resourcesPath: string, opti
     },
     filter)
 
-  await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(resourcesPath, "app.asar"), files, metadata, options)
+  // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
+  await BluebirdPromise.promisify(createPackageFromFiles)(src, path.join(resourcesPath, "app.asar"), pathSorter(files), metadata, options)
 }
 
 export async function checkFileInPackage(asarFile: string, relativeFile: string) {

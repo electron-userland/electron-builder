@@ -18,10 +18,6 @@ import { listDependencies, createFilter, copyFiltered } from "./util/filter"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"]
-
-export const DIR_TARGET = "dir"
-
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
 
@@ -68,16 +64,21 @@ export interface BuildInfo {
   appInfo: AppInfo
 }
 
+export class Target {
+  constructor(public name: string) {
+  }
+}
+
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   protected readonly options: PackagerOptions
 
-  protected readonly projectDir: string
+  readonly projectDir: string
   readonly buildResourcesDir: string
 
   readonly metadata: AppMetadata
   readonly devMetadata: DevMetadata
 
-  readonly customBuildOptions: DC
+  readonly platformSpecificBuildOptions: DC
 
   readonly resourceList: Promise<Array<string>>
 
@@ -93,7 +94,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.devMetadata = info.devMetadata
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
-    this.customBuildOptions = (<any>info.devMetadata.build)[this.platform.buildConfigurationKey] || Object.create(null)
+
+    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>info.devMetadata.build)[this.platform.buildConfigurationKey])
 
     this.resourceList = readdir(this.buildResourcesDir)
       .catch(e => {
@@ -102,6 +104,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
         return []
       })
+  }
+
+  normalizePlatformSpecificBuildOptions(options: DC | n): DC {
+    return options == null ? Object.create(null) : options
+  }
+
+  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+    throw new Error("not implemented")
   }
 
   protected getCscPassword(): string {
@@ -115,24 +125,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  protected hasOnlyDirTarget(): boolean {
-    for (let targets of this.options.targets!.get(this.platform)!.values()) {
-      for (let t of targets) {
-        if (t !== "dir") {
-          return false
-        }
-      }
-    }
-
-    const targets = normalizeTargets(this.customBuildOptions.target)
-    return targets != null && targets.length === 1 && targets[0] === "dir"
-  }
-
   get relativeBuildResourcesDirname() {
     return use(this.devMetadata.directories, it => it!.buildResources) || "build"
   }
-
-  abstract get supportedTargets(): Array<string>
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
     return path.join(outDir, `${this.platform.buildConfigurationKey}${arch === Arch.x64 ? "" : `-${Arch[arch]}`}`)
@@ -146,10 +141,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  abstract pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any>
+  abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: DC) {
-    const asarOptions = this.computeAsarOptions(customBuildOptions)
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, platformSpecificBuildOptions: DC) {
+    const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
     options.initializeApp = async (opts, buildDir, appRelativePath) => {
       const appPath = path.join(buildDir, appRelativePath)
       const resourcesPath = path.dirname(appPath)
@@ -175,7 +170,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
       }
 
-      let patterns = this.getFilePatterns("files", customBuildOptions)
+      let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
       if (patterns == null || patterns.length === 0) {
         patterns = ["**/*"]
       }
@@ -210,8 +205,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     await task(`Packaging for platform ${options.platform} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
 
-    await this.doCopyExtraFiles(true, appOutDir, arch, customBuildOptions)
-    await this.doCopyExtraFiles(false, appOutDir, arch, customBuildOptions)
+    await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
+    await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -224,11 +219,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
-  protected computePackOptions(outDir: string, appOutDir: string, arch: Arch): ElectronPackagerOptions {
-    if ((<any>this.devMetadata.build).prune != null) {
-      warn("prune is deprecated — development dependencies are never copied in any case")
-    }
-
+  protected async computePackOptions(outDir: string, appOutDir: string, arch: Arch): Promise<ElectronPackagerOptions> {
     //noinspection JSUnusedGlobalSymbols
     const options: any = deepAssign({
       dir: this.info.appDir,
@@ -239,7 +230,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       platform: this.platform.nodeName,
       arch: Arch[arch],
       version: this.info.electronVersion,
-      icon: path.join(this.buildResourcesDir, "icon"),
+      icon: await this.getIconPath(),
       overwrite: true,
       "app-version": this.appInfo.version,
       "app-copyright": this.appInfo.copyright,
@@ -258,6 +249,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     // this option only for windows-installer
     delete options.iconUrl
     return options
+  }
+
+  async getIconPath(): Promise<string | null> {
+    return null
   }
 
   private computeAsarOptions(customBuildOptions: DC): AsarOptions | null {
@@ -298,7 +293,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
-    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.OSX ? path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents") : appOutDir
     const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
     return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)))
   }
@@ -329,7 +324,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getResourcesDir(appOutDir: string): string {
-    return this.platform === Platform.OSX ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+    return this.platform === Platform.MAC ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
 
   private getOSXResourcesDir(appOutDir: string): string {
@@ -367,7 +362,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.OSX ? path.join(appOutDir, `${this.appInfo.productName}.app`) : appOutDir)
+    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productName}.app`) : appOutDir)
   }
 
   generateName(ext: string, arch: Arch, deployment: boolean): string {
@@ -388,6 +383,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   generateName2(ext: string, classifier: string | n, deployment: boolean): string {
     return `${deployment ? this.appInfo.name : this.appInfo.productName}-${this.metadata.version}${classifier == null ? "" : `-${classifier}`}.${ext}`
   }
+
+  protected async getDefaultIcon(ext: string) {
+    const resourceList = await this.resourceList
+    const name = `icon.${ext}`
+    if (resourceList.includes(name)) {
+      return path.join(this.buildResourcesDir, name)
+    }
+    else {
+      warn("Application icon is not set, default Electron icon will be used")
+      return null
+    }
+  }
 }
 
 export function getArchSuffix(arch: Arch): string {
@@ -399,15 +406,6 @@ export interface ArtifactCreated {
   readonly artifactName?: string
 
   readonly platform: Platform
-}
-
-export function normalizeTargets(targets: Array<string> | string | null | undefined): Array<string> | null {
-  if (targets == null) {
-    return null
-  }
-  else {
-    return (Array.isArray(targets) ? targets : [targets]).map(it => it.toLowerCase().trim())
-  }
 }
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
@@ -422,9 +420,4 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
-}
-
-export function computeEffectiveTargets(rawList: Array<string>, targetsFromMetadata: Array<string> | n): Array<string> {
-  let targets = normalizeTargets(rawList.length === 0 ? targetsFromMetadata : rawList)
-  return targets == null ? ["default"] : targets
 }

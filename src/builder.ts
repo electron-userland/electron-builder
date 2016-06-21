@@ -31,7 +31,7 @@ export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
 export interface CliOptions extends PackagerOptions, PublishOptions {
-  osx?: Array<string>
+  mac?: Array<string>
   linux?: Array<string>
   win?: Array<string>
 
@@ -90,7 +90,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     if (types.length === 0) {
-      if (platform === Platform.OSX) {
+      if (platform === Platform.MAC) {
         archToType.set(Arch.x64, [])
       }
       else {
@@ -103,7 +103,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
     for (let type of types) {
       let arch: string
-      if (platform === Platform.OSX) {
+      if (platform === Platform.MAC) {
         arch = "x64"
         addValue(archToType, Arch.x64, type)
       }
@@ -121,8 +121,8 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
   }
 
-  if (args.osx != null) {
-    processTargets(Platform.OSX, args.osx)
+  if (args.mac != null) {
+    processTargets(Platform.MAC, args.mac)
   }
 
   if (args.linux != null) {
@@ -145,17 +145,19 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   const result = Object.assign({}, args)
   result.targets = targets
 
-  delete result.osx
+  delete result.mac
   delete result.linux
   delete result.win
   delete result.platform
   delete result.arch
 
   const r = <any>result
+  delete r.m
   delete r.o
   delete r.l
   delete r.w
   delete r.windows
+  delete r.osx
   delete r["$0"]
   delete r._
   delete r.version
@@ -169,7 +171,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {
   const targets = new Map<Platform, Map<Arch, Array<string>>>()
   for (let platform of platforms) {
-    const archs = platform === Platform.OSX ? [Arch.x64] : (arch === "all" ? [Arch.x64, Arch.ia32] : [archFromString(arch == null ? process.arch : arch)])
+    const archs = platform === Platform.MAC ? [Arch.x64] : (arch === "all" ? [Arch.x64, Arch.ia32] : [archFromString(arch == null ? process.arch : arch)])
     const archToType = new Map<Arch, Array<string>>()
     targets.set(platform, archToType)
 

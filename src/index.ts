@@ -1,5 +1,6 @@
 export { Packager } from "./packager"
-export { PackagerOptions, ArtifactCreated, DIR_TARGET, BuildInfo } from "./platformPackager"
+export { PackagerOptions, ArtifactCreated, BuildInfo } from "./platformPackager"
+export { DIR_TARGET, DEFAULT_TARGET } from "./targets/targetFactory"
 export { BuildOptions, build, createPublisher, CliOptions, createTargets } from "./builder"
 export { PublishOptions, Publisher } from "./gitHubPublisher"
-export { AppMetadata, DevMetadata, Platform, Arch, archFromString, BuildMetadata, OsXBuildOptions, WinBuildOptions, LinuxBuildOptions, CompressionLevel } from "./metadata"
+export { AppMetadata, DevMetadata, Platform, Arch, archFromString, BuildMetadata, MacOptions, WinBuildOptions, LinuxBuildOptions, CompressionLevel } from "./metadata"

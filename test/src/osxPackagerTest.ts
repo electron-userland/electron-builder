@@ -7,9 +7,11 @@ import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
 import { ElectronPackagerOptions } from "electron-packager-tf"
-import { Platform, OsXBuildOptions, createTargets } from "out"
+import { Platform, MacOptions, createTargets } from "out"
 import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
 import { Arch } from "out"
+import { Target } from "out/platformPackager"
+import { DmgTarget } from "out/targets/dmg"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -128,7 +130,7 @@ test.ifOsx("no build directory", (t: any) => assertPack("test-app-one", platform
   tempDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
-test.ifOsx("custom background", () => {
+test.ifOsx("custom background - old way", () => {
   let platformPackager: CheckingOsXPackager = null
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
@@ -152,8 +154,43 @@ test.ifOsx("custom background", () => {
   })
 })
 
+test.ifOsx("custom background - new way", () => {
+  let platformPackager: CheckingOsXPackager = null
+  const customBackground = "customBackground.png"
+  return assertPack("test-app-one", {
+    targets: Platform.OSX.createTarget(),
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks)
+  }, {
+    tempDirCreated: projectDir => BluebirdPromise.all([
+      move(path.join(projectDir, "build", "background.png"), path.join(projectDir, customBackground)),
+      modifyPackageJson(projectDir, data => {
+        data.build.mac = {
+          icon: "customIcon"
+        }
+
+        data.build.dmg = {
+          background: customBackground,
+          icon: "foo.icns",
+        }
+
+        data.build.osx = {
+          background: null,
+          icon: "ignoreMe.icns",
+        }
+      })
+    ]),
+    packed: projectDir => {
+      assertThat(platformPackager.effectiveDistOptions.background).equal(customBackground)
+      assertThat(platformPackager.effectiveDistOptions.icon).equal("foo.icns")
+      assertThat(platformPackager.effectivePackOptions.icon).equal(path.join(projectDir, "customIcon.icns"))
+      return BluebirdPromise.resolve(null)
+    },
+  })
+})
+
 class CheckingOsXPackager extends OsXPackager {
   effectiveDistOptions: any
+  effectivePackOptions: ElectronPackagerOptions
   effectiveSignOptions: SignOptions
   effectiveFlatOptions: FlatOptions
 
@@ -161,9 +198,19 @@ class CheckingOsXPackager extends OsXPackager {
     super(info, cleanupTasks)
   }
 
-  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: OsXBuildOptions, postAsyncTasks: Array<Promise<any>> = null) {
-    // skip pack
-    this.effectiveDistOptions = await this.computeEffectiveDistOptions(this.computeAppOutDir(outDir, arch))
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    for (let target of targets) {
+      // do not use instanceof to avoid dmg require
+      if (target.name === "dmg") {
+        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions(outDir)
+        break
+      }
+    }
+    return await super.pack(outDir, arch, targets, postAsyncTasks)
+  }
+
+  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {
+    this.effectivePackOptions = options
   }
 
   async doSign(opts: SignOptions): Promise<any> {
@@ -174,7 +221,7 @@ class CheckingOsXPackager extends OsXPackager {
     this.effectiveFlatOptions = opts
   }
 
-  packageInDistributableFormat(appOutDir: string, targets: Array<string>, promises: Array<Promise<any>>): void {
+  packageInDistributableFormat(appOutDir: string, targets: Array<Target>, promises: Array<Promise<any>>): void {
     // skip
   }
 }

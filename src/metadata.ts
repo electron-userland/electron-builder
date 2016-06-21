@@ -82,7 +82,7 @@ export type CompressionLevel = "store" | "normal" | "maximum"
 export interface BuildMetadata {
   /*
   The application id. Used as
-  [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for OS X and as
+  [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
   [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.
 
   For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.
@@ -95,7 +95,7 @@ export interface BuildMetadata {
   readonly "app-bundle-id"?: string | null
 
   /*
-   *OS X-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+   *MacOS-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
    For example, `app-category-type=public.app-category.developer-tools` will set the application category to *Developer Tools*.
 
@@ -124,31 +124,39 @@ export interface BuildMetadata {
 
    Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
-   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to osx, linux or win according to current platform) and `${arch}` in the pattern.
+   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to mac, linux or win according to current platform) and `${arch}` in the pattern.
    If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
    Remember that default pattern `\*\*\/\*` is not added to your custom, so, you have to add it explicitly — e.g. `["\*\*\/\*", "!ignoreMe${/\*}"]`.
 
-   May be specified in the platform options (e.g. in the `build.osx`).
+   May be specified in the platform options (e.g. in the `build.mac`).
    */
   readonly files?: Array<string> | string | null
 
   /**
-   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for OS X, `resources` for Linux/Windows).
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
 
    Glob rules the same as for [files](#BuildMetadata-files).
    */
   readonly extraResources?: Array<string> | string | null
 
   /**
-   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, root directory for Linux/Windows).
+   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<string> | string | null
 
   /*
-   See [.build.osx](#OsXBuildOptions).
+   See [.build.mac](#MacOptions).
    */
-  readonly osx?: OsXBuildOptions | null
+  readonly mac?: MacOptions | null
+
+  /*
+   See [.build.dmg](#DmgOptions).
+   */
+  readonly dmg?: DmgOptions | null
+
+  // deprecated
+  readonly osx?: MacOptions | null
 
   /*
    See [.build.mas](#MasBuildOptions).
@@ -194,6 +202,8 @@ export interface BuildMetadata {
    Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */
   readonly npmRebuild?: boolean
+
+  readonly icon?: string | null
 }
 
 export interface AfterPackContext {
@@ -202,22 +212,11 @@ export interface AfterPackContext {
 }
 
 /*
- ### `.build.osx`
+ ### `.build.mac`
 
- See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
+ MacOS specific build options.
  */
-export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
-  /*
-   The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
-   */
-  readonly icon?: string | null
-
-  /*
-   The path to background (default: `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
-   If background is not specified, use `window.size`, see [specification](https://github.com/LinusU/node-appdmg#json-specification).
-   */
-  readonly background?: string | null
-
+export interface MacOptions extends PlatformSpecificBuildOptions {
   /*
    Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
@@ -245,11 +244,31 @@ export interface OsXBuildOptions extends PlatformSpecificBuildOptions {
 }
 
 /*
+ ### `.build.dmg`
+
+ MacOS DMG specific options.
+
+ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
+ */
+export interface DmgOptions {
+  /*
+   The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
+   */
+  readonly icon?: string | null
+
+  /*
+   The path to background (default: `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
+   If background is not specified, use `window.size`, see [specification](https://github.com/LinusU/node-appdmg#json-specification).
+   */
+  readonly background?: string | null
+}
+
+/*
  ### `.build.mas`
 
- MAS (Mac Application Store) specific options (in addition to `build.osx`).
+ MAS (Mac Application Store) specific options (in addition to `build.mac`).
  */
-export interface MasBuildOptions extends OsXBuildOptions {
+export interface MasBuildOptions extends MacOptions {
   /*
    The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
    Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
@@ -265,6 +284,8 @@ export interface MasBuildOptions extends OsXBuildOptions {
 
 /*
  ### `.build.win`
+
+ Windows specific build options.
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificateFile?: string
@@ -341,36 +362,38 @@ export interface NsisOptions {
 
 /*
  ### `.build.linux`
+
+ Linux specific build options.
  */
 export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   /*
    As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
    */
-  description?: string | null
+  readonly description?: string | null
 
   /*
    *deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
    */
-  synopsis?: string | null
+  readonly synopsis?: string | null
 
   /*
    The maintainer. Defaults to [author](#AppMetadata-author).
    */
-  maintainer?: string | null
+  readonly maintainer?: string | null
 
   /*
    The vendor. Defaults to [author](#AppMetadata-author).
    */
-  vendor?: string | null
+  readonly vendor?: string | null
 
   // should be not documented, only to experiment
-  fpm?: Array<string> | null
+  readonly fpm?: Array<string> | null
 
   //.desktop file template
-  desktop?: string | null
+  readonly desktop?: string | null
 
-  afterInstall?: string | null
-  afterRemove?: string | null
+  readonly afterInstall?: string | null
+  readonly afterRemove?: string | null
 
   /*
   *deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
@@ -420,12 +443,18 @@ export interface PlatformSpecificBuildOptions {
   readonly asar?: AsarOptions | boolean
 
   readonly target?: Array<string> | null
+
+  readonly icon?: string | null
 }
 
 export class Platform {
-  static OSX = new Platform("osx", "osx", "darwin")
+  static MAC = new Platform("mac", "mac", "darwin")
   static LINUX = new Platform("linux", "linux", "linux")
   static WINDOWS = new Platform("windows", "win", "win32")
+
+  // deprecated
+  //noinspection JSUnusedGlobalSymbols
+  static OSX = Platform.MAC
 
   constructor(public name: string, public buildConfigurationKey: string, public nodeName: string) {
   }
@@ -440,7 +469,7 @@ export class Platform {
 
   createTarget(type?: string | Array<string> | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
     const archToType = new Map()
-    if (this === Platform.OSX) {
+    if (this === Platform.MAC) {
       archs = [Arch.x64]
     }
 
@@ -455,10 +484,12 @@ export class Platform {
   }
 
   static fromString(name: string): Platform {
+    name = name.toLowerCase()
     switch (name) {
-      case Platform.OSX.nodeName:
-      case Platform.OSX.name:
-        return Platform.OSX
+      case Platform.MAC.nodeName:
+      case Platform.MAC.name:
+      case "osx":
+        return Platform.MAC
 
       case Platform.WINDOWS.nodeName:
       case Platform.WINDOWS.name:
@@ -469,7 +500,7 @@ export class Platform {
         return Platform.LINUX
     }
 
-    throw new Error("Unknown platform: " + name)
+    throw new Error(`Unknown platform: ${name}`)
   }
 }
 

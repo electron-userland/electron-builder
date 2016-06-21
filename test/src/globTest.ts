@@ -48,7 +48,7 @@ test.ifDevOrLinuxCi("files", () => {
   })
 })
 
-// skip on OS X because we want test only / and \
+// skip on MacOS because we want test only / and \
 test.ifNotCiOsx("ignore node_modules known dev dep", () => {
   const build: any = {
     asar: false,

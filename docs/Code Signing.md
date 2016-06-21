@@ -1,6 +1,6 @@
-OS X and Windows code signing is supported. Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
+MacOS and Windows code signing is supported. Windows is dual code-signed (SHA1 & SHA256 hashing algorithms).
 
-On a OS X development machine valid and appropriate identity from your keychain will be automatically used.
+On a MacOS development machine valid and appropriate identity from your keychain will be automatically used.
 
 | Env name       |  Description
 | -------------- | -----------

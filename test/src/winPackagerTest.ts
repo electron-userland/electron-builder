@@ -8,6 +8,8 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
+import { Target } from "out/platformPackager"
+import { ElectronPackagerOptions } from "electron-packager-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/awaiter")
@@ -52,7 +54,7 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
 // ))
 
 // very slow
-test.skip("delta", () => assertPack("test-app-one", {
+test.ifWinCi("delta", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
     devMetadata: {
       build: {
@@ -127,25 +129,50 @@ test.ifNotCiOsx("icon not an image", (t: any) => t.throws(assertPack("test-app-o
   tempDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
 }), /Windows icon is not valid ico file, please fix ".+/))
 
+test.ifOsx("custom icon", () => {
+  let platformPackager: CheckingWinPackager = null
+  return assertPack("test-app-one", {
+    targets: Platform.WINDOWS.createTarget(),
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks)
+  }, {
+    tempDirCreated: projectDir => BluebirdPromise.all([
+      move(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
+      modifyPackageJson(projectDir, data => {
+        data.build.win = {
+          icon: "customIcon"
+        }
+      })
+    ]),
+    packed: projectDir => {
+      assertThat(platformPackager.effectivePackOptions.icon).isEqualTo(path.join(projectDir, "customIcon.ico"))
+      return BluebirdPromise.resolve()
+    },
+  })
+})
+
 class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
   signOptions: SignOptions | null
+
+  effectivePackOptions: ElectronPackagerOptions
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info, cleanupTasks)
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
     const appOutDir = this.computeAppOutDir(outDir, arch)
 
+    this.effectivePackOptions = await this.computePackOptions(outDir, appOutDir, arch)
+
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this, appOutDir).computeEffectiveDistOptions("foo", "Foo.exe"))
+    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions(appOutDir, "foo", "Foo.exe"))
 
     await this.sign(appOutDir)
   }
 
-  packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>, promises: Array<Promise<any>>): void {
+  packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     // skip
   }
 

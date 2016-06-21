@@ -28,14 +28,19 @@ test("cli", () => {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
-  assertThat(parse("--platform osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
-  assertThat(parse("-owl --x64 --ia32")).isEqualTo(expected({targets: new Map([...Platform.OSX.createTarget(null, Arch.x64), ...Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), ...Platform.LINUX.createTarget(null, Arch.x64, Arch.ia32)])}))
-  assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.OSX.createTarget()}))
+  assertThat(parse("--platform osx")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
+  assertThat(parse("--platform mac")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
+
+  const all = expected({targets: new Map([...Platform.MAC.createTarget(null, Arch.x64), ...Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), ...Platform.LINUX.createTarget(null, Arch.x64, Arch.ia32)])})
+  assertThat(parse("-owl --x64 --ia32")).isEqualTo(all)
+  assertThat(parse("-mwl --x64 --ia32")).isEqualTo(all)
+
+  assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
   assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
   assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
   assertThat(parse("--linux")).isEqualTo(expected({targets: Platform.LINUX.createTarget()}))
   assertThat(parse("--win")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget()}))
-  assertThat(parse("-owl")).isEqualTo(expected({targets: createTargets([Platform.OSX, Platform.WINDOWS, Platform.LINUX])}))
+  assertThat(parse("-owl")).isEqualTo(expected({targets: createTargets([Platform.MAC, Platform.WINDOWS, Platform.LINUX])}))
   assertThat(parse("-l tar.gz:ia32")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.ia32)}))
   assertThat(parse("-l tar.gz:x64")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
   assertThat(parse("-l tar.gz")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
@@ -176,7 +181,7 @@ test("afterPack", t => {
   })
 })
 
-test.ifWinCi("Build OS X on Windows is not supported", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.OSX)), /Build for OS X is supported only on OS X.+/))
+test.ifWinCi("Build MacOS on Windows is not supported", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.MAC)), /Build for MacOS is supported only on MacOS.+/))
 
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {

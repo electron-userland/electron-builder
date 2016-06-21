@@ -22,7 +22,7 @@ In the development `package.json` custom `build` field can be specified to custo
 }
 ```
 
-As you can see, you need to customize OS X options only if you want to provide custom `x, y`.
+As you can see, you need to customize MacOS options only if you want to provide custom `x, y`.
 Don't customize paths to background and icon, — just follow conventions.
 
 Here documented only `electron-builder` specific options:
@@ -50,14 +50,15 @@ Here documented only `electron-builder` specific options:
 ## `.build`
 | Name | Description
 | --- | ---
-| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for OS X and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.</p> <p>For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
-| app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*OS X-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
+| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.</p> <p>For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
+| app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*MacOS-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p> <p>Or you can pass object of any asar options.</p>
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
-| files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to <code>\*\*\/\*</code> (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).</p> <p>Development dependencies are never copied in any case. You don’t need to ignore it explicitly.</p> <p>[Multiple patterns](#multiple-glob-patterns) are supported. You can use <code>${os}</code> (expanded to osx, linux or win according to current platform) and <code>${arch}</code> in the pattern. If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>foo</code> directory.</p> <p>Remember that default pattern <code>\*\*\/\*</code> is not added to your custom, so, you have to add it explicitly — e.g. <code>[&quot;\*\*\/\*&quot;, &quot;!ignoreMe${/\*}&quot;]</code>.</p> <p>May be specified in the platform options (e.g. in the <code>build.osx</code>).</p>
-| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for OS X, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#BuildMetadata-files).</p>
-| extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for OS X, root directory for Linux/Windows).
-| osx | <a name="BuildMetadata-osx"></a>See [.build.osx](#OsXBuildOptions).
+| files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to <code>\*\*\/\*</code> (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).</p> <p>Development dependencies are never copied in any case. You don’t need to ignore it explicitly.</p> <p>[Multiple patterns](#multiple-glob-patterns) are supported. You can use <code>${os}</code> (expanded to mac, linux or win according to current platform) and <code>${arch}</code> in the pattern. If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>foo</code> directory.</p> <p>Remember that default pattern <code>\*\*\/\*</code> is not added to your custom, so, you have to add it explicitly — e.g. <code>[&quot;\*\*\/\*&quot;, &quot;!ignoreMe${/\*}&quot;]</code>.</p> <p>May be specified in the platform options (e.g. in the <code>build.mac</code>).</p>
+| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#BuildMetadata-files).</p>
+| extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+| mac | <a name="BuildMetadata-mac"></a>See [.build.mac](#MacOptions).
+| dmg | <a name="BuildMetadata-dmg"></a>See [.build.dmg](#DmgOptions).
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
 | nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
@@ -65,24 +66,34 @@ Here documented only `electron-builder` specific options:
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
 
-<a name="OsXBuildOptions"></a>
-### `.build.osx`
+<a name="MacOptions"></a>
+### `.build.mac`
+
+MacOS specific build options.
+
+| Name | Description
+| --- | ---
+| target | <a name="MacOptions-target"></a>Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+| identity | <a name="MacOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
+| entitlements | <a name="MacOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.osx.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
+| entitlementsInherit | <a name="MacOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.osx.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
+
+<a name="DmgOptions"></a>
+### `.build.dmg`
+
+MacOS DMG specific options.
 
 See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
 
 | Name | Description
 | --- | ---
-| icon | <a name="OsXBuildOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
-| background | <a name="OsXBuildOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
-| target | <a name="OsXBuildOptions-target"></a>Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
-| identity | <a name="OsXBuildOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
-| entitlements | <a name="OsXBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.osx.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
-| entitlementsInherit | <a name="OsXBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.osx.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
+| icon | <a name="DmgOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
+| background | <a name="DmgOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
 
 <a name="MasBuildOptions"></a>
 ### `.build.mas`
 
-MAS (Mac Application Store) specific options (in addition to `build.osx`).
+MAS (Mac Application Store) specific options (in addition to `build.mac`).
 
 | Name | Description
 | --- | ---
@@ -91,6 +102,9 @@ MAS (Mac Application Store) specific options (in addition to `build.osx`).
 
 <a name="WinBuildOptions"></a>
 ### `.build.win`
+
+Windows specific build options.
+
 | Name | Description
 | --- | ---
 | target | <a name="WinBuildOptions-target"></a>Target package type: list of `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
@@ -116,6 +130,9 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`
+
+Linux specific build options.
+
 | Name | Description
 | --- | ---
 | description | <a name="LinuxBuildOptions-description"></a>As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
@@ -157,4 +174,4 @@ Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` d
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
 
 # Build Version Management
-`CFBundleVersion` (OS X) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
+`CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

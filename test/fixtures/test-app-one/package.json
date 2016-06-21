@@ -5,15 +5,10 @@
   "version": "1.1.0",
   "homepage": "http://foo.example.com",
   "description": "Test Application (test quite \" #378)",
-  "scripts": {
-    "start": "electron ."
-  },
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
-  "devDependencies": {
-    "electron-prebuilt": "^1.2.3"
-  },
   "build": {
+    "electronVersion": "1.2.3",
     "appId": "org.electron-builder.testApp",
     "app-category-type": "your.app.category.type",
     "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",

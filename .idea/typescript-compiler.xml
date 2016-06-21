@@ -4,6 +4,7 @@
     <option name="isCompilerEnabled" value="true" />
     <option name="typeScriptServiceDirectory" value="$PROJECT_DIR$/node_modules/typescript/lib" />
     <option name="useConfig" value="true" />
+    <option name="useService" value="true" />
     <option name="versionType" value="SERVICE_DIRECTORY" />
   </component>
 </project>

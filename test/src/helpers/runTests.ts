@@ -149,6 +149,9 @@ function runTests(): BluebirdPromise<any> {
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
+  else if (process.platform === "win32") {
+    args.push("test/out/*.js", "!test/out/osxPackagerTest.js", "!test/out/linuxPackagerTest.js", "!test/out/CodeSignTest.js", "!test/out/ArtifactPublisherTest.js")
+  }
 
   return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {
     cwd: rootDir,

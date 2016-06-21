@@ -21,7 +21,7 @@ declare module "electron-packager-tf" {
     out?: string;
     /**
      * Currently you must look for conversion tools in order to supply an icon in the format required by the platform:
-     * - OS X: `.icns`
+     * - MacOS: `.icns`
      * - Windows: `.ico`
      *
      * For Linux builds, this option is not required, as the dock/window list icon is set via the icon option in the BrowserWindow contructor.
@@ -36,7 +36,7 @@ declare module "electron-packager-tf" {
       "app-bundle-id"?: string | null;
     /** The release version to set for the app. */
       "app-version"?: string;
-    /** The build version to set for the app (OS X only). */
+    /** The build version to set for the app (MacOS only). */
       "build-version"?: string | null;
     /** The bundle identifier to use in the app helper plist. */
       "helper-bundle-id"?: string | null;
@@ -56,7 +56,7 @@ declare module "electron-packager-tf" {
     /** Unpacks the files to app.asar.unpacked directory whose filenames regex .match this string. */
     "asar-unpack"?: string;
     "asar-unpack-dir"?: string;
-    /** Should contain the identity to be used when running `codesign` (OS X only). */
+    /** Should contain the identity to be used when running `codesign` (MacOS only). */
     sign?: string;
 
     "app-copyright"?: string

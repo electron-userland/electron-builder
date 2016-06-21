@@ -10,8 +10,8 @@ export function printErrorAndExit(error: Error) {
 }
 
 // you don't need to handle error in your task - it is passed only indicate status of promise
-export async function executeFinally(promise: Promise<any>, task: (errorOccurred: boolean) => Promise<any>): Promise<any> {
-  let result: any = null
+export async function executeFinally<T>(promise: Promise<T>, task: (errorOccurred: boolean) => Promise<any>): Promise<T> {
+  let result: T | null = null
   try {
     result = await promise
   }

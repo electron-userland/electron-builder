@@ -1,17 +1,19 @@
-import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, OsXBuildOptions, MasBuildOptions, Arch } from "./metadata"
+import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { Platform, MasBuildOptions, Arch, MacOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { debug, isEmptyOrSpaces } from "./util"
+import { isEmptyOrSpaces } from "./util"
 import { log, warn, task } from "./log"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity, appleCertificatePrefixes, CertType } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { DmgTarget } from "./targets/dmg"
+import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
 
-export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
+export default class MacPackager extends PlatformPackager<MacOptions> {
   codeSigningInfo: Promise<CodeSigningInfo | null>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
@@ -27,32 +29,66 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
+  async getIconPath(): Promise<string | null> {
+    let iconPath = this.platformSpecificBuildOptions.icon || this.devMetadata.build.icon
+    if (iconPath != null && !iconPath.endsWith(".icns")) {
+      iconPath += ".icns"
+    }
+    return iconPath == null ? await this.getDefaultIcon("icns") : path.resolve(this.projectDir, iconPath)
+  }
+
+  normalizePlatformSpecificBuildOptions(options: MacOptions | n): MacOptions {
+    return super.normalizePlatformSpecificBuildOptions(options == null ? (<any>this.info.devMetadata.build).osx : options)
+  }
+
+  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+    for (let name of targets) {
+      if (name === "dir") {
+        continue
+      }
+
+      if (name === DEFAULT_TARGET) {
+        mapper("dmg", () => new DmgTarget(this))
+        mapper("zip", () => new Target("zip"))
+      }
+      else if (name === "dmg") {
+        mapper("dmg", () => new DmgTarget(this))
+      }
+      else {
+        mapper(name, () => name === "mas" ? new Target("mas") : createCommonTarget(name))
+      }
+    }
+  }
+
   get platform() {
-    return Platform.OSX
+    return Platform.MAC
   }
 
-  get supportedTargets(): Array<string> {
-    return ["dmg", "mas"]
-  }
-
-  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const packOptions = this.computePackOptions(outDir, this.computeAppOutDir(outDir, arch), arch)
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    const packOptions = await this.computePackOptions(outDir, this.computeAppOutDir(outDir, arch), arch)
     let nonMasPromise: Promise<any> | null = null
-    if (targets.length > 1 || targets[0] !== "mas") {
+
+    const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas")
+
+    if (!hasMas || targets.length > 1) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
-      nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
+      nonMasPromise = this.doPack(packOptions, outDir, appOutDir, arch, this.platformSpecificBuildOptions)
         .then(() => this.sign(appOutDir, null))
         .then(() => {
           this.packageInDistributableFormat(appOutDir, targets, postAsyncTasks)
         })
     }
 
-    if (targets.includes("mas")) {
+    if (hasMas) {
       // osx-sign - disable warning
       const appOutDir = path.join(outDir, "mas")
-      const masBuildOptions = deepAssign({}, this.customBuildOptions, (<any>this.devMetadata.build)["mas"])
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.devMetadata.build)["mas"])
       //noinspection JSUnusedGlobalSymbols
-      await this.doPack(Object.assign({}, packOptions, {platform: "mas", "osx-sign": false, generateFinalBasename: function () { return "mas" }}), outDir, appOutDir, arch, masBuildOptions)
+      await this.doPack(Object.assign({}, packOptions, {
+        platform: "mas",
+        "osx-sign": false,
+        generateFinalBasename: function () { return "mas" }
+      }), outDir, appOutDir, arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)
     }
 
@@ -89,7 +125,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
         throw new Error("codeSigningInfo is null, but CSC_LINK defined")
       }
 
-      const identity = await OsXPackager.findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", this.customBuildOptions.identity)
+      const identity = await MacPackager.findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", this.platformSpecificBuildOptions.identity)
       if (identity == null) {
         const message = "App is not signed: CSC_LINK or CSC_NAME are not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
         if (masOptions == null) {
@@ -102,7 +138,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
       }
 
       if (masOptions != null) {
-        const installerName = masOptions == null ? null : (await OsXPackager.findIdentity("3rd Party Mac Developer Installer", this.customBuildOptions.identity))
+        const installerName = masOptions == null ? null : (await MacPackager.findIdentity("3rd Party Mac Developer Installer", this.platformSpecificBuildOptions.identity))
         if (installerName == null) {
           throw new Error("Cannot find valid installer certificate: CSC_LINK or CSC_NAME are not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
         }
@@ -142,7 +178,7 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
 
     const resourceList = await this.resourceList
 
-    const customSignOptions = masOptions || this.customBuildOptions
+    const customSignOptions = masOptions || this.platformSpecificBuildOptions
     if (customSignOptions.entitlements != null) {
       signOptions.entitlements = customSignOptions.entitlements
     }
@@ -175,98 +211,30 @@ export default class OsXPackager extends PlatformPackager<OsXBuildOptions> {
     }
   }
 
+  //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions): Promise<any> {
     return signAsync(opts)
   }
 
+  //noinspection JSMethodCanBeStatic
   protected async doFlat(opts: FlatOptions): Promise<any> {
     return flatAsync(opts)
   }
 
-  protected async computeEffectiveDistOptions(appOutDir: string): Promise<appdmg.Specification> {
-    const specification: appdmg.Specification = deepAssign({
-      title: this.appInfo.productName,
-      "icon-size": 80,
-      contents: [
-        {
-          "x": 410, "y": 220, "type": "link", "path": "/Applications"
-        },
-        {
-          "x": 130, "y": 220, "type": "file"
-        }
-      ],
-      format: this.devMetadata.build.compression === "store" ? "UDRO" : "UDBZ",
-    }, this.customBuildOptions)
-
-    if (!("icon" in this.customBuildOptions)) {
-      const resourceList = await this.resourceList
-      if (resourceList.includes("icon.icns")) {
-        specification.icon = path.join(this.buildResourcesDir, "icon.icns")
+  protected packageInDistributableFormat(appOutDir: string, targets: Array<Target>, promises: Array<Promise<any>>): void {
+    for (let t of targets) {
+      const target = t.name
+      if (t instanceof DmgTarget) {
+        promises.push(t.build(appOutDir))
       }
-      else {
-        warn("Application icon is not set, default Electron icon will be used")
-      }
-    }
-
-    if (!("background" in this.customBuildOptions)) {
-      const resourceList = await this.resourceList
-      if (resourceList.includes("background.png")) {
-        specification.background = path.join(this.buildResourcesDir, "background.png")
-      }
-    }
-
-    specification.contents[1].path = path.join(appOutDir, this.appInfo.productName + ".app")
-    return specification
-  }
-
-  protected packageInDistributableFormat(appOutDir: string, targets: Array<string>, promises: Array<Promise<any>>): void {
-    for (let target of targets) {
-      if (target === "dir") {
-        continue
-      }
-
-      if (target === "dmg" || target === "default") {
-        promises.push(this.createDmg(appOutDir))
-      }
-
-      if (target !== "mas" && target !== "dmg") {
-        const format = target === "default" ? "zip" : target
-        log(`Creating OS X ${format}`)
+      else if (target !== "mas") {
+        log(`Creating MacOS ${target}`)
         // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(appOutDir, this.generateName2(format, "mac", false))
-        promises.push(this.archiveApp(format, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, this.generateName2(format, "mac", true))))
+        const outFile = path.join(appOutDir, this.generateName2(target, "mac", false))
+        promises.push(this.archiveApp(target, appOutDir, outFile)
+          .then(() => this.dispatchArtifactCreated(outFile, this.generateName2(target, "mac", true))))
       }
     }
-  }
-
-  private async createDmg(appOutDir: string) {
-    const artifactPath = path.join(appOutDir, `${this.appInfo.productName}-${this.appInfo.version}.dmg`)
-    await new BluebirdPromise<any>(async(resolve, reject) => {
-      log("Creating DMG")
-      const dmgOptions = {
-        target: artifactPath,
-        basepath: this.projectDir,
-        specification: await this.computeEffectiveDistOptions(appOutDir),
-      }
-
-      if (debug.enabled) {
-        debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
-      }
-
-      const emitter = require("appdmg")(dmgOptions)
-      emitter.on("error", reject)
-      emitter.on("finish", () => resolve())
-      if (debug.enabled) {
-        emitter.on("progress", (info: any) => {
-          if (info.type === "step-begin") {
-            debug(`appdmg: [${info.current}] ${info.title}`)
-          }
-        })
-      }
-    })
-
-    this.dispatchArtifactCreated(artifactPath, `${this.appInfo.name}-${this.appInfo.version}.dmg`)
   }
 }
 

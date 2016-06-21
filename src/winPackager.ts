@@ -1,6 +1,6 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, getArchSuffix } from "./platformPackager"
+import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPackager"
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, warn, task } from "./log"
@@ -8,6 +8,7 @@ import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
+import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -20,14 +21,14 @@ export interface FileCodeSigningInfo {
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
   readonly cscInfo: Promise<FileCodeSigningInfo | null>
 
-  readonly iconPath: Promise<string>
+  private readonly iconPath: Promise<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    const certificateFile = this.customBuildOptions.certificateFile
+    const certificateFile = this.platformSpecificBuildOptions.certificateFile
     if (certificateFile != null) {
-      const certificatePassword = this.customBuildOptions.certificatePassword || this.getCscPassword()
+      const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
       this.cscInfo = BluebirdPromise.resolve({
         file: certificateFile,
         password: certificatePassword == null ? null : certificatePassword.trim(),
@@ -50,32 +51,62 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     this.iconPath = this.getValidIconPath()
   }
 
+  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+    for (let name of targets) {
+      if (name === DIR_TARGET) {
+        continue
+      }
+
+      if (name === DEFAULT_TARGET || name === "squirrel") {
+        mapper("squirrel", () => {
+          const targetClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
+          return new targetClass(this)
+        })
+      }
+      else if (name === "nsis") {
+        mapper(name, () => {
+          const targetClass: typeof NsisTarget = require("./targets/nsis").default
+          return new targetClass(this)
+        })
+      }
+      else {
+        mapper(name, () => createCommonTarget(name))
+      }
+    }
+  }
+
   get platform() {
     return Platform.WINDOWS
   }
 
-  get supportedTargets(): Array<string> {
-    return ["squirrel", "nsis"]
+  async getIconPath() {
+    return await this.iconPath
   }
 
-  private async getValidIconPath(): Promise<string> {
-    const iconPath = path.join(this.buildResourcesDir, "icon.ico")
+  private async getValidIconPath(): Promise<string | null> {
+    let iconPath = this.platformSpecificBuildOptions.icon || this.devMetadata.build.icon
+    if (iconPath != null && !iconPath.endsWith(".ico")) {
+      iconPath += ".ico"
+    }
+
+    iconPath = iconPath == null ? await this.getDefaultIcon("ico") : path.resolve(this.projectDir, iconPath)
+    if (iconPath == null) {
+      return null
+    }
+
     await checkIcon(iconPath)
     return iconPath
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<string>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     if (arch === Arch.ia32) {
       warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }
 
-    // we must check icon before pack because electron-packager uses icon and it leads to cryptic error message "spawn wine ENOENT"
-    await this.iconPath
-
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    const packOptions = this.computePackOptions(outDir, appOutDir, arch)
+    const packOptions = await this.computePackOptions(outDir, appOutDir, arch)
 
-    await this.doPack(packOptions, outDir, appOutDir, arch, this.customBuildOptions)
+    await this.doPack(packOptions, outDir, appOutDir, arch, this.platformSpecificBuildOptions)
     await this.sign(path.join(appOutDir, `${this.appInfo.productName}.exe`))
     this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
@@ -95,35 +126,31 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         name: this.appInfo.productName,
         site: await this.appInfo.computePackageUrl(),
         overwrite: true,
-        hash: this.customBuildOptions.signingHashAlgorithms,
+        hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
       })
     }
   }
 
+  //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions): Promise<any> {
     return BluebirdPromise.promisify(sign)(opts)
   }
 
-  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<string>, promises: Array<Promise<any>>): void {
+  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
-      if (target === "dir") {
-        continue
+      if (target instanceof SquirrelWindowsTarget) {
+        promises.push(task(`Building Squirrel.Windows installer`, target.build(arch, appOutDir)))
       }
-
-      if (target === "squirrel" || target === "default") {
-        const helperClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-        promises.push(task(`Building Squirrel.Windows installer`, new helperClass(this, appOutDir).build(arch)))
-      }
-      else if (target === "nsis") {
-        const helperClass: typeof NsisTarget = require("./targets/nsis").default
-        promises.push(task(`Building NSIS installer`, new helperClass(this, outDir, appOutDir).build(arch)))
+      else if (target instanceof NsisTarget) {
+        promises.push(task(`Building NSIS installer`, target.build(arch, outDir, appOutDir)))
       }
       else {
-        log(`Creating Windows ${target}`)
+        const format = target.name
+        log(`Creating Windows ${format}`)
         // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(outDir, this.generateName1(target, arch, "win", false))
-        promises.push(this.archiveApp(target, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, this.generateName1(target, arch, "win", true))))
+        const outFile = path.join(outDir, this.generateName1(format, arch, "win", false))
+        promises.push(this.archiveApp(format, appOutDir, outFile)
+          .then(() => this.dispatchArtifactCreated(outFile, this.generateName1(format, arch, "win", true))))
       }
     }
   }

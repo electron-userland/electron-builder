@@ -10,7 +10,7 @@ import { exec, getTempName } from "out/util"
 import { log } from "out/log"
 import { createTargets } from "out"
 import { tmpdir } from "os"
-import { getArchSuffix, computeEffectiveTargets } from "out/platformPackager"
+import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
 import { convertVersion } from "electron-winstaller-fixed"
@@ -98,7 +98,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
     list.push(event)
   })
 
-  await packager.build()
+  const platformToTarget = await packager.build()
 
   if (packagerOptions.platformPackagerFactory != null) {
     return
@@ -110,6 +110,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         continue c
       }
 
+      const nameToTarget = platformToTarget.get(platform)
       if (platform === Platform.OSX) {
         await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
       }
@@ -117,7 +118,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, targets, checkOptions, artifacts.get(Platform.WINDOWS), arch)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch, nameToTarget)
       }
     }
   }
@@ -231,7 +232,7 @@ function getFileNames(list: Array<ArtifactCreated>): Array<string> {
   return list.map(it => path.basename(it.file))
 }
 
-async function checkWindowsResult(packager: Packager, targets: Array<string>, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
+async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
   const productName = appInfo.productName
   let squirrel = false
@@ -240,8 +241,8 @@ async function checkWindowsResult(packager: Packager, targets: Array<string>, ch
   const expectedFileNames: Array<string> = []
   const archSuffix = getArchSuffix(arch)
   const buildOptions = packager.devMetadata.build.win
-  for (let target of computeEffectiveTargets(targets, buildOptions == null ? null : buildOptions.target)) {
-    if (target === "default" || target === "squirrel") {
+  for (let target of nameToTarget.keys()) {
+    if (target === "squirrel") {
       squirrel = true
       expectedFileNames.push("RELEASES", `${productName} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
 

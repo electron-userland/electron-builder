@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder)
-Complete solution to package and build ready for distribution and "auto update" Electron app for OS X, Windows and Linux.
+Complete solution to package and build ready for distribution and "auto update" Electron app for MacOS, Windows and Linux.
 
 * NPM packages management:
   * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if [two-package.json project structure](#two-packagejson-structure) used).
@@ -9,9 +9,9 @@ Complete solution to package and build ready for distribution and "auto update" 
 * [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`.
-  * [OS X](https://github.com/electron-userland/electron-builder/wiki/Options#OsXBuildOptions-target): `dmg`, `mas`.
+  * [MacOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-  * Windows: Squirrel.Windows. NSIS will be supported soon.
+  * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Squirrel.Windows.
 * [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
 [electron-packager](https://github.com/electron-userland/electron-packager) and
@@ -59,9 +59,9 @@ For a production app you need to sign your application, see [Where to buy code s
     ```
    See [options](https://github.com/electron-userland/electron-builder/wiki/Options). This object will be used as a source of [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
 
-3. Create directory `build` in the root of the project and put your `background.png` (OS X DMG background), `icon.icns` (OS X app icon) and `icon.ico` (Windows app icon).
+3. Create directory `build` in the root of the project and put your `background.png` (MacOS DMG background), `icon.icns` (MacOS app icon) and `icon.ico` (Windows app icon).
 
-   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>Linux icon set will be generated automatically on the fly from the OS X `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
+   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>Linux icon set will be generated automatically on the fly from the MacOS `icns` file (or you can put them into the `build/icons` directory — filename must contains size (e.g. `32x32.png`)).
 
 4. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
     ```json
@@ -80,7 +80,7 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 # Auto Update
 `electron-builder` produces all required artifacts:
 
-* `.dmg`: OS X installer, required for OS X user to initial install.
+* `.dmg`: MacOS installer, required for MacOS user to initial install.
 * `-mac.zip`: required for Squirrel.Mac.
 * `.exe` and `-ia32.exe`: Windows installer, required for Windows user to initial install. Please note — [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
 * `.full-nupkg`: required for Squirrel.Windows.
@@ -95,7 +95,7 @@ For windows consider only [distributing 64-bit versions](https://github.com/elec
 # CLI Usage
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 ```
---osx, -o             Build for OS X                                   [array]
+--mac, -o             Build for MacOS                                  [array]
 --linux, -l           Build for Linux                                  [array]
 --win, -w, --windows  Build for Windows                                [array]
 --x64                 Build for x64                                  [boolean]
@@ -103,9 +103,9 @@ Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 --publish, -p         Publish artifacts (to GitHub Releases), see
                       https://goo.gl/WMlr4n
                          [choices: "onTag", "onTagOrDraft", "always", "never"]
---platform            The target platform (preferred to use --osx, --win or
+--platform            The target platform (preferred to use --mac, --win or
                       --linux)
-                    [choices: "osx", "win", "linux", "darwin", "win32", "all"]
+                    [choices: "mac", "win", "linux", "darwin", "win32", "all"]
 --arch                The target arch (preferred to use --x64 or --ia32)
                                                [choices: "ia32", "x64", "all"]
 --help                Show help                                      [boolean]
@@ -123,7 +123,7 @@ const Platform = builder.Platform
 
 // Promise is returned
 builder.build({
-  targets: Platform.OSX.createTarget(),
+  targets: Platform.MAC.createTarget(),
   devMetadata: {
     "//": "build and other properties, see https://goo.gl/5jVxoO"
   }
