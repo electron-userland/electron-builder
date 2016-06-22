@@ -67,11 +67,10 @@ For a production app you need to sign your application, see [Where to buy code s
     ```json
     "scripts": {
       "postinstall": "install-app-deps",
-      "pack": "build --target dir",
       "dist": "build"
     }
     ```
-    And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack`.
+    And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)).
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
