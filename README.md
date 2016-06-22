@@ -67,11 +67,11 @@ For a production app you need to sign your application, see [Where to buy code s
     ```json
     "scripts": {
       "postinstall": "install-app-deps",
-      "pack": "build --target dir",
+      "pack": "build --dir",
       "dist": "build"
     }
     ```
-    And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack`.
+    And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack` (useful to test).
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
@@ -95,21 +95,38 @@ For windows consider only [distributing 64-bit versions](https://github.com/elec
 # CLI Usage
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 ```
---mac, -o             Build for MacOS                                  [array]
---linux, -l           Build for Linux                                  [array]
---win, -w, --windows  Build for Windows                                [array]
---x64                 Build for x64                                  [boolean]
---ia32                Build for ia32                                 [boolean]
---publish, -p         Publish artifacts (to GitHub Releases), see
-                      https://goo.gl/WMlr4n
-                         [choices: "onTag", "onTagOrDraft", "always", "never"]
---platform            The target platform (preferred to use --mac, --win or
-                      --linux)
-                    [choices: "mac", "win", "linux", "darwin", "win32", "all"]
---arch                The target arch (preferred to use --x64 or --ia32)
-                                               [choices: "ia32", "x64", "all"]
---help                Show help                                      [boolean]
---version             Show version number                            [boolean]
+Building:
+  --mac, -m, -o, --osx  Build for MacOS, accepts target list (see
+                        https://goo.gl/HAnnq8).                          [array]
+  --linux, -l           Build for Linux, accepts target list (see
+                        https://goo.gl/O80IL2)                           [array]
+  --win, -w, --windows  Build for Windows, accepts target list (see
+                        https://goo.gl/dL4i8i)                           [array]
+  --x64                 Build for x64                                  [boolean]
+  --ia32                Build for ia32                                 [boolean]
+  --dir                 Build unpacked dir. Useful to test.            [boolean]
+
+Publishing:
+  --publish, -p  Publish artifacts (to GitHub Releases), see
+                 https://goo.gl/WMlr4n
+                           [choices: "onTag", "onTagOrDraft", "always", "never"]
+  --draft        Create a draft (unpublished) release                  [boolean]
+  --prerelease   Identify the release as a prerelease                  [boolean]
+
+Deprecated:
+  --platform  The target platform (preferred to use --mac, --win or --linux)
+               [choices: "mac", "osx", "win", "linux", "darwin", "win32", "all"]
+  --arch      The target arch (preferred to use --x64 or --ia32)
+                                                 [choices: "ia32", "x64", "all"]
+
+Other:
+  --help     Show help                                                 [boolean]
+  --version  Show version number                                       [boolean]
+
+Examples:
+  build -mwl                build for MacOS, Windows and Linux
+  build --linux deb tar.xz  build deb and tar.xz for Linux
+  build --win --ia32        build for Windows ia32
 ```
 
 # Programmatic Usage

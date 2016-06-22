@@ -38,6 +38,11 @@ export function createYargs(): any {
       describe: "Build for ia32",
       type: "boolean",
     })
+    .option("dir", {
+      group: buildGroup,
+      describe: "Build unpacked dir. Useful to test.",
+      type: "boolean",
+    })
     .option("publish", {
       group: publishGroup,
       alias: "p",

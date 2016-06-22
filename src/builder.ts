@@ -7,6 +7,7 @@ import { isEmptyOrSpaces } from "./util/util"
 import { log, warn } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
+import { DIR_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -39,6 +40,8 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
 
   x64?: boolean
   ia32?: boolean
+
+  dir?: boolean
 
   platform?: string
 }
@@ -90,12 +93,13 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     if (types.length === 0) {
+      const defaultTargetValue = args.dir ? [DIR_TARGET] : []
       if (platform === Platform.MAC) {
-        archToType.set(Arch.x64, [])
+        archToType.set(Arch.x64, defaultTargetValue)
       }
       else {
         for (let arch of commonArch()) {
-          archToType.set(arch, [])
+          archToType.set(arch, defaultTargetValue)
         }
       }
       return
@@ -138,13 +142,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       processTargets(Platform.current(), [])
     }
     else {
-      targets = createTargets(normalizePlatforms(args.platform), null, args.arch)
+      targets = createTargets(normalizePlatforms(args.platform), args.dir ? DIR_TARGET : null, args.arch)
     }
   }
 
   const result = Object.assign({}, args)
   result.targets = targets
 
+  delete result.dir
   delete result.mac
   delete result.linux
   delete result.win

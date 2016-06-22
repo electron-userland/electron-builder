@@ -35,6 +35,11 @@ test("cli", () => {
   assertThat(parse("-owl --x64 --ia32")).isEqualTo(all)
   assertThat(parse("-mwl --x64 --ia32")).isEqualTo(all)
 
+  assertThat(parse("--dir")).isEqualTo(expected({targets: Platform.current().createTarget(DIR_TARGET)}))
+  assertThat(parse("--mac --dir")).isEqualTo(expected({targets: Platform.MAC.createTarget(DIR_TARGET)}))
+  assertThat(parse("--ia32 --dir")).isEqualTo(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.ia32)}))
+  assertThat(parse("--platform linux --dir")).isEqualTo(expected({targets: Platform.LINUX.createTarget(DIR_TARGET)}))
+
   assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
   assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
   assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
