@@ -1,6 +1,6 @@
 import { Release, Asset } from "gh-release"
-import { isEmptyOrSpaces } from "./util"
-import { log, warn } from "./log"
+import { isEmptyOrSpaces } from "./util/util"
+import { log, warn } from "./util/log"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
@@ -13,7 +13,7 @@ import progressStream = require("progress-stream")
 import ProgressBar = require("progress")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export interface Publisher {
   upload(file: string, artifactName?: string): Promise<any>

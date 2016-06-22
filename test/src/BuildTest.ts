@@ -9,7 +9,7 @@ import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cliOptions"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test("cli", () => {
   const yargs = createYargs()

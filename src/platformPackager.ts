@@ -4,19 +4,19 @@ import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
 import { readdir, unlink, remove, realpath } from "fs-extra-p"
-import { statOrNull, use } from "./util"
+import { statOrNull, use } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInPackage, createAsarArchive } from "./asarUtil"
 import deepAssign = require("deep-assign")
-import { warn, log, task } from "./log"
+import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered } from "./util/filter"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>

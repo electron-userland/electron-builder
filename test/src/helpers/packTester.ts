@@ -6,8 +6,8 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
-import { exec, getTempName } from "out/util"
-import { log } from "out/log"
+import { exec, getTempName } from "out/util/util"
+import { log } from "out/util/log"
 import { createTargets } from "out"
 import { tmpdir } from "os"
 import { getArchSuffix, Target } from "out/platformPackager"
@@ -16,7 +16,7 @@ import DecompressZip = require("decompress-zip")
 import { convertVersion } from "electron-winstaller-fixed"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 if (process.env.TRAVIS !== "true") {
   // we don't use CircleCI, so, we can safely set this env

@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPackager"
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
-import { log, warn, task } from "./log"
+import { log, warn, task } from "./util/log"
 import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
@@ -11,7 +11,7 @@ import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export interface FileCodeSigningInfo {
   readonly file: string

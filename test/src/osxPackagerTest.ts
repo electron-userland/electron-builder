@@ -1,6 +1,6 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
-import OsXPackager from "out/osxPackager"
+import OsXPackager from "out/macPackager"
 import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo, PackagerOptions } from "out/platformPackager"
@@ -14,7 +14,7 @@ import { Target } from "out/platformPackager"
 import { DmgTarget } from "out/targets/dmg"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test.ifOsx("two-package", () => assertPack("test-app", signed({
   targets: createTargets([Platform.OSX], null, "all"),

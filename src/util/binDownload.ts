@@ -1,13 +1,13 @@
-import { statOrNull, spawn, debug, debug7zArgs, getTempName } from "../util"
+import { statOrNull, spawn, debug, debug7zArgs, getTempName } from "./util"
 import { rename, remove, unlink, emptyDir } from "fs-extra-p"
-import { download } from "../httpRequest"
+import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
 import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("./awaiter")
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

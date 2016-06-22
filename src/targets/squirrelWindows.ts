@@ -3,12 +3,12 @@ import { getArchSuffix, Target } from "../platformPackager"
 import { Arch, WinBuildOptions } from "../metadata"
 import { createWindowsInstaller, convertVersion } from "electron-winstaller-fixed"
 import * as path from "path"
-import { warn } from "../log"
+import { warn } from "../util/log"
 import { emptyDir } from "fs-extra-p"
 import { getRepositoryInfo } from "../repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("../util/awaiter")
 
 export default class SquirrelWindowsTarget extends Target {
   constructor(private packager: WinPackager) {

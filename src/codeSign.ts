@@ -1,15 +1,15 @@
-import { exec, getTempName } from "./util"
+import { exec, getTempName } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
-import { download } from "./httpRequest"
+import { download } from "./util/httpRequest"
 import { tmpdir } from "os"
 import * as path from "path"
-import { executeFinally, all } from "./promise"
+import { executeFinally, all } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { randomBytes } from "crypto"
 import { homedir } from "os"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
 

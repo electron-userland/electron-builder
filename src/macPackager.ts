@@ -2,8 +2,8 @@ import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
 import { Platform, MasBuildOptions, Arch, MacOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { isEmptyOrSpaces } from "./util"
-import { log, warn, task } from "./log"
+import { isEmptyOrSpaces } from "./util/util"
+import { log, warn, task } from "./util/log"
 import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity, appleCertificatePrefixes, CertType } from "./codeSign"
 import deepAssign = require("deep-assign")
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
@@ -11,7 +11,7 @@ import { DmgTarget } from "./targets/dmg"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   codeSigningInfo: Promise<CodeSigningInfo | null>

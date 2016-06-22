@@ -1,6 +1,6 @@
 import { LinuxBuildOptions, Arch } from "../metadata"
 import { smarten, Target, PlatformPackager } from "../platformPackager"
-import { use, getTempName, debug, exec } from "../util"
+import { use, getTempName, debug, exec } from "../util/util"
 import { installPrefix } from "../linuxPackager"
 import * as path from "path"
 import { downloadFpm } from "../util/binDownload"
@@ -11,7 +11,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 const template = require("lodash.template")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("../util/awaiter")
 
 export class FpmTarget extends Target {
   private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])

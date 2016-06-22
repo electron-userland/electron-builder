@@ -6,7 +6,7 @@ import { AssertionError } from "assert"
 import * as path from "path"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(actual: any): Assertions {

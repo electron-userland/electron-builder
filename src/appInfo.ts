@@ -1,12 +1,12 @@
 import { ElectronPackagerOptions } from "electron-packager-tf"
 import { DevMetadata, AppMetadata } from "./metadata"
-import { warn } from "./log"
+import { warn } from "./util/log"
 import { smarten } from "./platformPackager"
-import { isEmptyOrSpaces } from "./util"
+import { isEmptyOrSpaces } from "./util/util"
 import { getRepositoryInfo } from "./repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export class AppInfo {
   readonly description = smarten(this.metadata.description)

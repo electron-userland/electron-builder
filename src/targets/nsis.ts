@@ -1,18 +1,18 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions } from "../metadata"
-import { exec, debug } from "../util"
+import { exec, debug } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBin } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { getArchSuffix, Target } from "../platformPackager"
 import { archiveApp } from "./archive"
-import { subTask } from "../log"
+import { subTask } from "../util/log"
 import sanitizeFileName = require("sanitize-filename")
 import semver = require("semver")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("../util/awaiter")
 
 const NSIS_VERSION = "nsis-3.0.0-rc.1.2"
 //noinspection SpellCheckingInspection

@@ -12,7 +12,7 @@ import { Target } from "out/platformPackager"
 import { ElectronPackagerOptions } from "electron-packager-tf"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 function _signed(packagerOptions: PackagerOptions): PackagerOptions {
   if (process.platform !== "win32") {

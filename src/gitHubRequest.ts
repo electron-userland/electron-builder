@@ -1,10 +1,10 @@
 import * as https from "https"
 import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
-import { addTimeOutHandler } from "./httpRequest"
+import { addTimeOutHandler } from "./util/httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 Array.isArray(__awaiter)
 
 export function gitHubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {

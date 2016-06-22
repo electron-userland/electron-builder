@@ -9,7 +9,7 @@ import {  Platform, DIR_TARGET } from "out"
 import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test.ifDevOrLinuxCi("ignore build resources", () => {
   return assertPack("test-app-one", {

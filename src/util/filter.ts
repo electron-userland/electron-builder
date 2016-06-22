@@ -1,10 +1,10 @@
 import { copy } from "fs-extra-p"
 import { Minimatch } from "minimatch"
-import { exec } from "../util"
+import { exec } from "./util"
 import * as path from "path"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("./awaiter")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
 export function copyFiltered(src: string, destination: string, filter: (file: string) => boolean, dereference: boolean = false): Promise<any> {

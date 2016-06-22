@@ -6,9 +6,9 @@ import { Platform } from "out/metadata"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../../../out/awaiter")
+const __awaiter = require("../../../out/util/awaiter")
 
-const util = require("../../../out/util")
+const util = require("../../../out/util/util")
 const utilSpawn = util.spawn
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
@@ -150,7 +150,7 @@ function runTests(): BluebirdPromise<any> {
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
   else if (process.platform === "win32") {
-    args.push("test/out/*.js", "!test/out/osxPackagerTest.js", "!test/out/linuxPackagerTest.js", "!test/out/CodeSignTest.js", "!test/out/ArtifactPublisherTest.js")
+    args.push("test/out/*.js", "!test/out/osxPackagerTest.js", "!test/out/linuxPackagerTest.js", "!test/out/CodeSignTest.js", "!test/out/ArtifactPublisherTest.js", "!test/out/httpRequestTest.js")
   }
 
   return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {

@@ -6,7 +6,7 @@ import { FpmTarget } from "./targets/fpm"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export const installPrefix = "/opt"
 

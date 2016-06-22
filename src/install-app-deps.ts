@@ -1,14 +1,14 @@
 #! /usr/bin/env node
 
-import { computeDefaultAppDirectory, installDependencies, getElectronVersion, readPackageJson, use } from "./util"
-import { printErrorAndExit } from "./promise"
+import { computeDefaultAppDirectory, installDependencies, getElectronVersion, readPackageJson, use } from "./util/util"
+import { printErrorAndExit } from "./util/promise"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { DevMetadata } from "./metadata"
 import yargs = require("yargs")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 const args: any = yargs
   .option("arch", {

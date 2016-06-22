@@ -5,7 +5,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { getRepositoryInfo } from "out/repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test("repo slug from TRAVIS_REPO_SLUG", () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG

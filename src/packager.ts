@@ -2,8 +2,8 @@ import * as path from "path"
 import {
   computeDefaultAppDirectory, installDependencies, getElectronVersion, readPackageJson, use,
   exec, isEmptyOrSpaces
-} from "./util"
-import { all, executeFinally } from "./promise"
+} from "./util/util"
+import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
@@ -13,13 +13,13 @@ import * as errorMessages from "./errorMessages"
 import * as util from "util"
 import deepAssign = require("deep-assign")
 import semver = require("semver")
-import { warn, log } from "./log"
+import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
-import MacPackager from "./osxPackager"
+import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -120,7 +120,7 @@ export class Packager implements BuildInfo {
     switch (platform) {
       case Platform.MAC:
       {
-        const helperClass: typeof MacPackager = require("./osxPackager").default
+        const helperClass: typeof MacPackager = require("./macPackager").default
         return new helperClass(this, cleanupTasks)
       }
 

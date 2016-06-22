@@ -1,11 +1,11 @@
-import { spawn, debug, debug7zArgs } from "../util"
+import { spawn, debug, debug7zArgs } from "../util/util"
 import { CompressionLevel } from "../metadata"
 import * as path from "path"
 import { unlink } from "fs-extra-p"
 import { path7za } from "7zip-bin"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("../util/awaiter")
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {

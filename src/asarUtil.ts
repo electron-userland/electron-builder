@@ -1,5 +1,5 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions, AsarFileMetadata, createPackageFromFiles } from "asar"
-import { statOrNull } from "./util"
+import { statOrNull } from "./util/util"
 import { lstat, readdir } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -7,7 +7,7 @@ import { Stats } from "fs"
 import pathSorter = require("path-sort")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 const concurrency = {concurrency: 50}
 

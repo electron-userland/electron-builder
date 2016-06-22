@@ -1,14 +1,14 @@
 import deepAssign = require("deep-assign")
 import * as path from "path"
-import { log } from "../log"
+import { log } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"
 import { MacOptions, DmgOptions } from "../metadata"
 import { Promise as BluebirdPromise } from "bluebird"
-import { debug, use } from "../util"
+import { debug, use } from "../util/util"
 import appdmg = require("appdmg")
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("../awaiter")
+const __awaiter = require("../util/awaiter")
 
 export class DmgTarget extends Target {
   private readonly options: DmgOptions

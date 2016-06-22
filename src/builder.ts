@@ -1,15 +1,15 @@
 import { Packager, normalizePlatforms } from "./packager"
 import { PackagerOptions } from "./platformPackager"
 import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
-import { executeFinally } from "./promise"
+import { executeFinally } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
-import { isEmptyOrSpaces } from "./util"
-import { log, warn } from "./log"
+import { isEmptyOrSpaces } from "./util/util"
+import { log, warn } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+const __awaiter = require("./util/awaiter")
 
 export async function createPublisher(packager: Packager, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)

@@ -5,7 +5,7 @@ import * as path from "path"
 import { Platform } from "out"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test.ifNotWindows("deb", () => assertPack("test-app-one", platform(Platform.LINUX)))
 

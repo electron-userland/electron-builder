@@ -7,10 +7,10 @@ import {
   CSC_INSTALLER_KEY_PASSWORD,
   CSC_INSTALLER_LINK
 } from "./helpers/codeSignData"
-import { executeFinally, all } from "out/promise"
+import { executeFinally, all } from "out/util/promise"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/awaiter")
+const __awaiter = require("out/util/awaiter")
 
 test.ifOsx("create keychain", async () => {
   const keychainName = generateKeychainName()
