@@ -229,6 +229,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly identity?: string | null
 
   /*
+   The path to application icon. Defaults to `build/icon.icns` (consider using this convention instead of complicating your configuration).
+   */
+  readonly icon?: string | null
+
+  /*
    The path to entitlements file for signing the app. `build/entitlements.osx.plist` will be used if exists (it is a recommended way to set).
    MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
    */
@@ -332,6 +337,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly signingHashAlgorithms?: Array<string> | null
   readonly signcodePath?: string | null
+
+  /*
+   The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
+   */
+  readonly icon?: string | null
 }
 
 /*
