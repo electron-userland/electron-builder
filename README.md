@@ -50,7 +50,7 @@ For a production app you need to sign your application, see [Where to buy code s
 2. Specify [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) field in the development `package.json`:
     ```json
     "build": {
-      "app-bundle-id": "your.id",
+      "appId": "your.id",
       "app-category-type": "your.app.category.type",
       "win": {
         "iconUrl": "(windows-only) https link to icon"
