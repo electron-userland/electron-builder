@@ -153,5 +153,11 @@ builder.build({
   })
 ```
 
+# Donations
+
+[Donate with PayPal.](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
+
 # Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
+
+
