@@ -17,10 +17,12 @@ cache:
     - $HOME/.cache/fpm
 
 before_install:
-  - brew install --ignore-dependencies --force-bottle gnu-tar dpkg libicns graphicsmagick lzip freetype
-  - brew deps --skip-optional wine | grep -v -e freetype -e libtiff -e libpng -e libtool -e libicns -e jpeg -e gmp | xargs brew install --ignore-dependencies --force-bottle
-  - brew install --ignore-dependencies --force-bottle wine
-  - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v1.2.0/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-1.2.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
+  - curl -L https://dl.bintray.com/develar/bin/7za > /tmp/7za
+  - chmod +x /tmp/7za
+  - curl -L https://dl.bintray.com/develar/bin/wine.7z > /tmp/wine.7z
+  - /tmp/7za x -o/usr/local/Cellar -y /tmp/wine.7z
+  - brew link fontconfig freetype gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle openssl sane-backends webp wine git-lfs gnu-tar dpkg graphicsmagick
+  - git-lfs pull
 
 install:
 - nvm install $NODE_VERSION
