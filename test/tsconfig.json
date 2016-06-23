@@ -75,7 +75,7 @@
     "src/helpers/runTests.ts",
     "src/httpRequestTest.ts",
     "src/linuxPackagerTest.ts",
-    "src/osxPackagerTest.ts",
+    "src/macPackagerTest.ts",
     "src/RepoSlugTest.ts",
     "src/winPackagerTest.ts"
   ]

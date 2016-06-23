@@ -56,7 +56,7 @@ test.ifOsx("custom mas", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
-        osx: {
+        mac: {
           target: ["mas"],
           identity: "Test Test",
         },
@@ -85,7 +85,7 @@ test.ifOsx("entitlements in the package.json", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
-        osx: {
+        mac: {
           entitlements: "osx-entitlements file path",
           entitlementsInherit: "osx-entitlementsInherit file path",
         }

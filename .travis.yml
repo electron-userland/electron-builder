@@ -6,7 +6,7 @@ matrix:
       env: NODE_VERSION=6
 
     - os: osx
-      env: TEST_FILES=osxPackagerTest,CodeSignTest NODE_VERSION=4
+      env: TEST_FILES=macPackagerTest,CodeSignTest NODE_VERSION=4
 
 language: c
 
