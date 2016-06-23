@@ -54,12 +54,13 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
 // ))
 
 // very slow
-test.ifWinCi("delta", () => assertPack("test-app-one", {
+test.ifWinCi("delta and msi", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
     devMetadata: {
       build: {
         win: {
           remoteReleases: "https://github.com/develar/__test-app-releases",
+          msi: true,
         }
       }
     },

@@ -67,6 +67,7 @@ export default class SquirrelWindowsTarget extends Target {
       productName: appInfo.productName,
       exe: `${appInfo.productName}.exe`,
       setupExe: setupExeName,
+      msiExe: setupExeName.replace(".exe", ".msi"),
       title: appInfo.productName,
       appDirectory: appOutDir,
       outputDirectory: installerOutDir,
