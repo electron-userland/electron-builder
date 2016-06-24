@@ -1,7 +1,7 @@
 import { Platform, Arch, BuildInfo, PackagerOptions } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
-import { move, outputFile } from "fs-extra-p"
+import { outputFile, rename } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -48,10 +48,76 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
   }
 ))
 
-// test.ifNotCiOsx("win 32", () => assertPack("test-app-one", signed({
-//     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
-//   })
-// ))
+test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
+    targets: Platform.WINDOWS.createTarget(["nsis"]),
+    devMetadata: {
+      build: {
+        nsis: {
+          oneClick: false,
+        }
+      }
+    }
+  }), {
+    useTempDir: true,
+  }
+))
+
+test.ifNotCiOsx("nsis boring, MUI_HEADER", () => {
+  let installerHeaderPath: string | null = null
+  return assertPack("test-app-one", {
+      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      devMetadata: {
+        build: {
+          nsis: {
+            oneClick: false,
+          }
+        }
+      },
+      effectiveOptionComputed: options => {
+        const defines = options[0]
+        assertThat(defines.MUI_HEADERIMAGE).isEqualTo(null)
+        assertThat(defines.MUI_HEADERIMAGE_BITMAP).isEqualTo(installerHeaderPath)
+        assertThat(defines.MUI_HEADERIMAGE_RIGHT).isEqualTo(null)
+        // speedup, do not build - another MUI_HEADER test will test build
+        return true
+      }
+    }, {
+      tempDirCreated: projectDir => {
+        installerHeaderPath = path.join(projectDir, "build", "installerHeader.bmp")
+        return rename(path.join(projectDir, "installerHeader.bmp"), installerHeaderPath)
+      }
+    }
+  )
+})
+
+test.ifNotCiOsx("nsis boring, MUI_HEADER as option", () => {
+  let installerHeaderPath: string | null = null
+  return assertPack("test-app-one", {
+      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      devMetadata: {
+        build: {
+          nsis: {
+            oneClick: false,
+            installerHeader: "foo.bmp"
+          }
+        }
+      },
+      effectiveOptionComputed: options => {
+        const defines = options[0]
+        assertThat(defines.MUI_HEADERIMAGE).isEqualTo(null)
+        assertThat(defines.MUI_HEADERIMAGE_BITMAP).isEqualTo(installerHeaderPath)
+        assertThat(defines.MUI_HEADERIMAGE_RIGHT).isEqualTo(null)
+        // test that we can build such installer
+        return false
+      }
+    }, {
+      tempDirCreated: projectDir => {
+        installerHeaderPath = path.join(projectDir, "foo.bmp")
+        return rename(path.join(projectDir, "installerHeader.bmp"), installerHeaderPath)
+      }
+    }
+  )
+})
 
 // very slow
 test.ifWinCi("delta and msi", () => assertPack("test-app-one", {
@@ -95,17 +161,17 @@ test("detect install-spinner, certificateFile/password", () => {
     targets: Platform.WINDOWS.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks),
     devMetadata: {
-        build: {
-          win: {
-            certificatePassword: "pass",
-          }
+      build: {
+        win: {
+          certificatePassword: "pass",
         }
       }
+    }
   }, {
     tempDirCreated: it => {
       loadingGifPath = path.join(it, "build", "install-spinner.gif")
       return BluebirdPromise.all([
-        move(path.join(it, "install-spinner.gif"), loadingGifPath),
+        rename(path.join(it, "install-spinner.gif"), loadingGifPath),
         modifyPackageJson(it, data => {
           data.build.win = {
             certificateFile: "secretFile",
@@ -123,7 +189,7 @@ test("detect install-spinner, certificateFile/password", () => {
 })
 
 test.ifNotCiOsx("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
-  tempDirCreated: projectDir => move(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"), {clobber: true})
+  tempDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }), /Windows icon size must be at least 256x256, please fix ".+/))
 
 test.ifNotCiOsx("icon not an image", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
@@ -137,7 +203,7 @@ test.ifOsx("custom icon", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks)
   }, {
     tempDirCreated: projectDir => BluebirdPromise.all([
-      move(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
+      rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
       modifyPackageJson(projectDir, data => {
         data.build.win = {
           icon: "customIcon"

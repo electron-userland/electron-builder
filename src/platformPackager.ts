@@ -44,6 +44,8 @@ export interface PackagerOptions {
    * Application `package.json` will be still read, but options specified in this object will override.
    */
   readonly appMetadata?: AppMetadata
+
+  readonly effectiveOptionComputed?: (options: any) => boolean
 }
 
 export interface BuildInfo {
@@ -70,7 +72,7 @@ export class Target {
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
-  protected readonly options: PackagerOptions
+  readonly options: PackagerOptions
 
   readonly projectDir: string
   readonly buildResourcesDir: string

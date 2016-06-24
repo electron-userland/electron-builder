@@ -368,6 +368,11 @@ export interface NsisOptions {
   One-click installation. Defaults to `true`.
    */
   readonly oneClick?: boolean | null
+
+  /*
+   *boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
+   */
+  readonly installerHeader?: string | null
 }
 
 /*

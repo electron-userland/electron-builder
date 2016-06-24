@@ -100,7 +100,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 
   const platformToTarget = await packager.build()
 
-  if (packagerOptions.platformPackagerFactory != null) {
+  if (packagerOptions.platformPackagerFactory != null || packagerOptions.effectiveOptionComputed != null) {
     return
   }
 

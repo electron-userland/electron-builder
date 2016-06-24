@@ -24,12 +24,12 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 const nsisPathPromise = getBin("nsis", NSIS_VERSION, `https://dl.bintray.com/electron-userland/bin/${NSIS_VERSION}.7z`, NSIS_SHA2)
 
 export default class NsisTarget extends Target {
-  private readonly nsisOptions: NsisOptions
+  private readonly options: NsisOptions
 
   constructor(private packager: WinPackager) {
     super("nsis")
 
-    this.nsisOptions = packager.info.devMetadata.build.nsis || Object.create(null)
+    this.options = packager.info.devMetadata.build.nsis || Object.create(null)
   }
 
   async build(arch: Arch, outDir: string, appOutDir: string) {
@@ -43,7 +43,7 @@ export default class NsisTarget extends Target {
     // const archiveFile = path.join(this.outDir, `.${packager.metadata.name}-${packager.metadata.version}${archSuffix}.7z`)
     const archiveFile = path.join(outDir, `app.7z`)
 
-    const guid = this.nsisOptions.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
+    const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const productName = appInfo.productName
     const defines: any = {
       APP_ID: appInfo.id,
@@ -60,14 +60,31 @@ export default class NsisTarget extends Target {
       COMPANY_NAME: appInfo.companyName,
     }
 
-    if (this.nsisOptions.perMachine === true) {
+    let installerHeader = this.options.installerHeader
+    if (installerHeader === undefined) {
+      const resourceList = await packager.resourceList
+      if (resourceList.includes("installerHeader.bmp")) {
+        installerHeader = path.join(packager.buildResourcesDir, "installerHeader.bmp")
+      }
+    }
+    else {
+      installerHeader = path.resolve(packager.projectDir, installerHeader)
+    }
+
+    if (installerHeader != null) {
+      defines.MUI_HEADERIMAGE = null
+      defines.MUI_HEADERIMAGE_RIGHT = null
+      defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+    }
+
+    if (this.options.perMachine === true) {
       defines.MULTIUSER_INSTALLMODE_DEFAULT_ALLUSERS = null
     }
     else {
       defines.MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER = null
     }
 
-    if (this.nsisOptions.allowElevation !== false) {
+    if (this.options.allowElevation !== false) {
       defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
     }
 
@@ -102,13 +119,17 @@ export default class NsisTarget extends Target {
 
     await subTask("Packing app into 7z archive", archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true))
 
-    const oneClick = this.nsisOptions.oneClick !== false
+    const oneClick = this.options.oneClick !== false
     if (oneClick) {
       defines.ONE_CLICK = null
     }
 
     debug(defines)
     debug(commands)
+
+    if (this.packager.options.effectiveOptionComputed != null && this.packager.options.effectiveOptionComputed([defines, commands])) {
+      return
+    }
 
     await subTask(`Executing makensis`, NsisTarget.executeMakensis(defines, commands))
     await packager.sign(installerPath)
