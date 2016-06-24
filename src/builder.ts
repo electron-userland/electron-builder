@@ -24,7 +24,7 @@ export async function createPublisher(packager: Packager, options: PublishOption
   }
   else {
     log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${packager.metadata.version}`)
-    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options, options.publish!)
+    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options, isPublishOptionGuessed)
   }
 }
 

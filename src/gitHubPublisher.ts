@@ -19,8 +19,10 @@ export interface Publisher {
   upload(file: string, artifactName?: string): Promise<any>
 }
 
+export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
+
 export interface PublishOptions {
-  publish?: "onTag" | "onTagOrDraft" | "always" | "never" | null
+  publish?: PublishPolicy | null
   githubToken?: string | null
 
   draft?: boolean
@@ -32,17 +34,19 @@ export class GitHubPublisher implements Publisher {
   private _releasePromise: BluebirdPromise<Release>
 
   private readonly token: string
+  private readonly policy: PublishPolicy
 
   get releasePromise(): Promise<Release | null> {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, version: string, private options: PublishOptions, private policy: string = "always") {
+  constructor(private owner: string, private repo: string, version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false) {
     if (isEmptyOrSpaces(options.githubToken)) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
 
     this.token = options.githubToken!
+    this.policy = options.publish!
 
     this.tag = "v" + version
     this._releasePromise = <BluebirdPromise<Release>>this.init()
@@ -54,30 +58,31 @@ export class GitHubPublisher implements Publisher {
     const releases = await gitHubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
     for (let release of releases) {
       if (release.tag_name === this.tag) {
-        if (!release.draft) {
-          if (this.policy === "onTag") {
-            throw new Error("Release must be a draft")
-          }
-          else {
-            const message = `Release ${this.tag} is not a draft, artifacts will be not published`
-            if (this.policy === "always") {
-              warn(message)
-            }
-            else {
-              log(message)
-            }
-            return null
-          }
+        if (release.draft) {
+          return release
         }
-        return release!
+
+        if (!this.isPublishOptionGuessed && this.policy === "onTag") {
+          throw new Error(`Release with tag ${this.tag} must be a draft`)
+        }
+
+        const message = `Release with tag ${this.tag} is not a draft, artifacts will be not published`
+        if (this.isPublishOptionGuessed || this.policy === "onTagOrDraft") {
+          log(message)
+        }
+        else {
+          warn(message)
+        }
+        return null
       }
     }
 
     if (createReleaseIfNotExists) {
-      log(`Release this.tag doesn't exists, creating one`)
+      log(`Release with tag ${this.tag} doesn't exists, creating one`)
       return this.createRelease()
     }
     else {
+      log(`Cannot found release with tag ${this.tag}, artifacts will be not published`)
       return null
     }
   }
@@ -162,6 +167,7 @@ export class GitHubPublisher implements Publisher {
   }
 
   // test only
+  //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
     return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token)
   }
