@@ -69,6 +69,10 @@ export interface BuildInfo {
 export class Target {
   constructor(public name: string) {
   }
+
+  finishBuild(): Promise<any> {
+    return BluebirdPromise.resolve()
+  }
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -112,7 +116,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options == null ? Object.create(null) : options
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     throw new Error("not implemented")
   }
 

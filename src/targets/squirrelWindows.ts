@@ -16,6 +16,10 @@ export default class SquirrelWindowsTarget extends Target {
   }
 
   async build(arch: Arch, appOutDir: string) {
+    if (arch === Arch.ia32) {
+      warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
+    }
+
     const appInfo = this.packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)

@@ -104,7 +104,11 @@ export class Packager implements BuildInfo {
           checkWineVersion(wineCheck)
         }
 
-        await helper.pack(outDir, arch, createTargets(nameToTarget, targets, helper, cleanupTasks), distTasks)
+        await helper.pack(outDir, arch, createTargets(nameToTarget, targets, outDir, helper, cleanupTasks), distTasks)
+      }
+
+      for (let target of nameToTarget.values()) {
+        distTasks.push(target.finishBuild())
       }
     }
 

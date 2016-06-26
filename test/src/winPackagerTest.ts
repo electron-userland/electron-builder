@@ -28,7 +28,7 @@ test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
 ))
 
 test("nsis", () => assertPack("test-app-one", _signed({
-    targets: Platform.WINDOWS.createTarget(["nsis"]),
+    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
   }), {
   useTempDir: true,
   }

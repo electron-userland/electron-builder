@@ -1,3 +1,7 @@
+# 32 bit + 64 bit
+
+If you build both ia32 and xha arch, you in any case get one installer. Appropriate arch will be installed automatically.
+
 # GUID vs Application Name
 
 Windows requires to use registry keys (e.g. INSTALL/UNINSTALL info). Squirrel.Windows simply uses application name as key.

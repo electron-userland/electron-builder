@@ -253,8 +253,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
       artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
     }
     else if (target === "nsis") {
-      expectedFileNames.push(`${productName} Setup ${appInfo.version}${archSuffix}.exe`)
-      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
+      expectedFileNames.push(`${productName} Setup ${appInfo.version}.exe`)
+      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}.exe`)
     }
     else {
       expectedFileNames.push(`${productName}-${appInfo.version}${archSuffix}-win.${target}`)

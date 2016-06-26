@@ -4,13 +4,13 @@ export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", 
 export const DEFAULT_TARGET = "default"
 export const DIR_TARGET = "dir"
 
-export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string> | n, packager: PlatformPackager<any>, cleanupTasks: Array<() => Promise<any>>): Array<Target> {
+export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string> | n, outDir: string, packager: PlatformPackager<any>, cleanupTasks: Array<() => Promise<any>>): Array<Target> {
   const result: Array<Target> = []
 
-  const mapper = (name: string, factory: () => Target) => {
+  const mapper = (name: string, factory: (outDir: string) => Target) => {
     let target = nameToTarget.get(name)
     if (target == null) {
-      target = factory()
+      target = factory(outDir)
       nameToTarget.set(name, target)
     }
     result.push(target)

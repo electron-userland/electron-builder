@@ -4,6 +4,7 @@
 !include "nsProcess.nsh"
 !include "allowOnlyOneInstallerInstace.nsh"
 !include "checkAppRunning.nsh"
+!include x64.nsh
 
 Function StartApp
   ExecShell "" "$SMPROGRAMS\${PRODUCT_NAME}.lnk"
@@ -25,8 +26,25 @@ Function .onInit
   !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
 
   InitPluginsDir
+
+  ${If} ${RunningX64}
+    !ifdef APP_64
+      SetRegView 64
+    !endif
+  ${Else}
+    !ifndef APP_32
+      MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required."
+      Quit
+    !endif
+  ${EndIf}
+
   SetCompress off
-  File /oname=$PLUGINSDIR\app.7z "${APP_ARCHIVE}"
+  !ifdef APP_32
+    File /oname=$PLUGINSDIR\app-32.7z "${APP_32}"
+  !endif
+  !ifdef APP_64
+    File /oname=$PLUGINSDIR\app-64.7z "${APP_64}"
+  !endif
   SetCompress "${COMPRESS}"
 FunctionEnd
 
@@ -47,7 +65,11 @@ Section "install"
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
 
-  Nsis7z::Extract "$PLUGINSDIR\app.7z"
+  ${If} ${RunningX64}
+    Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
+  ${Else}
+    Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+  ${EndIf}
 
 #  <% if(fileAssociation){ %>
     # specify file association
@@ -90,6 +112,8 @@ Section "un.install"
 
   # delete the installed files
   RMDir /r $INSTDIR
+
+  RMDir /r "$APPDATA\${PRODUCT_NAME}"
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
 

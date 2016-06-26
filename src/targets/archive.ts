@@ -19,7 +19,7 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
   "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
 }
 
-export async function archiveApp(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<any> {
+export async function archiveApp(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<string> {
   const storeOnly = compression === "store"
 
   if (format.startsWith("tar.")) {
@@ -37,7 +37,7 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
       stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
       env: tarEnv
     })
-    return
+    return outFile
   }
 
   const args = debug7zArgs("a")
@@ -76,4 +76,6 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
     cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
     stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
+
+  return outFile
 }

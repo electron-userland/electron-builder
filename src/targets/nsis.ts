@@ -5,9 +5,10 @@ import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBin } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { getArchSuffix, Target } from "../platformPackager"
+import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
-import { subTask } from "../util/log"
+import { subTask, task } from "../util/log"
+import { unlink } from "fs-extra-p"
 import sanitizeFileName = require("sanitize-filename")
 import semver = require("semver")
 
@@ -26,22 +27,33 @@ const nsisPathPromise = getBin("nsis", NSIS_VERSION, `https://dl.bintray.com/ele
 export default class NsisTarget extends Target {
   private readonly options: NsisOptions
 
-  constructor(private packager: WinPackager) {
+  private archs: Map<Arch, Promise<string>> = new Map()
+
+  constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
     this.options = packager.info.devMetadata.build.nsis || Object.create(null)
   }
 
-  async build(arch: Arch, outDir: string, appOutDir: string) {
+  async build(arch: Arch, appOutDir: string) {
+    const packager = this.packager
+    const archSuffix = arch == Arch.x64 ? "x64": "ia32"
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${archSuffix}.nsis.7z`)
+    this.archs.set(arch, task(`Creating NSIS ${archSuffix} package`, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true)))
+  }
+
+  finishBuild(): Promise<any> {
+    return task("Building NSIS installer", this.buildInstaller()
+      .then(() => BluebirdPromise.map(this.archs.values(), it => unlink(it))))
+  }
+
+  private async buildInstaller(): Promise<any> {
     const packager = this.packager
 
     const iconPath = await packager.getIconPath()
     const appInfo = packager.appInfo
     const version = appInfo.version
-    const archSuffix = getArchSuffix(arch)
-    const installerPath = path.join(outDir, `${appInfo.productName} Setup ${version}${archSuffix}.exe`)
-    // const archiveFile = path.join(this.outDir, `.${packager.metadata.name}-${packager.metadata.version}${archSuffix}.7z`)
-    const archiveFile = path.join(outDir, `app.7z`)
+    const installerPath = path.join(this.outDir, `${appInfo.productName} Setup ${version}.exe`)
 
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const productName = appInfo.productName
@@ -51,13 +63,16 @@ export default class NsisTarget extends Target {
       PRODUCT_NAME: productName,
       INST_DIR_NAME: sanitizeFileName(productName),
       APP_DESCRIPTION: appInfo.description,
-      APP_ARCHIVE: archiveFile,
       VERSION: version,
 
       MUI_ICON: iconPath,
       MUI_UNICON: iconPath,
 
       COMPANY_NAME: appInfo.companyName,
+    }
+
+    for (let [arch, file] of this.archs) {
+      defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
     }
 
     let installerHeader = this.options.installerHeader
@@ -117,8 +132,6 @@ export default class NsisTarget extends Target {
       defines.COMPRESS = "auto"
     }
 
-    await subTask("Packing app into 7z archive", archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true))
-
     const oneClick = this.options.oneClick !== false
     if (oneClick) {
       defines.ONE_CLICK = null
@@ -134,7 +147,7 @@ export default class NsisTarget extends Target {
     await subTask(`Executing makensis`, NsisTarget.executeMakensis(defines, commands))
     await packager.sign(installerPath)
 
-    this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
+    this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
   }
 
   private static async executeMakensis(defines: any, commands: any) {

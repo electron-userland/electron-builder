@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPackager"
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
-import { log, warn, task } from "./util/log"
+import { log, task } from "./util/log"
 import { deleteFile, open, close, read } from "fs-extra-p"
 import { sign, SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
@@ -51,7 +51,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     this.iconPath = this.getValidIconPath()
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     for (let name of targets) {
       if (name === DIR_TARGET) {
         continue
@@ -64,9 +64,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         })
       }
       else if (name === "nsis") {
-        mapper(name, () => {
+        mapper(name, outDir => {
           const targetClass: typeof NsisTarget = require("./targets/nsis").default
-          return new targetClass(this)
+          return new targetClass(this, outDir)
         })
       }
       else {
@@ -99,10 +99,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    if (arch === Arch.ia32) {
-      warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
-    }
-
     const appOutDir = this.computeAppOutDir(outDir, arch)
     const packOptions = await this.computePackOptions(outDir, appOutDir, arch)
 
@@ -142,7 +138,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         promises.push(task(`Building Squirrel.Windows installer`, target.build(arch, appOutDir)))
       }
       else if (target instanceof NsisTarget) {
-        promises.push(task(`Building NSIS installer`, target.build(arch, outDir, appOutDir)))
+        promises.push(target.build(arch, appOutDir))
       }
       else {
         const format = target.name
