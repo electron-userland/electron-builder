@@ -157,21 +157,37 @@ export function downloadCertificate(cscLink: string): Promise<string> {
     .thenReturn(certPath)
 }
 
-export let findIdentityRawResult: Promise<string> | null = null
+export let findIdentityRawResult: Promise<Array<string>> | null = null
 
 export async function findIdentity(namePrefix: CertType, qualifier?: string): Promise<string | null> {
   if (findIdentityRawResult == null) {
     // https://github.com/electron-userland/electron-builder/issues/481
-    findIdentityRawResult = exec("security", ["find-identity", "-v", "-p", "codesigning", "-p", "appleID"])
+    // https://github.com/electron-userland/electron-builder/issues/535
+    findIdentityRawResult = BluebirdPromise.all([
+      exec("security", ["find-identity", "-v"])
+        .then(it => it.trim().split("\n").filter(it => {
+          for (let prefix of appleCertificatePrefixes) {
+            if (it.includes(prefix)) {
+              return true
+            }
+          }
+          return false
+        })),
+      exec("security", ["find-identity", "-v", "-p", "codesigning"])
+        .then(it => it.trim().split(("\n"))),
+    ])
+      .then(it => {
+        const array = it[0].concat(it[1])
+          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
+          // remove 1)
+          .map(it => it.substring(it.indexOf(")") + 1).trim())
+        return Array.from(new Set(array))
+      })
   }
 
   // https://github.com/electron-userland/electron-builder/issues/484
   //noinspection SpellCheckingInspection
-  const lines = (await findIdentityRawResult)
-    .trim()
-    .split("\n")
-    .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
-
+  const lines = await findIdentityRawResult
   for (let line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
       continue
