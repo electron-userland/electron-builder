@@ -373,6 +373,11 @@ export interface NsisOptions {
    *boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
    */
   readonly installerHeader?: string | null
+
+  /*
+   *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/headerIcon.ico` or application icon.
+   */
+  readonly headerIcon?: string | null
 }
 
 /*

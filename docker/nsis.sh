@@ -5,7 +5,7 @@ rm -rf Docs
 rm -rf NSIS.chm
 rm -rf Examples
 rm -rf Plugins/x86-ansi
-unlink makensisw.exe
+rm -f makensisw.exe
 
 # nsProcess plugin
 curl -L http://nsis.sourceforge.net/mediawiki/images/1/18/NsProcess.zip > a.zip

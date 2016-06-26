@@ -62,6 +62,24 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
   }
 ))
 
+test.ifNotCiOsx("nsis, headerIcon", () => {
+  let headerIconPath: string | null = null
+  return assertPack("test-app-one", {
+      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      effectiveOptionComputed: options => {
+        const defines = options[0]
+        assertThat(defines.HEADER_ICO).isEqualTo(headerIconPath)
+        return false
+      }
+    }, {
+      tempDirCreated: projectDir => {
+        headerIconPath = path.join(projectDir, "build", "headerIcon.ico")
+        return rename(path.join(projectDir, "headerIcon.ico"), headerIconPath)
+      }
+    }
+  )
+})
+
 test.ifNotCiOsx("nsis boring, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {

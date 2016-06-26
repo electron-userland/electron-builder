@@ -15,9 +15,9 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-const NSIS_VERSION = "nsis-3.0.0-rc.1.2"
+const NSIS_VERSION = "nsis-3.0.0-rc.1.3"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "d96f714ba552a5ebccf2593ed3fee1b072b67e7bfd1b90d66a5eb0cd3ca41d16"
+const NSIS_SHA2 = "77bca57e784372dea1b69b0571d89d5a1c879c51d80d7c503f283a2e7de5f072"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -75,21 +75,18 @@ export default class NsisTarget extends Target {
       defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
     }
 
-    let installerHeader = this.options.installerHeader
-    if (installerHeader === undefined) {
-      const resourceList = await packager.resourceList
-      if (resourceList.includes("installerHeader.bmp")) {
-        installerHeader = path.join(packager.buildResourcesDir, "installerHeader.bmp")
-      }
-    }
-    else {
-      installerHeader = path.resolve(packager.projectDir, installerHeader)
-    }
+    const oneClick = this.options.oneClick !== false
 
+    const installerHeader = oneClick ? null : await this.getResource(this.options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {
       defines.MUI_HEADERIMAGE = null
       defines.MUI_HEADERIMAGE_RIGHT = null
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+    }
+
+    const headerIcon = oneClick ? await this.getResource(this.options.installerHeader, "headerIcon.ico") : null
+    if (headerIcon != null) {
+      defines.HEADER_ICO = headerIcon
     }
 
     if (this.options.perMachine === true) {
@@ -132,7 +129,6 @@ export default class NsisTarget extends Target {
       defines.COMPRESS = "auto"
     }
 
-    const oneClick = this.options.oneClick !== false
     if (oneClick) {
       defines.ONE_CLICK = null
     }
@@ -148,6 +144,21 @@ export default class NsisTarget extends Target {
     await packager.sign(installerPath)
 
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
+  }
+
+  protected async getResource(custom: string | n, name: string): Promise<string | null> {
+    let result = custom
+    if (result === undefined) {
+      const resourceList = await this.packager.resourceList
+      if (resourceList.includes(name)) {
+        return path.join(this.packager.buildResourcesDir, name)
+      }
+    }
+    else {
+      return path.resolve(this.packager.projectDir, result)
+    }
+
+    return null
   }
 
   private static async executeMakensis(defines: any, commands: any) {

@@ -57,7 +57,11 @@ Section "install"
   SetDetailsPrint none
 
   !ifdef ONE_CLICK
-    SpiderBanner::Show /MODERN
+    !ifdef HEADER_ICO
+      SpiderBanner::Show /MODERN /ICON "${HEADER_ICO}"
+    !else
+      SpiderBanner::Show /MODERN
+   !endif
   !endif
 
   !insertmacro CHECK_APP_RUNNING "install"
