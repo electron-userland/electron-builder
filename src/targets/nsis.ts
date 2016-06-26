@@ -84,7 +84,7 @@ export default class NsisTarget extends Target {
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
     }
 
-    const headerIcon = oneClick ? await this.getResource(this.options.installerHeader, "headerIcon.ico") : null
+    const headerIcon = oneClick ? await this.getResource(this.options.headerIcon, "headerIcon.ico") : null
     if (headerIcon != null) {
       defines.HEADER_ICO = headerIcon
     }

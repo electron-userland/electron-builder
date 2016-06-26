@@ -40,15 +40,19 @@ export class GitHubPublisher implements Publisher {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false) {
+  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false) {
     if (isEmptyOrSpaces(options.githubToken)) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
 
     this.token = options.githubToken!
-    this.policy = options.publish!
+    this.policy = options.publish || "always"
 
-    this.tag = "v" + version
+    if (version.startsWith("v")) {
+      throw new Error(`Version must not starts with "v": ${version}`)
+    }
+
+    this.tag = `v${version}`
     this._releasePromise = <BluebirdPromise<Release>>this.init()
   }
 
@@ -74,6 +78,9 @@ export class GitHubPublisher implements Publisher {
           warn(message)
         }
         return null
+      }
+      else if (release.tag_name === this.version) {
+        throw new Error(`Tag name must starts with "v": ${release.tag_name}`)
       }
     }
 

@@ -79,6 +79,28 @@ testAndIgnoreApiRate("prerelease", async () => {
   }
 })
 
+testAndIgnoreApiRate("incorrect tag name", async () => {
+  const publisher = new GitHubPublisher("actperepo", "ecb2", "5.0", {
+    githubToken: token,
+    draft: false,
+    prerelease: true,
+    publish: "onTagOrDraft",
+  })
+  try {
+    await publisher.releasePromise
+    //noinspection ExceptionCaughtLocallyJS
+    throw new Error("No expected error")
+  }
+  catch (e) {
+    if (e.message !== 'Tag name must starts with "v": 5.0') {
+      throw e
+    }
+  }
+  finally {
+    await publisher.deleteRelease()
+  }
+})
+
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
   const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), {
