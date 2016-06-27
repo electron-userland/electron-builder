@@ -111,8 +111,8 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
       }
 
       const nameToTarget = platformToTarget.get(platform)
-      if (platform === Platform.OSX) {
-        await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.OSX))
+      if (platform === Platform.MAC) {
+        await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
       }
       else if (platform === Platform.LINUX) {
         await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch)
@@ -196,11 +196,10 @@ function parseDebControl(info: string): any {
 
 async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const appInfo = packager.appInfo
-  const productName = appInfo.productName
-  const packedAppDir = path.join(path.dirname(artifacts[0].file), (productName || packager.metadata.name) + ".app")
+  const packedAppDir = path.join(path.dirname(artifacts[0].file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   assertThat2(info).has.properties({
-    CFBundleDisplayName: productName,
+    CFBundleDisplayName: appInfo.productName,
     CFBundleIdentifier: "org.electron-builder.testApp",
     LSApplicationCategoryType: "your.app.category.type",
     CFBundleVersion: `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
@@ -217,8 +216,8 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   }
   else {
     assertThat(actualFiles).isEqualTo([
-      `${productName}-${appInfo.version}-mac.zip`,
-      `${productName}-${appInfo.version}.dmg`,
+      `${appInfo.productFilename}-${appInfo.version}-mac.zip`,
+      `${appInfo.productFilename}-${appInfo.version}.dmg`,
     ].sort())
 
     assertThat(artifacts.map(it => it.artifactName).sort()).isEqualTo([
@@ -234,7 +233,6 @@ function getFileNames(list: Array<ArtifactCreated>): Array<string> {
 
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
-  const productName = appInfo.productName
   let squirrel = false
 
   const artifactNames: Array<string> = []
@@ -244,7 +242,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   for (let target of nameToTarget.keys()) {
     if (target === "squirrel") {
       squirrel = true
-      expectedFileNames.push("RELEASES", `${productName} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
+      expectedFileNames.push("RELEASES", `${appInfo.productFilename} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
 
       if (buildOptions != null && buildOptions.remoteReleases != null) {
         expectedFileNames.push(`${appInfo.name}-${convertVersion(appInfo.version)}-delta.nupkg`)
@@ -253,11 +251,11 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
       artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
     }
     else if (target === "nsis") {
-      expectedFileNames.push(`${productName} Setup ${appInfo.version}.exe`)
+      expectedFileNames.push(`${appInfo.productFilename} Setup ${appInfo.version}.exe`)
       artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}.exe`)
     }
     else {
-      expectedFileNames.push(`${productName}-${appInfo.version}${archSuffix}-win.${target}`)
+      expectedFileNames.push(`${appInfo.productFilename}-${appInfo.version}${archSuffix}-win.${target}`)
       artifactNames.push(`${appInfo.name}-${appInfo.version}${archSuffix}-win.${target}`)
     }
   }
@@ -280,7 +278,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
   assertThat(files).isEqualTo(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
-      return `lib/net45/${encodeURI(productName)}.exe`
+      return `lib/net45/${encodeURI(appInfo.productFilename)}.exe`
     }
     else {
       return it
@@ -298,7 +296,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   <metadata>
     <id>TestApp</id>
     <version>${convertVersion(appInfo.version)}</version>
-    <title>${productName}</title>
+    <title>${appInfo.productName}</title>
     <authors>Foo Bar</authors>
     <owners>Foo Bar</owners>
     <iconUrl>https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico</iconUrl>
@@ -343,7 +341,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
 
 export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
   const platforms = [Platform.fromString(process.platform)]
-  if (process.platform === Platform.OSX.nodeName) {
+  if (process.platform === Platform.MAC.nodeName) {
     if (process.env.LINUX_SKIP == null) {
       platforms.push(Platform.LINUX)
     }

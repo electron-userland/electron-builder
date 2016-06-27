@@ -9,7 +9,6 @@ import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task } from "../util/log"
 import { unlink } from "fs-extra-p"
-import sanitizeFileName = require("sanitize-filename")
 import semver = require("semver")
 
 //noinspection JSUnusedLocalSymbols
@@ -53,15 +52,14 @@ export default class NsisTarget extends Target {
     const iconPath = await packager.getIconPath()
     const appInfo = packager.appInfo
     const version = appInfo.version
-    const installerPath = path.join(this.outDir, `${appInfo.productName} Setup ${version}.exe`)
+    const installerPath = path.join(this.outDir, `${appInfo.productFilename} Setup ${version}.exe`)
 
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
-    const productName = appInfo.productName
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
-      PRODUCT_NAME: productName,
-      INST_DIR_NAME: sanitizeFileName(productName),
+      PRODUCT_NAME: appInfo.productName,
+      INST_DIR_NAME: appInfo.productFilename,
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 

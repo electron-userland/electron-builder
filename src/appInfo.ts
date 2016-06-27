@@ -4,6 +4,7 @@ import { warn } from "./util/log"
 import { smarten } from "./platformPackager"
 import { isEmptyOrSpaces } from "./util/util"
 import { getRepositoryInfo } from "./repositoryInfo"
+import sanitizeFileName = require("sanitize-filename")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -23,6 +24,8 @@ export class AppInfo {
   readonly version: string
   readonly buildVersion: string
 
+  readonly productFilename: string
+
   constructor(public metadata: AppMetadata, private devMetadata: DevMetadata) {
     let buildVersion = metadata.version
     this.version = buildVersion
@@ -32,6 +35,8 @@ export class AppInfo {
       buildVersion += `.${buildNumber}`
     }
     this.buildVersion = buildVersion
+
+    this.productFilename = sanitizeFileName(this.productName)
   }
 
   get companyName() {

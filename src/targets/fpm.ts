@@ -88,7 +88,7 @@ export class FpmTarget extends Target {
 
     const templateOptions = Object.assign({
       // old API compatibility
-      executable: this.packager.appInfo.productName,
+      executable: this.packager.appInfo.productFilename,
     }, this.packager.platformSpecificBuildOptions)
 
     const afterInstallTemplate = this.packager.platformSpecificBuildOptions.afterInstall || path.join(defaultTemplatesDir, "after-install.tpl")
@@ -111,7 +111,7 @@ export class FpmTarget extends Target {
     }
 
     const options = this.options
-    const author = options.maintainer || `${packager.metadata.author.name} <${packager.metadata.author.email}>`
+    const author = options.maintainer || `${packager.appInfo.metadata.author.name} <${packager.appInfo.metadata.author.email}>`
     const synopsis = options.synopsis
     const args = [
       "-s", "dir",
@@ -163,28 +163,28 @@ export class FpmTarget extends Target {
       args.push("--depends", dep)
     }
 
-    use(packager.metadata.license || packager.devMetadata.license, it => args.push("--license", it!))
+    use(packager.appInfo.metadata.license || packager.devMetadata.license, it => args.push("--license", it!))
     use(appInfo.buildNumber, it => args.push("--iteration", it!))
 
     use(options.fpm, it => args.push(...<any>it))
 
-    args.push(`${appOutDir}/=${installPrefix}/${appInfo.productName}`)
+    args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
     args.push(...<any>(await this.packageFiles)!)
     await exec(await this.fpmPath, args)
   }
 
   private async computeDesktop(tempDir: string): Promise<Array<string>> {
     const appInfo = this.packager.appInfo
-    const tempFile = path.join(tempDir, appInfo.productName + ".desktop")
+    const tempFile = path.join(tempDir, `${appInfo.productFilename}.desktop`)
     await outputFile(tempFile, this.packager.platformSpecificBuildOptions.desktop || `[Desktop Entry]
 Name=${appInfo.productName}
 Comment=${this.packager.platformSpecificBuildOptions.description || appInfo.description}
-Exec="${installPrefix}/${appInfo.productName}/${appInfo.productName}"
+Exec="${installPrefix}/${appInfo.productFilename}/${appInfo.productFilename}"
 Terminal=false
 Type=Application
 Icon=${appInfo.name}
 `)
-    return [`${tempFile}=/usr/share/applications/${appInfo.productName}.desktop`]
+    return [`${tempFile}=/usr/share/applications/${appInfo.productFilename}.desktop`]
   }
 
   private async createFromIcns(tempDir: string): Promise<Array<string>> {

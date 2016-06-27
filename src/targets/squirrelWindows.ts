@@ -23,7 +23,7 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = this.packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
-    const setupFileName = `${appInfo.productName} Setup ${version}${archSuffix}.exe`
+    const setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
 
     const installerOutDir = path.join(appOutDir, "..", `win${getArchSuffix(arch)}`)
     await emptyDir(installerOutDir)
@@ -45,7 +45,7 @@ export default class SquirrelWindowsTarget extends Target {
     const packager = this.packager
     let iconUrl = packager.platformSpecificBuildOptions.iconUrl || packager.devMetadata.build.iconUrl
     if (iconUrl == null) {
-      const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.devMetadata)
       if (info != null) {
         iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
@@ -69,7 +69,7 @@ export default class SquirrelWindowsTarget extends Target {
     const options: any = Object.assign({
       name: appInfo.name,
       productName: appInfo.productName,
-      exe: `${appInfo.productName}.exe`,
+      exe: `${appInfo.productFilename}.exe`,
       setupExe: setupExeName,
       msiExe: setupExeName.replace(".exe", ".msi"),
       title: appInfo.productName,

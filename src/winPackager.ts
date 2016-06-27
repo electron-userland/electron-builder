@@ -103,7 +103,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const packOptions = await this.computePackOptions(outDir, appOutDir, arch)
 
     await this.doPack(packOptions, outDir, appOutDir, arch, this.platformSpecificBuildOptions)
-    await this.sign(path.join(appOutDir, `${this.appInfo.productName}.exe`))
+    await this.sign(path.join(appOutDir, `${this.appInfo.productFilename}.exe`))
     this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
 

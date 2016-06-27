@@ -67,7 +67,7 @@
     "debug": "^2.2.0",
     "deep-assign": "^2.0.0",
     "electron-osx-sign-tf": "0.6.0",
-    "electron-packager-tf": "~7.4.0",
+    "electron-packager-tf": "~7.5.1",
     "electron-winstaller-fixed": "~2.11.5",
     "fs-extra-p": "^1.0.3",
     "hosted-git-info": "^2.1.5",

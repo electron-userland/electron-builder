@@ -17,14 +17,14 @@ import { DmgTarget } from "out/targets/dmg"
 const __awaiter = require("out/util/awaiter")
 
 test.ifOsx("two-package", () => assertPack("test-app", signed({
-  targets: createTargets([Platform.OSX], null, "all"),
+  targets: createTargets([Platform.MAC], null, "all"),
 })))
 
-test.ifOsx("one-package", () => assertPack("test-app-one", signed(platform(Platform.OSX))))
+test.ifOsx("one-package", () => assertPack("test-app-one", signed(platform(Platform.MAC))))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
   let options: PackagerOptions = {
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     devMetadata: {
       build: {
         osx: {
@@ -42,17 +42,17 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
   })
 }
 
-test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App-1.1.0.dmg"]))
-test.ifOsx("only zip", createTargetTest(["zip"], ["Test App-1.1.0-mac.zip"]))
+test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App AB-1.1.0.dmg"]))
+test.ifOsx("only zip", createTargetTest(["zip"], ["Test App AB-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
-test.ifOsx("mas", createTargetTest(["mas"], ["Test App-1.1.0.pkg"]))
-test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App-1.1.0-mac.7z", "Test App-1.1.0.pkg"]))
+test.ifOsx("mas", createTargetTest(["mas"], ["Test App AB-1.1.0.pkg"]))
+test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App AB-1.1.0-mac.7z", "Test App AB-1.1.0.pkg"]))
 
 test.ifOsx("custom mas", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
@@ -81,7 +81,7 @@ test.ifOsx("custom mas", () => {
 test.ifOsx("entitlements in the package.json", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
     devMetadata: {
       build: {
@@ -105,7 +105,7 @@ test.ifOsx("entitlements in the package.json", () => {
 test.ifOsx("entitlements in build dir", () => {
   let platformPackager: CheckingOsXPackager = null
   return assertPack("test-app-one", signed({
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks),
   }), {
     tempDirCreated: projectDir => BluebirdPromise.all([
@@ -122,11 +122,11 @@ test.ifOsx("entitlements in build dir", () => {
   })
 })
 
-test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
+test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.MAC), {
   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
 }))
 
-test.ifOsx("no build directory", (t: any) => assertPack("test-app-one", platform(Platform.OSX), {
+test.ifOsx("no build directory", (t: any) => assertPack("test-app-one", platform(Platform.MAC), {
   tempDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
@@ -134,7 +134,7 @@ test.ifOsx("custom background - old way", () => {
   let platformPackager: CheckingOsXPackager = null
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks)
   }, {
     tempDirCreated: projectDir => BluebirdPromise.all([
@@ -158,7 +158,7 @@ test.ifOsx("custom background - new way", () => {
   let platformPackager: CheckingOsXPackager = null
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
-    targets: Platform.OSX.createTarget(),
+    targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingOsXPackager(packager, cleanupTasks)
   }, {
     tempDirCreated: projectDir => BluebirdPromise.all([

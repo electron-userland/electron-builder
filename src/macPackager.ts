@@ -166,7 +166,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const identity = codeSigningInfo.name
 
     const baseSignOptions: BaseSignOptions = {
-      app: path.join(appOutDir, `${this.appInfo.productName}.app`),
+      app: path.join(appOutDir, `${this.appInfo.productFilename}.app`),
       platform: masOptions == null ? "darwin" : "mas",
       keychain: <any>codeSigningInfo.keychainName,
       version: this.info.electronVersion
@@ -202,7 +202,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     await task(`Signing app (identity: ${identity})`, this.doSign(signOptions))
 
     if (masOptions != null) {
-      const pkg = path.join(appOutDir, `${this.appInfo.productName}-${this.appInfo.version}.pkg`)
+      const pkg = path.join(appOutDir, `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
       await this.doFlat(Object.assign({
         pkg: pkg,
         identity: codeSigningInfo.installerName,

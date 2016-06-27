@@ -124,7 +124,7 @@ test("extraResources", async () => {
       packed: async (projectDir) => {
         const base = path.join(projectDir, outDirName, platform.buildConfigurationKey)
         let resourcesDir = path.join(base, "resources")
-        if (platform === Platform.OSX) {
+        if (platform === Platform.MAC) {
           resourcesDir = path.join(base, "TestApp.app", "Contents", "Resources")
         }
         else if (platform === Platform.WINDOWS) {

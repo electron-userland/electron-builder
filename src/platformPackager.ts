@@ -81,7 +81,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly projectDir: string
   readonly buildResourcesDir: string
 
-  readonly metadata: AppMetadata
   readonly devMetadata: DevMetadata
 
   readonly platformSpecificBuildOptions: DC
@@ -96,7 +95,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.appInfo = info.appInfo
     this.options = info.options
     this.projectDir = info.projectDir
-    this.metadata = info.appInfo.metadata
     this.devMetadata = info.devMetadata
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
@@ -299,7 +297,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
-    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents") : appOutDir
+    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
     const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
     return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)))
   }
@@ -334,7 +332,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getOSXResourcesDir(appOutDir: string): string {
-    return path.join(appOutDir, `${this.appInfo.productName}.app`, "Contents", "Resources")
+    return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
   private async checkFileInPackage(resourcesDir: string, file: string, isAsar: boolean) {
@@ -363,12 +361,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
     }
 
-    const mainFile = this.metadata.main || "index.js"
+    const mainFile = this.appInfo.metadata.main || "index.js"
     await this.checkFileInPackage(this.getResourcesDir(appOutDir), mainFile, isAsar)
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productName}.app`) : appOutDir)
+    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir)
   }
 
   generateName(ext: string, arch: Arch, deployment: boolean): string {
@@ -387,7 +385,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   generateName2(ext: string, classifier: string | n, deployment: boolean): string {
-    return `${deployment ? this.appInfo.name : this.appInfo.productName}-${this.metadata.version}${classifier == null ? "" : `-${classifier}`}.${ext}`
+    return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}.${ext}`
   }
 
   protected async getDefaultIcon(ext: string) {
