@@ -1,22 +1,4 @@
-# Development machine
-
-To build Linux:
-```sh
-docker run --rm -ti -v `pwd`:/project -v `pwd`/node_modules/.linux:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder
-```
-
-To build windows:
-```sh
-docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine
-```
-
-Consider using `/test.sh` to install npm dependencies and run tests.
-
-# CI Server
-
-```sh
-docker run --rm -v ${PWD}:/project -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh
-```
+It is developer documentation. See [user documentation](https://github.com/electron-userland/electron-builder/wiki/docker).
 
 # Build
 

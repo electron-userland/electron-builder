@@ -8,6 +8,7 @@ import {
   CSC_INSTALLER_LINK
 } from "./helpers/codeSignData"
 import { executeFinally, all } from "out/util/promise"
+import { removePassword } from "out/util/util"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -28,4 +29,9 @@ test.ifOsx("create keychain with installers", async () => {
       assertThat(result.keychainName).not.empty()
       assertThat(result.name).equal(CSC_NAME)
     }), () => all([deleteKeychain(keychainName)]))
+})
+
+test.ifOsx("remove password from log", async () => {
+  assertThat(removePassword("seq -P foo -B")).equal("seq -P 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash) -B")
+  assertThat(removePassword("pass:foo")).equal("pass:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash)")
 })

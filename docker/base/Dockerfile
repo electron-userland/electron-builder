@@ -110,4 +110,4 @@ ENV BUNDLE_PATH="$GEM_HOME" \
 ENV PATH $BUNDLE_BIN:$PATH
 RUN mkdir -p "$GEM_HOME" "$BUNDLE_BIN" \
 	&& chmod 777 "$GEM_HOME" "$BUNDLE_BIN" \
-  && mkdir -p /tmp/fpm && curl -L https://github.com/jordansissel/fpm/archive/5719990e1bbc3deeaea8a196d6aaa51421a058bd.tar.gz | tar -xz -C /tmp/fpm --strip-components 1 && cd /tmp/fpm && bundle install && make install && cd .. && rm -rf /tmp/fpm
+  && mkdir -p /tmp/fpm && curl -L https://github.com/jordansissel/fpm/archive/103602c83215c0f7d18e32316268a3db38de5cc0.tar.gz | tar -xz -C /tmp/fpm --strip-components 1 && cd /tmp/fpm && bundle install && make install && cd .. && rm -rf /tmp/fpm

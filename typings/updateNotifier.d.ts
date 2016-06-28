@@ -9,7 +9,9 @@ declare module "update-notifier" {
   }
 
   interface Notifier {
-    notify(): void
+    notify(options: any): void
+
+    update: any
   }
 
   function updateNotifier(options: NotifyOptions): Notifier

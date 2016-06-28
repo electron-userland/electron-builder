@@ -100,7 +100,6 @@
     ]
   },
   "devDependencies": {
-    "@types/chalk": "^0.4.22-alpha",
     "@types/debug": "0.0.22-alpha",
     "@types/mime": "0.0.22-alpha",
     "@types/progress": "^1.1.21-alpha",

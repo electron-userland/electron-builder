@@ -177,6 +177,7 @@ export async function findIdentity(namePrefix: CertType, qualifier?: string): Pr
         .then(it => it.trim().split(("\n"))),
     ])
       .then(it => {
+        //noinspection SpellCheckingInspection
         const array = it[0].concat(it[1])
           .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
           // remove 1)

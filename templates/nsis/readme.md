@@ -1,4 +1,4 @@
-It is developer documentation. See [wiki](https://github.com/electron-userland/electron-builder/wiki/nsis).
+It is developer documentation. See [user documentation](https://github.com/electron-userland/electron-builder/wiki/nsis).
 
 http://www.mathiaswestin.net/2012/09/how-to-make-per-user-installation-with.html
 

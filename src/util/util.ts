@@ -8,6 +8,7 @@ import { yellow, red } from "chalk"
 import debugFactory = require("debug")
 import IDebugger = debug.IDebugger
 import { warn, task } from "./log"
+import { createHash } from "crypto"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
@@ -64,9 +65,15 @@ export interface ExecOptions extends BaseExecOptions {
   killSignal?: string
 }
 
+export function removePassword(input: string): string {
+  return input.replace(/(-P |pass:)([^ ]+)/, function (match, p1, p2) {
+    return `${p1}${createHash('sha256').update(p2).digest('hex')} (sha256 hash)`
+  })
+}
+
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<string> {
   if (debug.enabled) {
-    debug(`Executing ${file} ${args == null ? "" : args.join(" ")}`)
+    debug(removePassword(`Executing ${file} ${args == null ? "" : args.join(" ")}`))
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
@@ -75,7 +82,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
         resolve(stdout)
       }
       else {
-        let message = red(error.message)
+        let message = red(removePassword(error.message))
         if (stdout.length !== 0) {
           message += `\n${yellow(stdout)}`
         }

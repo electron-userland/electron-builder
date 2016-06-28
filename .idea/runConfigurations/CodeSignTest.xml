@@ -1,10 +1,14 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="CodeSignTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/CodeSignTest.js" node-parameters="--harmony_default_parameters --expose-debug-as=v8debug" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="CodeSignTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="--match &quot;remove password from log&quot; test/out/CodeSignTest.js" node-parameters="--harmony_default_parameters --expose-debug-as=v8debug" working-dir="$PROJECT_DIR$">
     <envs>
       <env name="NODE_PATH" value="." />
       <env name="CSA_LINK" value="https://repository.certum.pl/cscasha2.cer" />
       <env name="DEBUG" value="electron-builder" />
     </envs>
+    <profiling v8-profiler-path="" />
+    <EXTENSION ID="com.jetbrains.nodejs.run.NodeJSProfilingRunConfigurationExtension">
+      <profiling v8-profiler-path="" />
+    </EXTENSION>
     <method />
   </configuration>
 </component>
