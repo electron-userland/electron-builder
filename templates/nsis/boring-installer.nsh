@@ -1,5 +1,4 @@
 # http://nsis.sourceforge.net/Run_an_application_shortcut_after_an_install
-#!define MUI_FINISHPAGE_RUN_TEXT "Start ${PRODUCT_NAME}"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 

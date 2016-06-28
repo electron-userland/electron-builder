@@ -375,9 +375,9 @@ export interface NsisOptions {
   readonly installerHeader?: string | null
 
   /*
-   *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/headerIcon.ico` or application icon.
+   *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
-  readonly headerIcon?: string | null
+  readonly installerHeaderIcon?: string | null
 }
 
 /*

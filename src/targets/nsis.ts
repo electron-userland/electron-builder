@@ -59,7 +59,7 @@ export default class NsisTarget extends Target {
       APP_ID: appInfo.id,
       APP_GUID: guid,
       PRODUCT_NAME: appInfo.productName,
-      INST_DIR_NAME: appInfo.productFilename,
+      PRODUCT_FILENAME: appInfo.productFilename,
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 
@@ -82,9 +82,9 @@ export default class NsisTarget extends Target {
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
     }
 
-    const headerIcon = oneClick ? await this.getResource(this.options.headerIcon, "headerIcon.ico") : null
-    if (headerIcon != null) {
-      defines.HEADER_ICO = headerIcon
+    const installerHeaderIcon = oneClick ? await this.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
+    if (installerHeaderIcon != null) {
+      defines.HEADER_ICO = installerHeaderIcon
     }
 
     if (this.options.perMachine === true) {

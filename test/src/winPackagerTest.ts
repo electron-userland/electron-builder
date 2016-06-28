@@ -48,21 +48,7 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
   }
 ))
 
-test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
-    targets: Platform.WINDOWS.createTarget(["nsis"]),
-    devMetadata: {
-      build: {
-        nsis: {
-          oneClick: false,
-        }
-      }
-    }
-  }), {
-    useTempDir: true,
-  }
-))
-
-test.ifNotCiOsx("nsis, headerIcon", () => {
+test.ifNotCiOsx("nsis, installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
       targets: Platform.WINDOWS.createTarget(["nsis"]),
@@ -73,7 +59,7 @@ test.ifNotCiOsx("nsis, headerIcon", () => {
       }
     }, {
       tempDirCreated: projectDir => {
-        headerIconPath = path.join(projectDir, "build", "headerIcon.ico")
+        headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
         return rename(path.join(projectDir, "headerIcon.ico"), headerIconPath)
       }
     }

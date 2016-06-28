@@ -5,12 +5,14 @@
 !include "allowOnlyOneInstallerInstace.nsh"
 !include "checkAppRunning.nsh"
 !include x64.nsh
+!include WinVer.nsh
 
 Function StartApp
-  ExecShell "" "$SMPROGRAMS\${PRODUCT_NAME}.lnk"
+  ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
 FunctionEnd
 
 !ifdef ONE_CLICK
+  SilentUnInstall silent
   AutoCloseWindow true
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_UNPAGE_INSTFILES
@@ -22,6 +24,11 @@ Var startMenuLink
 Var desktopLink
 
 Function .onInit
+ ${IfNot} ${AtLeastWin7}
+    MessageBox MB_OK "Windows 7 and above is required"
+    Quit
+  ${EndIf}
+
   !insertmacro MULTIUSER_INIT
   !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
 
@@ -33,7 +40,7 @@ Function .onInit
     !endif
   ${Else}
     !ifndef APP_32
-      MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required."
+      MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required"
       Quit
     !endif
   ${EndIf}
@@ -46,19 +53,22 @@ Function .onInit
     File /oname=$PLUGINSDIR\app-64.7z "${APP_64}"
   !endif
   SetCompress "${COMPRESS}"
+
+  !ifdef HEADER_ICO
+    File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
+  !endif
 FunctionEnd
 
 Function un.onInit
   !insertmacro MULTIUSER_UNINIT
 FunctionEnd
 
-# default section start
 Section "install"
   SetDetailsPrint none
 
   !ifdef ONE_CLICK
     !ifdef HEADER_ICO
-      SpiderBanner::Show /MODERN /ICON "${HEADER_ICO}"
+      SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
     !else
       SpiderBanner::Show /MODERN
    !endif
@@ -77,14 +87,14 @@ Section "install"
 
 #  <% if(fileAssociation){ %>
     # specify file association
-#    ${registerExtension} "$INSTDIR\${PRODUCT_NAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+#    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
 #  <% } %>
 
   WriteUninstaller "${UNINSTALL_FILENAME}"
   !insertmacro MULTIUSER_RegistryAddInstallInfo
 
-  StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_NAME}.lnk"
-  StrCpy $desktopLink "$DESKTOP\${PRODUCT_NAME}.lnk"
+  StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+  StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
 
   # create shortcuts in the start menu and on the desktop
   # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
@@ -104,12 +114,12 @@ SectionEnd
 Section "un.install"
   !insertmacro CHECK_APP_RUNNING "uninstall"
 
-  StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_NAME}.lnk"
-  StrCpy $desktopLink "$DESKTOP\${PRODUCT_NAME}.lnk"
+  StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+  StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
 
   WinShell::UninstAppUserModelId "${APP_ID}"
   WinShell::UninstShortcut "$startMenuLink"
-  WinShell::UninstShortcut "$$desktopLink"
+  WinShell::UninstShortcut "$desktopLink"
 
   Delete "$startMenuLink"
   Delete "$desktopLink"
@@ -117,7 +127,7 @@ Section "un.install"
   # delete the installed files
   RMDir /r $INSTDIR
 
-  RMDir /r "$APPDATA\${PRODUCT_NAME}"
+  RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
 

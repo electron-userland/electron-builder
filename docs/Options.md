@@ -130,7 +130,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | allowElevation | <a name="NsisOptions-allowElevation"></a>Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
 | oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
 | installerHeader | <a name="NsisOptions-installerHeader"></a>*boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
-| headerIcon | <a name="NsisOptions-headerIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/headerIcon.ico` or application icon.
+| installerHeaderIcon | <a name="NsisOptions-installerHeaderIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`
