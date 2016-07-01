@@ -48,6 +48,58 @@ test.ifDevOrLinuxCi("files", () => {
   })
 })
 
+test.ifDevOrLinuxCi("unpackDir one", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    devMetadata: {
+      build: {
+        asar: {
+          unpackDir: "{assets,b2}"
+        },
+      }
+    }
+  }, {
+    tempDirCreated: projectDir => {
+      return BluebirdPromise.all([
+        outputFile(path.join(projectDir, "assets", "file"), "data"),
+        outputFile(path.join(projectDir, "b2", "file"), "data"),
+      ])
+    },
+    packed: projectDir => {
+      return BluebirdPromise.all([
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app.asar.unpacked", "assets")).isDirectory(),
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app.asar.unpacked", "b2")).isDirectory(),
+      ])
+    },
+  })
+})
+
+test.ifDevOrLinuxCi("unpackDir", () => {
+  return assertPack("test-app", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    devMetadata: {
+      build: {
+        asar: {
+          unpackDir: "{assets,b2}"
+        },
+      }
+    }
+  }, {
+    tempDirCreated: projectDir => {
+      return BluebirdPromise.all([
+        outputFile(path.join(projectDir, "app", "assets", "file"), "data"),
+        outputFile(path.join(projectDir, "app", "b2", "file"), "data"),
+      ])
+    },
+    packed: projectDir => {
+      return BluebirdPromise.all([
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app.asar.unpacked", "assets")).isDirectory(),
+        assertThat(path.join(projectDir, outDirName, "linux", "resources", "app.asar.unpacked", "b2")).isDirectory(),
+      ])
+    },
+  })
+})
+
 // skip on MacOS because we want test only / and \
 test.ifNotCiOsx("ignore node_modules known dev dep", () => {
   const build: any = {
