@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import readPackageJsonAsync = require("read-package-json")
 import * as os from "os"
 import * as path from "path"
-import { readJson, stat, Stats } from "fs-extra-p"
+import { readJson, stat, Stats, unlink } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import debugFactory = require("debug")
 import IDebugger = debug.IDebugger
@@ -228,4 +228,9 @@ export function getTempName(prefix?: string | n): string {
 
 export function isEmptyOrSpaces(s: string | n) {
   return s == null || s.trim().length === 0
+}
+
+export function unlinkIfExists(file: string) {
+  return unlink(file)
+    .catch(() => {})
 }

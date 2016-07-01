@@ -2,6 +2,7 @@
   <dictionary name="develar">
     <words>
       <w>actperepo</w>
+      <w>appimage</w>
       <w>appveyor</w>
       <w>archs</w>
       <w>aspx</w>
@@ -10,6 +11,7 @@
       <w>awaiter</w>
       <w>bintray</w>
       <w>buildpack</w>
+      <w>chown</w>
       <w>circleci</w>
       <w>clcerts</w>
       <w>cleanuper</w>
@@ -38,6 +40,7 @@
       <w>inno</w>
       <w>installmode</w>
       <w>instdir</w>
+      <w>joliet</w>
       <w>keyserver</w>
       <w>libappindicator</w>
       <w>libexec</w>
@@ -84,10 +87,13 @@
       <w>userprofile</w>
       <w>valuename</w>
       <w>veyor</w>
+      <w>volid</w>
       <w>winstaller</w>
       <w>xamarin</w>
       <w>xenial</w>
+      <w>xorriso</w>
       <w>yargs</w>
+      <w>zisofs</w>
     </words>
   </dictionary>
 </component>

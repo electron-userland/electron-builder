@@ -3,8 +3,8 @@ import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
-import { readdir, unlink, remove, realpath } from "fs-extra-p"
-import { statOrNull, use } from "./util/util"
+import { readdir, remove, realpath } from "fs-extra-p"
+import { statOrNull, use, unlinkIfExists } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
@@ -73,6 +73,10 @@ export class Target {
   finishBuild(): Promise<any> {
     return BluebirdPromise.resolve()
   }
+}
+
+export abstract class TargetEx extends Target {
+  abstract async build(appOutDir: string, arch: Arch): Promise<any>
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -196,18 +200,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         copyFiltered(this.info.appDir, appPath, filter, true)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
-      const promises = [promise]
+      const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
       if (this.info.electronVersion[0] === "0") {
         // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
-        promises.push(remove(path.join(resourcesPath, "default_app.asar")), remove(path.join(resourcesPath, "default_app")))
-      }
-      else {
-        promises.push(unlink(path.join(resourcesPath, "default_app.asar")))
+        promises.push(remove(path.join(resourcesPath, "default_app")))
       }
 
       await BluebirdPromise.all(promises)
     }
-    await task(`Packaging for platform ${options.platform} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
+    await task(`Packaging for platform ${this.platform.name} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
@@ -225,26 +226,27 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async computePackOptions(outDir: string, appOutDir: string, arch: Arch): Promise<ElectronPackagerOptions> {
     //noinspection JSUnusedGlobalSymbols
+    const appInfo = this.appInfo
     const options: any = deepAssign({
       dir: this.info.appDir,
-      "app-bundle-id": this.appInfo.id,
+      "app-bundle-id": appInfo.id,
       out: outDir,
-      name: this.appInfo.productName,
-      productName: this.appInfo.productName,
+      name: appInfo.productName,
+      productName: appInfo.productName,
       platform: this.platform.nodeName,
       arch: Arch[arch],
       version: this.info.electronVersion,
       icon: await this.getIconPath(),
       overwrite: true,
-      "app-version": this.appInfo.version,
-      "app-copyright": this.appInfo.copyright,
-      "build-version": this.appInfo.buildVersion,
+      "app-version": appInfo.version,
+      "app-copyright": appInfo.copyright,
+      "build-version": appInfo.buildVersion,
       tmpdir: false,
       generateFinalBasename: () => path.basename(appOutDir),
     }, this.devMetadata.build)
 
     if (this.platform === Platform.WINDOWS) {
-      options["version-string"] = this.appInfo.versionString
+      options["version-string"] = appInfo.versionString
     }
 
     delete options.osx
@@ -369,11 +371,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir)
   }
 
-  generateName(ext: string, arch: Arch, deployment: boolean): string {
+  generateName(ext: string | null, arch: Arch, deployment: boolean): string {
     return this.generateName2(ext, arch === Arch.x64 ? null : Arch[arch], deployment)
   }
 
-  generateName1(ext: string, arch: Arch, classifier: string, deployment: boolean): string {
+  generateName1(ext: string | null, arch: Arch, classifier: string, deployment: boolean): string {
     let c = arch === Arch.x64 ? null : Arch[arch]
     if (c == null) {
       c = classifier
@@ -384,8 +386,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.generateName2(ext, c, deployment)
   }
 
-  generateName2(ext: string, classifier: string | n, deployment: boolean): string {
-    return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}.${ext}`
+  generateName2(ext: string | null, classifier: string | n, deployment: boolean): string {
+    const dotExt = ext == null ? "" : `.${ext}`
+    return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}${dotExt}`
   }
 
   protected async getDefaultIcon(ext: string) {

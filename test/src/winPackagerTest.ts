@@ -1,7 +1,7 @@
 import { Platform, Arch, BuildInfo, PackagerOptions } from "out"
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
-import { outputFile, rename } from "fs-extra-p"
+import { assertPack, platform, modifyPackageJson, signed, getTestAsset } from "./helpers/packTester"
+import { outputFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -60,7 +60,7 @@ test.ifNotCiOsx("nsis, installerHeaderIcon", () => {
     }, {
       tempDirCreated: projectDir => {
         headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
-        return rename(path.join(projectDir, "headerIcon.ico"), headerIconPath)
+        return copy(getTestAsset("headerIcon.ico"), headerIconPath)
       }
     }
   )
@@ -88,7 +88,7 @@ test.ifNotCiOsx("nsis boring, MUI_HEADER", () => {
     }, {
       tempDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "build", "installerHeader.bmp")
-        return rename(path.join(projectDir, "installerHeader.bmp"), installerHeaderPath)
+        return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
       }
     }
   )
@@ -117,7 +117,7 @@ test.ifNotCiOsx("nsis boring, MUI_HEADER as option", () => {
     }, {
       tempDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "foo.bmp")
-        return rename(path.join(projectDir, "installerHeader.bmp"), installerHeaderPath)
+        return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
       }
     }
   )
@@ -175,7 +175,7 @@ test("detect install-spinner, certificateFile/password", () => {
     tempDirCreated: it => {
       loadingGifPath = path.join(it, "build", "install-spinner.gif")
       return BluebirdPromise.all([
-        rename(path.join(it, "install-spinner.gif"), loadingGifPath),
+        copy(getTestAsset("install-spinner.gif"), loadingGifPath),
         modifyPackageJson(it, data => {
           data.build.win = {
             certificateFile: "secretFile",

@@ -27,8 +27,8 @@ RUN apt-get update -y && \
   curl -L http://tukaani.org/xz/xz-$XZ_VERSION.tar.xz | tar -xJ && cd xz-$XZ_VERSION && ./configure && make && make install && cd .. && rm -rf xz-$XZ_VERSION && ldconfig && \
   mkdir -p /tmp/7z && curl -L http://downloads.sourceforge.net/project/p7zip/p7zip/15.14.1/p7zip_15.14.1_src_all.tar.bz2 | tar -xj -C /tmp/7z --strip-components 1 && cd /tmp/7z && cp makefile.linux_amd64_asm makefile.machine && make && make install && rm -rf /tmp/7z && \
   mkdir -p /tmp/s && cd /tmp/s && \
-  curl -L https://sourceforge.net/code-snapshots/git/o/os/osslsigncode/osslsigncode.git/osslsigncode-osslsigncode-e72a1937d1a13e87074e4584f012f13e03fc1d64.zip > a.zip && \
-  7za x a.zip && cd osslsigncode-osslsigncode-e72a1937d1a13e87074e4584f012f13e03fc1d64 && ./autogen.sh && ./configure && make && make install && rm -rf /tmp/s
+  curl -L https://dl.bintray.com/develar/bin/osslsigncode-src.7z > a.7z && \
+  7za x -oosslsigncode a.7z && cd osslsigncode && ./autogen.sh && ./configure && make && make install && rm -rf /tmp/s
 
 # nodejs keys
 RUN set -ex \

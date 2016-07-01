@@ -88,7 +88,7 @@ export async function createKeychain(keychainName: string, cscLink: string, cscK
         ["set-keychain-settings", "-t", "3600", "-u", keychainName]
       ], it => exec("security", it))
     ])
-    .then(() => importCerts(keychainName, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
+    .then<CodeSigningInfo>(() => importCerts(keychainName, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
     errorOccurred => {
       const tasks = certPaths.map(it => deleteFile(it, true))
       if (errorOccurred) {
@@ -163,7 +163,7 @@ export async function findIdentity(namePrefix: CertType, qualifier?: string): Pr
   if (findIdentityRawResult == null) {
     // https://github.com/electron-userland/electron-builder/issues/481
     // https://github.com/electron-userland/electron-builder/issues/535
-    findIdentityRawResult = BluebirdPromise.all([
+    findIdentityRawResult = BluebirdPromise.all<Array<string>>([
       exec("security", ["find-identity", "-v"])
         .then(it => it.trim().split("\n").filter(it => {
           for (let prefix of appleCertificatePrefixes) {
@@ -177,7 +177,6 @@ export async function findIdentity(namePrefix: CertType, qualifier?: string): Pr
         .then(it => it.trim().split(("\n"))),
     ])
       .then(it => {
-        //noinspection SpellCheckingInspection
         const array = it[0].concat(it[1])
           .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
           // remove 1)

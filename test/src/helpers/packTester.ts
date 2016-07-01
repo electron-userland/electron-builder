@@ -84,6 +84,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 }
 
+export function getTestAsset(file: string) {
+  return path.join(__dirname, "..", "..", "fixtures", file)
+}
+
 async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<void> {
   const packager = new Packager(packagerOptions)
 
@@ -115,7 +119,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
       }
       else if (platform === Platform.LINUX) {
-        await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch)
+        await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
         await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch, nameToTarget)
@@ -124,44 +128,41 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
   }
 }
 
-async function checkLinuxResult(projectDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch) {
-  const customBuildOptions = packager.devMetadata.build.linux
-  const targets = customBuildOptions == null || customBuildOptions.target == null ? ["default"] : customBuildOptions.target
-
+async function checkLinuxResult(projectDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
   function getExpected(): Array<string> {
     const result: Array<string> = []
-    for (let target of targets) {
-      result.push(`TestApp-${packager.appInfo.version}.${target === "default" ? "deb" : target}`)
+    for (let target of nameToTarget.keys()) {
+      result.push(`TestApp-${packager.appInfo.version}${target === "appimage" ? "" : `.${target}`}`)
     }
     return result
   }
 
   assertThat(getFileNames(artifacts)).containsAll(getExpected())
 
-  if (!targets.includes("deb") || !targets.includes("default")) {
+  if (!nameToTarget.has("deb")) {
     return
   }
 
-  const productName = packager.appInfo.productName
+  const productFilename = packager.appInfo.productFilename
   const expectedContents = expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
-      return "/opt/" + productName + "/" + productName
+      return "/opt/" + productFilename + "/" + productFilename
     }
     else if (it === "/usr/share/applications/TestApp.desktop") {
-      return `/usr/share/applications/${productName}.desktop`
+      return `/usr/share/applications/${productFilename}.desktop`
     }
     else {
-      return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productName}/`)
+      return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productFilename}/`)
     }
   })
 
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
-  const packageFile = `${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-amd64.deb`
-  assertThat(await getContents(packageFile, productName)).isEqualTo(expectedContents)
+  const packageFile = `${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}.deb`
+  assertThat(await getContents(packageFile, productFilename)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`, productName)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`, productFilename)).isEqualTo(expectedContents)
   }
 
   assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({

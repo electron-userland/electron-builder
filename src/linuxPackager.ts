@@ -1,14 +1,14 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, LinuxBuildOptions, Arch } from "./metadata"
-import { FpmTarget } from "./targets/fpm"
+import FpmTarget from "./targets/fpm"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
+import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
+import AppImageTarget from "./targets/appImage"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
-
-export const installPrefix = "/opt"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   constructor(info: BuildInfo) {
@@ -26,17 +26,28 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     }
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     for (let name of targets) {
       if (name === "dir") {
         continue
       }
 
-      if (name === DEFAULT_TARGET || name === "deb") {
-        mapper("deb", () => new FpmTarget("deb", this, cleanupTasks))
+      let helper: LinuxTargetHelper | null
+      const getHelper = () => {
+        if (helper == null) {
+          helper = new LinuxTargetHelper(this, cleanupTasks)
+        }
+        return helper
       }
-      else if (name === "rpm" || name === "sh" || name === "freebsd" || name === "pacman" || name === "apk" || name === "p5p") {
-        mapper(name, () => new FpmTarget(name, this,  cleanupTasks))
+
+      if (name === "appimage") {
+        const targetClass: typeof AppImageTarget = require("./targets/appImage").default
+        mapper(name, outDir => new targetClass(this, getHelper(), outDir))
+      }
+      else if (name === DEFAULT_TARGET || name === "deb" || name === "rpm" || name === "sh" || name === "freebsd" || name === "pacman" || name === "apk" || name === "p5p") {
+        const targetClass: typeof FpmTarget = require("./targets/fpm").default
+        const target = name === DEFAULT_TARGET ? "deb" : name
+        mapper(target, outDir => new targetClass(target, this,  getHelper(), outDir))
       }
       else {
         mapper(name, () => createCommonTarget(name))
@@ -58,11 +69,8 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>): Promise<any> {
     // todo fix fpm - if run in parallel, get strange tar errors
     for (let t of targets) {
-      if (t instanceof FpmTarget) {
-        const target = t.name
-        const destination = path.join(outDir, this.generateName(target, arch, true /* on Linux we use safe name — without space */))
-        await t.build(destination, target, appOutDir, arch)
-        this.dispatchArtifactCreated(destination)
+      if (t instanceof TargetEx) {
+        await t.build(appOutDir, arch)
       }
     }
 
