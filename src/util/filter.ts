@@ -14,6 +14,21 @@ export function copyFiltered(src: string, destination: string, filter: (file: st
   })
 }
 
+export function hasMagic(pattern: Minimatch) {
+  const set = pattern.set
+  if (set.length > 1) {
+    return true
+  }
+
+  for (let i of set[0]) {
+    if (typeof i !== 'string') {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean): (file: string) => boolean {
   return function filter(it) {
     if (src === it) {
@@ -76,15 +91,6 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
     // partial match — pattern: foo/bar.txt path: foo — we must allow foo
     // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron-prebuilt)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
     match = pattern.match(path, !pattern.negate)
-    if (!match && !pattern.negate) {
-      const rawPattern = pattern.pattern
-      // 1 - slash
-      const patternLengthPlusSlash = rawPattern.length + 1
-      if (path.length > patternLengthPlusSlash) {
-        // foo: include all directory content
-        match = path[rawPattern.length] === "/" && path.startsWith(rawPattern)
-      }
-    }
   }
   return match
 }

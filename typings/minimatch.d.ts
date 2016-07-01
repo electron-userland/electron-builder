@@ -101,6 +101,8 @@ namespace minimatch {
      * Take a `/-`split filename, and match it against a single row in the `regExpSet`. This method is mainly for internal use, but is exposed so that it can be used by a glob-walker that needs to avoid excessive filesystem calls.
      */
 		matchOne (fileArray: string[], patternArray: string[], partial: boolean): boolean;
+
+		set: any
 	}
 }
 

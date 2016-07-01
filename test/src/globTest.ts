@@ -115,6 +115,7 @@ test("extraResources", async () => {
           }),
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
+          outputFile(path.join(projectDir, "foo", ".dot"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
@@ -137,6 +138,7 @@ test("extraResources", async () => {
         await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
         await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
+        await assertThat(path.join(resourcesDir, "foo", ".dot")).doesNotExist()
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         winDirPrefix + "bar/hello.txt",

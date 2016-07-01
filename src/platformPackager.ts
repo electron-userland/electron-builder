@@ -13,7 +13,7 @@ import { checkFileInPackage, createAsarArchive } from "./asarUtil"
 import deepAssign = require("deep-assign")
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
-import { listDependencies, createFilter, copyFiltered } from "./util/filter"
+import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -308,8 +308,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const minimatchOptions = {}
     const parsedPatterns: Array<Minimatch> = []
     for (let i = 0; i < patterns.length; i++) {
-      parsedPatterns[i] = new Minimatch(this.expandPattern(patterns[i], arch), minimatchOptions)
+      const pattern = this.expandPattern(patterns[i], arch)
+      const parsedPattern = new Minimatch(pattern, minimatchOptions)
+      parsedPatterns.push(parsedPattern)
+      if (!hasMagic(parsedPattern)) {
+        // https://github.com/electron-userland/electron-builder/issues/545
+        // add **/*
+        parsedPatterns.push(new Minimatch(`${pattern}/*/**`, minimatchOptions))
+      }
     }
+
     return parsedPatterns
   }
 
