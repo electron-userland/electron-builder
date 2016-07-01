@@ -197,7 +197,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
       const promise = asarOptions == null ?
-        copyFiltered(this.info.appDir, appPath, filter, true)
+        copyFiltered(this.info.appDir, appPath, filter, this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
@@ -301,7 +301,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
     const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)))
+    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)), this.platform === Platform.WINDOWS)
   }
 
   private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {

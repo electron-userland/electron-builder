@@ -7,7 +7,7 @@ import * as path from "path"
 const __awaiter = require("./awaiter")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
-export function copyFiltered(src: string, destination: string, filter: (file: string) => boolean, dereference: boolean = false): Promise<any> {
+export function copyFiltered(src: string, destination: string, filter: (file: string) => boolean, dereference: boolean): Promise<any> {
   return copy(src, destination, {
     dereference: dereference,
     filter: filter
