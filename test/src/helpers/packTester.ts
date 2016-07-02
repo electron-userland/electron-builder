@@ -144,7 +144,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
   }
 
   const productFilename = packager.appInfo.productFilename
-  const expectedContents = expectedLinuxContents.map(it => {
+  const expectedContents = pathSorter(expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
       return "/opt/" + productFilename + "/" + productFilename
     }
@@ -154,15 +154,15 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     else {
       return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productFilename}/`)
     }
-  })
+  }))
 
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
   const packageFile = `${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}.deb`
-  assertThat(await getContents(packageFile, productFilename)).isEqualTo(expectedContents)
+  assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`, productFilename)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
   }
 
   assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
@@ -277,14 +277,17 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
-  assertThat(files).isEqualTo(expectedContents.map(it => {
+  assertThat(files).isEqualTo(pathSorter(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
-      return `lib/net45/${encodeURI(appInfo.productFilename)}.exe`
+      if (appInfo.productFilename === "Test App ßW") {
+        return `lib/net45/Test%20App%20%C3%9FW.exe`
+      }
+      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, '[').replace(/%5D/g, ']')}.exe`
     }
     else {
       return it
     }
-  }))
+  })))
 
   if (checkOptions == null || checkOptions.expectedContents == null) {
     await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {
@@ -310,12 +313,12 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-async function getContents(path: string, productName: string) {
+async function getContents(path: string) {
   const result = await exec("dpkg", ["--contents", path])
   return pathSorter(result
     .split("\n")
     .map(it => it.length === 0 ? null : it.substring(it.indexOf(".") + 1))
-    .filter(it => it != null && !(it.startsWith(`/opt/${productName}/locales/`) || it.startsWith(`/opt/${productName}/libgcrypt`)))
+    .filter(it => it != null && !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
     )
 }
 

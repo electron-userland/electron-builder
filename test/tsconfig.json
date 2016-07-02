@@ -66,6 +66,7 @@
     "src/ArtifactPublisherTest.ts",
     "src/BuildTest.ts",
     "src/CodeSignTest.ts",
+    "src/RepoSlugTest.ts",
     "src/globTest.ts",
     "src/helpers/avaEx.ts",
     "src/helpers/codeSignData.ts",
@@ -76,7 +77,6 @@
     "src/httpRequestTest.ts",
     "src/linuxPackagerTest.ts",
     "src/macPackagerTest.ts",
-    "src/RepoSlugTest.ts",
     "src/winPackagerTest.ts"
   ]
 }
