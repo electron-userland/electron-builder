@@ -193,6 +193,9 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   if (options.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
     options.cscLink = process.env.CSC_LINK
   }
+  if (options.cscInstallerLink === undefined && !isEmptyOrSpaces(process.env.CSC_INSTALLER_LINK)) {
+    options.cscInstallerLink = process.env.CSC_INSTALLER_LINK
+  }
   if (options.cscKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_KEY_PASSWORD)) {
     options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
   }
