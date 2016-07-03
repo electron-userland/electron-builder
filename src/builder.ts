@@ -199,6 +199,9 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   if (options.cscKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_KEY_PASSWORD)) {
     options.cscKeyPassword = process.env.CSC_KEY_PASSWORD
   }
+  if (options.cscInstallerKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_INSTALLER_KEY_PASSWORD)) {
+    options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
+  }
   if (options.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
     options.githubToken = process.env.GH_TOKEN
   }
