@@ -88,7 +88,7 @@ See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification
 
 | Name | Description
 | --- | ---
-| icon | <a name="DmgOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
+| icon | <a name="DmgOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Set to an empty string `""` to disable. Defaults to `build/icon.icns`.
 | background | <a name="DmgOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
 
 <a name="MasBuildOptions"></a>
