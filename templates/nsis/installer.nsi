@@ -4,6 +4,7 @@
 !include "nsProcess.nsh"
 !include "allowOnlyOneInstallerInstace.nsh"
 !include "checkAppRunning.nsh"
+!include "FileAssociation.nsh"
 !include x64.nsh
 !include WinVer.nsh
 
@@ -85,10 +86,10 @@ Section "install"
     Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
   ${EndIf}
 
-#  <% if(fileAssociation){ %>
+  !ifdef fileAssociation
     # specify file association
-#    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
-#  <% } %>
+    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+  !endif
 
   WriteUninstaller "${UNINSTALL_FILENAME}"
   !insertmacro MULTIUSER_RegistryAddInstallInfo
@@ -123,6 +124,11 @@ Section "un.install"
 
   Delete "$startMenuLink"
   Delete "$desktopLink"
+
+  !ifdef fileAssociation
+    # unregister file extension
+    ${unregisterExtension} "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+  !endif
 
   # delete the installed files
   RMDir /r $INSTDIR
