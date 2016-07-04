@@ -95,7 +95,7 @@ export interface BuildMetadata {
   readonly "app-bundle-id"?: string | null
 
   /*
-   *MacOS-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+   *macOS-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
    For example, `app-category-type=public.app-category.developer-tools` will set the application category to *Developer Tools*.
 
@@ -234,13 +234,13 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   /*
-   The path to entitlements file for signing the app. `build/entitlements.osx.plist` will be used if exists (it is a recommended way to set).
+   The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
    MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
    */
   readonly entitlements?: string | null
 
   /*
-   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.osx.inherit.plist` will be used if exists (it is a recommended way to set).
+   The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).
    Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
 
    This option only applies when signing with `entitlements` provided.

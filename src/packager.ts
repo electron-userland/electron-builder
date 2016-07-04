@@ -11,7 +11,7 @@ import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, Target }
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
-import deepAssign = require("deep-assign")
+import { deepAssign } from "./util/deepAssign"
 import semver = require("semver")
 import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"

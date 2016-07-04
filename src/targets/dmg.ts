@@ -1,4 +1,4 @@
-import deepAssign = require("deep-assign")
+import { deepAssign } from "../util/deepAssign"
 import * as path from "path"
 import { log } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"

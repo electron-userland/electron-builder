@@ -4,13 +4,13 @@ import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
 import { readdir, remove, realpath } from "fs-extra-p"
-import { statOrNull, use, unlinkIfExists } from "./util/util"
+import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInPackage, createAsarArchive } from "./asarUtil"
-import deepAssign = require("deep-assign")
+import { deepAssign } from "./util/deepAssign"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
@@ -123,8 +123,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected getCscPassword(): string {
-    const password = this.options.cscKeyPassword
-    if (password == null) {
+    const password = this.options.cscKeyPassword || process.env.CSC_KEY_PASSWORD
+    if (isEmptyOrSpaces(password)) {
       log("CSC_KEY_PASSWORD is not defined, empty password will be used")
       return ""
     }

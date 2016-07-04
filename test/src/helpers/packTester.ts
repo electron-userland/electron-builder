@@ -3,11 +3,11 @@ import * as assertThat2 from "should/as-function"
 import { assertThat } from "./fileAssert"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
-import { CSC_LINK, CSC_KEY_PASSWORD, CSC_INSTALLER_LINK, CSC_INSTALLER_KEY_PASSWORD } from "./codeSignData"
+import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
 import { exec, getTempName } from "out/util/util"
-import { log } from "out/util/log"
+import { log, warn } from "out/util/log"
 import { createTargets } from "out"
 import { tmpdir } from "os"
 import { getArchSuffix, Target } from "out/platformPackager"
@@ -336,10 +336,12 @@ export function platform(platform: Platform): PackagerOptions {
 }
 
 export function signed(packagerOptions: PackagerOptions): PackagerOptions {
-  packagerOptions.cscLink = CSC_LINK
-  packagerOptions.cscKeyPassword = CSC_KEY_PASSWORD
-  packagerOptions.cscInstallerLink = CSC_INSTALLER_LINK
-  packagerOptions.cscInstallerKeyPassword = CSC_INSTALLER_KEY_PASSWORD
+  if (process.env.CSC_KEY_PASSWORD == null) {
+    warn("macOS code sign is not tested — CSC_KEY_PASSWORD is not defined")
+  }
+  else {
+    packagerOptions.cscLink = CSC_LINK
+  }
   return packagerOptions
 }
 
