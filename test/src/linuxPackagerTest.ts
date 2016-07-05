@@ -9,10 +9,14 @@ const __awaiter = require("out/util/awaiter")
 
 test.ifNotWindows("deb", () => assertPack("test-app-one", platform(Platform.LINUX)))
 
-// test.ifDevOrLinuxCi("AppImage", () => assertPack("test-app-one", {
-//     targets: Platform.LINUX.createTarget("appimage")
-//   }
-// ))
+test.ifDevOrLinuxCi("AppImage", () => assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget("appimage"),
+    appMetadata: {
+      name: "Bar",
+      productName: "Bar",
+    },
+  }
+))
 
 test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(),

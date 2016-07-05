@@ -7,7 +7,7 @@ import { readJson, stat, Stats, unlink } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import debugFactory = require("debug")
 import IDebugger = debug.IDebugger
-import { warn, task } from "./log"
+import { warn, task, log } from "./log"
 import { createHash } from "crypto"
 
 //noinspection JSUnusedLocalSymbols
@@ -79,6 +79,12 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   return new BluebirdPromise<string>((resolve, reject) => {
     execFile(file, <any>args, options, function (error, stdout, stderr) {
       if (error == null) {
+        if (debug.enabled) {
+          if (stderr.length !== 0) {
+            log(stderr)
+          }
+          // log(stdout)
+        }
         resolve(stdout)
       }
       else {

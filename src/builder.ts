@@ -23,8 +23,9 @@ export async function createPublisher(packager: Packager, options: PublishOption
     throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
   }
   else {
-    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${packager.metadata.version}`)
-    return new GitHubPublisher(info.user, info.project, packager.metadata.version, options, isPublishOptionGuessed)
+    const version = packager.metadata.version!
+    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${version}`)
+    return new GitHubPublisher(info.user, info.project, version, options, isPublishOptionGuessed)
   }
 }
 

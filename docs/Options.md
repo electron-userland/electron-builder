@@ -3,7 +3,7 @@
 In the development `package.json` custom `build` field can be specified to customize format:
 ```json
 "build": {
-  "osx": {
+  "dmg": {
     "contents": [
       {
         "x": 410,
@@ -35,7 +35,7 @@ Here documented only `electron-builder` specific options:
 | --- | ---
 | **name** | <a name="AppMetadata-name"></a>The application name.
 | productName | <a name="AppMetadata-productName"></a><p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
-| **description** | <a name="AppMetadata-description"></a>The application description.
+| description | <a name="AppMetadata-description"></a>The application description.
 | homepage | <a name="AppMetadata-homepage"></a><p>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package <code>projectUrl</code> (optional) or Linux Package URL (required)).</p> <p>If not specified and your project repository is public on GitHub, it will be <code>https://github.com/${user}/${project}</code> by default.</p>
 | license | <a name="AppMetadata-license"></a>*linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
 

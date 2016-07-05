@@ -64,7 +64,7 @@ export class LinuxTargetHelper {
     }
   }
 
-  async computeDesktopEntry(relativeExec: boolean): Promise<string> {
+  async computeDesktopEntry(exec?: string): Promise<string> {
     const appInfo = this.packager.appInfo
 
     const custom = this.packager.platformSpecificBuildOptions.desktop
@@ -73,13 +73,11 @@ export class LinuxTargetHelper {
     }
 
     const productFilename = appInfo.productFilename
-    const appExec = relativeExec ? `"${productFilename}"` : `"${installPrefix}/${productFilename}/${productFilename}"`
-
     const tempFile = path.join(await this.tempDirPromise, `${productFilename}.desktop`)
     await outputFile(tempFile, this.packager.platformSpecificBuildOptions.desktop || `[Desktop Entry]
 Name=${appInfo.productName}
 Comment=${this.packager.platformSpecificBuildOptions.description || appInfo.description}
-Exec=${appExec}
+Exec=${(exec == null ? `"${installPrefix}/${productFilename}/${productFilename}"` : exec)}
 Terminal=false
 Type=Application
 Icon=${appInfo.name}

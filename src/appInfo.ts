@@ -10,7 +10,7 @@ import sanitizeFileName = require("sanitize-filename")
 const __awaiter = require("./util/awaiter")
 
 export class AppInfo {
-  readonly description = smarten(this.metadata.description)
+  readonly description = smarten(this.metadata.description!)
 
   // windows-only
   versionString = {
@@ -27,7 +27,7 @@ export class AppInfo {
   readonly productFilename: string
 
   constructor(public metadata: AppMetadata, private devMetadata: DevMetadata) {
-    let buildVersion = metadata.version
+    let buildVersion = metadata.version!
     this.version = buildVersion
 
     const buildNumber = this.buildNumber
@@ -40,7 +40,7 @@ export class AppInfo {
   }
 
   get companyName() {
-    return this.metadata.author.name
+    return this.metadata.author!.name
   }
 
   get buildNumber(): string | null {
@@ -76,7 +76,7 @@ export class AppInfo {
     if (copyright != null) {
       return copyright
     }
-    return `Copyright © ${new Date().getFullYear()} ${this.metadata.author.name || this.productName}`
+    return `Copyright © ${new Date().getFullYear()} ${this.metadata.author!.name || this.productName}`
   }
 
   async computePackageUrl(): Promise<string | null> {

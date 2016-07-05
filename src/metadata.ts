@@ -9,7 +9,7 @@ export interface Metadata {
  # Application `package.json`
  */
 export interface AppMetadata extends Metadata {
-  readonly version: string
+  readonly version?: string
 
   /*
    The application name.
@@ -25,11 +25,11 @@ export interface AppMetadata extends Metadata {
   /*
    The application description.
    */
-  readonly description: string
+  readonly description?: string
 
   readonly main?: string | null
 
-  readonly author: AuthorMetadata
+  readonly author?: AuthorMetadata
 
   /*
    The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).

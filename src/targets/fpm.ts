@@ -3,7 +3,6 @@ import { smarten, PlatformPackager, TargetEx } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
 import { downloadFpm } from "../util/binDownload"
-import { tmpdir } from "os"
 import {  readFile, outputFile } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
@@ -27,7 +26,7 @@ export default class FpmTarget extends TargetEx {
     super(name)
 
     this.scriptFiles = this.createScripts(helper.tempDirPromise)
-    this.desktopEntry = helper.computeDesktopEntry(false)
+    this.desktopEntry = helper.computeDesktopEntry()
   }
 
   private async createScripts(tempDirPromise: Promise<string>): Promise<Array<string>> {
@@ -62,7 +61,7 @@ export default class FpmTarget extends TargetEx {
     }
 
     const options = this.options
-    const author = options.maintainer || `${packager.appInfo.metadata.author.name} <${packager.appInfo.metadata.author.email}>`
+    const author = options.maintainer || `${appInfo.metadata.author!.name} <${appInfo.metadata.author!.email}>`
     const synopsis = options.synopsis
     const args = [
       "-s", "dir",

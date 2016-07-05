@@ -21,7 +21,7 @@ ENV FORCE_COLOR true
 # libcurl4-openssl-dev, libtool and automake are required to build osslsigncode
 
 RUN apt-get update -y && \
-  apt-get install --no-install-recommends -y bsdtar build-essential autoconf automake libcurl4-openssl-dev libtool libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
+  apt-get install --no-install-recommends -y xorriso bsdtar build-essential autoconf automake libcurl4-openssl-dev libtool libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   curl -L http://tukaani.org/xz/xz-$XZ_VERSION.tar.xz | tar -xJ && cd xz-$XZ_VERSION && ./configure && make && make install && cd .. && rm -rf xz-$XZ_VERSION && ldconfig && \

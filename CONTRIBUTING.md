@@ -56,7 +56,7 @@ Must be one of the following:
 * **chore**: Changes to the build process or auxiliary tools and libraries such as documentation generation.
 
 ### Scope
-The scope is optional and could be anything specifying place of the commit change. For example `nsis`, `osx`, `linux`, etc...
+The scope is optional and could be anything specifying place of the commit change. For example `nsis`, `mac`, `linux`, etc...
 
 ### Subject
 The subject contains succinct description of the change:

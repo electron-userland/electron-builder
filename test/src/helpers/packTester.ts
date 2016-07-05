@@ -137,6 +137,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     return result
   }
 
+  if (nameToTarget.has("appimage")) {
+    return
+  }
+
   assertThat(getFileNames(artifacts)).containsAll(getExpected())
 
   if (!nameToTarget.has("deb")) {

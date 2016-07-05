@@ -12,7 +12,7 @@ export function createYargs(): any {
     .example("build --win --ia32", "build for Windows ia32")
     .option("mac", {
       group: buildGroup,
-      alias: ["m", "o", "osx"],
+      alias: ["m", "o", "osx", "macos"],
       describe: `Build for MacOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
       type: "array",
     })

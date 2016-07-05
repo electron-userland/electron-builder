@@ -63,7 +63,15 @@ export class Packager implements BuildInfo {
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
     const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
-    this.metadata = appPackageFile === devPackageFile ? (this.options.appMetadata || this.devMetadata) : deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata)
+    if (appPackageFile === devPackageFile) {
+      if (this.options.appMetadata != null) {
+        this.devMetadata = deepAssign(this.devMetadata, this.options.appMetadata)
+      }
+      this.metadata = <any>this.devMetadata
+    }
+    else {
+      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata)
+    }
 
     this.checkMetadata(appPackageFile, devPackageFile)
     checkConflictingOptions(this.devMetadata.build)
@@ -147,7 +155,7 @@ export class Packager implements BuildInfo {
       throw new Error(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
     }
 
-    const checkNotEmpty = (name: string, value: string) => {
+    const checkNotEmpty = (name: string, value: string | n) => {
       if (isEmptyOrSpaces(value)) {
         reportError(name)
       }
@@ -178,10 +186,10 @@ export class Packager implements BuildInfo {
     }
     else {
       const author = appMetadata.author
-      if (<any>author == null) {
+      if (author == null) {
         throw new Error(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name.`)
       }
-      else if (<any>author.email == null && this.options.targets!.has(Platform.LINUX)) {
+      else if (author.email == null && this.options.targets!.has(Platform.LINUX)) {
         throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
       }
 
