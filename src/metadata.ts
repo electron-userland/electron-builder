@@ -178,6 +178,8 @@ export interface BuildMetadata {
    */
   readonly linux?: LinuxBuildOptions | null
 
+  readonly deb?: LinuxBuildOptions | null
+
   /*
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
    */
@@ -392,6 +394,15 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly description?: string | null
 
   /*
+   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `deb`.
+
+   The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
+
+   Only `deb` and `AppImage` is tested. Feel free to file issues for `rpm` and other package formats.
+   */
+  readonly target?: Array<string> | null
+
+  /*
    *deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
    */
   readonly synopsis?: string | null
@@ -424,15 +435,6 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
    */
   readonly depends?: string[] | null
-
-  /*
-   Target package type: list of `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `deb`.
-
-   The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
-
-   Only `deb` is tested. Feel free to file issues for `rpm` and other package formats.
-   */
-  readonly target?: Array<string> | null
 }
 
 /*

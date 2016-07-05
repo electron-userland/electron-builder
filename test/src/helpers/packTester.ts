@@ -5,7 +5,7 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, DEFAULT_TARGET } from "out"
 import { exec, getTempName } from "out/util/util"
 import { log, warn } from "out/util/log"
 import { createTargets } from "out"
@@ -38,7 +38,7 @@ interface AssertPackOptions {
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
   const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir)
+  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir) || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"

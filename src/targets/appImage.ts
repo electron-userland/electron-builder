@@ -11,11 +11,16 @@ import { Promise as BluebirdPromise } from "bluebird"
 const __awaiter = require("../util/awaiter")
 
 const appImageVersion = "AppImage-5"
+//noinspection SpellCheckingInspection
 const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "19833e5db3cbc546432de8ddc8a54181489e6faad4944bd1f3138adf4b771259")
 
 export default class AppImageTarget extends TargetEx {
+  private readonly desktopEntry: Promise<string>
+
   constructor(private packager: PlatformPackager<LinuxBuildOptions>, private helper: LinuxTargetHelper, private outDir: string) {
     super("appImage")
+
+    this.desktopEntry = helper.computeDesktopEntry("AppRun", `X-AppImage-Version=${packager.appInfo.buildVersion}`)
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -33,6 +38,7 @@ export default class AppImageTarget extends TargetEx {
       "-padding", "0",
       "-map", appOutDir, "/usr/bin",
       "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), `/AppRun`,
+      "-map", await this.desktopEntry, `/${appInfo.name}.desktop`,
       "-move", `/usr/bin/${appInfo.productFilename}`, "/usr/bin/app",
     ]
     for (let [from, to] of (await this.helper.icons)) {
@@ -50,17 +56,17 @@ export default class AppImageTarget extends TargetEx {
 
     await exec(process.platform === "darwin" ? path.join(appImagePath, "xorriso") : "xorriso", args)
 
+    await new BluebirdPromise((resolve, reject) => {
+      const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
+      rd.on("error", reject)
+      const wr = createWriteStream(image)
+      wr.on("error", reject)
+      wr.on("finish", resolve)
+      rd.pipe(wr)
+    })
+
     const fd = await open(image, "r+")
     try {
-      await new BluebirdPromise((resolve, reject) => {
-        const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
-        rd.on("error", reject)
-        const wr = createWriteStream(image, <any>{fd: fd, autoClose: false})
-        wr.on("error", reject)
-        wr.on("finish", resolve)
-        rd.pipe(wr)
-      })
-
       const magicData = new Buffer([0x41, 0x49, 0x01])
       await write(fd, magicData, 0, magicData.length, 8)
     }
@@ -72,7 +78,7 @@ export default class AppImageTarget extends TargetEx {
     // we archive because you cannot distribute exe as is - e.g. Ubuntu clear exec flag and user cannot just click on AppImage to run
     // also, LZMA compression - 29MB vs zip 42MB
     // we use slow xz instead of 7za because 7za doesn't preserve exec file permissions for xz
-    await spawn("xz", ["--compress", "--force", image], {
+    await spawn("xz", ["--x86", "--lzma2", "--compress", "--force", packager.devMetadata.build.compression === "store" ? "-0" : "-9e", image], {
       cwd: path.dirname(image),
       stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
     })

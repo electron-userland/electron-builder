@@ -15,8 +15,8 @@
   },
   "scripts": {
     "compile": "npm run compile-production && npm run compile-test",
-    "compile-production": "tsconfig -i 2 && ts-babel",
-    "compile-test": "tsconfig -i 2 test && ts-babel test",
+    "compile-production": "ts-babel",
+    "compile-test": "ts-babel test",
     "lint": "tslint src/*.ts test/src/*.ts",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./test/out/helpers/runTests.js",
@@ -83,7 +83,7 @@
     "semver": "^5.2.0",
     "signcode-tf": "~0.7.3",
     "source-map-support": "^0.4.1",
-    "typescript": "^2.0.0-dev.20160630",
+    "typescript": "2.0.0-dev.20160705",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
     "yargs": "^4.7.1"
@@ -100,11 +100,11 @@
     ]
   },
   "devDependencies": {
-    "@types/debug": "0.0.22-alpha",
-    "@types/mime": "0.0.25-alpha",
-    "@types/progress": "^1.1.24-alpha",
-    "@types/semver": "^4.3.23-alpha",
-    "@types/source-map-support": "^0.2.24-alpha",
+    "@types/debug": "0.0.26-alpha",
+    "@types/mime": "0.0.26-alpha",
+    "@types/progress": "^1.1.25-alpha",
+    "@types/semver": "^4.3.24-alpha",
+    "@types/source-map-support": "^0.2.25-alpha",
     "ava-tf": "^0.15.3",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-destructuring": "^6.9.0",
@@ -119,8 +119,7 @@
     "semantic-release": "^6.3.0",
     "should": "^9.0.2",
     "ts-babel": "^1.0.3",
-    "tsconfig-glob": "^0.4.3",
-    "tslint": "3.12.0-dev.1",
+    "tslint": "3.13.0",
     "typescript": "2.0.0-dev.20160620-1.0",
     "whitespace": "^2.0.0"
   },
@@ -139,8 +138,5 @@
       "test/out/*.js"
     ]
   },
-  "typings": "./out/electron-builder.d.ts",
-  "publishConfig": {
-    "tag": "next"
-  }
+  "typings": "./out/electron-builder.d.ts"
 }

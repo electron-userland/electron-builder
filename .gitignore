@@ -12,3 +12,4 @@ dist/
 /typings/main.d.ts
 .DS_Store
 .idea/shelf/
+test/typings/electron-builder.d.ts

@@ -22,12 +22,14 @@
         </JSCodeStyleSettings>
         <TypeScriptCodeStyleSettings>
           <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
-          <option name="SPACE_AFTER_TYPE_COLON" value="true" />
           <option name="SPACES_WITHIN_IMPORTS" value="true" />
         </TypeScriptCodeStyleSettings>
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
+        <editorconfig>
+          <option name="ENABLED" value="false" />
+        </editorconfig>
         <codeStyleSettings language="CSS">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />

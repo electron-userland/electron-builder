@@ -64,7 +64,7 @@ export class LinuxTargetHelper {
     }
   }
 
-  async computeDesktopEntry(exec?: string): Promise<string> {
+  async computeDesktopEntry(exec?: string, extra?: string): Promise<string> {
     const appInfo = this.packager.appInfo
 
     const custom = this.packager.platformSpecificBuildOptions.desktop
@@ -81,7 +81,7 @@ Exec=${(exec == null ? `"${installPrefix}/${productFilename}/${productFilename}"
 Terminal=false
 Type=Application
 Icon=${appInfo.name}
-`)
+${extra == null ? "" : `${extra}\n`}`)
     return tempFile
   }
 
