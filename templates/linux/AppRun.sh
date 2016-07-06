@@ -33,8 +33,6 @@ NUMBER_OF_ARGS="$#"
 # such as desktop integration daemons
 VENDORPREFIX=appimagekit
 
-BIN="${APPDIR}/usr/bin/app"
-
 trap atexit EXIT
 
 # Note that the following handles 0, 1 or more arguments (file paths)
@@ -126,6 +124,8 @@ check_dep xdg-desktop-menu
 
 DESKTOP_FILE=$(find "$APPDIR" -maxdepth 1 -name "*.desktop" | head -n 1)
 DESKTOP_FILE_NAME=$(basename "${DESKTOP_FILE}")
+APP=$(echo "$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
+BIN="$APPDIR/usr/bin/$APP"
 
 if [ ! -f "$DESKTOP_FILE" ] ; then
   echo "Desktop file is missing. Please run ${THIS} from within an AppImage."
@@ -165,8 +165,6 @@ fi
 
 # If the user has agreed, rewrite and install the desktop file, and the MIME information
 if [ -z "$SKIP" ] ; then
-  APP=$(echo "$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
-
   # desktop-file-install is supposed to install .desktop files to the user's
   # applications directory when run as a non-root user,
   # and to /usr/share/applications if run as root

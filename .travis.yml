@@ -28,7 +28,7 @@ install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
-- npm install --registry http://registry.npmjs.eu
+- npm install
 - npm prune
 
 script:

@@ -39,7 +39,7 @@ export default class AppImageTarget extends TargetEx {
       "-map", appOutDir, "/usr/bin",
       "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), `/AppRun`,
       "-map", await this.desktopEntry, `/${appInfo.name}.desktop`,
-      "-move", `/usr/bin/${appInfo.productFilename}`, "/usr/bin/app",
+      "-move", `/usr/bin/${appInfo.productFilename}`, `/usr/bin/${appInfo.name}`,
     ]
     for (let [from, to] of (await this.helper.icons)) {
       args.push("-map", from, `/usr/share/icons/default/${to}`)
@@ -51,15 +51,16 @@ export default class AppImageTarget extends TargetEx {
     }
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
-    // args.push("-zisofs", `level=0:block_size=128k:by_magic=off`, "-chown_r", "0")
-    // args.push("/", "--", "set_filter_r", "--zisofs", "/")
+    args.push("-chown_r", "0", "/", "--")
+    args.push("-zisofs", `level=0:block_size=128k:by_magic=off`)
+    args.push("set_filter_r", "--zisofs", "/")
 
     await exec(process.platform === "darwin" ? path.join(appImagePath, "xorriso") : "xorriso", args)
 
     await new BluebirdPromise((resolve, reject) => {
       const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
       rd.on("error", reject)
-      const wr = createWriteStream(image)
+      const wr = createWriteStream(image, {flags: "r+"})
       wr.on("error", reject)
       wr.on("finish", resolve)
       rd.pipe(wr)
@@ -83,6 +84,6 @@ export default class AppImageTarget extends TargetEx {
       stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
     })
 
-    packager.dispatchArtifactCreated(image)
+    packager.dispatchArtifactCreated(`${image}.xz`)
   }
 }
