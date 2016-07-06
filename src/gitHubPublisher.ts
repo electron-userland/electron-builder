@@ -185,9 +185,14 @@ export class GitHubPublisher implements Publisher {
       return BluebirdPromise.resolve()
     }
 
+    const release = this._releasePromise.value()
+    if (release == null) {
+      return BluebirdPromise.resolve()
+    }
+
     for (let i = 0; i < 3; i++) {
       try {
-        return await gitHubRequest(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token, null, "DELETE")
+        return await gitHubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
       }
       catch (e) {
         if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {
@@ -198,6 +203,6 @@ export class GitHubPublisher implements Publisher {
       }
     }
 
-    warn(`Cannot delete release ${this._releasePromise.value().id}`)
+    warn(`Cannot delete release ${release.id}`)
   }
 }

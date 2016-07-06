@@ -8,6 +8,7 @@ import { deepAssign } from "./util/deepAssign"
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign"
 import { DmgTarget } from "./targets/dmg"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
+import { AppInfo } from "./appInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -26,6 +27,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       cleanupTasks.push(() => deleteKeychain(keychainName))
       this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.getCscPassword(), this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
     }
+  }
+
+  protected prepareAppInfo(appInfo: AppInfo): AppInfo {
+    return new AppInfo(appInfo.metadata, this.devMetadata, this.platformSpecificBuildOptions.bundleVersion)
   }
 
   async getIconPath(): Promise<string | null> {

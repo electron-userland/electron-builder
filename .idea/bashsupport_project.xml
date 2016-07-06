@@ -8,6 +8,7 @@
         <option value="DEBUG" />
         <option value="DESKTOPINTEGRATION" />
         <option value="SKIP" />
+        <option value="XDG_DATA_DIRS" />
       </set>
     </option>
   </component>

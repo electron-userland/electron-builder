@@ -21,7 +21,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     }
     else {
       return Object.assign({
-        description: this.appInfo.description,
+        description: this.info.appInfo.description,
       }, options)
     }
   }

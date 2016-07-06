@@ -22,29 +22,32 @@ export class AppInfo {
   }
 
   readonly version: string
+  readonly buildNumber: string
   readonly buildVersion: string
 
   readonly productFilename: string
 
-  constructor(public metadata: AppMetadata, private devMetadata: DevMetadata) {
-    let buildVersion = metadata.version!
-    this.version = buildVersion
+  constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, buildVersion?: string | null) {
+    this.version = metadata.version!
 
-    const buildNumber = this.buildNumber
-    if (!isEmptyOrSpaces(buildNumber)) {
-      buildVersion += `.${buildNumber}`
+    this.buildNumber = this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+
+    if (isEmptyOrSpaces(buildVersion)) {
+      buildVersion = this.version
+      if (!isEmptyOrSpaces(this.buildNumber)) {
+        buildVersion += `.${this.buildNumber}`
+      }
+      this.buildVersion = buildVersion
     }
-    this.buildVersion = buildVersion
+    else {
+      this.buildVersion = buildVersion!
+    }
 
     this.productFilename = sanitizeFileName(this.productName)
   }
 
   get companyName() {
     return this.metadata.author!.name
-  }
-
-  get buildNumber(): string | null {
-   return this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
   }
 
   get id(): string {

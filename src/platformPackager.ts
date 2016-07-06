@@ -96,14 +96,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly appInfo: AppInfo
 
   constructor(public info: BuildInfo) {
-    this.appInfo = info.appInfo
+    this.devMetadata = info.devMetadata
+    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>info.devMetadata.build)[this.platform.buildConfigurationKey])
+    this.appInfo = this.prepareAppInfo(info.appInfo)
     this.options = info.options
     this.projectDir = info.projectDir
-    this.devMetadata = info.devMetadata
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
-
-    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>info.devMetadata.build)[this.platform.buildConfigurationKey])
 
     this.resourceList = readdir(this.buildResourcesDir)
       .catch(e => {
@@ -112,6 +111,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
         return []
       })
+  }
+
+  protected prepareAppInfo(appInfo: AppInfo) {
+    return appInfo
   }
 
   normalizePlatformSpecificBuildOptions(options: DC | n): DC {

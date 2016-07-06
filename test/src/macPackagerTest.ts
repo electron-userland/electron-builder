@@ -28,7 +28,7 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
     devMetadata: {
       build: {
         mac: {
-          target: target
+          target: target,
         }
       }
     }
@@ -186,7 +186,7 @@ test.ifOsx("custom background - new way", () => {
   })
 })
 
-test.ifOsx("disable dmg icon", () => {
+test.ifOsx("disable dmg icon, bundleVersion", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
@@ -195,13 +195,17 @@ test.ifOsx("disable dmg icon", () => {
       build: {
         dmg: {
           icon: null,
-        }
+        },
+        mac: {
+          bundleVersion: "50"
+        },
       },
     }
   }, {
     packed: () => {
       assertThat(platformPackager.effectiveDistOptions.icon).equal(null)
       assertThat(platformPackager.effectivePackOptions.icon).not.equal(null)
+      assertThat(platformPackager.effectivePackOptions["build-version"]).equal("50")
       return BluebirdPromise.resolve(null)
     },
   })
