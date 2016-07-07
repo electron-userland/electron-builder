@@ -103,10 +103,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
   private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
     let keychainName = (await this.codeSigningInfo).keychainName
-    if (process.env.CSC_LINK != null) {
-      throw new Error("keychainName is null, but CSC_LINK defined")
-    }
-
     const masQualifier = masOptions == null ? null : (masOptions.identity || this.platformSpecificBuildOptions.identity)
 
     let name = await findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", masOptions == null ? this.platformSpecificBuildOptions.identity : masQualifier, keychainName)

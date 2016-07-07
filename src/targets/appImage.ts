@@ -26,7 +26,7 @@ export default class AppImageTarget extends TargetEx {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    const image = path.join(this.outDir, packager.generateName(null, arch, true))
+    const image = path.join(this.outDir, packager.generateName("AppImage", arch, false))
     const appInfo = packager.appInfo
     await unlinkIfExists(image)
 
@@ -52,7 +52,7 @@ export default class AppImageTarget extends TargetEx {
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
     args.push("-chown_r", "0", "/", "--")
-    args.push("-zisofs", `level=0:block_size=128k:by_magic=off`)
+    args.push("-zisofs", `level=${packager.devMetadata.build.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
 
     await exec(process.platform === "darwin" ? path.join(appImagePath, "xorriso") : "xorriso", args)
@@ -76,14 +76,7 @@ export default class AppImageTarget extends TargetEx {
     }
 
     await chmod(image, "0755")
-    // we archive because you cannot distribute exe as is - e.g. Ubuntu clear exec flag and user cannot just click on AppImage to run
-    // also, LZMA compression - 29MB vs zip 42MB
-    // we use slow xz instead of 7za because 7za doesn't preserve exec file permissions for xz
-    await spawn("xz", ["--x86", "--lzma2", "--compress", "--force", packager.devMetadata.build.compression === "store" ? "-0" : "-9e", image], {
-      cwd: path.dirname(image),
-      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
-    })
 
-    packager.dispatchArtifactCreated(`${image}.xz`)
+    packager.dispatchArtifactCreated(image, packager.generateName("AppImage", arch, true))
   }
 }

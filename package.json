@@ -66,8 +66,8 @@
     "cli-cursor": "^1.0.2",
     "debug": "^2.2.0",
     "electron-osx-sign": "^0.4.0-beta4",
-    "electron-packager-tf": "~7.5.2",
-    "electron-winstaller-fixed": "~2.11.6",
+    "electron-packager-tf": "~7.5.3",
+    "electron-winstaller-fixed": "~2.11.7",
     "fs-extra-p": "^1.0.5",
     "hosted-git-info": "^2.1.5",
     "image-size": "^0.5.0",
@@ -141,5 +141,8 @@
   "release": {
     "verifyConditions": []
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }
