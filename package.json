@@ -116,7 +116,7 @@
     "json8": "^0.9.0",
     "plist": "^1.2.0",
     "pre-git": "^3.10.0",
-    "semantic-release": "^6.3.0",
+    "@develar/semantic-release": "^6.3.1",
     "should": "^9.0.2",
     "ts-babel": "^1.0.3",
     "tslint": "3.13.0",
@@ -137,6 +137,9 @@
     "files": [
       "test/out/*.js"
     ]
+  },
+  "release": {
+    "verifyConditions": []
   },
   "typings": "./out/electron-builder.d.ts"
 }
