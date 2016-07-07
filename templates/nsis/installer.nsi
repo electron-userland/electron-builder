@@ -79,11 +79,15 @@ Section "install"
   RMDir /r $INSTDIR
   SetOutPath $INSTDIR
 
-  ${If} ${RunningX64}
-    Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
-  ${Else}
+  !ifdef APP_64
+    ${If} ${RunningX64}
+      Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
+    ${Else}
+      Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+    ${EndIf}
+  !else
     Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
-  ${EndIf}
+  !endif
 
 #  <% if(fileAssociation){ %>
     # specify file association
