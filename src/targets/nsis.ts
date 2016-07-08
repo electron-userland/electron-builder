@@ -48,13 +48,14 @@ export default class NsisTarget extends Target {
 
   private async buildInstaller(): Promise<any> {
     const packager = this.packager
+    const options = this.options
 
     const iconPath = await packager.getIconPath()
     const appInfo = packager.appInfo
     const version = appInfo.version
     const installerPath = path.join(this.outDir, `${appInfo.productFilename} Setup ${version}.exe`)
 
-    const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
+    const guid = options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
@@ -67,6 +68,9 @@ export default class NsisTarget extends Target {
       MUI_UNICON: iconPath,
 
       COMPANY_NAME: appInfo.companyName,
+
+      EXTENSION: options.extension,
+      FILE_TYPE: options.fileType
     }
 
     for (let [arch, file] of this.archs) {

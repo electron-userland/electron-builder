@@ -131,6 +131,8 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
 | installerHeader | <a name="NsisOptions-installerHeader"></a>*boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
 | installerHeaderIcon | <a name="NsisOptions-installerHeaderIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
+| extension | <a name="NsisOptions-extension"></a>Optional, file association extension. Ex. .yourapp
+| fileType | <a name="NsisOptions-fileType"></a>Optional, file assocation file type. If given extension, you should also give this file extension a name.
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`

@@ -86,9 +86,10 @@ Section "install"
     Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
   ${EndIf}
 
-  !ifdef fileAssociation
-    # specify file association
-    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+
+  # specify file association
+  !ifdef EXTENSION & FILE_TYPE
+    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "${EXTENSION}" "${FILE_TYPE}"
   !endif
 
   WriteUninstaller "${UNINSTALL_FILENAME}"
@@ -125,9 +126,9 @@ Section "un.install"
   Delete "$startMenuLink"
   Delete "$desktopLink"
 
-  !ifdef fileAssociation
-    # unregister file extension
-    ${unregisterExtension} "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
+  # unregister file extension
+  !ifdef EXTENSION & FILE_TYPE
+    ${unregisterExtension} "${EXTENSION}" "${FILE_TYPE}"
   !endif
 
   # delete the installed files
