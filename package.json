@@ -100,11 +100,11 @@
     ]
   },
   "devDependencies": {
-    "@types/debug": "0.0.26-alpha",
-    "@types/mime": "0.0.26-alpha",
-    "@types/progress": "^1.1.25-alpha",
-    "@types/semver": "^4.3.24-alpha",
-    "@types/source-map-support": "^0.2.25-alpha",
+    "@types/debug": "0.0.27-alpha",
+    "@types/mime": "0.0.27-alpha",
+    "@types/progress": "^1.1.26-alpha",
+    "@types/semver": "^4.3.25-alpha",
+    "@types/source-map-support": "^0.2.26-alpha",
     "ava-tf": "^0.15.3",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-destructuring": "^6.9.0",

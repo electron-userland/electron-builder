@@ -1,7 +1,7 @@
 import {  PlatformPackager, TargetEx } from "../platformPackager"
 import { LinuxBuildOptions, Arch } from "../metadata"
 import * as path from "path"
-import { exec, unlinkIfExists, spawn, debug } from "../util/util"
+import { exec, unlinkIfExists } from "../util/util"
 import { open, write, createReadStream, createWriteStream, close, chmod } from "fs-extra-p"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getBin } from "../util/binDownload"
@@ -10,9 +10,11 @@ import { Promise as BluebirdPromise } from "bluebird"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-const appImageVersion = "AppImage-5"
+const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
-const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "19833e5db3cbc546432de8ddc8a54181489e6faad4944bd1f3138adf4b771259")
+const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef5bd7f218f18826261332e7d31d93ab4432fa0312" : "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221"
+//noinspection SpellCheckingInspection
+const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
 
 export default class AppImageTarget extends TargetEx {
   private readonly desktopEntry: Promise<string>
@@ -55,7 +57,7 @@ export default class AppImageTarget extends TargetEx {
     args.push("-zisofs", `level=${packager.devMetadata.build.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
 
-    await exec(process.platform === "darwin" ? path.join(appImagePath, "xorriso") : "xorriso", args)
+    await exec(process.env.USE_SYSTEM_FPM === "true" || process.arch !== "x64" ? "xorriso" : path.join(appImagePath, "xorriso"), args)
 
     await new BluebirdPromise((resolve, reject) => {
       const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
