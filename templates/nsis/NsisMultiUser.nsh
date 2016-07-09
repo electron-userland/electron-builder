@@ -56,8 +56,6 @@ Var RadioButtonLabel1
 	!define MULTIUSER_INSTALLMODE_DISPLAYNAME "${PRODUCT_NAME} ${VERSION}"
 !endif
 
-RequestExecutionLevel user
-
 ; Sets install mode to "per-machine" (all users).
 !macro MULTIUSER_INSTALLMODE_ALLUSERS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
 	;Install mode initialization - per-machine
@@ -372,8 +370,9 @@ FunctionEnd
 		SendMessage $MultiUser.InstallModePage.AllUsers ${BM_GETCHECK} 0 0 $MultiUser.InstallModePage.ReturnValue
 
 		${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
-			${if} $IsAdmin == "0" 
-				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION ; if it's not Power or Admin, but elevation is allowed, then elevate...
+			${if} $IsAdmin == "0"
+			  # if it's not Power or Admin, but elevation is allowed, then elevate
+				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
 					;MessageBox MB_OK "Will elevate and quit"
 					ShowWindow $HWNDPARENT ${SW_HIDE} ; HideWindow would work?
 					!insertmacro UAC_RunElevated
@@ -407,12 +406,12 @@ FunctionEnd
 
 					ShowWindow $HWNDPARENT ${SW_SHOW}
 					BringToFront
-					Abort ; Stay on page - http://nsis.sourceforge.net/Abort
-				!else 			
-						;se não é Power ou Admin, e não é permitida elevation, então nem deveria ter chegado aqui... o radiobutton deveria estar disabled
+					# Stay on page
+					Abort
 				!endif
 			${else}
-				Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers ; if it's Power or Admin, just go on with installation...
+			  # if it's Power or Admin, just go on with installation
+				Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
 			${endif}
 		${else}
 			Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser

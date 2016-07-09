@@ -16,7 +16,14 @@ FunctionEnd
   AutoCloseWindow true
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_UNPAGE_INSTFILES
+
+  !ifdef INSTALL_MODE_PER_ALL_USERS
+    RequestExecutionLevel admin
+  !else
+    RequestExecutionLevel user
+  !endif
 !else
+  RequestExecutionLevel user
   !include "boring-installer.nsh"
 !endif
 

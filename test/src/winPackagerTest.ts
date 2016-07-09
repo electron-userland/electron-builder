@@ -46,18 +46,15 @@ test.ifDevOrLinuxCi("nsis 32 perMachine", () => assertPack("test-app-one", {
 }))
 
 test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
-    targets: Platform.WINDOWS.createTarget(["nsis"]),
-    devMetadata: {
-      build: {
-        nsis: {
-          oneClick: false,
-        }
+  targets: Platform.WINDOWS.createTarget(["nsis"]),
+  devMetadata: {
+    build: {
+      nsis: {
+        oneClick: false,
       }
     }
-  }), {
-    useTempDir: true,
   }
-))
+})))
 
 test.ifNotCiOsx("nsis, installerHeaderIcon", () => {
   let headerIconPath: string | null = null

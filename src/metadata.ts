@@ -370,7 +370,7 @@ export interface NsisOptions {
   readonly perMachine?: boolean | null
 
   /*
-   Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
+   *boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
    */
   readonly allowElevation?: boolean | null
 

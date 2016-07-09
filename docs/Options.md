@@ -127,9 +127,9 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 
 | Name | Description
 | --- | ---
-| perMachine | <a name="NsisOptions-perMachine"></a>Mark "all users" (per-machine) as default. Not recommended. Defaults to `false`.
-| allowElevation | <a name="NsisOptions-allowElevation"></a>Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
 | oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
+| perMachine | <a name="NsisOptions-perMachine"></a>Install per all users (per-machine). Defaults to `false`.
+| allowElevation | <a name="NsisOptions-allowElevation"></a>Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
 | installerHeader | <a name="NsisOptions-installerHeader"></a>*boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
 | installerHeaderIcon | <a name="NsisOptions-installerHeaderIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
 
