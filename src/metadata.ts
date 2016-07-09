@@ -360,7 +360,12 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
  */
 export interface NsisOptions {
   /*
-  Mark "all users" (per-machine) as default. Not recommended. Defaults to `false`.
+  One-click installation. Defaults to `true`.
+   */
+  readonly oneClick?: boolean | null
+
+  /*
+  Install per all users (per-machine). Defaults to `false`.
    */
   readonly perMachine?: boolean | null
 
@@ -370,11 +375,6 @@ export interface NsisOptions {
   readonly allowElevation?: boolean | null
 
   readonly guid?: string | null
-
-  /*
-  One-click installation. Defaults to `true`.
-   */
-  readonly oneClick?: boolean | null
 
   /*
    *boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`

@@ -29,8 +29,8 @@ Function .onInit
     Quit
   ${EndIf}
 
-  !insertmacro MULTIUSER_INIT
   !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+  !insertmacro MULTIUSER_INIT
 
   InitPluginsDir
 

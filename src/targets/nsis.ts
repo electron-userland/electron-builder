@@ -88,10 +88,7 @@ export default class NsisTarget extends Target {
     }
 
     if (this.options.perMachine === true) {
-      defines.MULTIUSER_INSTALLMODE_DEFAULT_ALLUSERS = null
-    }
-    else {
-      defines.MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER = null
+      defines.INSTALL_MODE_PER_ALL_USERS = null
     }
 
     if (this.options.allowElevation !== false) {

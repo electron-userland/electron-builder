@@ -137,7 +137,7 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
   }, true)
 }))
 
-const electronVersion = "1.2.3"
+const electronVersion = "1.2.6"
 
 test.ifNotWindows("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(DIR_TARGET),

@@ -56,7 +56,7 @@ Var RadioButtonLabel1
 	!define MULTIUSER_INSTALLMODE_DISPLAYNAME "${PRODUCT_NAME} ${VERSION}"
 !endif
 
-RequestExecutionLevel user ; will ask elevation only if necessary
+RequestExecutionLevel user
 
 ; Sets install mode to "per-machine" (all users).
 !macro MULTIUSER_INSTALLMODE_ALLUSERS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
@@ -157,7 +157,6 @@ FunctionEnd
 !macroend
 
 !macro MULTIUSER_INIT_CHECKS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
-
 	;Installer initialization - check privileges and set default install mode
 	!insertmacro MULTIUSER_INIT_TEXTS
 
@@ -170,10 +169,10 @@ FunctionEnd
 		StrCpy $IsAdmin 0
 	${endif}
 
-	; Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+	# checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
 	StrCpy $HasPerMachineInstallation 0
 	StrCpy $HasPerUserInstallation 0
-	;Set installation mode to setting from a previous installation
+	# set installation mode to setting from a previous installation
 	ReadRegStr $PerMachineInstallationFolder HKLM "${MULTIUSER_INSTALLMODE_INSTALL_REGISTRY_KEY2}" "${MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME}"
 	${if} $PerMachineInstallationFolder != ""
 		StrCpy $HasPerMachineInstallation 1
@@ -189,24 +188,13 @@ FunctionEnd
 	${elseif} $HasPerUserInstallation == "0" ; if there is only one installation... set it as default...
 		${andif} $HasPerMachineInstallation == "1"
 		Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-	${else} ; if there is no installation, or there is both per-user and per-machine...
-		${if} ${IsNT}
-			${if} $IsAdmin == "1" ;If running as admin, default to per-machine installation if possible (unless default is forced by MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER)
-				!if MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
-					Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-				!else
-					Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-				!endif
-			${else} ;If not running as admin, default to per-user installation (unless default is forced by MULTIUSER_INSTALLMODE_DEFAULT_ALLUSERS and elevation is allowed MULTIUSER_INSTALLMODE_ALLOW_ELEVATION)
-				!ifdef MULTIUSER_INSTALLMODE_DEFAULT_ALLUSERS & MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
-					Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-				!else
-					Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-				!endif
-			${endif}
-		${else} ; Not running Windows NT, (so it's Windows XP at best), so per-user installation not supported
-			Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-		${endif}
+	${else}
+	  # if there is no installation, or there is both per-user and per-machine
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+    !else
+      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
+    !endif
 	${endif}
 	
 !macroend
@@ -215,7 +203,6 @@ FunctionEnd
 	!verbose push
 	!verbose 3
 
-	; se for inner (sub processo) e ainda assim não for admin... algo errado
 	${If} ${UAC_IsInnerInstance}
 	${AndIfNot} ${UAC_IsAdmin}
 		;MessageBox MB_OK "This account doesn't have admin rights"
@@ -353,7 +340,6 @@ FunctionEnd
 		${NSD_CreateRadioButton} 10u 50u 280u 20u "$9 ($0)"
 		Pop $MultiUser.InstallModePage.CurrentUser
 
-
 		nsDialogs::SetUserData $MultiUser.InstallModePage.AllUsers 1 ; Install for All Users (1, pra exibir o icone SHIELD de elevation)
 		nsDialogs::SetUserData $MultiUser.InstallModePage.CurrentUser 0	; Install for Single User (0 pra não exibir)
 
@@ -369,8 +355,6 @@ FunctionEnd
 		;${NSD_CreateLabel} 0u 130u 280u 20u ""
 		;Pop $RadioButtonLabel3
 
-		
-		
 		${if} $MultiUser.InstallMode == "AllUsers" ; setting defaults
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_SETCHECK} ${BST_CHECKED} 0 ; set as default
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_CLICK} 0 0 ; trigger click event
@@ -473,13 +457,11 @@ FunctionEnd
 			${endif}
 		${endif}
 		SendMessage $RadioButtonLabel1 ${WM_SETTEXT} 0 "STR:$7"
-		;SendMessage $RadioButtonLabel2 ${WM_SETTEXT} 0 "STR:$8"
-		;SendMessage $RadioButtonLabel3 ${WM_SETTEXT} 0 "STR:$9"
 	FunctionEnd
 
 !macroend
 
-; SHCTX is the hive HKLM if SetShellVarContext all, or HKCU if SetShellVarContext user
+# SHCTX is the hive HKLM if SetShellVarContext all, or HKCU if SetShellVarContext user
 !macro MULTIUSER_RegistryAddInstallInfo
 	!verbose push
 	!verbose 3

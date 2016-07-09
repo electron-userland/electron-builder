@@ -34,12 +34,16 @@ test("nsis", () => assertPack("test-app-one", _signed({
   }
 ))
 
-test.ifDevOrLinuxCi("nsis 32", () => assertPack("test-app-one", _signed({
-    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-  }), {
-  useTempDir: true,
+test.ifDevOrLinuxCi("nsis 32 perMachine", () => assertPack("test-app-one", {
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  devMetadata: {
+    build: {
+      nsis: {
+        perMachine: true,
+      }
+    }
   }
-))
+}))
 
 test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
     targets: Platform.WINDOWS.createTarget(["nsis"]),
