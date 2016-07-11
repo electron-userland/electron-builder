@@ -1,3 +1,5 @@
+!include x64.nsh
+
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow
 ShowUninstDetails nevershow
@@ -5,12 +7,25 @@ FileBufSize 64
 Name "${PRODUCT_NAME}"
 Unicode true
 
-!define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME "UninstallString"
-!define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME "InstallLocation"
-
 !define MULTIUSER_INSTALLMODE_INSTDIR "${APP_GUID}"
-!define MULTIUSER_INSTALLMODE_INSTALL_REGISTRY_KEY "${APP_GUID}"
-!define MULTIUSER_INSTALLMODE_UNINSTALL_REGISTRY_KEY "${APP_GUID}"
 
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
+
+!macro check64BitAndSetRegView
+  !ifdef APP_64
+    ${IfNot} ${AtLeastWin7}
+      MessageBox MB_OK "Windows 7 and above is required"
+      Quit
+    ${EndIf}
+
+    ${If} ${RunningX64}
+      SetRegView 64
+    ${Else}
+      !ifndef APP_32
+        MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required"
+        Quit
+      !endif
+    ${EndIf}
+  !endif
+!macroend

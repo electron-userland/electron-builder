@@ -1,17 +1,21 @@
 !include "common.nsh"
 !include "MUI2.nsh"
-!include "NsisMultiUser.nsh"
+!include "multiUser.nsh"
 !include "nsProcess.nsh"
 !include "allowOnlyOneInstallerInstace.nsh"
 !include "checkAppRunning.nsh"
-!include x64.nsh
 !include WinVer.nsh
 
-Function StartApp
-  ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-FunctionEnd
-
 !ifdef ONE_CLICK
+  Function StartApp
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      !include UAC.nsh
+      !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
+    !else
+      ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+    !endif
+  FunctionEnd
+
   SilentUnInstall silent
   AutoCloseWindow true
   !insertmacro MUI_PAGE_INSTFILES
@@ -23,7 +27,6 @@ FunctionEnd
     RequestExecutionLevel user
   !endif
 !else
-  RequestExecutionLevel user
   !include "boring-installer.nsh"
 !endif
 
@@ -31,26 +34,18 @@ Var startMenuLink
 Var desktopLink
 
 Function .onInit
- ${IfNot} ${AtLeastWin7}
-    MessageBox MB_OK "Windows 7 and above is required"
-    Quit
-  ${EndIf}
+  !insertmacro check64BitAndSetRegView
+  !insertmacro initMultiUser "" ""
 
-  !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
-  !insertmacro MULTIUSER_INIT
+  !ifdef ONE_CLICK
+    !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+  !else
+    ${IfNot} ${UAC_IsInnerInstance}
+      !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+    ${EndIf}
+  !endif
 
   InitPluginsDir
-
-  ${If} ${RunningX64}
-    !ifdef APP_64
-      SetRegView 64
-    !endif
-  ${Else}
-    !ifndef APP_32
-      MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required"
-      Quit
-    !endif
-  ${EndIf}
 
   SetCompress off
   !ifdef APP_32
@@ -67,7 +62,8 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
-  !insertmacro MULTIUSER_UNINIT
+  !insertmacro check64BitAndSetRegView
+  !insertmacro initMultiUser Un un.
 FunctionEnd
 
 Section "install"
@@ -123,6 +119,8 @@ Section "install"
 SectionEnd
 
 Section "un.install"
+  SetAutoClose true
+
   !insertmacro CHECK_APP_RUNNING "uninstall"
 
   StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
@@ -141,9 +139,4 @@ Section "un.install"
   RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
-
-  !ifdef ONE_CLICK
-    # strange, AutoCloseWindow true doesn't work for uninstaller, so, just quit
-    Quit
-  !endif
 SectionEnd
