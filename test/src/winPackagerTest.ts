@@ -9,7 +9,7 @@ import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "signcode-tf"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
-import { ElectronPackagerOptions } from "electron-packager-tf"
+import { ElectronPackagerOptions } from "out/packager/dirPackager"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -132,7 +132,7 @@ test.ifNotCiOsx("nsis boring, MUI_HEADER as option", () => {
 })
 
 // very slow
-test.ifWinCi("delta and msi", () => assertPack("test-app-one", {
+test.skip("delta and msi", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
     devMetadata: {
       build: {
@@ -243,7 +243,7 @@ class CheckingWinPackager extends WinPackager {
     // skip pack
     const appOutDir = this.computeAppOutDir(outDir, arch)
 
-    this.effectivePackOptions = await this.computePackOptions(outDir, appOutDir, arch)
+    this.effectivePackOptions = await this.computePackOptions()
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
     this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions(appOutDir, "foo", "Foo.exe"))

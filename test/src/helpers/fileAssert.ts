@@ -67,10 +67,14 @@ class Assertions {
 function prettyDiff(actual: any, expected: any): string {
   const diffJson2 = diffJson(expected, actual)
   const diff = diffJson2.map(part => {
-    if (part.added) return green(part.value.replace(/.+/g, '    - $&'))
-    if (part.removed) return red(part.value.replace(/.+/g, '    + $&'))
-    return gray(part.value.replace(/.+/g, '    | $&'))
-  }).join('')
+    if (part.added) {
+      return green(part.value.replace(/.+/g, "    - $&"))
+    }
+    if (part.removed) {
+      return red(part.value.replace(/.+/g, "    + $&"))
+    }
+    return gray(part.value.replace(/.+/g, "    | $&"))
+  }).join("")
   return `\n${diff}\n`
 }
 

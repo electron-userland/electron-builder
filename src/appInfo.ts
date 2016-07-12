@@ -1,4 +1,3 @@
-import { ElectronPackagerOptions } from "electron-packager-tf"
 import { DevMetadata, AppMetadata } from "./metadata"
 import { warn } from "./util/log"
 import { smarten } from "./platformPackager"
@@ -30,7 +29,7 @@ export class AppInfo {
   constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, buildVersion?: string | null) {
     this.version = metadata.version!
 
-    this.buildNumber = this.devMetadata.build["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    this.buildNumber = (<any>this.devMetadata.build)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
 
     if (isEmptyOrSpaces(buildVersion)) {
       buildVersion = this.version
@@ -75,7 +74,7 @@ export class AppInfo {
   }
 
   get copyright(): string {
-    const copyright = (<ElectronPackagerOptions>this.devMetadata.build)["app-copyright"]
+    const copyright = (<any>this.devMetadata.build)["app-copyright"]
     if (copyright != null) {
       return copyright
     }

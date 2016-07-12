@@ -139,4 +139,3 @@ export function subTask(title: string, promise: BluebirdPromise<any> | Promise<a
 export function task(title: string, promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
   return logger.task(title, promise)
 }
-

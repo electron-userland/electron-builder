@@ -1,8 +1,7 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, archToString } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import { pack, ElectronPackagerOptions, userIgnoreFilter } from "electron-packager-tf"
 import { readdir, remove, realpath } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
 import { Packager } from "./packager"
@@ -14,6 +13,8 @@ import { deepAssign } from "./util/deepAssign"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
+import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
+import { userIgnoreFilter } from "./packager/common"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -154,7 +155,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, platformSpecificBuildOptions: DC) {
+  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
     options.initializeApp = async (opts, buildDir, appRelativePath) => {
       const appPath = path.join(buildDir, appRelativePath)
@@ -195,7 +196,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         else {
           warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
-        rawFilter = userIgnoreFilter(opts)
+        rawFilter = userIgnoreFilter(opts, this.info.appDir)
       }
 
       const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
@@ -211,7 +212,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       await BluebirdPromise.all(promises)
     }
-    await task(`Packaging for platform ${this.platform.name} ${options.arch} using electron ${options.version} to ${path.relative(this.projectDir, appOutDir)}`, pack(options))
+    await task(`Packaging for platform ${this.platform.name} ${archToString(arch)} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
+      pack(options, appOutDir, platformName, archToString(arch), this.info.electronVersion))
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
@@ -227,25 +229,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
-  protected async computePackOptions(outDir: string, appOutDir: string, arch: Arch): Promise<ElectronPackagerOptions> {
+  protected async computePackOptions(): Promise<ElectronPackagerOptions> {
     //noinspection JSUnusedGlobalSymbols
     const appInfo = this.appInfo
     const options: any = deepAssign({
-      dir: this.info.appDir,
-      "app-bundle-id": appInfo.id,
-      out: outDir,
+      appBundleId: appInfo.id,
       name: appInfo.productName,
       productName: appInfo.productName,
       platform: this.platform.nodeName,
-      arch: Arch[arch],
-      version: this.info.electronVersion,
       icon: await this.getIconPath(),
-      overwrite: true,
-      "app-version": appInfo.version,
-      "app-copyright": appInfo.copyright,
-      "build-version": appInfo.buildVersion,
-      tmpdir: false,
-      generateFinalBasename: () => path.basename(appOutDir),
+      appInfo: appInfo,
     }, this.devMetadata.build)
 
     if (this.platform === Platform.WINDOWS) {
@@ -275,7 +268,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    const buildMetadata = <ElectronPackagerOptions>this.devMetadata.build
+    const buildMetadata = <any>this.devMetadata.build
     if (buildMetadata["asar-unpack"] != null) {
       warn("asar-unpack is deprecated, please set as asar.unpack")
     }

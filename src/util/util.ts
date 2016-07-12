@@ -66,7 +66,7 @@ export interface ExecOptions extends BaseExecOptions {
 
 export function removePassword(input: string): string {
   return input.replace(/(-P |pass:)([^ ]+)/, function (match, p1, p2) {
-    return `${p1}${createHash('sha256').update(p2).digest('hex')} (sha256 hash)`
+    return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
 }
 
@@ -237,5 +237,7 @@ export function isEmptyOrSpaces(s: string | n) {
 
 export function unlinkIfExists(file: string) {
   return unlink(file)
-    .catch(() => {})
+    .catch(() => {
+      // ignore
+    })
 }

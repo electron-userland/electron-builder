@@ -21,7 +21,7 @@ export function hasMagic(pattern: Minimatch) {
   }
 
   for (let i of set[0]) {
-    if (typeof i !== 'string') {
+    if (typeof i !== "string") {
       return true
     }
   }

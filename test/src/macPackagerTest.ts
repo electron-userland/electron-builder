@@ -6,7 +6,7 @@ import * as path from "path"
 import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as assertThat from "should/as-function"
-import { ElectronPackagerOptions } from "electron-packager-tf"
+import { ElectronPackagerOptions } from "out/packager/dirPackager"
 import { Platform, MacOptions, createTargets } from "out"
 import { SignOptions, FlatOptions } from "electron-osx-sign"
 import { Arch } from "out"
@@ -205,7 +205,7 @@ test.ifOsx("disable dmg icon, bundleVersion", () => {
     packed: () => {
       assertThat(platformPackager.effectiveDistOptions.icon).equal(null)
       assertThat(platformPackager.effectivePackOptions.icon).not.equal(null)
-      assertThat(platformPackager.effectivePackOptions["build-version"]).equal("50")
+      assertThat(platformPackager.appInfo.buildVersion).equal("50")
       return BluebirdPromise.resolve(null)
     },
   })
@@ -232,7 +232,7 @@ class CheckingMacPackager extends OsXPackager {
     return await super.pack(outDir, arch, targets, postAsyncTasks)
   }
 
-  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {
+  async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {
     this.effectivePackOptions = options
   }
 

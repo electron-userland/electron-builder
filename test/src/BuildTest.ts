@@ -174,14 +174,14 @@ test("afterPack", t => {
       build: {
         afterPack: () => {
           called++
-          return Promise.resolve()
+          return BluebirdPromise.resolve()
         }
       }
     }
   }, {
     packed: () => {
       t.is(called, targets.size)
-      return Promise.resolve()
+      return BluebirdPromise.resolve()
     }
   })
 })

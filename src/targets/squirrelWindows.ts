@@ -4,7 +4,6 @@ import { Arch, WinBuildOptions } from "../metadata"
 import { createWindowsInstaller, convertVersion } from "electron-winstaller-fixed"
 import * as path from "path"
 import { warn } from "../util/log"
-import { emptyDir } from "fs-extra-p"
 import { getRepositoryInfo } from "../repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
@@ -23,10 +22,9 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = this.packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
-    const  setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
+    const setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
 
     const installerOutDir = path.join(appOutDir, "..", `win${getArchSuffix(arch)}`)
-    await emptyDir(installerOutDir)
 
     const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFileName)
     await createWindowsInstaller(distOptions)

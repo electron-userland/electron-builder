@@ -191,7 +191,7 @@ function parseDebControl(info: string): any {
       value += match[3]
     }
 
-    if (value[value.length - 1] == "\n") {
+    if (value[value.length - 1] === "\n") {
       value = value.substring(0, value.length - 1)
     }
     metadata[match[1]] = value
@@ -286,7 +286,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
       if (appInfo.productFilename === "Test App ßW") {
         return `lib/net45/Test%20App%20%C3%9FW.exe`
       }
-      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, '[').replace(/%5D/g, ']')}.exe`
+      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}.exe`
     }
     else {
       return it

@@ -1,5 +1,5 @@
-import { ElectronPackagerOptions } from "electron-packager-tf"
 import { AsarOptions } from "asar"
+import { ElectronPackagerOptions } from "./packager/dirPackager"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -184,8 +184,6 @@ export interface BuildMetadata {
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
    */
   readonly compression?: CompressionLevel | null
-
-  readonly "build-version"?: string | null
 
   /*
    *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
@@ -533,6 +531,10 @@ export class Platform {
 
 export enum Arch {
   ia32, x64
+}
+
+export function archToString(arch: Arch): string {
+  return arch === Arch.ia32 ? "ia32" : "x64"
 }
 
 export function archFromString(name: string): Arch {

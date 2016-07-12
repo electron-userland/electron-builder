@@ -250,7 +250,7 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
 }
 
 function checkConflictingOptions(options: any) {
-  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name"]) {
+  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name", "extra-resource"]) {
     if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }

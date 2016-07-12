@@ -12,10 +12,6 @@ declare module "ava-tf" {
     export const ifDevOrLinuxCi: typeof test;
     export const ifNotTravis: typeof test;
   }
-  
-  interface AssertContext {
-    throws(value: (() => void) | Promise<any>, error?: ErrorValidator, message?: string): void
-  }
 }
 
 Object.defineProperties(test, {
