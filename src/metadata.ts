@@ -328,9 +328,9 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly msi?: boolean
 
   /*
-   *Squirrel.Windows-only.* A URL to your existing updates. If given, these will be downloaded to create delta updates.
+   *Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
    */
-  readonly remoteReleases?: string | null
+  readonly remoteReleases?: string | boolean | null
 
   /*
    *Squirrel.Windows-only.* Authentication token for remote updates

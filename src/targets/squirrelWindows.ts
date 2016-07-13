@@ -3,7 +3,7 @@ import { getArchSuffix, Target } from "../platformPackager"
 import { Arch, WinBuildOptions } from "../metadata"
 import { createWindowsInstaller, convertVersion } from "electron-winstaller-fixed"
 import * as path from "path"
-import { warn } from "../util/log"
+import { warn, log } from "../util/log"
 import { getRepositoryInfo } from "../repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
@@ -99,6 +99,17 @@ export default class SquirrelWindowsTarget extends Target {
       const resourceList = await packager.resourceList
       if (resourceList.includes("install-spinner.gif")) {
         options.loadingGif = path.join(packager.buildResourcesDir, "install-spinner.gif")
+      }
+    }
+
+    if (options.remoteReleases === true) {
+      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.devMetadata)
+      if (info == null) {
+        warn("remoteReleases set to true, but cannot get repository info")
+      }
+      else {
+        options.remoteReleases = `https://github.com/${info.user}/${info.project}`
+        log(`remoteReleases is set to ${options.remoteReleases}`)
       }
     }
 
