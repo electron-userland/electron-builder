@@ -91,7 +91,12 @@ export default class NsisTarget extends Target {
       defines.INSTALL_MODE_PER_ALL_USERS = null
     }
 
-    if (!oneClick && this.options.allowElevation !== false) {
+    if (oneClick) {
+      if (this.options.runAfterFinish !== false) {
+        defines.RUN_AFTER_FINISH = null
+      }
+    }
+    else if (this.options.allowElevation !== false) {
       defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
     }
 

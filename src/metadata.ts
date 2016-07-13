@@ -372,6 +372,11 @@ export interface NsisOptions {
    */
   readonly allowElevation?: boolean | null
 
+  /*
+   *one-click installer only.* Run application after finish. Defaults to `true`.
+   */
+  readonly runAfterFinish?: boolean | null
+
   readonly guid?: string | null
 
   /*

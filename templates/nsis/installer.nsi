@@ -114,7 +114,9 @@ Section "install"
   !ifdef ONE_CLICK
     # otherwise app window will be in backround
     HideWindow
-    Call StartApp
+    !ifdef RUN_AFTER_FINISH
+      Call StartApp
+    !endif
   !endif
 SectionEnd
 
