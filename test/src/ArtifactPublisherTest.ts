@@ -1,6 +1,6 @@
 import test from "./helpers/avaEx"
-import { GitHubPublisher } from "out/gitHubPublisher"
-import { HttpError } from "out/gitHubRequest"
+import { GitHubPublisher } from "out/publish/gitHubPublisher"
+import { HttpError } from "out/publish/gitHubRequest"
 import { join } from "path"
 import * as assertThat from "should/as-function"
 

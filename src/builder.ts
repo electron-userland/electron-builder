@@ -1,6 +1,7 @@
 import { Packager, normalizePlatforms } from "./packager"
 import { PackagerOptions } from "./platformPackager"
-import { PublishOptions, Publisher, GitHubPublisher } from "./gitHubPublisher"
+import { PublishOptions, Publisher } from "./publish/publisher"
+import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { isEmptyOrSpaces } from "./util/util"

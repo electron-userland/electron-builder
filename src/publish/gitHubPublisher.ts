@@ -1,6 +1,6 @@
 import { Release, Asset } from "gh-release"
-import { isEmptyOrSpaces } from "./util/util"
-import { log, warn } from "./util/log"
+import { isEmptyOrSpaces } from "../util/util"
+import { log, warn } from "../util/log"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
@@ -11,23 +11,10 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { ReadStream } from "tty"
 import progressStream = require("progress-stream")
 import ProgressBar = require("progress")
+import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
-
-export interface Publisher {
-  upload(file: string, artifactName?: string): Promise<any>
-}
-
-export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
-
-export interface PublishOptions {
-  publish?: PublishPolicy | null
-  githubToken?: string | null
-
-  draft?: boolean
-  prerelease?: boolean
-}
 
 export class GitHubPublisher implements Publisher {
   private tag: string

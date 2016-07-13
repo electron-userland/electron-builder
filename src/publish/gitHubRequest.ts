@@ -1,7 +1,7 @@
 import * as https from "https"
 import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
-import { addTimeOutHandler } from "./util/httpRequest"
+import { addTimeOutHandler } from "../util/httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 
 const __awaiter = require("./util/awaiter")
