@@ -48,6 +48,16 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   })
 }
 
+// testAndIgnoreApiRate("Bintray upload", async () => {
+//   const publisher = new BintrayPublisher("actperepo", "5df2cadec86dff91392e4c419540785813c3db15", versionNumber(), "test")
+//   try {
+//     await publisher.upload(iconPath)
+//   }
+//   finally {
+//     // await publisher.deleteRelease()
+//   }
+// })
+
 testAndIgnoreApiRate("GitHub upload", async () => {
   const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
     githubToken: token

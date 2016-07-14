@@ -4,18 +4,29 @@ import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 
-const __awaiter = require("./util/awaiter")
-Array.isArray(__awaiter)
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("../util/awaiter")
 
 export function gitHubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+  return request<T>("api.github.com", path, token, data, method)
+}
+
+export function bintrayRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+  return request<T>("api.bintray.com", path, token, data, method)
+}
+
+function request<T>(hostname: string, path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
   const options: any = {
-    hostname: "api.github.com",
+    hostname: hostname,
     path: path,
     method: method,
     headers: {
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "electron-builder",
+      "User-Agent": "electron-builder"
     }
+  }
+
+  if (hostname.includes("github")) {
+    options.headers.Accept = "application/vnd.github.v3+json"
   }
 
   const encodedData = data == null ? null : new Buffer(JSON.stringify(data))
@@ -29,7 +40,7 @@ export function gitHubRequest<T>(path: string, token: string | null, data: { [na
 
 export function doGitHubRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
   if (token != null) {
-    (<any>options.headers).authorization = "token " + token
+    (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
 
   return new BluebirdPromise<T>((resolve, reject, onCancel) => {

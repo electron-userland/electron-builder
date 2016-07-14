@@ -1,4 +1,3 @@
-import { Release, Asset } from "gh-release"
 import { isEmptyOrSpaces } from "../util/util"
 import { log, warn } from "../util/log"
 import { basename } from "path"
@@ -14,7 +13,21 @@ import ProgressBar = require("progress")
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
+const __awaiter = require("../util/awaiter")
+
+export interface Release {
+  id: number
+  tag_name: string
+
+  draft: boolean
+
+  upload_url: string
+}
+
+interface Asset {
+  id: number
+  name: string
+}
 
 export class GitHubPublisher implements Publisher {
   private tag: string
