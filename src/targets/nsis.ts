@@ -1,6 +1,6 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions, archToString } from "../metadata"
-import { exec, debug } from "../util/util"
+import { debug, doSpawn, handleProcess } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBin } from "../util/binDownload"
@@ -8,7 +8,7 @@ import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task } from "../util/log"
-import { unlink } from "fs-extra-p"
+import { unlink, readFile } from "fs-extra-p"
 import semver = require("semver")
 
 //noinspection JSUnusedLocalSymbols
@@ -140,7 +140,7 @@ export default class NsisTarget extends Target {
       return
     }
 
-    await subTask(`Executing makensis`, NsisTarget.executeMakensis(defines, commands))
+    await subTask(`Executing makensis`, this.executeMakensis(defines, commands))
     await packager.sign(installerPath)
 
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
@@ -161,7 +161,7 @@ export default class NsisTarget extends Target {
     return null
   }
 
-  private static async executeMakensis(defines: any, commands: any) {
+  private async executeMakensis(defines: any, commands: any) {
     const args: Array<string> = []
     for (let name of Object.keys(defines)) {
       const value = defines[name]
@@ -185,14 +185,60 @@ export default class NsisTarget extends Target {
       }
     }
 
-    args.push(path.join(__dirname, "..", "..", "templates", "nsis", "installer.nsi"))
+    const nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
+    args.push("-")
 
     const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
     const nsisPath = await nsisPathPromise
-    // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
 
-    await exec(path.join(nsisPath, binDir, process.platform === "win32" ? "makensis.exe" : "makensis"), args, {
-      env: Object.assign({}, process.env, {NSISDIR: nsisPath})
+    const packager = this.packager
+    const fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
+    let registerFileAssociationsScript = ""
+    let unregisterFileAssociationsScript = ""
+    if (fileAssociations.length !== 0) {
+      for (let item of fileAssociations) {
+        registerFileAssociationsScript += '${RegisterExtension} "$INSTDIR\\${APP_EXECUTABLE_FILENAME}" ' + `"${normalizeExt(item.ext)}" "${item.name}"\n`
+      }
+
+      for (let item of fileAssociations) {
+        unregisterFileAssociationsScript += "${UnRegisterExtension} " + `"${normalizeExt(item.ext)}" "${item.name}"\n`
+      }
+    }
+
+    let script = await readFile(path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+    script = script.replace("!insertmacro registerFileAssociations", registerFileAssociationsScript)
+    script = script.replace("!insertmacro unregisterFileAssociations", unregisterFileAssociationsScript)
+
+    debug(script)
+
+    await new BluebirdPromise<any>((resolve, reject) => {
+      const command = path.join(nsisPath, binDir, process.platform === "win32" ? "makensis.exe" : "makensis")
+      const childProcess = doSpawn(command, args, {
+        // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
+        env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
+        cwd: nsisTemplatesDir,
+        stdio: ["pipe", "pipe", process.stderr]
+      })
+      handleProcess("close", childProcess, command, resolve, reject, true)
+
+      childProcess.stdin.end(script)
     })
+  }
+}
+
+// nsis — add leading dot, mac — remove leading dot
+function normalizeExt(ext: string) {
+  return ext.startsWith(".") ? ext : `.${ext}`
+}
+
+function asArray<T>(v: n | T | Array<T>): Array<T> {
+  if (v == null) {
+    return []
+  }
+  else if (Array.isArray(v)) {
+    return v
+  }
+  else {
+    return [v]
   }
 }

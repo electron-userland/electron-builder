@@ -65,6 +65,7 @@ Here documented only `electron-builder` specific options:
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+| fileAssociations | <a name="BuildMetadata-fileAssociations"></a>File associations. (NSIS only for now).
 
 <a name="MacOptions"></a>
 ### `.build.mac`
@@ -149,13 +150,15 @@ Linux specific build options.
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
 
-<a name="MetadataDirectories"></a>
-## `.directories`
+<a name="FileAssociation"></a>
+### `.build.fileAssociations`
+
+NSIS only, [in progress](https://github.com/electron-userland/electron-builder/issues/409).
+
 | Name | Description
 | --- | ---
-| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
-| output | <a name="MetadataDirectories-output"></a>The output directory, defaults to `dist`.
-| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
+| **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`
+| **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
 
 <!-- end of generated block -->
 

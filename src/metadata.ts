@@ -204,6 +204,11 @@ export interface BuildMetadata {
   readonly npmRebuild?: boolean
 
   readonly icon?: string | null
+
+  /*
+  File associations. (NSIS only for now).
+   */
+  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 }
 
 export interface AfterPackContext {
@@ -347,6 +352,8 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
    */
   readonly icon?: string | null
+
+  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 }
 
 /*
@@ -444,6 +451,27 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly depends?: string[] | null
 }
+
+/*
+ ### `.build.fileAssociations`
+
+ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/issues/409).
+ */
+export interface FileAssociation {
+  /*
+  The extension (minus the leading period). e.g. `png`
+   */
+  readonly ext: string
+
+  /*
+   The name. e.g. `PNG`
+   */
+  readonly name: string
+}
+
+// CFBundleTypeName
+// https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
+// CFBundleTypeExtensions
 
 /*
  ## `.directories`

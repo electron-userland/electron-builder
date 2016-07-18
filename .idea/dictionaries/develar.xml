@@ -42,6 +42,7 @@
       <w>icnsutils</w>
       <w>idms</w>
       <w>inno</w>
+      <w>insertmacro</w>
       <w>installmode</w>
       <w>instdir</w>
       <w>joliet</w>
@@ -54,6 +55,7 @@
       <w>lzip</w>
       <w>lzma</w>
       <w>lzop</w>
+      <w>macroend</w>
       <w>makedeb</w>
       <w>makensis</w>
       <w>minimatch</w>

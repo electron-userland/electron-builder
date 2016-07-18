@@ -38,10 +38,16 @@ test.ifDevOrLinuxCi("nsis 32 perMachine, no run after finish", () => assertPack(
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   devMetadata: {
     build: {
+      fileAssociations: [
+        {
+          ext: "foo",
+          name: "Test Foo",
+        }
+      ],
       nsis: {
         perMachine: true,
         runAfterFinish: false,
-      }
+      },
     }
   }
 }))

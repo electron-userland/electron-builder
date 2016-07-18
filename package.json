@@ -89,7 +89,7 @@
     "typescript": "2.0.0-dev.20160705",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
-    "yargs": "^4.8.0"
+    "yargs": "^4.8.1"
   },
   "optionalDependencies": {
     "appdmg": "^0.4.5"

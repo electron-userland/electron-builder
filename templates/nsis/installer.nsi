@@ -5,21 +5,26 @@
 !include "allowOnlyOneInstallerInstace.nsh"
 !include "checkAppRunning.nsh"
 !include WinVer.nsh
+!include FileAssociation.nsh
 
 !ifdef ONE_CLICK
-  Function StartApp
-    !ifdef INSTALL_MODE_PER_ALL_USERS
-      !include UAC.nsh
-      !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
-    !else
-      ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-    !endif
-  FunctionEnd
+  !ifdef RUN_AFTER_FINISH
+    Function StartApp
+      !ifdef INSTALL_MODE_PER_ALL_USERS
+        !include UAC.nsh
+        !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
+      !else
+        ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+      !endif
+    FunctionEnd
+  !endif
 
   SilentUnInstall silent
   AutoCloseWindow true
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_UNPAGE_INSTFILES
+
+  !insertmacro MUI_LANGUAGE "English"
 
   !ifdef INSTALL_MODE_PER_ALL_USERS
     RequestExecutionLevel admin
@@ -92,12 +97,8 @@ Section "install"
     Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
   !endif
 
-#  <% if(fileAssociation){ %>
-    # specify file association
-#    ${registerExtension} "$INSTDIR\${PRODUCT_FILENAME}.exe" "<%= fileAssociation.extension %>" "<%= fileAssociation.fileType %>"
-#  <% } %>
-
   WriteUninstaller "${UNINSTALL_FILENAME}"
+
   !insertmacro MULTIUSER_RegistryAddInstallInfo
 
   StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
@@ -110,6 +111,8 @@ Section "install"
 
   WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
   WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
+
+  !insertmacro registerFileAssociations
 
   !ifdef ONE_CLICK
     # otherwise app window will be in backround
@@ -134,6 +137,8 @@ Section "un.install"
 
   Delete "$startMenuLink"
   Delete "$desktopLink"
+
+  !insertmacro unregisterFileAssociations
 
   # delete the installed files
   RMDir /r $INSTDIR

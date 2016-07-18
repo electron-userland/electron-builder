@@ -116,15 +116,25 @@ export function spawn(command: string, args?: Array<string> | null, options?: Sp
   })
 }
 
-export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
+export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void, printOut: boolean = false) {
   childProcess.on("error", reject)
+
+  let out: string | null = null
+  if (printOut) {
+    out = ""
+    childProcess.stdout.on("data", (data: string) => {
+      out += data
+    })
+  }
+
   childProcess.on(event, (code: number) => {
-    if (debug.enabled) {
+    if (code === 0 && debug.enabled) {
       debug(`${command} (${childProcess.pid}) exited with code ${code}`)
+      debug(out)
     }
 
     if (code !== 0) {
-      reject(new Error(`${command} exited with code ${code}`))
+      reject(new Error(`${command} exited with code ${code}${out == null ? "" : `\n${out}`}`))
     }
     else if (resolve != null) {
       resolve()
