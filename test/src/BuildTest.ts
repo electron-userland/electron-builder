@@ -66,7 +66,9 @@ test("custom buildResources dir", () => assertPack("test-app-one", allPlatforms(
 test("custom output dir", () => assertPack("test-app-one", allPlatforms(false), {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.directories = {
-      output: "customDist"
+      output: "customDist",
+      // https://github.com/electron-userland/electron-builder/issues/601
+      app: ".",
     }
   }),
   packed: async (projectDir) => {
