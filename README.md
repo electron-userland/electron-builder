@@ -14,7 +14,6 @@ Complete solution to package and build ready for distribution and "auto update" 
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Squirrel.Windows.
 * [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
-[electron-packager](https://github.com/electron-userland/electron-packager) and
 [appdmg](https://github.com/LinusU/node-appdmg) are used under the hood.
 
 _Note: `appdmg` (and the platform specific `7zip-bin-*` packages) are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._

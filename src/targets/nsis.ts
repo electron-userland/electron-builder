@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { Arch, NsisOptions, archToString } from "../metadata"
+import { Arch, NsisOptions } from "../metadata"
 import { debug, doSpawn, handleProcess } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -36,7 +36,7 @@ export default class NsisTarget extends Target {
 
   async build(arch: Arch, appOutDir: string) {
     const packager = this.packager
-    const archSuffix = archToString(arch)
+    const archSuffix = Arch[arch]
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${archSuffix}.nsis.7z`)
     this.archs.set(arch, task(`Creating NSIS ${archSuffix} package`, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true)))
   }

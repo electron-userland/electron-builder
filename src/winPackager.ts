@@ -143,9 +143,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         const format = target.name
         log(`Creating Windows ${format}`)
         // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(outDir, this.generateName1(format, arch, "win", false))
+        const outFile = path.join(outDir, this.generateName(format, arch, false, "win"))
         promises.push(this.archiveApp(format, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, this.generateName1(format, arch, "win", true))))
+          .then(() => this.dispatchArtifactCreated(outFile, this.generateName(format, arch, true, "win"))))
       }
     }
   }

@@ -1,4 +1,4 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, archToString } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -212,8 +212,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       await BluebirdPromise.all(promises)
     }
-    await task(`Packaging for platform ${this.platform.name} ${archToString(arch)} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
-      pack(options, appOutDir, platformName, archToString(arch), this.info.electronVersion))
+    await task(`Packaging for platform ${this.platform.name} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
+      pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion))
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
@@ -375,16 +375,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir)
   }
 
-  generateName(ext: string | null, arch: Arch, deployment: boolean): string {
-    return this.generateName2(ext, arch === Arch.x64 ? null : Arch[arch], deployment)
-  }
-
-  generateName1(ext: string | null, arch: Arch, classifier: string, deployment: boolean): string {
-    let c = arch === Arch.x64 ? null : Arch[arch]
+  generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {
+    let c = arch === Arch.x64 ? (ext === "AppImage" ? "x86_64" : null) : Arch[arch]
     if (c == null) {
       c = classifier
     }
-    else {
+    else if (classifier != null) {
       c += `-${classifier}`
     }
     return this.generateName2(ext, c, deployment)

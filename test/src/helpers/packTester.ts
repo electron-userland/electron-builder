@@ -129,16 +129,19 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
 }
 
 async function checkLinuxResult(projectDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
+  const appInfo = packager.appInfo
+
   function getExpected(): Array<string> {
     const result: Array<string> = []
     for (let target of nameToTarget.keys()) {
-      result.push(`TestApp-${packager.appInfo.version}${target === "appimage" ? "" : `.${target}`}`)
+      if (target === "appimage") {
+        result.push(`${appInfo.productFilename}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
+      }
+      else {
+        result.push(`TestApp-${appInfo.version}.${target}`)
+      }
     }
     return result
-  }
-
-  if (nameToTarget.has("appimage")) {
-    return
   }
 
   assertThat(getFileNames(artifacts)).containsAll(getExpected())
@@ -147,7 +150,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     return
   }
 
-  const productFilename = packager.appInfo.productFilename
+  const productFilename = appInfo.productFilename
   const expectedContents = pathSorter(expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
       return "/opt/" + productFilename + "/" + productFilename
@@ -163,10 +166,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
   // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
 
-  const packageFile = `${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}.deb`
+  const packageFile = `${projectDir}/${outDirName}/TestApp-${appInfo.version}.deb`
   assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${packager.appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
   }
 
   assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
