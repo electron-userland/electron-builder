@@ -190,14 +190,6 @@ export interface BuildMetadata {
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
-  // /*
-  //  Whether to [prune](https://docs.npmjs.com/cli/prune) dependencies (`npm prune --production`) before starting to package the app.
-  //  Defaults to `false`.
-  //  */
-  // readonly npmPrune?: boolean
-  // deprecated
-  // readonly prune?: boolean
-
   /*
    Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */

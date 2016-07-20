@@ -1,10 +1,6 @@
 !include nsDialogs.nsh
 !include UAC.nsh
 
-Function StartApp
-  !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
-FunctionEnd
-
 RequestExecutionLevel user
 
 Var HasTwoAvailableOptions ; 0 (false) or 1 (true)

@@ -91,6 +91,10 @@ export default class NsisTarget extends Target {
       defines.INSTALL_MODE_PER_ALL_USERS = null
     }
 
+    if (!oneClick || this.options.perMachine === true) {
+      defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
+    }
+
     if (oneClick) {
       if (this.options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
@@ -162,7 +166,7 @@ export default class NsisTarget extends Target {
   }
 
   private async executeMakensis(defines: any, commands: any) {
-    const args: Array<string> = []
+    const args: Array<string> = ["-WX"]
     for (let name of Object.keys(defines)) {
       const value = defines[name]
       if (value == null) {
@@ -195,7 +199,9 @@ export default class NsisTarget extends Target {
     const fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
     let registerFileAssociationsScript = ""
     let unregisterFileAssociationsScript = ""
+    let script = await readFile(path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
     if (fileAssociations.length !== 0) {
+      script = "!include FileAssociation.nsh\n" + script
       for (let item of fileAssociations) {
         registerFileAssociationsScript += '${RegisterExtension} "$INSTDIR\\${APP_EXECUTABLE_FILENAME}" ' + `"${normalizeExt(item.ext)}" "${item.name}"\n`
       }
@@ -205,7 +211,6 @@ export default class NsisTarget extends Target {
       }
     }
 
-    let script = await readFile(path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
     script = script.replace("!insertmacro registerFileAssociations", registerFileAssociationsScript)
     script = script.replace("!insertmacro unregisterFileAssociations", unregisterFileAssociationsScript)
 
