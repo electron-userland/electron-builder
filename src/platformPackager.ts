@@ -14,7 +14,6 @@ import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
-import { userIgnoreFilter } from "./packager/common"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -157,63 +156,61 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
-    options.initializeApp = async (opts, buildDir, appRelativePath) => {
-      const appPath = path.join(buildDir, appRelativePath)
-      const resourcesPath = path.dirname(appPath)
+    await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
+      pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async () => {
+            const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
+            if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+              const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
+              const productionDepsSet = new Set(result[1])
 
-      const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
-      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-        const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
-        const productionDepsSet = new Set(result[1])
+              // npm returns real path, so, we should use relative path to avoid any mismatch
+              const realAppDirPath = await realpath(this.info.appDir)
 
-        // npm returns real path, so, we should use relative path to avoid any mismatch
-        const realAppDirPath = await realpath(this.info.appDir)
-
-        for (let it of result[0]) {
-          if (!productionDepsSet.has(it)) {
-            if (it.startsWith(realAppDirPath)) {
-              it = it.substring(realAppDirPath.length + 1)
+              for (let it of result[0]) {
+                if (!productionDepsSet.has(it)) {
+                  if (it.startsWith(realAppDirPath)) {
+                    it = it.substring(realAppDirPath.length + 1)
+                  }
+                  else if (it.startsWith(this.info.appDir)) {
+                    it = it.substring(this.info.appDir.length + 1)
+                  }
+                  ignoreFiles.add(it)
+                }
+              }
             }
-            else if (it.startsWith(this.info.appDir)) {
-              it = it.substring(this.info.appDir.length + 1)
+
+            let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
+            if (patterns == null || patterns.length === 0) {
+              patterns = ["**/*"]
             }
-            ignoreFiles.add(it)
+
+            let rawFilter: any = null
+            const deprecatedIgnore = (<any>this.devMetadata.build).ignore
+            if (deprecatedIgnore) {
+              if (typeof deprecatedIgnore === "function") {
+                log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+              }
+              else {
+                warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+              }
+              rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
+            }
+
+            const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
+            const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
+            const promise = asarOptions == null ?
+              copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
+              : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
+
+            const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
+            if (this.info.electronVersion[0] === "0") {
+              // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
+              promises.push(remove(path.join(resourcesPath, "default_app")))
+            }
+
+            await BluebirdPromise.all(promises)
           }
-        }
-      }
-
-      let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
-      if (patterns == null || patterns.length === 0) {
-        patterns = ["**/*"]
-      }
-
-      let rawFilter: any = null
-      const deprecatedIgnore = (<any>this.devMetadata.build).ignore
-      if (deprecatedIgnore) {
-        if (typeof deprecatedIgnore === "function") {
-          log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-        }
-        else {
-          warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-        }
-        rawFilter = userIgnoreFilter(opts, this.info.appDir)
-      }
-
-      const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
-      const promise = asarOptions == null ?
-        copyFiltered(this.info.appDir, appPath, filter, this.platform === Platform.WINDOWS)
-        : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
-
-      const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
-      if (this.info.electronVersion[0] === "0") {
-        // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
-        promises.push(remove(path.join(resourcesPath, "default_app")))
-      }
-
-      await BluebirdPromise.all(promises)
-    }
-    await task(`Packaging for platform ${this.platform.name} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
-      pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion))
+      ))
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
@@ -233,10 +230,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     //noinspection JSUnusedGlobalSymbols
     const appInfo = this.appInfo
     const options: any = deepAssign({
-      appBundleId: appInfo.id,
-      name: appInfo.productName,
-      productName: appInfo.productName,
-      platform: this.platform.nodeName,
       icon: await this.getIconPath(),
       appInfo: appInfo,
     }, this.devMetadata.build)
@@ -427,4 +420,37 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
+}
+
+export function deprecatedUserIgnoreFilter(opts: ElectronPackagerOptions, appDir: string) {
+  let ignore = opts.ignore || []
+  let ignoreFunc: any
+
+  if (typeof (ignore) === "function") {
+    ignoreFunc = function (file: string) { return !ignore(file) }
+  }
+  else {
+    if (!Array.isArray(ignore)) {
+      ignore = [ignore]
+    }
+
+    ignoreFunc = function (file: string) {
+      for (let i = 0; i < ignore.length; i++) {
+        if (file.match(ignore[i])) {
+          return false
+        }
+      }
+
+      return true
+    }
+  }
+
+  return function filter(file: string) {
+    let name = file.split(path.resolve(appDir))[1]
+    if (path.sep === "\\") {
+      // convert slashes so unix-format ignores work
+      name = name.replace(/\\/g, "/")
+    }
+    return ignoreFunc(name)
+  }
 }

@@ -120,7 +120,7 @@ export interface BuildMetadata {
   readonly productName?: string | null
 
   /**
-   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `\*\*\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `**\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
 
    Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 

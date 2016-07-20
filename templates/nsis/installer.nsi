@@ -6,7 +6,7 @@
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else
-  !include "boring-installer.nsh"
+  !include "boringInstaller.nsh"
 !endif
 
 Var startMenuLink

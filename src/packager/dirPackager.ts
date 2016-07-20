@@ -12,7 +12,6 @@ const __awaiter = require("../util/awaiter")
 export interface ElectronPackagerOptions {
   "extend-info"?: string
   "app-category-type"?: string
-  appBundleId: string
 
   protocols?: any
 
@@ -20,13 +19,9 @@ export interface ElectronPackagerOptions {
 
   icon?: string;
 
-  "app-bundle-id"?: string | null;
-
   "helper-bundle-id"?: string | null;
 
   ignore?: any
-
-  initializeApp?: (opts: ElectronPackagerOptions, buildDir: string, appRelativePath: string) => Promise<any>
 }
 
 const supportedPlatforms: any = {
@@ -56,9 +51,11 @@ function subOptionWarning (properties: any, optionName: any, parameter: any, val
   properties[parameter] = value
 }
 
-export async function pack(opts: ElectronPackagerOptions, out: string, platform: string, arch: string, electronVersion: string) {
-  const zipPath = await downloadElectron(createDownloadOpts(opts, platform, arch, electronVersion))
-  await emptyDir(out)
+export async function pack(opts: ElectronPackagerOptions, out: string, platform: string, arch: string, electronVersion: string, initializeApp: () => Promise<any>) {
+  const zipPath = (await BluebirdPromise.all<any>([
+    downloadElectron(createDownloadOpts(opts, platform, arch, electronVersion)),
+    emptyDir(out)
+  ]))[0]
   await extract(zipPath, {dir: out})
-  await require(supportedPlatforms[platform]).createApp(opts, out)
+  await require(supportedPlatforms[platform]).createApp(opts, out, initializeApp)
 }
