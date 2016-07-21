@@ -135,7 +135,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     const result: Array<string> = []
     for (let target of nameToTarget.keys()) {
       if (target === "appimage") {
-        result.push(`${appInfo.productFilename}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
+        result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
       else {
         result.push(`TestApp-${appInfo.version}.${target}`)

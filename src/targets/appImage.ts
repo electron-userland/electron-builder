@@ -28,7 +28,8 @@ export default class AppImageTarget extends TargetEx {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    const image = path.join(this.outDir, packager.generateName("AppImage", arch, false))
+    // avoid spaces in the file name
+    const image = path.join(this.outDir, packager.generateName("AppImage", arch, true))
     const appInfo = packager.appInfo
     await unlinkIfExists(image)
 

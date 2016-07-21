@@ -384,7 +384,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}${dotExt}`
   }
 
-  protected async getDefaultIcon(ext: string) {
+  async getDefaultIcon(ext: string) {
     const resourceList = await this.resourceList
     const name = `icon.${ext}`
     if (resourceList.includes(name)) {

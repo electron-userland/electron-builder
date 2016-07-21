@@ -178,12 +178,27 @@ if [ -z "$SKIP" ] ; then
   RESOURCE_NAME=$(echo "$VENDORPREFIX-$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
   echo "${RESOURCE_NAME}"
 
-  # Install the icon files for the application; TODO: scalable
+  # uninstall previous icons
+  xdg-icon-resource uninstall --noupdate --size 16 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 24 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 32 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 48 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 64 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 72 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 96 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 128 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 256 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 512 "$RESOURCE_NAME"
+  xdg-icon-resource uninstall --noupdate --size 1024 "$RESOURCE_NAME"
+
+  # Install the icon files for the application
   ICONS=$(find "$APPDIR/usr/share/icons/" -path "*/apps/$APP.png" || true)
   for ICON in $ICONS ; do
     ICON_SIZE=$(echo "$ICON" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
-    xdg-icon-resource install --context apps --size "$ICON_SIZE" "$ICON" "$RESOURCE_NAME"
+    xdg-icon-resource install --noupdate --context apps --size "$ICON_SIZE" "$ICON" "$RESOURCE_NAME"
   done
+
+  xdg-icon-resource forceupdate
 
   # Install mime type
   find "$APPDIR/usr/share/mime/" -type f -name "*xml" -exec xdg-mime install ${SYSTEM_WIDE} --novendor {} \; || true
