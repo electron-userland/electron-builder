@@ -1,4 +1,4 @@
-import { AsarOptions } from "asar"
+import { AsarOptions } from "@develar/asar"
 import { ElectronPackagerOptions } from "./packager/dirPackager"
 
 export interface Metadata {

@@ -60,14 +60,14 @@
   "dependencies": {
     "7zip-bin": "^1.0.5",
     "ansi-escapes": "^1.4.0",
-    "asar": "^0.12.0",
+    "@develar/asar": "^0.13.1",
     "bluebird": "^3.4.1",
     "chalk": "^1.1.3",
     "cli-cursor": "^1.0.2",
     "debug": "^2.2.0",
     "electron-download": "^2.1.2",
     "electron-osx-sign": "^0.4.0-beta4",
-    "electron-winstaller-fixed": "~3.0.0",
+    "electron-winstaller-fixed": "~3.1.0",
     "extract-zip": "^1.5.0",
     "fs-extra-p": "^1.0.5",
     "hosted-git-info": "^2.1.5",
@@ -103,6 +103,7 @@
     ]
   },
   "devDependencies": {
+    "@develar/asar": "^0.13.1",
     "@develar/semantic-release": "^6.3.1",
     "@types/debug": "0.0.28",
     "@types/mime": "0.0.28",

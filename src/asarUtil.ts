@@ -1,4 +1,4 @@
-import { AsarFileInfo, listPackage, statFile, AsarOptions, AsarFileMetadata, createPackageFromFiles } from "asar"
+import { AsarFileInfo, listPackage, statFile, AsarOptions, AsarFileMetadata, createPackageFromFiles } from "@develar/asar"
 import { statOrNull } from "./util/util"
 import { lstat, readdir } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"

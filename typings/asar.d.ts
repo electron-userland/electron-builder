@@ -1,4 +1,4 @@
-declare module "asar" {
+declare module "@develar/asar" {
   import { Stats } from "fs"
 
   interface AsarFileInfo {

@@ -5,7 +5,7 @@ import * as path from "path"
 import { readdir, remove, realpath } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
 import { Packager } from "./packager"
-import { AsarOptions } from "asar"
+import { AsarOptions } from "@develar/asar"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInPackage, createAsarArchive } from "./asarUtil"
@@ -156,61 +156,61 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
-    await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
-      pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async () => {
-            const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
-            if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-              const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
-              const productionDepsSet = new Set(result[1])
+    const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
+      const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
+      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+        const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
+        const productionDepsSet = new Set(result[1])
 
-              // npm returns real path, so, we should use relative path to avoid any mismatch
-              const realAppDirPath = await realpath(this.info.appDir)
+        // npm returns real path, so, we should use relative path to avoid any mismatch
+        const realAppDirPath = await realpath(this.info.appDir)
 
-              for (let it of result[0]) {
-                if (!productionDepsSet.has(it)) {
-                  if (it.startsWith(realAppDirPath)) {
-                    it = it.substring(realAppDirPath.length + 1)
-                  }
-                  else if (it.startsWith(this.info.appDir)) {
-                    it = it.substring(this.info.appDir.length + 1)
-                  }
-                  ignoreFiles.add(it)
-                }
-              }
+        for (let it of result[0]) {
+          if (!productionDepsSet.has(it)) {
+            if (it.startsWith(realAppDirPath)) {
+              it = it.substring(realAppDirPath.length + 1)
             }
-
-            let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
-            if (patterns == null || patterns.length === 0) {
-              patterns = ["**/*"]
+            else if (it.startsWith(this.info.appDir)) {
+              it = it.substring(this.info.appDir.length + 1)
             }
-
-            let rawFilter: any = null
-            const deprecatedIgnore = (<any>this.devMetadata.build).ignore
-            if (deprecatedIgnore) {
-              if (typeof deprecatedIgnore === "function") {
-                log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-              }
-              else {
-                warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-              }
-              rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
-            }
-
-            const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
-            const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
-            const promise = asarOptions == null ?
-              copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
-              : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
-
-            const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
-            if (this.info.electronVersion[0] === "0") {
-              // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
-              promises.push(remove(path.join(resourcesPath, "default_app")))
-            }
-
-            await BluebirdPromise.all(promises)
+            ignoreFiles.add(it)
           }
-      ))
+        }
+      }
+
+      let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
+      if (patterns == null || patterns.length === 0) {
+        patterns = ["**/*"]
+      }
+      patterns.push("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
+
+      let rawFilter: any = null
+      const deprecatedIgnore = (<any>this.devMetadata.build).ignore
+      if (deprecatedIgnore) {
+        if (typeof deprecatedIgnore === "function") {
+          log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        }
+        else {
+          warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        }
+        rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
+      }
+
+      const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
+      const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
+      const promise = asarOptions == null ?
+        copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
+        : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
+
+      const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
+      if (this.info.electronVersion[0] === "0") {
+        // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
+        promises.push(remove(path.join(resourcesPath, "default_app")))
+      }
+
+      await BluebirdPromise.all(promises)
+    })
+    await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
