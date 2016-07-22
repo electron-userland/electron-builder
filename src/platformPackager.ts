@@ -154,8 +154,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
+  private getExtraFilePatterns(isResources: boolean, arch: Arch, customBuildOptions: DC): Array<Minimatch> | null {
+    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
+    return patterns == null || patterns.length === 0 ? null : this.getParsedPatterns(patterns, arch)
+  }
+
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
+
+    const extraResourcePatterns = this.getExtraFilePatterns(true, arch, platformSpecificBuildOptions)
+    const extraFilePatterns = this.getExtraFilePatterns(false, arch, platformSpecificBuildOptions)
+
     const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
@@ -196,8 +205,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
       }
 
+      const filePatterns = this.getParsedPatterns(patterns, arch)
+      let excludePatterns: Array<Minimatch> | null = null
+      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+        if (extraResourcePatterns != null) {
+          excludePatterns = extraResourcePatterns
+        }
+        if (extraFilePatterns != null) {
+          if (excludePatterns == null) {
+            excludePatterns = extraFilePatterns
+          }
+          else {
+            excludePatterns = excludePatterns.concat(extraFilePatterns)
+          }
+        }
+      }
+
       const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
-      const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
+      const filter = createFilter(this.info.appDir, filePatterns, ignoreFiles, rawFilter, excludePatterns)
       const promise = asarOptions == null ?
         copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
@@ -289,8 +314,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
-    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)), this.platform === Platform.WINDOWS)
+    const patterns = this.getExtraFilePatterns(isResources, arch, customBuildOptions)
+    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, patterns), this.platform === Platform.WINDOWS)
   }
 
   private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {
