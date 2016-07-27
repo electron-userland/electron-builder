@@ -9,6 +9,10 @@
   !include "boringInstaller.nsh"
 !endif
 
+!ifmacrodef customHeader
+  !insertmacro customHeader
+!endif
+
 Var startMenuLink
 Var desktopLink
 
@@ -38,11 +42,19 @@ Function .onInit
   !ifdef HEADER_ICO
     File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
   !endif
+
+  !ifmacrodef customInit
+    !insertmacro customInit
+  !endif
 FunctionEnd
 
 Function un.onInit
   !insertmacro check64BitAndSetRegView
   !insertmacro initMultiUser Un un.
+
+  !ifmacrodef customUnInit
+    !insertmacro customUnInit
+  !endif
 FunctionEnd
 
 Section "install"
@@ -88,6 +100,10 @@ Section "install"
 
   !insertmacro registerFileAssociations
 
+  !ifmacrodef customInstall
+    !insertmacro customInstall
+  !endif
+
   !ifdef ONE_CLICK
     # otherwise app window will be in backround
     HideWindow
@@ -120,4 +136,8 @@ Section "un.install"
   RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
+
+  !ifmacrodef customUnInstall
+    !insertmacro customUnInstall
+  !endif
 SectionEnd

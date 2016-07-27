@@ -14,9 +14,9 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-const NSIS_VERSION = "nsis-3.0.0-rc.1.3"
+const NSIS_VERSION = "nsis-3.0.0"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "77bca57e784372dea1b69b0571d89d5a1c879c51d80d7c503f283a2e7de5f072"
+const NSIS_SHA2 = "7741089f3ca13de879f87836156ef785eab49844cacbeeabaeaefd1ade325ee7"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -67,6 +67,9 @@ export default class NsisTarget extends Target {
       MUI_UNICON: iconPath,
 
       COMPANY_NAME: appInfo.companyName,
+
+      PROJECT_DIR: this.packager.projectDir,
+      BUILD_RESOURCES_DIR: this.packager.buildResourcesDir,
     }
 
     for (let [arch, file] of this.archs) {
@@ -200,6 +203,12 @@ export default class NsisTarget extends Target {
     let registerFileAssociationsScript = ""
     let unregisterFileAssociationsScript = ""
     let script = await readFile(path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+
+    const customInclude = await this.getResource(this.options.include, "installer.nsh")
+    if (customInclude != null) {
+      script = `!include "${customInclude}"\n!addincludedir "${this.packager.buildResourcesDir}"\n${script}`
+    }
+
     if (fileAssociations.length !== 0) {
       script = "!include FileAssociation.nsh\n" + script
       for (let item of fileAssociations) {

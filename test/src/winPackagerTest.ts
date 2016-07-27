@@ -138,6 +138,12 @@ test.ifNotCiOsx("nsis boring, MUI_HEADER as option", () => {
   )
 })
 
+test.ifDevOrLinuxCi("nsis - custom include", () => assertPack("test-app-one", {
+  targets: Platform.WINDOWS.createTarget(["nsis"]),
+}, {
+  tempDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
+}))
+
 // very slow
 test.skip("delta and msi", () => assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(null, Arch.ia32),

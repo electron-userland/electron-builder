@@ -14,7 +14,6 @@ cache:
   directories:
     - node_modules
     - $HOME/.electron
-    - $HOME/.cache
 
 before_install:
   - curl -L https://dl.bintray.com/develar/bin/7za -o /tmp/7za
