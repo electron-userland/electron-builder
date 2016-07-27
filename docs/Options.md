@@ -60,7 +60,7 @@ Here documented only `electron-builder` specific options:
 | mac | <a name="BuildMetadata-mac"></a>See [.build.mac](#MacOptions).
 | dmg | <a name="BuildMetadata-dmg"></a>See [.build.dmg](#DmgOptions).
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
-| win | <a name="BuildMetadata-win"></a>See [.build.win](#LinuxBuildOptions).
+| win | <a name="BuildMetadata-win"></a>See [.build.win](#WinBuildOptions).
 | nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
