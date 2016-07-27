@@ -1,4 +1,4 @@
-declare module "@develar/asar" {
+declare module "asar-electron-builder" {
   import { Stats } from "fs"
 
   interface AsarFileInfo {
