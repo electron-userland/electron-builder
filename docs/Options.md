@@ -162,6 +162,14 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 | **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
 
+<a name="MetadataDirectories"></a>
+## `.directories`
+| Name | Description
+| --- | ---
+| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
+| output | <a name="MetadataDirectories-output"></a>The output directory, defaults to `dist`.
+| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
+
 <!-- end of generated block -->
 
 

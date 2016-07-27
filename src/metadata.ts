@@ -466,10 +466,6 @@ export interface FileAssociation {
   readonly name: string
 }
 
-// CFBundleTypeName
-// https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
-// CFBundleTypeExtensions
-
 /*
  ## `.directories`
  */
