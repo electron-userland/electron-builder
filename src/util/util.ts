@@ -1,7 +1,6 @@
 import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
 import { Promise as BluebirdPromise } from "bluebird"
-import readPackageJsonAsync = require("read-package-json")
-import * as os from "os"
+import { homedir } from "os"
 import * as path from "path"
 import { readJson, stat, Stats, unlink } from "fs-extra-p"
 import { yellow, red } from "chalk"
@@ -17,10 +16,8 @@ export const debug7z = debugFactory("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-export const readPackageJson = BluebirdPromise.promisify(readPackageJsonAsync)
-
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
-  const gypHome = path.join(os.homedir(), ".electron-gyp")
+  const gypHome = path.join(homedir(), ".electron-gyp")
   return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, Object.assign({}, process.env, {
       npm_config_disturl: "https://atom.io/download/atom-shell",
       npm_config_target: electronVersion,

@@ -1,7 +1,7 @@
 import * as path from "path"
 import {
-  computeDefaultAppDirectory, installDependencies, getElectronVersion, readPackageJson, use,
-  exec, isEmptyOrSpaces
+  computeDefaultAppDirectory, installDependencies, getElectronVersion, use,
+  exec, isEmptyOrSpaces, statOrNull
 } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
@@ -17,6 +17,7 @@ import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
 import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
+import { readPackageJson } from "./util/readPackageJson"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -172,11 +173,8 @@ export class Packager implements BuildInfo {
         throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
       }
 
-      if (this.devMetadata.homepage != null) {
-        warn("homepage in the development package.json is deprecated, please move to the application package.json")
-      }
       if (this.devMetadata.license != null) {
-        warn("license in the development package.json is deprecated, please move to the application package.json")
+        warn(`license in the development package.json (${devAppPackageFile}) is deprecated, please move to the application package.json`)
       }
     }
 
@@ -207,13 +205,13 @@ export class Packager implements BuildInfo {
     }
   }
 
-  private installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
+  private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       if (this.devMetadata.build.npmRebuild === false) {
         log("Skip app dependencies rebuild because npmRebuild is set to false")
       }
       else if (platform.nodeName === process.platform) {
-        return installDependencies(this.appDir, this.electronVersion, Arch[arch], "rebuild")
+        await installDependencies(this.appDir, this.electronVersion, Arch[arch], (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild")
       }
       else {
         log("Skip app dependencies rebuild because platform is different")
@@ -222,8 +220,6 @@ export class Packager implements BuildInfo {
     else {
       log("Skip app dependencies rebuild because dev and app dependencies are not separated")
     }
-
-    return BluebirdPromise.resolve()
   }
 }
 
