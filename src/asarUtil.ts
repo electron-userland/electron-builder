@@ -1,6 +1,6 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
 import { statOrNull } from "./util/util"
-import { lstat, readdir, readFile, mkdirp, Stats } from "fs-extra-p"
+import { lstat, readdir, readFile, mkdirp, Stats, createWriteStream, copy, createReadStream } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import pathSorter = require("path-sort")
@@ -8,6 +8,8 @@ import { log } from "./util/log"
 import { Minimatch } from "minimatch"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
+const pickle = require ("chromium-pickle-js")
+const Filesystem = require("asar-electron-builder/lib/filesystem")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -75,9 +77,6 @@ export async function createAsarArchive(src: string, resourcesPath: string, opti
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   await createPackageFromFiles(src, path.join(resourcesPath, "app.asar"), options.ordering == null ? files : await order(src, files, options), metadata, options)
 }
-
-const Filesystem = require("asar-electron-builder/lib/filesystem")
-const writeFilesystem: any = BluebirdPromise.promisify(require("asar-electron-builder/lib/disk").writeFilesystem)
 
 function isUnpackDir(path: string, pattern: Minimatch, rawPattern: string): boolean {
   return path.indexOf(rawPattern) === 0 || pattern.match(path)
@@ -166,21 +165,34 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
     matchBase: true
   })
 
-  const regularFiles: Array<any> = []
+  await mkdirp(path.dirname(dest))
+
+  const unpackedDest = `${dest}.unpacked`
+  const toPack: Array<string> = []
   const filesystem = new Filesystem(src)
+  const copyPromises: Array<Promise<any>> = []
   for (let file of files) {
     const stat = metadata.get(file)!
     if (stat.isFile()) {
+      const dir = path.dirname(file)
+
       let shouldUnpack = unpack != null && unpack.match(file)
       if (!shouldUnpack) {
-        const dir = path.dirname(file)
         shouldUnpack = autoUnpackDirs.has(dir) || (unpackDir != null && isUnpackDir(path.relative(src, dir), unpackDir, options.unpackDir))
       }
 
-      regularFiles.push({
-        filename: file,
-        unpack: shouldUnpack
-      })
+      if (shouldUnpack) {
+        copyPromises.push(copy(file, path.join(unpackedDest, path.relative(src, file))))
+        // limit concurrency
+        if (copyPromises.length > 50) {
+          await BluebirdPromise.all(copyPromises)
+          copyPromises.length = 0
+        }
+      }
+      else {
+        toPack.push(file)
+      }
+
       filesystem.insertFile(file, shouldUnpack, stat)
     }
     else if (stat.isDirectory()) {
@@ -201,8 +213,42 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
     }
   }
 
-  await mkdirp(path.dirname(dest))
-  await writeFilesystem(dest, filesystem, regularFiles)
+  await BluebirdPromise.all(copyPromises)
+
+  const headerPickle = pickle.createEmpty()
+  headerPickle.writeString(JSON.stringify(filesystem.header))
+  const headerBuf = headerPickle.toBuffer()
+
+  const sizePickle = pickle.createEmpty()
+  sizePickle.writeUInt32(headerBuf.length)
+  const sizeBuf = sizePickle.toBuffer()
+
+  const out = createWriteStream(dest)
+  await new BluebirdPromise((resolve, rejected) => {
+    out.on("error", rejected)
+    out.write(sizeBuf)
+
+    function w(list: Array<any>, index: number) {
+      if (list.length === index) {
+        out.end()
+        resolve()
+        return
+      }
+
+      const stream = createReadStream(list[index])
+      stream.on("error", rejected)
+      stream.on("end", () => {
+        w(list, index + 1)
+      })
+      stream.pipe(out, {
+        end: false
+      })
+    }
+
+    out.write(headerBuf, () => {
+      w(toPack, 0)
+    })
+  })
 }
 
 export async function checkFileInPackage(asarFile: string, relativeFile: string) {
