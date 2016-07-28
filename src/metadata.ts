@@ -376,6 +376,9 @@ export interface NsisOptions {
    */
   readonly runAfterFinish?: boolean | null
 
+  /*
+  See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+   */
   readonly guid?: string | null
 
   /*
@@ -389,9 +392,14 @@ export interface NsisOptions {
   readonly installerHeaderIcon?: string | null
 
   /*
-  The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`
+  The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
    */
   readonly include?: string | null
+
+  /*
+  The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+   */
+  readonly script?: string | null
 }
 
 /*

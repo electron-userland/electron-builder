@@ -120,7 +120,7 @@
     "pre-git": "^3.10.0",
     "should": "^10.0.0",
     "ts-babel": "^1.0.3",
-    "tslint": "3.14.0",
+    "tslint": "3.14.0-dev.1",
     "typescript": "^2.1.0-dev.20160726",
     "whitespace": "^2.0.0"
   },

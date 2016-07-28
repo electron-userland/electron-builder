@@ -33,16 +33,21 @@ export default class FpmTarget extends TargetEx {
     const tempDir = await tempDirPromise
     const defaultTemplatesDir = path.join(__dirname, "..", "..", "templates", "linux")
 
+    const packager = this.packager
     const templateOptions = Object.assign({
       // old API compatibility
-      executable: this.packager.appInfo.productFilename,
-    }, this.packager.platformSpecificBuildOptions)
+      executable: packager.appInfo.productFilename,
+    }, packager.platformSpecificBuildOptions)
 
-    const afterInstallTemplate = this.packager.platformSpecificBuildOptions.afterInstall || path.join(defaultTemplatesDir, "after-install.tpl")
-    const afterInstallFilePath = writeConfigFile(tempDir, afterInstallTemplate, templateOptions)
+    function getResource(value: string | n, defaultFile: string) {
+      if (value == null) {
+        return path.join(defaultTemplatesDir, defaultFile)
+      }
+      return path.resolve(packager.projectDir, value)
+    }
 
-    const afterRemoveTemplate = this.packager.platformSpecificBuildOptions.afterRemove || path.join(defaultTemplatesDir, "after-remove.tpl")
-    const afterRemoveFilePath = writeConfigFile(tempDir, afterRemoveTemplate, templateOptions)
+    const afterInstallFilePath = writeConfigFile(tempDir, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
+    const afterRemoveFilePath = writeConfigFile(tempDir, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
 
     return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
   }

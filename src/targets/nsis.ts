@@ -202,7 +202,7 @@ export default class NsisTarget extends Target {
     const fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
     let registerFileAssociationsScript = ""
     let unregisterFileAssociationsScript = ""
-    let script = await readFile(path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
+    let script = await readFile((await this.getResource(this.options.script, "installer.nsi")) || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     const customInclude = await this.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
@@ -223,7 +223,9 @@ export default class NsisTarget extends Target {
     script = script.replace("!insertmacro registerFileAssociations", registerFileAssociationsScript)
     script = script.replace("!insertmacro unregisterFileAssociations", unregisterFileAssociationsScript)
 
-    debug(script)
+    if (debug.enabled) {
+      process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
+    }
 
     await new BluebirdPromise<any>((resolve, reject) => {
       const command = path.join(nsisPath, binDir, process.platform === "win32" ? "makensis.exe" : "makensis")

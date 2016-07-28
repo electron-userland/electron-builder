@@ -133,7 +133,7 @@ test.ifNotCiOsx("nsis boring, MUI_HEADER as option", () => {
       tempDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "foo.bmp")
         return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
-      }
+      },
     }
   )
 })
@@ -142,6 +142,18 @@ test.ifDevOrLinuxCi("nsis - custom include", () => assertPack("test-app-one", {
   targets: Platform.WINDOWS.createTarget(["nsis"]),
 }, {
   tempDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
+  packed: projectDir => BluebirdPromise.all([
+    assertThat(path.join(projectDir, "build", "customHeader")).isFile(),
+    assertThat(path.join(projectDir, "build", "customInit")).isFile(),
+    assertThat(path.join(projectDir, "build", "customInstall")).isFile(),
+  ]),
+}))
+
+test.ifDevOrLinuxCi("nsis - custom script", () => assertPack("test-app-one", {
+  targets: Platform.WINDOWS.createTarget(["nsis"]),
+}, {
+  tempDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
+  packed: projectDir => assertThat(path.join(projectDir, "build", "customInstallerScript")).isFile(),
 }))
 
 // very slow
@@ -152,7 +164,7 @@ test.skip("delta and msi", () => assertPack("test-app-one", {
         win: {
           remoteReleases: "https://github.com/develar/__test-app-releases",
           msi: true,
-        }
+        },
       }
     },
   }

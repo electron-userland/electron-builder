@@ -1,5 +1,5 @@
 {
-  "extends": "tslint:latest",
+  "extends": "tslint:recommended",
   "rules": {
     "member-ordering": [
       "static-before-instance",
