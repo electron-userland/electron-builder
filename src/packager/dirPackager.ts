@@ -17,9 +17,9 @@ export interface ElectronPackagerOptions {
 
   appInfo: AppInfo
 
-  icon?: string;
+  icon?: string
 
-  "helper-bundle-id"?: string | null;
+  "helper-bundle-id"?: string | null
 
   ignore?: any
 }

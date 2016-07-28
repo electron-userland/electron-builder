@@ -37,7 +37,7 @@
       "ban-keywords"
     ],
     "ordered-imports": false,
-    "semicolon": "never",
+    "semicolon": [true, "never"],
     "trailing-comma": false,
     "object-literal-sort-keys": false,
     "no-var-requires": false,

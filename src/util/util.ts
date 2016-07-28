@@ -42,7 +42,7 @@ export function spawnNpmProduction(command: string, appDir: string, env?: any): 
 
   return spawn(npmExecPath, npmExecArgs, {
     cwd: appDir,
-    stdio: "inherit",
+    stdio: ["ignore", "pipe", process.stderr],
     env: env || process.env
   })
 }
@@ -107,9 +107,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    const notNullArgs = args || []
-    const childProcess = doSpawn(command, notNullArgs, options)
-    handleProcess("close", childProcess, command, resolve, reject)
+    handleProcess("close", doSpawn(command, args || [], options), command, resolve, reject)
   })
 }
 

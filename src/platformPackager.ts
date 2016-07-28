@@ -295,14 +295,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (result == null || result === true) {
-      return {
+      result = {
         unpack: buildMetadata["asar-unpack"],
         unpackDir: buildMetadata["asar-unpack-dir"]
       }
     }
-    else {
-      return result
-    }
+
+    return deepAssign(result, {
+
+    })
   }
 
   private expandPattern(pattern: string, arch: Arch): string {

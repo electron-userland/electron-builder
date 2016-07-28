@@ -91,7 +91,7 @@ class Logger {
     cursor.hide()
 
     let out = ""
-    let firstPendingLineIndex = 0;
+    let firstPendingLineIndex = 0
     while (firstPendingLineIndex < prevLineCount) {
       let line = this.lines[firstPendingLineIndex]
       if (line.promise == null || !line.promise.isPending()) {
