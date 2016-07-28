@@ -1,5 +1,7 @@
 import test from "ava-tf"
 
+/* tslint:disable:no-invalid-this no-namespace */
+
 declare module "ava-tf" {
   namespace test {
     export const ifNotWindows: typeof test;

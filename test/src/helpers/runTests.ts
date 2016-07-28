@@ -1,7 +1,7 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { copy, readJson, emptyDir, unlink, readdir, outputFile, readFileSync } from "fs-extra-p"
+import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink } from "fs-extra-p"
 import { Platform } from "out/metadata"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here

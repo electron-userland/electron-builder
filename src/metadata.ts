@@ -164,7 +164,7 @@ export interface BuildMetadata {
   readonly mas?: MasBuildOptions | null
 
   /**
-   See [.build.win](#LinuxBuildOptions).
+   See [.build.win](#WinBuildOptions).
    */
   readonly win?: WinBuildOptions  | null
 
