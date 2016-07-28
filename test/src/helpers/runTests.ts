@@ -125,6 +125,10 @@ function runTests(): BluebirdPromise<any> {
   const args: Array<string> = []
   const testFiles = process.env.TEST_FILES
 
+  if (process.env.TRAVIS) {
+    args.push("--concurrency=2")
+  }
+
   const baseDir = path.join("test", "out")
   const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]
   let skipWin = false
