@@ -1,6 +1,6 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
 import { statOrNull } from "./util/util"
-import { lstat, readdir, readFile, mkdirp, Stats, createWriteStream, copy, createReadStream } from "fs-extra-p"
+import { lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import pathSorter = require("path-sort")
@@ -125,6 +125,10 @@ async function order(src: string, filenames: Array<string>, options: any) {
 async function createPackageFromFiles(src: string, dest: string, files: Array<string>, metadata: Map<string, Stats>, options: any) {
   // search auto unpacked dir
   const autoUnpackDirs = new Set<string>()
+
+  const createDirPromises: Array<Promise<any>> = [ensureDir(path.dirname(dest))]
+  const unpackedDest = `${dest}.unpacked`
+
   if (options.smartUnpack !== false) {
     for (let file of files) {
       const index = file.lastIndexOf(NODE_MODULES_PATTERN)
@@ -137,8 +141,17 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
         continue
       }
 
+      if (!metadata.get(file)!.isFile()) {
+        continue
+      }
+
       const nodeModuleDir = file.substring(0, nextSlashIndex)
-      if (autoUnpackDirs.has(nodeModuleDir) || !metadata.get(file)!.isFile()) {
+      if (autoUnpackDirs.has(nodeModuleDir)) {
+        const fileParent = path.dirname(file)
+        if (fileParent != nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
+          autoUnpackDirs.add(fileParent)
+          createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+        }
         continue
       }
 
@@ -157,6 +170,12 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
 
       log(`${path.relative(src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
       autoUnpackDirs.add(nodeModuleDir)
+      const fileParent = path.dirname(file)
+      if (fileParent != nodeModuleDir) {
+        autoUnpackDirs.add(fileParent)
+        // create parent dir to be able to copy file later without directory existence check
+        createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+      }
     }
   }
 
@@ -165,9 +184,11 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
     matchBase: true
   })
 
-  await mkdirp(path.dirname(dest))
+  if (createDirPromises.length > 0) {
+    await BluebirdPromise.all(createDirPromises)
+    createDirPromises.length = 0
+  }
 
-  const unpackedDest = `${dest}.unpacked`
   const toPack: Array<string> = []
   const filesystem = new Filesystem(src)
   const copyPromises: Array<Promise<any>> = []
@@ -177,12 +198,24 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
       const dir = path.dirname(file)
 
       let shouldUnpack = unpack != null && unpack.match(file)
-      if (!shouldUnpack) {
+      if (shouldUnpack) {
+        const fileParent = path.dirname(file)
+        if (!autoUnpackDirs.has(fileParent)) {
+          // create parent dir to be able to copy file later without directory existence check
+          createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+        }
+      }
+      else {
         shouldUnpack = autoUnpackDirs.has(dir) || (unpackDir != null && isUnpackDir(path.relative(src, dir), unpackDir, options.unpackDir))
       }
 
       if (shouldUnpack) {
-        copyPromises.push(copy(file, path.join(unpackedDest, path.relative(src, file))))
+        if (createDirPromises.length > 0) {
+          await BluebirdPromise.all(createDirPromises)
+          createDirPromises.length = 0
+        }
+
+        copyPromises.push(copyFile(file, path.join(unpackedDest, path.relative(src, file)), stat))
         // limit concurrency
         if (copyPromises.length > 50) {
           await BluebirdPromise.all(copyPromises)
@@ -196,13 +229,25 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
       filesystem.insertFile(file, shouldUnpack, stat)
     }
     else if (stat.isDirectory()) {
-      let unpacked = autoUnpackDirs.has(file) || (unpackDir != null && isUnpackDir(path.relative(src, file), unpackDir, options.unpackDir))
-      if (!unpacked) {
-        for (let d of autoUnpackDirs) {
-          if (file.length > (d.length + 2) && file[d.length] === path.sep && file.startsWith(d)) {
-            unpacked = true
-            autoUnpackDirs.add(file)
-            break
+      let unpacked = false
+      if (autoUnpackDirs.has(file)) {
+        unpacked = true
+      }
+      else {
+        unpacked = unpackDir != null && isUnpackDir(path.relative(src, file), unpackDir, options.unpackDir)
+        if (unpacked) {
+          createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, file))))
+        }
+        else {
+          for (let d of autoUnpackDirs) {
+            if (file.length > (d.length + 2) && file[d.length] === path.sep && file.startsWith(d)) {
+              unpacked = true
+              autoUnpackDirs.add(file)
+              // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
+              // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
+              createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, file))))
+              break
+            }
           }
         }
       }
@@ -214,7 +259,10 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
   }
 
   await BluebirdPromise.all(copyPromises)
+  await writeAsarFile(filesystem, dest, toPack)
+}
 
+function writeAsarFile(filesystem: any, dest: string, toPack: Array<string>): Promise<any> {
   const headerPickle = pickle.createEmpty()
   headerPickle.writeString(JSON.stringify(filesystem.header))
   const headerBuf = headerPickle.toBuffer()
@@ -223,31 +271,27 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
   sizePickle.writeUInt32(headerBuf.length)
   const sizeBuf = sizePickle.toBuffer()
 
-  const out = createWriteStream(dest)
-  await new BluebirdPromise((resolve, rejected) => {
-    out.on("error", rejected)
-    out.write(sizeBuf)
+  const writeStream = createWriteStream(dest)
+  return new BluebirdPromise((resolve, reject) => {
+    writeStream.on("error", reject)
+    writeStream.once("finish", resolve)
+    writeStream.write(sizeBuf)
 
     function w(list: Array<any>, index: number) {
       if (list.length === index) {
-        out.end()
-        resolve()
+        writeStream.end()
         return
       }
 
-      const stream = createReadStream(list[index])
-      stream.on("error", rejected)
-      stream.on("end", () => {
-        w(list, index + 1)
-      })
-      stream.pipe(out, {
+      const readStream = createReadStream(list[index])
+      readStream.on("error", reject)
+      readStream.once("end", () => w(list, index + 1))
+      readStream.pipe(writeStream, {
         end: false
       })
     }
 
-    out.write(headerBuf, () => {
-      w(toPack, 0)
-    })
+    writeStream.write(headerBuf, () => w(toPack, 0))
   })
 }
 
@@ -279,4 +323,20 @@ export async function checkFileInPackage(asarFile: string, relativeFile: string)
   if (stat.size === 0) {
     throw new Error(`Application entry file "${relativeFile}" in the "${asarFile}" is corrupted: size 0`)
   }
+}
+
+function copyFile(src: string, dest: string, stats: Stats) {
+  return new BluebirdPromise(function (resolve, reject) {
+    const readStream = createReadStream(src)
+    const writeStream = createWriteStream(dest, {mode: stats.mode})
+
+    readStream.on("error", reject)
+    writeStream.on("error", reject)
+
+    writeStream.on("open", function () {
+      readStream.pipe(writeStream)
+    })
+
+    writeStream.once("finish", resolve)
+  })
 }

@@ -3,6 +3,7 @@ import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink } from "fs-extra-p"
 import { Platform } from "out/metadata"
+import { cpus } from "os"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -125,9 +126,7 @@ function runTests(): BluebirdPromise<any> {
   const args: Array<string> = []
   const testFiles = process.env.TEST_FILES
 
-  if (process.env.TRAVIS) {
-    args.push("--concurrency=2")
-  }
+  args.push(`--concurrency=${cpus().length}`)
 
   const baseDir = path.join("test", "out")
   const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]

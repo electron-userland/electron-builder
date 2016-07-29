@@ -11,4 +11,4 @@ SEC=`security find-generic-password -l BINTRAY_API_KEY -g 2>&1`
 ACCOUNT=`echo "$SEC" | grep "acct" | cut -d \" -f 4`
 API_KEY=`echo "$SEC" | grep "password" | cut -d \" -f 2`
 
-curl --progress-bar -T ~/wine.7z -u${ACCOUNT}:${API_KEY} 'https://api.bintray.com/content/develar/bin/electron-builder-mac-test-bottle/1.0/wine.7z?override=1&publish=1' > dev/null
+curl --progress-bar -T ~/wine.7z -u${ACCOUNT}:${API_KEY} 'https://api.bintray.com/content/develar/bin/electron-builder-mac-test-bottle/1.0/wine.7z?override=1&publish=1' > /dev/null
