@@ -27,6 +27,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     super(info)
 
     const certificateFile = this.platformSpecificBuildOptions.certificateFile
+    const cscLink = this.options.cscLink
     if (certificateFile != null) {
       const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
       this.cscInfo = BluebirdPromise.resolve({
@@ -34,10 +35,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         password: certificatePassword == null ? null : certificatePassword.trim(),
       })
     }
-    else if (this.options.cscLink != null) {
-      this.cscInfo = downloadCertificate(this.options.cscLink)
+    else if (cscLink != null) {
+      this.cscInfo = downloadCertificate(cscLink)
         .then(path => {
-          cleanupTasks.push(() => deleteFile(path, true))
+          if (cscLink.startsWith("https://")) {
+            cleanupTasks.push(() => deleteFile(path, true))
+          }
           return {
             file: path,
             password: this.getCscPassword(),
