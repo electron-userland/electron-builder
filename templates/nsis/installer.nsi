@@ -58,15 +58,17 @@ Function un.onInit
 FunctionEnd
 
 Section "install"
-  SetDetailsPrint none
+  ${IfNot} ${Silent}
+    SetDetailsPrint none
 
-  !ifdef ONE_CLICK
-    !ifdef HEADER_ICO
-      SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
-    !else
-      SpiderBanner::Show /MODERN
-   !endif
-  !endif
+    !ifdef ONE_CLICK
+      !ifdef HEADER_ICO
+        SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
+      !else
+        SpiderBanner::Show /MODERN
+     !endif
+    !endif
+  ${EndIf}
 
   !insertmacro CHECK_APP_RUNNING "install"
 
@@ -104,13 +106,15 @@ Section "install"
     !insertmacro customInstall
   !endif
 
-  !ifdef ONE_CLICK
-    # otherwise app window will be in backround
-    HideWindow
-    !ifdef RUN_AFTER_FINISH
-      Call StartApp
+  ${IfNot} ${Silent}
+    !ifdef ONE_CLICK
+      # otherwise app window will be in backround
+      HideWindow
+      !ifdef RUN_AFTER_FINISH
+        Call StartApp
+      !endif
     !endif
-  !endif
+  ${EndIf}
 SectionEnd
 
 Section "un.install"
