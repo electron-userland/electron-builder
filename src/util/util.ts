@@ -204,9 +204,9 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
   }
 
   for (let dir of DEFAULT_APP_DIR_NAMES) {
-    const absolutePath = path.join(projectDir, dir)
+    const absolutePath = path.join(projectDir, dir, "package.json")
     const stat = await statOrNull(absolutePath)
-    if (stat != null && stat.isDirectory()) {
+    if (stat != null && stat.isFile()) {
       return absolutePath
     }
   }
