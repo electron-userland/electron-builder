@@ -97,15 +97,16 @@ For windows consider only [distributing 64-bit versions](https://github.com/elec
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 ```
 Building:
-  --mac, -m, -o, --osx  Build for MacOS, accepts target list (see
-                        https://goo.gl/HAnnq8).                          [array]
-  --linux, -l           Build for Linux, accepts target list (see
-                        https://goo.gl/O80IL2)                           [array]
-  --win, -w, --windows  Build for Windows, accepts target list (see
-                        https://goo.gl/dL4i8i)                           [array]
-  --x64                 Build for x64                                  [boolean]
-  --ia32                Build for ia32                                 [boolean]
-  --dir                 Build unpacked dir. Useful to test.            [boolean]
+  --mac, -m, -o, --osx, --macos  Build for MacOS, accepts target list (see
+                                 https://goo.gl/HAnnq8).                 [array]
+  --linux, -l                    Build for Linux, accepts target list (see
+                                 https://goo.gl/O80IL2)                  [array]
+  --win, -w, --windows           Build for Windows, accepts target list (see
+                                 https://goo.gl/dL4i8i)                  [array]
+  --x64                          Build for x64                         [boolean]
+  --ia32                         Build for ia32                        [boolean]
+  --dir                          Build unpacked dir. Useful to test.   [boolean]
+  --extraMetadata, --em          Inject properties to application package.json
 
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
@@ -128,6 +129,7 @@ Examples:
   build -mwl                build for MacOS, Windows and Linux
   build --linux deb tar.xz  build deb and tar.xz for Linux
   build --win --ia32        build for Windows ia32
+  build --em.foo=bar        set application package.json property `foo` to `bar`
 ```
 
 # Programmatic Usage

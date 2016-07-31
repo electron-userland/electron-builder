@@ -108,6 +108,8 @@ export interface BuildMetadata {
    Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).
 
    Or you can pass object of any asar options.
+
+   electron-builder detects node modules that must be unpacked automatically, you don't need to explicitly set `asar.unpackDir` - please file issue if this doesn't work.
    */
   readonly asar?: AsarOptions | boolean | null
 

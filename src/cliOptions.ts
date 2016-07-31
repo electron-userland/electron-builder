@@ -6,10 +6,12 @@ const buildGroup = "Building:"
 const deprecated = "Deprecated:"
 
 export function createYargs(): any {
+  //noinspection ReservedWordAsName
   return yargs
     .example("build -mwl", "build for MacOS, Windows and Linux")
     .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("build --win --ia32", "build for Windows ia32")
+    .example("build --em.foo=bar", "set application package.json property `foo` to `bar`")
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "osx", "macos"],
@@ -70,6 +72,11 @@ export function createYargs(): any {
       group: deprecated,
       describe: "The target arch (preferred to use --x64 or --ia32)",
       choices: ["ia32", "x64", "all"],
+    })
+    .option("extraMetadata", {
+      alias: ["em",],
+      group: buildGroup,
+      describe: "Inject properties to application package.json (asar only)",
     })
     .strict()
     .group(["help", "version"], "Other:")

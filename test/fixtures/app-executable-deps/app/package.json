@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "description": "app executable deps",
   "main": "main.js",
-  "author": "Foo",
+  "author": "Foo <foo@example.com>",
   "dependencies": {
     "keytar": "^3.0.2",
     "node-notifier": "^4.6.0"

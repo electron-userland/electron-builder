@@ -55,6 +55,7 @@ export const expectedLinuxContents = [
 
 //noinspection SpellCheckingInspection
 export const expectedWinContents = [
+  "lib/net45/blink_image_resources_200_percent.pak",
   "lib/net45/content_resources_200_percent.pak",
   "lib/net45/content_shell.pak",
   "lib/net45/d3dcompiler_47.dll",
@@ -70,6 +71,7 @@ export const expectedWinContents = [
   "lib/net45/TestApp.exe",
   "lib/net45/ui_resources_200_percent.pak",
   "lib/net45/Update.exe",
+  "lib/net45/views_resources_200_percent.pak",
   "lib/net45/xinput1_3.dll",
   "lib/net45/locales/en-US.pak",
   "lib/net45/resources/app.asar",

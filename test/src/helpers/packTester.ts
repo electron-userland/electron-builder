@@ -38,7 +38,7 @@ interface AssertPackOptions {
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
   const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir) || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET
+  const useTempDir = fixtureName !== "app-executable-deps" && (tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir) || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET)
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"

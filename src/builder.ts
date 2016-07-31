@@ -159,6 +159,8 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.arch
 
   const r = <any>result
+  delete r.em
+
   delete r.m
   delete r.o
   delete r.l

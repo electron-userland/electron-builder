@@ -1,6 +1,9 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
 import { statOrNull, debug } from "./util/util"
-import { lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson } from "fs-extra-p"
+import {
+  lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson,
+  writeFile
+} from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import pathSorter = require("path-sort")
@@ -10,6 +13,7 @@ import { Minimatch } from "minimatch"
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
 const Filesystem = require("asar-electron-builder/lib/filesystem")
+const UINT64 = require("cuint").UINT64
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -123,10 +127,11 @@ async function order(src: string, filenames: Array<string>, options: any) {
   return filenamesSorted
 }
 
-async function detectUnpackedDirs(src: string, files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, createDirPromises: Array<Promise<any>>, unpackedDest: string, packageFileToData: Map<string, BluebirdPromise<string>>) {
+async function detectUnpackedDirs(src: string, files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, createDirPromises: Array<Promise<any>>, unpackedDest: string, fileIndexToModulePackageData: Array<BluebirdPromise<string>>) {
   const packageJsonStringLength = "package.json".length
   const readPackageJsonPromises: Array<Promise<any>> = []
-  for (let file of files) {
+  for (let i = 0, n = files.length; i < n; i++) {
+    const file = files[i]
     const index = file.lastIndexOf(NODE_MODULES_PATTERN)
     if (index < 0) {
       continue
@@ -151,7 +156,7 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
         readPackageJsonPromises.length = 0
       }
       readPackageJsonPromises.push(promise)
-      packageFileToData.set(file, promise)
+      fileIndexToModulePackageData[i] = promise
     }
 
     if (autoUnpackDirs.has(nodeModuleDir)) {
@@ -200,7 +205,7 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
   }
 }
 
-async function createPackageFromFiles(src: string, dest: string, files: Array<string>, metadata: Map<string, Stats>, options: any) {
+async function createPackageFromFiles(src: string, dest: string, files: Array<string>, metadata: Map<string, Stats>, options: AsarOptions) {
   // search auto unpacked dir
   const autoUnpackDirs = new Set<string>()
 
@@ -208,9 +213,9 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
   const unpackedDest = `${dest}.unpacked`
   const changedFiles = new Map<string, string>()
 
-  const packageFileToData = new Map<string, BluebirdPromise<string>>()
+  const fileIndexToModulePackageData: Array<BluebirdPromise<string>> = new Array(files.length)
   if (options.smartUnpack !== false) {
-    await detectUnpackedDirs(src, files, metadata, autoUnpackDirs, createDirPromises, unpackedDest, packageFileToData)
+    await detectUnpackedDirs(src, files, metadata, autoUnpackDirs, createDirPromises, unpackedDest, fileIndexToModulePackageData)
   }
 
   const unpackDir = options.unpackDir == null ? null : new Minimatch(options.unpackDir)
@@ -221,46 +226,67 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
   const toPack: Array<string> = []
   const filesystem = new Filesystem(src)
   const copyPromises: Array<Promise<any>> = []
-  for (let file of files) {
+  const mainPackageJson = path.join(src, "package.json")
+  for (let i = 0, n = files.length; i < n; i++) {
+    const file = files[i]
     const stat = metadata.get(file)!
     if (stat.isFile()) {
-      const dir = path.dirname(file)
+      const fileParent = path.dirname(file)
+      const dirNode = filesystem.searchNodeFromPath(fileParent)
 
-      let shouldUnpack = unpack != null && unpack.match(file)
-      if (shouldUnpack) {
-        const fileParent = path.dirname(file)
-        if (!autoUnpackDirs.has(fileParent)) {
-          // create parent dir to be able to copy file later without directory existence check
-          createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+      if (dirNode.unpacked && createDirPromises.length > 0) {
+        await BluebirdPromise.all(createDirPromises)
+        createDirPromises.length = 0
+      }
+
+      const packageDataPromise = fileIndexToModulePackageData[i]
+      let newData: any | null = null
+      if (packageDataPromise == null) {
+        if (options.extraMetadata != null && file === mainPackageJson) {
+          newData = JSON.stringify(Object.assign(await readJson(file), options.extraMetadata), null, 2)
         }
       }
       else {
-        shouldUnpack = autoUnpackDirs.has(dir) || (unpackDir != null && isUnpackDir(path.relative(src, dir), unpackDir, options.unpackDir))
+        newData = cleanupPackageJson(packageDataPromise.value())
       }
 
-      if (shouldUnpack) {
-        if (createDirPromises.length > 0) {
+      const fileSize = newData == null ? stat.size : Buffer.byteLength(newData)
+      const node = filesystem.searchNodeFromPath(file)
+      node.size = fileSize
+      if (dirNode.unpacked || (unpack != null && unpack.match(file))) {
+        node.unpacked = true
+
+        if (!dirNode.unpacked) {
+          createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
           await BluebirdPromise.all(createDirPromises)
           createDirPromises.length = 0
         }
 
-        copyPromises.push(copyFile(file, path.join(unpackedDest, path.relative(src, file)), stat))
-        // limit concurrency
+        const unpackedFile = path.join(unpackedDest, path.relative(src, file))
+        copyPromises.push(newData == null ? copyFile(file, unpackedFile, stat) : writeFile(unpackedFile, newData))
         if (copyPromises.length > MAX_FILE_REQUESTS) {
           await BluebirdPromise.all(copyPromises)
           copyPromises.length = 0
         }
       }
       else {
+        if (newData != null) {
+          changedFiles.set(file, newData)
+        }
+
+        if (fileSize > 4294967295) {
+          throw new Error(`${file}: file size can not be larger than 4.2GB`)
+        }
+
+        node.offset = filesystem.offset.toString()
+        //noinspection JSBitwiseOperatorUsage
+        if (process.platform !== "win32" && stat.mode & 0x40) {
+          node.executable = true
+        }
         toPack.push(file)
       }
 
-      const packageDataPromise = packageFileToData.get(file)
-      if (packageDataPromise != null) {
-        cleanupPackageJson(file, stat, packageDataPromise.value(), changedFiles)
-      }
-
-      filesystem.insertFile(file, shouldUnpack, stat)
+      filesystem.offset.add(UINT64(fileSize))
     }
     else if (stat.isDirectory()) {
       let unpacked = false
@@ -268,7 +294,7 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
         unpacked = true
       }
       else {
-        unpacked = unpackDir != null && isUnpackDir(path.relative(src, file), unpackDir, options.unpackDir)
+        unpacked = unpackDir != null && isUnpackDir(path.relative(src, file), unpackDir, options.unpackDir!)
         if (unpacked) {
           createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, file))))
         }
@@ -296,25 +322,25 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
   await writeAsarFile(filesystem, dest, toPack, changedFiles)
 }
 
-function cleanupPackageJson(file: string, stat: Stats, data: any, changedFiles: Map<string, string>) {
+function cleanupPackageJson(data: any): any {
   try {
-    let writeFile = false
+    let changed = false
     for (let prop of Object.getOwnPropertyNames(data)) {
       if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords") {
         delete data[prop]
-        writeFile = true
+        changed = true
       }
     }
 
-    if (writeFile) {
-      const value = JSON.stringify(data, null, 2)
-      changedFiles.set(file, value)
-      stat.size = Buffer.byteLength(value)
+    if (changed) {
+      return JSON.stringify(data, null, 2)
     }
   }
   catch (e) {
     debug(e)
   }
+
+  return null
 }
 
 function writeAsarFile(filesystem: any, dest: string, toPack: Array<string>, changedFiles: Map<string, string>): Promise<any> {

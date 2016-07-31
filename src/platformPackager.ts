@@ -46,6 +46,8 @@ export interface PackagerOptions {
   readonly appMetadata?: AppMetadata
 
   readonly effectiveOptionComputed?: (options: any) => boolean
+
+  readonly extraMetadata?: any
 }
 
 export interface BuildInfo {
@@ -301,8 +303,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    return deepAssign(result, {
-
+    return Object.assign(result, {
+      extraMetadata: this.options.extraMetadata
     })
   }
 

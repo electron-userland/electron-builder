@@ -17,6 +17,7 @@ cache:
   directories:
     - node_modules
     - $HOME/.electron
+    - "test/fixtures/app-executable-deps/app/node_modules"
 
 before_install:
   - curl -L https://dl.bintray.com/develar/bin/7za -o /tmp/7za
@@ -32,6 +33,7 @@ install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
 - npm install
 - npm prune
+- (cd test/fixtures/app-executable-deps/app && npm install && npm prune)
 
 script:
 - sudo ntpdate -u time.apple.com

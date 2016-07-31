@@ -1,12 +1,13 @@
 import test from "./helpers/avaEx"
 import { assertPack, modifyPackageJson, platform, getPossiblePlatforms, currentPlatform } from "./helpers/packTester"
-import { move, outputJson } from "fs-extra-p"
+import { move, outputJson, readJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets, PublishOptions } from "out"
+import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
 import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cliOptions"
+import { extractFile } from "asar-electron-builder"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -14,14 +15,13 @@ const __awaiter = require("out/util/awaiter")
 test("cli", () => {
   const yargs = createYargs()
 
-  const base: PublishOptions = {
-    publish: undefined,
-    draft: undefined,
-    prerelease: undefined,
-  }
-
-  function expected(opt: PackagerOptions): any {
-    return Object.assign(base, opt)
+  function expected(opt: BuildOptions): any {
+    return Object.assign({
+      publish: undefined,
+      draft: undefined,
+      prerelease: undefined,
+      extraMetadata: undefined,
+    }, opt)
   }
 
   function parse(input: string): BuildOptions {
@@ -50,6 +50,15 @@ test("cli", () => {
   assertThat(parse("-l tar.gz:x64")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
   assertThat(parse("-l tar.gz")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
   assertThat(parse("-w tar.gz:x64")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget("tar.gz", Arch.x64)}))
+
+  function parseExtraMetadata(input: string) {
+    const result = parse(input)
+    delete result.targets
+    return result
+  }
+  assertThat(parseExtraMetadata("--em.foo=bar")).isEqualTo(expected({extraMetadata: {
+    foo: "bar",
+  }}))
 })
 
 test("custom buildResources dir", () => assertPack("test-app-one", allPlatforms(), {
@@ -139,7 +148,7 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
   }, true)
 }))
 
-const electronVersion = "1.2.6"
+const electronVersion = "1.3.1"
 
 test.ifNotWindows("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -168,7 +177,7 @@ test("www as default dir", () => assertPack("test-app", currentPlatform(), {
 }))
 
 test("afterPack", t => {
-  const targets = process.env.CI ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms()
+  const targets = process.env.CI ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
   let called = 0
   return assertPack("test-app-one", {
     targets: targets,
@@ -184,6 +193,34 @@ test("afterPack", t => {
     packed: () => {
       t.is(called, targets.size)
       return BluebirdPromise.resolve()
+    }
+  })
+})
+
+test.ifDevOrLinuxCi("extra metadata", () => {
+  const extraMetadata = {foo: "bar"}
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    extraMetadata: extraMetadata,
+  }, {
+    packed: projectDir => {
+      assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "package.json").toString())).hasProperties(extraMetadata)
+      return BluebirdPromise.resolve()
+    }
+  })
+})
+
+test.ifOsx("app-executable-deps", () => {
+  return assertPack("app-executable-deps", {
+    targets: Platform.current().createTarget(DIR_TARGET),
+  }, {
+    packed: async (projectDir) => {
+      const data = await readJson(path.join(projectDir, "dist/mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
+      for (let name of Object.getOwnPropertyNames(data)) {
+        if (name[0] === "_") {
+          throw new Error("Property name starts with _")
+        }
+      }
     }
   })
 })
