@@ -559,9 +559,10 @@ export class Platform {
 
       case Platform.LINUX.nodeName:
         return Platform.LINUX
-    }
 
-    throw new Error(`Unknown platform: ${name}`)
+      default:
+        throw new Error(`Unknown platform: ${name}`)
+    }
   }
 }
 

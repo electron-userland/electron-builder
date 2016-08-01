@@ -6,7 +6,6 @@ import {
 } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import pathSorter = require("path-sort")
 import { log } from "./util/log"
 import { Minimatch } from "minimatch"
 import { deepAssign } from "./util/deepAssign"
@@ -85,16 +84,16 @@ export async function createAsarArchive(src: string, resourcesPath: string, opti
 }
 
 function isUnpackDir(path: string, pattern: Minimatch, rawPattern: string): boolean {
-  return path.indexOf(rawPattern) === 0 || pattern.match(path)
+  return path.startsWith(rawPattern) || pattern.match(path)
 }
 
 async function order(src: string, filenames: Array<string>, options: any) {
-  const orderingFiles = (await readFile(options.ordering, "utf8")).split("\n").map(function (line) {
-    if (line.indexOf(':') !== -1) {
-      line = line.split(':').pop()!
+  const orderingFiles = (await readFile(options.ordering, "utf8")).split("\n").map(line => {
+    if (line.indexOf(":") !== -1) {
+      line = line.split(":").pop()!
     }
     line = line.trim()
-    if (line[0] === '/') {
+    if (line[0] === "/") {
       line = line.slice(1)
     }
     return line
@@ -121,7 +120,7 @@ async function order(src: string, filenames: Array<string>, options: any) {
   for (let file of filenames) {
     if (!filenamesSorted.includes(file)) {
       filenamesSorted.push(file)
-      missing += 1;
+      missing += 1
     }
   }
   log(`Ordering file has ${((total - missing) / total * 100)}% coverage.`)
@@ -149,7 +148,7 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
 
     const nodeModuleDir = file.substring(0, nextSlashIndex)
 
-    if (file.length == (nodeModuleDir.length + 1 + packageJsonStringLength) && file.endsWith("package.json")) {
+    if (file.length === (nodeModuleDir.length + 1 + packageJsonStringLength) && file.endsWith("package.json")) {
       const promise = readJson(file)
 
       if (readPackageJsonPromises.length > MAX_FILE_REQUESTS) {
@@ -162,7 +161,7 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
 
     if (autoUnpackDirs.has(nodeModuleDir)) {
       const fileParent = path.dirname(file)
-      if (fileParent != nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
+      if (fileParent !== nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
         autoUnpackDirs.add(fileParent)
 
         if (createDirPromises.length > MAX_FILE_REQUESTS) {
@@ -190,7 +189,7 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
     log(`${path.relative(src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
     autoUnpackDirs.add(nodeModuleDir)
     const fileParent = path.dirname(file)
-    if (fileParent != nodeModuleDir) {
+    if (fileParent !== nodeModuleDir) {
       autoUnpackDirs.add(fileParent)
       // create parent dir to be able to copy file later without directory existence check
       createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))

@@ -73,6 +73,7 @@
       <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
+      <w>osslsigncode</w>
       <w>packagejson</w>
       <w>pacman</w>
       <w>passin</w>
@@ -83,9 +84,11 @@
       <w>progexe</w>
       <w>promisify</w>
       <w>psmdcp</w>
+      <w>readpass</w>
       <w>repos</w>
       <w>rimraf</w>
       <w>semver</w>
+      <w>signtool</w>
       <w>templating</w>
       <w>testapp</w>
       <w>tsconfig</w>

@@ -1,4 +1,4 @@
-import { Platform, Arch, BuildInfo, PackagerOptions } from "out"
+import { Platform, Arch, BuildInfo } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed, getTestAsset } from "./helpers/packTester"
 import { outputFile, rename, copy } from "fs-extra-p"
@@ -6,7 +6,7 @@ import * as path from "path"
 import { WinPackager } from "out/winPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
-import { SignOptions } from "signcode-tf"
+import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
 import { ElectronPackagerOptions } from "out/packager/dirPackager"
@@ -14,23 +14,15 @@ import { ElectronPackagerOptions } from "out/packager/dirPackager"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
-function _signed(packagerOptions: PackagerOptions): PackagerOptions {
-  if (process.platform !== "win32") {
-    // todo Linux  Signing failed with SIGBUS
-    return packagerOptions
-  }
-  return signed(packagerOptions)
-}
-
-test.ifNotCiOsx("win", () => assertPack("test-app-one", _signed({
+test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
     targets: Platform.WINDOWS.createTarget(["default", "zip"]),
   })
 ))
 
-test("nsis", () => assertPack("test-app-one", _signed({
+test("nsis", () => assertPack("test-app-one", signed({
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
   }), {
-  useTempDir: true,
+    useTempDir: true,
   }
 ))
 
@@ -52,7 +44,7 @@ test.ifDevOrLinuxCi("nsis 32 perMachine, no run after finish", () => assertPack(
   }
 }))
 
-test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
+test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", signed({
   targets: Platform.WINDOWS.createTarget(["nsis"]),
   devMetadata: {
     build: {
@@ -62,7 +54,6 @@ test.ifNotCiOsx("nsis boring", () => assertPack("test-app-one", _signed({
     }
   }
 })))
-
 test.ifNotCiOsx("nsis, installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {

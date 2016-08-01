@@ -5,7 +5,7 @@ import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
 import { deleteFile, open, close, read } from "fs-extra-p"
-import { sign, SignOptions } from "signcode-tf"
+import { sign, SignOptions } from "./windowsCodeSign"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
@@ -123,7 +123,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         password: cscInfo.password!,
         name: this.appInfo.productName,
         site: await this.appInfo.computePackageUrl(),
-        overwrite: true,
         hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
       })
     }
@@ -131,7 +130,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions): Promise<any> {
-    return BluebirdPromise.promisify(sign)(opts)
+    return sign(opts)
   }
 
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {

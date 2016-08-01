@@ -74,7 +74,7 @@ export function createYargs(): any {
       choices: ["ia32", "x64", "all"],
     })
     .option("extraMetadata", {
-      alias: ["em",],
+      alias: ["em"],
       group: buildGroup,
       describe: "Inject properties to application package.json (asar only)",
     })

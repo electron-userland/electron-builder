@@ -56,6 +56,8 @@
       "check-operator",
       "check-separator",
       "check-type"
-    ]
+    ],
+    "no-bitwise": false,
+    "jsdoc-format": false
   }
 }
