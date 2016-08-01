@@ -21,6 +21,7 @@
       <w>coroutine</w>
       <w>cpus</w>
       <w>crypto</w>
+      <w>cuint</w>
       <w>debian</w>
       <w>difflet</w>
       <w>digester</w>
@@ -47,6 +48,7 @@
       <w>insertmacro</w>
       <w>installmode</w>
       <w>instdir</w>
+      <w>isbinaryfile</w>
       <w>joliet</w>
       <w>keyserver</w>
       <w>libappindicator</w>
