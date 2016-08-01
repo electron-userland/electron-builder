@@ -89,7 +89,6 @@
     "semver": "^5.3.0",
     "source-map-support": "^0.4.2",
     "tslint": "^3.14.0-dev.1",
-    "typescript": "2.0.0-dev.20160705",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
     "yargs": "^4.8.1"
@@ -106,7 +105,7 @@
     ]
   },
   "devDependencies": {
-    "@develar/semantic-release": "^6.3.2",
+    "@develar/semantic-release": "^6.3.3",
     "@types/debug": "0.0.28",
     "@types/mime": "0.0.28",
     "@types/progress": "^1.1.27",
@@ -124,7 +123,7 @@
     "should": "^10.0.0",
     "ts-babel": "^1.0.3",
     "tslint": "3.14.0",
-    "typescript": "^2.1.0-dev.20160726",
+    "typescript": "^2.1.0-dev.20160801",
     "whitespace": "^2.0.0"
   },
   "babel": {

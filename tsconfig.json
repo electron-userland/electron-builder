@@ -12,7 +12,8 @@
     "noImplicitReturns": true,
     "strictNullChecks": true,
     "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   },
   "declaration": {
     "electron-builder": "out/electron-builder.d.ts",

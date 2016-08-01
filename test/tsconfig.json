@@ -12,7 +12,8 @@
     "sourceMap": true,
     "noImplicitReturns": true,
     "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   },
   "include": [
     "../typings/**/*.d.ts",
