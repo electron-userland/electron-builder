@@ -198,13 +198,29 @@ test("afterPack", t => {
 })
 
 test.ifDevOrLinuxCi("extra metadata", () => {
-  const extraMetadata = {foo: "bar"}
+  const extraMetadata = {
+    foo: {
+      bar: 12,
+    }
+  }
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     extraMetadata: extraMetadata,
   }, {
+    tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+      data.foo = {
+        bar: 42,
+        existingProp: 22,
+      }
+    }),
     packed: projectDir => {
-      assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "package.json").toString())).hasProperties(extraMetadata)
+      assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "package.json").toString())).hasProperties({
+          foo: {
+            bar: 12,
+            existingProp: 22,
+          }
+        }
+      )
       return BluebirdPromise.resolve()
     }
   })

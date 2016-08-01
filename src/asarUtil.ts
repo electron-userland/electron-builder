@@ -9,6 +9,7 @@ import * as path from "path"
 import pathSorter = require("path-sort")
 import { log } from "./util/log"
 import { Minimatch } from "minimatch"
+import { deepAssign } from "./util/deepAssign"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -243,7 +244,7 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
       let newData: any | null = null
       if (packageDataPromise == null) {
         if (options.extraMetadata != null && file === mainPackageJson) {
-          newData = JSON.stringify(Object.assign(await readJson(file), options.extraMetadata), null, 2)
+          newData = JSON.stringify(deepAssign(await readJson(file), options.extraMetadata), null, 2)
         }
       }
       else {
