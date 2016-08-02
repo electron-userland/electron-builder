@@ -32,6 +32,7 @@ install:
 - nvm use --delete-prefix $NODE_VERSION
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
 - npm install
+- npm install @develar/semantic-release
 - npm prune
 - (cd test/fixtures/app-executable-deps/app && npm install && npm prune)
 

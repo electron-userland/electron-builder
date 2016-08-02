@@ -105,7 +105,7 @@
     ]
   },
   "devDependencies": {
-    "@develar/semantic-release": "^6.3.4",
+    "@develar/semantic-release": "^6.3.5",
     "@types/debug": "0.0.28",
     "@types/mime": "0.0.28",
     "@types/progress": "^1.1.27",
