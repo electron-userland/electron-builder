@@ -56,7 +56,6 @@ async function doGetBin(name: string, dirName: string, url: string, sha2?: strin
 
   await spawn(path7za, debug7zArgs("x").concat(archiveName, `-o${tempUnpackDir}`), {
     cwd: cachePath,
-    stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
 
   const isOldMethod = sha2 == null

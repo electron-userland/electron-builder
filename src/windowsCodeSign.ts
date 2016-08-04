@@ -98,9 +98,7 @@ async function spawnSign(options: any, inputPath: string, outputPath: string, ha
     args.push(inputPath)
   }
 
-  return await spawn(await getToolPath(options), args, {
-    stdio: ["ignore", "ignore", "inherit"],
-  })
+  return await spawn(await getToolPath(options), args)
 }
 
 // async function verify(options: any) {

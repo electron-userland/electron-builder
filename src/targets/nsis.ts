@@ -233,9 +233,8 @@ export default class NsisTarget extends Target {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
         cwd: nsisTemplatesDir,
-        stdio: ["pipe", "pipe", process.stderr]
-      })
-      handleProcess("close", childProcess, command, resolve, reject, true)
+      }, true)
+      handleProcess("close", childProcess, command, resolve, reject)
 
       childProcess.stdin.end(script)
     })

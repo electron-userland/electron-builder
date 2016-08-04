@@ -1,5 +1,5 @@
 import { Info } from "hosted-git-info"
-import * as assertThat from "should/as-function"
+import { assertThat } from "./helpers/fileAssert"
 import test from "ava-tf"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getRepositoryInfo } from "out/repositoryInfo"
@@ -12,7 +12,7 @@ test("repo slug from TRAVIS_REPO_SLUG", () => {
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
     const info = (<BluebirdPromise<Info>>getRepositoryInfo()).value()
-    assertThat(info).has.properties({
+    assertThat(info).hasProperties({
       user: "travis-ci",
       project: "travis-build",
     })
@@ -43,7 +43,7 @@ test("repo slug from APPVEYOR", () => {
     process.env.APPVEYOR_ACCOUNT_NAME = "travis-ci"
     process.env.APPVEYOR_PROJECT_NAME = "travis-build"
     const info = (<BluebirdPromise<Info>>getRepositoryInfo()).value()
-    assertThat(info).has.properties({
+    assertThat(info).hasProperties({
       user: "travis-ci",
       project: "travis-build",
     })

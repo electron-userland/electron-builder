@@ -1,9 +1,10 @@
 //noinspection SpellCheckingInspection
-export const expectedLinuxContents = [
-  "/",
+export const expectedLinuxContents = ["/",
   "/opt/",
   "/usr/",
   "/opt/TestApp/",
+  "/opt/TestApp/blink_image_resources_200_percent.pak",
+  "/opt/TestApp/content_resources_200_percent.pak",
   "/opt/TestApp/content_shell.pak",
   "/opt/TestApp/icudtl.dat",
   "/opt/TestApp/libffmpeg.so",
@@ -13,6 +14,8 @@ export const expectedLinuxContents = [
   "/opt/TestApp/natives_blob.bin",
   "/opt/TestApp/snapshot_blob.bin",
   "/opt/TestApp/TestApp",
+  "/opt/TestApp/ui_resources_200_percent.pak",
+  "/opt/TestApp/views_resources_200_percent.pak",
   "/usr/share/",
   "/opt/TestApp/resources/",
   "/opt/TestApp/resources/app.asar",
@@ -50,8 +53,7 @@ export const expectedLinuxContents = [
   "/usr/share/icons/hicolor/64x64/apps/",
   "/usr/share/icons/hicolor/64x64/apps/TestApp.png",
   "/usr/share/icons/hicolor/96x96/apps/",
-  "/usr/share/icons/hicolor/96x96/apps/TestApp.png"
-]
+  "/usr/share/icons/hicolor/96x96/apps/TestApp.png"]
 
 //noinspection SpellCheckingInspection
 export const expectedWinContents = [

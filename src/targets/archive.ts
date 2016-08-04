@@ -1,4 +1,4 @@
-import { spawn, debug, debug7zArgs } from "../util/util"
+import { spawn, debug7zArgs } from "../util/util"
 import { CompressionLevel } from "../metadata"
 import * as path from "path"
 import { unlink } from "fs-extra-p"
@@ -34,7 +34,6 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
 
     await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", [info.flag, "--transform", `s,^\.,${path.basename(outFile, "." + format)},`, "-cf", outFile, "."], {
       cwd: dirToArchive,
-      stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
       env: tarEnv
     })
     return outFile
@@ -74,7 +73,6 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
 
   await spawn(path7za, args, {
     cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
-    stdio: ["ignore", debug.enabled ? "inherit" : "ignore", "inherit"],
   })
 
   return outFile

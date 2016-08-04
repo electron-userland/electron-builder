@@ -1,5 +1,4 @@
 import { copy, emptyDir, remove, writeJson, readJson, readFile } from "fs-extra-p"
-import * as assertThat2 from "should/as-function"
 import { assertThat } from "./fileAssert"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
@@ -172,7 +171,7 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
   }
 
-  assertThat2(parseDebControl(await exec("dpkg", ["--info", packageFile]))).has.properties({
+  assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).hasProperties({
     License: "MIT",
     Homepage: "http://foo.example.com",
     Maintainer: "Foo Bar <foo@example.com>",
@@ -206,7 +205,7 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
   const appInfo = packager.appInfo
   const packedAppDir = path.join(path.dirname(artifacts[0].file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
-  assertThat2(info).has.properties({
+  assertThat(info).hasProperties({
     CFBundleDisplayName: appInfo.productName,
     CFBundleIdentifier: "org.electron-builder.testApp",
     LSApplicationCategoryType: "your.app.category.type",
@@ -215,7 +214,7 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
 
   if (packagerOptions.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
-    assertThat2(result).not.match(/is not signed at all/)
+    assertThat(result).doesNotMatch(/is not signed at all/)
   }
 
   const actualFiles = artifacts.map(it => path.basename(it.file)).sort()

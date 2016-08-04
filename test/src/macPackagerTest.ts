@@ -5,7 +5,7 @@ import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo, PackagerOptions } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
-import * as assertThat from "should/as-function"
+import { assertThat } from "./helpers/fileAssert"
 import { ElectronPackagerOptions } from "out/packager/dirPackager"
 import { Platform, MacOptions, createTargets } from "out"
 import { SignOptions, FlatOptions } from "electron-osx-sign"
@@ -46,79 +46,84 @@ test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App ßW-1.1.0.dmg"]))
 test.ifOsx("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
-test.ifOsx("mas", createTargetTest(["mas"], ["Test App ßW-1.1.0.pkg"]))
-test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App ßW-1.1.0-mac.7z", "Test App ßW-1.1.0.pkg"]))
+if (process.env.CSC_KEY_PASSWORD == null) {
+  console.warn("Skip mas tests because CSC_KEY_PASSWORD is not defined")
+}
+else {
+  test.ifOsx("mas", createTargetTest(["mas"], ["Test App ßW-1.1.0.pkg"]))
+  test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App ßW-1.1.0-mac.7z", "Test App ßW-1.1.0.pkg"]))
 
-test.ifOsx("custom mas", () => {
-  let platformPackager: CheckingMacPackager = null
-  return assertPack("test-app-one", signed({
-    targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
-    devMetadata: {
-      build: {
-        mac: {
-          target: ["mas"],
-        },
-        mas: {
+  test.ifOsx("custom mas", () => {
+    let platformPackager: CheckingMacPackager = null
+    return assertPack("test-app-one", signed({
+      targets: Platform.MAC.createTarget(),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+      devMetadata: {
+        build: {
+          mac: {
+            target: ["mas"],
+          },
+          mas: {
+            entitlements: "mas-entitlements file path",
+            entitlementsInherit: "mas-entitlementsInherit file path",
+          }
+        }
+      }
+    }), {
+      packed: () => {
+        assertThat(platformPackager.effectiveSignOptions).hasProperties({
           entitlements: "mas-entitlements file path",
-          entitlementsInherit: "mas-entitlementsInherit file path",
+          "entitlements-inherit": "mas-entitlementsInherit file path",
+        })
+        return BluebirdPromise.resolve(null)
+      }
+    })
+  })
+
+  test.ifOsx("entitlements in the package.json", () => {
+    let platformPackager: CheckingMacPackager = null
+    return assertPack("test-app-one", signed({
+      targets: Platform.MAC.createTarget(),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+      devMetadata: {
+        build: {
+          mac: {
+            entitlements: "osx-entitlements file path",
+            entitlementsInherit: "osx-entitlementsInherit file path",
+          }
         }
       }
-    }
-  }), {
-    packed: () => {
-      assertThat(platformPackager.effectiveSignOptions).has.properties({
-        entitlements: "mas-entitlements file path",
-        "entitlements-inherit": "mas-entitlementsInherit file path",
-      })
-      return BluebirdPromise.resolve(null)
-    }
-  })
-})
-
-test.ifOsx("entitlements in the package.json", () => {
-  let platformPackager: CheckingMacPackager = null
-  return assertPack("test-app-one", signed({
-    targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
-    devMetadata: {
-      build: {
-        mac: {
+    }), {
+      packed: () => {
+        assertThat(platformPackager.effectiveSignOptions).hasProperties({
           entitlements: "osx-entitlements file path",
-          entitlementsInherit: "osx-entitlementsInherit file path",
-        }
+          "entitlements-inherit": "osx-entitlementsInherit file path",
+        })
+        return BluebirdPromise.resolve()
       }
-    }
-  }), {
-    packed: () => {
-      assertThat(platformPackager.effectiveSignOptions).has.properties({
-        entitlements: "osx-entitlements file path",
-        "entitlements-inherit": "osx-entitlementsInherit file path",
-      })
-      return BluebirdPromise.resolve(null)
-    }
+    })
   })
-})
 
-test.ifOsx("entitlements in build dir", () => {
-  let platformPackager: CheckingMacPackager = null
-  return assertPack("test-app-one", signed({
-    targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
-  }), {
-    tempDirCreated: projectDir => BluebirdPromise.all([
-      writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
-      writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
-    ]),
-    packed: projectDir => {
-      assertThat(platformPackager.effectiveSignOptions).has.properties({
-        entitlements: path.join(projectDir, "build", "entitlements.mac.plist"),
-        "entitlements-inherit": path.join(projectDir, "build", "entitlements.mac.inherit.plist"),
-      })
-      return BluebirdPromise.resolve(null)
-    }
+  test.ifOsx("entitlements in build dir", () => {
+    let platformPackager: CheckingMacPackager = null
+    return assertPack("test-app-one", signed({
+      targets: Platform.MAC.createTarget(),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+    }), {
+      tempDirCreated: projectDir => BluebirdPromise.all([
+        writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
+        writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
+      ]),
+      packed: projectDir => {
+        assertThat(platformPackager.effectiveSignOptions).hasProperties({
+          entitlements: path.join(projectDir, "build", "entitlements.mac.plist"),
+          "entitlements-inherit": path.join(projectDir, "build", "entitlements.mac.inherit.plist"),
+        })
+        return BluebirdPromise.resolve()
+      }
+    })
   })
-})
+}
 
 test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.MAC), {
   tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
@@ -145,8 +150,8 @@ test.ifOsx("custom background - old way", () => {
       })
     ]),
     packed: () => {
-      assertThat(platformPackager.effectiveDistOptions.background).equal(customBackground)
-      assertThat(platformPackager.effectiveDistOptions.icon).equal("foo.icns")
+      assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
+      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
       return BluebirdPromise.resolve(null)
     },
   })
@@ -178,9 +183,9 @@ test.ifOsx("custom background - new way", () => {
       })
     ]),
     packed: projectDir => {
-      assertThat(platformPackager.effectiveDistOptions.background).equal(customBackground)
-      assertThat(platformPackager.effectiveDistOptions.icon).equal("foo.icns")
-      assertThat(platformPackager.effectivePackOptions.icon).equal(path.join(projectDir, "customIcon.icns"))
+      assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
+      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
+      assertThat(platformPackager.effectivePackOptions.icon).isEqualTo(path.join(projectDir, "customIcon.icns"))
       return BluebirdPromise.resolve(null)
     },
   })
@@ -203,9 +208,9 @@ test.ifOsx("disable dmg icon, bundleVersion", () => {
     }
   }, {
     packed: () => {
-      assertThat(platformPackager.effectiveDistOptions.icon).equal(null)
-      assertThat(platformPackager.effectivePackOptions.icon).not.equal(null)
-      assertThat(platformPackager.appInfo.buildVersion).equal("50")
+      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo(null)
+      assertThat(platformPackager.effectivePackOptions.icon).isNotEqualTo(null)
+      assertThat(platformPackager.appInfo.buildVersion).isEqualTo("50")
       return BluebirdPromise.resolve(null)
     },
   })

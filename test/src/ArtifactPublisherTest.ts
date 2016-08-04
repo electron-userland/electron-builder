@@ -2,7 +2,7 @@ import test from "./helpers/avaEx"
 import { GitHubPublisher } from "out/publish/gitHubPublisher"
 import { HttpError } from "out/publish/gitHubRequest"
 import { join } from "path"
-import * as assertThat from "should/as-function"
+import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 
 //noinspection JSUnusedLocalSymbols
@@ -16,6 +16,7 @@ function versionNumber() {
   return `${getRandomInt(0, 99)}.${getRandomInt(0, 99)}.${getRandomInt(0, 99)}`
 }
 
+//noinspection SpellCheckingInspection
 const token = new Buffer("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 
@@ -51,6 +52,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 
 test("Bintray upload", async () => {
   const version = versionNumber()
+  //noinspection SpellCheckingInspection
   const publisher = new BintrayPublisher("actperepo", "5df2cadec86dff91392e4c419540785813c3db15", version, "test")
   try {
     const artifactName = `icon-${version}.icns`
@@ -85,7 +87,7 @@ testAndIgnoreApiRate("prerelease", async () => {
   try {
     await publisher.upload(iconPath)
     const r = await publisher.getRelease()
-    assertThat(r).has.properties({
+    assertThat(r).hasProperties({
       prerelease: true,
       draft: false,
     })

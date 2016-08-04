@@ -42,7 +42,6 @@ export function spawnNpmProduction(command: string, appDir: string, env?: any): 
 
   return spawn(npmExecPath, npmExecArgs, {
     cwd: appDir,
-    stdio: ["ignore", "pipe", process.stderr],
     env: env || process.env
   })
 }
@@ -98,25 +97,31 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions): ChildProcess {
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean): ChildProcess {
+  if (options == null) {
+    options = {}
+  }
+  if (options.stdio == null) {
+    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", "inherit"]
+  }
+
   if (debug.enabled) {
     debug(`Spawning ${command} ${args.join(" ")}`)
   }
   return _spawn(command, args, options)
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, pipeInput?: Boolean): BluebirdPromise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    handleProcess("close", doSpawn(command, args || [], options), command, resolve, reject)
+    handleProcess("close", doSpawn(command, args || [], options, pipeInput), command, resolve, reject)
   })
 }
 
-export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void, printOut: boolean = false) {
+export function handleProcess(event: string, childProcess: ChildProcess, command: string, resolve: ((value?: any) => void) | null, reject: (reason?: any) => void) {
   childProcess.on("error", reject)
 
-  let out: string | null = null
-  if (printOut) {
-    out = ""
+  let out = ""
+  if (!debug.enabled && childProcess.stdout != null) {
     childProcess.stdout.on("data", (data: string) => {
       out += data
     })
@@ -125,11 +130,10 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
   childProcess.on(event, (code: number) => {
     if (code === 0 && debug.enabled) {
       debug(`${command} (${childProcess.pid}) exited with code ${code}`)
-      debug(out)
     }
 
     if (code !== 0) {
-      reject(new Error(`${command} exited with code ${code}${out == null ? "" : `\n${out}`}`))
+      reject(new Error(`${command} exited with code ${code}${out.length === 0 ? "" : `\n${out}`}`))
     }
     else if (resolve != null) {
       resolve()

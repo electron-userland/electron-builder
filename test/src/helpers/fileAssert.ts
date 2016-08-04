@@ -29,6 +29,20 @@ class Assertions {
     compare(this.actual, expected)
   }
 
+  isNotEqualTo(expected: any) {
+    compare(this.actual, expected, true)
+  }
+
+  isNotEmpty() {
+    compare(this.actual, "", true)
+  }
+
+  doesNotMatch(pattern: RegExp) {
+    if ((<string>this.actual).match(pattern)) {
+      throw new Error(`${this.actual} matches ${pattern}`)
+    }
+  }
+
   containsAll<T>(expected: Iterable<T>) {
     compare(this.actual.slice().sort(), Array.from(expected).slice().sort())
   }
@@ -89,8 +103,8 @@ function prettyDiff(actual: any, expected: any): string {
   return `\n${diff}\n`
 }
 
-function compare(actual: any, expected: any) {
-  if (!json8.equal(actual, expected)) {
+function compare(actual: any, expected: any, not: boolean = false) {
+  if (json8.equal(actual, expected) === not) {
     const actualJson = JSON.stringify(actual, jsonReplacer, 2)
     const expectedJson = JSON.stringify(expected, jsonReplacer, 2)
     const stack = new Error().stack
