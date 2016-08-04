@@ -5,8 +5,5 @@
   "description": "Test Application (test quite \" #378)",
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
-  "homepage": "http://foo.example.com",
-  "dependencies": {
-    "nslog": "^3.0.0"
-  }
+  "homepage": "http://foo.example.com"
 }
