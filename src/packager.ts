@@ -168,7 +168,10 @@ export class Packager implements BuildInfo {
     checkNotEmpty("description", appMetadata.description)
     checkNotEmpty("version", appMetadata.version)
 
+    checkDependencies(this.devMetadata.dependencies)
     if ((<any>appMetadata) !== this.devMetadata) {
+      checkDependencies(appMetadata.dependencies)
+
       if ((<any>appMetadata).build != null) {
         throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
       }
@@ -281,5 +284,17 @@ async function checkWineVersion(checkPromise: Promise<string>) {
 
   if (semver.lt(wineVersion, "1.8.0")) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
+  }
+}
+
+function checkDependencies(dependencies?: { [key: string]: string }) {
+  if (dependencies == null) {
+    return
+  }
+
+  for (let name of ["electron", "electron-prebuilt", "electron-builder"]) {
+    if (name in dependencies) {
+      throw new Error(`${name} must be in the devDependencies`)
+    }
   }
 }

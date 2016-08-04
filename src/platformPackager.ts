@@ -8,7 +8,7 @@ import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
-import { checkFileInPackage, createAsarArchive } from "./asarUtil"
+import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { deepAssign } from "./util/deepAssign"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
@@ -362,25 +362,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
-  private async checkFileInPackage(resourcesDir: string, file: string, isAsar: boolean) {
+  private async checkFileInPackage(resourcesDir: string, file: string, messagePrefix: string, isAsar: boolean) {
     const relativeFile = path.relative(this.info.appDir, path.resolve(this.info.appDir, file))
     if (isAsar) {
-      await checkFileInPackage(path.join(resourcesDir, "app.asar"), relativeFile)
+      await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
     }
     else {
       const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
       if (outStat == null) {
-        throw new Error(`Application entry file "${relativeFile}" does not exist. Seems like a wrong configuration.`)
+        throw new Error(`${messagePrefix} "${relativeFile}" does not exist. Seems like a wrong configuration.`)
       }
       else if (!outStat.isFile()) {
-        throw new Error(`Application entry file "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+        throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
       }
     }
   }
 
   private async sanityCheckPackage(appOutDir: string, isAsar: boolean): Promise<any> {
     const outStat = await statOrNull(appOutDir)
-
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
     }
@@ -388,8 +387,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
     }
 
-    const mainFile = this.appInfo.metadata.main || "index.js"
-    await this.checkFileInPackage(this.getResourcesDir(appOutDir), mainFile, isAsar)
+    const resourcesDir = this.getResourcesDir(appOutDir)
+    await this.checkFileInPackage(resourcesDir, this.appInfo.metadata.main || "index.js", "Application entry file", isAsar)
+    await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {

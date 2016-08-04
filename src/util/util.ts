@@ -204,6 +204,9 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     else if (!stat.isDirectory()) {
       throw new Error(`Application directory ${userAppDir} is not a directory`)
     }
+    else if (projectDir === absolutePath) {
+      warn(`Specified application directory "${userAppDir}" equals to project dir — superfluous or wrong configuration`)
+    }
     return absolutePath
   }
 
@@ -238,7 +241,7 @@ let tmpDirCounter = 0
 const tempDirPrefix = `${process.pid.toString(36)}-${Date.now().toString(36)}`
 
 export function getTempName(prefix?: string | n): string {
-  return `${prefix == null ? "" : prefix + "-"}${tempDirPrefix}-${(tmpDirCounter++).toString(36)}`
+  return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(36)}`
 }
 
 export function isEmptyOrSpaces(s: string | n) {

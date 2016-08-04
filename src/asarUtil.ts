@@ -384,7 +384,11 @@ function writeAsarFile(filesystem: any, dest: string, toPack: Array<string>, cha
   })
 }
 
-export async function checkFileInPackage(asarFile: string, relativeFile: string) {
+export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
+  function error(text: string) {
+    return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
+  }
+
   let stat: AsarFileInfo | null
   try {
     stat = statFile(asarFile, relativeFile)
@@ -392,14 +396,14 @@ export async function checkFileInPackage(asarFile: string, relativeFile: string)
   catch (e) {
     const fileStat = await statOrNull(asarFile)
     if (fileStat == null) {
-      throw new Error(`File "${asarFile}" does not exist. Seems like a wrong configuration.`)
+      throw error(`does not exist. Seems like a wrong configuration.`)
     }
 
     try {
       listPackage(asarFile)
     }
     catch (e) {
-      throw new Error(`File "${asarFile}" is corrupted: ${e}`)
+      throw error(`is corrupted: ${e}`)
     }
 
     // asar throws error on access to undefined object (info.link)
@@ -407,10 +411,10 @@ export async function checkFileInPackage(asarFile: string, relativeFile: string)
   }
 
   if (stat == null) {
-    throw new Error(`Application entry file "${relativeFile}" in the "${asarFile}" does not exist. Seems like a wrong configuration.`)
+    throw error(`does not exist. Seems like a wrong configuration.`)
   }
   if (stat.size === 0) {
-    throw new Error(`Application entry file "${relativeFile}" in the "${asarFile}" is corrupted: size 0`)
+    throw error(`is corrupted: size 0`)
   }
 }
 

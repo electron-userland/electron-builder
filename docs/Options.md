@@ -54,8 +54,8 @@ Here documented only `electron-builder` specific options:
 | app-category-type | <a name="BuildMetadata-app-category-type"></a><p>*macOS-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>app-category-type=public.app-category.developer-tools</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p> <p>Or you can pass object of any asar options.</p> <p>electron-builder detects node modules that must be unpacked automatically, you don’t need to explicitly set <code>asar.unpackDir</code> - please file issue if this doesn’t work.</p>
 | productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
-| files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to <code>**\/\*</code> (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).</p> <p>Development dependencies are never copied in any case. You don’t need to ignore it explicitly.</p> <p>[Multiple patterns](#multiple-glob-patterns) are supported. You can use <code>${os}</code> (expanded to mac, linux or win according to current platform) and <code>${arch}</code> in the pattern. If directory matched, all contents are copied. So, you can just specify <code>foo</code> to copy <code>foo</code> directory.</p> <p>Remember that default pattern <code>\*\*\/\*</code> is not added to your custom, so, you have to add it explicitly — e.g. <code>[&quot;\*\*\/\*&quot;, &quot;!ignoreMe${/\*}&quot;]</code>.</p> <p>May be specified in the platform options (e.g. in the <code>build.mac</code>).</p>
-| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#BuildMetadata-files).</p>
+| files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. See [File Patterns](#multiple-glob-patterns).</p>
+| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#multiple-glob-patterns).</p>
 | extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
 | mac | <a name="BuildMetadata-mac"></a>See [.build.mac](#MacOptions).
 | dmg | <a name="BuildMetadata-dmg"></a>See [.build.dmg](#DmgOptions).
@@ -174,8 +174,20 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 
 <!-- end of generated block -->
 
+# File Patterns
 
-# Multiple Glob Patterns
+[build.files](#BuildMetadata-files) defaults to `**/*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
+
+Development dependencies are never copied in any case. You don't need to ignore it explicitly.
+
+[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to mac, linux or win according to current platform) and `${arch}` in the pattern.
+If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
+
+Remember that default pattern `**/*` is not added to your custom, so, you have to add it explicitly — e.g. `["**/*", "!ignoreMe${/*}"]`.
+
+May be specified in the platform options (e.g. in the `build.mac`).
+
+## Multiple Glob Patterns
  ```js
  [
    // match all files

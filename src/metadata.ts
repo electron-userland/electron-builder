@@ -3,6 +3,8 @@ import { ElectronPackagerOptions } from "./packager/dirPackager"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
+
+  dependencies?: { [key: string]: string }
 }
 
 /*
@@ -122,23 +124,15 @@ export interface BuildMetadata {
   readonly productName?: string | null
 
   /**
-   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `**\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
-
-   Development dependencies are never copied in any case. You don't need to ignore it explicitly.
-
-   [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to mac, linux or win according to current platform) and `${arch}` in the pattern.
-   If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
-
-   Remember that default pattern `\*\*\/\*` is not added to your custom, so, you have to add it explicitly — e.g. `["\*\*\/\*", "!ignoreMe${/\*}"]`.
-
-   May be specified in the platform options (e.g. in the `build.mac`).
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+   See [File Patterns](#multiple-glob-patterns).
    */
   readonly files?: Array<string> | string | null
 
   /**
    A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
 
-   Glob rules the same as for [files](#BuildMetadata-files).
+   Glob rules the same as for [files](#multiple-glob-patterns).
    */
   readonly extraResources?: Array<string> | string | null
 
