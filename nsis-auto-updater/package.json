@@ -1,0 +1,25 @@
+{
+  "name": "nsis-auto-updater",
+  "version": "0.0.1",
+  "description": "NSIS Auto Updater",
+  "main": "out/nsis-auto-updater/src/nsis-updater.js",
+  "scripts": {
+  },
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "files": [
+    "out"
+  ],
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "fs-extra-p": "^1.0.6"
+  },
+  "bundledDependencies": [
+    "fs-extra-p",
+    "bluebird"
+  ],
+  "devDependencies": {
+    "@types/electron": "^0.37.14",
+    "@types/node": "^4.0.30"
+  }
+}

@@ -3,6 +3,7 @@ import { GitHubPublisher } from "out/publish/gitHubPublisher"
 import { HttpError } from "out/publish/gitHubRequest"
 import { join } from "path"
 import * as assertThat from "should/as-function"
+import { BintrayPublisher } from "out/publish/BintrayPublisher"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -12,7 +13,7 @@ function getRandomInt(min: number, max: number) {
 }
 
 function versionNumber() {
-  return getRandomInt(0, 99) + "." + Date.now() + "." + getRandomInt(0, 9)
+  return `${getRandomInt(0, 99)}.${getRandomInt(0, 99)}.${getRandomInt(0, 99)}`
 }
 
 const token = new Buffer("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
@@ -48,21 +49,26 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   })
 }
 
-// testAndIgnoreApiRate("Bintray upload", async () => {
-//   const publisher = new BintrayPublisher("actperepo", "5df2cadec86dff91392e4c419540785813c3db15", versionNumber(), "test")
-//   try {
-//     await publisher.upload(iconPath)
-//   }
-//   finally {
-//     // await publisher.deleteRelease()
-//   }
-// })
+test("Bintray upload", async () => {
+  const version = versionNumber()
+  const publisher = new BintrayPublisher("actperepo", "5df2cadec86dff91392e4c419540785813c3db15", version, "test")
+  try {
+    const artifactName = `icon-${version}.icns`
+    await publisher.upload(iconPath, artifactName)
+    await publisher.upload(iconPath, artifactName)
+  }
+  finally {
+    await publisher.deleteRelease()
+  }
+})
 
 testAndIgnoreApiRate("GitHub upload", async () => {
   const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
     githubToken: token
   })
   try {
+    await publisher.upload(iconPath)
+    // test overwrite
     await publisher.upload(iconPath)
   }
   finally {
@@ -117,19 +123,6 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
       githubToken: token
     })
   try {
-    await publisher.upload(iconPath)
-  }
-  finally {
-    await publisher.deleteRelease()
-  }
-})
-
-testAndIgnoreApiRate("GitHub overwrite on upload", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
-      githubToken: token
-    })
-  try {
-    await publisher.upload(iconPath)
     await publisher.upload(iconPath)
   }
   finally {

@@ -1,15 +1,12 @@
 import { isEmptyOrSpaces } from "../util/util"
 import { log, warn } from "../util/log"
+import { debug } from "../util/util"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
 import { stat } from "fs-extra-p"
-import { createReadStream } from "fs"
-import { gitHubRequest, HttpError, doGitHubRequest } from "./gitHubRequest"
+import { gitHubRequest, HttpError, doApiRequest, uploadFile } from "./gitHubRequest"
 import { Promise as BluebirdPromise } from "bluebird"
-import { ReadStream } from "tty"
-import progressStream = require("progress-stream")
-import ProgressBar = require("progress")
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 
 //noinspection JSUnusedLocalSymbols
@@ -85,11 +82,11 @@ export class GitHubPublisher implements Publisher {
     }
 
     if (createReleaseIfNotExists) {
-      log(`Release with tag ${this.tag} doesn't exists, creating one`)
+      log(`Release with tag ${this.tag} doesn't exist, creating one`)
       return this.createRelease()
     }
     else {
-      log(`Cannot found release with tag ${this.tag}, artifacts will be not published`)
+      log(`Release with tag ${this.tag} doesn't exist, artifacts will be not published`)
       return null
     }
   }
@@ -98,6 +95,7 @@ export class GitHubPublisher implements Publisher {
     const fileName = artifactName || basename(file)
     const release = await this.releasePromise
     if (release == null) {
+      debug(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
       return
     }
 
@@ -105,38 +103,18 @@ export class GitHubPublisher implements Publisher {
     const fileStat = await stat(file)
     let badGatewayCount = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
-      const progressBar = (<ReadStream>process.stdin).isTTY ? new ProgressBar(`Uploading ${fileName} [:bar] :percent :etas`, {
-        total: fileStat.size,
-        incomplete: " ",
-        stream: process.stdout,
-        width: 20,
-      }) : null
-
       try {
-        return await doGitHubRequest<any>({
+        return await doApiRequest<any>({
           hostname: parsedUrl.hostname,
           path: parsedUrl.path,
           method: "POST",
           headers: {
             Accept: "application/vnd.github.v3+json",
-            "User-Agent": "electron-complete-builder",
+            "User-Agent": "electron-builder",
             "Content-Type": mime.lookup(fileName),
             "Content-Length": fileStat.size
           }
-        }, this.token, (request, reject) => {
-          const fileInputStream = createReadStream(file)
-          fileInputStream.on("error", reject)
-          fileInputStream
-            .pipe(progressStream({
-              length: fileStat.size,
-              time: 1000
-            }, progress => {
-              if (progressBar != null) {
-                progressBar.tick(progress.delta)
-              }
-            }))
-            .pipe(request)
-        })
+        }, this.token, uploadFile.bind(this, file, fileStat, fileName))
       }
       catch (e) {
         if (e instanceof HttpError) {
@@ -167,7 +145,7 @@ export class GitHubPublisher implements Publisher {
   private createRelease() {
     return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases`, this.token, {
       tag_name: this.tag,
-      name: this.tag,
+      name: this.version,
       draft: this.options.draft == null || this.options.draft,
       prerelease: this.options.prerelease != null && this.options.prerelease,
     })
@@ -182,12 +160,12 @@ export class GitHubPublisher implements Publisher {
   //noinspection JSUnusedGlobalSymbols
   async deleteRelease(): Promise<any> {
     if (!this._releasePromise.isFulfilled()) {
-      return BluebirdPromise.resolve()
+      return
     }
 
     const release = this._releasePromise.value()
     if (release == null) {
-      return BluebirdPromise.resolve()
+      return
     }
 
     for (let i = 0; i < 3; i++) {

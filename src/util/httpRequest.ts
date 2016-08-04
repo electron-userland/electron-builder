@@ -17,7 +17,7 @@ export interface DownloadOptions {
 
 export const download = <(url: string, destination: string, options?: DownloadOptions) => BluebirdPromise<any>>(BluebirdPromise.promisify(_download))
 
-function _download(url: string, destination: string, options: DownloadOptions | n, callback: (error: Error) => void): void {
+function _download(url: string, destination: string, options: DownloadOptions | null | undefined, callback: (error: Error) => void): void {
   if (callback == null) {
     callback = <any>options
     options = null
@@ -62,14 +62,14 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
       return
     }
 
-    const sha1Header = response.headers["X-Checksum-Sha2"]
-    if (sha1Header != null && options.sha2 != null) {
+    const sha2Header = response.headers["X-Checksum-Sha2"]
+    if (sha2Header != null && options.sha2 != null) {
       // todo why bintray doesn't send this header always
-      if (sha1Header == null) {
+      if (sha2Header == null) {
         throw new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header")
       }
-      else if (sha1Header !== options.sha2) {
-        throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha1Header} (X-Checksum-Sha2 header)`)
+      else if (sha2Header !== options.sha2) {
+        throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`)
       }
     }
 

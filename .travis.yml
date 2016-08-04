@@ -6,7 +6,7 @@ matrix:
       env: TEST_FILES=BuildTest,linuxPackagerTest,globTest NODE_VERSION=6 PUBLISH_TO_NPM=true
 
     - os: osx
-      env: TEST_FILES=macPackagerTest,winPackagerTest NODE_VERSION=6
+      env: TEST_FILES=macPackagerTest,winPackagerTest,nsisTest NODE_VERSION=6
 
     - os: osx
       env: TEST_FILES=macPackagerTest,CodeSignTest NODE_VERSION=4

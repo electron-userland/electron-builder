@@ -3,7 +3,7 @@ import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink } from "fs-extra-p"
 import { Platform } from "out/metadata"
-import { cpus } from "os"
+import { cpus, homedir } from "os"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -20,7 +20,7 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "1.3.1"
+const electronVersion = "1.3.2"
 
 async function main() {
   await BluebirdPromise.all([
@@ -56,7 +56,7 @@ async function deleteOldElectronVersion(): Promise<any> {
     return
   }
 
-  const cacheDir = path.join(require("os").homedir(), ".electron")
+  const cacheDir = path.join(homedir(), ".electron")
   try {
     const deletePromises: Array<Promise<any>> = []
     for (let file of (await readdir(cacheDir))) {
@@ -148,6 +148,7 @@ function runTests(): BluebirdPromise<any> {
     }
     else {
       args.push(path.join(baseDir, "winPackagerTest.js"))
+      args.push(path.join(baseDir, "nsisTest.js"))
       args.push(...baseForLinuxTests)
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)

@@ -15,18 +15,13 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
-  "declaration": {
-    "electron-builder": "out/electron-builder.d.ts",
-    "": "test/typings/electron-builder.d.ts"
-  },
-  "docs": "docs/Options.md",
+  "files": [
+    "../node_modules/fs-extra-p/index.d.ts",
+    "../node_modules/fs-extra-p/bluebird.d.ts",
+    "../src/util/httpRequest.ts"
+  ],
   "include": [
     "src/**/*.ts",
-    "typings/**/*.d.ts",
-    "node_modules/fs-extra-p/index.d.ts",
-    "node_modules/7zip-bin/index.d.ts",
-    "node_modules/fs-extra-p/bluebird.d.ts",
-    "node_modules/electron-osx-sign/index.d.ts",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [

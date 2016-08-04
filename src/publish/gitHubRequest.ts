@@ -3,6 +3,10 @@ import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
+import { createReadStream, Stats } from "fs-extra-p"
+import progressStream = require("progress-stream")
+import ProgressBar = require("progress")
+import { ReadStream } from "tty"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -35,10 +39,10 @@ function request<T>(hostname: string, path: string, token: string | null, data: 
     options.headers["Content-Type"] = "application/json"
     options.headers["Content-Length"] = encodedData.length
   }
-  return doGitHubRequest<T>(options, token, it => it.end(encodedData))
+  return doApiRequest<T>(options, token, it => it.end(encodedData))
 }
 
-export function doGitHubRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
+export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
   if (token != null) {
     (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
@@ -68,7 +72,8 @@ Please double check that your GitHub Token is correct. Due to security reasons G
         response.on("end", () => {
           try {
             if (response.statusCode >= 400) {
-              if (response.headers["content-type"].includes("json")) {
+              const contentType = response.headers["content-type"]
+              if (contentType != null && contentType.includes("json")) {
                 reject(new HttpError(response, JSON.parse(data)))
               }
               else {
@@ -99,4 +104,26 @@ export class HttpError extends Error {
   constructor(public response: IncomingMessage, public description: any = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, <any>null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, <any>null, "  "))
   }
+}
+
+export function uploadFile(file: string, fileStat: Stats, fileName: string, request: ClientRequest, reject: (error: Error) => void) {
+  const progressBar = (<ReadStream>process.stdin).isTTY ? new ProgressBar(`Uploading ${fileName} [:bar] :percent :etas`, {
+    total: fileStat.size,
+    incomplete: " ",
+    stream: process.stdout,
+    width: 20,
+  }) : null
+
+  const fileInputStream = createReadStream(file)
+  fileInputStream.on("error", reject)
+  fileInputStream
+    .pipe(progressStream({
+      length: fileStat.size,
+      time: 1000
+    }, progress => {
+      if (progressBar != null) {
+        progressBar.tick(progress.delta)
+      }
+    }))
+    .pipe(request)
 }
