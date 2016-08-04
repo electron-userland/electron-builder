@@ -150,7 +150,7 @@ test("relative index", () => assertPack("test-app", allPlatforms(false), {
 
 const electronVersion = "1.3.2"
 
-test.ifNotWindows("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
+test.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   tempDirCreated: projectDir => BluebirdPromise.all([
@@ -158,12 +158,27 @@ test.ifNotWindows("electron version from electron-prebuilt dependency", () => as
       version: electronVersion
     }),
     modifyPackageJson(projectDir, data => {
+      delete data.build.electronVersion
       data.devDependencies = {}
     })
   ])
 }))
 
-test.ifNotWindows("electron version from build", () => assertPack("test-app-one", {
+test.ifDevOrLinuxCi("electron version from electron dependency", () => assertPack("test-app-one", {
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+}, {
+  tempDirCreated: projectDir => BluebirdPromise.all([
+    outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
+      version: electronVersion
+    }),
+    modifyPackageJson(projectDir, data => {
+      delete data.build.electronVersion
+      data.devDependencies = {}
+    })
+  ])
+}))
+
+test.ifDevOrLinuxCi("electron version from build", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {

@@ -147,18 +147,21 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
   if (build != null && build.electronVersion != null) {
     return build.electronVersion
   }
-  try {
-    return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", "electron-prebuilt", "package.json"))).version
-  }
-  catch (e) {
-    if (e.code !== "ENOENT") {
-      warn(`Cannot read electron version from electron-prebuilt package.json: ${e.message}`)
+
+  for (let name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+    try {
+      return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", name, "package.json"))).version
+    }
+    catch (e) {
+      if (e.code !== "ENOENT") {
+        warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
+      }
     }
   }
 
   const electronPrebuiltDep = findFromElectronPrebuilt(packageData)
   if (electronPrebuiltDep == null) {
-    throw new Error("Cannot find electron-prebuilt dependency to get electron version in the '" + packageJsonPath + "'")
+    throw new Error("Cannot find electron dependency to get electron version in the '" + packageJsonPath + "'")
   }
 
   const firstChar = electronPrebuiltDep[0]
@@ -166,15 +169,15 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
 }
 
 function findFromElectronPrebuilt(packageData: any): any {
-  for (let name of ["electron-prebuilt", "electron-prebuilt-compile"]) {
+  for (let name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
     const devDependencies = packageData.devDependencies
-    let electronPrebuiltDep = devDependencies == null ? null : devDependencies[name]
-    if (electronPrebuiltDep == null) {
+    let dep = devDependencies == null ? null : devDependencies[name]
+    if (dep == null) {
       const dependencies = packageData.dependencies
-      electronPrebuiltDep = dependencies == null ? null : dependencies[name]
+      dep = dependencies == null ? null : dependencies[name]
     }
-    if (electronPrebuiltDep != null) {
-      return electronPrebuiltDep
+    if (dep != null) {
+      return dep
     }
   }
   return null

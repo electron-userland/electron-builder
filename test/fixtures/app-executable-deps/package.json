@@ -1,7 +1,7 @@
 {
   "devDependencies": {
     "electron-builder": "next",
-    "electron-prebuilt": "^1.3.2"
+    "electron": "^1.3.2"
   },
   "build": {
     "app-category-type": "public.app-category.business"

@@ -90,7 +90,7 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
     }
 
     // partial match — pattern: foo/bar.txt path: foo — we must allow foo
-    // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron-prebuilt)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
+    // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
     match = pattern.match(path, !pattern.negate)
   }
   return match

@@ -125,6 +125,7 @@ export interface BuildMetadata {
 
   /**
    A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+
    See [File Patterns](#multiple-glob-patterns).
    */
   readonly files?: Array<string> | string | null
