@@ -48,25 +48,6 @@ Function .onInit
   !endif
 FunctionEnd
 
-Function un.onInit
-  !insertmacro check64BitAndSetRegView
-
-  ${IfNot} ${Silent}
-    MessageBox MB_OKCANCEL "Are you sure you want to uninstall ${PRODUCT_NAME}?" IDOK +2
-    Quit
-
-    !ifdef ONE_CLICK
-      SetSilent silent
-    !endif
-  ${EndIf}
-
-  !insertmacro initMultiUser Un un.
-
-  !ifmacrodef customUnInit
-    !insertmacro customUnInit
-  !endif
-FunctionEnd
-
 Section "install"
   ${IfNot} ${Silent}
     SetDetailsPrint none
@@ -127,10 +108,34 @@ Section "install"
   ${EndIf}
 SectionEnd
 
+Function un.onInit
+  !insertmacro check64BitAndSetRegView
+
+  ${IfNot} ${Silent}
+    MessageBox MB_OKCANCEL "Are you sure you want to uninstall ${PRODUCT_NAME}?" IDOK +2
+    Quit
+
+    !ifdef ONE_CLICK
+      # one-click installer executes uninstall section in the silent mode, but we must show message dialog if silent mode was not explicitly set by user (using /S flag)
+      !insertmacro CHECK_APP_RUNNING "uninstall"
+      SetSilent silent
+    !endif
+  ${EndIf}
+
+  !insertmacro initMultiUser Un un.
+
+  !ifmacrodef customUnInit
+    !insertmacro customUnInit
+  !endif
+FunctionEnd
+
 Section "un.install"
   SetAutoClose true
 
-  !insertmacro CHECK_APP_RUNNING "uninstall"
+  !ifndef ONE_CLICK
+    # for boring installer we check it here to show progress
+    !insertmacro CHECK_APP_RUNNING "uninstall"
+  !endif
 
   StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
   StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
