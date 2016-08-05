@@ -128,7 +128,7 @@ check_dep xdg-desktop-menu
 
 DESKTOP_FILE=$(find "$APPDIR" -maxdepth 1 -name "*.desktop" | head -n 1)
 DESKTOP_FILE_NAME=$(basename "${DESKTOP_FILE}")
-APP=$(echo "$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
+APP="${DESKTOP_FILE_NAME%.*}"
 BIN="$APPDIR/usr/bin/$APP"
 
 if [ ! -f "$DESKTOP_FILE" ] ; then

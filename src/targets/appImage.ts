@@ -45,7 +45,6 @@ export default class AppImageTarget extends TargetEx {
       "-map", await this.desktopEntry, `/${appInfo.name}.desktop`,
       "-move", `/usr/bin/${appInfo.productFilename}`, appExecutableImagePath,
       // http://stackoverflow.com/questions/13633488/can-i-store-unix-permissions-in-a-zip-file-built-with-apache-ant, xorriso doesn't preserve it for zip, but we set it in any case
-      "-chmod", "+x", appExecutableImagePath, "--",
       "-chmod", "+x", "/AppRun", appExecutableImagePath, "--",
     ]
     for (let [from, to] of (await this.helper.icons)) {
