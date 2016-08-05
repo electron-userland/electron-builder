@@ -9,7 +9,6 @@
   FunctionEnd
 !endif
 
-SilentUnInstall silent
 AutoCloseWindow true
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_UNPAGE_INSTFILES
