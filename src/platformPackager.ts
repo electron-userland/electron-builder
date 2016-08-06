@@ -239,8 +239,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
     await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
-    await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
-    await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
+    await this.doCopyExtraFiles(true, appOutDir, extraResourcePatterns)
+    await this.doCopyExtraFiles(false, appOutDir, extraFilePatterns)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -315,10 +315,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
   }
 
-  private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
-    const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
-    const patterns = this.getExtraFilePatterns(isResources, arch, customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, patterns), this.platform === Platform.WINDOWS)
+  private doCopyExtraFiles(isResources: boolean, appOutDir: string, patterns: Array<Minimatch> | null): Promise<any> {
+    const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
+    if (patterns == null || patterns.length === 0) {
+      return BluebirdPromise.resolve()
+    }
+    else {
+      return copyFiltered(this.projectDir, base, createFilter(this.projectDir, patterns), this.platform === Platform.WINDOWS)
+    }
   }
 
   private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {

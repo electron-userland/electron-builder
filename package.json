@@ -24,7 +24,7 @@
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
-    "whitespace": "whitespace src/**/*.ts",
+    "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh"
   },
   "repository": {
@@ -124,7 +124,7 @@
     "ts-babel": "^1.0.4",
     "tslint": "3.14.0",
     "typescript": "^2.1.0-dev.20160802",
-    "whitespace": "^2.0.0"
+    "whitespace": "^2.1.0"
   },
   "babel": {
     "plugins": [
