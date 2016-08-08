@@ -1,6 +1,6 @@
 import test from "./helpers/avaEx"
 import { GitHubPublisher } from "out/publish/gitHubPublisher"
-import { HttpError } from "out/publish/gitHubRequest"
+import { HttpError } from "out/publish/restApiRequest"
 import { join } from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"

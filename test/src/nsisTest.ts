@@ -9,7 +9,7 @@ import { assertThat } from "./helpers/fileAssert"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
-test("nsis", () => assertPack("test-app-one", signed({
+test("one-click", () => assertPack("test-app-one", signed({
     targets: Platform.WINDOWS.createTarget(["nsis"]),
   }), {
     useTempDir: true,
@@ -44,6 +44,7 @@ test.ifNotCiOsx("boring", () => assertPack("test-app-one", signed({
     }
   }
 })))
+
 test.ifNotCiOsx("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {

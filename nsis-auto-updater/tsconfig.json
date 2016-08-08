@@ -16,13 +16,16 @@
     "skipLibCheck": true
   },
   "files": [
+    "../node_modules/@types/node/index.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/fs-extra-p/bluebird.d.ts",
-    "../src/util/httpRequest.ts"
+    "../src/util/httpRequest.ts",
+    "../src/publish/restApiRequest.ts",
+    "../src/publish/bintray.ts",
+    "../src/util/awaiter.ts"
   ],
   "include": [
-    "src/**/*.ts",
-    "node_modules/@types/**/*.d.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
   ]

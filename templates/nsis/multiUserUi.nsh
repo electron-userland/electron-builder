@@ -52,18 +52,16 @@ Var RadioButtonLabel1
 
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
-    IfErrors notallusers
-    Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-    Abort
-
-    notallusers:
+    ${IfNot} ${Errors}
+      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+      Abort
+    ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
-    IfErrors notcurrentuser
-    Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-    Abort
-
-    notcurrentuser:
+    ${IfNot} ${Errors}
+      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
+      Abort
+    ${EndIf}
 
 		# If uninstalling, will check if there is both a per-user and per-machine installation. If there is only one, will skip the form.
 	  # If uninstallation was invoked from the "add/remove programs" Windows will automatically requests elevation (depending if uninstall keys are in HKLM or HKCU)
@@ -81,9 +79,9 @@ Var RadioButtonLabel1
 		!endif
 
 		!if "${UNINSTALLER_PREFIX}" == UN
-			!insertmacro MUI_HEADER_TEXT "Choose Installation Options" "Who should this application be installed for?"
+      !insertmacro MUI_HEADER_TEXT "Choose Uninstallation Options" "Which installation should be removed?"
 		!else
-			!insertmacro MUI_HEADER_TEXT "Choose Uninstallation Options" "Which installation should be removed?"
+      !insertmacro MUI_HEADER_TEXT "Choose Installation Options" "Who should this application be installed for?"
 		!endif
 
 		nsDialogs::Create 1018

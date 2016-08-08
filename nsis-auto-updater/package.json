@@ -3,10 +3,11 @@
   "version": "0.0.1",
   "description": "NSIS Auto Updater",
   "main": "out/nsis-auto-updater/src/nsis-updater.js",
-  "scripts": {
-  },
   "author": "Vladimir Krivosheev",
   "license": "MIT",
+  "repository": "electron-userland/electron-builder",
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
     "out"
   ],
@@ -17,9 +18,5 @@
   "bundledDependencies": [
     "fs-extra-p",
     "bluebird"
-  ],
-  "devDependencies": {
-    "@types/electron": "^0.37.14",
-    "@types/node": "^4.0.30"
-  }
+  ]
 }

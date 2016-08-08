@@ -3,20 +3,16 @@ import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
 import { Promise as BluebirdPromise } from "bluebird"
-import { createReadStream, Stats } from "fs-extra-p"
-import progressStream = require("progress-stream")
-import ProgressBar = require("progress")
-import { ReadStream } from "tty"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-export function gitHubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
   return request<T>("api.github.com", path, token, data, method)
 }
 
-export function bintrayRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
-  return request<T>("api.bintray.com", path, token, data, method)
+export function bintrayRequest<T>(path: string, auth: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+  return request<T>("api.bintray.com", path, auth, data, method)
 }
 
 function request<T>(hostname: string, path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
@@ -104,26 +100,4 @@ export class HttpError extends Error {
   constructor(public response: IncomingMessage, public description: any = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, <any>null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, <any>null, "  "))
   }
-}
-
-export function uploadFile(file: string, fileStat: Stats, fileName: string, request: ClientRequest, reject: (error: Error) => void) {
-  const progressBar = (<ReadStream>process.stdin).isTTY ? new ProgressBar(`Uploading ${fileName} [:bar] :percent :etas`, {
-    total: fileStat.size,
-    incomplete: " ",
-    stream: process.stdout,
-    width: 20,
-  }) : null
-
-  const fileInputStream = createReadStream(file)
-  fileInputStream.on("error", reject)
-  fileInputStream
-    .pipe(progressStream({
-      length: fileStat.size,
-      time: 1000
-    }, progress => {
-      if (progressBar != null) {
-        progressBar.tick(progress.delta)
-      }
-    }))
-    .pipe(request)
 }

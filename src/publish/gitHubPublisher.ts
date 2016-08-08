@@ -5,9 +5,10 @@ import { basename } from "path"
 import { parse as parseUrl } from "url"
 import * as mime from "mime"
 import { stat } from "fs-extra-p"
-import { gitHubRequest, HttpError, doApiRequest, uploadFile } from "./gitHubRequest"
+import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
+import { uploadFile } from "./uploader"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -56,7 +57,7 @@ export class GitHubPublisher implements Publisher {
   private async init(): Promise<Release | null> {
     const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
-    const releases = await gitHubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
+    const releases = await githubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
     for (let release of releases) {
       if (release.tag_name === this.tag) {
         if (release.draft) {
@@ -121,10 +122,10 @@ export class GitHubPublisher implements Publisher {
           if (e.response.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
             log(`Artifact ${fileName} already exists, overwrite one`)
-            const assets = await gitHubRequest<Array<Asset>>(`/repos/${this.owner}/${this.repo}/releases/${release.id}/assets`, this.token)
+            const assets = await githubRequest<Array<Asset>>(`/repos/${this.owner}/${this.repo}/releases/${release.id}/assets`, this.token)
             for (let asset of assets) {
               if (asset!.name === fileName) {
-                await gitHubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
+                await githubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
                 continue uploadAttempt
               }
             }
@@ -143,7 +144,7 @@ export class GitHubPublisher implements Publisher {
   }
 
   private createRelease() {
-    return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases`, this.token, {
+    return githubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.version,
       draft: this.options.draft == null || this.options.draft,
@@ -154,7 +155,7 @@ export class GitHubPublisher implements Publisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return gitHubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token)
+    return githubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -170,7 +171,7 @@ export class GitHubPublisher implements Publisher {
 
     for (let i = 0; i < 3; i++) {
       try {
-        return await gitHubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
+        return await githubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
       }
       catch (e) {
         if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {

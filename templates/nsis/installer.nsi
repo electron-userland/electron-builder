@@ -152,7 +152,11 @@ Section "un.install"
   # delete the installed files
   RMDir /r $INSTDIR
 
-  RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "/KEEP_APP_DATA" $R1
+  ${If} ${Errors}
+    RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
+  ${EndIf}
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
 
