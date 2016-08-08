@@ -89,7 +89,6 @@
     "sanitize-filename": "^1.6.0",
     "semver": "^5.3.0",
     "source-map-support": "^0.4.2",
-    "tslint": "^3.14.0-dev.1",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
     "yargs": "^4.8.1"
@@ -122,7 +121,7 @@
     "json8": "^0.9.2",
     "pre-git": "^3.10.0",
     "ts-babel": "^1.0.4",
-    "tslint": "3.14.0",
+    "tslint": "^3.14.0-dev.1",
     "typescript": "^2.1.0-dev.20160802",
     "whitespace": "^2.1.0"
   },
