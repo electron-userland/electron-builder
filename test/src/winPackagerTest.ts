@@ -93,11 +93,11 @@ test("detect install-spinner, certificateFile/password", () => {
   })
 })
 
-test.ifNotCiOsx("icon < 256", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+test.ifNotCiOsx("icon < 256", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
   tempDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }), /Windows icon size must be at least 256x256, please fix ".+/))
 
-test.ifNotCiOsx("icon not an image", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+test.ifNotCiOsx("icon not an image", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
   tempDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
 }), /Windows icon is not valid ico file, please fix ".+/))
 
@@ -121,6 +121,17 @@ test.ifOsx("custom icon", () => {
     },
   })
 })
+
+test.ifNotWindows("ev", t => t.throws(assertPack("test-app-one", {
+  targets: Platform.WINDOWS.createTarget(["dir"]),
+  devMetadata: {
+    build: {
+      win: {
+        certificateSubjectName: "ev",
+      }
+    }
+  }
+}), /certificateSubjectName supported only on Windows/))
 
 class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

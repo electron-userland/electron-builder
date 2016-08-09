@@ -297,9 +297,6 @@ export interface MasBuildOptions extends MacOptions {
  Windows specific build options.
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
-  readonly certificateFile?: string
-  readonly certificatePassword?: string
-
   /*
    Target package type: list of `squirrel`, `nsis`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
   */
@@ -352,6 +349,19 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   The trademarks and registered trademarks.
    */
   readonly legalTrademarks?: string | null
+
+  readonly certificateFile?: string
+  readonly certificatePassword?: string
+
+  /*
+  The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
+   */
+  readonly certificateSubjectName?: string
+
+  /*
+  The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
+   */
+  readonly rfc3161TimeStampServer?: string
 }
 
 /*

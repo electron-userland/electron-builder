@@ -16,41 +16,51 @@ import { rename } from "fs-extra-p"
 const __awaiter = require("./util/awaiter")
 
 export interface FileCodeSigningInfo {
-  readonly file: string
+  readonly file?: string | null
   readonly password?: string | null
+
+  readonly subjectName?: string | null
 }
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
-  readonly cscInfo: Promise<FileCodeSigningInfo | null>
+  readonly cscInfo: Promise<FileCodeSigningInfo | null> | null
 
   private readonly iconPath: Promise<string>
 
   constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
     super(info)
 
-    const certificateFile = this.platformSpecificBuildOptions.certificateFile
-    const cscLink = this.options.cscLink
-    if (certificateFile != null) {
-      const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
-      this.cscInfo = BluebirdPromise.resolve({
-        file: certificateFile,
-        password: certificatePassword == null ? null : certificatePassword.trim(),
-      })
-    }
-    else if (cscLink != null) {
-      this.cscInfo = downloadCertificate(cscLink)
-        .then(path => {
-          if (cscLink.startsWith("https://")) {
-            cleanupTasks.push(() => deleteFile(path, true))
-          }
-          return {
-            file: path,
-            password: this.getCscPassword(),
-          }
+    const subjectName = this.platformSpecificBuildOptions.certificateSubjectName
+    if (subjectName == null) {
+      const certificateFile = this.platformSpecificBuildOptions.certificateFile
+      const cscLink = this.options.cscLink
+      if (certificateFile != null) {
+        const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
+        this.cscInfo = BluebirdPromise.resolve({
+          file: certificateFile,
+          password: certificatePassword == null ? null : certificatePassword.trim(),
         })
+      }
+      else if (cscLink != null) {
+        this.cscInfo = downloadCertificate(cscLink)
+          .then(path => {
+            if (cscLink.startsWith("https://")) {
+              cleanupTasks.push(() => deleteFile(path, true))
+            }
+            return {
+              file: path,
+              password: this.getCscPassword(),
+            }
+          })
+      }
+      else {
+        this.cscInfo = BluebirdPromise.resolve(null)
+      }
     }
     else {
-      this.cscInfo = BluebirdPromise.resolve(null)
+      this.cscInfo = BluebirdPromise.resolve({
+        subjectName: subjectName
+      })
     }
 
     this.iconPath = this.getValidIconPath()
@@ -121,18 +131,22 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       log(`Signing ${path.basename(file)} (certificate file "${cscInfo.file}")`)
       await this.doSign({
         path: file,
+
         cert: cscInfo.file,
-        password: cscInfo.password!,
+        subjectName: cscInfo.subjectName,
+
+        password: cscInfo.password,
         name: this.appInfo.productName,
         site: await this.appInfo.computePackageUrl(),
         hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
+        tr: this.platformSpecificBuildOptions.rfc3161TimeStampServer,
       })
     }
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(opts: SignOptions): Promise<any> {
-    return sign(opts)
+  protected async doSign(options: SignOptions): Promise<any> {
+    return sign(options)
   }
 
   async signAndEditResources(file: string) {
