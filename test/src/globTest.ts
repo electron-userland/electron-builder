@@ -204,7 +204,7 @@ test("extraResources", async () => {
 })
 
 test("extraResources - one-package", async () => {
-  for (let platform of [Platform.LINUX]) {
+  for (let platform of [process.platform === "win32" ? Platform.WINDOWS : Platform.LINUX]) {
     const osName = platform.buildConfigurationKey
 
     const winDirPrefix = "lib/net45/resources/"

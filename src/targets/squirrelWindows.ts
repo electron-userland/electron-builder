@@ -57,12 +57,6 @@ export default class SquirrelWindowsTarget extends Target {
 
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
-    const rceditOptions = {
-      "version-string": appInfo.versionString,
-      "file-version": appInfo.buildVersion,
-      "product-version": appInfo.version,
-    }
-
     const cscInfo = await packager.cscInfo
     const options: any = Object.assign({
       name: appInfo.name,
@@ -86,8 +80,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
-      sign: this.packager.sign.bind(this.packager),
-      rcedit: rceditOptions,
+      sign: this.packager.signAndEditResources.bind(this.packager),
     }, packager.platformSpecificBuildOptions)
 
     if (!("loadingGif" in options)) {

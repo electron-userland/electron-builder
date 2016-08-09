@@ -4,11 +4,13 @@ import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPa
 import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
+import { exec, use } from "./util/util"
 import { deleteFile, open, close, read } from "fs-extra-p"
-import { sign, SignOptions } from "./windowsCodeSign"
+import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
+import { rename } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -131,6 +133,41 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions): Promise<any> {
     return sign(opts)
+  }
+
+  async signAndEditResources(file: string) {
+    const appInfo = this.appInfo
+
+    const args = [
+      file,
+      "--set-version-string", "CompanyName", appInfo.companyName,
+      "--set-version-string", "FileDescription", appInfo.description,
+      "--set-version-string", "ProductName", appInfo.productName,
+      "--set-version-string", "InternalName", appInfo.productName,
+      "--set-version-string", "LegalCopyright", appInfo.copyright,
+      // cannot remove OriginalFilename, must be set to some value
+      "--set-version-string", "OriginalFilename", "",
+      "--set-file-version", appInfo.buildVersion,
+      "--set-product-version", appInfo.version,
+      "--set-icon", await this.getIconPath(),
+    ]
+
+    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+
+    const rceditExecutable = path.join(await getSignVendorPath(), "rcedit.exe")
+    const isWin = process.platform === "win32"
+    if (!isWin) {
+      args.unshift(rceditExecutable)
+    }
+    await exec(isWin ? rceditExecutable : "wine", args)
+
+    await this.sign(file)
+  }
+
+  protected async postInitApp(appOutDir: string) {
+    const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
+    await rename(path.join(appOutDir, "electron.exe"), executable)
+    await this.signAndEditResources(executable)
   }
 
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {

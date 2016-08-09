@@ -93,17 +93,19 @@ export interface BuildMetadata {
    */
   readonly appId?: string | null
 
-  // deprecated
-  readonly "app-bundle-id"?: string | null
-
   /*
    *macOS-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
 
-   For example, `app-category-type=public.app-category.developer-tools` will set the application category to *Developer Tools*.
+   For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
 
    Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
    */
-  readonly "app-category-type"?: string | null
+  readonly category?: string | null
+
+  /*
+  The human-readable copyright line for the app. Defaults to `Copyright © year author`.
+   */
+  readonly copyright?: string | null
 
   /*
    Whether to package the application's source code into an archive, using [Electron's archive format](https://github.com/electron/asar). Defaults to `true`.
@@ -111,7 +113,7 @@ export interface BuildMetadata {
 
    Or you can pass object of any asar options.
 
-   electron-builder detects node modules that must be unpacked automatically, you don't need to explicitly set `asar.unpackDir` - please file issue if this doesn't work.
+   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set `asar.unpackDir` - please file issue if this doesn't work.
    */
   readonly asar?: AsarOptions | boolean | null
 
@@ -141,6 +143,11 @@ export interface BuildMetadata {
    The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<string> | string | null
+
+  /*
+  File associations. See [.build.fileAssociations](#FileAssociation).
+   */
+  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
   /*
    See [.build.mac](#MacOptions).
@@ -194,10 +201,8 @@ export interface BuildMetadata {
 
   readonly icon?: string | null
 
-  /*
-  File associations. (NSIS only for now).
-   */
-  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
+  // deprecated
+  readonly "app-bundle-id"?: string | null
 }
 
 export interface AfterPackContext {
@@ -335,7 +340,6 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
    */
   readonly signingHashAlgorithms?: Array<string> | null
-  readonly signcodePath?: string | null
 
   /*
    The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
@@ -343,6 +347,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
+
+  /*
+  The trademarks and registered trademarks.
+   */
+  readonly legalTrademarks?: string | null
 }
 
 /*

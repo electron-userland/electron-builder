@@ -1,6 +1,6 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions } from "../metadata"
-import { debug, doSpawn, handleProcess } from "../util/util"
+import { debug, doSpawn, handleProcess, use } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBin } from "../util/binDownload"
@@ -110,18 +110,22 @@ export default class NsisTarget extends Target {
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const parsedVersion = new semver.SemVer(appInfo.version)
+    const versionKey = [
+      `ProductName "${appInfo.productName}"`,
+      `ProductVersion "${appInfo.version}"`,
+      `CompanyName "${appInfo.companyName}"`,
+      `LegalCopyright "${appInfo.copyright}"`,
+      `FileDescription "${appInfo.description}"`,
+      `FileVersion "${appInfo.buildVersion}"`,
+    ]
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`LegalTrademarks "${it}"`))
+
     const commands: any = {
       OutFile: `"${installerPath}"`,
       // LoadLanguageFile: '"${NSISDIR}/Contrib/Language files/English.nlf"',
       VIProductVersion: `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${appInfo.buildNumber || "0"}`,
       // VIFileVersion: packager.appInfo.buildVersion,
-      VIAddVersionKey: [
-        `ProductName "${appInfo.productName}"`,
-        `CompanyName "${appInfo.versionString.CompanyName}"`,
-        `LegalCopyright "${appInfo.versionString.LegalCopyright}"`,
-        `FileDescription "${appInfo.description}"`,
-        `FileVersion "${appInfo.buildVersion}"`,
-      ],
+      VIAddVersionKey: versionKey,
     }
 
     if (packager.devMetadata.build.compression === "store") {
@@ -233,7 +237,7 @@ export default class NsisTarget extends Target {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
         cwd: nsisTemplatesDir,
-      }, true)
+      })
       handleProcess("close", childProcess, command, resolve, reject)
 
       childProcess.stdin.end(script)

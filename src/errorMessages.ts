@@ -2,7 +2,7 @@ export const buildIsMissed = `Please specify 'build' configuration in the develo
 
   build: {
     "appId": "your.id",
-    "app-category-type": "your.app.category.type"
+    "category": "your.app.category.type"
   }
 }
 

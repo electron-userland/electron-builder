@@ -1,8 +1,7 @@
 import { Promise as BluebirdPromise } from "bluebird"
-import { emptyDir, rename } from "fs-extra-p"
+import { emptyDir } from "fs-extra-p"
 import { warn } from "../util/log"
 import { AppInfo } from "../appInfo"
-import * as path from "path"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
 const extract: any = BluebirdPromise.promisify(require("extract-zip"))
@@ -12,7 +11,6 @@ const __awaiter = require("../util/awaiter")
 
 export interface ElectronPackagerOptions {
   "extend-info"?: string
-  "app-category-type"?: string
 
   protocols?: any
 
@@ -23,13 +21,6 @@ export interface ElectronPackagerOptions {
   "helper-bundle-id"?: string | null
 
   ignore?: any
-}
-
-const supportedPlatforms: any = {
-  // Maps to module ID for each platform (lazy-required if used)
-  darwin: "./mac",
-  mas: "./mac", // map to darwin
-  win32: "./win32"
 }
 
 function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
@@ -58,13 +49,10 @@ export async function pack(opts: ElectronPackagerOptions, out: string, platform:
   ]))[0]
   await extract(zipPath, {dir: out})
 
-  if (platform === "linux") {
-    await BluebirdPromise.all([
-      initializeApp(),
-      rename(path.join(out, "electron"), path.join(out, opts.appInfo.productFilename))
-    ])
+  if (platform === "darwin" || platform === "mas") {
+    await(<any>require("./mac")).createApp(opts, out, initializeApp)
   }
   else {
-    await (<any>require(supportedPlatforms[platform])).createApp(opts, out, initializeApp)
+    await initializeApp()
   }
 }

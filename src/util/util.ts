@@ -78,7 +78,6 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
           if (stderr.length !== 0) {
             log(stderr)
           }
-          // log(stdout)
         }
         resolve(stdout)
       }
@@ -97,12 +96,12 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean): ChildProcess {
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions): ChildProcess {
   if (options == null) {
     options = {}
   }
   if (options.stdio == null) {
-    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", "inherit"]
+    options.stdio = ["pipe", debug.enabled ? "inherit" : "pipe", "pipe"]
   }
 
   if (debug.enabled) {
@@ -111,9 +110,9 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   return _spawn(command, args, options)
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, pipeInput?: Boolean): BluebirdPromise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    handleProcess("close", doSpawn(command, args || [], options, pipeInput), command, resolve, reject)
+    handleProcess("close", doSpawn(command, args || [], options), command, resolve, reject)
   })
 }
 
@@ -127,13 +126,29 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
     })
   }
 
-  childProcess.on(event, (code: number) => {
+  let errorOut = ""
+  if (childProcess.stderr != null) {
+    childProcess.stderr.on("data", (data: string) => {
+      errorOut += data
+    })
+  }
+
+  childProcess.once(event, (code: number) => {
     if (code === 0 && debug.enabled) {
       debug(`${command} (${childProcess.pid}) exited with code ${code}`)
     }
 
     if (code !== 0) {
-      reject(new Error(`${command} exited with code ${code}${out.length === 0 ? "" : `\n${out}`}`))
+      function formatOut(text: string, title: string) {
+        if (text.length === 0) {
+          return ""
+        }
+        else {
+          return `\n${title}:\n${text}`
+        }
+      }
+
+      reject(new Error(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`))
     }
     else if (resolve != null) {
       resolve()

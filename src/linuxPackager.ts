@@ -6,6 +6,7 @@ import FpmTarget from "./targets/fpm"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import AppImageTarget from "./targets/appImage"
+import { rename } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -63,6 +64,10 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(await this.computePackOptions(), outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
     postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, targets))
+  }
+
+  protected postInitApp(appOutDir: string): Promise<any> {
+    return rename(path.join(appOutDir, "electron"), path.join(appOutDir, this.appInfo.productFilename))
   }
 
   protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>): Promise<any> {

@@ -91,6 +91,7 @@
       <w>repos</w>
       <w>rimraf</w>
       <w>semver</w>
+      <w>signcode</w>
       <w>signtool</w>
       <w>templating</w>
       <w>testapp</w>

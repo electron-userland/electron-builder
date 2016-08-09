@@ -4,6 +4,6 @@
     "electron": "^1.3.2"
   },
   "build": {
-    "app-category-type": "public.app-category.business"
+    "category": "public.app-category.business"
   }
 }

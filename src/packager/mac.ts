@@ -3,6 +3,7 @@ import { rename, readFile, writeFile, copy } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
+import { use } from "../util/util"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -52,14 +53,8 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     Object.assign(appPlist, parsePlist(fileContents[4]))
   }
 
-  // Now set fields based on explicit options
-
   const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
   const helperBundleIdentifier = filterCFBundleIdentifier(opts["helper-bundle-id"] || `${appBundleIdentifier}.helper`)
-
-  const buildVersion = appInfo.buildVersion
-  const appCategoryType = opts["app-category-type"]
-  const humanReadableCopyright = appInfo.copyright
 
   appPlist.CFBundleDisplayName = appInfo.productName
   appPlist.CFBundleIdentifier = appBundleIdentifier
@@ -78,13 +73,11 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   helperNPPlist.CFBundleName = `${appInfo.productName} Helper NP`
   helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
 
-  if (appInfo.version != null) {
-    appPlist.CFBundleShortVersionString = appPlist.CFBundleVersion = appInfo.version
-  }
-
-  if (buildVersion != null) {
-    appPlist.CFBundleVersion = buildVersion
-  }
+  use(appInfo.version, it => {
+    appPlist.CFBundleShortVersionString = it
+    appPlist.CFBundleVersion = it
+  })
+  use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
 
   if (opts.protocols && opts.protocols.length) {
     appPlist.CFBundleURLTypes = opts.protocols.map(function (protocol: any) {
@@ -95,13 +88,8 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     })
   }
 
-  if (appCategoryType) {
-    appPlist.LSApplicationCategoryType = appCategoryType
-  }
-
-  if (humanReadableCopyright) {
-    appPlist.NSHumanReadableCopyright = humanReadableCopyright
-  }
+  use(appInfo.category, it => appPlist.LSApplicationCategoryType = it)
+  use(appInfo.copyright, it => appPlist.NSHumanReadableCopyright = it)
 
   const promises: Array<BluebirdPromise<any | n>> = [
     writeFile(appPlistFilename, buildPlist(appPlist)),

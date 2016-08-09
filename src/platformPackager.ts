@@ -235,6 +235,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         promises.push(remove(path.join(resourcesPath, "default_app")))
       }
 
+      promises.push(this.postInitApp(appOutDir))
       await BluebirdPromise.all(promises)
     })
     await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
@@ -253,6 +254,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
+  protected postInitApp(executableFile: string): Promise<any> {
+    return BluebirdPromise.resolve(null)
+  }
+
   protected async computePackOptions(): Promise<ElectronPackagerOptions> {
     //noinspection JSUnusedGlobalSymbols
     const appInfo = this.appInfo
@@ -260,10 +265,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       icon: await this.getIconPath(),
       appInfo: appInfo,
     }, this.devMetadata.build)
-
-    if (this.platform === Platform.WINDOWS) {
-      options["version-string"] = appInfo.versionString
-    }
 
     delete options.osx
     delete options.win

@@ -35,7 +35,12 @@ test.skip("delta and msi", () => assertPack("test-app-one", {
 
 test.ifDevOrWinCi("beta version", () => {
   const metadata: any = {
-    version: "3.0.0-beta.2"
+    version: "3.0.0-beta.2",
+    build: {
+      win: {
+        legalTrademarks: "My Trademark"
+      },
+    },
   }
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),

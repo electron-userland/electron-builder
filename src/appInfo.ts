@@ -10,16 +10,6 @@ const __awaiter = require("./util/awaiter")
 
 export class AppInfo {
   readonly description = smarten(this.metadata.description!)
-
-  // windows-only
-  versionString = {
-    CompanyName: this.companyName,
-    FileDescription: this.description,
-    ProductName: this.productName,
-    InternalName: this.productName,
-    LegalCopyright: this.copyright,
-  }
-
   readonly version: string
   readonly buildNumber: string
   readonly buildVersion: string
@@ -69,12 +59,27 @@ export class AppInfo {
     return this.metadata.name
   }
 
+  get category() {
+    const metadata = this.devMetadata.build
+    const old = (<any>metadata)["app-category-type"]
+    if (old != null) {
+      warn('"app-category-type" is deprecated — please use "category" instead')
+    }
+    return metadata.category || old
+  }
+
   get productName(): string {
     return getProductName(this.metadata, this.devMetadata)
   }
 
   get copyright(): string {
-    const copyright = (<any>this.devMetadata.build)["app-copyright"]
+    const metadata = this.devMetadata.build
+    const old = (<any>metadata)["app-copyright"]
+    if (old != null) {
+      warn('"app-copyright" is deprecated — please use "copyright" instead')
+    }
+
+    const copyright = metadata.copyright || old
     if (copyright != null) {
       return copyright
     }

@@ -26,7 +26,8 @@ Use [brew](http://brew.sh) to install required packages.
 
 ### To build app for Windows on MacOS:
 ```
-brew install Caskroom/cask/xquartz wine mono
+brew install wine --with-win64 --without-x11 --devel
+brew install mono
 ```
 
 ### To build app for Linux on MacOS:

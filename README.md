@@ -52,7 +52,7 @@ For a production app you need to sign your application, see [Where to buy code s
     ```json
     "build": {
       "appId": "your.id",
-      "app-category-type": "your.app.category.type",
+      "category": "your.app.category.type",
       "win": {
         "iconUrl": "(windows-only) https link to icon"
       }
