@@ -80,6 +80,82 @@ export abstract class TargetEx extends Target {
   abstract async build(appOutDir: string, arch: Arch): Promise<any>
 }
 
+export interface FilePattern {
+  from?: string
+  to?: string
+  filter?: Array<string> | string
+}
+
+export interface FileMatchOptions {
+  arch: string,
+  os: string
+}
+
+export class FileMatcher {
+  readonly from: string
+  readonly to: string
+  readonly options: FileMatchOptions
+
+  private parsedPatterns: Array<Minimatch>
+
+  constructor(from: string, to: string, options: FileMatchOptions, patterns?: Array<string> | string | n) {
+    this.options = options
+    this.parsedPatterns = []
+
+    this.from = this.expandPattern(from)
+    this.to = this.expandPattern(to)
+
+    if (patterns != null && !Array.isArray(patterns)) {
+      this.addPattern(patterns)
+    }
+    else if (patterns != null) {
+      for (let i = 0; i < patterns.length; i++) {
+        this.addPattern(patterns[i])
+      }
+    }
+  }
+
+  addPattern(pattern: string) {
+    const minimatchOptions = {}
+
+    const expandedPattern = this.expandPattern(pattern)
+    const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
+    this.parsedPatterns.push(parsedPattern)
+
+    if (!hasMagic(parsedPattern)) {
+      // https://github.com/electron-userland/electron-builder/issues/545
+      // add **/*
+      this.parsedPatterns.push(new Minimatch(`${expandedPattern}/*/**`, minimatchOptions))
+    }
+  }
+
+  isEmpty() {
+    return this.parsedPatterns.length === 0
+  }
+
+  merge(fileMatch: FileMatcher): FileMatcher {
+    if (fileMatch.from !== this.from || fileMatch.to !== this.to) {
+      throw new Error("Cannot merge FileMatchers with different source/destinations")
+    }
+
+    const mergedFileMatch = new FileMatcher(this.from, this.to, this.options)
+    mergedFileMatch.parsedPatterns = this.parsedPatterns.concat(fileMatch.parsedPatterns)
+    return mergedFileMatch
+  }
+
+  createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, exclude?: FileMatcher | n): (file: string) => boolean {
+    const excludePatterns = exclude != null ? exclude.parsedPatterns : null
+    return createFilter(this.from, this.parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
+  }
+
+  private expandPattern(pattern: string): string {
+    return pattern
+      .replace(/\$\{arch}/g, this.options.arch)
+      .replace(/\$\{os}/g, this.options.os)
+      .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
+  }
+}
+
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly options: PackagerOptions
 
@@ -155,16 +231,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  private getExtraFilePatterns(isResources: boolean, arch: Arch, customBuildOptions: DC): Array<Minimatch> | null {
-    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : this.getParsedPatterns(patterns, arch)
+  private getExtraFilePatterns(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+    const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
+    return this.getFilePatterns(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
+    const fileMatchOptions: FileMatchOptions = {
+      arch: Arch[arch],
+      os: this.platform.buildConfigurationKey
+    }
 
-    const extraResourcePatterns = this.getExtraFilePatterns(true, arch, platformSpecificBuildOptions)
-    const extraFilePatterns = this.getExtraFilePatterns(false, arch, platformSpecificBuildOptions)
+    const extraResourcePatterns = this.getExtraFilePatterns(true, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
+    const extraFilePatterns = this.getExtraFilePatterns(false, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
+
+    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
     const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
@@ -188,11 +270,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
       }
 
-      let patterns = this.getFilePatterns("files", platformSpecificBuildOptions)
-      if (patterns == null || patterns.length === 0) {
-        patterns = ["**/*"]
+      let patterns = this.getFilePatterns("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+      let defaultMatcher = patterns != null ? patterns[0] : new FileMatcher(this.info.appDir, path.join(resourcesPath, "app"), fileMatchOptions)
+
+      if (defaultMatcher.isEmpty()) {
+        defaultMatcher.addPattern("**/*")
       }
-      patterns.push("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
+      defaultMatcher.addPattern("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
@@ -206,24 +290,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
       }
 
-      const filePatterns = this.getParsedPatterns(patterns, arch)
-      let excludePatterns: Array<Minimatch> | null = null
+      let excludePatterns: FileMatcher | null = null
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
         if (extraResourcePatterns != null) {
-          excludePatterns = extraResourcePatterns
+          excludePatterns = extraResourcePatterns[0]
         }
         if (extraFilePatterns != null) {
           if (excludePatterns == null) {
-            excludePatterns = extraFilePatterns
+            excludePatterns = extraFilePatterns[0]
           }
           else {
-            excludePatterns = excludePatterns.concat(extraFilePatterns)
+            excludePatterns = excludePatterns.merge(extraFilePatterns[0])
           }
         }
       }
 
-      const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
-      const filter = createFilter(this.info.appDir, filePatterns, ignoreFiles, rawFilter, excludePatterns)
+      const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns)
       const promise = asarOptions == null ?
         copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
@@ -239,8 +321,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
     await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
-    await this.doCopyExtraFiles(true, appOutDir, extraResourcePatterns)
-    await this.doCopyExtraFiles(false, appOutDir, extraFilePatterns)
+    await this.doCopyExtraFiles(true, extraResourcePatterns)
+    await this.doCopyExtraFiles(false, extraFilePatterns)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -306,54 +388,63 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  private expandPattern(pattern: string, arch: Arch): string {
-    return pattern
-      .replace(/\$\{arch}/g, Arch[arch])
-      .replace(/\$\{os}/g, this.platform.buildConfigurationKey)
-      .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
-  }
-
-  private doCopyExtraFiles(isResources: boolean, appOutDir: string, patterns: Array<Minimatch> | null): Promise<any> {
-    const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
+  private doCopyExtraFiles(isResources: boolean, patterns: Array<FileMatcher> | n): Promise<any> {
     if (patterns == null || patterns.length === 0) {
       return BluebirdPromise.resolve()
     }
     else {
-      return copyFiltered(this.projectDir, base, createFilter(this.projectDir, patterns), this.platform === Platform.WINDOWS)
+      const promises: Array<Promise<any>> = []
+      for (let i = 0; i < patterns.length; i++) {
+        if (patterns[i].isEmpty()) {
+          patterns[i].addPattern("**/*")
+        }
+        promises.push(copyFiltered(patterns[i].from, patterns[i].to, patterns[i].createFilter(), this.platform === Platform.WINDOWS))
+      }
+      return BluebirdPromise.all(promises)
     }
   }
 
-  private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {
-    const minimatchOptions = {}
-    const parsedPatterns: Array<Minimatch> = []
-    for (let i = 0; i < patterns.length; i++) {
-      const pattern = this.expandPattern(patterns[i], arch)
-      const parsedPattern = new Minimatch(pattern, minimatchOptions)
-      parsedPatterns.push(parsedPattern)
-      if (!hasMagic(parsedPattern)) {
-        // https://github.com/electron-userland/electron-builder/issues/545
-        // add **/*
-        parsedPatterns.push(new Minimatch(`${pattern}/*/**`, minimatchOptions))
+  private getFilePatterns(name: "files" | "extraFiles" | "extraResources", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+    let globalPatterns: Array<string | FilePattern> | string | n = (<any>this.devMetadata.build)[name]
+    let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
+
+    const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, fileMatchOptions)
+    const fileMatchers: Array<FileMatcher> = []
+
+    function addPatterns(patterns: Array<string | FilePattern> | string | n) {
+      if (patterns == null) {
+        return
+      }
+      else if (!Array.isArray(patterns)) {
+        defaultMatcher.addPattern(patterns)
+        return
+      }
+
+      for (let i = 0; i < patterns.length; i++) {
+        const pattern = patterns[i]
+        if (typeof pattern === "string") {
+          defaultMatcher.addPattern(pattern)
+        }
+        else if (allowAdvancedMatching) {
+          const from = pattern.from ? (path.isAbsolute(pattern.from) ? pattern.from : path.join(defaultSrc, pattern.from)) : defaultSrc
+          const to = pattern.to ? (path.isAbsolute(pattern.to) ? pattern.to : path.join(defaultDest, pattern.to)) : defaultDest
+          fileMatchers.push(new FileMatcher(from, to, fileMatchOptions, pattern.filter))
+        }
+        else {
+          throw new Error(`Advanced file copying not supported for "${name}"`)
+        }
       }
     }
 
-    return parsedPatterns
-  }
+    addPatterns(globalPatterns)
+    addPatterns(platformSpecificPatterns)
 
-  private getFilePatterns(name: "files" | "extraFiles" | "extraResources", customBuildOptions: DC): Array<string> | n {
-    let patterns: Array<string> | string | n = (<any>this.devMetadata.build)[name]
-    if (patterns != null && !Array.isArray(patterns)) {
-      patterns = [patterns]
+    if (!defaultMatcher.isEmpty()) {
+      // Default matcher should be first in the array
+      fileMatchers.unshift(defaultMatcher)
     }
 
-    let platformSpecificPatterns: Array<string> | string | n = (<any>customBuildOptions)[name]
-    if (platformSpecificPatterns != null) {
-      if (!Array.isArray(platformSpecificPatterns)) {
-        platformSpecificPatterns = [platformSpecificPatterns]
-      }
-      return patterns == null ? platformSpecificPatterns : Array.from(new Set(patterns.concat(platformSpecificPatterns)))
-    }
-    return patterns
+    return fileMatchers.length ? fileMatchers : null
   }
 
   private getResourcesDir(appOutDir: string): string {

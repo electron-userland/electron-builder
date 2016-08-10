@@ -210,5 +210,22 @@ May be specified in the platform options (e.g. in the `build.mac`).
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
 
+## Source and Destination directories
+You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
+Note this only works for `extraFiles` and `extraResources`.
+ ```js
+ [
+   {
+     "from": "path/to/source",
+     "to": "path/to/destination",
+     "filter": ["**/*", "!foo/*.js"]
+   }
+ ]
+ ```
+If `from` is given as a relative path, it is relative to the project directory.
+If `to` is given as a relative path, it is relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+
+You can you `${os}` and `${arch}` in the `from` and `to` fields as well.
+
 # Build Version Management
 `CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
