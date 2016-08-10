@@ -163,10 +163,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       "--set-version-string", "OriginalFilename", "",
       "--set-file-version", appInfo.buildVersion,
       "--set-product-version", appInfo.version,
-      "--set-icon", await this.getIconPath(),
     ]
 
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+    use(await this.getIconPath(), it => args.push("--set-icon", it))
 
     const rceditExecutable = path.join(await getSignVendorPath(), "rcedit.exe")
     const isWin = process.platform === "win32"

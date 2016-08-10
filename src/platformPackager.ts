@@ -9,7 +9,6 @@ import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
-import { deepAssign } from "./util/deepAssign"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
@@ -261,16 +260,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   protected async computePackOptions(): Promise<ElectronPackagerOptions> {
     //noinspection JSUnusedGlobalSymbols
     const appInfo = this.appInfo
-    const options: any = deepAssign({
-      icon: await this.getIconPath(),
+    const options: any = Object.assign({
       appInfo: appInfo,
+      platformPackager: this,
     }, this.devMetadata.build)
 
     delete options.osx
     delete options.win
     delete options.linux
-    // this option only for windows-installer
-    delete options.iconUrl
     return options
   }
 

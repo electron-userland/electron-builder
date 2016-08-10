@@ -2,6 +2,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { emptyDir } from "fs-extra-p"
 import { warn } from "../util/log"
 import { AppInfo } from "../appInfo"
+import { PlatformPackager } from "../platformPackager"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
 const extract: any = BluebirdPromise.promisify(require("extract-zip"))
@@ -15,8 +16,7 @@ export interface ElectronPackagerOptions {
   protocols?: any
 
   appInfo: AppInfo
-
-  icon?: string
+  platformPackager: PlatformPackager<any>
 
   "helper-bundle-id"?: string | null
 

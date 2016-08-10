@@ -284,9 +284,8 @@ async function createPackageFromFiles(src: string, dest: string, files: Array<st
           node.executable = true
         }
         toPack.push(file)
+        filesystem.offset.add(UINT64(fileSize))
       }
-
-      filesystem.offset.add(UINT64(fileSize))
     }
     else if (stat.isDirectory()) {
       let unpacked = false

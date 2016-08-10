@@ -99,8 +99,9 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable)
   ]
 
-  if (opts.icon != null) {
-    promises.push(copy(opts.icon, path.join(contentsPath, "Resources", appPlist.CFBundleIconFile)))
+  const icon = await opts.platformPackager.getIconPath()
+  if (icon != null) {
+    promises.push(copy(icon, path.join(contentsPath, "Resources", appPlist.CFBundleIconFile)))
   }
 
   await BluebirdPromise.all(promises)

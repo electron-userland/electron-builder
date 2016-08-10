@@ -182,11 +182,10 @@ test.ifOsx("custom background - new way", () => {
         }
       })
     ]),
-    packed: projectDir => {
+    packed: async (projectDir) => {
       assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
       assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
-      assertThat(platformPackager.effectivePackOptions.icon).isEqualTo(path.join(projectDir, "customIcon.icns"))
-      return BluebirdPromise.resolve(null)
+      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(projectDir, "customIcon.icns"))
     },
   })
 })
@@ -207,11 +206,10 @@ test.ifOsx("disable dmg icon, bundleVersion", () => {
       },
     }
   }, {
-    packed: () => {
+    packed: async () => {
       assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo(null)
-      assertThat(platformPackager.effectivePackOptions.icon).isNotEqualTo(null)
+      assertThat(await platformPackager.getIconPath()).isNotEqualTo(null)
       assertThat(platformPackager.appInfo.buildVersion).isEqualTo("50")
-      return BluebirdPromise.resolve(null)
     },
   })
 })

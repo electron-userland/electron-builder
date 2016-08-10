@@ -115,8 +115,8 @@ test.ifOsx("custom icon", () => {
         }
       })
     ]),
-    packed: projectDir => {
-      assertThat(platformPackager.effectivePackOptions.icon).isEqualTo(path.join(projectDir, "customIcon.ico"))
+    packed: async (projectDir) => {
+      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(projectDir, "customIcon.ico"))
       return BluebirdPromise.resolve()
     },
   })
