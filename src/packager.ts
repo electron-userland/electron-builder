@@ -175,10 +175,6 @@ export class Packager implements BuildInfo {
       if ((<any>appMetadata).build != null) {
         throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
       }
-
-      if (this.devMetadata.license != null) {
-        warn(`license in the development package.json (${devAppPackageFile}) is deprecated, please move to the application package.json`)
-      }
     }
 
     const build = <any>this.devMetadata.build
