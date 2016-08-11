@@ -13,6 +13,7 @@ import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
 import { convertVersion } from "electron-winstaller-fixed"
+import { spawnNpmProduction } from "out/util/util"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -33,6 +34,8 @@ interface AssertPackOptions {
   readonly expectedDepends?: string
 
   readonly useTempDir?: boolean
+
+  readonly npmInstallBefore?: boolean
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
@@ -61,6 +64,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   try {
     if (tempDirCreated != null) {
       await tempDirCreated(projectDir)
+      if (checkOptions != null && checkOptions.npmInstallBefore) {
+        await spawnNpmProduction("install", projectDir)
+      }
     }
 
     await packAndCheck(projectDir, Object.assign({

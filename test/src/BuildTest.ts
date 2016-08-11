@@ -230,12 +230,11 @@ test.ifDevOrLinuxCi("extra metadata", () => {
     }),
     packed: projectDir => {
       assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "package.json").toString())).hasProperties({
-          foo: {
-            bar: 12,
-            existingProp: 22,
-          }
+        foo: {
+          bar: 12,
+          existingProp: 22,
         }
-      )
+      })
       return BluebirdPromise.resolve()
     }
   })
@@ -252,6 +251,26 @@ test.ifOsx("app-executable-deps", () => {
           throw new Error("Property name starts with _")
         }
       }
+    }
+  })
+})
+
+test.ifDevOrLinuxCi("smart unpack", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+  }, {
+    npmInstallBefore: true,
+    tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+      data.dependencies = {
+        "debug": "^2.2.0",
+        "edge-cs": "^1.0.0"
+      }
+    }),
+    packed: projectDir => {
+      assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "node_modules/debug/package.json").toString())).hasProperties({
+        name: "debug"
+      })
+      return BluebirdPromise.resolve()
     }
   })
 })

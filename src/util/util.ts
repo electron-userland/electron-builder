@@ -31,7 +31,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
 
 export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = [command, "--production"]
+  const npmExecArgs = [command, "--production", "--cache-min", "999999999"]
   if (npmExecPath == null) {
     npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
@@ -96,12 +96,12 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions): ChildProcess {
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean): ChildProcess {
   if (options == null) {
     options = {}
   }
   if (options.stdio == null) {
-    options.stdio = ["pipe", debug.enabled ? "inherit" : "pipe", "pipe"]
+    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", "pipe"]
   }
 
   if (debug.enabled) {

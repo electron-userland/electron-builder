@@ -2,8 +2,8 @@ platform:
   - x64
 
 cache:
+  - node_modules
   - '%USERPROFILE%\.electron'
-  - '%USERPROFILE%\.cache\nsis'
 
 install:
   - ps: Install-Product node 6 x64
