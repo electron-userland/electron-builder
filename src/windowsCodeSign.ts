@@ -6,10 +6,10 @@ import { getBin } from "./util/binDownload"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
 
-const TOOLS_VERSION = "winCodeSign-1.1.0"
+const TOOLS_VERSION = "winCodeSign-1.3.0"
 
 export function getSignVendorPath() {
-  return getBin("winCodeSign", TOOLS_VERSION, `https://dl.bintray.com/electron-userland/bin/${TOOLS_VERSION}.7z`, "f9cd51c00f673c49290e2a1c610ba1106b84e68fc23f7075b98e4e10403d6e02")
+  return getBin("winCodeSign", TOOLS_VERSION, `https://dl.bintray.com/electron-userland/bin/${TOOLS_VERSION}.7z`, "cfe9569f7e5aef605c11704d90a3ce22d2445984b51f145c97140eec68bd9833")
 }
 
 export interface SignOptions {
@@ -127,13 +127,13 @@ function getOutputPath(inputPath: string, hash: string) {
 }
 
 async function getToolPath() {
+  if (process.env.USE_SYSTEM_SIGNCODE) {
+    return "osslsigncode"
+  }
+
   let result = process.env.SIGNTOOL_PATH
   if (result) {
     return result
-  }
-
-  if (process.env.USE_SYSTEM_SIGNCODE || process.platform === "linux") {
-    return "osslsigncode"
   }
 
   const vendorPath = await getSignVendorPath()

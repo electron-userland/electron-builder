@@ -26,7 +26,7 @@ Use [brew](http://brew.sh) to install required packages.
 
 ### To build app for Windows on MacOS:
 ```
-brew install wine --with-win64 --without-x11 --devel
+brew install wine --without-x11
 brew install mono
 ```
 
@@ -64,11 +64,6 @@ To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
   echo "deb http://download.mono-project.com/repo/debian wheezy main" | sudo tee /etc/apt/sources.list.d/mono-xamarin.list
   sudo apt-get update
   sudo apt-get install --no-install-recommends -y mono-devel ca-certificates-mono
-  ```
-
-* Install osslsigncode.
-  ```
-  apt-get install --no-install-recommends -y osslsigncode
   ```
 
 ### To build app in 32 bit from a machine with 64 bit:

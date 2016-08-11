@@ -18,17 +18,12 @@ ENV USE_SYSTEM_FPM true
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true
 
-# libcurl4-openssl-dev, libtool and automake are required to build osslsigncode
-
 RUN apt-get update -y && \
-  apt-get install --no-install-recommends -y xorriso bsdtar build-essential autoconf automake libcurl4-openssl-dev libtool libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
+  apt-get install --no-install-recommends -y xorriso bsdtar build-essential autoconf libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   curl -L http://tukaani.org/xz/xz-$XZ_VERSION.tar.xz | tar -xJ && cd xz-$XZ_VERSION && ./configure && make && make install && cd .. && rm -rf xz-$XZ_VERSION && ldconfig && \
-  mkdir -p /tmp/7z && curl -L http://downloads.sourceforge.net/project/p7zip/p7zip/15.14.1/p7zip_15.14.1_src_all.tar.bz2 | tar -xj -C /tmp/7z --strip-components 1 && cd /tmp/7z && cp makefile.linux_amd64_asm makefile.machine && make && make install && rm -rf /tmp/7z && \
-  mkdir -p /tmp/s && cd /tmp/s && \
-  curl -L https://dl.bintray.com/develar/bin/osslsigncode-src.7z > a.7z && \
-  7za x -oosslsigncode a.7z && cd osslsigncode && ./autogen.sh && ./configure && make && make install && rm -rf /tmp/s
+  mkdir -p /tmp/7z && curl -L http://downloads.sourceforge.net/project/p7zip/p7zip/15.14.1/p7zip_15.14.1_src_all.tar.bz2 | tar -xj -C /tmp/7z --strip-components 1 && cd /tmp/7z && cp makefile.linux_amd64_asm makefile.machine && make && make install && rm -rf /tmp/7z
 
 # nodejs keys
 RUN set -ex \
