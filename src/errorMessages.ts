@@ -9,7 +9,7 @@ export const buildIsMissed = `Please specify 'build' configuration in the develo
 is required.
 `
 
-export const authorEmailIsMissed = `Please specify author 'email' in the application package.json ('%s')
+export const authorEmailIsMissed = `Please specify author 'email' in the application package.json
 
 See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
 

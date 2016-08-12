@@ -1,4 +1,4 @@
-import { spawn } from "./util/util"
+import { exec } from "./util/util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import { release } from "os"
@@ -104,7 +104,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     args.push(inputPath)
   }
 
-  return await spawn(await getToolPath(), args)
+  return await exec(await getToolPath(), args)
 }
 
 // async function verify(options: any) {

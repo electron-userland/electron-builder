@@ -73,7 +73,7 @@ export interface RepositoryInfo {
 
 export interface AuthorMetadata {
   readonly name: string
-  readonly email: string
+  readonly email?: string
 }
 
 export type CompressionLevel = "store" | "normal" | "maximum"

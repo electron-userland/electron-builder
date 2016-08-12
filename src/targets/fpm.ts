@@ -6,6 +6,7 @@ import { downloadFpm } from "../util/binDownload"
 import {  readFile, outputFile } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
+import * as errorMessages from "../errorMessages"
 
 const template = require("lodash.template")
 
@@ -66,7 +67,15 @@ export default class FpmTarget extends TargetEx {
     }
 
     const options = this.options
-    const author = options.maintainer || `${appInfo.metadata.author!.name} <${appInfo.metadata.author!.email}>`
+    let author = options.maintainer
+    if (author == null) {
+      const a = appInfo.metadata.author!
+      if (a.email == null) {
+        throw new Error(errorMessages.authorEmailIsMissed)
+      }
+      author = `${a.name} <${a.email}>`
+    }
+
     const synopsis = options.synopsis
     const args = [
       "-s", "dir",

@@ -68,7 +68,7 @@ export function removePassword(input: string): string {
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<string> {
   if (debug.enabled) {
-    debug(removePassword(`Executing ${file} ${args == null ? "" : args.join(" ")}`))
+    debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
@@ -105,7 +105,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 
   if (debug.enabled) {
-    debug(`Spawning ${command} ${args.join(" ")}`)
+    debug(`Spawning ${command} ${removePassword(args.join(" "))}`)
   }
   return _spawn(command, args, options)
 }

@@ -196,9 +196,6 @@ export class Packager implements BuildInfo {
       if (author == null) {
         throw new Error(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name.`)
       }
-      else if (author.email == null && this.options.targets!.has(Platform.LINUX)) {
-        throw new Error(util.format(errorMessages.authorEmailIsMissed, appPackageFile))
-      }
 
       if (build.name != null) {
         throw new Error(util.format(errorMessages.nameInBuildSpecified, appPackageFile))
