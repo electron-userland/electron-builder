@@ -7,6 +7,7 @@
       <w>appimage</w>
       <w>appleid</w>
       <w>appveyor</w>
+      <w>archiver</w>
       <w>archs</w>
       <w>aspx</w>
       <w>atime</w>
@@ -88,6 +89,7 @@
       <w>promisify</w>
       <w>psmdcp</w>
       <w>readpass</w>
+      <w>rels</w>
       <w>repos</w>
       <w>rimraf</w>
       <w>semver</w>

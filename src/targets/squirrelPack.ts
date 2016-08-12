@@ -1,0 +1,250 @@
+import * as path from "path"
+import { Promise as BluebirdPromise } from "bluebird"
+import { emptyDir, copy, createWriteStream, unlink } from "fs-extra-p"
+import { spawn, exec } from "../util/util"
+import { debug } from "../util/util"
+import { WinPackager } from "../winPackager"
+
+const archiverUtil = require("archiver-utils")
+const archiver = require("archiver")
+
+//noinspection JSUnusedLocalSymbols
+const __awaiter = require("../util/awaiter")
+
+export function convertVersion(version: string): string {
+  const parts = version.split("-")
+  const mainVersion = parts.shift()
+  if (parts.length > 0) {
+    return [mainVersion, parts.join("-").replace(/\./g, "")].join("-")
+  }
+  else {
+    return mainVersion!
+  }
+}
+
+function syncReleases(outputDirectory: string, options: SquirrelOptions) {
+  const args = prepareArgs(["-u", options.remoteReleases!, "-r", outputDirectory], path.join(options.vendorPath, "SyncReleases.exe"))
+  if (options.remoteToken) {
+    args.push("-t", options.remoteToken)
+  }
+  return spawn(process.platform === "win32" ? path.join(options.vendorPath, "SyncReleases.exe") : "mono", args)
+}
+
+export interface SquirrelOptions {
+  vendorPath: string
+  remoteReleases?: string
+  remoteToken?: string
+  loadingGif?: string
+  productName?: string
+  name: string
+  packageCompressionLevel?: number
+  version: string
+  msi?: any
+
+  owners?: string
+  description?: string
+  iconUrl?: string
+  authors?: string
+  extraMetadataSpecs?: string
+  copyright?: string
+}
+
+export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, stageDir: string, setupExe: string, packager: WinPackager, appOutDir: string) {
+  const appUpdate = path.join(stageDir, "Update.exe")
+  const promises = [
+    copy(path.join(options.vendorPath, "Update.exe"), appUpdate)
+      .then(() => packager.sign(appUpdate)),
+    emptyDir(outputDirectory)
+  ]
+  if (options.remoteReleases) {
+    promises.push(syncReleases(outputDirectory, options))
+  }
+  await BluebirdPromise.all(promises)
+
+  const embeddedArchiveFile = path.join(stageDir, "setup.zip")
+  const embeddedArchive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 6 : options.packageCompressionLevel}})
+  const embeddedArchiveOut = createWriteStream(embeddedArchiveFile)
+  const embeddedArchivePromise = new BluebirdPromise(function (resolve, reject) {
+    embeddedArchive.on("error", reject)
+    embeddedArchiveOut.on("close", resolve)
+  })
+  embeddedArchive.pipe(embeddedArchiveOut)
+
+  embeddedArchive.file(appUpdate, {name: "Update.exe"})
+  embeddedArchive.file(options.loadingGif ? path.resolve(options.loadingGif) : path.join(__dirname, "..", "..", "templates", "install-spinner.gif"), {name: "background.gif"})
+
+  const version = convertVersion(options.version)
+  const packageName = `${options.name}-${version}-full.nupkg`
+  const nupkgPath = path.join(outputDirectory, packageName)
+  const setupPath = path.join(outputDirectory, setupExe || `${options.name || options.productName}Setup.exe`)
+
+  await BluebirdPromise.all<any>([
+    pack(options, appOutDir, appUpdate, nupkgPath, version, options.packageCompressionLevel),
+    copy(path.join(options.vendorPath, "Setup.exe"), setupPath),
+  ])
+
+  embeddedArchive.file(nupkgPath, {name: packageName})
+
+  const releaseEntry = await releasify(options, nupkgPath, outputDirectory, packageName)
+
+  embeddedArchive.append(releaseEntry, {name: "RELEASES"})
+  embeddedArchive.finalize()
+  await embeddedArchivePromise
+
+  const writeZipToSetup = path.join(options.vendorPath, "WriteZipToSetup.exe")
+  await exec(process.platform === "win32" ? writeZipToSetup : "wine", prepareArgs([setupPath, embeddedArchiveFile], writeZipToSetup))
+
+  await packager.signAndEditResources(setupPath)
+  if (options.msi && process.platform === "win32") {
+    const outFile = setupExe.replace(".exe", ".msi")
+    await msi(options, nupkgPath, setupPath, outputDirectory, outFile)
+    await packager.signAndEditResources(path.join(outputDirectory, outFile))
+  }
+}
+
+async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packageCompressionLevel?: number) {
+  const archive = archiver("zip", {zlib: {level: packageCompressionLevel == null ? 9 : packageCompressionLevel}})
+  // const archiveOut = createWriteStream('/Users/develar/test.zip')
+  const archiveOut = createWriteStream(outFile)
+  const archivePromise = new BluebirdPromise(function (resolve, reject) {
+    archive.on("error", reject)
+    archiveOut.on("close", resolve)
+  })
+  archive.pipe(archiveOut)
+
+  const author = options.authors || options.owners
+  const copyright = options.copyright || `Copyright © ${new Date().getFullYear()} ${author}`
+  const nuspecContent = `<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>${options.name}</id>
+    <version>${version}</version>
+    <title>${options.productName}</title>
+    <authors>${author}</authors>
+    <owners>${options.owners || options.authors}</owners>
+    <iconUrl>${options.iconUrl}</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>${options.description}</description>
+    <copyright>${copyright}</copyright>${options.extraMetadataSpecs || ""}
+  </metadata>
+</package>`
+  debug(`Created NuSpec file:\n${nuspecContent}`)
+  archive.append(nuspecContent.replace(/\n/, "\r\n"), {name: `${encodeURI(options.name).replace(/%5B/g, "[").replace(/%5D/g, "]")}.nuspec`})
+
+  //noinspection SpellCheckingInspection
+  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/${options.name}.nuspec" Id="Re0" />
+  <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/1.psmdcp" Id="Re1" />
+</Relationships>`.replace(/\n/, "\r\n"), {name: ".rels", prefix: "_rels"})
+
+  //noinspection SpellCheckingInspection
+  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />
+  <Default Extension="nuspec" ContentType="application/octet" />
+  <Default Extension="pak" ContentType="application/octet" />
+  <Default Extension="asar" ContentType="application/octet" />
+  <Default Extension="bin" ContentType="application/octet" />
+  <Default Extension="dll" ContentType="application/octet" />
+  <Default Extension="exe" ContentType="application/octet" />
+  <Default Extension="dat" ContentType="application/octet" />
+  <Default Extension="psmdcp" ContentType="application/vnd.openxmlformats-package.core-properties+xml" />
+  <Override PartName="/lib/net45/LICENSE" ContentType="application/octet" />
+  <Default Extension="diff" ContentType="application/octet" />
+  <Default Extension="bsdiff" ContentType="application/octet" />
+  <Default Extension="shasum" ContentType="text/plain" />
+</Types>`.replace(/\n/, "\r\n"), {name: "[Content_Types].xml"})
+
+  archive.append(`<?xml version="1.0" encoding="utf-8"?>
+<coreProperties xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
+  <dc:creator>${author}</dc:creator>
+  <dc:description>${options.description}</dc:description>
+  <dc:identifier>${options.name}</dc:identifier>
+  <version>${version}</version>
+  <keywords/>
+  <dc:title>${options.productName}</dc:title>
+  <lastModifiedBy>NuGet, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=null;Microsoft Windows NT 6.2.9200.0;.NET Framework 4</lastModifiedBy>
+</coreProperties>`.replace(/\n/, "\r\n"), {name: "1.psmdcp", prefix: "package/services/metadata/core-properties"})
+
+  archive.file(updateFile, {name: "Update.exe", prefix: "lib/net45"})
+  encodedZip(archive, directory, "lib/net45")
+  await archivePromise
+}
+
+async function releasify(options: SquirrelOptions, nupkgPath: string, outputDirectory: string, packageName: string) {
+  const args = [
+    "--releasify", nupkgPath,
+    "--releaseDir", outputDirectory
+  ]
+  const out = (await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")))).trim()
+  if (debug.enabled) {
+    debug(out)
+  }
+
+  const lines = out.split("\n")
+  for (let i = lines.length - 1; i > -1; i--) {
+    const line = lines[i]
+    if (line.includes(packageName)) {
+      return line.trim()
+    }
+  }
+
+  throw new Error("Invalid output, cannot find last release entry")
+}
+
+async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {
+  const args = [
+    "--createMsi", nupkgPath,
+    "--bootstrapperExe", setupPath
+  ]
+  await exec(process.platform === "win32" ? path.join(options.vendorPath, "Update.com") : "mono", prepareArgs(args, path.join(options.vendorPath, "Update-Mono.exe")))
+  //noinspection SpellCheckingInspection
+  await exec(path.join(options.vendorPath, "candle.exe"), ["-nologo", "-ext", "WixNetFxExtension", "-out", "Setup.wixobj", "Setup.wxs"], {
+    cwd: outputDirectory,
+  })
+  //noinspection SpellCheckingInspection
+  await exec(path.join(options.vendorPath, "light.exe"), ["-ext", "WixNetFxExtension", "-sval", "-out", outFile, "Setup.wixobj"], {
+    cwd: outputDirectory,
+  })
+
+  //noinspection SpellCheckingInspection
+  await BluebirdPromise.all([
+    unlink(path.join(outputDirectory, "Setup.wxs")),
+    unlink(path.join(outputDirectory, "Setup.wixobj")),
+    unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),
+  ])
+}
+
+function prepareArgs(args: Array<string>, exePath: string) {
+  if (process.platform !== "win32") {
+    args.unshift(exePath)
+  }
+  return args
+}
+
+function encodedZip(archive: any, dir: string, prefix: string) {
+  archiverUtil.walkdir(dir, function (error: any, files: any) {
+    if (error) {
+      archive.emit("error", error)
+      return
+    }
+
+    for (let file of files) {
+      if (file.stats.isDirectory()) {
+        continue
+      }
+
+      // GBK file name encoding (or Non-English file name) caused a problem
+      const entryData = {
+        name: encodeURI(file.relative.replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]"),
+        prefix: prefix,
+        stats: file.stats,
+      }
+      archive._append(file.path, entryData)
+    }
+
+    archive.finalize()
+  })
+}

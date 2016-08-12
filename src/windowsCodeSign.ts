@@ -2,14 +2,14 @@ import { spawn } from "./util/util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import { release } from "os"
-import { getBin } from "./util/binDownload"
+import { getBinFromBintray } from "./util/binDownload"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
 
-const TOOLS_VERSION = "winCodeSign-1.3.0"
+const TOOLS_VERSION = "1.4.0"
 
 export function getSignVendorPath() {
-  return getBin("winCodeSign", TOOLS_VERSION, `https://dl.bintray.com/electron-userland/bin/${TOOLS_VERSION}.7z`, "cfe9569f7e5aef605c11704d90a3ce22d2445984b51f145c97140eec68bd9833")
+  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "0496cf9d3c68cf00c3873a20794361c782d355c566f0b31a69422571deffeb69")
 }
 
 export interface SignOptions {

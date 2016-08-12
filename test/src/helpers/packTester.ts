@@ -12,7 +12,7 @@ import { tmpdir } from "os"
 import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
-import { convertVersion } from "electron-winstaller-fixed"
+import { convertVersion } from "out/targets/squirrelPack"
 import { spawnNpmProduction } from "out/util/util"
 
 //noinspection JSUnusedLocalSymbols

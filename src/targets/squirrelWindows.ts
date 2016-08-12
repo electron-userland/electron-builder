@@ -1,13 +1,21 @@
 import { WinPackager } from "../winPackager"
 import { getArchSuffix, Target } from "../platformPackager"
-import { Arch, WinBuildOptions } from "../metadata"
-import { createWindowsInstaller, convertVersion } from "electron-winstaller-fixed"
+import { Arch } from "../metadata"
 import * as path from "path"
 import { warn, log } from "../util/log"
 import { getRepositoryInfo } from "../repositoryInfo"
+import { getBinFromBintray } from "../util/binDownload"
+import { tmpdir } from "os"
+import { getTempName } from "../util/util"
+import { emptyDir, remove } from "fs-extra-p"
+import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
+
+const SW_VERSION = "1.4.4"
+//noinspection SpellCheckingInspection
+const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
 export default class SquirrelWindowsTarget extends Target {
   constructor(private packager: WinPackager) {
@@ -26,8 +34,22 @@ export default class SquirrelWindowsTarget extends Target {
 
     const installerOutDir = path.join(appOutDir, "..", `win${getArchSuffix(arch)}`)
 
-    const distOptions = await this.computeEffectiveDistOptions(appOutDir, installerOutDir, setupFileName)
-    await createWindowsInstaller(distOptions)
+    const distOptions = await this.computeEffectiveDistOptions()
+
+    const stageDir = path.join(tmpdir(), getTempName("squirrel-windows-builder"))
+    await emptyDir(stageDir)
+    try {
+      await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, stageDir, setupFileName, this.packager, appOutDir)
+    }
+    finally {
+      try {
+        await remove(stageDir)
+      }
+      catch (e) {
+        // ignore
+      }
+    }
+
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 
     const packagePrefix = `${appInfo.name}-${convertVersion(version)}-`
@@ -39,7 +61,7 @@ export default class SquirrelWindowsTarget extends Target {
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
   }
 
-  async computeEffectiveDistOptions(appOutDir: string, installerOutDir: string, setupExeName: string): Promise<WinBuildOptions> {
+  async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
     const packager = this.packager
     let iconUrl = packager.platformSpecificBuildOptions.iconUrl || packager.devMetadata.build.iconUrl
     if (iconUrl == null) {
@@ -57,30 +79,17 @@ export default class SquirrelWindowsTarget extends Target {
 
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
-    const cscInfo = await packager.cscInfo
     const options: any = Object.assign({
       name: appInfo.name,
       productName: appInfo.productName,
-      exe: `${appInfo.productFilename}.exe`,
-      setupExe: setupExeName,
-      msiExe: setupExeName.replace(".exe", ".msi"),
-      title: appInfo.productName,
-      appDirectory: appOutDir,
-      outputDirectory: installerOutDir,
       version: appInfo.version,
       description: appInfo.description,
       authors: appInfo.companyName,
       iconUrl: iconUrl,
-      setupIcon: await packager.getIconPath(),
-      certificateFile: cscInfo == null ? null : cscInfo.file,
-      certificatePassword: cscInfo == null ? null : cscInfo.password,
-      fixUpPaths: false,
-      skipUpdateIcon: true,
-      usePackageJson: false,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
-      sign: this.packager.signAndEditResources.bind(this.packager),
+      vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, packager.platformSpecificBuildOptions)
 
     if (!("loadingGif" in options)) {

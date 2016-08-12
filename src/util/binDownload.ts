@@ -17,6 +17,11 @@ export function downloadFpm(version: string, osAndArch: string): Promise<string>
     .then(it => path.join(it, "fpm"))
 }
 
+export function getBinFromBintray(name: string, version: string, sha2?: string): Promise<string> {
+  const dirName = `${name}-${version}`
+  return getBin(name, dirName, `https://dl.bintray.com/electron-userland/bin/${dirName}.7z`, sha2)
+}
+
 export function getBin(name: string, dirName: string, url: string, sha2?: string): Promise<string> {
   let promise = versionToPromise.get(dirName)
   // if rejected, we will try to download again

@@ -145,14 +145,12 @@ class CheckingWinPackager extends WinPackager {
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    const appOutDir = this.computeAppOutDir(outDir, arch)
-
     this.effectivePackOptions = await this.computePackOptions()
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions(appOutDir, "foo", "Foo.exe"))
+    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
 
-    await this.sign(appOutDir)
+    await this.sign(this.computeAppOutDir(outDir, arch))
   }
 
   packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {

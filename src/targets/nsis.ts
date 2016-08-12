@@ -3,7 +3,7 @@ import { Arch, NsisOptions } from "../metadata"
 import { debug, doSpawn, handleProcess, use } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { getBin } from "../util/binDownload"
+import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
@@ -14,14 +14,14 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-const NSIS_VERSION = "nsis-3.0.0"
+const NSIS_VERSION = "3.0.0"
 //noinspection SpellCheckingInspection
 const NSIS_SHA2 = "7741089f3ca13de879f87836156ef785eab49844cacbeeabaeaefd1ade325ee7"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-const nsisPathPromise = getBin("nsis", NSIS_VERSION, `https://dl.bintray.com/electron-userland/bin/${NSIS_VERSION}.7z`, NSIS_SHA2)
+const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 
 export default class NsisTarget extends Target {
   private readonly options: NsisOptions
