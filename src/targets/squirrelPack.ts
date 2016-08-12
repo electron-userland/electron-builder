@@ -1,6 +1,6 @@
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { emptyDir, copy, createWriteStream, unlink } from "fs-extra-p"
+import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
 import { spawn, exec } from "../util/util"
 import { debug } from "../util/util"
 import { WinPackager } from "../winPackager"
@@ -54,7 +54,8 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const promises = [
     copy(path.join(options.vendorPath, "Update.exe"), appUpdate)
       .then(() => packager.sign(appUpdate)),
-    emptyDir(outputDirectory)
+    remove(outputDirectory.replace(/\\/g, "/") + "/*-full.nupkg")
+      .then(() => ensureDir(outputDirectory))
   ]
   if (options.remoteReleases) {
     promises.push(syncReleases(outputDirectory, options))
@@ -104,10 +105,10 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
 
 async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packageCompressionLevel?: number) {
   const archive = archiver("zip", {zlib: {level: packageCompressionLevel == null ? 9 : packageCompressionLevel}})
-  // const archiveOut = createWriteStream('/Users/develar/test.zip')
   const archiveOut = createWriteStream(outFile)
   const archivePromise = new BluebirdPromise(function (resolve, reject) {
     archive.on("error", reject)
+    archiveOut.on("error", reject)
     archiveOut.on("close", resolve)
   })
   archive.pipe(archiveOut)

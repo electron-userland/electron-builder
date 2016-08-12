@@ -159,7 +159,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "InternalName", appInfo.productName,
       "--set-version-string", "LegalCopyright", appInfo.copyright,
-      // cannot remove OriginalFilename, must be set to some value
       "--set-version-string", "OriginalFilename", "",
       "--set-file-version", appInfo.buildVersion,
       "--set-product-version", appInfo.version,
