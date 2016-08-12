@@ -216,7 +216,8 @@ test.ifDevOrLinuxCi("extra metadata", () => {
   const extraMetadata = {
     foo: {
       bar: 12,
-    }
+    },
+    productName: "NewName"
   }
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -228,17 +229,52 @@ test.ifDevOrLinuxCi("extra metadata", () => {
         existingProp: 22,
       }
     }),
-    packed: projectDir => {
-      assertThat(JSON.parse(extractFile(path.join(projectDir, "dist", "linux", "resources", "app.asar"), "package.json").toString())).hasProperties({
+    packed: async (projectDir) => {
+      const out = path.join(projectDir, "dist", "linux")
+      await assertThat(path.join(out, "NewName")).isFile()
+      assertThat(JSON.parse(extractFile(path.join(out, "resources", "app.asar"), "package.json").toString())).hasProperties({
         foo: {
           bar: 12,
           existingProp: 22,
         }
       })
-      return BluebirdPromise.resolve()
     }
   })
 })
+
+test.ifDevOrLinuxCi("extra metadata - two", () => {
+  const extraMetadata = {
+    productName: "NewName"
+  }
+  return assertPack("test-app", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    extraMetadata: extraMetadata,
+  }, {
+    packed: async (projectDir) => {
+      const out = path.join(projectDir, "dist", "linux")
+      await assertThat(path.join(out, "NewName")).isFile()
+    }
+  })
+})
+
+test.ifOsx("extra metadata - override icon", t => t.throws((() => {
+  const extraMetadata = {
+    build: {
+      mac: {
+        icon: "dev"
+      }
+    },
+  }
+  return assertPack("test-app", {
+    targets: Platform.OSX.createTarget(DIR_TARGET),
+    extraMetadata: extraMetadata,
+  }, {
+    packed: async (projectDir) => {
+      const out = path.join(projectDir, "dist", "linux")
+      await assertThat(path.join(out, "NewName")).isFile()
+    }
+  })
+})(), /ENOENT: no such file or directory/))
 
 test.ifOsx("app-executable-deps", () => {
   return assertPack("app-executable-deps", {
@@ -275,7 +311,7 @@ test.ifDevOrLinuxCi("smart unpack", () => {
   })
 })
 
-test.ifWinCi("Build MacOS on Windows is not supported", (t: any) => t.throws(assertPack("test-app-one", platform(Platform.MAC)), /Build for MacOS is supported only on MacOS.+/))
+test.ifWinCi("Build MacOS on Windows is not supported", t => t.throws(assertPack("test-app-one", platform(Platform.MAC)), /Build for MacOS is supported only on MacOS.+/))
 
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {

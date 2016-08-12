@@ -58,20 +58,30 @@ export class Packager implements BuildInfo {
   async build(): Promise<Map<Platform, Map<String, Target>>> {
     const devPackageFile = this.devPackageFile
 
+    const extraMetadata = this.options.extraMetadata
+
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
     this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
-    const appPackageFile = this.projectDir === this.appDir ? devPackageFile : path.join(this.appDir, "package.json")
-    if (appPackageFile === devPackageFile) {
-      if (this.options.appMetadata != null) {
-        this.devMetadata = deepAssign(this.devMetadata, this.options.appMetadata)
+    const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
+    if (this.isTwoPackageJsonProjectLayoutUsed) {
+      if (extraMetadata != null && extraMetadata.build != null) {
+        deepAssign(this.devMetadata, {build: extraMetadata.build})
+        delete extraMetadata.build
       }
-      this.metadata = <any>this.devMetadata
+
+      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
     }
     else {
-      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata)
+      if (this.options.appMetadata != null) {
+        deepAssign(this.devMetadata, this.options.appMetadata)
+      }
+      if (extraMetadata != null) {
+        deepAssign(this.devMetadata, extraMetadata)
+      }
+      this.metadata = <any>this.devMetadata
     }
 
     this.checkMetadata(appPackageFile, devPackageFile)
