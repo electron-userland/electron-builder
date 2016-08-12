@@ -1,10 +1,11 @@
 import { copy } from "fs-extra-p"
 import { Minimatch } from "minimatch"
-import { exec } from "./util"
 import * as path from "path"
+import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
+const readInstalled = require("read-installed")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
 export function copyFiltered(src: string, destination: string, filter: (file: string) => boolean, dereference: boolean): Promise<any> {
@@ -54,29 +55,43 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
   }
 }
 
-export async function listDependencies(appDir: string, production: boolean): Promise<Array<string>> {
-  let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = ["ls", production ? "--production" : "--dev", "--parseable"]
-  if (npmExecPath == null) {
-    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
-  }
-  else {
-    npmExecArgs.unshift(npmExecPath)
-    npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
+export function devDependencies(dir: string): Promise<Array<string>> {
+  return new BluebirdPromise((resolve, reject) => {
+    readInstalled(dir, (error: Error, data: any) => {
+      if (error) {
+        reject(error)
+      }
+      else {
+        resolve(flatDependencies(data, new Set()))
+      }
+    })
+  })
+}
+
+function flatDependencies(data: any, seen: Set<string>): any {
+  const deps = data.dependencies
+  if (deps == null) {
+    return []
   }
 
-  const result = (await exec(npmExecPath, npmExecArgs, {
-    cwd: appDir,
-    stdio: "inherit",
-    maxBuffer: 1024 * 1024,
-  })).trim().split("\n")
-  if (result.length > 0 && !result[0].includes("/node_modules/")) {
-    // first line is a project dir
-    const lastIndex = result.length - 1
-    result[0] = result[lastIndex]
-    result.length = result.length - 1
-  }
-  return result
+  return Object.keys(deps).map(function (d) {
+    if (typeof deps[d] !== "object" || seen.has(deps[d])) {
+      return null
+    }
+
+    seen.add(deps[d])
+    if (deps[d].extraneous) {
+      const extra = deps[d]
+      delete deps[d]
+      return extra.path
+    }
+    return flatDependencies(deps[d], seen)
+  })
+    .filter(it => it !== null)
+    .reduce(function FLAT(l, r) {
+      return l.concat(Array.isArray(r) ? r.reduce(FLAT, []) : r)
+    }, [])
+
 }
 
 // https://github.com/joshwnj/minimatch-all/blob/master/index.js

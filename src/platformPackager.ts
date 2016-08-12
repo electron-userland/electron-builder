@@ -11,7 +11,7 @@ import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
-import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
+import { createFilter, copyFiltered, hasMagic, devDependencies } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
 
 //noinspection JSUnusedLocalSymbols
@@ -169,22 +169,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-        const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
-        const productionDepsSet = new Set(result[1])
-
+        const result = await devDependencies(this.info.appDir)
         // npm returns real path, so, we should use relative path to avoid any mismatch
         const realAppDirPath = await realpath(this.info.appDir)
-
-        for (let it of result[0]) {
-          if (!productionDepsSet.has(it)) {
-            if (it.startsWith(realAppDirPath)) {
-              it = it.substring(realAppDirPath.length + 1)
-            }
-            else if (it.startsWith(this.info.appDir)) {
-              it = it.substring(this.info.appDir.length + 1)
-            }
-            ignoreFiles.add(it)
+        for (let it of result) {
+          if (it.startsWith(realAppDirPath)) {
+            it = it.substring(realAppDirPath.length + 1)
           }
+          else if (it.startsWith(this.info.appDir)) {
+            it = it.substring(this.info.appDir.length + 1)
+          }
+          ignoreFiles.add(it)
         }
       }
 

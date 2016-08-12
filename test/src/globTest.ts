@@ -135,6 +135,22 @@ test.ifNotCiOsx("ignore node_modules known dev dep", () => {
   })
 })
 
+// https://github.com/electron-userland/electron-builder/issues/611
+test.ifDevOrLinuxCi("failed peer dep", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+  }, {
+    npmInstallBefore: true,
+    tempDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+      data.dependencies = {
+        "rc-datepicker": "4.0.0",
+        "react": "15.2.1",
+        "react-dom": "15.2.1"
+      }
+    }),
+  })
+})
+
 test("extraResources", async () => {
   for (let platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
