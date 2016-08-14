@@ -1,15 +1,16 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions } from "../metadata"
-import { debug, doSpawn, handleProcess, use } from "../util/util"
+import { exec, debug, doSpawn, handleProcess, use, getTempName } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
-import { subTask, task } from "../util/log"
-import { unlink, readFile } from "fs-extra-p"
+import { subTask, task, log } from "../util/log"
+import { unlink, readFile, remove } from "fs-extra-p"
 import semver = require("semver")
+import { tmpdir } from "os"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -28,7 +29,9 @@ export default class NsisTarget extends Target {
 
   private archs: Map<Arch, Promise<string>> = new Map()
 
-  constructor(private packager: WinPackager, private outDir: string) {
+  private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
+
+  constructor(private packager: WinPackager, private outDir: string, private cleanupTasks: Array<() => Promise<any>>) {
     super("nsis")
 
     this.options = packager.info.devMetadata.build.nsis || Object.create(null)
@@ -52,8 +55,8 @@ export default class NsisTarget extends Target {
     const iconPath = await packager.getIconPath()
     const appInfo = packager.appInfo
     const version = appInfo.version
-    const installerPath = path.join(this.outDir, `${appInfo.productFilename} Setup ${version}.exe`)
 
+    const installerPath = path.join(this.outDir, `${appInfo.productFilename} Setup ${version}.exe`)
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const defines: any = {
       APP_ID: appInfo.id,
@@ -122,9 +125,7 @@ export default class NsisTarget extends Target {
 
     const commands: any = {
       OutFile: `"${installerPath}"`,
-      // LoadLanguageFile: '"${NSISDIR}/Contrib/Language files/English.nlf"',
       VIProductVersion: `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${appInfo.buildNumber || "0"}`,
-      // VIFileVersion: packager.appInfo.buildVersion,
       VIAddVersionKey: versionKey,
     }
 
@@ -151,7 +152,29 @@ export default class NsisTarget extends Target {
       return
     }
 
-    await subTask(`Executing makensis`, this.executeMakensis(defines, commands))
+    const customScriptPath = await this.getResource(this.options.script, "installer.nsi")
+    const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
+
+    if (customScriptPath == null) {
+      const uninstallerPath = path.join(tmpdir(), `${getTempName("electron-builder")}.exe`)
+      this.cleanupTasks.push(() => remove(uninstallerPath))
+
+      defines.BUILD_UNINSTALLER = null
+      defines.UNINSTALLER_OUT_FILE = path.win32.join("Z:", uninstallerPath)
+      await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
+      const isWin = process.platform === "win32"
+      await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
+      await packager.sign(uninstallerPath)
+
+      delete defines.BUILD_UNINSTALLER
+      // platform-specific path, not wine
+      defines.UNINSTALLER_OUT_FILE = uninstallerPath
+    }
+    else {
+      log("Custom NSIS script is used - uninstaller is not signed by electron-builder")
+    }
+
+    await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
     await packager.sign(installerPath)
 
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
@@ -172,7 +195,7 @@ export default class NsisTarget extends Target {
     return null
   }
 
-  private async executeMakensis(defines: any, commands: any) {
+  private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
     const args: Array<string> = ["-WX"]
     for (let name of Object.keys(defines)) {
       const value = defines[name]
@@ -196,18 +219,18 @@ export default class NsisTarget extends Target {
       }
     }
 
-    const nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
     args.push("-")
 
     const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
     const nsisPath = await nsisPathPromise
 
     const packager = this.packager
+    // CFBundleTypeName
+    // https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
+    // CFBundleTypeExtensions
     const fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
-    let registerFileAssociationsScript = ""
-    let unregisterFileAssociationsScript = ""
-    let script = await readFile((await this.getResource(this.options.script, "installer.nsi")) || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
+    let script = originalScript
     const customInclude = await this.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
       script = `!include "${customInclude}"\n!addincludedir "${this.packager.buildResourcesDir}"\n${script}`
@@ -215,17 +238,24 @@ export default class NsisTarget extends Target {
 
     if (fileAssociations.length !== 0) {
       script = "!include FileAssociation.nsh\n" + script
-      for (let item of fileAssociations) {
-        registerFileAssociationsScript += '${RegisterExtension} "$INSTDIR\\${APP_EXECUTABLE_FILENAME}" ' + `"${normalizeExt(item.ext)}" "${item.name}"\n`
+      if (isInstaller) {
+        let registerFileAssociationsScript = ""
+        for (let item of fileAssociations) {
+          const icon = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME},0"'
+          const commandText = `"Open with ${this.packager.appInfo.productName}"`
+          const command = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME} $\\"%1$\\""'
+          registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${normalizeExt(item.ext)}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
+        }
+        script = `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n${script}`
       }
-
-      for (let item of fileAssociations) {
-        unregisterFileAssociationsScript += "${UnRegisterExtension} " + `"${normalizeExt(item.ext)}" "${item.name}"\n`
+      else {
+        let unregisterFileAssociationsScript = ""
+        for (let item of fileAssociations) {
+          unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(item.ext)}" "${item.name}"\n`
+        }
+        script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`
       }
     }
-
-    script = script.replace("!insertmacro registerFileAssociations", registerFileAssociationsScript)
-    script = script.replace("!insertmacro unregisterFileAssociations", unregisterFileAssociationsScript)
 
     if (debug.enabled) {
       process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
@@ -236,7 +266,7 @@ export default class NsisTarget extends Target {
       const childProcess = doSpawn(command, args, {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
-        cwd: nsisTemplatesDir,
+        cwd: this.nsisTemplatesDir,
       }, true)
       handleProcess("close", childProcess, command, resolve, reject)
 
@@ -245,9 +275,9 @@ export default class NsisTarget extends Target {
   }
 }
 
-// nsis — add leading dot, mac — remove leading dot
+// remove leading dot
 function normalizeExt(ext: string) {
-  return ext.startsWith(".") ? ext : `.${ext}`
+  return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
 function asArray<T>(v: n | T | Array<T>): Array<T> {

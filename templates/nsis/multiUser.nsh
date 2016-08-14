@@ -3,36 +3,24 @@
 !define FOLDERID_UserProgramFiles {5CD7AEE2-2219-4A67-B85D-6C9CE15660CB}
 !define KF_FLAG_CREATE 0x00008000
 
-!ifdef UNINSTALL_FILENAME & VERSION & APP_EXECUTABLE_FILENAME & PRODUCT_NAME & COMPANY_NAME & PRODUCT_FILENAME
-!else
-	!error "Should define all variables: UNINSTALL_FILENAME & VERSION & APP_EXECUTABLE_FILENAME & PRODUCT_NAME & COMPANY_NAME & PRODUCT_FILENAME"
-!endif
-
 !define INSTALL_REGISTRY_KEY "Software\${APP_GUID}"
 !define UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_GUID}"
+!define UNINSTALL_DISPLAY_NAME "${PRODUCT_NAME} ${VERSION}"
 
-!ifndef MULTIUSER_INSTALLMODE_DISPLAYNAME
-	!define MULTIUSER_INSTALLMODE_DISPLAYNAME "${PRODUCT_NAME} ${VERSION}"
-!endif
-
-# Current Install Mode ("AllUsers" or "CurrentUser")
-Var MultiUser.InstallMode
+# current Install Mode ("AllUsers" or "CurrentUser")
+Var installMode
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !ifndef ONE_CLICK
-    Var HasPerUserInstallation ; 0 (false) or 1 (true)
-    Var HasPerMachineInstallation ; 0 (false) or 1 (true)
+    Var hasPerUserInstallation
+    Var hasPerMachineInstallation
   !endif
   Var PerUserInstallationFolder
 
-  # Sets install mode to "per-user".
-  !macro MULTIUSER_INSTALLMODE_CURRENTUSER UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
-    StrCpy $MultiUser.InstallMode CurrentUser
-
+  !macro setInstallModePerUser
+    StrCpy $installMode CurrentUser
     SetShellVarContext current
-
-    !if "${UNINSTALLER_PREFIX}" != UN
-      # http://www.mathiaswestin.net/2012/09/how-to-make-per-user-installation-with.html
+    !ifndef BUILD_UNINSTALLER
       StrCpy $0 "$LocalAppData\Programs"
       # Win7 has a per-user programfiles known folder and this can be a non-default location
       System::Call 'Shell32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}",i ${KF_FLAG_CREATE},i0,*i.r2)i.r1'
@@ -41,140 +29,62 @@ Var MultiUser.InstallMode
         StrCpy $0 $1
         System::Call 'Ole32::CoTaskMemFree(ir2)'
       ${EndIf}
-      StrCpy $Instdir "$0\${PRODUCT_FILENAME}"
+      StrCpy $INSTDIR "$0\${PRODUCT_FILENAME}"
     !endif
 
-    # Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
-    ReadRegStr $PerUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $PerUserInstallationFolder != ""
-      StrCpy $INSTDIR $PerUserInstallationFolder
+    # сhecks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $perUserInstallationFolder != ""
+      StrCpy $INSTDIR $perUserInstallationFolder
     ${endif}
-
-    !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
-      Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
-    !endif
   !macroend
 
-  Function MultiUser.InstallMode.CurrentUser
-  	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER "" ""
-  FunctionEnd
-
-  Function un.MultiUser.InstallMode.CurrentUser
-  	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER UN un.
-  FunctionEnd
+  !ifndef BUILD_UNINSTALLER
+    Function installMode.CurrentUser
+      !insertmacro setInstallModePerUser
+    FunctionEnd
+  !endif
 !endif
 
 !ifdef INSTALL_MODE_PER_ALL_USERS_REQUIRED
-  Var PerMachineInstallationFolder
+  Var perMachineInstallationFolder
 
   # Sets install mode to "per-machine" (all users).
-  !macro MULTIUSER_INSTALLMODE_ALLUSERS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
+  !macro setInstallModePerAllUsers
     # Install mode initialization - per-machine
-    StrCpy $MultiUser.InstallMode AllUsers
+    StrCpy $installMode AllUsers
 
     SetShellVarContext all
 
-    !if "${UNINSTALLER_PREFIX}" != UN
-      ;Set default installation location for installer
+    !ifndef BUILD_UNINSTALLER
       StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
     !endif
 
-    ; Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
-    ReadRegStr $PerMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $PerMachineInstallationFolder != ""
-      StrCpy $INSTDIR $PerMachineInstallationFolder
+    # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $perMachineInstallationFolder != ""
+      StrCpy $INSTDIR $perMachineInstallationFolder
     ${endif}
-
-    !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
-      Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
-    !endif
   !macroend
 
-  Function MultiUser.InstallMode.AllUsers
-    !insertmacro MULTIUSER_INSTALLMODE_ALLUSERS "" ""
-  FunctionEnd
-
-  Function un.MultiUser.InstallMode.AllUsers
-    !insertmacro MULTIUSER_INSTALLMODE_ALLUSERS UN un.
-  FunctionEnd
+  !ifndef BUILD_UNINSTALLER
+    Function installMode.AllUsers
+      !insertmacro setInstallModePerAllUsers
+    FunctionEnd
+  !endif
 !endif
 
-!macro MULTIUSER_INIT_TEXTS
-	!ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED
-		!define MULTIUSER_INIT_TEXT_ADMINREQUIRED "$(^Caption) requires administrator privileges."
-	!endif
-
-	!ifndef MULTIUSER_INIT_TEXT_POWERREQUIRED
-		!define MULTIUSER_INIT_TEXT_POWERREQUIRED "$(^Caption) requires at least Power User privileges."
-	!endif
-
-	!ifndef MULTIUSER_INIT_TEXT_ALLUSERSNOTPOSSIBLE
-		!define MULTIUSER_INIT_TEXT_ALLUSERSNOTPOSSIBLE "Your user account does not have sufficient privileges to install $(^Name) for all users of this computer."
-	!endif
-!macroend
-
-!macro initMultiUser UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
-  !ifdef ONE_CLICK
-    !ifdef INSTALL_MODE_PER_ALL_USERS
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-    !else
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-    !endif
-  !else
-    !insertmacro UAC_PageElevation_OnInit
-
-    ${If} ${UAC_IsInnerInstance}
-    ${AndIfNot} ${UAC_IsAdmin}
-      # special return value for outer instance so it knows we did not have admin rights
-      SetErrorLevel 0x666666
-      Quit
-    ${EndIf}
-
-    !insertmacro MULTIUSER_INIT_TEXTS
-
-    # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
-    StrCpy $HasPerMachineInstallation "0"
-    StrCpy $HasPerUserInstallation "0"
-
-    # set installation mode to setting from a previous installation
-    ReadRegStr $PerMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $PerMachineInstallationFolder != ""
-      StrCpy $HasPerMachineInstallation "1"
-    ${endif}
-
-    ReadRegStr $PerUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $PerUserInstallationFolder != ""
-      StrCpy $HasPerUserInstallation "1"
-    ${endif}
-
-    ${if} $HasPerUserInstallation == "1"
-      ${andif} $HasPerMachineInstallation == "0"
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-    ${elseif} $HasPerUserInstallation == "0"
-      ${andif} $HasPerMachineInstallation == "1"
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-    ${else}
-      # if there is no installation, or there is both per-user and per-machine
-      !ifdef INSTALL_MODE_PER_ALL_USERS
-        Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
-      !else
-        Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
-      !endif
-    ${endif}
-  !endif
-!macroend
-
 # SHCTX is the hive HKLM if SetShellVarContext all, or HKCU if SetShellVarContext user
-!macro MULTIUSER_RegistryAddInstallInfo
+!macro registryAddInstallInfo
 	# Write the installation path into the registry
 	WriteRegStr SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
 
 	# Write the uninstall keys for Windows
-	${if} $MultiUser.InstallMode == "AllUsers"
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${MULTIUSER_INSTALLMODE_DISPLAYNAME}"
+	${if} $installMode == "AllUsers"
+		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}"
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /allusers'
 	${else}
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${MULTIUSER_INSTALLMODE_DISPLAYNAME} (only current user)"
+		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME} (only current user)"
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /currentuser'
 	${endif}
 
@@ -187,9 +97,4 @@ Var MultiUser.InstallMode
 	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
 	IntFmt $0 "0x%08X" $0
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
-!macroend
-
-!macro MULTIUSER_RegistryRemoveInstallInfo
-	DeleteRegKey SHCTX "${UNINSTALL_REGISTRY_KEY}"
-	DeleteRegKey SHCTX "${INSTALL_REGISTRY_KEY}"
 !macroend

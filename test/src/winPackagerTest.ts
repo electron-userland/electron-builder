@@ -1,6 +1,6 @@
 import { Platform, Arch, BuildInfo } from "out"
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, signed, getTestAsset } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, getTestAsset, app } from "./helpers/packTester"
 import { outputFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
@@ -14,24 +14,20 @@ import { ElectronPackagerOptions } from "out/packager/dirPackager"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
-test.ifNotCiOsx("win", () => assertPack("test-app-one", signed({
-    targets: Platform.WINDOWS.createTarget(["default", "zip"]),
-  })
-))
+test.ifNotCiOsx("win", app({targets: Platform.WINDOWS.createTarget(["default", "zip"])}, {signed: true}))
 
 // very slow
-test.skip("delta and msi", () => assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
-    devMetadata: {
-      build: {
-        win: {
-          remoteReleases: "https://github.com/develar/__test-app-releases",
-          msi: true,
-        },
-      }
-    },
-  }
-))
+test.skip("delta and msi", app({
+  targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
+  devMetadata: {
+    build: {
+      win: {
+        remoteReleases: "https://github.com/develar/__test-app-releases",
+        msi: true,
+      },
+    }
+  },
+}))
 
 test.ifDevOrWinCi("beta version", () => {
   const metadata: any = {
@@ -148,7 +144,7 @@ class CheckingWinPackager extends WinPackager {
     this.effectivePackOptions = await this.computePackOptions()
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
+    this.effectiveDistOptions = await (new helperClass(this, []).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))
   }

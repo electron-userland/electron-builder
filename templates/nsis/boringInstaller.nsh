@@ -1,87 +1,78 @@
-# http://nsis.sourceforge.net/Run_an_application_shortcut_after_an_install
 !include multiUserUi.nsh
 
-Function StartApp
-  !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
-FunctionEnd
+!ifndef BUILD_UNINSTALLER
+  Function StartApp
+    !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
+  FunctionEnd
 
-!define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
+  Function GuiInit
+    !insertmacro UAC_PageElevation_OnGuiInit
+  FunctionEnd
 
-!define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
-!insertmacro MULTIUSER_PAGE_INSTALLMODE
-!insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
+  !define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
 
-# uninstall pages
-!insertmacro MUI_UNPAGE_INSTFILES
+  !insertmacro PAGE_INSTALL_MODE
+  !insertmacro MUI_PAGE_INSTFILES
+  !insertmacro MUI_PAGE_FINISH
+!else
+  !insertmacro PAGE_INSTALL_MODE
+  !insertmacro MUI_UNPAGE_INSTFILES
+!endif
 
-!insertmacro MUI_LANGUAGE "English"
-!insertmacro MUI_LANGUAGE "German"
-!insertmacro MUI_LANGUAGE "French"
-!insertmacro MUI_LANGUAGE "Spanish"
-!insertmacro MUI_LANGUAGE "SpanishInternational"
-!insertmacro MUI_LANGUAGE "SimpChinese"
-!insertmacro MUI_LANGUAGE "TradChinese"
-!insertmacro MUI_LANGUAGE "Japanese"
-#!insertmacro MUI_LANGUAGE "Korean"
-!insertmacro MUI_LANGUAGE "Italian"
-!insertmacro MUI_LANGUAGE "Dutch"
-#!insertmacro MUI_LANGUAGE "Danish"
-#!insertmacro MUI_LANGUAGE "Swedish"
-#!insertmacro MUI_LANGUAGE "Norwegian"
-#!insertmacro MUI_LANGUAGE "NorwegianNynorsk"
-#!insertmacro MUI_LANGUAGE "Finnish"
-#!insertmacro MUI_LANGUAGE "Greek"
-!insertmacro MUI_LANGUAGE "Russian"
-#!insertmacro MUI_LANGUAGE "Portuguese"
-#!insertmacro MUI_LANGUAGE "PortugueseBR"
-#!insertmacro MUI_LANGUAGE "Polish"
-#!insertmacro MUI_LANGUAGE "Ukrainian"
-!insertmacro MUI_LANGUAGE "Czech"
-#!insertmacro MUI_LANGUAGE "Slovak"
-#!insertmacro MUI_LANGUAGE "Croatian"
-#!insertmacro MUI_LANGUAGE "Bulgarian"
-#!insertmacro MUI_LANGUAGE "Hungarian"
-#!insertmacro MUI_LANGUAGE "Thai"
-#!insertmacro MUI_LANGUAGE "Romanian"
-#!insertmacro MUI_LANGUAGE "Latvian"
-#!insertmacro MUI_LANGUAGE "Macedonian"
-#!insertmacro MUI_LANGUAGE "Estonian"
-#!insertmacro MUI_LANGUAGE "Turkish"
-#!insertmacro MUI_LANGUAGE "Lithuanian"
-#!insertmacro MUI_LANGUAGE "Slovenian"
-#!insertmacro MUI_LANGUAGE "Serbian"
-#!insertmacro MUI_LANGUAGE "SerbianLatin"
-#!insertmacro MUI_LANGUAGE "Arabic"
-#!insertmacro MUI_LANGUAGE "Farsi"
-#!insertmacro MUI_LANGUAGE "Hebrew"
-#!insertmacro MUI_LANGUAGE "Indonesian"
-#!insertmacro MUI_LANGUAGE "Mongolian"
-#!insertmacro MUI_LANGUAGE "Luxembourgish"
-#!insertmacro MUI_LANGUAGE "Albanian"
-#!insertmacro MUI_LANGUAGE "Breton"
-#!insertmacro MUI_LANGUAGE "Belarusian"
-#!insertmacro MUI_LANGUAGE "Icelandic"
-#!insertmacro MUI_LANGUAGE "Malay"
-#!insertmacro MUI_LANGUAGE "Bosnian"
-#!insertmacro MUI_LANGUAGE "Kurdish"
-#!insertmacro MUI_LANGUAGE "Irish"
-#!insertmacro MUI_LANGUAGE "Uzbek"
-#!insertmacro MUI_LANGUAGE "Galician"
-#!insertmacro MUI_LANGUAGE "Afrikaans"
-#!insertmacro MUI_LANGUAGE "Catalan"
-#!insertmacro MUI_LANGUAGE "Esperanto"
-#!insertmacro MUI_LANGUAGE "Asturian"
-#!insertmacro MUI_LANGUAGE "Basque"
-#!insertmacro MUI_LANGUAGE "Pashto"
-#!insertmacro MUI_LANGUAGE "ScotsGaelic"
-#!insertmacro MUI_LANGUAGE "Georgian"
-#!insertmacro MUI_LANGUAGE "Vietnamese"
-#!insertmacro MUI_LANGUAGE "Welsh"
-#!insertmacro MUI_LANGUAGE "Armenian"
+!macro initMultiUser UNINSTALLER_FUNCPREFIX
+  !insertmacro UAC_PageElevation_OnInit
 
-Function GuiInit
-  !insertmacro UAC_PageElevation_OnGuiInit
-FunctionEnd
+  ${If} ${UAC_IsInnerInstance}
+  ${AndIfNot} ${UAC_IsAdmin}
+    # special return value for outer instance so it knows we did not have admin rights
+    SetErrorLevel 0x666666
+    Quit
+  ${EndIf}
+
+  !ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED
+    !define MULTIUSER_INIT_TEXT_ADMINREQUIRED "$(^Caption) requires administrator privileges."
+  !endif
+
+  !ifndef MULTIUSER_INIT_TEXT_POWERREQUIRED
+    !define MULTIUSER_INIT_TEXT_POWERREQUIRED "$(^Caption) requires at least Power User privileges."
+  !endif
+
+  !ifndef MULTIUSER_INIT_TEXT_ALLUSERSNOTPOSSIBLE
+    !define MULTIUSER_INIT_TEXT_ALLUSERSNOTPOSSIBLE "Your user account does not have sufficient privileges to install $(^Name) for all users of this computer."
+  !endif
+
+  # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+  StrCpy $hasPerMachineInstallation "0"
+  StrCpy $hasPerUserInstallation "0"
+
+  # set installation mode to setting from a previous installation
+  ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${if} $perMachineInstallationFolder != ""
+    StrCpy $hasPerMachineInstallation "1"
+  ${endif}
+
+  ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${if} $perUserInstallationFolder != ""
+    StrCpy $hasPerUserInstallation "1"
+  ${endif}
+
+  ${if} $hasPerUserInstallation == "1"
+  ${andif} $hasPerMachineInstallation == "0"
+    Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+  ${elseif} $hasPerUserInstallation == "0"
+    ${andif} $hasPerMachineInstallation == "1"
+    Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+  ${else}
+    # if there is no installation, or there is both per-user and per-machine
+    !ifdef INSTALL_MODE_PER_ALL_USERS
+      Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+    !else
+      Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+    !endif
+  ${endif}
+!macroend
+
+!include "langs.nsh"

@@ -167,6 +167,7 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 | --- | ---
 | **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
+| description | <a name="FileAssociation-description"></a>*windows-only.* The description.
 
 <a name="MetadataDirectories"></a>
 ## `.directories`

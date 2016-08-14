@@ -19,11 +19,8 @@ export class LinuxTargetHelper {
 
   constructor(private packager: PlatformPackager<LinuxBuildOptions>, cleanupTasks: Array<() => Promise<any>>) {
     const tempDir = path.join(tmpdir(), getTempName("electron-builder-linux"))
-    this.tempDirPromise = emptyDir(tempDir)
-      .then(() => {
-        cleanupTasks.push(() => remove(tempDir))
-        return tempDir
-      })
+    this.tempDirPromise = emptyDir(tempDir).thenReturn(tempDir)
+    cleanupTasks.push(() => remove(tempDir))
 
     this.icons = this.computeDesktopIcons()
   }

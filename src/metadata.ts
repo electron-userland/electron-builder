@@ -488,6 +488,11 @@ export interface FileAssociation {
    The name. e.g. `PNG`
    */
   readonly name: string
+
+  /*
+   *windows-only.* The description.
+   */
+  readonly description?: string
 }
 
 /*

@@ -3,82 +3,67 @@
 
 RequestExecutionLevel user
 
-Var HasTwoAvailableOptions ; 0 (false) or 1 (true)
+Var HasTwoAvailableOptions
 Var RadioButtonLabel1
 
-!macro MULTIUSER_INIT_QUIT UNINSTALLER_FUNCPREFIX
-	!ifdef MULTIUSER_INIT_${UNINSTALLER_FUNCPREFIX}FUNCTIONQUIT
-		Call "${MULTIUSER_INIT_${UNINSTALLER_FUNCPREFIX}FUCTIONQUIT}"
-	!else
-		Quit
-	!endif
-!macroend
-
-!macro MULTIUSER_INSTALLMODEPAGE_INTERFACE
-	Var MultiUser.InstallModePage
-	Var MultiUser.InstallModePage.Text
-	Var MultiUser.InstallModePage.AllUsers
-	Var MultiUser.InstallModePage.CurrentUser
-	Var MultiUser.InstallModePage.ReturnValue
-!macroend
-
-!macro MULTIUSER_PAGEDECLARATION_INSTALLMODE
-	!insertmacro MUI_SET MULTIUSER_${MUI_PAGE_UNINSTALLER_PREFIX}INSTALLMODEPAGE ""
-	!insertmacro MULTIUSER_INSTALLMODEPAGE_INTERFACE
-	!insertmacro MULTIUSER_FUNCTION_INSTALLMODEPAGE MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID} "" ""
-	!insertmacro MULTIUSER_FUNCTION_INSTALLMODEPAGE MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID} UN un.
-
-	PageEx custom
-		PageCallbacks MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID}
-		Caption " "
-	PageExEnd
-
-	UninstPage custom un.MultiUser.InstallModePre_${MUI_UNIQUEID} un.MultiUser.InstallModeLeave_${MUI_UNIQUEID}
-!macroend
-
-!macro MULTIUSER_PAGE_INSTALLMODE
+!macro PAGE_INSTALL_MODE
   !insertmacro MUI_PAGE_INIT
-  !insertmacro MULTIUSER_PAGEDECLARATION_INSTALLMODE
+
+  !insertmacro MUI_SET MULTIUSER_${MUI_PAGE_UNINSTALLER_PREFIX}INSTALLMODEPAGE ""
+  Var MultiUser.InstallModePage
+  Var MultiUser.InstallModePage.Text
+  Var MultiUser.InstallModePage.AllUsers
+  Var MultiUser.InstallModePage.CurrentUser
+  Var MultiUser.InstallModePage.ReturnValue
+
+  !ifndef BUILD_UNINSTALLER
+    !insertmacro FUNCTION_INSTALL_MODE_PAGE_FUNCTION MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID} ""
+    PageEx custom
+      PageCallbacks MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID}
+      Caption " "
+    PageExEnd
+  !else
+    !insertmacro FUNCTION_INSTALL_MODE_PAGE_FUNCTION MultiUser.InstallModePre_${MUI_UNIQUEID} MultiUser.InstallModeLeave_${MUI_UNIQUEID} un.
+    UninstPage custom un.multiUser.InstallModePre_${MUI_UNIQUEID} un.MultiUser.InstallModeLeave_${MUI_UNIQUEID}
+  !endif
 !macroend
 
-!macro MULTIUSER_FUNCTION_INSTALLMODEPAGE PRE LEAVE UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
+!macro FUNCTION_INSTALL_MODE_PAGE_FUNCTION PRE LEAVE UNINSTALLER_FUNCPREFIX
 	Function "${UNINSTALLER_FUNCPREFIX}${PRE}"
 		${If} ${UAC_IsInnerInstance}
 		${AndIf} ${UAC_IsAdmin}
-		  # Inner Process (and Admin) - skip selection, inner process is always used for elevation (machine-wide)
-			Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+		  # inner Process (and Admin) - skip selection, inner process is always used for elevation (machine-wide)
+			Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
 			Abort
 		${EndIf}
 
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
     ${IfNot} ${Errors}
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+      Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
       Abort
     ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${IfNot} ${Errors}
-      Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
+      Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
       Abort
     ${EndIf}
 
 		# If uninstalling, will check if there is both a per-user and per-machine installation. If there is only one, will skip the form.
 	  # If uninstallation was invoked from the "add/remove programs" Windows will automatically requests elevation (depending if uninstall keys are in HKLM or HKCU)
 		# so (for uninstallation) just checking UAC_IsAdmin would probably be enought to determine if it's a per-user or per-machine. However, user can run the uninstall.exe from the folder itself
-		!if "${UNINSTALLER_PREFIX}" == UN
-			${if} $HasPerUserInstallation == "1"
-				${andif} $HasPerMachineInstallation == "0"
-				Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
+		!ifdef BUILD_UNINSTALLER
+			${if} $hasPerUserInstallation == "1"
+				${andif} $hasPerMachineInstallation == "0"
+				Call un.installMode.CurrentUser
 				Abort
-			${elseif} $HasPerUserInstallation == "0"
-				${andif} $HasPerMachineInstallation == "1"
-				Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+			${elseif} $hasPerUserInstallation == "0"
+				${andif} $hasPerMachineInstallation == "1"
+				Call un.installMode.AllUsers
 				Abort
 			${endif}
-		!endif
 
-		!if "${UNINSTALLER_PREFIX}" == UN
       !insertmacro MUI_HEADER_TEXT "Choose Uninstallation Options" "Which installation should be removed?"
 		!else
       !insertmacro MUI_HEADER_TEXT "Choose Installation Options" "Who should this application be installed for?"
@@ -87,7 +72,7 @@ Var RadioButtonLabel1
 		nsDialogs::Create 1018
 		Pop $MultiUser.InstallModePage
 
-		!if "${UNINSTALLER_PREFIX}" != UN
+		!ifndef BUILD_UNINSTALLER
 			${NSD_CreateLabel} 0u 0u 300u 20u "Please select whether you wish to make this software available to all users or just yourself"
 			StrCpy $8 "Anyone who uses this computer (&all users)"
 			StrCpy $9 "Only for &me"
@@ -128,7 +113,7 @@ Var RadioButtonLabel1
 		${NSD_CreateLabel} 0u 110u 280u 50u ""
 		Pop $RadioButtonLabel1
 
-		${if} $MultiUser.InstallMode == "AllUsers" ; setting defaults
+		${if} $installMode == "AllUsers" ; setting defaults
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_SETCHECK} ${BST_CHECKED} 0 ; set as default
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_CLICK} 0 0 ; trigger click event
 		${else}
@@ -145,7 +130,7 @@ Var RadioButtonLabel1
 
 		${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
 			${if} ${UAC_IsAdmin}
-			  Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.AllUsers
+			  Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
       ${else}
 				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
 					GetDlgItem $9 $HWNDParent 1
@@ -173,7 +158,7 @@ Var RadioButtonLabel1
 				!endif
 			${endif}
 		${else}
-			Call ${UNINSTALLER_FUNCPREFIX}MultiUser.InstallMode.CurrentUser
+			Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
 		${endif}
 
 		!insertmacro MUI_PAGE_FUNCTION_CUSTOM LEAVE
@@ -187,22 +172,22 @@ Var RadioButtonLabel1
 		
 		StrCpy $7 ""
 		${if} "$1" == "0" ; current user
-			${if} $HasPerUserInstallation == "1"
-				!if "${UNINSTALLER_PREFIX}" != UN
-					StrCpy $7 "There is already a per-user installation. ($PerUserInstallationFolder)$\r$\nWill reinstall/upgrade."
+			${if} $hasPerUserInstallation == "1"
+				!ifndef BUILD_UNINSTALLER
+					StrCpy $7 "There is already a per-user installation. ($perUserInstallationFolder)$\r$\nWill reinstall/upgrade."
 				!else
-					StrCpy $7 "There is a per-user installation. ($PerUserInstallationFolder)$\r$\nWill uninstall."
+					StrCpy $7 "There is a per-user installation. ($perUserInstallationFolder)$\r$\nWill uninstall."
 				!endif
 			${else}
 				StrCpy $7 "Fresh install for current user only"
 			${endif}
 			SendMessage $0 ${BCM_SETSHIELD} 0 0 ; hide SHIELD
 		${else} ; all users
-			${if} $HasPerMachineInstallation == "1"
-				!if "${UNINSTALLER_PREFIX}" != UN
-					StrCpy $7 "There is already a per-machine installation. ($PerMachineInstallationFolder)$\r$\nWill reinstall/upgrade."
+			${if} $hasPerMachineInstallation == "1"
+				!ifndef BUILD_UNINSTALLER
+					StrCpy $7 "There is already a per-machine installation. ($perMachineInstallationFolder)$\r$\nWill reinstall/upgrade."
 				!else
-					StrCpy $7 "There is a per-machine installation. ($PerMachineInstallationFolder)$\r$\nWill uninstall."
+					StrCpy $7 "There is a per-machine installation. ($perMachineInstallationFolder)$\r$\nWill uninstall."
 				!endif
 			${else}
 				StrCpy $7 "Fresh install for all users"

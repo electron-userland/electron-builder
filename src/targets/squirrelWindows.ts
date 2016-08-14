@@ -18,7 +18,7 @@ const SW_VERSION = "1.4.4"
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
 export default class SquirrelWindowsTarget extends Target {
-  constructor(private packager: WinPackager) {
+  constructor(private packager: WinPackager, private cleanupTasks: Array<() => Promise<any>>) {
     super("squirrel")
   }
 
@@ -38,17 +38,8 @@ export default class SquirrelWindowsTarget extends Target {
 
     const stageDir = path.join(tmpdir(), getTempName("squirrel-windows-builder"))
     await emptyDir(stageDir)
-    try {
-      await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, stageDir, setupFileName, this.packager, appOutDir)
-    }
-    finally {
-      try {
-        await remove(stageDir)
-      }
-      catch (e) {
-        // ignore
-      }
-    }
+    this.cleanupTasks.push(() => remove(stageDir))
+    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, stageDir, setupFileName, this.packager, appOutDir)
 
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 

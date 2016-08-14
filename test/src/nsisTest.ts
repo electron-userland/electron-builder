@@ -1,6 +1,6 @@
 import { Platform, Arch } from "out"
 import test from "./helpers/avaEx"
-import { assertPack, signed, getTestAsset } from "./helpers/packTester"
+import { assertPack, getTestAsset, app } from "./helpers/packTester"
 import { copy } from "fs-extra-p"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -9,14 +9,10 @@ import { assertThat } from "./helpers/fileAssert"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
-test("one-click", () => assertPack("test-app-one", signed({
-    targets: Platform.WINDOWS.createTarget(["nsis"]),
-  }), {
-    useTempDir: true,
-  }
-))
+const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
+test("one-click", app({targets: nsisTarget}, {useTempDir: true, signed: true}))
 
-test.ifDevOrLinuxCi("perMachine, no run after finish", () => assertPack("test-app-one", {
+test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
   devMetadata: {
     build: {
@@ -34,8 +30,8 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", () => assertPack("test-ap
   }
 }))
 
-test.ifNotCiOsx("boring", () => assertPack("test-app-one", signed({
-  targets: Platform.WINDOWS.createTarget(["nsis"]),
+test.ifNotCiOsx("boring", app({
+  targets: nsisTarget,
   devMetadata: {
     build: {
       nsis: {
@@ -43,12 +39,12 @@ test.ifNotCiOsx("boring", () => assertPack("test-app-one", signed({
       }
     }
   }
-})))
+}, {signed: true}))
 
 test.ifNotCiOsx("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      targets: nsisTarget,
       effectiveOptionComputed: options => {
         const defines = options[0]
         assertThat(defines.HEADER_ICO).isEqualTo(headerIconPath)
@@ -66,7 +62,7 @@ test.ifNotCiOsx("installerHeaderIcon", () => {
 test.ifNotCiOsx("boring, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      targets: nsisTarget,
       devMetadata: {
         build: {
           nsis: {
@@ -94,7 +90,7 @@ test.ifNotCiOsx("boring, MUI_HEADER", () => {
 test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis"]),
+      targets: nsisTarget,
       devMetadata: {
         build: {
           nsis: {
@@ -120,9 +116,7 @@ test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
   )
 })
 
-test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {
-  targets: Platform.WINDOWS.createTarget(["nsis"]),
-}, {
+test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
   tempDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
   packed: projectDir => BluebirdPromise.all([
     assertThat(path.join(projectDir, "build", "customHeader")).isFile(),
@@ -131,9 +125,7 @@ test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {
   ]),
 }))
 
-test.ifDevOrLinuxCi("custom script", () => assertPack("test-app-one", {
-  targets: Platform.WINDOWS.createTarget(["nsis"]),
-}, {
+test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   tempDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
   packed: projectDir => assertThat(path.join(projectDir, "build", "customInstallerScript")).isFile(),
 }))

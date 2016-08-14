@@ -1,9 +1,9 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink } from "fs-extra-p"
+import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, remove } from "fs-extra-p"
 import { Platform } from "out/metadata"
-import { cpus, homedir } from "os"
+import { cpus, homedir, tmpdir } from "os"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -17,15 +17,17 @@ const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisi
 const packager = require("../../../out/packager")
 
 const rootDir = path.join(__dirname, "..", "..", "..")
-const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
+const testPackageDir = path.join(tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
 const electronVersion = "1.3.2"
 
 async function main() {
+  const tempTestBaseDir = path.join(tmpdir(), "electron-builder-test")
   await BluebirdPromise.all([
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
+    emptyDir(tempTestBaseDir),
     outputFile(path.join(testPackageDir, "package.json"), `{
       "private": true,
       "version": "1.0.0",
@@ -42,7 +44,12 @@ async function main() {
   await exec(["install", "--cache-min", "999999999", "--production", rootDir])
   // prune stale packages
   await exec(["prune", "--production"])
-  await runTests()
+  try {
+    await runTests()
+  }
+  finally {
+    await remove(tempTestBaseDir)
+  }
 }
 
 main()

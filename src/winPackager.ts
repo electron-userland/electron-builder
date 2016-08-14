@@ -75,13 +75,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       if (name === DEFAULT_TARGET || name === "squirrel") {
         mapper("squirrel", () => {
           const targetClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-          return new targetClass(this)
+          return new targetClass(this, cleanupTasks)
         })
       }
       else if (name === "nsis") {
         mapper(name, outDir => {
           const targetClass: typeof NsisTarget = require("./targets/nsis").default
-          return new targetClass(this, outDir)
+          return new targetClass(this, outDir, cleanupTasks)
         })
       }
       else {

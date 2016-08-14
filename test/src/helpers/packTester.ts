@@ -34,20 +34,29 @@ interface AssertPackOptions {
   readonly expectedDepends?: string
 
   readonly useTempDir?: boolean
+  readonly signed?: boolean
 
   readonly npmInstallBefore?: boolean
 }
 
-export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions?: AssertPackOptions): Promise<void> {
-  const tempDirCreated = checkOptions == null ? null : checkOptions.tempDirCreated
-  const useTempDir = fixtureName !== "app-executable-deps" && (tempDirCreated != null || packagerOptions.devMetadata != null || (checkOptions != null && checkOptions.useTempDir) || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET)
+export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return () => assertPack("test-app-one", packagerOptions, checkOptions)
+}
+
+export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
+  if (checkOptions.signed) {
+    packagerOptions = signed(packagerOptions)
+  }
+
+  const tempDirCreated = checkOptions.tempDirCreated
+  const useTempDir = fixtureName !== "app-executable-deps" && (tempDirCreated != null || packagerOptions.devMetadata != null || checkOptions.useTempDir || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET)
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(tmpdir(), `${getTempName("electron-builder-test")}`) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? path.join(tmpdir(), "electron-builder-test", `${getTempName()}`) : path.resolve(customTmpDir)
     if (customTmpDir != null) {
       log(`Custom temp dir used: ${customTmpDir}`)
     }
@@ -64,7 +73,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   try {
     if (tempDirCreated != null) {
       await tempDirCreated(projectDir)
-      if (checkOptions != null && checkOptions.npmInstallBefore) {
+      if (checkOptions.npmInstallBefore) {
         await spawnNpmProduction("install", projectDir)
       }
     }
@@ -73,7 +82,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       projectDir: projectDir,
     }, packagerOptions), checkOptions)
 
-    if (checkOptions != null && checkOptions.packed != null) {
+    if (checkOptions.packed != null) {
       await checkOptions.packed(projectDir)
     }
   }
@@ -83,7 +92,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         await remove(projectDir)
       }
       catch (e) {
-        console.warn("Cannot delete temporary directory " + projectDir + ": " + (e.stack || e))
+        console.warn(`Cannot delete temporary directory ${projectDir}: ${(e.stack || e)}`)
       }
     }
   }

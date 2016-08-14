@@ -3,12 +3,12 @@
 
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow
-ShowUninstDetails nevershow
+!ifdef BUILD_UNINSTALLER
+  ShowUninstDetails nevershow
+!endif
 FileBufSize 64
 Name "${PRODUCT_NAME}"
 Unicode true
-
-!define MULTIUSER_INSTALLMODE_INSTDIR "${APP_GUID}"
 
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
