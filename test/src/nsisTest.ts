@@ -28,6 +28,11 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       },
     }
   }
+}, {
+  projectDirCreated: projectDir => {
+    let headerIconPath = path.join(projectDir, "build", "foo.ico")
+    return copy(getTestAsset("headerIcon.ico"), headerIconPath)
+  },
 }))
 
 test.ifNotCiOsx("boring", app({

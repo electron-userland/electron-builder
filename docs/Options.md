@@ -168,6 +168,7 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 | **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
+| icon | <a name="FileAssociation-icon"></a>*windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
 
 <a name="MetadataDirectories"></a>
 ## `.directories`

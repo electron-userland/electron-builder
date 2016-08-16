@@ -493,6 +493,11 @@ export interface FileAssociation {
    *windows-only.* The description.
    */
   readonly description?: string
+
+  /*
+   *windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
+   */
+  readonly icon?: string
 }
 
 /*

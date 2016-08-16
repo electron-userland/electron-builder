@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { Arch, NsisOptions } from "../metadata"
+import { Arch, NsisOptions, FileAssociation } from "../metadata"
 import { exec, debug, doSpawn, handleProcess, use } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -30,10 +30,17 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
+  private readonly fileAssociations: Array<FileAssociation>
+
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
     this.options = packager.info.devMetadata.build.nsis || Object.create(null)
+
+    // CFBundleTypeName
+    // https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
+    // CFBundleTypeExtensions
+    this.fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
   }
 
   async build(arch: Arch, appOutDir: string) {
@@ -221,24 +228,26 @@ export default class NsisTarget extends Target {
     const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
     const nsisPath = await nsisPathPromise
 
-    const packager = this.packager
-    // CFBundleTypeName
-    // https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
-    // CFBundleTypeExtensions
-    const fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
-
     let script = originalScript
     const customInclude = await this.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
       script = `!include "${customInclude}"\n!addincludedir "${this.packager.buildResourcesDir}"\n${script}`
     }
 
-    if (fileAssociations.length !== 0) {
+    if (this.fileAssociations.length !== 0) {
       script = "!include FileAssociation.nsh\n" + script
       if (isInstaller) {
         let registerFileAssociationsScript = ""
-        for (let item of fileAssociations) {
-          const icon = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME},0"'
+        for (let item of this.fileAssociations) {
+          const customIcon = await this.getResource(item.icon, `${normalizeExt(item.ext)}.ico`)
+          let installedIconPath = "${APP_EXECUTABLE_FILENAME},0"
+          if (customIcon != null) {
+            installedIconPath = `resources\\${path.basename(customIcon)}`
+            //noinspection SpellCheckingInspection
+            registerFileAssociationsScript += `  File "/oname=${installedIconPath}" "${customIcon}"\n`
+          }
+
+          const icon = `"$INSTDIR\\${installedIconPath}"`
           const commandText = `"Open with ${this.packager.appInfo.productName}"`
           const command = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME} $\\"%1$\\""'
           registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${normalizeExt(item.ext)}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
@@ -247,7 +256,7 @@ export default class NsisTarget extends Target {
       }
       else {
         let unregisterFileAssociationsScript = ""
-        for (let item of fileAssociations) {
+        for (let item of this.fileAssociations) {
           unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(item.ext)}" "${item.name}"\n`
         }
         script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`
