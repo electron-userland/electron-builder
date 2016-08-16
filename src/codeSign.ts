@@ -1,12 +1,12 @@
 import { exec, getTempName, isEmptyOrSpaces } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
-import { tmpdir } from "os"
 import * as path from "path"
 import { executeFinally, all } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
 import { randomBytes } from "crypto"
 import { homedir } from "os"
+import { TmpDir } from "./util/tmp"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -19,23 +19,13 @@ export interface CodeSigningInfo {
   keychainName?: string | null
 }
 
-export function generateKeychainName(): string {
-  return path.join(tmpdir(), getTempName("csc") + ".keychain")
-}
-
-export function downloadCertificate(urlOrBase64: string): BluebirdPromise<string> {
-  const tempFile = path.join(tmpdir(), `${getTempName()}.p12`)
-  if (urlOrBase64.startsWith("https://")) {
-    return download(urlOrBase64, tempFile)
-      .thenReturn(tempFile)
-  }
-  else if (urlOrBase64.startsWith("file://")) {
+export function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): BluebirdPromise<string> {
+  if (urlOrBase64.startsWith("file://")) {
     return BluebirdPromise.resolve(urlOrBase64.substring("file://".length))
   }
-  else {
-    return outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
-      .thenReturn(tempFile)
-  }
+
+  return tmpDir.getTempFile(".p12")
+    .then(tempFile => (urlOrBase64.startsWith("https://") ? download(urlOrBase64, tempFile) : outputFile(tempFile, new Buffer(urlOrBase64, "base64"))).thenReturn(tempFile))
 }
 
 let bundledCertKeychainAdded: Promise<any> | null = null
@@ -66,11 +56,13 @@ async function createCustomCertKeychain() {
   }
 }
 
-export async function createKeychain(keychainName: string, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null): Promise<CodeSigningInfo> {
+export async function createKeychain(tmpDir: TmpDir, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null): Promise<CodeSigningInfo> {
   if (bundledCertKeychainAdded == null) {
     bundledCertKeychainAdded = createCustomCertKeychain()
   }
   await bundledCertKeychainAdded
+
+  const keychainName = await tmpDir.getTempFile(".keychain")
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -80,7 +72,7 @@ export async function createKeychain(keychainName: string, cscLink: string, cscK
   const certPaths = new Array(certLinks.length)
   const keychainPassword = randomBytes(8).toString("hex")
   return await executeFinally(BluebirdPromise.all([
-      BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link).then(it => certPaths[i] = it)),
+      BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir).then(it => certPaths[i] = it)),
       BluebirdPromise.mapSeries([
         ["create-keychain", "-p", keychainPassword, keychainName],
         ["unlock-keychain", "-p", keychainPassword, keychainName],
@@ -88,13 +80,7 @@ export async function createKeychain(keychainName: string, cscLink: string, cscK
       ], it => exec("security", it))
     ])
     .then<CodeSigningInfo>(() => importCerts(keychainName, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
-    errorOccurred => {
-      const tasks = certPaths.map((it, index) => certLinks[index].startsWith("https://") ? deleteFile(it, true) : BluebirdPromise.resolve())
-      if (errorOccurred) {
-        tasks.push(deleteKeychain(keychainName))
-      }
-      return all(tasks)
-    })
+    () => all(certPaths.map((it, index) => certLinks[index].startsWith("https://") ? deleteFile(it, true) : BluebirdPromise.resolve())))
 }
 
 async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
@@ -113,20 +99,6 @@ export function sign(path: string, name: string, keychain: string): BluebirdProm
     args.push("--keychain", keychain)
   }
   return exec("codesign", args)
-}
-
-export function deleteKeychain(keychainName: string, ignoreNotFound: boolean = true): BluebirdPromise<any> {
-  const result = exec("security", ["delete-keychain", keychainName])
-  if (ignoreNotFound) {
-    return result.catch(error => {
-      if (!error.message.includes("The specified keychain could not be found.")) {
-        throw error
-      }
-    })
-  }
-  else {
-    return result
-  }
 }
 
 export let findIdentityRawResult: Promise<Array<string>> | null = null

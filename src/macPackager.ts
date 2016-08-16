@@ -3,7 +3,7 @@ import { Platform, MasBuildOptions, Arch, MacOptions } from "./metadata"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, warn, task } from "./util/log"
-import { createKeychain, deleteKeychain, CodeSigningInfo, generateKeychainName, findIdentity } from "./codeSign"
+import { createKeychain, CodeSigningInfo, findIdentity } from "./codeSign"
 import { deepAssign } from "./util/deepAssign"
 import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign"
 import { DmgTarget } from "./targets/dmg"
@@ -16,16 +16,14 @@ const __awaiter = require("./util/awaiter")
 export default class MacPackager extends PlatformPackager<MacOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
 
-  constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
+  constructor(info: BuildInfo) {
     super(info)
 
     if (this.options.cscLink == null) {
       this.codeSigningInfo = BluebirdPromise.resolve({})
     }
     else {
-      const keychainName = generateKeychainName()
-      cleanupTasks.push(() => deleteKeychain(keychainName))
-      this.codeSigningInfo = createKeychain(keychainName, this.options.cscLink, this.getCscPassword(), this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
+      this.codeSigningInfo = createKeychain(info.tempDirManager, this.options.cscLink!, this.getCscPassword(), this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
     }
   }
 

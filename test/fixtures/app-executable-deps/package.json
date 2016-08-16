@@ -1,9 +1,6 @@
 {
-  "devDependencies": {
-    "electron-builder": "next",
-    "electron": "^1.3.2"
-  },
   "build": {
+    "electronVersion": "1.3.2",
     "category": "public.app-category.business"
   }
 }

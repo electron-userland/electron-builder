@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, signed } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, signed, app } from "./helpers/packTester"
 import OsXPackager from "out/macPackager"
 import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
@@ -16,11 +16,9 @@ import { DmgTarget } from "out/targets/dmg"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
-test.ifOsx("two-package", () => assertPack("test-app", signed({
-  targets: createTargets([Platform.MAC], null, "all"),
-})))
+test.ifOsx("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 
-test.ifOsx("one-package", () => assertPack("test-app-one", signed(platform(Platform.MAC))))
+test.ifOsx("one-package", app(platform(Platform.MAC), {signed: true}))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
   let options: PackagerOptions = {
@@ -37,14 +35,12 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
     options = signed(options)
   }
 
-  return () => assertPack("test-app-one", options, {
-    expectedContents: expectedContents
-  })
+  return app(options, {expectedContents: expectedContents})
 }
 
 test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App ßW-1.1.0.dmg"]))
 test.ifOsx("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
-test.ifOsx("invalid target", (t: any) => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
+test.ifOsx("invalid target", t => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
 if (process.env.CSC_KEY_PASSWORD == null) {
   console.warn("Skip mas tests because CSC_KEY_PASSWORD is not defined")
@@ -57,7 +53,7 @@ else {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
-      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
       devMetadata: {
         build: {
           mac: {
@@ -84,7 +80,7 @@ else {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
-      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
       devMetadata: {
         build: {
           mac: {
@@ -108,9 +104,9 @@ else {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
-      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+      platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
     }), {
-      tempDirCreated: projectDir => BluebirdPromise.all([
+      projectDirCreated: projectDir => BluebirdPromise.all([
         writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
         writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
       ]),
@@ -125,12 +121,12 @@ else {
   })
 }
 
-test.ifOsx("no background", (t: any) => assertPack("test-app-one", platform(Platform.MAC), {
-  tempDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
+test.ifOsx("no background", app(platform(Platform.MAC), {
+  projectDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
 }))
 
-test.ifOsx("no build directory", (t: any) => assertPack("test-app-one", platform(Platform.MAC), {
-  tempDirCreated: projectDir => remove(path.join(projectDir, "build"))
+test.ifOsx("no build directory", app(platform(Platform.MAC), {
+  projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
 test.ifOsx("custom background - old way", () => {
@@ -138,9 +134,9 @@ test.ifOsx("custom background - old way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks)
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
-    tempDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => BluebirdPromise.all([
       move(path.join(projectDir, "build", "background.png"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.osx = {
@@ -162,9 +158,9 @@ test.ifOsx("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks)
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
-    tempDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => BluebirdPromise.all([
       move(path.join(projectDir, "build", "background.png"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.mac = {
@@ -194,7 +190,7 @@ test.ifOsx("disable dmg icon, bundleVersion", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager, cleanupTasks),
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
     devMetadata: {
       build: {
         dmg: {
@@ -220,8 +216,8 @@ class CheckingMacPackager extends OsXPackager {
   effectiveSignOptions: SignOptions
   effectiveFlatOptions: FlatOptions
 
-  constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
-    super(info, cleanupTasks)
+  constructor(info: BuildInfo) {
+    super(info)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {

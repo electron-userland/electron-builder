@@ -49,16 +49,13 @@ Var installMode
 !ifdef INSTALL_MODE_PER_ALL_USERS_REQUIRED
   Var perMachineInstallationFolder
 
-  # Sets install mode to "per-machine" (all users).
   !macro setInstallModePerAllUsers
     # Install mode initialization - per-machine
     StrCpy $installMode AllUsers
 
     SetShellVarContext all
 
-    !ifndef BUILD_UNINSTALLER
-      StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
-    !endif
+    StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
 
     # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation

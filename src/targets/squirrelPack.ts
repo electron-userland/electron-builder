@@ -49,8 +49,8 @@ export interface SquirrelOptions {
   copyright?: string
 }
 
-export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, stageDir: string, setupExe: string, packager: WinPackager, appOutDir: string) {
-  const appUpdate = path.join(stageDir, "Update.exe")
+export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string) {
+  const appUpdate = await packager.getTempFile("Update.exe")
   const promises = [
     copy(path.join(options.vendorPath, "Update.exe"), appUpdate)
       .then(() => packager.sign(appUpdate)),
@@ -62,7 +62,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   }
   await BluebirdPromise.all(promises)
 
-  const embeddedArchiveFile = path.join(stageDir, "setup.zip")
+  const embeddedArchiveFile = await packager.getTempFile("setup.zip")
   const embeddedArchive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 6 : options.packageCompressionLevel}})
   const embeddedArchiveOut = createWriteStream(embeddedArchiveFile)
   const embeddedArchivePromise = new BluebirdPromise(function (resolve, reject) {

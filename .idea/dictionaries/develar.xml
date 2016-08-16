@@ -66,6 +66,7 @@
       <w>makensis</w>
       <w>minimatch</w>
       <w>mkdirp</w>
+      <w>mkdtemp</w>
       <w>mpass</w>
       <w>multilib</w>
       <w>multiuser</w>

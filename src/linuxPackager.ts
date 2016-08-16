@@ -36,7 +36,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       let helper: LinuxTargetHelper | null
       const getHelper = () => {
         if (helper == null) {
-          helper = new LinuxTargetHelper(this, cleanupTasks)
+          helper = new LinuxTargetHelper(this)
         }
         return helper
       }

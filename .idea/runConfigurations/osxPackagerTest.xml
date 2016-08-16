@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="osxPackagerTest" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/osxPackagerTest.js" node-parameters="--harmony_default_parameters" working-dir="$PROJECT_DIR$">
-    <envs>
-      <env name="NODE_PATH" value="." />
-    </envs>
-    <method />
-  </configuration>
-</component>

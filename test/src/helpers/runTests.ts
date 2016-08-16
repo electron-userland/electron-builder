@@ -4,6 +4,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, remove } from "fs-extra-p"
 import { Platform } from "out/metadata"
 import { cpus, homedir, tmpdir } from "os"
+import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -20,14 +21,11 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "1.3.2"
-
 async function main() {
-  const tempTestBaseDir = path.join(tmpdir(), "electron-builder-test")
   await BluebirdPromise.all([
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
-    emptyDir(tempTestBaseDir),
+    emptyDir(TEST_DIR),
     outputFile(path.join(testPackageDir, "package.json"), `{
       "private": true,
       "version": "1.0.0",
@@ -48,7 +46,7 @@ async function main() {
     await runTests()
   }
   finally {
-    await remove(tempTestBaseDir)
+    await remove(TEST_DIR)
   }
 }
 
@@ -67,7 +65,7 @@ async function deleteOldElectronVersion(): Promise<any> {
   try {
     const deletePromises: Array<Promise<any>> = []
     for (let file of (await readdir(cacheDir))) {
-      if (file.endsWith(".zip") && !file.includes(electronVersion)) {
+      if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
         console.log(`Remove old electron ${file}`)
         deletePromises.push(unlink(path.join(cacheDir, file)))
       }
@@ -95,7 +93,7 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
   for (let platform of platforms) {
     for (let arch of (platform === "mas" || platform === "darwin" ? ["x64"] : ["ia32", "x64"])) {
       downloadPromises.push(downloadElectron({
-        version: electronVersion,
+        version: ELECTRON_VERSION,
         arch: arch,
         platform: platform,
       }))

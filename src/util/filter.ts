@@ -40,12 +40,12 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
       return false
     }
 
-    let relative = it.substring(src.length + 1)
-
     // yes, check before path sep normalization
-    if (ignoreFiles != null && ignoreFiles.has(relative)) {
+    if (ignoreFiles != null && ignoreFiles.has(it)) {
       return false
     }
+
+    let relative = it.substring(src.length + 1)
 
     if (path.sep === "\\") {
       relative = relative.replace(/\\/g, "/")

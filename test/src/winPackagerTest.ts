@@ -29,8 +29,9 @@ test.skip("delta and msi", app({
   },
 }))
 
-test.ifDevOrWinCi("beta version", () => {
-  const metadata: any = {
+test.ifDevOrWinCi("beta version", app({
+  targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
+  devMetadata: <any>{
     version: "3.0.0-beta.2",
     build: {
       win: {
@@ -38,15 +39,11 @@ test.ifDevOrWinCi("beta version", () => {
       },
     },
   }
-  return assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
-    devMetadata: metadata
-  })
-})
+}))
 
 test.ifNotCiOsx("msi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
   {
-    tempDirCreated: it => modifyPackageJson(it, data => {
+    projectDirCreated: it => modifyPackageJson(it, data => {
       data.build.win = {
         msi: "false",
       }
@@ -60,7 +57,7 @@ test("detect install-spinner, certificateFile/password", () => {
 
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks),
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
     devMetadata: {
       build: {
         win: {
@@ -69,7 +66,7 @@ test("detect install-spinner, certificateFile/password", () => {
       }
     }
   }, {
-    tempDirCreated: it => {
+    projectDirCreated: it => {
       loadingGifPath = path.join(it, "build", "install-spinner.gif")
       return BluebirdPromise.all([
         copy(getTestAsset("install-spinner.gif"), loadingGifPath),
@@ -90,20 +87,20 @@ test("detect install-spinner, certificateFile/password", () => {
 })
 
 test.ifNotCiOsx("icon < 256", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
-  tempDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
+  projectDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }), /Windows icon size must be at least 256x256, please fix ".+/))
 
 test.ifNotCiOsx("icon not an image", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
-  tempDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
+  projectDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
 }), /Windows icon is not valid ico file, please fix ".+/))
 
 test.ifOsx("custom icon", () => {
   let platformPackager: CheckingWinPackager = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager, cleanupTasks)
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager)
   }, {
-    tempDirCreated: projectDir => BluebirdPromise.all([
+    projectDirCreated: projectDir => BluebirdPromise.all([
       rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
       modifyPackageJson(projectDir, data => {
         data.build.win = {
@@ -135,8 +132,8 @@ class CheckingWinPackager extends WinPackager {
 
   effectivePackOptions: ElectronPackagerOptions
 
-  constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
-    super(info, cleanupTasks)
+  constructor(info: BuildInfo) {
+    super(info)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
@@ -144,7 +141,7 @@ class CheckingWinPackager extends WinPackager {
     this.effectivePackOptions = await this.computePackOptions()
 
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this, []).computeEffectiveDistOptions())
+    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))
   }

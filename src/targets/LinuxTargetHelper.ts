@@ -1,7 +1,6 @@
-import { remove, emptyDir, readdir, outputFile } from "fs-extra-p"
+import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { tmpdir } from "os"
-import { getTempName, exec, debug } from "../util/util"
+import { exec, debug } from "../util/util"
 import { PlatformPackager } from "../platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxBuildOptions } from "../metadata"
@@ -13,15 +12,10 @@ export const installPrefix = "/opt"
 
 export class LinuxTargetHelper {
   readonly icons: Promise<Array<Array<string>>>
-  readonly tempDirPromise: Promise<string>
 
   maxIconPath: string | null = null
 
-  constructor(private packager: PlatformPackager<LinuxBuildOptions>, cleanupTasks: Array<() => Promise<any>>) {
-    const tempDir = path.join(tmpdir(), getTempName("electron-builder-linux"))
-    this.tempDirPromise = emptyDir(tempDir).thenReturn(tempDir)
-    cleanupTasks.push(() => remove(tempDir))
-
+  constructor(private packager: PlatformPackager<LinuxBuildOptions>) {
     this.icons = this.computeDesktopIcons()
   }
 
@@ -32,7 +26,7 @@ export class LinuxTargetHelper {
       return this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
     }
     else {
-      return this.createFromIcns(await this.tempDirPromise)
+      return this.createFromIcns(await this.packager.getTempFile("electron-builder-linux").then(it => ensureDir(it).thenReturn(it)))
     }
   }
 
@@ -81,7 +75,7 @@ export class LinuxTargetHelper {
     }
 
     const productFilename = appInfo.productFilename
-    const tempFile = path.join(await this.tempDirPromise, `${productFilename}.desktop`)
+    const tempFile = await this.packager.getTempFile(`${productFilename}.desktop`)
     await outputFile(tempFile, this.packager.platformSpecificBuildOptions.desktop || `[Desktop Entry]
 Name=${appInfo.productName}
 Comment=${this.packager.platformSpecificBuildOptions.description || appInfo.description}

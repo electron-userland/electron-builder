@@ -5,7 +5,7 @@ import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
 import { exec, use } from "./util/util"
-import { deleteFile, open, close, read } from "fs-extra-p"
+import { open, close, read } from "fs-extra-p"
 import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
@@ -27,7 +27,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   private readonly iconPath: Promise<string>
 
-  constructor(info: BuildInfo, cleanupTasks: Array<() => Promise<any>>) {
+  constructor(info: BuildInfo) {
     super(info)
 
     const subjectName = this.platformSpecificBuildOptions.certificateSubjectName
@@ -42,11 +42,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         })
       }
       else if (cscLink != null) {
-        this.cscInfo = downloadCertificate(cscLink)
+        this.cscInfo = downloadCertificate(cscLink, info.tempDirManager)
           .then(path => {
-            if (cscLink.startsWith("https://")) {
-              cleanupTasks.push(() => deleteFile(path, true))
-            }
             return {
               file: path,
               password: this.getCscPassword(),
@@ -75,13 +72,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       if (name === DEFAULT_TARGET || name === "squirrel") {
         mapper("squirrel", () => {
           const targetClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-          return new targetClass(this, cleanupTasks)
+          return new targetClass(this)
         })
       }
       else if (name === "nsis") {
         mapper(name, outDir => {
           const targetClass: typeof NsisTarget = require("./targets/nsis").default
-          return new targetClass(this, outDir, cleanupTasks)
+          return new targetClass(this, outDir)
         })
       }
       else {

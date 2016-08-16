@@ -2,7 +2,7 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch 
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
-import { readdir, remove, realpath } from "fs-extra-p"
+import { readdir, remove } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
@@ -13,6 +13,7 @@ import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { createFilter, copyFiltered, hasMagic, devDependencies } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
+import { TmpDir } from "./util/tmp"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -65,6 +66,8 @@ export interface BuildInfo {
 
   // computed final effective appId
   appInfo: AppInfo
+
+  readonly tempDirManager: TmpDir
 }
 
 export class Target {
@@ -165,18 +168,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const extraFilePatterns = this.getExtraFilePatterns(false, arch, platformSpecificBuildOptions)
 
     const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
-      const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
+      const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
         const result = await devDependencies(this.info.appDir)
-        // npm returns real path, so, we should use relative path to avoid any mismatch
-        const realAppDirPath = await realpath(this.info.appDir)
         for (let it of result) {
-          if (it.startsWith(realAppDirPath)) {
-            it = it.substring(realAppDirPath.length + 1)
-          }
-          else if (it.startsWith(this.info.appDir)) {
-            it = it.substring(this.info.appDir.length + 1)
-          }
           ignoreFiles.add(it)
         }
       }
@@ -417,6 +412,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       warn("Application icon is not set, default Electron icon will be used")
       return null
     }
+  }
+
+  async getTempFile(suffix: string): Promise<string> {
+    return this.info.tempDirManager.getTempFile(suffix)
   }
 }
 

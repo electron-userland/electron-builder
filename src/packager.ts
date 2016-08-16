@@ -18,6 +18,7 @@ import { AppInfo } from "./appInfo"
 import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
+import { TmpDir } from "./util/tmp"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -40,6 +41,8 @@ export class Packager implements BuildInfo {
   readonly eventEmitter = new EventEmitter()
 
   appInfo: AppInfo
+
+  readonly tempDirManager = new TmpDir()
 
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions) {
@@ -91,7 +94,7 @@ export class Packager implements BuildInfo {
 
     this.appInfo = new AppInfo(this.metadata, this.devMetadata)
     const cleanupTasks: Array<() => Promise<any>> = []
-    return executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it())))
+    return executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
   }
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
@@ -144,13 +147,13 @@ export class Packager implements BuildInfo {
       case Platform.MAC:
       {
         const helperClass: typeof MacPackager = require("./macPackager").default
-        return new helperClass(this, cleanupTasks)
+        return new helperClass(this)
       }
 
       case Platform.WINDOWS:
       {
         const helperClass: typeof WinPackager = require("./winPackager").WinPackager
-        return new helperClass(this, cleanupTasks)
+        return new helperClass(this)
       }
 
       case Platform.LINUX:

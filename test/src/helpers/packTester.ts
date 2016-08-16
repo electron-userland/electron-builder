@@ -4,16 +4,18 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, DEFAULT_TARGET } from "out"
-import { exec, getTempName } from "out/util/util"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
+import { exec } from "out/util/util"
 import { log, warn } from "out/util/log"
 import { createTargets } from "out"
-import { tmpdir } from "os"
 import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter = require("path-sort")
 import DecompressZip = require("decompress-zip")
 import { convertVersion } from "out/targets/squirrelPack"
 import { spawnNpmProduction } from "out/util/util"
+import { TEST_DIR } from "./config"
+import { deepAssign } from "out/util/deepAssign"
+import { AssertContext } from "ava-tf"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -23,11 +25,11 @@ if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
 }
 
-export const outDirName = "dist"
+const OUT_DIR_NAME = "dist"
 
 interface AssertPackOptions {
-  readonly tempDirCreated?: (projectDir: string) => Promise<any>
-  readonly packed?: (projectDir: string) => Promise<any>
+  readonly projectDirCreated?: (projectDir: string) => Promise<any>
+  readonly packed?: (projectDir: string, outDir: string) => Promise<any>
   readonly expectedContents?: Array<string>
   readonly expectedArtifacts?: Array<string>
 
@@ -39,6 +41,12 @@ interface AssertPackOptions {
   readonly npmInstallBefore?: boolean
 }
 
+let tmpDirCounter = 0
+
+export function appThrows(error: RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return (t: AssertContext) => t.throws(assertPack("test-app-one", packagerOptions, checkOptions), error)
+}
+
 export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
   return () => assertPack("test-app-one", packagerOptions, checkOptions)
 }
@@ -48,51 +56,66 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     packagerOptions = signed(packagerOptions)
   }
 
-  const tempDirCreated = checkOptions.tempDirCreated
-  const useTempDir = fixtureName !== "app-executable-deps" && (tempDirCreated != null || packagerOptions.devMetadata != null || checkOptions.useTempDir || packagerOptions.targets.values().next().value.values().next().value[0] !== DEFAULT_TARGET)
+  const projectDirCreated = checkOptions.projectDirCreated
+  const useTempDir = checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.devMetadata != null || checkOptions.npmInstallBefore)
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
+  let dirToDelete: string | null = null
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(tmpdir(), "electron-builder-test", `${getTempName()}`) : path.resolve(customTmpDir)
-    if (customTmpDir != null) {
+    const dir = customTmpDir == null ? path.join(TEST_DIR, `${(tmpDirCounter++).toString(16)}`) : path.resolve(customTmpDir)
+    if (customTmpDir == null) {
+      dirToDelete = dir
+    }
+    else {
       log(`Custom temp dir used: ${customTmpDir}`)
     }
     await emptyDir(dir)
     await copy(projectDir, dir, {
       filter: it => {
         const basename = path.basename(it)
-        return basename !== outDirName && basename !== "node_modules" && basename[0] !== "."
+        return basename !== OUT_DIR_NAME && basename !== "node_modules" && basename[0] !== "."
       }
     })
     projectDir = dir
   }
 
   try {
-    if (tempDirCreated != null) {
-      await tempDirCreated(projectDir)
+    if (projectDirCreated != null) {
+      await projectDirCreated(projectDir)
       if (checkOptions.npmInstallBefore) {
         await spawnNpmProduction("install", projectDir)
       }
     }
 
-    await packAndCheck(projectDir, Object.assign({
+    // never output to test fixture app
+    if (!useTempDir) {
+      dirToDelete = path.join(TEST_DIR, `${(tmpDirCounter++).toString(16)}`)
+      const devMetadata = packagerOptions.devMetadata
+      if (devMetadata != null && devMetadata.directories != null) {
+        throw new Error("unsupported")
+      }
+      packagerOptions = deepAssign({}, packagerOptions, {devMetadata: {directories: {output: dirToDelete}}})
+    }
+
+    const outDir = useTempDir ? path.join(projectDir, OUT_DIR_NAME) : dirToDelete
+    await packAndCheck(outDir, Object.assign({
       projectDir: projectDir,
     }, packagerOptions), checkOptions)
 
     if (checkOptions.packed != null) {
-      await checkOptions.packed(projectDir)
+      await checkOptions.packed(projectDir, outDir)
     }
   }
   finally {
-    if (useTempDir && customTmpDir == null) {
+    if (dirToDelete != null) {
       try {
-        await remove(projectDir)
+        await remove(dirToDelete)
       }
       catch (e) {
-        console.warn(`Cannot delete temporary directory ${projectDir}: ${(e.stack || e)}`)
+        console.warn(`Cannot delete temporary directory ${dirToDelete}: ${(e.stack || e)}`)
       }
     }
   }
@@ -102,7 +125,7 @@ export function getTestAsset(file: string) {
   return path.join(__dirname, "..", "..", "fixtures", file)
 }
 
-async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<void> {
+async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<void> {
   const packager = new Packager(packagerOptions)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -133,7 +156,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
         await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
       }
       else if (platform === Platform.LINUX) {
-        await checkLinuxResult(projectDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
+        await checkLinuxResult(outDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
         await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch, nameToTarget)
@@ -142,7 +165,7 @@ async function packAndCheck(projectDir: string, packagerOptions: PackagerOptions
   }
 }
 
-async function checkLinuxResult(projectDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
+async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
 
   function getExpected(): Array<string> {
@@ -177,13 +200,10 @@ async function checkLinuxResult(projectDir: string, packager: Packager, checkOpt
     }
   }))
 
-  // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-amd64.deb", productName), null, 2))
-  // console.log(JSON.stringify(await getContents(projectDir + "/dist/TestApp-1.0.0-i386.deb", productName), null, 2))
-
-  const packageFile = `${projectDir}/${outDirName}/TestApp-${appInfo.version}.deb`
+  const packageFile = `${outDir}/TestApp-${appInfo.version}.deb`
   assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${projectDir}/${outDirName}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${outDir}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
   }
 
   assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).hasProperties({
@@ -341,6 +361,10 @@ async function getContents(path: string) {
     .map(it => it.length === 0 ? null : it.substring(it.indexOf(".") + 1))
     .filter(it => it != null && !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
     )
+}
+
+export function packageJson(task: (data: any) => void, isApp: boolean = false) {
+  return (projectDir: string) => modifyPackageJson(projectDir, task, isApp)
 }
 
 export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp: boolean = false): Promise<any> {

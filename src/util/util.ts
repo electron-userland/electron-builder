@@ -256,10 +256,10 @@ export function debug7zArgs(command: "a" | "x"): Array<string> {
 
 let tmpDirCounter = 0
 // add date to avoid use stale temp dir
-const tempDirPrefix = `${process.pid.toString(36)}-${Date.now().toString(36)}`
+const tempDirPrefix = `${process.pid.toString(16)}-${Date.now().toString(16)}`
 
 export function getTempName(prefix?: string | n): string {
-  return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(36)}`
+  return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(16)}`
 }
 
 export function isEmptyOrSpaces(s: string | n) {

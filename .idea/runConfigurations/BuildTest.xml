@@ -3,6 +3,12 @@
     <envs>
       <env name="NODE_PATH" value="." />
     </envs>
-    <method />
+    <profiling v8-profiler-path="" />
+    <EXTENSION ID="com.jetbrains.nodejs.run.NodeJSProfilingRunConfigurationExtension">
+      <profiling v8-profiler-path="" />
+    </EXTENSION>
+    <method>
+      <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="true" />
+    </method>
   </configuration>
 </component>

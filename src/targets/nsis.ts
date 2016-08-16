@@ -1,6 +1,6 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions } from "../metadata"
-import { exec, debug, doSpawn, handleProcess, use, getTempName } from "../util/util"
+import { exec, debug, doSpawn, handleProcess, use } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
@@ -8,9 +8,8 @@ import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
-import { unlink, readFile, remove } from "fs-extra-p"
+import { unlink, readFile } from "fs-extra-p"
 import semver = require("semver")
-import { tmpdir } from "os"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -31,7 +30,7 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  constructor(private packager: WinPackager, private outDir: string, private cleanupTasks: Array<() => Promise<any>>) {
+  constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
     this.options = packager.info.devMetadata.build.nsis || Object.create(null)
@@ -156,13 +155,11 @@ export default class NsisTarget extends Target {
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath == null) {
-      const uninstallerPath = path.join(tmpdir(), `${getTempName("electron-builder")}.exe`)
-      this.cleanupTasks.push(() => remove(uninstallerPath))
-
-      defines.BUILD_UNINSTALLER = null
-      defines.UNINSTALLER_OUT_FILE = path.win32.join("Z:", uninstallerPath)
-      await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
+      const uninstallerPath = await packager.getTempFile("uninstaller.exe")
       const isWin = process.platform === "win32"
+      defines.BUILD_UNINSTALLER = null
+      defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
+      await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
       await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
       await packager.sign(uninstallerPath)
 

@@ -5,9 +5,6 @@ import * as path from "path"
 import { warn, log } from "../util/log"
 import { getRepositoryInfo } from "../repositoryInfo"
 import { getBinFromBintray } from "../util/binDownload"
-import { tmpdir } from "os"
-import { getTempName } from "../util/util"
-import { emptyDir, remove } from "fs-extra-p"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 
 //noinspection JSUnusedLocalSymbols
@@ -18,7 +15,7 @@ const SW_VERSION = "1.4.4"
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
 export default class SquirrelWindowsTarget extends Target {
-  constructor(private packager: WinPackager, private cleanupTasks: Array<() => Promise<any>>) {
+  constructor(private packager: WinPackager) {
     super("squirrel")
   }
 
@@ -36,10 +33,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     const distOptions = await this.computeEffectiveDistOptions()
 
-    const stageDir = path.join(tmpdir(), getTempName("squirrel-windows-builder"))
-    await emptyDir(stageDir)
-    this.cleanupTasks.push(() => remove(stageDir))
-    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, stageDir, setupFileName, this.packager, appOutDir)
+    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, this.packager, appOutDir)
 
     this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 

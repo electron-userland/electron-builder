@@ -51,7 +51,7 @@ test.ifNotCiOsx("installerHeaderIcon", () => {
         return false
       }
     }, {
-      tempDirCreated: projectDir => {
+      projectDirCreated: projectDir => {
         headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
         return copy(getTestAsset("headerIcon.ico"), headerIconPath)
       }
@@ -79,7 +79,7 @@ test.ifNotCiOsx("boring, MUI_HEADER", () => {
         return true
       }
     }, {
-      tempDirCreated: projectDir => {
+      projectDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "build", "installerHeader.bmp")
         return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
       }
@@ -108,7 +108,7 @@ test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
         return false
       }
     }, {
-      tempDirCreated: projectDir => {
+      projectDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "foo.bmp")
         return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
       },
@@ -117,7 +117,7 @@ test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
 })
 
 test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
-  tempDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
+  projectDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
   packed: projectDir => BluebirdPromise.all([
     assertThat(path.join(projectDir, "build", "customHeader")).isFile(),
     assertThat(path.join(projectDir, "build", "customInit")).isFile(),
@@ -126,6 +126,6 @@ test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets:
 }))
 
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
-  tempDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
+  projectDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
   packed: projectDir => assertThat(path.join(projectDir, "build", "customInstallerScript")).isFile(),
 }))

@@ -7,6 +7,7 @@ import {  readFile, outputFile } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
+import { TmpDir } from "../util/tmp"
 
 const template = require("lodash.template")
 
@@ -26,12 +27,11 @@ export default class FpmTarget extends TargetEx {
   constructor(name: string, private packager: PlatformPackager<LinuxBuildOptions>, private helper: LinuxTargetHelper, private outDir: string) {
     super(name)
 
-    this.scriptFiles = this.createScripts(helper.tempDirPromise)
+    this.scriptFiles = this.createScripts()
     this.desktopEntry = helper.computeDesktopEntry()
   }
 
-  private async createScripts(tempDirPromise: Promise<string>): Promise<Array<string>> {
-    const tempDir = await tempDirPromise
+  private async createScripts(): Promise<Array<string>> {
     const defaultTemplatesDir = path.join(__dirname, "..", "..", "templates", "linux")
 
     const packager = this.packager
@@ -47,8 +47,8 @@ export default class FpmTarget extends TargetEx {
       return path.resolve(packager.projectDir, value)
     }
 
-    const afterInstallFilePath = writeConfigFile(tempDir, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
-    const afterRemoveFilePath = writeConfigFile(tempDir, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
+    const afterInstallFilePath = writeConfigFile(this.packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
+    const afterRemoveFilePath = writeConfigFile(this.packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
 
     return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
   }
@@ -145,14 +145,14 @@ export default class FpmTarget extends TargetEx {
   }
 }
 
-async function writeConfigFile(tempDir: string, templatePath: string, options: any): Promise<string> {
+async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {
   const config = template(await readFile(templatePath, "utf8"),
     {
       // set interpolate explicitly to avoid troubles with templating of installer.nsi.tpl
       interpolate: /<%=([\s\S]+?)%>/g
     })(options)
 
-  const outputPath = path.join(tempDir, path.basename(templatePath, ".tpl"))
+  const outputPath = await tmpDir.getTempFile(path.basename(templatePath, ".tpl"))
   await outputFile(outputPath, config)
   return outputPath
 }
