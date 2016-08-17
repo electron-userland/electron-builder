@@ -28,11 +28,17 @@ export interface SignOptions {
 
 export async function sign(options: SignOptions) {
   let hashes = options.hash
-  if (hashes == null) {
-    hashes = ["sha1", "sha256"]
+  // msi does not support dual-signing
+  if (path.extname(options.path) === ".msi") {
+    hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
   }
   else {
-    hashes = Array.isArray(hashes) ? hashes.slice() : [hashes]
+    if (hashes == null) {
+      hashes = ["sha1", "sha256"]
+    }
+    else {
+      hashes = Array.isArray(hashes) ? hashes.slice() : [hashes]
+    }
   }
 
   const isWin = process.platform === "win32"
@@ -91,6 +97,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     args.push(isWin ? "/du" : "-i", options.site)
   }
 
+  // msi does not support dual-signing
   if (nest) {
     args.push(isWin ? "/as" : "-nest")
   }
