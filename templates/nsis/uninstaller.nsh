@@ -1,15 +1,3 @@
-!ifndef INSTALL_MODE_PER_ALL_USERS
-  Function un.installMode.CurrentUser
-    !insertmacro setInstallModePerUser
-  FunctionEnd
-!endif
-
-!ifdef INSTALL_MODE_PER_ALL_USERS_REQUIRED
-  Function un.installMode.AllUsers
-    !insertmacro setInstallModePerAllUsers
-  FunctionEnd
-!endif
-
 Function un.onInit
   !insertmacro check64BitAndSetRegView
 
@@ -22,9 +10,9 @@ Function un.onInit
       !insertmacro CHECK_APP_RUNNING "uninstall"
       SetSilent silent
     !endif
-  ${EndIf}
+  ${endIf}
 
-  !insertmacro initMultiUser un.
+  !insertmacro initMultiUser
 
   !ifmacrodef customUnInit
     !insertmacro customUnInit
@@ -59,7 +47,14 @@ Section "un.install"
   ${GetParameters} $R0
   ${GetOptions} $R0 "/KEEP_APP_DATA" $R1
   ${If} ${Errors}
+    # electron always uses per user app data
+    ${if} $installMode == "all"
+      SetShellVarContext current
+    ${endif}
     RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
+    ${if} $installMode == "all"
+      SetShellVarContext all
+    ${endif}
   ${EndIf}
 
   DeleteRegKey SHCTX "${UNINSTALL_REGISTRY_KEY}"

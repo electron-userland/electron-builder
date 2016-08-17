@@ -7,7 +7,7 @@
 !define UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_GUID}"
 !define UNINSTALL_DISPLAY_NAME "${PRODUCT_NAME} ${VERSION}"
 
-# current Install Mode ("AllUsers" or "CurrentUser")
+# current Install Mode ("all" or "CurrentUser")
 Var installMode
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
@@ -28,7 +28,7 @@ Var installMode
         System::Call '*$2(&w${NSIS_MAX_STRLEN} .r1)'
         StrCpy $0 $1
         System::Call 'Ole32::CoTaskMemFree(ir2)'
-      ${EndIf}
+      ${endif}
       StrCpy $INSTDIR "$0\${PRODUCT_FILENAME}"
     !endif
 
@@ -38,21 +38,13 @@ Var installMode
       StrCpy $INSTDIR $perUserInstallationFolder
     ${endif}
   !macroend
-
-  !ifndef BUILD_UNINSTALLER
-    Function installMode.CurrentUser
-      !insertmacro setInstallModePerUser
-    FunctionEnd
-  !endif
 !endif
 
 !ifdef INSTALL_MODE_PER_ALL_USERS_REQUIRED
   Var perMachineInstallationFolder
 
   !macro setInstallModePerAllUsers
-    # Install mode initialization - per-machine
-    StrCpy $installMode AllUsers
-
+    StrCpy $installMode all
     SetShellVarContext all
 
     StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
@@ -63,12 +55,6 @@ Var installMode
       StrCpy $INSTDIR $perMachineInstallationFolder
     ${endif}
   !macroend
-
-  !ifndef BUILD_UNINSTALLER
-    Function installMode.AllUsers
-      !insertmacro setInstallModePerAllUsers
-    FunctionEnd
-  !endif
 !endif
 
 # SHCTX is the hive HKLM if SetShellVarContext all, or HKCU if SetShellVarContext user
@@ -77,7 +63,7 @@ Var installMode
 	WriteRegStr SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
 
 	# Write the uninstall keys for Windows
-	${if} $installMode == "AllUsers"
+	${if} $installMode == "all"
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}"
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /allusers'
 	${else}

@@ -33,20 +33,20 @@ Var RadioButtonLabel1
 		${If} ${UAC_IsInnerInstance}
 		${AndIf} ${UAC_IsAdmin}
 		  # inner Process (and Admin) - skip selection, inner process is always used for elevation (machine-wide)
-			Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+			!insertmacro setInstallModePerAllUsers
 			Abort
 		${EndIf}
 
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
     ${IfNot} ${Errors}
-      Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+      !insertmacro setInstallModePerAllUsers
       Abort
     ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${IfNot} ${Errors}
-      Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+      !insertmacro setInstallModePerUser
       Abort
     ${EndIf}
 
@@ -56,11 +56,11 @@ Var RadioButtonLabel1
 		!ifdef BUILD_UNINSTALLER
 			${if} $hasPerUserInstallation == "1"
 				${andif} $hasPerMachineInstallation == "0"
-				Call un.installMode.CurrentUser
+				!insertmacro setInstallModePerUser
 				Abort
 			${elseif} $hasPerUserInstallation == "0"
 				${andif} $hasPerMachineInstallation == "1"
-				Call un.installMode.AllUsers
+				!insertmacro setInstallModePerAllUsers
 				Abort
 			${endif}
 
@@ -113,7 +113,7 @@ Var RadioButtonLabel1
 		${NSD_CreateLabel} 0u 110u 280u 50u ""
 		Pop $RadioButtonLabel1
 
-		${if} $installMode == "AllUsers" ; setting defaults
+		${if} $installMode == "all"
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_SETCHECK} ${BST_CHECKED} 0 ; set as default
 			SendMessage $MultiUser.InstallModePage.AllUsers ${BM_CLICK} 0 0 ; trigger click event
 		${else}
@@ -130,7 +130,7 @@ Var RadioButtonLabel1
 
 		${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
 			${if} ${UAC_IsAdmin}
-			  Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+			  !insertmacro setInstallModePerAllUsers
       ${else}
 				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
 					GetDlgItem $9 $HWNDParent 1
@@ -158,7 +158,7 @@ Var RadioButtonLabel1
 				!endif
 			${endif}
 		${else}
-			Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+			!insertmacro setInstallModePerUser
 		${endif}
 
 		!insertmacro MUI_PAGE_FUNCTION_CUSTOM LEAVE

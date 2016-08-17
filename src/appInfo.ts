@@ -14,6 +14,7 @@ export class AppInfo {
   readonly buildNumber: string
   readonly buildVersion: string
 
+  readonly productName: string
   readonly productFilename: string
 
   constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, buildVersion?: string | null) {
@@ -32,6 +33,7 @@ export class AppInfo {
       this.buildVersion = buildVersion!
     }
 
+    this.productName = getProductName(this.metadata, this.devMetadata)
     this.productFilename = sanitizeFileName(this.productName)
   }
 
@@ -66,10 +68,6 @@ export class AppInfo {
       warn('"app-category-type" is deprecated — please use "category" instead')
     }
     return metadata.category || old
-  }
-
-  get productName(): string {
-    return getProductName(this.metadata, this.devMetadata)
   }
 
   get copyright(): string {

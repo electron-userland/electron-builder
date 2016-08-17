@@ -25,18 +25,10 @@ AutoCloseWindow true
   RequestExecutionLevel user
 !endif
 
-!macro initMultiUser UNINSTALLER_FUNCPREFIX
+!macro initMultiUser
   !ifdef INSTALL_MODE_PER_ALL_USERS
-    !ifdef BUILD_UNINSTALLER
-      Call un.installMode.AllUsers
-    !else
-      Call installMode.AllUsers
-    !endif
+    !insertmacro setInstallModePerAllUsers
   !else
-    !ifdef BUILD_UNINSTALLER
-      Call un.installMode.CurrentUser
-    !else
-      Call installMode.CurrentUser
-    !endif
+    !insertmacro setInstallModePerUser
   !endif
 !macroend

@@ -22,7 +22,7 @@
   !insertmacro MUI_UNPAGE_INSTFILES
 !endif
 
-!macro initMultiUser UNINSTALLER_FUNCPREFIX
+!macro initMultiUser
   !insertmacro UAC_PageElevation_OnInit
 
   ${If} ${UAC_IsInnerInstance}
@@ -60,17 +60,17 @@
   ${endif}
 
   ${if} $hasPerUserInstallation == "1"
-  ${andif} $hasPerMachineInstallation == "0"
-    Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+   ${andif} $hasPerMachineInstallation == "0"
+    !insertmacro setInstallModePerUser
   ${elseif} $hasPerUserInstallation == "0"
     ${andif} $hasPerMachineInstallation == "1"
-    Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+    !insertmacro setInstallModePerAllUsers
   ${else}
     # if there is no installation, or there is both per-user and per-machine
     !ifdef INSTALL_MODE_PER_ALL_USERS
-      Call ${UNINSTALLER_FUNCPREFIX}installMode.AllUsers
+      !insertmacro setInstallModePerAllUsers
     !else
-      Call ${UNINSTALLER_FUNCPREFIX}installMode.CurrentUser
+      !insertmacro setInstallModePerUser
     !endif
   ${endif}
 !macroend

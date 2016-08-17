@@ -154,7 +154,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       "--set-version-string", "CompanyName", appInfo.companyName,
       "--set-version-string", "FileDescription", appInfo.description,
       "--set-version-string", "ProductName", appInfo.productName,
-      "--set-version-string", "InternalName", appInfo.productName,
+      "--set-version-string", "InternalName", path.basename(appInfo.productFilename, ".exe"),
       "--set-version-string", "LegalCopyright", appInfo.copyright,
       "--set-version-string", "OriginalFilename", "",
       "--set-file-version", appInfo.buildVersion,
