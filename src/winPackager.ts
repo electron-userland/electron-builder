@@ -147,29 +147,32 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   async signAndEditResources(file: string) {
-    const appInfo = this.appInfo
+    // rcedit can only edit .exe resources
+    if (path.extname(file) !== ".msi") {
+      const appInfo = this.appInfo
 
-    const args = [
-      file,
-      "--set-version-string", "CompanyName", appInfo.companyName,
-      "--set-version-string", "FileDescription", appInfo.description,
-      "--set-version-string", "ProductName", appInfo.productName,
-      "--set-version-string", "InternalName", appInfo.productName,
-      "--set-version-string", "LegalCopyright", appInfo.copyright,
-      "--set-version-string", "OriginalFilename", "",
-      "--set-file-version", appInfo.buildVersion,
-      "--set-product-version", appInfo.version,
-    ]
+      const args = [
+        file,
+        "--set-version-string", "CompanyName", appInfo.companyName,
+        "--set-version-string", "FileDescription", appInfo.description,
+        "--set-version-string", "ProductName", appInfo.productName,
+        "--set-version-string", "InternalName", appInfo.productName,
+        "--set-version-string", "LegalCopyright", appInfo.copyright,
+        "--set-version-string", "OriginalFilename", "",
+        "--set-file-version", appInfo.buildVersion,
+        "--set-product-version", appInfo.version,
+      ]
 
-    use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
-    use(await this.getIconPath(), it => args.push("--set-icon", it))
+      use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+      use(await this.getIconPath(), it => args.push("--set-icon", it))
 
-    const rceditExecutable = path.join(await getSignVendorPath(), "rcedit.exe")
-    const isWin = process.platform === "win32"
-    if (!isWin) {
-      args.unshift(rceditExecutable)
+      const rceditExecutable = path.join(await getSignVendorPath(), "rcedit.exe")
+      const isWin = process.platform === "win32"
+      if (!isWin) {
+        args.unshift(rceditExecutable)
+      }
+      await exec(isWin ? rceditExecutable : "wine", args)
     }
-    await exec(isWin ? rceditExecutable : "wine", args)
 
     await this.sign(file)
   }
