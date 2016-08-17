@@ -99,7 +99,8 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   if (options.msi && process.platform === "win32") {
     const outFile = setupExe.replace(".exe", ".msi")
     await msi(options, nupkgPath, setupPath, outputDirectory, outFile)
-    await packager.signAndEditResources(path.join(outputDirectory, outFile))
+    // rcedit can only edit .exe resources
+    await packager.sign(path.join(outputDirectory, outFile))
   }
 }
 
