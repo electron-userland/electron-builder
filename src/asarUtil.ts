@@ -22,18 +22,20 @@ const MAX_FILE_REQUESTS = 32
 const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
-function walk(dirPath: string, consumer: (file: string, stat: Stats) => void, filter: (file: string) => boolean, addRootToResult?: boolean): BluebirdPromise<Array<string>> {
+export function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: (file: string) => boolean, addRootToResult?: boolean): BluebirdPromise<Array<string>> {
   return readdir(dirPath)
     .then(names => {
       return BluebirdPromise.map(names, name => {
         const filePath = dirPath + path.sep + name
-        if (!filter(filePath)) {
+        if (filter != null && !filter(filePath)) {
           return <any>null
         }
 
         return lstat(filePath)
           .then((stat): any => {
-            consumer(filePath, stat)
+            if (consumer != null) {
+              consumer(filePath, stat)
+            }
             if (stat.isDirectory()) {
               return walk(filePath, consumer, filter, true)
             }

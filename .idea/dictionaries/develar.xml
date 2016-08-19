@@ -91,6 +91,7 @@
       <w>psmdcp</w>
       <w>rcedit</w>
       <w>readpass</w>
+      <w>regedit</w>
       <w>rels</w>
       <w>repos</w>
       <w>rimraf</w>
@@ -109,6 +110,7 @@
       <w>valuename</w>
       <w>veyor</w>
       <w>volid</w>
+      <w>winedlloverrides</w>
       <w>winstaller</w>
       <w>xamarin</w>
       <w>xenial</w>

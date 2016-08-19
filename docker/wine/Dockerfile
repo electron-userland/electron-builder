@@ -11,5 +11,6 @@ apt-get install -y --no-install-recommends wine1.8 mono-devel ca-certificates-mo
 apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV WINEDEBUG -all,err+all
+ENV WINEDLLOVERRIDES winemenubuilder.exe=d
 
 RUN wineboot --init || true

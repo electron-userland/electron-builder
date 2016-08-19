@@ -89,7 +89,7 @@ class Assertions {
   }
 }
 
-function prettyDiff(actual: any, expected: any): string {
+export function prettyDiff(actual: any, expected: any): string {
   const diffJson2 = diffJson(expected, actual)
   const diff = diffJson2.map(part => {
     if (part.added) {

@@ -1,3 +1,9 @@
+InitPluginsDir
+
+!ifdef HEADER_ICO
+  File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
+!endif
+
 ${IfNot} ${Silent}
   SetDetailsPrint none
 
@@ -12,15 +18,22 @@ ${endif}
 
 !insertmacro CHECK_APP_RUNNING "install"
 
-${if} $installMode == "all"
-  ReadRegStr $R0 HKEY_LOCAL_MACHINE "${UNINSTALL_REGISTRY_KEY}" UninstallString
-  ${if} $R0 != ""
-    ExecWait "$R0 /S"
-  ${endif}
+ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString
+${if} $R0 != ""
+  ExecWait "$R0 /S /KEEP_APP_DATA"
 ${endif}
 
 RMDir /r $INSTDIR
 SetOutPath $INSTDIR
+
+SetCompress off
+!ifdef APP_32
+  File /oname=$PLUGINSDIR\app-32.7z "${APP_32}"
+!endif
+!ifdef APP_64
+  File /oname=$PLUGINSDIR\app-64.7z "${APP_64}"
+!endif
+SetCompress "${COMPRESS}"
 
 !ifdef APP_64
   ${If} ${RunningX64}

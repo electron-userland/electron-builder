@@ -20,8 +20,6 @@ Function un.onInit
 FunctionEnd
 
 Section "un.install"
-  SetAutoClose true
-
   !ifndef ONE_CLICK
     # for boring installer we check it here to show progress
     !insertmacro CHECK_APP_RUNNING "uninstall"
@@ -44,6 +42,7 @@ Section "un.install"
   # delete the installed files
   RMDir /r $INSTDIR
 
+  ClearErrors
   ${GetParameters} $R0
   ${GetOptions} $R0 "/KEEP_APP_DATA" $R1
   ${If} ${Errors}
@@ -63,4 +62,6 @@ Section "un.install"
   !ifmacrodef customUnInstall
     !insertmacro customUnInstall
   !endif
+
+  Quit
 SectionEnd

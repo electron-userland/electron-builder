@@ -1,10 +1,14 @@
 import { Platform, Arch } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, getTestAsset, app } from "./helpers/packTester"
-import { copy } from "fs-extra-p"
+import { copy, outputFile } from "fs-extra-p"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
+import { extractFile } from "asar-electron-builder"
+import { walk } from "out/asarUtil"
+import { nsisPerMachineInstall } from "./helpers/expectedContents"
+import { WineManager, diff } from "./helpers/wine"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -13,9 +17,11 @@ const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 test("one-click", app({targets: nsisTarget}, {useTempDir: true, signed: true}))
 
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
-  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   devMetadata: {
     build: {
+      // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
+      productName: "TestApp",
       fileAssociations: [
         {
           ext: "foo",
@@ -27,11 +33,55 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
         runAfterFinish: false,
       },
     }
-  }
+  },
 }, {
   projectDirCreated: projectDir => {
     let headerIconPath = path.join(projectDir, "build", "foo.ico")
     return copy(getTestAsset("headerIcon.ico"), headerIconPath)
+  },
+  packed: async (projectDir, outDir) => {
+    if (process.env.CI != null) {
+      return
+    }
+
+    const wine = new WineManager()
+    await wine.prepare()
+    const driveC = path.join(wine.wineDir, "drive_c")
+    const driveCWindows = path.join(wine.wineDir, "drive_c", "windows")
+    const perUserTempDir = path.join(wine.userDir, "Temp")
+    const walkFilter = (it: string) => {
+      return it !== driveCWindows && it !== perUserTempDir
+    }
+
+    function listFiles() {
+      return walk(driveC, null, walkFilter)
+    }
+
+    let fsBefore = await listFiles()
+
+    await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S")
+
+    const appAsar = path.join(driveC, "Program Files", "TestApp", "resources", "app.asar")
+    assertThat(JSON.parse(extractFile(appAsar, "package.json").toString())).hasProperties({
+      name: "TestApp"
+    })
+
+    let fsAfter = await listFiles()
+
+    let fsChanges = diff(fsBefore, fsAfter, driveC)
+    assertThat(fsChanges.added).isEqualTo(nsisPerMachineInstall)
+    assertThat(fsChanges.deleted).isEqualTo([])
+
+    // run installer again to test uninstall
+    const appDataFile = path.join(wine.userDir, "Application Data", "TestApp", "doNotDeleteMe")
+    await outputFile(appDataFile, "app data must be not removed")
+    fsBefore = await listFiles()
+    await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"))
+    fsAfter = await listFiles()
+
+    fsChanges = diff(fsBefore, fsAfter, driveC)
+    assertThat(fsChanges.added).isEqualTo([])
+    assertThat(fsChanges.deleted).isEqualTo([])
   },
 }))
 
@@ -95,7 +145,7 @@ test.ifNotCiOsx("boring, MUI_HEADER", () => {
 test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
-      targets: nsisTarget,
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
       devMetadata: {
         build: {
           nsis: {

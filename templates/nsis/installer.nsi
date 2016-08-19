@@ -38,21 +38,6 @@ Function .onInit
       ${EndIf}
     !endif
 
-    InitPluginsDir
-
-    SetCompress off
-    !ifdef APP_32
-      File /oname=$PLUGINSDIR\app-32.7z "${APP_32}"
-    !endif
-    !ifdef APP_64
-      File /oname=$PLUGINSDIR\app-64.7z "${APP_64}"
-    !endif
-    SetCompress "${COMPRESS}"
-
-    !ifdef HEADER_ICO
-      File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
-    !endif
-
     !ifmacrodef customInit
       !insertmacro customInit
     !endif
