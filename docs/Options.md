@@ -210,7 +210,7 @@ May be specified in the platform options (e.g. in the `build.mac`).
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
 
-## Source and Destination directories
+## Source and Destination Directories
 You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
 Note this only works for `extraFiles` and `extraResources`.
  ```js

@@ -96,56 +96,59 @@ export class FileMatcher {
   readonly to: string
   readonly options: FileMatchOptions
 
-  private parsedPatterns: Array<Minimatch>
+  readonly patterns: Array<string>
 
   constructor(from: string, to: string, options: FileMatchOptions, patterns?: Array<string> | string | n) {
     this.options = options
-    this.parsedPatterns = []
+    this.patterns = []
 
     this.from = this.expandPattern(from)
     this.to = this.expandPattern(to)
 
     if (patterns != null && !Array.isArray(patterns)) {
-      this.addPattern(patterns)
+      this.patterns = [patterns]
     }
     else if (patterns != null) {
-      for (let i = 0; i < patterns.length; i++) {
-        this.addPattern(patterns[i])
-      }
+      this.patterns = patterns
     }
   }
 
   addPattern(pattern: string) {
-    const minimatchOptions = {}
-
-    const expandedPattern = this.expandPattern(pattern)
-    const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
-    this.parsedPatterns.push(parsedPattern)
-
-    if (!hasMagic(parsedPattern)) {
-      // https://github.com/electron-userland/electron-builder/issues/545
-      // add **/*
-      this.parsedPatterns.push(new Minimatch(`${expandedPattern}/*/**`, minimatchOptions))
-    }
+    this.patterns.push(pattern)
   }
 
   isEmpty() {
-    return this.parsedPatterns.length === 0
+    return this.patterns.length === 0
   }
 
-  merge(fileMatch: FileMatcher): FileMatcher {
-    if (fileMatch.from !== this.from || fileMatch.to !== this.to) {
-      throw new Error("Cannot merge FileMatchers with different source/destinations")
+  getParsedPatterns(fromDir?: string): Array<Minimatch> {
+    const minimatchOptions = {}
+
+    const parsedPatterns: Array<Minimatch> = []
+    const pathDifference = fromDir ? path.relative(fromDir, this.from) : null
+
+    for (let i = 0; i < this.patterns.length; i++) {
+      let expandedPattern = this.expandPattern(this.patterns[i])
+
+      if (pathDifference) {
+        expandedPattern = path.join(pathDifference, expandedPattern)
+      }
+
+      const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
+      parsedPatterns.push(parsedPattern)
+
+      if (!hasMagic(parsedPattern)) {
+        // https://github.com/electron-userland/electron-builder/issues/545
+        // add **/*
+        parsedPatterns.push(new Minimatch(`${expandedPattern}/*/**`, minimatchOptions))
+      }
     }
 
-    const mergedFileMatch = new FileMatcher(this.from, this.to, this.options)
-    mergedFileMatch.parsedPatterns = this.parsedPatterns.concat(fileMatch.parsedPatterns)
-    return mergedFileMatch
+    return parsedPatterns
   }
 
-  createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, exclude?: FileMatcher | n): (file: string) => boolean {
-    const excludePatterns = exclude != null ? exclude.parsedPatterns : null
-    return createFilter(this.from, this.parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
+  createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): (file: string) => boolean {
+    return createFilter(this.from, this.getParsedPatterns(), ignoreFiles, rawFilter, excludePatterns)
   }
 
   private expandPattern(pattern: string): string {
@@ -290,22 +293,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
       }
 
-      let excludePatterns: FileMatcher | null = null
-      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-        if (extraResourcePatterns != null) {
-          excludePatterns = extraResourcePatterns[0]
+      let excludePatterns: Array<Minimatch> = []
+      if (extraResourcePatterns != null) {
+        for (let i = 0; i < extraResourcePatterns.length; i++) {
+          const patterns = extraResourcePatterns[i].getParsedPatterns(this.info.projectDir)
+          excludePatterns = excludePatterns.concat(patterns)
         }
-        if (extraFilePatterns != null) {
-          if (excludePatterns == null) {
-            excludePatterns = extraFilePatterns[0]
-          }
-          else {
-            excludePatterns = excludePatterns.merge(extraFilePatterns[0])
-          }
+      }
+      if (extraFilePatterns != null) {
+        for (let i = 0; i < extraFilePatterns.length; i++) {
+          const patterns = extraFilePatterns[i].getParsedPatterns(this.info.projectDir)
+          excludePatterns = excludePatterns.concat(patterns)
         }
       }
 
-      const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns)
+      const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
       const promise = asarOptions == null ?
         copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
@@ -321,8 +323,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
     await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
-    await this.doCopyExtraFiles(true, extraResourcePatterns)
-    await this.doCopyExtraFiles(false, extraFilePatterns)
+    await this.doCopyExtraFiles(extraResourcePatterns)
+    await this.doCopyExtraFiles(extraFilePatterns)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -388,7 +390,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  private doCopyExtraFiles(isResources: boolean, patterns: Array<FileMatcher> | n): Promise<any> {
+  private doCopyExtraFiles(patterns: Array<FileMatcher> | n): Promise<any> {
     if (patterns == null || patterns.length === 0) {
       return BluebirdPromise.resolve()
     }
