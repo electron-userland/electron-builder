@@ -1,7 +1,7 @@
 import * as path from "path"
 import {
   computeDefaultAppDirectory, installDependencies, getElectronVersion, use,
-  exec, isEmptyOrSpaces, statOrNull
+  exec, isEmptyOrSpaces, statOrNull, getGypEnv
 } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
@@ -215,6 +215,13 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
+    if (this.devMetadata.build.nodeGypRebuild === true) {
+      log("Execute node-gyp rebuild")
+      await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
+        env: getGypEnv(this.electronVersion, Arch[arch]),
+      })
+    }
+
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       if (this.devMetadata.build.npmRebuild === false) {
         log("Skip app dependencies rebuild because npmRebuild is set to false")

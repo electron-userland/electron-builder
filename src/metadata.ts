@@ -195,9 +195,14 @@ export interface BuildMetadata {
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
   /*
-   Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+   *two package.json structure only* Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */
   readonly npmRebuild?: boolean
+
+  /*
+   Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
+   */
+  readonly nodeGypRebuild?: boolean
 
   readonly icon?: string | null
 

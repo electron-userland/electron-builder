@@ -17,16 +17,19 @@ export const debug7z = debugFactory("electron-builder:7z")
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
+  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, getGypEnv(electronVersion, arch)))
+}
+
+export function getGypEnv(electronVersion: string, arch: string): any {
   const gypHome = path.join(homedir(), ".electron-gyp")
-  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, Object.assign({}, process.env, {
-      npm_config_disturl: "https://atom.io/download/atom-shell",
-      npm_config_target: electronVersion,
-      npm_config_runtime: "electron",
-      npm_config_arch: arch,
-      HOME: gypHome,
-      USERPROFILE: gypHome,
-    })
-  ))
+  return Object.assign({}, process.env, {
+    npm_config_disturl: "https://atom.io/download/atom-shell",
+    npm_config_target: electronVersion,
+    npm_config_runtime: "electron",
+    npm_config_arch: arch,
+    HOME: gypHome,
+    USERPROFILE: gypHome,
+  })
 }
 
 export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
