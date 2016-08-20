@@ -57,7 +57,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
-  const useTempDir = checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.devMetadata != null || checkOptions.npmInstallBefore)
+  const useTempDir = process.env.TEST_APP_TMP_DIR != null || (checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.devMetadata != null || checkOptions.npmInstallBefore))
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"

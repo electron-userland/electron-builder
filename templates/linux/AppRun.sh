@@ -10,15 +10,8 @@ echo "$APPDIR"
 
 THIS="$0"
 
-# $XDG_DATA_DIRS contains the default paths /usr/local/share:/usr/share
-# desktop file has to be installed in an applications subdirectory
-# of one of the $XDG_DATA_DIRS components
-if [ -z "$XDG_DATA_DIRS" ] ; then
-  echo "\$XDG_DATA_DIRS is missing. Please run ${THIS} from within an AppImage."
-  exit 0
-fi
-
 export PATH="${APPDIR}/usr/bin:${APPDIR}/usr/sbin:${PATH}"
+export XDG_DATA_DIRS="./share/:${XDG_DATA_DIRS}"
 export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS}"
 export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
@@ -180,7 +173,6 @@ if [ -z "$SKIP" ] ; then
     --dir "$DESTINATION_DIR_DESKTOP"
   chmod a+x "$DESTINATION_DIR_DESKTOP/"*
   RESOURCE_NAME=$(echo "$VENDORPREFIX-$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
-  echo "${RESOURCE_NAME}"
 
   # uninstall previous icons
   xdg-icon-resource uninstall --noupdate --size 16 "$RESOURCE_NAME"
@@ -205,10 +197,10 @@ if [ -z "$SKIP" ] ; then
   xdg-icon-resource forceupdate
 
   # Install mime type
-  find "$APPDIR/usr/share/mime/" -type f -name "*xml" -exec xdg-mime install ${SYSTEM_WIDE} --novendor {} \; || true
+  find "$APPDIR/usr/share/mime/" -type f -name "*xml" -exec xdg-mime install ${SYSTEM_WIDE} --novendor {} \; 2>/dev/null || true
 
   # Install the icon files for the mime type; TODO: scalable
-  ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/mimetypes/*.png" || true)
+  ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/mimetypes/*.png" 2>/dev/null || true)
   for ICON in $ICONS ; do
     ICON_SIZE=$(echo "$ICON" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
     xdg-icon-resource install --context mimetypes --size "$ICON_SIZE" "$ICON" $(basename "$ICON" | sed -e 's/.png//g')
