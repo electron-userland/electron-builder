@@ -53,6 +53,7 @@
       <w>isbinaryfile</w>
       <w>joliet</w>
       <w>keyserver</w>
+      <w>lcid</w>
       <w>libappindicator</w>
       <w>libexec</w>
       <w>libgcrypt</w>

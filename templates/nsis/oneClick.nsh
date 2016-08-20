@@ -11,7 +11,6 @@
   !endif
 !endif
 
-AutoCloseWindow true
 !insertmacro MUI_PAGE_INSTFILES
 !ifdef BUILD_UNINSTALLER
   !insertmacro MUI_UNPAGE_INSTFILES

@@ -14,9 +14,9 @@ import semver = require("semver")
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-const NSIS_VERSION = "3.0.0"
+const NSIS_VERSION = "3.0.1"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "7741089f3ca13de879f87836156ef785eab49844cacbeeabaeaefd1ade325ee7"
+const NSIS_SHA2 = "23280f66c07c923da6f29a3c318377720c8ecd7af4de3755256d1ecf60d07f74"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -119,13 +119,14 @@ export default class NsisTarget extends Target {
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const parsedVersion = new semver.SemVer(appInfo.version)
+    const localeId = this.options.language || "1033"
     const versionKey = [
-      `ProductName "${appInfo.productName}"`,
-      `ProductVersion "${appInfo.version}"`,
-      `CompanyName "${appInfo.companyName}"`,
-      `LegalCopyright "${appInfo.copyright}"`,
-      `FileDescription "${appInfo.description}"`,
-      `FileVersion "${appInfo.buildVersion}"`,
+      `/LANG=${localeId} ProductName "${appInfo.productName}"`,
+      `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
+      `/LANG=${localeId} CompanyName "${appInfo.companyName}"`,
+      `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
+      `/LANG=${localeId} FileDescription "${appInfo.description}"`,
+      `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
     use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`LegalTrademarks "${it}"`))
 

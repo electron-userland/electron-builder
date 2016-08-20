@@ -142,6 +142,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | installerHeaderIcon | <a name="NsisOptions-installerHeaderIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
 | include | <a name="NsisOptions-include"></a>The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
 | script | <a name="NsisOptions-script"></a>The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+| language | <a name="NsisOptions-language"></a>* Hex LCID, defaults to `1033`(`English - United States`, see https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx?f=255&MSPPError=-2147217396).
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`

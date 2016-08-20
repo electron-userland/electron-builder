@@ -36,7 +36,7 @@ export class WineManager {
     this.env = await this.winePreparePromise
   }
 
-  async exec(...args: Array<string>) {
+  exec(...args: Array<string>) {
     return exec("wine", args, {env: this.env})
   }
 

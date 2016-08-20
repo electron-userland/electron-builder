@@ -23,6 +23,14 @@ ${if} $R0 != ""
   ExecWait "$R0 /S /KEEP_APP_DATA"
 ${endif}
 
+${if} $installMode == "all"
+  # remove per-user installation
+  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallString
+  ${if} $R0 != ""
+    ExecWait "$R0 /S /KEEP_APP_DATA"
+  ${endif}
+${endif}
+
 RMDir /r $INSTDIR
 SetOutPath $INSTDIR
 
@@ -68,12 +76,13 @@ WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
   !insertmacro customInstall
 !endif
 
-${IfNot} ${Silent}
-  !ifdef ONE_CLICK
-    # otherwise app window will be in backround
-    HideWindow
-    !ifdef RUN_AFTER_FINISH
+!ifdef ONE_CLICK
+  !ifdef RUN_AFTER_FINISH
+    ${IfNot} ${Silent}
+      # otherwise app window will be in backround
+      HideWindow
       Call StartApp
-    !endif
+    ${EndIf}
   !endif
-${EndIf}
+  Quit
+!endif

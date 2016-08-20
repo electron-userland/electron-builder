@@ -416,6 +416,11 @@ export interface NsisOptions {
   The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
    */
   readonly script?: string | null
+
+  /*
+   * Hex LCID, defaults to `1033`(`English - United States`, see https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx?f=255&MSPPError=-2147217396).
+   */
+  readonly language?: string | null
 }
 
 /*
