@@ -31,7 +31,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
 
 export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = [command, "--production", "--cache-min", "999999999"]
+  const npmExecArgs = [command, "--production", "--build-from-source", "--cache-min", "999999999"]
   if (npmExecPath == null) {
     npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
