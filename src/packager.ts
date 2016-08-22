@@ -216,7 +216,7 @@ export class Packager implements BuildInfo {
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
     if (this.devMetadata.build.nodeGypRebuild === true) {
-      log("Execute node-gyp rebuild")
+      log(`Execute node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
         env: getGypEnv(this.electronVersion, Arch[arch]),
       })

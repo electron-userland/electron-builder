@@ -104,6 +104,8 @@ testAndIgnoreApiRate("incorrect tag name", async () => {
     prerelease: true,
     publish: "onTagOrDraft",
   })
+
+  // await publisher.deleteOldReleases()
   try {
     await publisher.releasePromise
     //noinspection ExceptionCaughtLocallyJS

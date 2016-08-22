@@ -184,4 +184,11 @@ export class GitHubPublisher implements Publisher {
 
     warn(`Cannot delete release ${release.id}`)
   }
+
+  // async deleteOldReleases() {
+  //   const releases = await githubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
+  //   for (let release of releases) {
+  //     await githubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
+  //   }
+  // }
 }

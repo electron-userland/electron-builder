@@ -13,7 +13,8 @@
   "bin": {
     "build": "./out/build-cli.js",
     "cleanup": "./out/cleanup.js",
-    "install-app-deps": "./out/install-app-deps.js"
+    "install-app-deps": "./out/install-app-deps.js",
+    "node-gyp-rebuild": "./out/node-gyp-rebuild.js"
   },
   "scripts": {
     "compile": "npm run compile-production && npm run compile-test && npm run compile-updater",
