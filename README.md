@@ -74,8 +74,13 @@ For a production app you need to sign your application, see [Where to buy code s
     And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack` (useful to test).
     
     Add script `"postinstall": "install-app-deps"` if two package.json structure is used to automatically install application dependencies.
+	
 
-5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
+5. If you have native addons of your own as a part of the application (not as a dependency), add `"nodeGypRebuild": true` to the `build` section of `package.json`.  
+   :bulb: Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [`npm`](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use [`node-gyp-rebuild`](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241488783) bin instead.
+
+   
+6. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
 Please note — packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-asar).
 
