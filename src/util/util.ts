@@ -275,3 +275,15 @@ export function unlinkIfExists(file: string) {
       // ignore
     })
 }
+
+export function asArray<T>(v: n | T | Array<T>): Array<T> {
+  if (v == null) {
+    return []
+  }
+  else if (Array.isArray(v)) {
+    return v
+  }
+  else {
+    return [v]
+  }
+}

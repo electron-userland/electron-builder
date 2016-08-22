@@ -145,9 +145,14 @@ export interface BuildMetadata {
   readonly extraFiles?: Array<string> | string | null
 
   /*
-  File associations. See [.build.fileAssociations](#FileAssociation).
+  The file associations. See [.build.fileAssociations](#FileAssociation).
    */
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
+
+  /*
+  The URL protocol scheme(s) to associate the app with. See [.build.protocol](#Protocol).
+  */
+  readonly protocols?: Array<Protocol> | Protocol
 
   /*
    See [.build.mac](#MacOptions).
@@ -490,12 +495,12 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
  */
 export interface FileAssociation {
   /*
-  The extension (minus the leading period). e.g. `png`
+  The extension (minus the leading period). e.g. `png`.
    */
   readonly ext: string
 
   /*
-   The name. e.g. `PNG`
+   The name. e.g. `PNG`.
    */
   readonly name: string
 
@@ -508,6 +513,23 @@ export interface FileAssociation {
    *windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
    */
   readonly icon?: string
+}
+
+/*
+ ### `.build.protocols`
+
+ macOS only.
+ */
+export interface Protocol {
+  /*
+   The name. e.g. `IRC server URL`.
+   */
+  readonly name: string
+
+  /*
+  The schemes. e.g. `["irc", "ircs"]`.
+  */
+  readonly schemes: Array<string>
 }
 
 /*

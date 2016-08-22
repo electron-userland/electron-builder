@@ -3,7 +3,7 @@ import { rename, readFile, writeFile, copy } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
-import { use } from "../util/util"
+import { use, asArray } from "../util/util"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -79,11 +79,12 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   })
   use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
 
-  if (opts.protocols && opts.protocols.length) {
-    appPlist.CFBundleURLTypes = opts.protocols.map(function (protocol: any) {
+  const protocols = asArray(opts.platformPackager.devMetadata.build.protocols).concat(asArray(opts.platformPackager.platformSpecificBuildOptions.protocols))
+  if (protocols.length > 0) {
+    appPlist.CFBundleURLTypes = protocols.map(protocol => {
       return {
         CFBundleURLName: protocol.name,
-        CFBundleURLSchemes: [].concat(protocol.schemes)
+        CFBundleURLSchemes: protocol.schemes.slice()
       }
     })
   }

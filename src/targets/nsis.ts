@@ -1,6 +1,6 @@
 import { WinPackager } from "../winPackager"
 import { Arch, NsisOptions, FileAssociation } from "../metadata"
-import { exec, debug, doSpawn, handleProcess, use } from "../util/util"
+import { exec, debug, doSpawn, handleProcess, use, asArray } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
@@ -285,16 +285,4 @@ export default class NsisTarget extends Target {
 // remove leading dot
 function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
-}
-
-function asArray<T>(v: n | T | Array<T>): Array<T> {
-  if (v == null) {
-    return []
-  }
-  else if (Array.isArray(v)) {
-    return v
-  }
-  else {
-    return [v]
-  }
 }

@@ -58,7 +58,8 @@ Here documented only `electron-builder` specific options:
 | files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.</p> <p>See [File Patterns](#multiple-glob-patterns).</p>
 | extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#multiple-glob-patterns).</p>
 | extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
-| fileAssociations | <a name="BuildMetadata-fileAssociations"></a>File associations. See [.build.fileAssociations](#FileAssociation).
+| fileAssociations | <a name="BuildMetadata-fileAssociations"></a>The file associations. See [.build.fileAssociations](#FileAssociation).
+| protocols | <a name="BuildMetadata-protocols"></a>The URL protocol scheme(s) to associate the app with. See [.build.protocol](#Protocol).
 | mac | <a name="BuildMetadata-mac"></a>See [.build.mac](#MacOptions).
 | dmg | <a name="BuildMetadata-dmg"></a>See [.build.dmg](#DmgOptions).
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
@@ -171,6 +172,16 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
 | icon | <a name="FileAssociation-icon"></a>*windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
+
+<a name="Protocol"></a>
+### `.build.protocols`
+
+macOS only.
+
+| Name | Description
+| --- | ---
+| **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`
+| **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`
 
 <a name="MetadataDirectories"></a>
 ## `.directories`
