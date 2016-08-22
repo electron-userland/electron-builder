@@ -168,8 +168,8 @@ NSIS only, [in progress](https://github.com/electron-userland/electron-builder/i
 
 | Name | Description
 | --- | ---
-| **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`
-| **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`
+| **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`.
+| **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`.
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
 | icon | <a name="FileAssociation-icon"></a>*windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
 
@@ -180,8 +180,8 @@ macOS only.
 
 | Name | Description
 | --- | ---
-| **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`
-| **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`
+| **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`.
+| **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
 
 <a name="MetadataDirectories"></a>
 ## `.directories`

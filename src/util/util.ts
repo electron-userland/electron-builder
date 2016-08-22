@@ -287,3 +287,6 @@ export function asArray<T>(v: n | T | Array<T>): Array<T> {
     return [v]
   }
 }
+export function isCi(): boolean {
+  return (process.env.CI || "").toLowerCase() === "true"
+}

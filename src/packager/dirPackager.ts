@@ -3,7 +3,6 @@ import { emptyDir } from "fs-extra-p"
 import { warn } from "../util/log"
 import { AppInfo } from "../appInfo"
 import { PlatformPackager } from "../platformPackager"
-import { Protocol } from "../metadata"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
 const extract: any = BluebirdPromise.promisify(require("extract-zip"))

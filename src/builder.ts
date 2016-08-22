@@ -4,7 +4,7 @@ import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
-import { isEmptyOrSpaces } from "./util/util"
+import { isEmptyOrSpaces, isCi } from "./util/util"
 import { log, warn } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
@@ -230,12 +230,20 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
         options.publish = "onTag"
         isPublishOptionGuessed = true
       }
-      else if ((process.env.CI || "").toLowerCase() === "true") {
-        log("CI detected, so artifacts will be published if draft release exists")
-        options.publish = "onTagOrDraft"
-        isPublishOptionGuessed = true
+      else {if (isCi()) {
+          log("CI detected, so artifacts will be published if draft release exists")
+          options.publish = "onTagOrDraft"
+          isPublishOptionGuessed = true
+        }
       }
     }
+    else {
+      log("CI detected, so artifacts will be published if draft release exists")
+    }
+  }
+
+  if (options.publish !== "never" && options.githubToken == null && isCi()) {
+    log(`CI detected, publish is set to ${options.publish}, but GH_TOKEN is not set, so artifacts will be not published`)
   }
 
   const publishTasks: Array<BluebirdPromise<any>> = []
