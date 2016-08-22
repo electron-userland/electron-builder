@@ -165,12 +165,11 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
       const fileParent = path.dirname(file)
       if (fileParent !== nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
         autoUnpackDirs.add(fileParent)
-
+        createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
         if (createDirPromises.length > MAX_FILE_REQUESTS) {
           await BluebirdPromise.all(createDirPromises)
           createDirPromises.length = 0
         }
-        createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
       }
       continue
     }
@@ -189,13 +188,21 @@ async function detectUnpackedDirs(src: string, files: Array<string>, metadata: M
     }
 
     log(`${path.relative(src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
-    autoUnpackDirs.add(nodeModuleDir)
-    const fileParent = path.dirname(file)
-    if (fileParent !== nodeModuleDir) {
-      autoUnpackDirs.add(fileParent)
-      // create parent dir to be able to copy file later without directory existence check
-      createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+
+    let fileParent = path.dirname(file)
+
+    // create parent dir to be able to copy file later without directory existence check
+    createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(src, fileParent))))
+    if (createDirPromises.length > MAX_FILE_REQUESTS) {
+      await BluebirdPromise.all(createDirPromises)
+      createDirPromises.length = 0
     }
+
+    while (fileParent !== nodeModuleDir) {
+      autoUnpackDirs.add(fileParent)
+      fileParent = path.dirname(fileParent)
+    }
+    autoUnpackDirs.add(nodeModuleDir)
   }
 
   if (readPackageJsonPromises.length > 0) {
