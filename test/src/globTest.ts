@@ -1,12 +1,13 @@
 import test from "./helpers/avaEx"
 import { expectedWinContents } from "./helpers/expectedContents"
-import { outputFile } from "fs-extra-p"
+import { outputFile, symlink } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, DIR_TARGET } from "out"
 import pathSorter = require("path-sort")
+import { statFile } from "asar-electron-builder"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -93,6 +94,19 @@ test.ifDevOrLinuxCi("unpackDir", () => {
     },
   })
 })
+
+test.ifNotWindows("link", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+}, {
+  projectDirCreated: projectDir => {
+    return symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
+  },
+  packed: async context => {
+    assertThat(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).hasProperties({
+      link: "index.js",
+    })
+  },
+}))
 
 // skip on MacOS because we want test only / and \
 test.ifNotCiOsx("ignore node_modules known dev dep", () => {

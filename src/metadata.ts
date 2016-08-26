@@ -213,6 +213,8 @@ export interface BuildMetadata {
 
   // deprecated
   readonly "app-bundle-id"?: string | null
+
+  readonly dereference?: boolean
 }
 
 export interface AfterPackContext {

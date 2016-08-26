@@ -297,7 +297,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
       const promise = asarOptions == null ?
-        copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
+        copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
