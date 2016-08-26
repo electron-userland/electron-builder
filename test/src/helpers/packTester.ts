@@ -29,7 +29,7 @@ const OUT_DIR_NAME = "dist"
 
 interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string) => Promise<any>
-  readonly packed?: (projectDir: string, outDir: string) => Promise<any>
+  readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedContents?: Array<string>
   readonly expectedArtifacts?: Array<string>
 
@@ -39,6 +39,14 @@ interface AssertPackOptions {
   readonly signed?: boolean
 
   readonly npmInstallBefore?: boolean
+}
+
+interface PackedContext {
+  readonly projectDir: string,
+  readonly outDir: string
+
+  readonly getResources: (platform: Platform) => string
+  readonly getContent: (platform: Platform) => string
 }
 
 let tmpDirCounter = 0
@@ -106,7 +114,16 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     }, packagerOptions), checkOptions)
 
     if (checkOptions.packed != null) {
-      await checkOptions.packed(projectDir, outDir)
+      function base(platform: Platform): string {
+        return path.join(outDir, `${platform.buildConfigurationKey}${platform === Platform.MAC ? "" : "-unpacked"}`)
+      }
+
+      await checkOptions.packed({
+          projectDir: projectDir,
+          outDir: outDir,
+          getResources: platform => path.join(base(platform), "resources"),
+          getContent: platform => base(platform),
+      })
     }
   }
   finally {

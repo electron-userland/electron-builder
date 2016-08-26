@@ -88,8 +88,8 @@ function flatDependencies(data: any, seen: Set<string>): any {
     return flatDependencies(deps[d], seen)
   })
     .filter(it => it !== null)
-    .reduce(function FLAT(l, r) {
-      return l.concat(Array.isArray(r) ? r.reduce(FLAT, []) : r)
+    .reduce(function flat(l, r): Array<string> {
+      return l.concat(Array.isArray(r) ? r.reduce(flat, []) : r)
     }, [])
 
 }

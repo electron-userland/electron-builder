@@ -110,10 +110,10 @@ else {
         writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),
         writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
       ]),
-      packed: projectDir => {
+      packed: context => {
         assertThat(platformPackager.effectiveSignOptions).hasProperties({
-          entitlements: path.join(projectDir, "build", "entitlements.mac.plist"),
-          "entitlements-inherit": path.join(projectDir, "build", "entitlements.mac.inherit.plist"),
+          entitlements: path.join(context.projectDir, "build", "entitlements.mac.plist"),
+          "entitlements-inherit": path.join(context.projectDir, "build", "entitlements.mac.inherit.plist"),
         })
         return BluebirdPromise.resolve()
       }
@@ -178,10 +178,10 @@ test.ifOsx("custom background - new way", () => {
         }
       })
     ]),
-    packed: async (projectDir) => {
+    packed: async context => {
       assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
       assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
-      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(projectDir, "customIcon.icns"))
+      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(context.projectDir, "customIcon.icns"))
     },
   })
 })

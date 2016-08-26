@@ -84,8 +84,8 @@ test("custom output dir", app(allPlatforms(false), {
       app: ".",
     }
   }),
-  packed: async (projectDir) => {
-    await assertThat(path.join(projectDir, "customDist")).isDirectory()
+  packed: async context => {
+    await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
   }
 }))
 
@@ -225,10 +225,9 @@ test.ifDevOrLinuxCi("extra metadata", () => {
         existingProp: 22,
       }
     }),
-    packed: async (projectDir) => {
-      const out = path.join(projectDir, "dist", "linux")
-      await assertThat(path.join(out, "NewName")).isFile()
-      assertThat(JSON.parse(extractFile(path.join(out, "resources", "app.asar"), "package.json").toString())).hasProperties({
+    packed: async context => {
+      await assertThat(path.join(context.getContent(Platform.LINUX), "NewName")).isFile()
+      assertThat(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json").toString())).hasProperties({
         foo: {
           bar: 12,
           existingProp: 22,
@@ -246,9 +245,8 @@ test.ifDevOrLinuxCi("extra metadata - two", () => {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     extraMetadata: extraMetadata,
   }, {
-    packed: async (projectDir, outDir) => {
-      const out = path.join(outDir, "linux")
-      await assertThat(path.join(out, "NewName")).isFile()
+    packed: async context => {
+      await assertThat(path.join(context.getContent(Platform.LINUX), "NewName")).isFile()
     }
   })
 })
@@ -265,9 +263,8 @@ test.ifOsx("extra metadata - override icon", t => t.throws((() => {
     targets: Platform.OSX.createTarget(DIR_TARGET),
     extraMetadata: extraMetadata,
   }, {
-    packed: async (projectDir, outDir) => {
-      const out = path.join(outDir, "linux")
-      await assertThat(path.join(out, "NewName")).isFile()
+    packed: async context => {
+      await assertThat(path.join(context.getContent(Platform.LINUX), "NewName")).isFile()
     }
   })
 })(), /ENOENT: no such file or directory/))
@@ -277,8 +274,8 @@ test.ifOsx("app-executable-deps", () => {
     targets: Platform.current().createTarget(DIR_TARGET),
   }, {
     useTempDir: false,
-    packed: async (projectDir, outDir) => {
-      const data = await readJson(path.join(outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
+    packed: async context => {
+      const data = await readJson(path.join(context.outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
       for (let name of Object.getOwnPropertyNames(data)) {
         if (name[0] === "_") {
           throw new Error("Property name starts with _")
@@ -299,8 +296,8 @@ test.ifDevOrLinuxCi("smart unpack", () => {
         "edge-cs": "^1.0.0"
       }
     }),
-    packed: (projectDir, outDir) => {
-      assertThat(JSON.parse(extractFile(path.join(outDir, "linux", "resources", "app.asar"), "node_modules/debug/package.json").toString())).hasProperties({
+    packed: context => {
+      assertThat(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).hasProperties({
         name: "debug"
       })
       return BluebirdPromise.resolve()

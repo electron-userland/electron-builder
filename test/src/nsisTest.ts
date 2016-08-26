@@ -26,8 +26,8 @@ test("one-click", app({
 }, {
   useTempDir: true,
   signed: true,
-  packed: (projectDir, outDir) => {
-    return doTest(outDir, true)
+  packed: context => {
+    return doTest(context.outDir, true)
   }
 }))
 
@@ -54,8 +54,8 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     let headerIconPath = path.join(projectDir, "build", "foo.ico")
     return copy(getTestAsset("headerIcon.ico"), headerIconPath)
   },
-  packed: (projectDir, outDir) => {
-    return doTest(outDir, false)
+  packed: context => {
+    return doTest(context.outDir, false)
   },
 }))
 
@@ -194,14 +194,14 @@ test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
 
 test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
   projectDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
-  packed: projectDir => BluebirdPromise.all([
-    assertThat(path.join(projectDir, "build", "customHeader")).isFile(),
-    assertThat(path.join(projectDir, "build", "customInit")).isFile(),
-    assertThat(path.join(projectDir, "build", "customInstall")).isFile(),
+  packed: context => BluebirdPromise.all([
+    assertThat(path.join(context.projectDir, "build", "customHeader")).isFile(),
+    assertThat(path.join(context.projectDir, "build", "customInit")).isFile(),
+    assertThat(path.join(context.projectDir, "build", "customInstall")).isFile(),
   ]),
 }))
 
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   projectDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
-  packed: projectDir => assertThat(path.join(projectDir, "build", "customInstallerScript")).isFile(),
+  packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))
