@@ -101,7 +101,7 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 For Windows consider only [distributing 64-bit versions](https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130).
 
 # CLI Usage
-Execute `node_modules/.bin/build --help` to get a detailed CLI usage guide.
+Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
 ```
 Building:
   --mac, -m, -o, --osx, --macos  Build for MacOS, accepts target list (see
@@ -140,7 +140,7 @@ Examples:
 ```
 
 # Programmatic Usage
-See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) are supported.
+See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
 
 ```js
 "use strict"
