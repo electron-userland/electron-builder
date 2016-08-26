@@ -49,7 +49,7 @@ For an app that will be shipped to production, you should sign your application.
 
 1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-license) are also required).
 
-2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) key in the development `package.json`:
+2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) configuration in the development `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
