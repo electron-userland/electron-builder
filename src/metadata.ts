@@ -447,7 +447,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly description?: string | null
 
   /*
-   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `deb`.
+   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `AppImage`.
 
    The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
 
@@ -626,10 +626,6 @@ export class Platform {
 
 export enum Arch {
   ia32, x64
-}
-
-export function archToString(arch: Arch): string {
-  return arch === Arch.ia32 ? "ia32" : "x64"
 }
 
 export function archFromString(name: string): Arch {

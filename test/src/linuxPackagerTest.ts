@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, app } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, app, appThrows } from "./helpers/packTester"
 import { remove } from "fs-extra-p"
 import * as path from "path"
 import { Platform } from "out"
@@ -50,10 +50,8 @@ test.ifNotWindows("custom depends", () => assertPack("test-app-one", {
     expectedDepends: "foo"
   }))
 
-test.ifNotWindows("no-author-email", t => {
-  t.throws(assertPack("test-app-one", platform(Platform.LINUX), {
-    projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
-      data.author = "Foo"
-    })
-  }), /Please specify author 'email' in .+/)
-})
+test.ifNotWindows("no-author-email", appThrows(/Please specify author 'email' in .+/, {targets: Platform.LINUX.createTarget("deb")}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.author = "Foo"
+  })
+}))

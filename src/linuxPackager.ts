@@ -41,14 +41,13 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
         return helper
       }
 
-      if (name === "appimage") {
+      if (name === DEFAULT_TARGET || name === "appimage") {
         const targetClass: typeof AppImageTarget = require("./targets/appImage").default
-        mapper(name, outDir => new targetClass(this, getHelper(), outDir))
+        mapper("appimage", outDir => new targetClass(this, getHelper(), outDir))
       }
-      else if (name === DEFAULT_TARGET || name === "deb" || name === "rpm" || name === "sh" || name === "freebsd" || name === "pacman" || name === "apk" || name === "p5p") {
+      else if (name === "deb" || name === "rpm" || name === "sh" || name === "freebsd" || name === "pacman" || name === "apk" || name === "p5p") {
         const targetClass: typeof FpmTarget = require("./targets/fpm").default
-        const target = name === DEFAULT_TARGET ? "deb" : name
-        mapper(target, outDir => new targetClass(target, this,  getHelper(), outDir))
+        mapper(name, outDir => new targetClass(name, this,  getHelper(), outDir))
       }
       else {
         mapper(name, () => createCommonTarget(name))
