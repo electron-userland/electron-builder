@@ -63,7 +63,7 @@ For an app that will be shipped to production, you should sign your application.
 
 3. Create a directory `build` in the root of the project and save a `background.png` (MacOS DMG background), `icon.icns` (MacOS app icon) and `icon.ico` (Windows app icon) into it.
 
-   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>The Linux icon set will be generated automatically based on the MacOS `icns` file (or you can put them into the `build/icons` directory if you want to specify them yourself. The filename must contain the size (e.g. `32x32.png`) of the icons).
+   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>The Linux icon set will be generated automatically based on the MacOS `icns` file (or you can put them into the `build/icons` directory if you want to specify them yourself. The filename must contain the size (e.g. `32x32.png`) of the icon).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
