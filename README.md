@@ -72,8 +72,8 @@ For a production app you need to sign your application, see [Where to buy code s
     }
     ```
     And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack` (useful to test).
-    
-    Add script `"postinstall": "install-app-deps"` if two package.json structure is used to automatically install application dependencies.
+
+    If you use the two `package.json` files approach, you'll only have your `devDependencies` in your development `package.json` (`./package.json`) and your `dependencies` in your app `package.json` (`./app/package.json`). To ensure your dependencies are always updated based on both files, simply add `"postinstall": "install-app-deps"` to your development `package.json`. This will basically automatically trigger an `npm install` within your app directory so you don't have to do this work everytime you install/update your dependencies.
 	
 
 5. If you have native addons of your own as a part of the application (not as a dependency), add `"nodeGypRebuild": true` to the `build` section of `package.json`.  
