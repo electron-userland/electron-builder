@@ -85,7 +85,7 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
             .pipe(fileOut)
         }
 
-        fileOut.on("finish", callback)
+        fileOut.on("finish", () => (<any>fileOut.close)(callback))
       })
       .catch(callback)
 
