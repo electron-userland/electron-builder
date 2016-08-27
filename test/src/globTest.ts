@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { outputFile, symlink } from "fs-extra-p"
-import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, getPossiblePlatforms, app, appThrows } from "./helpers/packTester"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -302,3 +302,23 @@ test("extraResources - one-package", async () => {
     })
   }
 })
+
+test.ifDevOrLinuxCi("copy only js files - no asar", appThrows(/Application "package.json" does not exist/, {
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  devMetadata: {
+    build: {
+      "files": ["**/*.js"],
+      asar: false,
+    }
+  }
+}))
+
+test.ifDevOrLinuxCi("copy only js files - asar", appThrows(/Application "package.json" in the /, {
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  devMetadata: {
+    build: {
+      "files": ["**/*.js"],
+      asar: true,
+    }
+  }
+}))

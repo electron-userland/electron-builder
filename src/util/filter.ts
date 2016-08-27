@@ -1,4 +1,4 @@
-import { copy } from "fs-extra-p"
+import { copy, Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -8,10 +8,11 @@ const __awaiter = require("./awaiter")
 const readInstalled = require("read-installed")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
-export function copyFiltered(src: string, destination: string, filter: (file: string) => boolean, dereference: boolean): Promise<any> {
+export function copyFiltered(src: string, destination: string, filter: Filter, dereference: boolean): Promise<any> {
   return copy(src, destination, {
     dereference: dereference,
-    filter: filter
+    filter: <any>filter,
+    passStats: true,
   })
 }
 
@@ -30,8 +31,10 @@ export function hasMagic(pattern: Minimatch) {
   return false
 }
 
-export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): (file: string) => boolean {
-  return function filter(it) {
+export type Filter = (file: string, stat: Stats) => boolean
+
+export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
+  return function filter(it, stat) {
     if (src === it) {
       return true
     }
@@ -51,7 +54,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
       relative = relative.replace(/\\/g, "/")
     }
 
-    return minimatchAll(relative, patterns) && (excludePatterns == null || !minimatchAll(relative, excludePatterns))
+    return minimatchAll(relative, patterns, stat) && (excludePatterns == null || !minimatchAll(relative, excludePatterns, stat))
   }
 }
 
@@ -95,7 +98,7 @@ function flatDependencies(data: any, seen: Set<string>): any {
 }
 
 // https://github.com/joshwnj/minimatch-all/blob/master/index.js
-function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
+function minimatchAll(path: string, patterns: Array<Minimatch>, stat: Stats): boolean {
   let match = false
   for (let pattern of patterns) {
     // If we've got a match, only re-test for exclusions.
@@ -106,7 +109,7 @@ function minimatchAll(path: string, patterns: Array<Minimatch>): boolean {
 
     // partial match — pattern: foo/bar.txt path: foo — we must allow foo
     // use it only for non-negate patterns: const m = new Minimatch("!node_modules/@(electron-download|electron)/**/*", {dot: true }); m.match("node_modules", true) will return false, but must be true
-    match = pattern.match(path, !pattern.negate)
+    match = pattern.match(path, stat.isDirectory() && !pattern.negate)
   }
   return match
 }

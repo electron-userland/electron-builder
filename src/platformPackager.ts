@@ -11,9 +11,10 @@ import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
-import { createFilter, copyFiltered, hasMagic, devDependencies } from "./util/filter"
+import { copyFiltered, devDependencies } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
+import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -81,85 +82,6 @@ export class Target {
 
 export abstract class TargetEx extends Target {
   abstract async build(appOutDir: string, arch: Arch): Promise<any>
-}
-
-export interface FilePattern {
-  from?: string
-  to?: string
-  filter?: Array<string> | string
-}
-
-export interface FileMatchOptions {
-  arch: string,
-  os: string
-}
-
-export class FileMatcher {
-  readonly from: string
-  readonly to: string
-  readonly options: FileMatchOptions
-
-  readonly patterns: Array<string>
-
-  constructor(from: string, to: string, options: FileMatchOptions, patterns?: Array<string> | string | n) {
-    this.options = options
-    this.patterns = []
-
-    this.from = this.expandPattern(from)
-    this.to = this.expandPattern(to)
-
-    if (patterns != null && !Array.isArray(patterns)) {
-      this.patterns = [patterns]
-    }
-    else if (patterns != null) {
-      this.patterns = patterns
-    }
-  }
-
-  addPattern(pattern: string) {
-    this.patterns.push(pattern)
-  }
-
-  isEmpty() {
-    return this.patterns.length === 0
-  }
-
-  getParsedPatterns(fromDir?: string): Array<Minimatch> {
-    const minimatchOptions = {}
-
-    const parsedPatterns: Array<Minimatch> = []
-    const pathDifference = fromDir ? path.relative(fromDir, this.from) : null
-
-    for (let i = 0; i < this.patterns.length; i++) {
-      let expandedPattern = this.expandPattern(this.patterns[i])
-
-      if (pathDifference) {
-        expandedPattern = path.join(pathDifference, expandedPattern)
-      }
-
-      const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
-      parsedPatterns.push(parsedPattern)
-
-      if (!hasMagic(parsedPattern)) {
-        // https://github.com/electron-userland/electron-builder/issues/545
-        // add **/*
-        parsedPatterns.push(new Minimatch(`${expandedPattern}/*/**`, minimatchOptions))
-      }
-    }
-
-    return parsedPatterns
-  }
-
-  createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): (file: string) => boolean {
-    return createFilter(this.from, this.getParsedPatterns(), ignoreFiles, rawFilter, excludePatterns)
-  }
-
-  private expandPattern(pattern: string): string {
-    return pattern
-      .replace(/\$\{arch}/g, this.options.arch)
-      .replace(/\$\{os}/g, this.options.os)
-      .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
-  }
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -235,9 +157,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  private getExtraFilePatterns(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return this.getFilePatterns(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
+    return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
 
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
@@ -247,8 +169,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       os: this.platform.buildConfigurationKey
     }
 
-    const extraResourcePatterns = this.getExtraFilePatterns(true, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
-    const extraFilePatterns = this.getExtraFilePatterns(false, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
+    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
+    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
@@ -261,7 +183,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
       }
 
-      let patterns = this.getFilePatterns("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+      const patterns = this.getFileMatchers("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
       let defaultMatcher = patterns != null ? patterns[0] : new FileMatcher(this.info.appDir, path.join(resourcesPath, "app"), fileMatchOptions)
 
       if (defaultMatcher.isEmpty()) {
@@ -271,26 +193,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
-      if (deprecatedIgnore) {
+      if (deprecatedIgnore != null) {
         if (typeof deprecatedIgnore === "function") {
           log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
         else {
           warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
-        rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
+        rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, this.info.appDir)
       }
 
       let excludePatterns: Array<Minimatch> = []
-      if (extraResourcePatterns != null) {
-        for (let i = 0; i < extraResourcePatterns.length; i++) {
-          const patterns = extraResourcePatterns[i].getParsedPatterns(this.info.projectDir)
+      if (extraResourceMatchers != null) {
+        for (let i = 0; i < extraResourceMatchers.length; i++) {
+          const patterns = extraResourceMatchers[i].getParsedPatterns(this.info.projectDir)
           excludePatterns = excludePatterns.concat(patterns)
         }
       }
-      if (extraFilePatterns != null) {
-        for (let i = 0; i < extraFilePatterns.length; i++) {
-          const patterns = extraFilePatterns[i].getParsedPatterns(this.info.projectDir)
+      if (extraFileMatchers != null) {
+        for (let i = 0; i < extraFileMatchers.length; i++) {
+          const patterns = extraFileMatchers[i].getParsedPatterns(this.info.projectDir)
           excludePatterns = excludePatterns.concat(patterns)
         }
       }
@@ -311,8 +233,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
     await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
-    await this.doCopyExtraFiles(extraResourcePatterns)
-    await this.doCopyExtraFiles(extraFilePatterns)
+    await this.doCopyExtraFiles(extraResourceMatchers)
+    await this.doCopyExtraFiles(extraFileMatchers)
 
     const afterPack = this.devMetadata.build.afterPack
     if (afterPack != null) {
@@ -394,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private getFilePatterns(name: "files" | "extraFiles" | "extraResources", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+  private getFileMatchers(name: "files" | "extraFiles" | "extraResources", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
     let globalPatterns: Array<string | FilePattern> | string | n = (<any>this.devMetadata.build)[name]
     let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
@@ -507,7 +429,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  async getTempFile(suffix: string): Promise<string> {
+  getTempFile(suffix: string): Promise<string> {
     return this.info.tempDirManager.getTempFile(suffix)
   }
 }
@@ -535,37 +457,4 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
-}
-
-export function deprecatedUserIgnoreFilter(opts: ElectronPackagerOptions, appDir: string) {
-  let ignore = opts.ignore || []
-  let ignoreFunc: any
-
-  if (typeof (ignore) === "function") {
-    ignoreFunc = function (file: string) { return !ignore(file) }
-  }
-  else {
-    if (!Array.isArray(ignore)) {
-      ignore = [ignore]
-    }
-
-    ignoreFunc = function (file: string) {
-      for (let i = 0; i < ignore.length; i++) {
-        if (file.match(ignore[i])) {
-          return false
-        }
-      }
-
-      return true
-    }
-  }
-
-  return function filter(file: string) {
-    let name = file.split(path.resolve(appDir))[1]
-    if (path.sep === "\\") {
-      // convert slashes so unix-format ignores work
-      name = name.replace(/\\/g, "/")
-    }
-    return ignoreFunc(name)
-  }
 }

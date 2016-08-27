@@ -9,6 +9,7 @@ import * as path from "path"
 import { log } from "./util/log"
 import { Minimatch } from "minimatch"
 import { deepAssign } from "./util/deepAssign"
+import { Filter } from "./util/filter"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -22,27 +23,25 @@ const MAX_FILE_REQUESTS = 32
 const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
-export function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: (file: string) => boolean, addRootToResult?: boolean): BluebirdPromise<Array<string>> {
+export function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): BluebirdPromise<Array<string>> {
   return readdir(dirPath)
-    .then(names => {
-      return BluebirdPromise.map(names, name => {
-        const filePath = dirPath + path.sep + name
-        if (filter != null && !filter(filePath)) {
-          return <any>null
-        }
+    .then(names => BluebirdPromise.map(names, name => {
+      const filePath = dirPath + path.sep + name
+      return lstat(filePath)
+        .then((stat): any => {
+          if (filter != null && !filter(filePath, stat)) {
+            return null
+          }
 
-        return lstat(filePath)
-          .then((stat): any => {
-            if (consumer != null) {
-              consumer(filePath, stat)
-            }
-            if (stat.isDirectory()) {
-              return walk(filePath, consumer, filter, true)
-            }
-            return filePath
-          })
-      }, concurrency)
-    })
+          if (consumer != null) {
+            consumer(filePath, stat)
+          }
+          if (stat.isDirectory()) {
+            return walk(filePath, consumer, filter, true)
+          }
+          return filePath
+        })
+    }, concurrency))
     .then(list => {
       list.sort((a, b) => {
         // files before directories
@@ -75,7 +74,7 @@ export function walk(dirPath: string, consumer?: (file: string, stat: Stats) => 
     })
 }
 
-export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: (file: string) => boolean): Promise<any> {
+export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter): Promise<any> {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   await new AsarPackager(src, resourcesPath, options).pack(filter)
 }
@@ -96,7 +95,7 @@ class AsarPackager {
     this.outFile = path.join(this.resourcesPath, "app.asar")
   }
 
-  async pack(filter: (file: string) => boolean) {
+  async pack(filter: Filter) {
     const metadata = new Map<string, Stats>()
     const files = await walk(this.src, (it, stat) => {
       metadata.set(it, stat)
