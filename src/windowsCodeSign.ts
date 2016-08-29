@@ -6,10 +6,10 @@ import { getBinFromBintray } from "./util/binDownload"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
 
-const TOOLS_VERSION = "1.4.1"
+const TOOLS_VERSION = "1.4.2"
 
 export function getSignVendorPath() {
-  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "bcafcb1aa9be7544ca9bdffda277e4dcf840f14964e51ed270f83fb850cf2e9e")
+  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "ca94097071ce6433a2e18a14518b905ac162afaef82ed88713a8a91c32a55b21")
 }
 
 export interface SignOptions {
@@ -146,6 +146,9 @@ async function getToolPath() {
   const vendorPath = await getSignVendorPath()
   if (process.platform === "win32") {
     return path.join(vendorPath, `windows-${(release().startsWith("6.") ? "6" : "10")}`, "signtool.exe")
+  }
+  else if (process.platform === "darwin" && process.env.CI) {
+    return path.join(vendorPath, process.platform, "ci", "osslsigncode")
   }
   else {
     return path.join(vendorPath, process.platform, "osslsigncode")

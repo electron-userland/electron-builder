@@ -1,5 +1,5 @@
 import { ElectronPackagerOptions } from "./dirPackager"
-import { rename, readFile, writeFile, copy } from "fs-extra-p"
+import { rename, readFile, writeFile, copy, unlink } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -58,6 +58,13 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
   const helperBundleIdentifier = filterCFBundleIdentifier(opts["helper-bundle-id"] || `${appBundleIdentifier}.helper`)
 
+  const packager = opts.platformPackager
+  const icon = await packager.getIconPath()
+  const oldIcon = appPlist.CFBundleIconFile
+  if (icon != null) {
+    appPlist.CFBundleIconFile = `${appInfo.productFilename}.icns`
+  }
+
   appPlist.CFBundleDisplayName = appInfo.productName
   appPlist.CFBundleIdentifier = appBundleIdentifier
   appPlist.CFBundleName = appInfo.productName
@@ -81,7 +88,6 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   })
   use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
 
-  const packager = opts.platformPackager
   const protocols = asArray(packager.devMetadata.build.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
@@ -102,7 +108,7 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
         CFBundleTypeExtensions: extensions,
         CFBundleTypeName: fileAssociation.name,
         CFBundleTypeRole: fileAssociation.role || "Editor",
-        CFBundleTypeIconFile: customIcon || "electron.icns"
+        CFBundleTypeIconFile: customIcon || appPlist.CFBundleIconFile
       }
     })
   }
@@ -118,8 +124,8 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable)
   ]
 
-  const icon = await packager.getIconPath()
   if (icon != null) {
+    promises.push(unlink(path.join(contentsPath, "Resources", oldIcon)))
     promises.push(copy(icon, path.join(contentsPath, "Resources", appPlist.CFBundleIconFile)))
   }
 

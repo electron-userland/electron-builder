@@ -40,7 +40,9 @@ export class TmpDir {
               removeSync(dir)
             }
             catch (e) {
-              warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
+              if (e.code !== "EPERM") {
+                warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
+              }
             }
           })
           return dir
@@ -48,7 +50,7 @@ export class TmpDir {
     }
 
     return this.tempDirectoryPromise
-      .then(it => path.join(it, `${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
+      .then(it => path.join(it, `temp-${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
   }
 
   cleanup(): Promise<any> {
@@ -61,7 +63,9 @@ export class TmpDir {
         this.dir = null
       })
       .catch(e => {
-        warn(`Cannot delete temporary dir "${this.dir}": ${(e.stack || e).toString()}`)
+        if (e.code !== "EPERM") {
+          warn(`Cannot delete temporary dir "${this.dir}": ${(e.stack || e).toString()}`)
+        }
       })
   }
 }
