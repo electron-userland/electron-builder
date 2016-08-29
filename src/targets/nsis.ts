@@ -69,13 +69,15 @@ export default class NsisTarget extends Target {
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 
-      MUI_ICON: iconPath,
-      MUI_UNICON: iconPath,
-
       COMPANY_NAME: appInfo.companyName,
 
       PROJECT_DIR: this.packager.projectDir,
       BUILD_RESOURCES_DIR: this.packager.buildResourcesDir,
+    }
+
+    if (iconPath != null) {
+      defines.MUI_ICON = iconPath
+      defines.MUI_UNICON = iconPath
     }
 
     for (let [arch, file] of this.archs) {

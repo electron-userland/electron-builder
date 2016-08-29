@@ -26,12 +26,12 @@ async function main() {
     getElectronVersion(devMetadata, devPackageFile)
   ])
 
+  if (results[0] === projectDir) {
+    throw new Error("install-app-deps is only useful for two package.json structure")
+  }
+
   await installDependencies(results[0], results[1], args.arch)
 }
 
-try {
-  main()
-}
-catch (e) {
-  printErrorAndExit(e)
-}
+main()
+  .catch(printErrorAndExit)

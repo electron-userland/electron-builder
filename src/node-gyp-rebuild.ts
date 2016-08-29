@@ -26,9 +26,5 @@ async function main() {
   })
 }
 
-try {
-  main()
-}
-catch (e) {
-  printErrorAndExit(e)
-}
+main()
+  .catch(printErrorAndExit)
