@@ -4,6 +4,8 @@ import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
 import { use, asArray } from "../util/util"
+import { normalizeExt } from "../platformPackager"
+import { FileAssociation } from "../metadata"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -79,12 +81,28 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   })
   use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
 
-  const protocols = asArray(opts.platformPackager.devMetadata.build.protocols).concat(asArray(opts.platformPackager.platformSpecificBuildOptions.protocols))
+  const packager = opts.platformPackager
+  const protocols = asArray(packager.devMetadata.build.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
       return {
         CFBundleURLName: protocol.name,
         CFBundleURLSchemes: protocol.schemes.slice()
+      }
+    })
+  }
+
+  const fileAssociations = packager.getFileAssociations()
+  if (fileAssociations.length > 0) {
+    appPlist.CFBundleDocumentTypes = await BluebirdPromise.map<FileAssociation>(fileAssociations, async fileAssociation => {
+      const extensions = asArray(fileAssociation.ext).map(normalizeExt)
+      const customIcon = await packager.getResource(fileAssociation.icon, `${extensions[0]}.icns`)
+      // todo rename electron.icns
+      return <any>{
+        CFBundleTypeExtensions: extensions,
+        CFBundleTypeName: fileAssociation.name,
+        CFBundleTypeRole: fileAssociation.role || "Editor",
+        CFBundleTypeIconFile: customIcon || "electron.icns"
       }
     })
   }
@@ -100,7 +118,7 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable)
   ]
 
-  const icon = await opts.platformPackager.getIconPath()
+  const icon = await packager.getIconPath()
   if (icon != null) {
     promises.push(copy(icon, path.join(contentsPath, "Resources", appPlist.CFBundleIconFile)))
   }

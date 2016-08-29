@@ -1,11 +1,11 @@
 import { WinPackager } from "../winPackager"
-import { Arch, NsisOptions, FileAssociation } from "../metadata"
+import { Arch, NsisOptions } from "../metadata"
 import { exec, debug, doSpawn, handleProcess, use, asArray } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { Target } from "../platformPackager"
+import { Target, normalizeExt } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
 import { unlink, readFile } from "fs-extra-p"
@@ -30,8 +30,6 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  private readonly fileAssociations: Array<FileAssociation>
-
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
@@ -40,7 +38,6 @@ export default class NsisTarget extends Target {
     // CFBundleTypeName
     // https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
     // CFBundleTypeExtensions
-    this.fileAssociations = asArray(packager.devMetadata.build.fileAssociations).concat(asArray(packager.platformSpecificBuildOptions.fileAssociations))
   }
 
   async build(arch: Arch, appOutDir: string) {
@@ -87,14 +84,14 @@ export default class NsisTarget extends Target {
 
     const oneClick = this.options.oneClick !== false
 
-    const installerHeader = oneClick ? null : await this.getResource(this.options.installerHeader, "installerHeader.bmp")
+    const installerHeader = oneClick ? null : await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {
       defines.MUI_HEADERIMAGE = null
       defines.MUI_HEADERIMAGE_RIGHT = null
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
     }
 
-    const installerHeaderIcon = oneClick ? await this.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
+    const installerHeaderIcon = oneClick ? await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
     if (installerHeaderIcon != null) {
       defines.HEADER_ICO = installerHeaderIcon
     }
@@ -159,7 +156,7 @@ export default class NsisTarget extends Target {
       return
     }
 
-    const customScriptPath = await this.getResource(this.options.script, "installer.nsi")
+    const customScriptPath = await this.packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath == null) {
@@ -183,21 +180,6 @@ export default class NsisTarget extends Target {
     await packager.sign(installerPath)
 
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
-  }
-
-  protected async getResource(custom: string | n, name: string): Promise<string | null> {
-    let result = custom
-    if (result === undefined) {
-      const resourceList = await this.packager.resourceList
-      if (resourceList.includes(name)) {
-        return path.join(this.packager.buildResourcesDir, name)
-      }
-    }
-    else {
-      return path.resolve(this.packager.projectDir, result)
-    }
-
-    return null
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
@@ -230,35 +212,42 @@ export default class NsisTarget extends Target {
     const nsisPath = await nsisPathPromise
 
     let script = originalScript
-    const customInclude = await this.getResource(this.options.include, "installer.nsh")
+    const packager = this.packager
+    const customInclude = await packager.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
-      script = `!include "${customInclude}"\n!addincludedir "${this.packager.buildResourcesDir}"\n${script}`
+      script = `!include "${customInclude}"\n!addincludedir "${packager.buildResourcesDir}"\n${script}`
     }
 
-    if (this.fileAssociations.length !== 0) {
+    const fileAssociations = packager.getFileAssociations()
+    if (fileAssociations.length !== 0) {
       script = "!include FileAssociation.nsh\n" + script
       if (isInstaller) {
         let registerFileAssociationsScript = ""
-        for (let item of this.fileAssociations) {
-          const customIcon = await this.getResource(item.icon, `${normalizeExt(item.ext)}.ico`)
-          let installedIconPath = "${APP_EXECUTABLE_FILENAME},0"
-          if (customIcon != null) {
-            installedIconPath = `resources\\${path.basename(customIcon)}`
-            //noinspection SpellCheckingInspection
-            registerFileAssociationsScript += `  File "/oname=${installedIconPath}" "${customIcon}"\n`
-          }
+        for (let item of fileAssociations) {
+          const extensions = asArray(item.ext).map(normalizeExt)
+          for (let ext of extensions) {
+            const customIcon = await packager.getResource(item.icon, `${extensions[0]}.ico`)
+            let installedIconPath = "${APP_EXECUTABLE_FILENAME},0"
+            if (customIcon != null) {
+              installedIconPath = `resources\\${path.basename(customIcon)}`
+              //noinspection SpellCheckingInspection
+              registerFileAssociationsScript += `  File "/oname=${installedIconPath}" "${customIcon}"\n`
+            }
 
-          const icon = `"$INSTDIR\\${installedIconPath}"`
-          const commandText = `"Open with ${this.packager.appInfo.productName}"`
-          const command = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME} $\\"%1$\\""'
-          registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${normalizeExt(item.ext)}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
+            const icon = `"$INSTDIR\\${installedIconPath}"`
+            const commandText = `"Open with ${packager.appInfo.productName}"`
+            const command = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME} $\\"%1$\\""'
+            registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
+          }
         }
         script = `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n${script}`
       }
       else {
         let unregisterFileAssociationsScript = ""
-        for (let item of this.fileAssociations) {
-          unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(item.ext)}" "${item.name}"\n`
+        for (let item of fileAssociations) {
+          for (let ext of asArray(item.ext)) {
+            unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name}"\n`
+          }
         }
         script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`
       }
@@ -280,9 +269,4 @@ export default class NsisTarget extends Target {
       childProcess.stdin.end(script)
     })
   }
-}
-
-// remove leading dot
-function normalizeExt(ext: string) {
-  return ext.startsWith(".") ? ext.substring(1) : ext
 }

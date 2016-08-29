@@ -1,9 +1,9 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { readdir, remove } from "fs-extra-p"
-import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
+import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
@@ -432,6 +432,25 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getTempFile(suffix: string): Promise<string> {
     return this.info.tempDirManager.getTempFile(suffix)
   }
+
+  getFileAssociations(): Array<FileAssociation> {
+    return asArray(this.devMetadata.build.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
+  }
+
+  async getResource(custom: string | n, name: string): Promise<string | null> {
+    let result = custom
+    if (result === undefined) {
+      const resourceList = await this.resourceList
+      if (resourceList.includes(name)) {
+        return path.join(this.buildResourcesDir, name)
+      }
+    }
+    else {
+      return path.resolve(this.projectDir, result)
+    }
+
+    return null
+  }
 }
 
 export function getArchSuffix(arch: Arch): string {
@@ -457,4 +476,9 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
+}
+
+// remove leading dot
+export function normalizeExt(ext: string) {
+  return ext.startsWith(".") ? ext.substring(1) : ext
 }

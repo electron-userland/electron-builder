@@ -164,14 +164,15 @@ Linux specific build options.
 <a name="FileAssociation"></a>
 ### `.build.fileAssociations`
 
-NSIS only, [in progress](https://github.com/electron-userland/electron-builder/issues/409).
+NSIS and MacOS only.
 
 | Name | Description
 | --- | ---
 | **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`.
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`.
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
-| icon | <a name="FileAssociation-icon"></a>*windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
+| icon | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
+| role | <a name="FileAssociation-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 
 <a name="Protocol"></a>
 ### `.build.protocols`

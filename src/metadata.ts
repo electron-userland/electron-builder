@@ -355,8 +355,6 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly icon?: string | null
 
-  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
-
   /*
   The trademarks and registered trademarks.
    */
@@ -493,13 +491,13 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
 /*
  ### `.build.fileAssociations`
 
- NSIS only, [in progress](https://github.com/electron-userland/electron-builder/issues/409).
+ NSIS and MacOS only.
  */
 export interface FileAssociation {
   /*
   The extension (minus the leading period). e.g. `png`.
    */
-  readonly ext: string
+  readonly ext: string | Array<string>
 
   /*
    The name. e.g. `PNG`.
@@ -512,9 +510,14 @@ export interface FileAssociation {
   readonly description?: string
 
   /*
-   *windows-only.* The path to icon (`.ico`), relative to `build` (build resources directory). Defaults to `${ext}.ico`.
+   The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
    */
   readonly icon?: string
+
+  /*
+  *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
+   */
+  readonly role?: string
 }
 
 /*
@@ -564,6 +567,8 @@ export interface PlatformSpecificBuildOptions {
   readonly target?: Array<string> | null
 
   readonly icon?: string | null
+
+  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 }
 
 export class Platform {
