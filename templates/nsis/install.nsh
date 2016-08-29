@@ -16,7 +16,13 @@ ${IfNot} ${Silent}
   !endif
 ${endif}
 
-!insertmacro CHECK_APP_RUNNING "install"
+!ifdef ONE_CLICK
+  !insertmacro CHECK_APP_RUNNING "install"
+!else
+  ${IfNot} ${UAC_IsInnerInstance}
+    !insertmacro CHECK_APP_RUNNING "install"
+  ${endif}
+!endif
 
 ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString
 ${if} $R0 != ""

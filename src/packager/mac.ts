@@ -91,9 +91,13 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   const protocols = asArray(packager.devMetadata.build.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
+      const schemes = asArray(protocol.schemes)
+      if (schemes.length === 0) {
+        throw new Error(`Protocol "${protocol.name}": must be at least one scheme specified`)
+      }
       return {
         CFBundleURLName: protocol.name,
-        CFBundleURLSchemes: protocol.schemes.slice()
+        CFBundleURLSchemes: schemes.slice()
       }
     })
   }

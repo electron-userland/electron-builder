@@ -85,9 +85,7 @@ export interface BuildMetadata {
   /*
   The application id. Used as
   [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
-  [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.
-
-  For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.
+  [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).
 
   Defaults to `com.electron.${name}`. It is strongly recommended that an explicit ID be set.
    */
@@ -388,7 +386,11 @@ export interface NsisOptions {
   readonly oneClick?: boolean | null
 
   /*
-  Install per all users (per-machine). Defaults to `false`.
+  Defaults to `false`.
+
+  If `oneClick` is `true` (default): Install per all users (per-machine).
+
+  If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
    */
   readonly perMachine?: boolean | null
 

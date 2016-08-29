@@ -25,8 +25,6 @@ In the development `package.json` custom `build` field can be specified to custo
 As you can see, you need to customize MacOS options only if you want to provide custom `x, y`.
 Don't customize paths to background and icon, — just follow conventions.
 
-Here documented only `electron-builder` specific options:
-
 <!-- do not edit. start of generated block -->
 
 <a name="AppMetadata"></a>
@@ -50,7 +48,7 @@ Here documented only `electron-builder` specific options:
 ## `.build`
 | Name | Description
 | --- | ---
-| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows.</p> <p>For windows only NSIS target supports it. Squirrel.Windows is not fixed yet.</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
+| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
 | category | <a name="BuildMetadata-category"></a><p>*macOS-only.* The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>&quot;category&quot;: &quot;public.app-category.developer-tools&quot;</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | copyright | <a name="BuildMetadata-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`.
 | asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](https://github.com/electron/asar). Defaults to <code>true</code>. Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron’s documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).</p> <p>Or you can pass object of any asar options.</p> <p>Node modules, that must be unpacked, will be detected automatically, you don’t need to explicitly set <code>asar.unpackDir</code> - please file issue if this doesn’t work.</p>
@@ -136,7 +134,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | Name | Description
 | --- | ---
 | oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
-| perMachine | <a name="NsisOptions-perMachine"></a>Install per all users (per-machine). Defaults to `false`.
+| perMachine | <a name="NsisOptions-perMachine"></a><p>Defaults to <code>false</code>.</p> <p>If <code>oneClick</code> is <code>true</code> (default): Install per all users (per-machine).</p> <p>If <code>oneClick</code> is <code>false</code>: no install mode installer page (choice per-machine or per-user), always install per-machine.</p>
 | allowElevation | <a name="NsisOptions-allowElevation"></a>*boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
 | runAfterFinish | <a name="NsisOptions-runAfterFinish"></a>*one-click installer only.* Run application after finish. Defaults to `true`.
 | guid | <a name="NsisOptions-guid"></a>See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).

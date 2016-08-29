@@ -3,6 +3,12 @@
 !include "multiUser.nsh"
 !include "allowOnlyOneInstallerInstace.nsh"
 
+!ifdef INSTALL_MODE_PER_ALL_USERS
+  RequestExecutionLevel admin
+!else
+  RequestExecutionLevel user
+!endif
+
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else

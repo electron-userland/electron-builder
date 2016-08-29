@@ -1,7 +1,4 @@
 !include nsDialogs.nsh
-!include UAC.nsh
-
-RequestExecutionLevel user
 
 Var HasTwoAvailableOptions
 Var RadioButtonLabel1

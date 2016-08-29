@@ -117,6 +117,18 @@ test.ifNotCiOsx("boring", app({
   }
 }, {signed: true}))
 
+test.ifNotCiOsx("boring, only perMachine", app({
+  targets: nsisTarget,
+  devMetadata: {
+    build: {
+      nsis: {
+        oneClick: false,
+        perMachine: true,
+      }
+    }
+  }
+}))
+
 test.ifNotCiOsx("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {

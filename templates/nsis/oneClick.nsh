@@ -18,12 +18,6 @@
 
 !insertmacro MUI_LANGUAGE "English"
 
-!ifdef INSTALL_MODE_PER_ALL_USERS
-  RequestExecutionLevel admin
-!else
-  RequestExecutionLevel user
-!endif
-
 !macro initMultiUser
   !ifdef INSTALL_MODE_PER_ALL_USERS
     !insertmacro setInstallModePerAllUsers
