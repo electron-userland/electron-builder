@@ -4,7 +4,11 @@
 !include "allowOnlyOneInstallerInstace.nsh"
 
 !ifdef INSTALL_MODE_PER_ALL_USERS
-  RequestExecutionLevel admin
+  !ifdef BUILD_UNINSTALLER
+    RequestExecutionLevel user
+  !else
+    RequestExecutionLevel admin
+  !endif
 !else
   RequestExecutionLevel user
 !endif
