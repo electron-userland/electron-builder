@@ -33,11 +33,6 @@ test.ifDevOrWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
   devMetadata: <any>{
     version: "3.0.0-beta.2",
-    build: {
-      win: {
-        legalTrademarks: "My Trademark"
-      },
-    },
   }
 }))
 

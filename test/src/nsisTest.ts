@@ -112,7 +112,10 @@ test.ifNotCiOsx("boring", app({
       nsis: {
         oneClick: false,
         language: "1031",
-      }
+      },
+      win: {
+        legalTrademarks: "My Trademark"
+      },
     }
   }
 }, {signed: true}))

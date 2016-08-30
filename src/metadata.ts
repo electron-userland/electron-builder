@@ -430,7 +430,7 @@ export interface NsisOptions {
   readonly script?: string | null
 
   /*
-   * Hex LCID, defaults to `1033`(`English - United States`, see https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx?f=255&MSPPError=-2147217396).
+   * LCID Dec, defaults to `1033`(`English - United States`, see https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx?f=255&MSPPError=-2147217396).
    */
   readonly language?: string | null
 }

@@ -127,7 +127,7 @@ export default class NsisTarget extends Target {
       `/LANG=${localeId} FileDescription "${appInfo.description}"`,
       `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`LegalTrademarks "${it}"`))
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
 
     const commands: any = {
       OutFile: `"${installerPath}"`,
