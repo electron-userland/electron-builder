@@ -19,7 +19,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   constructor(info: BuildInfo) {
     super(info)
 
-    if (this.options.cscLink == null) {
+    if (this.options.cscLink == null || process.platform !== "darwin") {
       this.codeSigningInfo = BluebirdPromise.resolve({})
     }
     else {
@@ -96,6 +96,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
+    if (process.platform !== "darwin") {
+      return
+    }
+
     let keychainName = (await this.codeSigningInfo).keychainName
     const masQualifier = masOptions == null ? null : (masOptions.identity || this.platformSpecificBuildOptions.identity)
 

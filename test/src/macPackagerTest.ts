@@ -3,7 +3,7 @@ import { assertPack, platform, modifyPackageJson, signed, app } from "./helpers/
 import OsXPackager from "out/macPackager"
 import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
-import { BuildInfo, PackagerOptions } from "out/platformPackager"
+import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
 import { ElectronPackagerOptions } from "out/packager/dirPackager"
@@ -21,7 +21,7 @@ test.ifOsx("two-package", () => assertPack("test-app", {targets: createTargets([
 test.ifOsx("one-package", app(platform(Platform.MAC), {signed: true}))
 
 function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
-  let options: PackagerOptions = {
+  return app({
     targets: Platform.MAC.createTarget(),
     devMetadata: {
       build: {
@@ -30,19 +30,14 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
         }
       }
     }
-  }
-  if (target.includes("mas")) {
-    options = signed(options)
-  }
-
-  return app(options, {expectedContents: expectedContents})
+  }, {expectedContents: expectedContents, signed: target.includes("mas")})
 }
 
 test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App ßW-1.1.0.dmg"]))
-test.ifOsx("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
+test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", t => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
-if (process.env.CSC_KEY_PASSWORD == null) {
+if (process.env.CSC_KEY_PASSWORD == null || process.platform !== "darwin") {
   console.warn("Skip mas tests because CSC_KEY_PASSWORD is not defined")
 }
 else {

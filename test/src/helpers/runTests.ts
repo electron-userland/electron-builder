@@ -152,8 +152,7 @@ function runTests(): BluebirdPromise<any> {
       args.push(path.join(baseDir, "linuxPackagerTest.js"), path.join(baseDir, "BuildTest.js"), path.join(baseDir, "globTest.js"))
     }
     else {
-      args.push(path.join(baseDir, "winPackagerTest.js"))
-      args.push(path.join(baseDir, "nsisTest.js"))
+      args.push(path.join(baseDir, "winPackagerTest.js"), path.join(baseDir, "nsisTest.js"), path.join(baseDir, "macPackagerTest.js"))
       args.push(...baseForLinuxTests)
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
