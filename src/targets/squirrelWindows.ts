@@ -77,6 +77,10 @@ export default class SquirrelWindowsTarget extends Target {
       vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, packager.platformSpecificBuildOptions)
 
+    if (options.remoteToken == null) {
+      options.remoteToken = packager.info.options.githubToken
+    }
+
     if (!("loadingGif" in options)) {
       const resourceList = await packager.resourceList
       if (resourceList.includes("install-spinner.gif")) {

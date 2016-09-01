@@ -15,6 +15,7 @@ import { copyFiltered, devDependencies } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
+import { BuildOptions } from "./builder"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -52,7 +53,7 @@ export interface PackagerOptions {
 }
 
 export interface BuildInfo {
-  options: PackagerOptions
+  options: BuildOptions
 
   devMetadata: DevMetadata
 

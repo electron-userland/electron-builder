@@ -7,7 +7,7 @@ import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
 import { Promise as BluebirdPromise } from "bluebird"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
-import { PackagerOptions, PlatformPackager, BuildInfo, ArtifactCreated, Target } from "./platformPackager"
+import { PlatformPackager, BuildInfo, ArtifactCreated, Target } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
@@ -19,6 +19,7 @@ import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "./util/tmp"
+import { BuildOptions } from "./builder"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -45,7 +46,7 @@ export class Packager implements BuildInfo {
   readonly tempDirManager = new TmpDir()
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(public options: PackagerOptions) {
+  constructor(public options: BuildOptions) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
   }
 
