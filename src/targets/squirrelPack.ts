@@ -51,16 +51,16 @@ export interface SquirrelOptions {
 
 export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string) {
   const appUpdate = await packager.getTempFile("Update.exe")
-  const promises = [
+  await BluebirdPromise.all([
     copy(path.join(options.vendorPath, "Update.exe"), appUpdate)
       .then(() => packager.sign(appUpdate)),
     remove(outputDirectory.replace(/\\/g, "/") + "/*-full.nupkg")
       .then(() => ensureDir(outputDirectory))
-  ]
+  ])
+
   if (options.remoteReleases) {
-    promises.push(syncReleases(outputDirectory, options))
+    await syncReleases(outputDirectory, options)
   }
-  await BluebirdPromise.all(promises)
 
   const embeddedArchiveFile = await packager.getTempFile("setup.zip")
   const embeddedArchive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 6 : options.packageCompressionLevel}})
