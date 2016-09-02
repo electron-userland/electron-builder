@@ -225,20 +225,16 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
     }
     else if (options.githubToken != null) {
       const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
-      if (tag != null && tag.length !== 0) {
+      if (!isEmptyOrSpaces(tag)) {
         log(`Tag ${tag} is defined, so artifacts will be published`)
         options.publish = "onTag"
         isPublishOptionGuessed = true
       }
-      else {if (isCi()) {
-          log("CI detected, so artifacts will be published if draft release exists")
-          options.publish = "onTagOrDraft"
-          isPublishOptionGuessed = true
-        }
+      else if (isCi()) {
+        log("CI detected, so artifacts will be published if draft release exists")
+        options.publish = "onTagOrDraft"
+        isPublishOptionGuessed = true
       }
-    }
-    else {
-      log("CI detected, so artifacts will be published if draft release exists")
     }
   }
 
