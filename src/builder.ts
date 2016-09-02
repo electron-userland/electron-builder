@@ -4,31 +4,15 @@ import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
-import { isEmptyOrSpaces, isCi } from "./util/util"
+import { isEmptyOrSpaces, isCi, asArray, debug } from "./util/util"
 import { log, warn } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { DIR_TARGET } from "./targets/targetFactory"
+import { BintrayPublisher, BintrayConfiguration } from "./publish/BintrayPublisher"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
-
-export async function createPublisher(packager: Packager, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
-  const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
-  if (info == null) {
-    if (isPublishOptionGuessed) {
-      return null
-    }
-
-    warn("Cannot detect repository by .git/config")
-    throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
-  }
-  else {
-    const version = packager.metadata.version!
-    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${version}`)
-    return new GitHubPublisher(info.user, info.project, version, options, isPublishOptionGuessed)
-  }
-}
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -210,6 +194,9 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   if (options.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
     options.githubToken = process.env.GH_TOKEN
   }
+  if (options.bintrayToken === undefined && !isEmptyOrSpaces(process.env.BT_TOKEN)) {
+    options.bintrayToken = process.env.BT_TOKEN
+  }
 
   if (options.draft === undefined && !isEmptyOrSpaces(process.env.EP_DRAFT)) {
     options.draft = process.env.EP_DRAFT.toLowerCase() === "true"
@@ -238,24 +225,16 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
     }
   }
 
-  if (options.publish !== "never" && options.githubToken == null && isCi()) {
-    log(`CI detected, publish is set to ${options.publish}, but GH_TOKEN is not set, so artifacts will be not published`)
-  }
-
-  const publishTasks: Array<BluebirdPromise<any>> = []
   const packager = new Packager(options)
-  if (options.publish != null && options.publish !== "never") {
-    let publisher: Promise<Publisher> | null = null
-    packager.artifactCreated(event => {
-      if (publisher == null) {
-        publisher = createPublisher(packager, options, isPublishOptionGuessed)
-      }
+  const publishTasks: Array<BluebirdPromise<any>> = []
 
-      if (publisher) {
-        publisher
-          .then(it => publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
-      }
-    })
+  if (options.publish != null && options.publish !== "never") {
+    if (options.githubToken != null || options.bintrayToken != null) {
+      publishManager(packager, publishTasks, options, isPublishOptionGuessed)
+    }
+    else if (isCi()) {
+      log(`CI detected, publish is set to ${options.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
+    }
   }
 
   await executeFinally(packager.build(), errorOccurred => {
@@ -269,4 +248,70 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
       return BluebirdPromise.all(publishTasks)
     }
   })
+}
+
+function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: BuildOptions, isPublishOptionGuessed: boolean) {
+  const nameToPublisher = new Map<string, Promise<Publisher>>()
+  packager.artifactCreated(event => {
+    let publishers = event.packager.platformSpecificBuildOptions.publish
+    // if explicitly set to null - do not publish
+    if (publishers === null) {
+      debug(`${event.file} is not published: publish set to null`)
+      return
+    }
+
+    if (publishers == null) {
+      publishers = event.packager.info.devMetadata.build.publish
+      if (publishers === null) {
+        debug(`${event.file} is not published: publish set to null in the "build"`)
+        return
+      }
+
+      if (publishers == null && options.githubToken != null) {
+        publishers = ["github"]
+      }
+      // if both tokens are set — still publish to github (because default publisher is github)
+      if (publishers == null && options.bintrayToken != null) {
+        publishers = ["bintray"]
+      }
+    }
+
+    for (let publisherName of asArray(publishers)) {
+      let publisher = nameToPublisher.get(publisherName)
+      if (publisher == null) {
+        publisher = createPublisher(packager, options, publisherName, isPublishOptionGuessed)
+        nameToPublisher.set(publisherName, publisher)
+      }
+
+      if (publisher != null) {
+        publisher
+          .then(it => it == null ? null : publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
+      }
+    }
+  })
+}
+
+export async function createPublisher(packager: Packager, options: PublishOptions, publisherName: string, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+  const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+  if (info == null) {
+    if (isPublishOptionGuessed) {
+      return null
+    }
+
+    warn("Cannot detect repository by .git/config")
+    throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
+  }
+
+  if (publisherName === "github") {
+    const version = packager.metadata.version!
+    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${version}`)
+    return new GitHubPublisher(info.user, info.project, version, options, isPublishOptionGuessed)
+  }
+  if (publisherName === "bintray") {
+    const version = packager.metadata.version!
+    const bintrayInfo: BintrayConfiguration = {user: info.user, packageName: info.project, repo: "generic"}
+    log(`Creating Bintray Publisher — user: ${bintrayInfo.user}, package: ${bintrayInfo.packageName}, repository: ${bintrayInfo.repo}, version: ${version}`)
+    return new BintrayPublisher(bintrayInfo, version, options)
+  }
+  return null
 }

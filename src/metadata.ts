@@ -213,6 +213,8 @@ export interface BuildMetadata {
   readonly "app-bundle-id"?: string | null
 
   readonly dereference?: boolean
+
+  readonly publish?: string | Array<string> | null
 }
 
 export interface AfterPackContext {
@@ -571,6 +573,8 @@ export interface PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
+
+  readonly publish?: string | Array<string> | null
 }
 
 export class Platform {

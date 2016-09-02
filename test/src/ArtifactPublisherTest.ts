@@ -4,6 +4,7 @@ import { HttpError } from "out/publish/restApiRequest"
 import { join } from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
+import { createPublisher } from "out/builder"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -53,7 +54,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 test("Bintray upload", async () => {
   const version = versionNumber()
   //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher("actperepo", "5df2cadec86dff91392e4c419540785813c3db15", version, "test")
+  const publisher = new BintrayPublisher({user: "actperepo", packageName: "test", repo: "generic"}, version, {bintrayToken: "5df2cadec86dff91392e4c419540785813c3db15"})
   try {
     const artifactName = `icon-${version}.icns`
     await publisher.upload(iconPath, artifactName)
@@ -132,4 +133,25 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
   finally {
     await publisher.deleteRelease()
   }
+})
+
+test("create publisher", async () => {
+  const packager: any = {
+    metadata: {
+      version: "2.0.0",
+    },
+    devMetadata: {
+      repository: "develar/test"
+    },
+  }
+  const publisher = await createPublisher(packager, {
+    githubToken: "__test__",
+  }, "github")
+
+  assertThat(publisher).hasProperties({
+    "owner": "develar",
+    "repo": "test",
+    "token": "__test__",
+    "version": "2.0.0",
+  })
 })

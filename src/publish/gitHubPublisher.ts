@@ -51,7 +51,7 @@ export class GitHubPublisher implements Publisher {
     }
 
     this.tag = `v${version}`
-    this._releasePromise = <BluebirdPromise<Release>>this.init()
+    this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : <BluebirdPromise<Release>>this.init()
   }
 
   private async init(): Promise<Release | null> {

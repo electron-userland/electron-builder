@@ -4,6 +4,7 @@ import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
 import { spawn, exec } from "../util/util"
 import { debug } from "../util/util"
 import { WinPackager } from "../winPackager"
+import { log } from "../util/log"
 
 const archiverUtil = require("archiver-utils")
 const archiver = require("archiver")
@@ -23,6 +24,7 @@ export function convertVersion(version: string): string {
 }
 
 function syncReleases(outputDirectory: string, options: SquirrelOptions) {
+  log("Sync releases to build delta package")
   const args = prepareArgs(["-u", options.remoteReleases!, "-r", outputDirectory], path.join(options.vendorPath, "SyncReleases.exe"))
   if (options.remoteToken) {
     args.push("-t", options.remoteToken)

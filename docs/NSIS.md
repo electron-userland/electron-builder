@@ -1,6 +1,6 @@
 # 32 bit + 64 bit
 
-If you build both ia32 and xha arch, you in any case get one installer. Appropriate arch will be installed automatically.
+If you build both ia32 and x64 arch, you in any case get one installer. Appropriate arch will be installed automatically.
 
 # Custom NSIS script
 

@@ -10,7 +10,7 @@ export class BintrayClient {
   private readonly basePath: string
   readonly auth: string | null
 
-  constructor(private user: string, private packageName: string, private repo: string = "generic", apiKey?: string | null) {
+  constructor(public user: string, public packageName: string, public repo: string = "generic", apiKey?: string | null) {
     this.auth = apiKey == null ? null : `Basic ${new Buffer(`${user}:${apiKey}`).toString("base64")}`
     this.basePath = `/packages/${this.user}/${this.repo}/${this.packageName}`
   }

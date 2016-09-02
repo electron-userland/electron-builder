@@ -153,6 +153,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       file: file,
       artifactName: artifactName,
       platform: this.platform,
+      packager: this,
     })
   }
 
@@ -459,6 +460,8 @@ export function getArchSuffix(arch: Arch): string {
 }
 
 export interface ArtifactCreated {
+  readonly packager: PlatformPackager<any>
+
   readonly file: string
   readonly artifactName?: string
 

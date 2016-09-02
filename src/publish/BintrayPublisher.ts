@@ -11,13 +11,19 @@ import { BintrayClient, Version } from "./bintray"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
+export interface BintrayConfiguration {
+  readonly user: string
+  readonly packageName: string
+  readonly repo?: string
+}
+
 export class BintrayPublisher implements Publisher {
   private _versionPromise: BluebirdPromise<Version>
 
   private readonly client: BintrayClient
 
-  constructor(private user: string, apiKey: string, private version: string, private packageName: string, private repo: string = "generic", private options: PublishOptions = {}) {
-    this.client = new BintrayClient(user, packageName, repo, apiKey)
+  constructor(private info: BintrayConfiguration, private version: string, private options: PublishOptions) {
+    this.client = new BintrayClient(info.user, info.packageName, info.repo || "generic", options.bintrayToken)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 
@@ -54,7 +60,7 @@ export class BintrayPublisher implements Publisher {
       try {
         return await doApiRequest<any>({
           hostname: "api.bintray.com",
-          path: `/content/${this.user}/${this.repo}/${this.packageName}/${version.name}/${fileName}`,
+          path: `/content/${this.client.user}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",
           headers: {
             "User-Agent": "electron-builder",
