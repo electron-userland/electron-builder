@@ -1,6 +1,6 @@
 {
   "build": {
-    "electronVersion": "1.3.2",
+    "electronVersion": "1.3.5",
     "category": "public.app-category.business"
   }
 }

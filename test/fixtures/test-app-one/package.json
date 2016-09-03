@@ -8,7 +8,7 @@
   "author": "Foo Bar <foo@example.com>",
   "license": "MIT",
   "build": {
-    "electronVersion": "1.3.2",
+    "electronVersion": "1.3.5",
     "appId": "org.electron-builder.testApp",
     "category": "your.app.category.type",
     "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
