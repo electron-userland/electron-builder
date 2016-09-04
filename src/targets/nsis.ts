@@ -229,16 +229,16 @@ export default class NsisTarget extends Target {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (let ext of extensions) {
             const customIcon = await packager.getResource(item.icon, `${extensions[0]}.ico`)
-            let installedIconPath = "${APP_EXECUTABLE_FILENAME},0"
+            let installedIconPath = "$appExe,0"
             if (customIcon != null) {
-              installedIconPath = `resources\\${path.basename(customIcon)}`
+              installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
               //noinspection SpellCheckingInspection
               registerFileAssociationsScript += `  File "/oname=${installedIconPath}" "${customIcon}"\n`
             }
 
-            const icon = `"$INSTDIR\\${installedIconPath}"`
+            const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${packager.appInfo.productName}"`
-            const command = '"$INSTDIR\\${APP_EXECUTABLE_FILENAME} $\\"%1$\\""'
+            const command = '"$appExe $\\"%1$\\""'
             registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
           }
         }

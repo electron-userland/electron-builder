@@ -29,7 +29,7 @@ Var installMode
         StrCpy $0 $1
         System::Call 'Ole32::CoTaskMemFree(ir2)'
       ${endif}
-      StrCpy $INSTDIR "$0\${PRODUCT_FILENAME}"
+      StrCpy $INSTDIR "$0\${PRODUCT_FILENAME}\${VERSION}"
     !endif
 
     # сhecks registry for previous installation path (both for upgrading, reinstall, or uninstall)
@@ -47,7 +47,7 @@ Var installMode
     StrCpy $installMode all
     SetShellVarContext all
 
-    StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
+    StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}\${VERSION}"
 
     # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
@@ -72,7 +72,7 @@ Var installMode
 	${endif}
 
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\${APP_EXECUTABLE_FILENAME},0"
+	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1

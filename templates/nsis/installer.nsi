@@ -28,6 +28,8 @@ Var desktopLink
 
 !ifdef BUILD_UNINSTALLER
   SilentInstall silent
+!else
+  Var appExe
 !endif
 
 Function .onInit
@@ -56,7 +58,7 @@ FunctionEnd
 
 Section "install"
   !ifndef BUILD_UNINSTALLER
-    !include "install.nsh"
+    !include "installSection.nsh"
   !endif
 SectionEnd
 

@@ -37,7 +37,6 @@ ${if} $installMode == "all"
   ${endif}
 ${endif}
 
-RMDir /r $INSTDIR
 SetOutPath $INSTDIR
 
 SetCompress off
@@ -51,12 +50,12 @@ SetCompress "${COMPRESS}"
 
 !ifdef APP_64
   ${If} ${RunningX64}
-    Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
+    Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-64.7z" "Installing %s..."
   ${Else}
-    Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+    Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-32.7z" "Installing %s..."
   ${endif}
 !else
-  Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+  Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-32.7z" "Installing %s..."
 !endif
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
@@ -65,11 +64,12 @@ File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
 StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
 StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
+StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
 # create shortcuts in the start menu and on the desktop
 # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
-CreateShortCut "$startMenuLink" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 "" "" "${APP_DESCRIPTION}"
-CreateShortCut "$desktopLink" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 "" "" "${APP_DESCRIPTION}"
+CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
 
 WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
 WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
