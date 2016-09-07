@@ -61,15 +61,6 @@ export class AppInfo {
     return this.metadata.name
   }
 
-  get category() {
-    const metadata = this.devMetadata.build
-    const old = (<any>metadata)["app-category-type"]
-    if (old != null) {
-      warn('"app-category-type" is deprecated — please use "category" instead')
-    }
-    return metadata.category || old
-  }
-
   get copyright(): string {
     const metadata = this.devMetadata.build
     const old = (<any>metadata)["app-copyright"]

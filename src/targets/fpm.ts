@@ -28,7 +28,7 @@ export default class FpmTarget extends TargetEx {
     super(name)
 
     this.scriptFiles = this.createScripts()
-    this.desktopEntry = helper.computeDesktopEntry()
+    this.desktopEntry = helper.computeDesktopEntry(this.options)
   }
 
   private async createScripts(): Promise<Array<string>> {
@@ -92,6 +92,11 @@ export default class FpmTarget extends TargetEx {
       "--package", destination,
       "--url", projectUrl,
     ]
+
+    const packageCategory = options.packageCategory
+    if (packageCategory != null && packageCategory !== null) {
+      args.push("--category", packageCategory)
+    }
 
     if (target === "deb") {
       args.push("--deb-compression", options.compression || (packager.devMetadata.build.compression === "store" ? "gz" : "xz"))

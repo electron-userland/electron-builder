@@ -67,14 +67,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const packOptions = await this.computePackOptions()
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas")
 
     if (!hasMas || targets.length > 1) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
-      nonMasPromise = this.doPack(packOptions, outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
+      nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
         .then(() => this.sign(appOutDir, null))
         .then(() => {
           this.packageInDistributableFormat(appOutDir, targets, postAsyncTasks)
@@ -86,7 +85,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       const appOutDir = path.join(outDir, "mas")
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.devMetadata.build).mas)
       //noinspection JSUnusedGlobalSymbols
-      await this.doPack(packOptions, outDir, appOutDir, "mas", arch, masBuildOptions)
+      await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)
     }
 

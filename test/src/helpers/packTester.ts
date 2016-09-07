@@ -231,6 +231,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     Package: "testapp",
     Description: " \n   Test Application (test quite “ #378)",
     Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify-bin" : checkOptions.expectedDepends,
+    Section: "devel",
   })
 }
 

@@ -147,8 +147,8 @@ fi
 # Check if the desktop file is already there
 # and if so, whether it points to the same AppImage
 if [ -e "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-$DESKTOP_FILE_NAME" ] ; then
-  INSTALLED_APP_VERSION=$(grep "^X-AppImage-Version=" "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-$DESKTOP_FILE_NAME" | head -n 1 | cut -d " " -f 1)
-  APP_VERSION=$(grep "^X-AppImage-Version=" "$DESKTOP_FILE" | head -n 1 | cut -d " " -f 1)
+  INSTALLED_APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-$DESKTOP_FILE_NAME" | head -n 1 | cut -d " " -f 1)
+  APP_VERSION=$(grep "^X-AppImage-BuildId=" "$DESKTOP_FILE" | head -n 1 | cut -d " " -f 1)
   echo "installed: $INSTALLED_APP_VERSION image: $APP_VERSION"
   if [ "$INSTALLED_APP_VERSION" == "$APP_VERSION" ] ; then
     exit 0
@@ -157,7 +157,7 @@ fi
 
 # We ask the user only if we have found no reason to skip until here
 if [ -z "$SKIP" ] ; then
-  yesno "Install" "Should a desktop file for $APPIMAGE be installed?"
+  yesno "Install" "Would you like to integrate $APPIMAGE with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
 fi
 
 # If the user has agreed, rewrite and install the desktop file, and the MIME information

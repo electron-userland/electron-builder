@@ -1,11 +1,10 @@
-import { ElectronPackagerOptions } from "./dirPackager"
 import { rename, readFile, writeFile, copy, unlink } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
 import { use, asArray } from "../util/util"
-import { normalizeExt } from "../platformPackager"
-import { FileAssociation } from "../metadata"
+import { normalizeExt, PlatformPackager } from "../platformPackager"
+import { warn } from "../util/log"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -28,8 +27,8 @@ function filterCFBundleIdentifier(identifier: string) {
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
-export async function createApp(opts: ElectronPackagerOptions, appOutDir: string, initializeApp: () => Promise<any>) {
-  const appInfo = opts.appInfo
+export async function createApp(packager: PlatformPackager<any>, appOutDir: string, initializeApp: () => Promise<any>) {
+  const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
   const contentsPath = path.join(appOutDir, "Electron.app", "Contents")
@@ -40,9 +39,11 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   const helperEHPlistFilename = path.join(frameworksPath, "Electron Helper EH.app", "Contents", "Info.plist")
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
 
+  const buildMetadata = packager.devMetadata.build!
+
   const result = await BluebirdPromise.all<any | n>([
     initializeApp(),
-    BluebirdPromise.map<any | null>([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, opts["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
+    BluebirdPromise.map<any | null>([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   ])
   const fileContents: Array<string> = result[1]!
   const appPlist = parsePlist(fileContents[0])
@@ -56,9 +57,13 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   }
 
   const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
-  const helperBundleIdentifier = filterCFBundleIdentifier(opts["helper-bundle-id"] || `${appBundleIdentifier}.helper`)
 
-  const packager = opts.platformPackager
+  const oldHelperBundleId = (<any>buildMetadata)["helper-bundle-id"]
+  if (oldHelperBundleId != null) {
+    warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
+  }
+  const helperBundleIdentifier = filterCFBundleIdentifier(packager.platformSpecificBuildOptions.helperBundleId || oldHelperBundleId || `${appBundleIdentifier}.helper`)
+
   const icon = await packager.getIconPath()
   const oldIcon = appPlist.CFBundleIconFile
   if (icon != null) {
@@ -88,7 +93,7 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
   })
   use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
 
-  const protocols = asArray(packager.devMetadata.build.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
+  const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {
     appPlist.CFBundleURLTypes = protocols.map(protocol => {
       const schemes = asArray(protocol.schemes)
@@ -104,7 +109,7 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
 
   const fileAssociations = packager.getFileAssociations()
   if (fileAssociations.length > 0) {
-    appPlist.CFBundleDocumentTypes = await BluebirdPromise.map<FileAssociation>(fileAssociations, async fileAssociation => {
+    appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)
       const customIcon = await packager.getResource(fileAssociation.icon, `${extensions[0]}.icns`)
       // todo rename electron.icns
@@ -117,7 +122,13 @@ export async function createApp(opts: ElectronPackagerOptions, appOutDir: string
     })
   }
 
-  use(appInfo.category, it => appPlist.LSApplicationCategoryType = it)
+  const oldCategory = (<any>buildMetadata)["app-category-type"]
+  if (oldCategory != null) {
+    warn("app-category-type is deprecated, please set as build.mac.category")
+  }
+
+  let category = packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category || oldCategory
+  use(category || oldCategory, it => appPlist.LSApplicationCategoryType = it)
   use(appInfo.copyright, it => appPlist.NSHumanReadableCopyright = it)
 
   const promises: Array<BluebirdPromise<any | n>> = [

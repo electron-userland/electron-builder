@@ -112,7 +112,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(await this.computePackOptions(), outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
+    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
     this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
 

@@ -1,5 +1,5 @@
 import { AsarOptions } from "asar-electron-builder"
-import { ElectronPackagerOptions } from "./packager/dirPackager"
+import { PlatformPackager } from "./platformPackager"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -90,15 +90,6 @@ export interface BuildMetadata {
   Defaults to `com.electron.${name}`. It is strongly recommended that an explicit ID be set.
    */
   readonly appId?: string | null
-
-  /*
-   *macOS-only.* The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
-
-   For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
-
-   Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
-   */
-  readonly category?: string | null
 
   /*
   The human-readable copyright line for the app. Defaults to `Copyright © year author`.
@@ -219,7 +210,11 @@ export interface BuildMetadata {
 
 export interface AfterPackContext {
   readonly appOutDir: string
-  readonly options: ElectronPackagerOptions
+
+  // deprecated
+  readonly options: any
+
+  readonly packager: PlatformPackager<any>
 }
 
 /*
@@ -228,6 +223,15 @@ export interface AfterPackContext {
  MacOS specific build options.
  */
 export interface MacOptions extends PlatformSpecificBuildOptions {
+  /*
+   The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+
+   For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
+
+   Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
+   */
+  readonly category?: string | null
+
   /*
    Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
@@ -262,6 +266,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   The `CFBundleVersion`. Do not use it unless [you need to](see (https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643)).
    */
   readonly bundleVersion?: string | null
+
+  /*
+  The bundle identifier to use in the application helper's plist. Defaults to `${appBundleIdentifier}.helper`.
+   */
+  readonly helperBundleId?: string | null
 }
 
 /*
@@ -432,7 +441,7 @@ export interface NsisOptions {
   readonly script?: string | null
 
   /*
-   * LCID Dec, defaults to `1033`(`English - United States`, see https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx?f=255&MSPPError=-2147217396).
+   * [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
    */
   readonly language?: string | null
 }
@@ -443,6 +452,16 @@ export interface NsisOptions {
  Linux specific build options.
  */
 export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
+  /*
+   The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+   */
+  readonly category?: string | null
+
+  /*
+  The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
+   */
+  readonly packageCategory?: string | null
+
   /*
    As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
    */
@@ -475,8 +494,10 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   // should be not documented, only to experiment
   readonly fpm?: Array<string> | null
 
-  //.desktop file template
-  readonly desktop?: string | null
+  /**
+   The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries.
+   */
+  readonly desktop?: { [key: string]: string; } | null
 
   readonly afterInstall?: string | null
   readonly afterRemove?: string | null

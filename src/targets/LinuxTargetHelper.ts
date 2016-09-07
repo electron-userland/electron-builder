@@ -1,6 +1,6 @@
 import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { exec, debug } from "../util/util"
+import { exec, debug, isEmptyOrSpaces } from "../util/util"
 import { PlatformPackager } from "../platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxBuildOptions } from "../metadata"
@@ -66,24 +66,34 @@ export class LinuxTargetHelper {
     return iconPath == null ? await this.packager.getDefaultIcon("icns") : path.resolve(this.packager.projectDir, iconPath)
   }
 
-  async computeDesktopEntry(exec?: string, extra?: string): Promise<string> {
+  async computeDesktopEntry(platformSpecificBuildOptions: LinuxBuildOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
     const appInfo = this.packager.appInfo
-
-    const custom = this.packager.platformSpecificBuildOptions.desktop
-    if (custom != null) {
-      return custom
-    }
 
     const productFilename = appInfo.productFilename
     const tempFile = await this.packager.getTempFile(`${productFilename}.desktop`)
-    await outputFile(tempFile, this.packager.platformSpecificBuildOptions.desktop || `[Desktop Entry]
-Name=${appInfo.productName}
-Comment=${this.packager.platformSpecificBuildOptions.description || appInfo.description}
-Exec=${(exec == null ? `"${installPrefix}/${productFilename}/${productFilename}"` : exec)}
-Terminal=false
-Type=Application
-Icon=${appInfo.name}
-${extra == null ? "" : `${extra}\n`}`)
+
+    const desktopMeta: any = Object.assign({
+      Name: appInfo.productName,
+      Comment: platformSpecificBuildOptions.description || appInfo.description,
+      Exec: exec == null ? `"${installPrefix}/${productFilename}/${productFilename}"` : exec,
+      Terminal: "false",
+      Type: "Application",
+      Icon: appInfo.name,
+    }, extra, platformSpecificBuildOptions.desktop)
+
+    const category = platformSpecificBuildOptions.category
+    if (!isEmptyOrSpaces(category)) {
+      desktopMeta.Categories = category
+    }
+
+    let data = `[Desktop Entry]`
+    for (let name of Object.keys(desktopMeta)) {
+      const value = desktopMeta[name]
+      data += `\n${name}=${value}`
+    }
+    data += "\n"
+
+    await outputFile(tempFile, data)
     return tempFile
   }
 

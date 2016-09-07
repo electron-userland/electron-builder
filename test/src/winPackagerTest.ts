@@ -9,7 +9,6 @@ import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
-import { ElectronPackagerOptions } from "out/packager/dirPackager"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -125,16 +124,12 @@ class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
   signOptions: SignOptions | null
 
-  effectivePackOptions: ElectronPackagerOptions
-
   constructor(info: BuildInfo) {
     super(info)
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    this.effectivePackOptions = await this.computePackOptions()
-
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
     this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
 

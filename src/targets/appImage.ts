@@ -6,6 +6,7 @@ import { open, write, createReadStream, createWriteStream, close, chmod } from "
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getBin } from "../util/binDownload"
 import { Promise as BluebirdPromise } from "bluebird"
+import { v1 as uuid1 } from "uuid-1345"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -17,12 +18,18 @@ const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef
 const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
 
 export default class AppImageTarget extends TargetEx {
+  private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
   private readonly desktopEntry: Promise<string>
 
   constructor(private packager: PlatformPackager<LinuxBuildOptions>, private helper: LinuxTargetHelper, private outDir: string) {
     super("appImage")
 
-    this.desktopEntry = helper.computeDesktopEntry("AppRun", `X-AppImage-Version=${packager.appInfo.buildVersion}`)
+    // we add X-AppImage-BuildId to ensure that new desktop file will be installed
+    this.desktopEntry = BluebirdPromise.promisify(uuid1)({mac: false})
+      .then(uuid => helper.computeDesktopEntry(this.options, "AppRun", {
+        "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
+        "X-AppImage-BuildId": uuid,
+      }))
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

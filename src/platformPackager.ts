@@ -12,7 +12,7 @@ import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { copyFiltered, devDependencies } from "./util/filter"
-import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
+import { pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
@@ -164,7 +164,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
 
-  protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
+  protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
     const fileMatchOptions: FileMatchOptions = {
       arch: Arch[arch],
@@ -176,7 +176,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
-    const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
+    const p = pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
         const result = await devDependencies(this.info.appDir)
@@ -242,7 +242,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (afterPack != null) {
       await afterPack({
         appOutDir: appOutDir,
-        options: options,
+        options: this.devMetadata.build,
+        packager: this,
       })
     }
 
@@ -251,20 +252,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   protected postInitApp(executableFile: string): Promise<any> {
     return BluebirdPromise.resolve(null)
-  }
-
-  protected async computePackOptions(): Promise<ElectronPackagerOptions> {
-    //noinspection JSUnusedGlobalSymbols
-    const appInfo = this.appInfo
-    const options: any = Object.assign({
-      appInfo: appInfo,
-      platformPackager: this,
-    }, this.devMetadata.build)
-
-    delete options.osx
-    delete options.win
-    delete options.linux
-    return options
   }
 
   async getIconPath(): Promise<string | null> {
