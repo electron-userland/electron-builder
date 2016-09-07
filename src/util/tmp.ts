@@ -50,21 +50,23 @@ export class TmpDir {
     }
 
     return this.tempDirectoryPromise
-      .then(it => path.join(it, `temp-${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
+      .then(it => path.join(it, `t-${process.pid.toString(16)}-${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
   }
 
   cleanup(): Promise<any> {
-    if (this.dir == null) {
+    const dir = this.dir
+    if (dir == null) {
       return BluebirdPromise.resolve()
     }
 
-    return remove(this.dir)
-      .then(() => {
-        this.dir = null
-      })
+    this.dir = null
+    return remove(dir)
       .catch(e => {
-        if (e.code !== "EPERM") {
-          warn(`Cannot delete temporary dir "${this.dir}": ${(e.stack || e).toString()}`)
+        if (e.code === "EPERM") {
+          this.dir = dir
+        }
+        else {
+          warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
         }
       })
   }
