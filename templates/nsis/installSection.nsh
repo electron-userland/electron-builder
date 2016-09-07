@@ -24,16 +24,31 @@ ${endif}
   ${endif}
 !endif
 
-ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString
+# http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
+
+ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallerPath
 ${if} $R0 != ""
-  ExecWait "$R0 /S /KEEP_APP_DATA"
+  ReadRegStr $R1 SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${if} $R1 != ""
+    CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+
+    ${if} $installMode == "all"
+      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /allusers"
+    ${Else}
+      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /currentuser"
+    ${endif}
+  ${endif}
 ${endif}
 
+# remove per-user installation
 ${if} $installMode == "all"
-  # remove per-user installation
-  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallString
+  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallerPath
   ${if} $R0 != ""
-    ExecWait "$R0 /S /KEEP_APP_DATA"
+    ReadRegStr $R1 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $R1 != ""
+      CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /currentuser"
+    ${endif}
   ${endif}
 ${endif}
 
@@ -50,12 +65,12 @@ SetCompress "${COMPRESS}"
 
 !ifdef APP_64
   ${If} ${RunningX64}
-    Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-64.7z" "Installing %s..."
+    Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
   ${Else}
-    Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-32.7z" "Installing %s..."
+    Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
   ${endif}
 !else
-  Nsis7z::ExtractWithDetails "$PLUGINSDIR\app-32.7z" "Installing %s..."
+  Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
 !endif
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
