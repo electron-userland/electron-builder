@@ -202,3 +202,84 @@ test("extraResources", async () => {
     })
   }
 })
+
+test("extraResources - one-package", async () => {
+  for (let platform of [Platform.LINUX]) {
+    const osName = platform.buildConfigurationKey
+
+    const winDirPrefix = "lib/net45/resources/"
+
+    //noinspection SpellCheckingInspection
+    await assertPack("test-app-one", {
+      // to check NuGet package
+      targets: platform.createTarget(platform === Platform.WINDOWS ? null : DIR_TARGET),
+      devMetadata: {
+        build: {
+          asar: true,
+        },
+      },
+    }, {
+      tempDirCreated: projectDir => {
+        return BluebirdPromise.all([
+          modifyPackageJson(projectDir, data => {
+            data.build.extraResources = [
+              "foo",
+              "bar/hello.txt",
+              "bar/${arch}.txt",
+              "${os}/${arch}.txt",
+            ]
+
+            data.build[osName] = {
+              extraResources: [
+                "platformSpecificR"
+              ],
+              extraFiles: [
+                "platformSpecificF"
+              ],
+            }
+          }),
+          outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
+          outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
+          outputFile(path.join(projectDir, "foo", ".dot"), "data"),
+          outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
+          outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
+          outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
+          outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+        ])
+      },
+      packed: async (projectDir) => {
+        const base = path.join(projectDir, outDirName, platform.buildConfigurationKey)
+        let resourcesDir = path.join(base, "resources")
+        if (platform === Platform.MAC) {
+          resourcesDir = path.join(base, "TestApp.app", "Contents", "Resources")
+        }
+        else if (platform === Platform.WINDOWS) {
+          resourcesDir = path.join(base + "-unpacked", "resources")
+        }
+        const appDir = path.join(resourcesDir, "app")
+
+        await assertThat(path.join(resourcesDir, "foo")).isDirectory()
+        await assertThat(path.join(appDir, "foo")).doesNotExist()
+
+        await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()
+        await assertThat(path.join(appDir, "foo", "nameWithoutDot")).doesNotExist()
+
+        await assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile()
+        await assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile()
+        await assertThat(path.join(appDir, "bar", `${process.arch}.txt`)).doesNotExist()
+
+        await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
+        await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
+        await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
+        await assertThat(path.join(resourcesDir, "foo", ".dot")).doesNotExist()
+      },
+      expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
+        winDirPrefix + "bar/hello.txt",
+        winDirPrefix + "bar/x64.txt",
+        winDirPrefix + "foo/nameWithoutDot",
+        winDirPrefix + "platformSpecificR",
+        winDirPrefix + "win/x64.txt"
+      )) : null,
+    })
+  }
+})

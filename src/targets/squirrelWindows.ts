@@ -86,12 +86,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
-      sign: {
-        name: appInfo.productName,
-        site: projectUrl,
-        overwrite: true,
-        hash: packager.platformSpecificBuildOptions.signingHashAlgorithms,
-      },
+      sign: this.packager.sign.bind(this.packager),
       rcedit: rceditOptions,
     }, packager.platformSpecificBuildOptions)
 

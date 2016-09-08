@@ -30,38 +30,49 @@ export class LinuxTargetHelper {
 
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<Array<string>>> {
-    const tempDir = await this.tempDirPromise
-    try {
-      const mappings: Array<Array<string>> = []
-      const pngIconsDir = path.join(this.packager.buildResourcesDir, "icons")
-      let maxSize = 0
-      for (let file of (await readdir(pngIconsDir))) {
-        if (file.endsWith(".png") || file.endsWith(".PNG")) {
-          // If parseInt encounters a character that is not a numeral in the specified radix,
-          // it returns the integer value parsed up to that point
-          try {
-            const size = parseInt(file!, 10)
-            if (size > 0) {
-              const iconPath = `${pngIconsDir}/${file}`
-              mappings.push([iconPath, `${size}x${size}/apps/${this.packager.appInfo.name}.png`])
+    const resourceList = await this.packager.resourceList
+    if (resourceList.includes("icons")) {
+      return this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
+    }
+    else {
+      return this.createFromIcns(await this.tempDirPromise)
+    }
+  }
 
-              if (size > maxSize) {
-                maxSize = size
-                this.maxIconPath = iconPath
-              }
+  private async iconsFromDir(iconsDir: string) {
+    const mappings: Array<Array<string>> = []
+    let maxSize = 0
+    for (let file of (await readdir(iconsDir))) {
+      if (file.endsWith(".png") || file.endsWith(".PNG")) {
+        // If parseInt encounters a character that is not a numeral in the specified radix,
+        // it returns the integer value parsed up to that point
+        try {
+          const size = parseInt(file!, 10)
+          if (size > 0) {
+            const iconPath = `${iconsDir}/${file}`
+            mappings.push([iconPath, `${size}x${size}/apps/${this.packager.appInfo.name}.png`])
+
+            if (size > maxSize) {
+              maxSize = size
+              this.maxIconPath = iconPath
             }
           }
-          catch (e) {
-            console.error(e)
-          }
+        }
+        catch (e) {
+          console.error(e)
         }
       }
+    }
+    return mappings
+  }
 
-      return mappings
+  private async getIcns(): Promise<string | null> {
+    const build = this.packager.devMetadata.build
+    let iconPath = (build.mac || {}).icon || build.icon
+    if (iconPath != null && !iconPath.endsWith(".icns")) {
+      iconPath += ".icns"
     }
-    catch (e) {
-      return this.createFromIcns(tempDir)
-    }
+    return iconPath == null ? await this.packager.getDefaultIcon("icns") : path.resolve(this.packager.projectDir, iconPath)
   }
 
   async computeDesktopEntry(exec?: string, extra?: string): Promise<string> {
@@ -86,7 +97,12 @@ ${extra == null ? "" : `${extra}\n`}`)
   }
 
   private async createFromIcns(tempDir: string): Promise<Array<Array<string>>> {
-    const output = await exec("icns2png", ["-x", "-o", tempDir, path.join(this.packager.buildResourcesDir, "icon.icns")])
+    const iconPath = await this.getIcns()
+    if (iconPath == null) {
+      return this.iconsFromDir(path.join(__dirname, "..", "..", "templates", "linux", "electron-icons"))
+    }
+
+    const output = await exec("icns2png", ["-x", "-o", tempDir, iconPath])
     debug(output)
 
     //noinspection UnnecessaryLocalVariableJS

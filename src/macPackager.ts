@@ -86,7 +86,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (hasMas) {
       // osx-sign - disable warning
       const appOutDir = path.join(outDir, "mas")
-      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.devMetadata.build)["mas"])
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.devMetadata.build).mas)
       //noinspection JSUnusedGlobalSymbols
       await this.doPack(packOptions, outDir, appOutDir, "mas", arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)

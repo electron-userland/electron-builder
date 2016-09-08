@@ -1,33 +1,16 @@
 {
+  "extends": "tslint:recommended",
   "rules": {
-    "class-name": true,
-    "curly": true,
-    "indent": [
-      true,
-      "spaces"
-    ],
     "member-ordering": [
       "static-before-instance",
       "variables-before-functions"
     ],
-    "no-arg": true,
-    "no-duplicate-key": true,
-    "no-consecutive-blank-lines": true,
-    "no-duplicate-variable": true,
-    "no-eval": true,
-    "no-empty": true,
-    "no-unreachable": true,
-    "no-unused-expression": true,
     "no-unused-variable": [
       true,
       {
         "ignore-pattern": "^_+awaiter$"
       }
     ],
-    "no-use-before-declare": true,
-    "no-internal-module": true,
-    "no-trailing-whitespace": true,
-    "no-var-keyword": true,
     "one-line": [
       true,
       "check-open-brace",
@@ -37,10 +20,6 @@
       true,
       "double",
       "avoid-escape"
-    ],
-    "triple-equals": [
-      true,
-      "allow-null-check"
     ],
     "typedef-whitespace": [
       true,
@@ -56,6 +35,19 @@
       true,
       "ban-keywords"
     ],
+    "ordered-imports": false,
+    "semicolon": [true, "never"],
+    "trailing-comma": false,
+    "object-literal-sort-keys": false,
+    "no-var-requires": false,
+    "no-console": false,
+    "max-line-length": false,
+    "eofline": false,
+    "comment-format": false,
+    "no-conditional-assignment": false,
+    "interface-name": false,
+    "member-access": false,
+    "no-shadowed-variable": false,
     "whitespace": [
       true,
       "check-branch",
@@ -63,14 +55,8 @@
       "check-operator",
       "check-separator",
       "check-type"
-    ]
-  },
-  "no-debugger": true,
-  "no-inferrable-types": true,
-  "no-shadowed-variable": true,
-  "no-invalid-this": true,
-  "no-reference": true,
-  "semicolon": "never",
-  "prefer-const": "true",
-  "one-variable-per-declaration": "true"
+    ],
+    "no-bitwise": false,
+    "jsdoc-format": false
+  }
 }

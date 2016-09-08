@@ -11,7 +11,7 @@ dependencies:
   # circleci doesn't cache after test, only after deps, so, we do test in this phase
   override:
     - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-    - sudo apt-get install git-lfs=1.2.0
+    - sudo apt-get install git-lfs=1.3.0
     - ssh git@github.com git-lfs-authenticate $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME.git download
     - git lfs pull
     - docker run --rm --env-file ./test/docker-env.list -v ${PWD}:/project -v ~/.electron:/root/.electron -v ~/.cache:/root/.cache electronuserland/electron-builder:$([ "$CIRCLE_NODE_INDEX" == "2" ] && echo "4" || echo "wine") /test.sh

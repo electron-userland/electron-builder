@@ -28,20 +28,25 @@ export default class AppImageTarget extends TargetEx {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    const image = path.join(this.outDir, packager.generateName("AppImage", arch, false))
+    // avoid spaces in the file name
+    const image = path.join(this.outDir, packager.generateName("AppImage", arch, true))
     const appInfo = packager.appInfo
     await unlinkIfExists(image)
 
     const appImagePath = await appImagePathPromise
+    const appExecutableImagePath = `/usr/bin/${appInfo.name}`
     const args = [
       "-joliet", "on",
       "-volid", "AppImage",
       "-dev", image,
       "-padding", "0",
       "-map", appOutDir, "/usr/bin",
-      "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), `/AppRun`,
+      "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), "/AppRun",
       "-map", await this.desktopEntry, `/${appInfo.name}.desktop`,
-      "-move", `/usr/bin/${appInfo.productFilename}`, `/usr/bin/${appInfo.name}`,
+      "-move", `/usr/bin/${appInfo.productFilename}`, appExecutableImagePath,
+      // http://stackoverflow.com/questions/13633488/can-i-store-unix-permissions-in-a-zip-file-built-with-apache-ant, xorriso doesn't preserve it for zip, but we set it in any case
+      "-chmod", "+x", appExecutableImagePath, "--",
+      "-chmod", "+x", "/AppRun", appExecutableImagePath, "--",
     ]
     for (let [from, to] of (await this.helper.icons)) {
       args.push("-map", from, `/usr/share/icons/default/${to}`)

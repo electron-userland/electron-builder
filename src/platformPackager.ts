@@ -5,7 +5,7 @@ import * as path from "path"
 import { readdir, remove, realpath } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces } from "./util/util"
 import { Packager } from "./packager"
-import { AsarOptions } from "asar"
+import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInPackage, createAsarArchive } from "./asarUtil"
@@ -14,7 +14,6 @@ import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { listDependencies, createFilter, copyFiltered, hasMagic } from "./util/filter"
 import { ElectronPackagerOptions, pack } from "./packager/dirPackager"
-import { userIgnoreFilter } from "./packager/common"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -47,6 +46,8 @@ export interface PackagerOptions {
   readonly appMetadata?: AppMetadata
 
   readonly effectiveOptionComputed?: (options: any) => boolean
+
+  readonly extraMetadata?: any
 }
 
 export interface BuildInfo {
@@ -155,12 +156,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
+  private getExtraFilePatterns(isResources: boolean, arch: Arch, customBuildOptions: DC): Array<Minimatch> | null {
+    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
+    return patterns == null || patterns.length === 0 ? null : this.getParsedPatterns(patterns, arch)
+  }
+
   protected async doPack(options: ElectronPackagerOptions, outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
-    options.initializeApp = async (opts, buildDir, appRelativePath) => {
-      const appPath = path.join(buildDir, appRelativePath)
-      const resourcesPath = path.dirname(appPath)
 
+    const extraResourcePatterns = this.getExtraFilePatterns(true, arch, platformSpecificBuildOptions)
+    const extraFilePatterns = this.getExtraFilePatterns(false, arch, platformSpecificBuildOptions)
+
+    const p = pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.relative(this.info.appDir, outDir), path.relative(this.info.appDir, this.buildResourcesDir)])
       if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
         const result = await BluebirdPromise.all([listDependencies(this.info.appDir, false), listDependencies(this.info.appDir, true)])
@@ -186,6 +193,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (patterns == null || patterns.length === 0) {
         patterns = ["**/*"]
       }
+      patterns.push("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
@@ -196,12 +204,29 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         else {
           warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
-        rawFilter = userIgnoreFilter(opts, this.info.appDir)
+        rawFilter = deprecatedUserIgnoreFilter(options, this.info.appDir)
       }
 
-      const filter = createFilter(this.info.appDir, this.getParsedPatterns(patterns, arch), ignoreFiles, rawFilter)
+      const filePatterns = this.getParsedPatterns(patterns, arch)
+      let excludePatterns: Array<Minimatch> | null = null
+      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
+        if (extraResourcePatterns != null) {
+          excludePatterns = extraResourcePatterns
+        }
+        if (extraFilePatterns != null) {
+          if (excludePatterns == null) {
+            excludePatterns = extraFilePatterns
+          }
+          else {
+            excludePatterns = excludePatterns.concat(extraFilePatterns)
+          }
+        }
+      }
+
+      const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
+      const filter = createFilter(this.info.appDir, filePatterns, ignoreFiles, rawFilter, excludePatterns)
       const promise = asarOptions == null ?
-        copyFiltered(this.info.appDir, appPath, filter, this.platform === Platform.WINDOWS)
+        copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
@@ -211,9 +236,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       await BluebirdPromise.all(promises)
-    }
-    await task(`Packaging for platform ${this.platform.name} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`,
-      pack(options, appOutDir, platformName, Arch[arch], this.info.electronVersion))
+    })
+    await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
     await this.doCopyExtraFiles(true, appOutDir, arch, platformSpecificBuildOptions)
     await this.doCopyExtraFiles(false, appOutDir, arch, platformSpecificBuildOptions)
@@ -233,10 +257,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     //noinspection JSUnusedGlobalSymbols
     const appInfo = this.appInfo
     const options: any = deepAssign({
-      appBundleId: appInfo.id,
-      name: appInfo.productName,
-      productName: appInfo.productName,
-      platform: this.platform.nodeName,
       icon: await this.getIconPath(),
       appInfo: appInfo,
     }, this.devMetadata.build)
@@ -277,14 +297,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     if (result == null || result === true) {
-      return {
+      result = {
         unpack: buildMetadata["asar-unpack"],
         unpackDir: buildMetadata["asar-unpack-dir"]
       }
     }
-    else {
-      return result
-    }
+
+    return Object.assign(result, {
+      extraMetadata: this.options.extraMetadata
+    })
   }
 
   private expandPattern(pattern: string, arch: Arch): string {
@@ -296,8 +317,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private async doCopyExtraFiles(isResources: boolean, appOutDir: string, arch: Arch, customBuildOptions: DC): Promise<any> {
     const base = isResources ? this.getResourcesDir(appOutDir) : this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir
-    const patterns = this.getFilePatterns(isResources ? "extraResources" : "extraFiles", customBuildOptions)
-    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, this.getParsedPatterns(patterns, arch)), this.platform === Platform.WINDOWS)
+    const patterns = this.getExtraFilePatterns(isResources, arch, customBuildOptions)
+    return patterns == null || patterns.length === 0 ? null : copyFiltered(this.projectDir, base, createFilter(this.projectDir, patterns), this.platform === Platform.WINDOWS)
   }
 
   private getParsedPatterns(patterns: Array<string>, arch: Arch): Array<Minimatch> {
@@ -391,7 +412,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}${dotExt}`
   }
 
-  protected async getDefaultIcon(ext: string) {
+  async getDefaultIcon(ext: string) {
     const resourceList = await this.resourceList
     const name = `icon.${ext}`
     if (resourceList.includes(name)) {
@@ -427,4 +448,37 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
+}
+
+export function deprecatedUserIgnoreFilter(opts: ElectronPackagerOptions, appDir: string) {
+  let ignore = opts.ignore || []
+  let ignoreFunc: any
+
+  if (typeof (ignore) === "function") {
+    ignoreFunc = function (file: string) { return !ignore(file) }
+  }
+  else {
+    if (!Array.isArray(ignore)) {
+      ignore = [ignore]
+    }
+
+    ignoreFunc = function (file: string) {
+      for (let i = 0; i < ignore.length; i++) {
+        if (file.match(ignore[i])) {
+          return false
+        }
+      }
+
+      return true
+    }
+  }
+
+  return function filter(file: string) {
+    let name = file.split(path.resolve(appDir))[1]
+    if (path.sep === "\\") {
+      // convert slashes so unix-format ignores work
+      name = name.replace(/\\/g, "/")
+    }
+    return ignoreFunc(name)
+  }
 }

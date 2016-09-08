@@ -1,16 +1,18 @@
 import test from "ava-tf"
 
+/* tslint:disable:no-invalid-this no-namespace */
+
 declare module "ava-tf" {
   namespace test {
-    export const ifNotWindows: typeof test;
-    export const ifOsx: typeof test;
-    export const ifNotCi: typeof test;
-    export const ifCi: typeof test;
-    export const ifNotCiOsx: typeof test;
-    export const ifDevOrWinCi: typeof test;
-    export const ifWinCi: typeof test;
-    export const ifDevOrLinuxCi: typeof test;
-    export const ifNotTravis: typeof test;
+    export const ifNotWindows: typeof test
+    export const ifOsx: typeof test
+    export const ifNotCi: typeof test
+    export const ifCi: typeof test
+    export const ifNotCiOsx: typeof test
+    export const ifDevOrWinCi: typeof test
+    export const ifWinCi: typeof test
+    export const ifDevOrLinuxCi: typeof test
+    export const ifNotTravis: typeof test
   }
 }
 

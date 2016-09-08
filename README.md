@@ -67,12 +67,13 @@ For a production app you need to sign your application, see [Where to buy code s
 4. Add [scripts](https://docs.npmjs.com/cli/run-script) to the development `package.json`:
     ```json
     "scripts": {
-      "postinstall": "install-app-deps",
       "pack": "build --dir",
       "dist": "build"
     }
     ```
     And then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack` (useful to test).
+    
+    Add script `"postinstall": "install-app-deps"` if two package.json structure is used to automatically install application dependencies.
 
 5. Install [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
@@ -88,7 +89,7 @@ Please note — packaged into an asar archive [by default](https://github.com/el
 
 For auto updating to work, you must implement and configure Electron's [`autoUpdater`](http://electron.atom.io/docs/latest/api/auto-updater/) module ([example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts)).
 You also need to deploy your releases to a server.
-Consider using [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets) or [Electron Release Server](https://github.com/ArekSredzki/electron-release-server).
+Consider using [Nuts](https://github.com/GitbookIO/nuts) (GitHub as a backend to store assets), [Electron Release Server](https://github.com/ArekSredzki/electron-release-server) or [Squirrel Updates Server](https://github.com/Aluxian/squirrel-updates-server).
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for information on configuring your CI environment for automatic deployment.
 
 For windows consider only [distributing 64-bit versions](https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130).
@@ -97,15 +98,16 @@ For windows consider only [distributing 64-bit versions](https://github.com/elec
 Execute `node_modules/.bin/build --help` to get actual CLI usage guide.
 ```
 Building:
-  --mac, -m, -o, --osx  Build for MacOS, accepts target list (see
-                        https://goo.gl/HAnnq8).                          [array]
-  --linux, -l           Build for Linux, accepts target list (see
-                        https://goo.gl/O80IL2)                           [array]
-  --win, -w, --windows  Build for Windows, accepts target list (see
-                        https://goo.gl/dL4i8i)                           [array]
-  --x64                 Build for x64                                  [boolean]
-  --ia32                Build for ia32                                 [boolean]
-  --dir                 Build unpacked dir. Useful to test.            [boolean]
+  --mac, -m, -o, --osx, --macos  Build for MacOS, accepts target list (see
+                                 https://goo.gl/HAnnq8).                 [array]
+  --linux, -l                    Build for Linux, accepts target list (see
+                                 https://goo.gl/O80IL2)                  [array]
+  --win, -w, --windows           Build for Windows, accepts target list (see
+                                 https://goo.gl/dL4i8i)                  [array]
+  --x64                          Build for x64                         [boolean]
+  --ia32                         Build for ia32                        [boolean]
+  --dir                          Build unpacked dir. Useful to test.   [boolean]
+  --extraMetadata, --em          Inject properties to application package.json
 
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
@@ -128,6 +130,7 @@ Examples:
   build -mwl                build for MacOS, Windows and Linux
   build --linux deb tar.xz  build deb and tar.xz for Linux
   build --win --ia32        build for Windows ia32
+  build --em.foo=bar        set application package.json property `foo` to `bar`
 ```
 
 # Programmatic Usage

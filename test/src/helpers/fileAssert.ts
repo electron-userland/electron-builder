@@ -13,6 +13,7 @@ export function assertThat(actual: any): Assertions {
   return new Assertions(actual)
 }
 
+//noinspection JSUnusedLocalSymbols
 function jsonReplacer(key: any, value: any): any {
   if (value instanceof Map) {
     return [...value]
@@ -30,6 +31,16 @@ class Assertions {
 
   containsAll<T>(expected: Iterable<T>) {
     compare(this.actual.slice().sort(), Array.from(expected).slice().sort())
+  }
+
+  hasProperties<T>(expected: any) {
+    const actual = Object.create(null)
+    for (let name of Object.getOwnPropertyNames(this.actual)) {
+      if (name in expected) {
+        actual[name] = this.actual[name]
+      }
+    }
+    compare(actual, expected)
   }
 
   isAbsolute() {

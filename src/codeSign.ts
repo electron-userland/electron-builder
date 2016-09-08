@@ -89,7 +89,7 @@ export async function createKeychain(keychainName: string, cscLink: string, cscK
     ])
     .then<CodeSigningInfo>(() => importCerts(keychainName, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
     errorOccurred => {
-      const tasks = certPaths.map((it, index) => certLinks[index].startsWith("file://") ? BluebirdPromise.resolve() : deleteFile(it, true))
+      const tasks = certPaths.map((it, index) => certLinks[index].startsWith("https://") ? deleteFile(it, true) : BluebirdPromise.resolve())
       if (errorOccurred) {
         tasks.push(deleteKeychain(keychainName))
       }

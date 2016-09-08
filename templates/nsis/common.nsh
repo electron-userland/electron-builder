@@ -1,4 +1,5 @@
 !include x64.nsh
+!include WinVer.nsh
 
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow

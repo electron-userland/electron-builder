@@ -12,13 +12,14 @@
     "sourceMap": true,
     "noImplicitReturns": true,
     "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   },
   "include": [
     "../typings/**/*.d.ts",
     "typings/**/*.d.ts",
     "src/**/*.ts",
-    "../node_modules/ava-tf/index.d.ts",
+    "../node_modules/ava-tf/types/generated.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/fs-extra-p/bluebird.d.ts",
     "../node_modules/electron-osx-sign/index.d.ts",

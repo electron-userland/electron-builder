@@ -5,7 +5,7 @@ import { Platform, WinBuildOptions, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
 import { deleteFile, open, close, read } from "fs-extra-p"
-import { sign, SignOptions } from "signcode-tf"
+import { sign, SignOptions } from "./windowsCodeSign"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
@@ -27,6 +27,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     super(info)
 
     const certificateFile = this.platformSpecificBuildOptions.certificateFile
+    const cscLink = this.options.cscLink
     if (certificateFile != null) {
       const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
       this.cscInfo = BluebirdPromise.resolve({
@@ -34,10 +35,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         password: certificatePassword == null ? null : certificatePassword.trim(),
       })
     }
-    else if (this.options.cscLink != null) {
-      this.cscInfo = downloadCertificate(this.options.cscLink)
+    else if (cscLink != null) {
+      this.cscInfo = downloadCertificate(cscLink)
         .then(path => {
-          cleanupTasks.push(() => deleteFile(path, true))
+          if (cscLink.startsWith("https://")) {
+            cleanupTasks.push(() => deleteFile(path, true))
+          }
           return {
             file: path,
             password: this.getCscPassword(),
@@ -120,7 +123,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         password: cscInfo.password!,
         name: this.appInfo.productName,
         site: await this.appInfo.computePackageUrl(),
-        overwrite: true,
         hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
       })
     }
@@ -128,7 +130,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   //noinspection JSMethodCanBeStatic
   protected async doSign(opts: SignOptions): Promise<any> {
-    return BluebirdPromise.promisify(sign)(opts)
+    return sign(opts)
   }
 
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {

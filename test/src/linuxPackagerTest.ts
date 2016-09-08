@@ -14,6 +14,13 @@ test.ifDevOrLinuxCi("AppImage", () => assertPack("test-app-one", {
   }
 ))
 
+test.ifDevOrLinuxCi("AppImage - default icon", () => assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget("appimage"),
+  }, {
+  tempDirCreated: projectDir => remove(path.join(projectDir, "build"))
+  },
+))
+
 // "apk" is very slow, don't test for now
 test.ifDevOrLinuxCi("targets", () => assertPack("test-app-one", {
   targets: Platform.LINUX.createTarget(["sh", "freebsd", "pacman", "zip", "7z"]),

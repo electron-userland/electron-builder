@@ -1,38 +1,16 @@
 !include "common.nsh"
 !include "MUI2.nsh"
 !include "multiUser.nsh"
-!include "nsProcess.nsh"
 !include "allowOnlyOneInstallerInstace.nsh"
-!include "checkAppRunning.nsh"
-!include WinVer.nsh
-!include FileAssociation.nsh
 
 !ifdef ONE_CLICK
-  !ifdef RUN_AFTER_FINISH
-    Function StartApp
-      !ifdef INSTALL_MODE_PER_ALL_USERS
-        !include UAC.nsh
-        !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
-      !else
-        ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-      !endif
-    FunctionEnd
-  !endif
-
-  SilentUnInstall silent
-  AutoCloseWindow true
-  !insertmacro MUI_PAGE_INSTFILES
-  !insertmacro MUI_UNPAGE_INSTFILES
-
-  !insertmacro MUI_LANGUAGE "English"
-
-  !ifdef INSTALL_MODE_PER_ALL_USERS
-    RequestExecutionLevel admin
-  !else
-    RequestExecutionLevel user
-  !endif
+  !include "oneClick.nsh"
 !else
-  !include "boring-installer.nsh"
+  !include "boringInstaller.nsh"
+!endif
+
+!ifmacrodef customHeader
+  !insertmacro customHeader
 !endif
 
 Var startMenuLink
@@ -64,23 +42,41 @@ Function .onInit
   !ifdef HEADER_ICO
     File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
   !endif
+
+  !ifmacrodef customInit
+    !insertmacro customInit
+  !endif
 FunctionEnd
 
 Function un.onInit
   !insertmacro check64BitAndSetRegView
+
+  ${IfNot} ${Silent}
+    MessageBox MB_OKCANCEL "Are you sure you want to uninstall ${PRODUCT_NAME}?" IDOK next
+      Quit
+
+    next:
+  ${EndIf}
+
   !insertmacro initMultiUser Un un.
+
+  !ifmacrodef customUnInit
+    !insertmacro customUnInit
+  !endif
 FunctionEnd
 
 Section "install"
-  SetDetailsPrint none
+  ${IfNot} ${Silent}
+    SetDetailsPrint none
 
-  !ifdef ONE_CLICK
-    !ifdef HEADER_ICO
-      SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
-    !else
-      SpiderBanner::Show /MODERN
-   !endif
-  !endif
+    !ifdef ONE_CLICK
+      !ifdef HEADER_ICO
+        SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
+      !else
+        SpiderBanner::Show /MODERN
+     !endif
+    !endif
+  ${EndIf}
 
   !insertmacro CHECK_APP_RUNNING "install"
 
@@ -114,13 +110,19 @@ Section "install"
 
   !insertmacro registerFileAssociations
 
-  !ifdef ONE_CLICK
-    # otherwise app window will be in backround
-    HideWindow
-    !ifdef RUN_AFTER_FINISH
-      Call StartApp
-    !endif
+  !ifmacrodef customInstall
+    !insertmacro customInstall
   !endif
+
+  ${IfNot} ${Silent}
+    !ifdef ONE_CLICK
+      # otherwise app window will be in backround
+      HideWindow
+      !ifdef RUN_AFTER_FINISH
+        Call StartApp
+      !endif
+    !endif
+  ${EndIf}
 SectionEnd
 
 Section "un.install"
@@ -146,4 +148,8 @@ Section "un.install"
   RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
 
   !insertmacro MULTIUSER_RegistryRemoveInstallInfo
+
+  !ifmacrodef customUnInstall
+    !insertmacro customUnInstall
+  !endif
 SectionEnd

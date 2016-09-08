@@ -3,7 +3,6 @@ import { rename, readFile, writeFile, copy } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import { Promise as BluebirdPromise } from "bluebird"
-import { initializeApp } from "./common"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -26,11 +25,11 @@ function filterCFBundleIdentifier(identifier: string) {
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
-export async function createApp(opts: ElectronPackagerOptions, tempPath: string) {
-  const appFilename = opts.appInfo.productFilename
+export async function createApp(opts: ElectronPackagerOptions, appOutDir: string, initializeApp: () => Promise<any>) {
+  const appInfo = opts.appInfo
+  const appFilename = appInfo.productFilename
 
-  const finalAppPath = path.join(tempPath, `${appFilename}.app`)
-  const contentsPath = path.join(tempPath, "Electron.app", "Contents")
+  const contentsPath = path.join(appOutDir, "Electron.app", "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
 
   const appPlistFilename = path.join(contentsPath, "Info.plist")
@@ -39,7 +38,7 @@ export async function createApp(opts: ElectronPackagerOptions, tempPath: string)
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
 
   const result = await BluebirdPromise.all<any | n>([
-    initializeApp(opts, tempPath, path.join("Electron.app", "Contents", "Resources", "app")),
+    initializeApp(),
     BluebirdPromise.map<any | null>([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, opts["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   ])
   const fileContents: Array<string> = result[1]!
@@ -55,33 +54,32 @@ export async function createApp(opts: ElectronPackagerOptions, tempPath: string)
 
   // Now set fields based on explicit options
 
-  const appBundleIdentifier = filterCFBundleIdentifier(opts.appBundleId)
+  const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
   const helperBundleIdentifier = filterCFBundleIdentifier(opts["helper-bundle-id"] || `${appBundleIdentifier}.helper`)
 
-  const appVersion = opts.appInfo.version
-  const buildVersion = opts.appInfo.buildVersion
+  const buildVersion = appInfo.buildVersion
   const appCategoryType = opts["app-category-type"]
-  const humanReadableCopyright = opts.appInfo.copyright
+  const humanReadableCopyright = appInfo.copyright
 
-  appPlist.CFBundleDisplayName = opts.appInfo.productName
+  appPlist.CFBundleDisplayName = appInfo.productName
   appPlist.CFBundleIdentifier = appBundleIdentifier
-  appPlist.CFBundleName = opts.appInfo.productName
-  helperPlist.CFBundleDisplayName = `${opts.appInfo.productName} Helper`
+  appPlist.CFBundleName = appInfo.productName
+  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
   helperPlist.CFBundleIdentifier = helperBundleIdentifier
   appPlist.CFBundleExecutable = appFilename
-  helperPlist.CFBundleName = opts.appInfo.productName
+  helperPlist.CFBundleName = appInfo.productName
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
   helperEHPlist.CFBundleDisplayName = `${appFilename} Helper EH`
   helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
-  helperEHPlist.CFBundleName = `${opts.appInfo.productName} Helper EH`
+  helperEHPlist.CFBundleName = `${appInfo.productName} Helper EH`
   helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
-  helperNPPlist.CFBundleDisplayName = `${opts.appInfo.productName} Helper NP`
+  helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
   helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
-  helperNPPlist.CFBundleName = `${opts.appInfo.productName} Helper NP`
+  helperNPPlist.CFBundleName = `${appInfo.productName} Helper NP`
   helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
 
-  if (appVersion != null) {
-    appPlist.CFBundleShortVersionString = appPlist.CFBundleVersion = appVersion
+  if (appInfo.version != null) {
+    appPlist.CFBundleShortVersionString = appPlist.CFBundleVersion = appInfo.version
   }
 
   if (buildVersion != null) {
@@ -120,5 +118,5 @@ export async function createApp(opts: ElectronPackagerOptions, tempPath: string)
   await BluebirdPromise.all(promises)
 
   await moveHelpers(frameworksPath, appFilename)
-  await rename(path.dirname(contentsPath), finalAppPath)
+  await rename(path.dirname(contentsPath), path.join(appOutDir, `${appFilename}.app`))
 }

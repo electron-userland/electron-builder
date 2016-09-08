@@ -1,4 +1,4 @@
-import { AsarOptions } from "asar"
+import { AsarOptions } from "asar-electron-builder"
 import { ElectronPackagerOptions } from "./packager/dirPackager"
 
 export interface Metadata {
@@ -108,6 +108,8 @@ export interface BuildMetadata {
    Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).
 
    Or you can pass object of any asar options.
+
+   electron-builder detects node modules that must be unpacked automatically, you don't need to explicitly set `asar.unpackDir` - please file issue if this doesn't work.
    */
   readonly asar?: AsarOptions | boolean | null
 
@@ -120,7 +122,7 @@ export interface BuildMetadata {
   readonly productName?: string | null
 
   /**
-   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `\*\*\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. Defaults to `**\/\*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
 
    Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
@@ -164,7 +166,7 @@ export interface BuildMetadata {
   readonly mas?: MasBuildOptions | null
 
   /**
-   See [.build.win](#LinuxBuildOptions).
+   See [.build.win](#WinBuildOptions).
    */
   readonly win?: WinBuildOptions  | null
 
@@ -189,14 +191,6 @@ export interface BuildMetadata {
    *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
-
-  // /*
-  //  Whether to [prune](https://docs.npmjs.com/cli/prune) dependencies (`npm prune --production`) before starting to package the app.
-  //  Defaults to `false`.
-  //  */
-  // readonly npmPrune?: boolean
-  // deprecated
-  // readonly prune?: boolean
 
   /*
    Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
@@ -384,6 +378,9 @@ export interface NsisOptions {
    */
   readonly runAfterFinish?: boolean | null
 
+  /*
+  See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+   */
   readonly guid?: string | null
 
   /*
@@ -395,6 +392,16 @@ export interface NsisOptions {
    *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
+
+  /*
+  The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+   */
+  readonly include?: string | null
+
+  /*
+  The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+   */
+  readonly script?: string | null
 }
 
 /*
@@ -468,10 +475,6 @@ export interface FileAssociation {
    */
   readonly name: string
 }
-
-// CFBundleTypeName
-// https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
-// CFBundleTypeExtensions
 
 /*
  ## `.directories`
@@ -556,9 +559,10 @@ export class Platform {
 
       case Platform.LINUX.nodeName:
         return Platform.LINUX
-    }
 
-    throw new Error(`Unknown platform: ${name}`)
+      default:
+        throw new Error(`Unknown platform: ${name}`)
+    }
   }
 }
 

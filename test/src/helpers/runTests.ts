@@ -1,8 +1,9 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { copy, readJson, emptyDir, unlink, readdir, outputFile, readFileSync } from "fs-extra-p"
+import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink } from "fs-extra-p"
 import { Platform } from "out/metadata"
+import { cpus } from "os"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 //noinspection JSUnusedLocalSymbols
@@ -19,7 +20,7 @@ const rootDir = path.join(__dirname, "..", "..", "..")
 const testPackageDir = path.join(require("os").tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
-const electronVersion = "1.2.6"
+const electronVersion = "1.3.1"
 
 async function main() {
   await BluebirdPromise.all([
@@ -124,6 +125,8 @@ async function copyDependencies() {
 function runTests(): BluebirdPromise<any> {
   const args: Array<string> = []
   const testFiles = process.env.TEST_FILES
+
+  args.push(`--concurrency=${cpus().length}`)
 
   const baseDir = path.join("test", "out")
   const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]

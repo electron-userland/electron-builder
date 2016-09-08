@@ -29,7 +29,7 @@ export function hasMagic(pattern: Minimatch) {
   return false
 }
 
-export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean): (file: string) => boolean {
+export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): (file: string) => boolean {
   return function filter(it) {
     if (src === it) {
       return true
@@ -49,7 +49,8 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
     if (path.sep === "\\") {
       relative = relative.replace(/\\/g, "/")
     }
-    return minimatchAll(relative, patterns)
+
+    return minimatchAll(relative, patterns) && (excludePatterns == null || !minimatchAll(relative, excludePatterns))
   }
 }
 

@@ -17,79 +17,87 @@
 
 # Current Install Mode ("AllUsers" or "CurrentUser")
 Var MultiUser.InstallMode
-Var HasPerUserInstallation ; 0 (false) or 1 (true)
-Var HasPerMachineInstallation ; 0 (false) or 1 (true)
-Var PerUserInstallationFolder
-Var PerMachineInstallationFolder
 
-# Sets install mode to "per-machine" (all users).
-!macro MULTIUSER_INSTALLMODE_ALLUSERS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
-	# Install mode initialization - per-machine
-	StrCpy $MultiUser.InstallMode AllUsers
+!ifndef INSTALL_MODE_PER_ALL_USERS
+  !ifndef ONE_CLICK
+    Var HasPerUserInstallation ; 0 (false) or 1 (true)
+    Var HasPerMachineInstallation ; 0 (false) or 1 (true)
+  !endif
+  Var PerUserInstallationFolder
 
-	SetShellVarContext all
+  # Sets install mode to "per-user".
+  !macro MULTIUSER_INSTALLMODE_CURRENTUSER UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
+    StrCpy $MultiUser.InstallMode CurrentUser
 
-	!if "${UNINSTALLER_PREFIX}" != UN
-		;Set default installation location for installer
-		StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
-	!endif
+    SetShellVarContext current
 
-	; Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
-	ReadRegStr $PerMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
-	${if} $PerMachineInstallationFolder != ""
-		StrCpy $INSTDIR $PerMachineInstallationFolder
-	${endif}
+    !if "${UNINSTALLER_PREFIX}" != UN
+      # http://www.mathiaswestin.net/2012/09/how-to-make-per-user-installation-with.html
+      StrCpy $0 "$LocalAppData\Programs"
+      # Win7 has a per-user programfiles known folder and this can be a non-default location
+      System::Call 'Shell32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}",i ${KF_FLAG_CREATE},i0,*i.r2)i.r1'
+      ${If} $1 == 0
+        System::Call '*$2(&w${NSIS_MAX_STRLEN} .r1)'
+        StrCpy $0 $1
+        System::Call 'Ole32::CoTaskMemFree(ir2)'
+      ${EndIf}
+      StrCpy $Instdir "$0\${PRODUCT_FILENAME}"
+    !endif
 
-	!ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
-		Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
-	!endif
-!macroend
+    # Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    ReadRegStr $PerUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $PerUserInstallationFolder != ""
+      StrCpy $INSTDIR $PerUserInstallationFolder
+    ${endif}
 
-# Sets install mode to "per-user".
-!macro MULTIUSER_INSTALLMODE_CURRENTUSER UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
-	StrCpy $MultiUser.InstallMode CurrentUser
+    !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
+      Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
+    !endif
+  !macroend
 
-	SetShellVarContext current
+  Function MultiUser.InstallMode.CurrentUser
+  	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER "" ""
+  FunctionEnd
 
-	!if "${UNINSTALLER_PREFIX}" != UN
-	  # http://www.mathiaswestin.net/2012/09/how-to-make-per-user-installation-with.html
-	  StrCpy $0 "$LocalAppData\Programs"
-    # Win7 has a per-user programfiles known folder and this can be a non-default location
-    System::Call 'Shell32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}",i ${KF_FLAG_CREATE},i0,*i.r2)i.r1'
-    ${If} $1 == 0
-      System::Call '*$2(&w${NSIS_MAX_STRLEN} .r1)'
-      StrCpy $0 $1
-      System::Call 'Ole32::CoTaskMemFree(ir2)'
-    ${EndIf}
-    StrCpy $Instdir "$0\${PRODUCT_FILENAME}"
-	!endif
+  Function un.MultiUser.InstallMode.CurrentUser
+  	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER UN un.
+  FunctionEnd
+!endif
 
-	# Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
-	ReadRegStr $PerUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-	${if} $PerUserInstallationFolder != ""
-		StrCpy $INSTDIR $PerUserInstallationFolder
-	${endif}
+!ifdef INSTALL_MODE_PER_ALL_USERS_REQUIRED
+  Var PerMachineInstallationFolder
 
-	!ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
-		Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
-	!endif
-!macroend
+  # Sets install mode to "per-machine" (all users).
+  !macro MULTIUSER_INSTALLMODE_ALLUSERS UNINSTALLER_PREFIX UNINSTALLER_FUNCPREFIX
+    # Install mode initialization - per-machine
+    StrCpy $MultiUser.InstallMode AllUsers
 
-Function MultiUser.InstallMode.AllUsers
-	!insertmacro MULTIUSER_INSTALLMODE_ALLUSERS "" ""
-FunctionEnd
+    SetShellVarContext all
 
-Function MultiUser.InstallMode.CurrentUser
-	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER "" ""
-FunctionEnd
+    !if "${UNINSTALLER_PREFIX}" != UN
+      ;Set default installation location for installer
+      StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}"
+    !endif
 
-Function un.MultiUser.InstallMode.AllUsers
-	!insertmacro MULTIUSER_INSTALLMODE_ALLUSERS UN un.
-FunctionEnd
+    ; Checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    ReadRegStr $PerMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $PerMachineInstallationFolder != ""
+      StrCpy $INSTDIR $PerMachineInstallationFolder
+    ${endif}
 
-Function un.MultiUser.InstallMode.CurrentUser
-	!insertmacro MULTIUSER_INSTALLMODE_CURRENTUSER UN un.
-FunctionEnd
+    !ifdef MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION
+      Call "${MULTIUSER_INSTALLMODE_${UNINSTALLER_PREFIX}FUNCTION}"
+    !endif
+  !macroend
+
+  Function MultiUser.InstallMode.AllUsers
+    !insertmacro MULTIUSER_INSTALLMODE_ALLUSERS "" ""
+  FunctionEnd
+
+  Function un.MultiUser.InstallMode.AllUsers
+    !insertmacro MULTIUSER_INSTALLMODE_ALLUSERS UN un.
+  FunctionEnd
+!endif
 
 !macro MULTIUSER_INIT_TEXTS
 	!ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED

@@ -2,6 +2,8 @@
   <dictionary name="develar">
     <words>
       <w>actperepo</w>
+      <w>addincludedir</w>
+      <w>appdir</w>
       <w>appimage</w>
       <w>appleid</w>
       <w>appveyor</w>
@@ -18,7 +20,9 @@
       <w>cleanuper</w>
       <w>codesigning</w>
       <w>coroutine</w>
+      <w>cpus</w>
       <w>crypto</w>
+      <w>cuint</w>
       <w>debian</w>
       <w>difflet</w>
       <w>digester</w>
@@ -45,6 +49,7 @@
       <w>insertmacro</w>
       <w>installmode</w>
       <w>instdir</w>
+      <w>isbinaryfile</w>
       <w>joliet</w>
       <w>keyserver</w>
       <w>libappindicator</w>
@@ -71,6 +76,7 @@
       <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
+      <w>osslsigncode</w>
       <w>packagejson</w>
       <w>pacman</w>
       <w>passin</w>
@@ -81,9 +87,11 @@
       <w>progexe</w>
       <w>promisify</w>
       <w>psmdcp</w>
+      <w>readpass</w>
       <w>repos</w>
       <w>rimraf</w>
       <w>semver</w>
+      <w>signtool</w>
       <w>templating</w>
       <w>testapp</w>
       <w>tsconfig</w>
