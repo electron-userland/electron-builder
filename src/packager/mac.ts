@@ -102,6 +102,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
       }
       return {
         CFBundleURLName: protocol.name,
+        CFBundleTypeRole: protocol.role || "Editor",
         CFBundleURLSchemes: schemes.slice()
       }
     })
