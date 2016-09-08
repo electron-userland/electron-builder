@@ -33,21 +33,20 @@ export class DmgTarget extends Target {
   async build(appOutDir: string) {
     const appInfo = this.packager.appInfo
     const artifactPath = path.join(appOutDir, `${appInfo.productFilename}-${appInfo.version}.dmg`)
-    await new BluebirdPromise<any>(async(resolve, reject) => {
-      log("Creating DMG")
-      const dmgOptions = {
-        target: artifactPath,
-        basepath: this.packager.projectDir,
-        specification: await this.computeDmgOptions(appOutDir),
-      }
+    log("Creating DMG")
+    const dmgOptions = {
+      target: artifactPath,
+      basepath: this.packager.projectDir,
+      specification: await this.computeDmgOptions(appOutDir),
+    }
+    if (debug.enabled) {
+      debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
+    }
 
-      if (debug.enabled) {
-        debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
-      }
-
-      const emitter = require("appdmg")(dmgOptions)
+    const emitter = require("appdmg")(dmgOptions)
+    await new BluebirdPromise((resolve, reject) => {
       emitter.on("error", reject)
-      emitter.on("finish", () => resolve())
+      emitter.on("finish", resolve)
       if (debug.enabled) {
         emitter.on("progress", (info: any) => {
           if (info.type === "step-begin") {
