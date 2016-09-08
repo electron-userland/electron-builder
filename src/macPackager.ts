@@ -134,23 +134,21 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }, (<any>this.devMetadata.build)["osx-sign"], baseSignOptions)
 
     const resourceList = await this.resourceList
+    if (resourceList.includes(`entitlements.osx.plist`)) {
+      throw new Error("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
+    }
+    if (resourceList.includes(`entitlements.osx.inherit.plist`)) {
+      throw new Error("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
+    }
 
     const customSignOptions = masOptions || this.platformSpecificBuildOptions
     if (customSignOptions.entitlements != null) {
       signOptions.entitlements = customSignOptions.entitlements
     }
     else {
-      let p = `entitlements.${masOptions == null ? "osx" : "mas"}.plist`
+      const p = `entitlements.${masOptions == null ? "mac" : "mas"}.plist`
       if (resourceList.includes(p)) {
-        warn("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
         signOptions.entitlements = path.join(this.buildResourcesDir, p)
-      }
-
-      if (masOptions == null) {
-        p = `entitlements.mac.plist`
-        if (resourceList.includes(p)) {
-          signOptions.entitlements = path.join(this.buildResourcesDir, p)
-        }
       }
     }
 
@@ -158,16 +156,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
     }
     else {
-      let p = `entitlements.${masOptions == null ? "osx" : "mas"}.inherit.plist`
+      const p = `entitlements.${masOptions == null ? "mac" : "mas"}.inherit.plist`
       if (resourceList.includes(p)) {
-        warn("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
         signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
-      }
-      if (masOptions == null) {
-        p = `entitlements.mac.inherit.plist`
-        if (resourceList.includes(p)) {
-          signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
-        }
       }
     }
 
