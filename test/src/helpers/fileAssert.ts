@@ -37,6 +37,10 @@ class Assertions {
     compare(this.actual, "", true)
   }
 
+  isNotNull() {
+    compare(this.actual, null, true)
+  }
+
   doesNotMatch(pattern: RegExp) {
     if ((<string>this.actual).match(pattern)) {
       throw new Error(`${this.actual} matches ${pattern}`)

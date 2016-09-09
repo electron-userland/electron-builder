@@ -1,11 +1,20 @@
 import test from "./helpers/avaEx"
+import { assertThat } from "./helpers/fileAssert"
+import { NsisUpdater } from "out/nsis-auto-updater/src/nsis-updater"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
+const __awaiter = require("out/util/awaiter");
 
-const updater = require("../../nsis-auto-updater/out/nsis-auto-updater/src/nsis-updater")
+(<any>global).__test_app = {
+  getVersion: function () {
+    return "0.0.1"
+  }
+}
 
-test("Check updates - no latest version", async (t) => {
+const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/nsis-updater").NsisUpdater
+
+test("check updates - no versions at all", async (t) => {
+  const updater: NsisUpdater = new NsisUpdaterClass()
   //noinspection ReservedWordAsName
   updater.setFeedURL({
     user: "actperepo",
@@ -13,4 +22,17 @@ test("Check updates - no latest version", async (t) => {
   })
 
   t.throws(updater.checkForUpdates(), /No latest version, please ensure that/)
+})
+
+test("cannot find suitable file for version", async (t) => {
+  const updater: NsisUpdater = new NsisUpdaterClass()
+  //noinspection ReservedWordAsName
+  updater.setFeedURL({
+    user: "actperepo",
+    package: "incorrect-file-version",
+  })
+
+  const updateCheckResult = await updater.checkForUpdates()
+  assertThat(updateCheckResult.downloadPromise).isNotNull()
+  t.throws(updateCheckResult.downloadPromise, /Cannot find suitable file for version 1.0.0 in/)
 })

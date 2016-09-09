@@ -54,7 +54,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 test("Bintray upload", async () => {
   const version = versionNumber()
   //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher({user: "actperepo", packageName: "test", repo: "generic"}, version, {bintrayToken: "5df2cadec86dff91392e4c419540785813c3db15"})
+  const publisher = new BintrayPublisher({user: "actperepo", package: "test", repo: "generic"}, version, {bintrayToken: "5df2cadec86dff91392e4c419540785813c3db15"})
   try {
     const artifactName = `icon-${version}.icns`
     await publisher.upload(iconPath, artifactName)

@@ -9,7 +9,8 @@ import { log, warn } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { DIR_TARGET } from "./targets/targetFactory"
-import { BintrayPublisher, BintrayConfiguration } from "./publish/BintrayPublisher"
+import { BintrayPublisher } from "./publish/BintrayPublisher"
+import { BintrayOptions } from "./publish/bintray"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -309,8 +310,9 @@ export async function createPublisher(packager: Packager, options: PublishOption
   }
   if (publisherName === "bintray") {
     const version = packager.metadata.version!
-    const bintrayInfo: BintrayConfiguration = {user: info.user, packageName: info.project, repo: "generic"}
-    log(`Creating Bintray Publisher — user: ${bintrayInfo.user}, package: ${bintrayInfo.packageName}, repository: ${bintrayInfo.repo}, version: ${version}`)
+    //noinspection ReservedWordAsName
+    const bintrayInfo: BintrayOptions = {user: info.user, package: info.project, repo: "generic"}
+    log(`Creating Bintray Publisher — user: ${bintrayInfo.user}, package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
     return new BintrayPublisher(bintrayInfo, version, options)
   }
   return null

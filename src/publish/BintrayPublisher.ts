@@ -6,24 +6,18 @@ import { log } from "../util/log"
 import { debug } from "../util/util"
 import { basename } from "path"
 import { stat } from "fs-extra-p"
-import { BintrayClient, Version } from "./bintray"
+import { BintrayClient, Version, BintrayOptions } from "./bintray"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
-
-export interface BintrayConfiguration {
-  readonly user: string
-  readonly packageName: string
-  readonly repo?: string
-}
 
 export class BintrayPublisher implements Publisher {
   private _versionPromise: BluebirdPromise<Version>
 
   private readonly client: BintrayClient
 
-  constructor(private info: BintrayConfiguration, private version: string, private options: PublishOptions) {
-    this.client = new BintrayClient(info.user, info.packageName, info.repo || "generic", options.bintrayToken)
+  constructor(private info: BintrayOptions, private version: string, private options: PublishOptions) {
+    this.client = new BintrayClient(info.user, info.package, info.repo, options.bintrayToken)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 

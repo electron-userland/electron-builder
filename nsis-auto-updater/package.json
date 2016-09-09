@@ -12,11 +12,14 @@
     "out"
   ],
   "dependencies": {
-    "bluebird": "^3.4.1",
-    "fs-extra-p": "^1.0.6"
+    "bluebird": "^3.4.6",
+    "fs-extra-p": "^1.1.8",
+    "semver": "^5.3.0"
   },
   "bundledDependencies": [
     "fs-extra-p",
-    "bluebird"
-  ]
+    "bluebird",
+    "semver"
+  ],
+  "typings": "./out/nsis-updater.d.ts"
 }

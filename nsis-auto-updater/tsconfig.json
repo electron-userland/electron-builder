@@ -15,8 +15,12 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
+  "declaration": {
+    "": "../test/typings/nsis-updater.d.ts"
+  },
   "files": [
     "../node_modules/@types/node/index.d.ts",
+    "../node_modules/@types/semver/index.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/fs-extra-p/bluebird.d.ts",
     "../src/util/httpRequest.ts",
