@@ -557,6 +557,11 @@ export interface Protocol {
   readonly name: string
 
   /*
+  *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
+  */
+  readonly role?: string
+
+  /*
   The schemes. e.g. `["irc", "ircs"]`.
   */
   readonly schemes: Array<string>
