@@ -35,7 +35,8 @@ export class FileMatcher {
   }
 
   getParsedPatterns(fromDir?: string): Array<Minimatch> {
-    const minimatchOptions = {}
+    // https://github.com/electron-userland/electron-builder/issues/733
+    const minimatchOptions = {dot: true}
 
     const parsedPatterns: Array<Minimatch> = []
     const pathDifference = fromDir ? path.relative(fromDir, this.from) : null
@@ -67,7 +68,7 @@ export class FileMatcher {
     return pattern
       .replace(/\$\{arch}/g, this.options.arch)
       .replace(/\$\{os}/g, this.options.os)
-      .replace(/\$\{\/\*}/g, "{,/**/*,/**/.*}")
+      .replace(/\$\{\/\*}/g, "{,/**/*}")
   }
 }
 

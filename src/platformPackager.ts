@@ -192,6 +192,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         defaultMatcher.addPattern("**/*")
       }
       defaultMatcher.addPattern("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
+      defaultMatcher.addPattern("!**/node_modules/.bin")
+      defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc}")
+      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db}")
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore

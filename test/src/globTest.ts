@@ -28,6 +28,30 @@ test.ifDevOrLinuxCi("ignore build resources", app({
   },
 }))
 
+test.ifDevOrLinuxCi("ignore known ignored files", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  devMetadata: {
+    build: {
+      asar: false
+    }
+  }
+}, {
+  projectDirCreated: projectDir => BluebirdPromise.all([
+    outputFile(path.join(projectDir, ".svn", "foo"), "data"),
+    outputFile(path.join(projectDir, ".git", "foo"), "data"),
+    outputFile(path.join(projectDir, "foo", "bar", "f.o"), "data"),
+    outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
+    outputFile(path.join(projectDir, "node_modules", ".bin2", "f.txt"), "data"),
+  ]),
+  packed: async context => {
+    await assertThat(path.join(context.getResources(Platform.LINUX), "app", ".svn")).doesNotExist()
+    await assertThat(path.join(context.getResources(Platform.LINUX), "app", ".git")).doesNotExist()
+    await assertThat(path.join(context.getResources(Platform.LINUX), "app", "foo", "bar", "f.o")).doesNotExist()
+    await assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin")).doesNotExist()
+    await assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin2")).isDirectory()
+  },
+}))
+
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   devMetadata: {
@@ -192,7 +216,6 @@ test("extraResources", async () => {
           }),
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.join(projectDir, "foo", ".dot"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
@@ -212,7 +235,6 @@ test("extraResources", async () => {
         await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
         await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
-        await assertThat(path.join(resourcesDir, "foo", ".dot")).doesNotExist()
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         winDirPrefix + "bar/hello.txt",
@@ -262,7 +284,6 @@ test("extraResources - one-package", async () => {
           }),
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
-          outputFile(path.join(projectDir, "foo", ".dot"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
@@ -290,7 +311,6 @@ test("extraResources - one-package", async () => {
         await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
         await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
         await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
-        await assertThat(path.join(resourcesDir, "foo", ".dot")).doesNotExist()
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         winDirPrefix + "bar/hello.txt",

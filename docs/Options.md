@@ -184,6 +184,7 @@ macOS only.
 | Name | Description
 | --- | ---
 | **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`.
+| role | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 | **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
 
 <a name="MetadataDirectories"></a>
@@ -198,7 +199,14 @@ macOS only.
 
 # File Patterns
 
-[build.files](#BuildMetadata-files) defaults to `**/*` (i.e. [hidden files are ignored by default](https://www.npmjs.com/package/glob#dots)).
+[build.files](#BuildMetadata-files) defaults to:
+* `**/*`
+* `!**/node_modules/*/{README.md,README,readme.md,readme,test}`
+* `!**/node_modules/.bin`
+* `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db}`
+
+[Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
