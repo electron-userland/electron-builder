@@ -32,11 +32,13 @@ Var installMode
       StrCpy $INSTDIR "$0\${PRODUCT_FILENAME}\${VERSION}"
     !endif
 
-    # сhecks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
     ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $perUserInstallationFolder != ""
-      StrCpy $INSTDIR $perUserInstallationFolder
-    ${endif}
+    !ifdef BUILD_UNINSTALLER
+      ${if} $perUserInstallationFolder != ""
+        StrCpy $INSTDIR $perUserInstallationFolder
+      ${endif}
+    !endif
   !macroend
 !endif
 
@@ -49,11 +51,13 @@ Var installMode
 
     StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}\${VERSION}"
 
-    # checks registry for previous installation path (both for upgrading, reinstall, or uninstall)
+    # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $perMachineInstallationFolder != ""
-      StrCpy $INSTDIR $perMachineInstallationFolder
-    ${endif}
+    !ifdef BUILD_UNINSTALLER
+      ${if} $perMachineInstallationFolder != ""
+        StrCpy $INSTDIR $perMachineInstallationFolder
+      ${endif}
+    !endif
   !macroend
 !endif
 

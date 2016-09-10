@@ -24,6 +24,36 @@ ${endif}
   ${endif}
 !endif
 
+### remove old < 6.4.1 versions
+
+ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString
+${if} $R0 != ""
+  ReadRegStr $R2 SHCTX "${INSTALL_REGISTRY_KEY}" UninstallerPath
+  ${if} $R2 == ""
+    ReadRegStr $R1 SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ExecWait "$R0 _?=$R1 /S /KEEP_APP_DATA"
+    Delete "$R1\Uninstall *.exe"
+    ClearErrors
+  ${endif}
+${endif}
+
+# remove per-user installation
+${if} $installMode == "all"
+  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallString
+  ${if} $R0 != ""
+    ReadRegStr $R2 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" UninstallerPath
+    ${if} $R2 == ""
+      ReadRegStr $R1 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" InstallLocation
+      ExecWait "$R0 _?=$R1 /S /KEEP_APP_DATA"
+      Delete "$R1\Uninstall *.exe"
+      ClearErrors
+    ${endif}
+  ${endif}
+${endif}
+
+###
+
+
 # http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
 
 ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallerPath

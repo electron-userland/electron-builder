@@ -20,7 +20,7 @@ test("one-click", app({
   devMetadata: {
     build: {
       // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
-      productName: "TestApp",
+      // productName: "TestApp",
     }
   }
 }, {
