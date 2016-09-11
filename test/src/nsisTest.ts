@@ -82,7 +82,7 @@ async function doTest(outDir: string, perUser: boolean) {
   await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S")
 
   const instDir = perUser ? path.join(wine.userDir, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
-  const appAsar = path.join(instDir, "TestApp", "resources", "app.asar")
+  const appAsar = path.join(instDir, "TestApp", "1.1.0", "resources", "app.asar")
   assertThat(JSON.parse(extractFile(appAsar, "package.json").toString())).hasProperties({
     name: "TestApp"
   })
@@ -97,7 +97,7 @@ async function doTest(outDir: string, perUser: boolean) {
   const appDataFile = path.join(wine.userDir, "Application Data", "TestApp", "doNotDeleteMe")
   await outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
-  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe", "/S"))
+  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S")
   fsAfter = await listFiles()
 
   fsChanges = diff(fsBefore, fsAfter, driveC)

@@ -85,7 +85,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
         resolve(stdout)
       }
       else {
-        let message = red(removePassword(error.message))
+        let message = red(removePassword(`Exit code: ${(<any>error).code}. ${error.message}`))
         if (stdout.length !== 0) {
           message += `\n${yellow(stdout)}`
         }

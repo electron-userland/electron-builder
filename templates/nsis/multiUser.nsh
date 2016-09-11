@@ -74,7 +74,6 @@ Var installMode
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME} (only current user)"
 		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /currentuser'
 	${endif}
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallerPath "$INSTDIR\${UNINSTALL_FILENAME}"
 
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"

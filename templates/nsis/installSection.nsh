@@ -1,3 +1,28 @@
+# http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
+!macro uninstallOldVersion ROOT_KEY
+  ReadRegStr $R0 ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}" UninstallString
+  ${if} $R0 != ""
+    Push $R0
+    Call GetInQuotes
+    Pop $R0
+
+    ReadRegStr $R1 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $R1 != ""
+    ${AndIf} $R0 != ""
+      CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
+
+      ${if} $installMode == "CurrentUser"
+      ${OrIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
+        StrCpy $0 "/currentuser"
+      ${else}
+        StrCpy $0 "/allusers"
+      ${endif}
+#      MessageBox MB_OK|MB_ICONEXCLAMATION '"$PLUGINSDIR\old-uninstaller.exe" "_?=$R1" /S /KEEP_APP_DATA $0'
+      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" "_?=$R1" /S /KEEP_APP_DATA $0'
+    ${endif}
+  ${endif}
+!macroend
+
 InitPluginsDir
 
 !ifdef HEADER_ICO
@@ -24,62 +49,9 @@ ${endif}
   ${endif}
 !endif
 
-### remove old < 6.4.1 versions
-
-ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString
-${if} $R0 != ""
-  ReadRegStr $R2 SHCTX "${INSTALL_REGISTRY_KEY}" UninstallerPath
-  ${if} $R2 == ""
-    ReadRegStr $R1 SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ExecWait "$R0 _?=$R1 /S /KEEP_APP_DATA"
-    Delete "$R1\Uninstall *.exe"
-    ClearErrors
-  ${endif}
-${endif}
-
-# remove per-user installation
+!insertmacro uninstallOldVersion SHELL_CONTEXT
 ${if} $installMode == "all"
-  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallString
-  ${if} $R0 != ""
-    ReadRegStr $R2 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" UninstallerPath
-    ${if} $R2 == ""
-      ReadRegStr $R1 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" InstallLocation
-      ExecWait "$R0 _?=$R1 /S /KEEP_APP_DATA"
-      Delete "$R1\Uninstall *.exe"
-      ClearErrors
-    ${endif}
-  ${endif}
-${endif}
-
-###
-
-
-# http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
-
-ReadRegStr $R0 SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallerPath
-${if} $R0 != ""
-  ReadRegStr $R1 SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation
-  ${if} $R1 != ""
-    CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
-
-    ${if} $installMode == "all"
-      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /allusers"
-    ${Else}
-      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /currentuser"
-    ${endif}
-  ${endif}
-${endif}
-
-# remove per-user installation
-${if} $installMode == "all"
-  ReadRegStr $R0 HKEY_CURRENT_USER "${UNINSTALL_REGISTRY_KEY}" UninstallerPath
-  ${if} $R0 != ""
-    ReadRegStr $R1 HKEY_CURRENT_USER "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $R1 != ""
-      CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
-      ExecWait "$PLUGINSDIR\old-uninstaller.exe _?=$R1 /S /KEEP_APP_DATA /currentuser"
-    ${endif}
-  ${endif}
+  !insertmacro uninstallOldVersion HKEY_CURRENT_USER
 ${endif}
 
 SetOutPath $INSTDIR
@@ -94,9 +66,9 @@ SetCompress off
 SetCompress "${COMPRESS}"
 
 !ifdef APP_64
-  ${If} ${RunningX64}
+  ${if} ${RunningX64}
     Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
-  ${Else}
+  ${else}
     Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
   ${endif}
 !else
@@ -135,5 +107,5 @@ WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
       Call StartApp
     ${EndIf}
   !endif
-  Quit
+  !insertmacro quitSuccess
 !endif

@@ -35,9 +35,7 @@ Var desktopLink
 Function .onInit
   !ifdef BUILD_UNINSTALLER
     WriteUninstaller "${UNINSTALLER_OUT_FILE}"
-    # avoid exit code 2
-    SetErrorLevel 0
-    Quit
+    !insertmacro quitSuccess
   !else
     !insertmacro check64BitAndSetRegView
     !insertmacro initMultiUser

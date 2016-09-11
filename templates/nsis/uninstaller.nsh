@@ -63,5 +63,5 @@ Section "un.install"
     !insertmacro customUnInstall
   !endif
 
-  Quit
+  !insertmacro quitSuccess
 SectionEnd

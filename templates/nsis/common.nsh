@@ -30,3 +30,45 @@ Unicode true
     ${EndIf}
   !endif
 !macroend
+
+# avoid exit code 2
+!macro quitSuccess
+  SetErrorLevel 0
+  Quit
+!macroend
+
+!ifndef BUILD_UNINSTALLER
+Function GetInQuotes
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+
+   StrCpy $R2 -1
+   IntOp $R2 $R2 + 1
+    StrCpy $R3 $R0 1 $R2
+    StrCmp $R3 "" 0 +3
+     StrCpy $R0 ""
+     Goto Done
+    StrCmp $R3 '"' 0 -5
+
+   IntOp $R2 $R2 + 1
+   StrCpy $R0 $R0 "" $R2
+
+   StrCpy $R2 0
+   IntOp $R2 $R2 + 1
+    StrCpy $R3 $R0 1 $R2
+    StrCmp $R3 "" 0 +3
+     StrCpy $R0 ""
+     Goto Done
+    StrCmp $R3 '"' 0 -5
+
+   StrCpy $R0 $R0 $R2
+   Done:
+
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd
+!endif
