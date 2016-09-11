@@ -2,10 +2,10 @@ import { copy, Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
+const readInstalled = require("read-installed")
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./awaiter")
-const readInstalled = require("read-installed")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
 export function copyFiltered(src: string, destination: string, filter: Filter, dereference: boolean): Promise<any> {

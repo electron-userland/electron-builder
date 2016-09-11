@@ -50,7 +50,7 @@ export function doApiRequest<T>(options: RequestOptions, token: string | null, r
           // error is clear, we don't need to read detailed error description
           reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
 
-Please double check that your GitHub Token is correct. Due to security reasons GitHub doesn't report actual status, but 404.
+Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
 `))
         }
         else if (response.statusCode === 204) {
