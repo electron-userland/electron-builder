@@ -89,6 +89,7 @@
     "sanitize-filename": "^1.6.0",
     "semver": "^5.3.0",
     "source-map-support": "^0.4.2",
+    "tunnel-agent": "^0.4.3",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
     "yargs": "^5.0.0"

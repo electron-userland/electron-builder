@@ -44,7 +44,8 @@ function doDownload(url: string, destination: string, redirectCount: number, opt
     path: parsedUrl.path,
     headers: {
       "User-Agent": "electron-builder"
-    }
+    },
+    agent: createAgent("https"),
   }, (response: IncomingMessage) => {
     if (response.statusCode >= 400) {
       callback(new Error(`Cannot download "${url}", status ${response.statusCode}: ${response.statusMessage}`))
@@ -121,4 +122,26 @@ class DigestTransform extends Transform {
     const hash = this.digester.digest("hex")
     callback(hash === this.expected ? null : new Error(`SHA2 checksum mismatch, expected ${this.expected}, got ${hash}`))
   }
+}
+
+function createAgent(uriProtocol: string) {
+  const proxyString: string = process.env.HTTPS_PROXY ||
+    process.env.https_proxy ||
+    process.env.HTTP_PROXY ||
+    process.env.http_proxy
+
+  if (!proxyString) {
+    return null
+  }
+
+  const proxy = parseUrl(proxyString)
+
+  const proxyProtocol = proxy.protocol === "https:" ? "Https" : "Http"
+  return require("tunnel-agent")[`${uriProtocol}Over${proxyProtocol}`]({
+    proxy: {
+      port: proxy.port || (proxyProtocol === "Https" ? 443 : 80),
+      host: proxy.hostname,
+      proxyAuth: proxy.auth
+    }
+  })
 }
