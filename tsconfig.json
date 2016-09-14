@@ -26,7 +26,7 @@
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/fs-extra-p/bluebird.d.ts",
-    "node_modules/electron-osx-sign/index.d.ts",
+    "node_modules/electron-osx-sign-tf/index.d.ts",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [

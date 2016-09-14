@@ -71,7 +71,7 @@
     "cuint": "^0.2.2",
     "debug": "^2.2.0",
     "electron-download": "2.1.2",
-    "electron-osx-sign": "^0.4.0-beta4",
+    "electron-osx-sign-tf": "^1.0.0",
     "extract-zip": "^1.5.0",
     "fs-extra-p": "^1.1.8",
     "hosted-git-info": "^2.1.5",

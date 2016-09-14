@@ -151,16 +151,16 @@ test.ifNotCiOsx("ignore node_modules known dev dep", () => {
       return BluebirdPromise.all([
         modifyPackageJson(projectDir, data => {
           data.devDependencies = Object.assign({
-              "electron-osx-sign": "*",
+              "electron-osx-sign-tf": "*",
             }, data.devDependencies)
         }),
-        outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
+        outputFile(path.join(projectDir, "node_modules", "electron-osx-sign-tf", "package.json"), "{}"),
         outputFile(path.join(projectDir, "ignoreMe"), ""),
       ])
     },
     packed: context => {
       return BluebirdPromise.all([
-        assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign")).doesNotExist(),
+        assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign-tf")).doesNotExist(),
         assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
       ])
     },
