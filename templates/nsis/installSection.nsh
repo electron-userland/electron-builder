@@ -7,17 +7,24 @@
     Pop $R0
 
     ReadRegStr $R1 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $R1 == ""
+    ${andIf} $R0 != ""
+      # https://github.com/electron-userland/electron-builder/issues/735#issuecomment-246918567
+      Push $R0
+      Call GetFileParent
+      Pop $R1
+    ${endif}
+
     ${if} $R1 != ""
-    ${AndIf} $R0 != ""
+    ${andIf} $R0 != ""
       CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
 
       ${if} $installMode == "CurrentUser"
-      ${OrIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
+      ${orIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
         StrCpy $0 "/currentuser"
       ${else}
         StrCpy $0 "/allusers"
       ${endif}
-#      MessageBox MB_OK|MB_ICONEXCLAMATION '"$PLUGINSDIR\old-uninstaller.exe" "_?=$R1" /S /KEEP_APP_DATA $0'
       ExecWait '"$PLUGINSDIR\old-uninstaller.exe" "_?=$R1" /S /KEEP_APP_DATA $0'
     ${endif}
   ${endif}

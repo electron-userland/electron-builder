@@ -16,7 +16,7 @@ if (process.env.CI == null && process.env.NO_UPDATE_NOTIFIER == null) {
       const notifier = updateNotifier({pkg: it})
       if (notifier.update != null) {
         notifier.notify({
-          message: `Update available ${dim(notifier.update.current)}${reset(" → ")}${green(notifier.update.latest)} \nRun ${cyan("npm i electron-builder")} to update`
+          message: `Update available ${dim(notifier.update.current)}${reset(" → ")}${green(notifier.update.latest)} \nRun ${cyan("npm i electron-builder --save-dev")} to update`
         })
       }
     })
