@@ -63,17 +63,20 @@ Var installMode
 
 # SHCTX is the hive HKLM if SetShellVarContext all, or HKCU if SetShellVarContext user
 !macro registryAddInstallInfo
-	# Write the installation path into the registry
 	WriteRegStr SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
 
-	# Write the uninstall keys for Windows
 	${if} $installMode == "all"
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}"
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /allusers'
+		StrCpy $0 "/allusers"
+		StrCpy $1 ""
 	${else}
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME} (only current user)"
-		WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$INSTDIR\${UNINSTALL_FILENAME}" /currentuser'
+		StrCpy $0 "/currentuser"
+		StrCpy $1 " (only current user)"
 	${endif}
+
+  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
+  # https://github.com/electron-userland/electron-builder/issues/750
+  StrCpy $2 "$INSTDIR\${UNINSTALL_FILENAME}"
+  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
 
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
