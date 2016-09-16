@@ -43,7 +43,7 @@ export class DmgTarget extends Target {
       debug(`appdmg: ${JSON.stringify(dmgOptions, <any>null, 2)}`)
     }
 
-    const emitter = require("appdmg")(dmgOptions)
+    const emitter = require("appdmg-tf")(dmgOptions)
     await new BluebirdPromise((resolve, reject) => {
       emitter.on("error", reject)
       emitter.on("finish", resolve)

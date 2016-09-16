@@ -96,7 +96,7 @@
     "yargs": "^5.0.0"
   },
   "optionalDependencies": {
-    "appdmg": "^0.4.5"
+    "appdmg-tf": "^0.4.7"
   },
   "config": {
     "pre-git": {

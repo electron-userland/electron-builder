@@ -4,7 +4,10 @@
   ${if} $R0 != ""
     Push $R0
     Call GetInQuotes
-    Pop $R0
+    Pop $R1
+    ${if} $R1 != ""
+      StrCpy $R0 "$R1"
+    ${endif}
 
     ReadRegStr $R1 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
     ${if} $R1 == ""
