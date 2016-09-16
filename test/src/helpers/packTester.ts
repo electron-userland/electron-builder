@@ -191,6 +191,9 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
       if (target === "appimage") {
         result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
+      else if (target === "deb") {
+        result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "amd64" : Arch[arch]}.deb`)
+      }
       else {
         result.push(`TestApp-${appInfo.version}.${target}`)
       }
@@ -207,7 +210,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
   const productFilename = appInfo.productFilename
   const expectedContents = pathSorter(expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
-      return "/opt/" + productFilename + "/" + productFilename
+      return `/opt/${productFilename}/${productFilename}`
     }
     else if (it === "/usr/share/applications/TestApp.desktop") {
       return `/usr/share/applications/${productFilename}.desktop`
@@ -217,7 +220,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     }
   }))
 
-  const packageFile = `${outDir}/TestApp-${appInfo.version}.deb`
+  const packageFile = `${outDir}/TestApp-${appInfo.version}-${arch === Arch.ia32 ? "ia32" : "amd64"}.deb`
   assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
     assertThat(await getContents(`${outDir}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)

@@ -394,7 +394,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {
-    let c = arch === Arch.x64 ? (ext === "AppImage" ? "x86_64" : null) : Arch[arch]
+    let c: string | null = null
+    if (arch === Arch.x64) {
+      if (ext === "AppImage") {
+        c = "x86_64"
+      }
+      else if (ext === "deb") {
+        c = "amd64"
+      }
+    }
+    else {
+      c = Arch[arch]
+    }
+
     if (c == null) {
       c = classifier
     }
