@@ -21,12 +21,12 @@ export interface DownloadOptions {
 
 let httpsAgent: Promise<Agent> | null = null
 
-export function download(url: string, destination: string, options?: DownloadOptions | null): BluebirdPromise<any> {
-  return <BluebirdPromise<Agent>>(httpsAgent || (httpsAgent = createAgent()))
+export function download(url: string, destination: string, options?: DownloadOptions | null): BluebirdPromise<string> {
+  return <BluebirdPromise<string>>(httpsAgent || (httpsAgent = createAgent()))
     .then(it => new BluebirdPromise(function (resolve, reject) {
       doDownload(url, destination, 0, options || {}, it, error => {
         if (error == null) {
-          resolve()
+          resolve(destination)
         }
         else {
           reject(error)

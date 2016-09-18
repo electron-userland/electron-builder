@@ -19,9 +19,11 @@
     "tunnel-agent": "^0.4.3"
   },
   "bundledDependencies": [
-    "fs-extra-p",
     "bluebird",
-    "semver"
+    "fs-extra-p",
+    "semver",
+    "ini",
+    "tunnel-agent"
   ],
   "typings": "./out/nsis-updater.d.ts"
 }

@@ -3,7 +3,7 @@ import {
   assertPack, modifyPackageJson, platform, getPossiblePlatforms, currentPlatform,
   app, appThrows, packageJson
 } from "./helpers/packTester"
-import { move, outputJson, readJson } from "fs-extra-p"
+import { move, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -269,21 +269,21 @@ test.ifOsx("extra metadata - override icon", t => t.throws((() => {
   })
 })(), /ENOENT: no such file or directory/))
 
-test.ifOsx("app-executable-deps", () => {
-  return assertPack("app-executable-deps", {
-    targets: Platform.current().createTarget(DIR_TARGET),
-  }, {
-    useTempDir: false,
-    packed: async context => {
-      const data = await readJson(path.join(context.outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
-      for (let name of Object.getOwnPropertyNames(data)) {
-        if (name[0] === "_") {
-          throw new Error("Property name starts with _")
-        }
-      }
-    }
-  })
-})
+// test.ifOsx("app-executable-deps", () => {
+//   return assertPack("app-executable-deps", {
+//     targets: Platform.current().createTarget(DIR_TARGET),
+//   }, {
+//     useTempDir: false,
+//     packed: async context => {
+//       const data = await readJson(path.join(context.outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
+//       for (let name of Object.getOwnPropertyNames(data)) {
+//         if (name[0] === "_") {
+//           throw new Error("Property name starts with _")
+//         }
+//       }
+//     }
+//   })
+// })
 
 test.ifDevOrLinuxCi("smart unpack", () => {
   return assertPack("test-app-one", {

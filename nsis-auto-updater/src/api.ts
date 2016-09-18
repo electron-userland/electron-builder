@@ -1,7 +1,10 @@
 export interface VersionInfo {
   readonly version: string
 }
+
 export interface FileInfo {
+  name: string
+
   url: string
 }
 
@@ -13,6 +16,7 @@ export interface Provider {
 
 export interface UpdateCheckResult {
   readonly versionInfo: VersionInfo
+  readonly fileInfo?: FileInfo
 
   readonly downloadPromise?: Promise<any> | null
 }

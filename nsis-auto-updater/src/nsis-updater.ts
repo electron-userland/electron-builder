@@ -2,63 +2,18 @@ import { EventEmitter } from "events"
 import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
-import { BintrayClient, BintrayOptions } from "../../src/publish/bintray"
-import { HttpError } from "../../src/publish/restApiRequest"
+import { BintrayOptions } from "../../src/publish/bintray"
 import semver = require("semver")
 import { download } from "../../src/util/httpRequest"
-import { Provider, VersionInfo, UpdateCheckResult, FileInfo } from "./api"
+import { Provider, UpdateCheckResult } from "./api"
+import { BintrayProvider } from "./BintrayProvider"
+import { Promise as BluebirdPromise } from "bluebird"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../../src/util/awaiter")
 
-class BintrayProvider implements Provider {
-  private client: BintrayClient
-
-  constructor(configuration: BintrayOptions) {
-    this.client = new BintrayClient(configuration.user, configuration.package, configuration.repo)
-  }
-
-  async getLatestVersion(): Promise<VersionInfo> {
-    try {
-      const data = await this.client.getVersion("_latest")
-      return {
-        version: data.name,
-      }
-    }
-    catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. ${e.stack || e.message}`)
-      }
-      throw e
-    }
-  }
-
-  async getUpdateFile(versionInfo: VersionInfo): Promise<FileInfo> {
-    try {
-      const files = await this.client.getVersionFiles(versionInfo.version)
-      const suffix = `${versionInfo.version}.exe`
-      for (let file of files) {
-        if (file.name.endsWith(suffix) && file.name.includes("Setup")) {
-          return {
-            url: ""
-          }
-        }
-      }
-
-      //noinspection ExceptionCaughtLocallyJS
-      throw new Error(`Cannot find suitable file for version ${versionInfo.version} in: ${JSON.stringify(files, null, 2)}`)
-    }
-    catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. ${e.stack || e.message}`)
-      }
-      throw e
-    }
-  }
-}
-
 export class NsisUpdater extends EventEmitter {
-  private setupPath = path.join(tmpdir(), 'innobox-upgrade.exe')
+  private setupPath: string | null
 
   private updateAvailable = false
   private quitAndInstallCalled = false
@@ -83,28 +38,29 @@ export class NsisUpdater extends EventEmitter {
     this.client = new BintrayProvider(<BintrayOptions>value)
   }
 
-  async checkForUpdates(): Promise<UpdateCheckResult> {
+  checkForUpdates(): Promise<UpdateCheckResult> {
     if (this.updateUrl == null) {
       const message = "Update URL is not set"
       this.emitError(message)
-      throw new Error(message)
+      return BluebirdPromise.reject(new Error(message))
     }
 
     this.emit("checking-for-update")
+    return this.doCheckForUpdates()
+      .catch(error => this.emitError(error))
+  }
+
+  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     const versionInfo = await this.client.getLatestVersion()
 
     const latestVersion = semver.valid(versionInfo.version)
     if (latestVersion == null) {
-      const error = `Latest version (from update server) is not valid semver version: "${latestVersion}`
-      this.emitError(error)
-      throw new Error(error)
+      throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
     const currentVersion = semver.valid(this.app.getVersion())
     if (currentVersion == null) {
-      const error = `App version is not valid semver version: "${currentVersion}`
-      this.emitError(error)
-      throw new Error(error)
+      throw new Error(`App version is not valid semver version: "${currentVersion}`)
     }
 
     if (semver.gte(currentVersion, latestVersion)) {
@@ -115,18 +71,26 @@ export class NsisUpdater extends EventEmitter {
       }
     }
 
+    const fileInfo = await this.client.getUpdateFile(versionInfo)
+
     this.updateAvailable = true
     this.emit("update-available")
 
+    const mkdtemp: any = BluebirdPromise.promisify(require("fs").mkdtemp)
     return {
       versionInfo: versionInfo,
-      downloadPromise: this.client.getUpdateFile(versionInfo)
-        .then(it => {}),
+      fileInfo: fileInfo,
+      downloadPromise: mkdtemp(`${path.join(tmpdir(), "up")}-`)
+        .then((it: string) => {
+          this.setupPath = path.join(it, fileInfo.name)
+          return download(fileInfo.url, this.setupPath)
+        }),
     }
   }
 
   quitAndInstall(): void {
-    if (!this.updateAvailable) {
+    const setupPath = this.setupPath
+    if (!this.updateAvailable || setupPath == null) {
       this.emitError("No update available, can't quit and install")
       return
     }
@@ -138,7 +102,7 @@ export class NsisUpdater extends EventEmitter {
     // prevent calling several times
     this.quitAndInstallCalled = true
 
-    spawn(this.setupPath, ["/S"], {
+    spawn(setupPath!!, ["/S"], {
       detached: true,
       stdio: "ignore",
     }).unref()
@@ -147,7 +111,7 @@ export class NsisUpdater extends EventEmitter {
   }
 
   // emit both error object and message, this is to keep compatibility with old APIs
-  private emitError (message: string) {
+  private emitError(message: string) {
     return this.emit("error", new Error(message), message)
   }
 }

@@ -1,4 +1,4 @@
-osx_image: xcode8
+osx_image: xcode7.3
 
 matrix:
   include:
@@ -17,14 +17,17 @@ cache:
   directories:
     - node_modules
     - $HOME/.electron
-    - "test/fixtures/app-executable-deps/app/node_modules"
 
 before_install:
   - curl -L https://dl.bintray.com/develar/bin/7za -o /tmp/7za
   - chmod +x /tmp/7za
   - curl -L https://dl.bintray.com/develar/bin/wine.7z -o /tmp/wine.7z
-  - /tmp/7za x -o/usr/local/Cellar -y /tmp/wine.7z
-  - brew link --overwrite fontconfig freetype gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle openssl sane-backends webp wine git-lfs gnu-tar dpkg graphicsmagick xz
+  - brew unlink libpng
+  # https://github.com/Homebrew/homebrew-core/issues/2987
+  - brew prune
+  - rm -rf /usr/local/Cellar/libpng
+  - /tmp/7za x -aoa /tmp/wine.7z -o/usr/local/Cellar -y
+  - brew link --overwrite fontconfig libpng freetype gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle sane-backends webp wine git-lfs gnu-tar dpkg graphicsmagick xz
   - git-lfs pull
 
 install:
@@ -33,7 +36,6 @@ install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
 - npm install
 - npm prune
-- (cd test/fixtures/app-executable-deps/app && npm install && npm prune)
 
 script:
 - sudo ntpdate -u time.apple.com
