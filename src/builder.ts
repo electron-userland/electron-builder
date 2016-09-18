@@ -11,6 +11,7 @@ import { getRepositoryInfo } from "./repositoryInfo"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { BintrayOptions } from "./publish/bintray"
+import { PublishConfiguration, GithubPublishConfiguration } from "./options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -269,18 +270,23 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
       }
 
       if (publishers == null && options.githubToken != null) {
-        publishers = ["github"]
+        publishers = {provider: "github"}
       }
       // if both tokens are set — still publish to github (because default publisher is github)
       if (publishers == null && options.bintrayToken != null) {
-        publishers = ["bintray"]
+        publishers = {provider: "bintray"}
       }
     }
 
-    for (let publisherName of asArray(publishers)) {
+    for (let publishConfig of asArray(publishers)) {
+      if (typeof publishConfig === "string") {
+        publishConfig = {provider: publishConfig}
+      }
+
+      const publisherName = publishConfig.provider
       let publisher = nameToPublisher.get(publisherName)
       if (publisher == null) {
-        publisher = createPublisher(packager, options, publisherName, isPublishOptionGuessed)
+        publisher = createPublisher(packager, options, publishConfig, isPublishOptionGuessed)
         nameToPublisher.set(publisherName, publisher)
       }
 
@@ -292,9 +298,13 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
   })
 }
 
-export async function createPublisher(packager: Packager, options: PublishOptions, publisherName: string, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
-  const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
-  if (info == null) {
+export async function createPublisher(packager: Packager, options: PublishOptions, publishConfig: PublishConfiguration | GithubPublishConfiguration, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+  async function getInfo() {
+    const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+    if (info != null) {
+      return info
+    }
+
     if (isPublishOptionGuessed) {
       return null
     }
@@ -303,12 +313,30 @@ export async function createPublisher(packager: Packager, options: PublishOption
     throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
   }
 
-  if (publisherName === "github") {
+  if (publishConfig.provider === "github") {
+    const config = <GithubPublishConfiguration>publishConfig
+    let user = config.owner
+    let repo = config.repo
+    if (!user || !repo) {
+      const info = await getInfo()
+      if (info == null) {
+        return null
+      }
+
+      user = info.user
+      repo = info.project
+    }
+
     const version = packager.metadata.version!
-    log(`Creating Github Publisher — user: ${info.user}, project: ${info.project}, version: ${version}`)
-    return new GitHubPublisher(info.user, info.project, version, options, isPublishOptionGuessed)
+    log(`Creating Github Publisher — user: ${user}, project: ${repo}, version: ${version}`)
+    return new GitHubPublisher(user, repo, version, options, isPublishOptionGuessed, config)
   }
-  if (publisherName === "bintray") {
+  if (publishConfig.provider === "bintray") {
+    const info = await getInfo()
+    if (info == null) {
+      return null
+    }
+
     const version = packager.metadata.version!
     //noinspection ReservedWordAsName
     const bintrayInfo: BintrayOptions = {user: info.user, package: info.project, repo: "generic"}

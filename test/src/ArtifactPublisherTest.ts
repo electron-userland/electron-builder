@@ -98,30 +98,6 @@ testAndIgnoreApiRate("prerelease", async () => {
   }
 })
 
-testAndIgnoreApiRate("incorrect tag name", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", "5.0", {
-    githubToken: token,
-    draft: false,
-    prerelease: true,
-    publish: "onTagOrDraft",
-  })
-
-  // await publisher.deleteOldReleases()
-  try {
-    await publisher.releasePromise
-    //noinspection ExceptionCaughtLocallyJS
-    throw new Error("No expected error")
-  }
-  catch (e) {
-    if (e.message !== 'Tag name must starts with "v": 5.0') {
-      throw e
-    }
-  }
-  finally {
-    await publisher.deleteRelease()
-  }
-})
-
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
   const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), {
@@ -146,12 +122,13 @@ test("create publisher", async () => {
   }
   const publisher = await createPublisher(packager, {
     githubToken: "__test__",
-  }, "github")
+  }, {provider: "github", vPrefixedTagName: false})
 
   assertThat(publisher).hasProperties({
     "owner": "develar",
     "repo": "test",
     "token": "__test__",
     "version": "2.0.0",
+    "tag": "2.0.0",
   })
 })

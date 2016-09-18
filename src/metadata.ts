@@ -1,6 +1,7 @@
 import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
-import { MacOptions, DmgOptions, MasBuildOptions } from "./macOptions"
+import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
+import { PublishConfiguration } from "./options/publishOptions"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -206,7 +207,7 @@ export interface BuildMetadata {
 
   readonly dereference?: boolean
 
-  readonly publish?: string | Array<string> | null
+  readonly publish?: string | Array<string> | null | PublishConfiguration
 }
 
 export interface AfterPackContext {

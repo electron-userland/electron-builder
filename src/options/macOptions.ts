@@ -1,4 +1,4 @@
-import { PlatformSpecificBuildOptions } from "./metadata"
+import { PlatformSpecificBuildOptions } from "../metadata"
 
 /*
  ### `.build.mac`

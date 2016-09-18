@@ -1,6 +1,6 @@
 import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
-import { MasBuildOptions, MacOptions } from "./macOptions"
+import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { log, warn, task } from "./util/log"

@@ -2,7 +2,7 @@ import { deepAssign } from "../util/deepAssign"
 import * as path from "path"
 import { log } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"
-import { MacOptions, DmgOptions } from "../macOptions"
+import { MacOptions, DmgOptions } from "../options/macOptions"
 import { Promise as BluebirdPromise } from "bluebird"
 import { debug, use } from "../util/util"
 

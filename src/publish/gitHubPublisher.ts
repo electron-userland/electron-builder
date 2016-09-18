@@ -9,6 +9,7 @@ import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 import { uploadFile } from "./uploader"
+import { GithubPublishConfiguration } from "../options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -38,7 +39,7 @@ export class GitHubPublisher implements Publisher {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false) {
+  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubPublishConfiguration | null) {
     if (isEmptyOrSpaces(options.githubToken)) {
       throw new Error("GitHub Personal Access Token is not specified")
     }
@@ -50,7 +51,7 @@ export class GitHubPublisher implements Publisher {
       throw new Error(`Version must not starts with "v": ${version}`)
     }
 
-    this.tag = `v${version}`
+    this.tag = config != null && config.vPrefixedTagName ? `v${version}` : version
     this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : <BluebirdPromise<Release>>this.init()
   }
 
@@ -59,7 +60,7 @@ export class GitHubPublisher implements Publisher {
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await githubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
     for (let release of releases) {
-      if (release.tag_name === this.tag) {
+      if (release.tag_name === this.tag || release.tag_name === this.version) {
         if (release.draft) {
           return release
         }
@@ -76,9 +77,6 @@ export class GitHubPublisher implements Publisher {
           warn(message)
         }
         return null
-      }
-      else if (release.tag_name === this.version) {
-        throw new Error(`Tag name must starts with "v": ${release.tag_name}`)
       }
     }
 
