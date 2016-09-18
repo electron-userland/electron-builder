@@ -130,7 +130,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
     ])
       .then(it => {
         const array = it[0].concat(it[1])
-          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
+          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.") && !it.includes("Mac Developer:"))
           // remove 1)
           .map(it => it.substring(it.indexOf(")") + 1).trim())
         return Array.from(new Set(array))

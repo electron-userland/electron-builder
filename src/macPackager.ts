@@ -105,12 +105,14 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     let name = await findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", masOptions == null ? this.platformSpecificBuildOptions.identity : masQualifier, keychainName)
     if (name == null) {
-      const message = "App is not signed: CSC_LINK is not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
+      let message = "App is not signed: CSC_LINK is not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
       if (masOptions == null) {
+        message += `\nMust be "Developer ID Application:" or custom non-Apple code signing certificate`
         warn(message)
         return
       }
       else {
+        message += `\nMust be "3rd Party Mac Developer Application:" and "3rd Party Mac Developer Installer:"`
         throw new Error(message)
       }
     }

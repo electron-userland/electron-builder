@@ -80,6 +80,9 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     if (certExtension === ".p12" || certExtension === ".pfx") {
       args.push(isWin ? "/f" : "-pkcs12", certificateFile)
     }
+    else {
+      throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
+    }
   }
 
   if (!isWin || hash !== "sha1") {

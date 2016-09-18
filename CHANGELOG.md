@@ -1,3 +1,6 @@
+**Here changelog only for previous major releases.**
+To see changes for current major release, please use [GiHub releases](https://github.com/electron-userland/electron-builder/releases).
+
 <a name="6.7.7"></a>
 ## [6.7.7](https://github.com/electron-userland/electron-builder/compare/v6.7.6...v6.7.7) (2016-09-16)
 
