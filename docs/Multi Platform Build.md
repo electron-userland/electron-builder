@@ -32,7 +32,7 @@ brew install mono
 
 ### To build app for Linux on MacOS:
 ```
-brew install gnu-tar libicns graphicsmagick xz
+brew install gnu-tar graphicsmagick xz
 ```
 
 To build rpm: `brew install rpm`.

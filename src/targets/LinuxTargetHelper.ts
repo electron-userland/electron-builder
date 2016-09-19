@@ -26,7 +26,7 @@ export class LinuxTargetHelper {
       return this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
     }
     else {
-      return this.createFromIcns(await this.packager.getTempFile("electron-builder-linux").then(it => ensureDir(it).thenReturn(it)))
+      return this.createFromIcns(await this.packager.getTempFile("electron-builder-linux.iconset").then(it => ensureDir(it).thenReturn(it)))
     }
   }
 
@@ -103,39 +103,71 @@ export class LinuxTargetHelper {
       return this.iconsFromDir(path.join(__dirname, "..", "..", "templates", "linux", "electron-icons"))
     }
 
-    const output = await exec("icns2png", ["-x", "-o", tempDir, iconPath])
-    debug(output)
+    if (process.platform === "darwin") {
+      await exec("iconutil", ["--convert", "iconset", "--output", tempDir, iconPath])
+      const iconFiles = await readdir(tempDir)
+      const imagePath = iconFiles.includes("icon_512x512.png") ? path.join(tempDir, "icon_512x512.png") : path.join(tempDir, "icon_256x256.png")
+      this.maxIconPath = imagePath
 
-    //noinspection UnnecessaryLocalVariableJS
-    const imagePath = path.join(tempDir, "icon_256x256x32.png")
+      function resize(size: number): BluebirdPromise<any> {
+        const filename = `icon_${size}x${size}.png`
 
-    this.maxIconPath = imagePath
+        if (iconFiles.includes(filename)) {
+          return BluebirdPromise.resolve()
+        }
 
-    function resize(size: number): BluebirdPromise<any> {
-      const sizeArg = `${size}x${size}`
-      return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, `icon_${size}x${size}x32.png`)])
-    }
+        const sizeArg = `${size}x${size}`
+        return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, filename)])
+      }
 
-    const promises: Array<Promise<any>> = [resize(24), resize(96)]
-    if (!output.includes("is32")) {
+      const promises: Array<Promise<any>> = [resize(24), resize(96)]
       promises.push(resize(16))
-    }
-    if (!output.includes("ih32")) {
       promises.push(resize(48))
-    }
-    if (!output.toString().includes("icp6")) {
       promises.push(resize(64))
-    }
-    if (!output.includes("it32")) {
       promises.push(resize(128))
+      await BluebirdPromise.all(promises)
+
+      return this.createMappings(tempDir)
     }
+    else {
+      const output = await exec("icns2png", ["-x", "-o", tempDir, iconPath])
+      debug(output)
 
-    await BluebirdPromise.all(promises)
+      //noinspection UnnecessaryLocalVariableJS
+      const imagePath = path.join(tempDir, "icon_256x256x32.png")
 
+      this.maxIconPath = imagePath
+
+      function resize(size: number): BluebirdPromise<any> {
+        const sizeArg = `${size}x${size}`
+        return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, `icon_${size}x${size}x32.png`)])
+      }
+
+      const promises: Array<Promise<any>> = [resize(24), resize(96)]
+      if (!output.includes("is32")) {
+        promises.push(resize(16))
+      }
+      if (!output.includes("ih32")) {
+        promises.push(resize(48))
+      }
+      if (!output.toString().includes("icp6")) {
+        promises.push(resize(64))
+      }
+      if (!output.includes("it32")) {
+        promises.push(resize(128))
+      }
+
+      await BluebirdPromise.all(promises)
+
+      return this.createMappings(tempDir)
+    }
+  }
+
+  private createMappings(tempDir: string) {
     const appName = this.packager.appInfo.name
 
     function createMapping(size: string) {
-      return [`${tempDir}/icon_${size}x${size}x32.png`, `${size}x${size}/apps/${appName}.png`]
+      return [process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`, `${size}x${size}/apps/${appName}.png`]
     }
 
     return [

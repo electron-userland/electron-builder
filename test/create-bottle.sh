@@ -5,7 +5,7 @@ cd /usr/local/Cellar
 brew cleanup
 brew prune
 rm -f ~/wine.7z
-7za a -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -xr!man -xr!doc ~/wine.7z libpng fontconfig freetype gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle openssl sane-backends webp wine git-lfs gnu-tar dpkg graphicsmagick xz
+7za a -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=on -xr!man -xr!doc ~/wine.7z fontconfig gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle openssl sane-backends webp wine git-lfs gnu-tar dpkg xz
 
 SEC=`security find-generic-password -l BINTRAY_API_KEY -g 2>&1`
 ACCOUNT=`echo "$SEC" | grep "acct" | cut -d \" -f 4`
