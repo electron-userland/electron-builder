@@ -51,7 +51,7 @@ export class GitHubPublisher implements Publisher {
       throw new Error(`Version must not starts with "v": ${version}`)
     }
 
-    this.tag = config == null || config.vPrefixedTagName ? `v${version}` : version
+    this.tag = config != null && config.vPrefixedTagName === false ? version : `v${version}`
     this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : <BluebirdPromise<Release>>this.init()
   }
 
