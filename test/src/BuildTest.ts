@@ -126,12 +126,38 @@ test("invalid main in the app package.json (no asar)", t => t.throws(assertPack(
   }
 }), `Application entry file "main.js" does not exist. Seems like a wrong configuration.`))
 
+test("invalid main in the app package.json (custom asar)", t => t.throws(assertPack("test-app", allPlatforms(false), {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      modifyPackageJson(projectDir, data => {
+        data.main = "path/app.asar/main.js"
+      }, true),
+      modifyPackageJson(projectDir, data => {
+        data.build.asar = false
+      })
+    ])
+  }
+}), /Application entry file "main.js" in the ("[^"]*") does not exist\. Seems like a wrong configuration\./))
+
 test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatforms(false), {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
       modifyPackageJson(projectDir, data => {
         data.main = "main.js"
+      }, true),
+      modifyPackageJson(projectDir, data => {
+        data.build.asar = false
+      })
+    ])
+  }
+}))
+
+test("main in the app package.json (custom asar)", () => assertPack("test-app", allPlatforms(false), {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      modifyPackageJson(projectDir, data => {
+        data.main = "path/app.asar/index.js"
       }, true),
       modifyPackageJson(projectDir, data => {
         data.build.asar = false

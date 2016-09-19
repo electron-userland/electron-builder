@@ -365,12 +365,27 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await checkFileInArchive(path.join(resourcesDir, "app.asar"), relativeFile, messagePrefix)
     }
     else {
-      const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
-      if (outStat == null) {
-        throw new Error(`${messagePrefix} "${relativeFile}" does not exist. Seems like a wrong configuration.`)
-      }
-      else if (!outStat.isFile()) {
-        throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+      const pathParsed = path.parse(file)
+      // Even when packaging to asar is disabled, it does not imply that the main file can not be inside an .asar archive.
+      // This may occur when the packaging is done manually before processing with electron-builder.
+      if (pathParsed.dir.includes(".asar")) {
+        // The path needs to be split to the part with an asar archive which acts like a directory and the part with
+        // the path to main file itself. (e.g. path/arch.asar/dir/index.js -> path/arch.asar, dir/index.js)
+        const pathSplit: Array<string> = pathParsed.dir.split(path.sep)
+        let partWithAsarIndex = 0
+        pathSplit.some((pathPart: string, index: number) => (partWithAsarIndex = index, pathPart.endsWith(".asar")))
+        const asarPath = path.join.apply(path, pathSplit.slice(0, partWithAsarIndex + 1))
+        let mainPath = (pathSplit.length > partWithAsarIndex + 1) ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
+        mainPath += path.join(mainPath, pathParsed.base)
+        await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
+      } else {
+        const outStat = await statOrNull(path.join(resourcesDir, "app", relativeFile))
+        if (outStat == null) {
+          throw new Error(`${messagePrefix} "${relativeFile}" does not exist. Seems like a wrong configuration.`)
+        }
+        else if (!outStat.isFile()) {
+          throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+        }
       }
     }
   }
