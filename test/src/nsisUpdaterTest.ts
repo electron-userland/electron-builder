@@ -33,9 +33,7 @@ test("cannot find suitable file for version", async (t) => {
     package: "incorrect-file-version",
   })
 
-  const updateCheckResult = await updater.checkForUpdates()
-  assertThat(updateCheckResult.downloadPromise).isNotNull()
-  t.throws(updateCheckResult.downloadPromise, /Cannot find suitable file for version 1.0.0 in/)
+  t.throws(updater.checkForUpdates(), /Cannot find suitable file for version 1.0.0 in/)
 })
 
 test("file url", async () => {
