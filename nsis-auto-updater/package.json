@@ -9,7 +9,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "out",
+    "nm"
   ],
   "dependencies": {
     "bluebird": "^3.4.6",
