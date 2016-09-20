@@ -1,5 +1,5 @@
 import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, signed, app } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, signed, app, appThrows } from "./helpers/packTester"
 import OsXPackager from "out/macPackager"
 import { move, writeFile, deleteFile, remove } from "fs-extra-p"
 import * as path from "path"
@@ -11,6 +11,7 @@ import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
 import { Arch } from "out"
 import { Target } from "out/platformPackager"
 import { DmgTarget } from "out/targets/dmg"
+import { DIR_TARGET } from "out/targets/targetFactory"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -203,6 +204,14 @@ test.ifOsx("disable dmg icon, bundleVersion", () => {
     },
   })
 })
+
+test.ifOsx("electronDist", appThrows(/ENOENT: no such file or directory/, {
+  targets: Platform.OSX.createTarget(DIR_TARGET),
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.build.electronDist = "foo"
+  })
+}))
 
 class CheckingMacPackager extends OsXPackager {
   effectiveDistOptions: any

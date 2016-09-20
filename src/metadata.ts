@@ -200,6 +200,11 @@ export interface BuildMetadata {
    */
   readonly nodeGypRebuild?: boolean
 
+  /**
+  The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
+   */
+  readonly electronDist?: string
+
   readonly icon?: string | null
 
   // deprecated

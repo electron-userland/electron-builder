@@ -1,10 +1,12 @@
 import { Promise as BluebirdPromise } from "bluebird"
-import { emptyDir } from "fs-extra-p"
+import { emptyDir, copy } from "fs-extra-p"
 import { warn } from "../util/log"
 import { PlatformPackager } from "../platformPackager"
+import { debug7zArgs, spawn } from "../util/util"
+import { path7za } from "7zip-bin"
+import * as path from "path"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
-const extract: any = BluebirdPromise.promisify(require("extract-zip"))
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -29,11 +31,19 @@ function subOptionWarning (properties: any, optionName: any, parameter: any, val
 }
 
 export async function pack(packager: PlatformPackager<any>, out: string, platform: string, arch: string, electronVersion: string, initializeApp: () => Promise<any>) {
-  const zipPath = (await BluebirdPromise.all<any>([
-    downloadElectron(createDownloadOpts(packager.devMetadata.build, platform, arch, electronVersion)),
-    emptyDir(out)
-  ]))[0]
-  await extract(zipPath, {dir: out})
+  const electronDist = packager.devMetadata.build.electronDist
+  if (electronDist == null) {
+    const zipPath = (await BluebirdPromise.all<any>([
+      downloadElectron(createDownloadOpts(packager.devMetadata.build, platform, arch, electronVersion)),
+      emptyDir(out)
+    ]))[0]
+
+    await spawn(path7za, debug7zArgs("x").concat(zipPath, `-o${out}`))
+  }
+  else {
+    await emptyDir(out)
+    await copy(path.resolve(packager.info.projectDir, electronDist, "Electron.app"), path.join(out, "Electron.app"))
+  }
 
   if (platform === "darwin" || platform === "mas") {
     await(<any>require("./mac")).createApp(packager, out, initializeApp)

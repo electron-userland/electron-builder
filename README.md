@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder) [![donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
-A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with "auto update" support out of the box.
+A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
   * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if the [two-package.json project structure](#two-packagejson-structure) is used).

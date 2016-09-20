@@ -1,6 +1,6 @@
 {
   "name": "electron-builder",
-  "description": "Complete solution to build ready for distribution and 'auto update' Electron App installers",
+  "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
   "version": "0.0.0-semantic-release",
   "main": "out/index.js",
   "files": [

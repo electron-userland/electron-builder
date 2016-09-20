@@ -16,6 +16,7 @@ language: c
 cache:
   directories:
     - node_modules
+    - nsis-auto-updater/node_modules
     - $HOME/.electron
 
 before_install:
