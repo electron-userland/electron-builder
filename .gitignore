@@ -7,6 +7,7 @@ dist/
 /.idea/encodings.xml
 /.idea/copyright/profiles_settings.xml
 /.idea/workspace.xml
+/.idea/deployment.xml
 /typings/browser/
 /typings/browser.d.ts
 /typings/main.d.ts
