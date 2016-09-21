@@ -185,7 +185,7 @@ export default class NsisTarget extends Target {
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
-    const args: Array<string> = ["-WX"]
+    const args: Array<string> = (this.options.warningsAsErrors === false) ? [] : ["-WX"]
     for (let name of Object.keys(defines)) {
       const value = defines[name]
       if (value == null) {

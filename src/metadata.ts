@@ -354,6 +354,15 @@ export interface NsisOptions {
    * [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
    */
   readonly language?: string | null
+
+  /*
+  Defaults to `false`.
+
+  If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors.
+
+  If `warningsAsErrors` is `false`: NSIS will allow warnings.
+   */
+  readonly warningsAsErrors?: boolean | null
 }
 
 /*
