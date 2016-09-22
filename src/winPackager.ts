@@ -1,7 +1,7 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPackager"
-import { Platform, WinBuildOptions, Arch } from "./metadata"
+import { Platform, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
 import { exec, use } from "./util/util"
@@ -11,6 +11,7 @@ import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 import { rename } from "fs-extra-p"
+import { WinBuildOptions } from "./options/winOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")

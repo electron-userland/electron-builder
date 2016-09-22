@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { Arch, NsisOptions } from "../metadata"
+import { Arch } from "../metadata"
 import { exec, debug, doSpawn, handleProcess, use, asArray } from "../util/util"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -10,6 +10,7 @@ import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
 import { unlink, readFile } from "fs-extra-p"
 import semver = require("semver")
+import { NsisOptions } from "../options/winOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")

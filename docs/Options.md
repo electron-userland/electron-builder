@@ -167,6 +167,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | include | <a name="NsisOptions-include"></a>The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
 | script | <a name="NsisOptions-script"></a>The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
+| warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a><p>Defaults to <code>false</code>.</p> <p>If <code>warningsAsErrors</code> is <code>true</code> (default): NSIS will treat warnings as errors.</p> <p>If <code>warningsAsErrors</code> is <code>false</code>: NSIS will allow warnings.</p>
 
 <a name="Protocol"></a>
 ### `.build.protocols`
@@ -215,7 +216,8 @@ Windows specific build options.
 * `!**/node_modules/*/{README.md,README,readme.md,readme,test}`
 * `!**/node_modules/.bin`
 * `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db}`
+* `!**/._*`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.idea,appveyor.yml,.travis.yml,circle.yml}`
 
 [Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
 

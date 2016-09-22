@@ -193,8 +193,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
       defaultMatcher.addPattern("!**/node_modules/*/{README.md,README,readme.md,readme,test}")
       defaultMatcher.addPattern("!**/node_modules/.bin")
-      defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc}")
-      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.idea,appveyor.yml,.travis.yml,circle.yml}")
+      defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
+      defaultMatcher.addPattern("!**/._*")
+      //noinspection SpellCheckingInspection
+      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log}")
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
@@ -228,7 +230,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
-      if (this.info.electronVersion[0] === "0") {
+      if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
         // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
         promises.push(remove(path.join(resourcesPath, "default_app")))
       }
@@ -374,9 +376,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       // the path to main file itself. (e.g. path/arch.asar/dir/index.js -> path/arch.asar, dir/index.js)
       const pathSplit: Array<string> = pathParsed.dir.split(path.sep)
       let partWithAsarIndex = 0
-      pathSplit.some((pathPart: string, index: number) => (partWithAsarIndex = index, pathPart.endsWith(".asar")))
+      pathSplit.some((pathPart: string, index: number) => {
+        partWithAsarIndex = index
+        return pathPart.endsWith(".asar")
+      })
       const asarPath = path.join.apply(path, pathSplit.slice(0, partWithAsarIndex + 1))
-      let mainPath = (pathSplit.length > partWithAsarIndex + 1) ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
+      let mainPath = pathSplit.length > (partWithAsarIndex + 1) ? path.join.apply(pathSplit.slice(partWithAsarIndex + 1)) : ""
       mainPath += path.join(mainPath, pathParsed.base)
       await checkFileInArchive(path.join(resourcesDir, "app", asarPath), mainPath, messagePrefix)
     }

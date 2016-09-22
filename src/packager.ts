@@ -63,6 +63,7 @@ export class Packager implements BuildInfo {
     const devPackageFile = this.devPackageFile
 
     const extraMetadata = this.options.extraMetadata
+    const extraBuildMetadata = extraMetadata == null ? null : extraMetadata.build
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
     this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
@@ -71,8 +72,8 @@ export class Packager implements BuildInfo {
 
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      if (extraMetadata != null && extraMetadata.build != null) {
-        deepAssign(this.devMetadata, {build: extraMetadata.build})
+      if (extraBuildMetadata != null) {
+        deepAssign(this.devMetadata, {build: extraBuildMetadata})
         delete extraMetadata.build
       }
 
