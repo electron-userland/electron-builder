@@ -66,9 +66,15 @@ export class Packager implements BuildInfo {
     const extraBuildMetadata = extraMetadata == null ? null : extraMetadata.build
 
     this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
-    if (extraBuildMetadata != null) {
-      deepAssign(this.devMetadata, {build: extraBuildMetadata})
-      delete extraMetadata.build
+    if (extraMetadata != null) {
+      if (extraBuildMetadata != null) {
+        deepAssign(this.devMetadata, {build: extraBuildMetadata})
+        delete extraMetadata.build
+      }
+      if (extraMetadata.directories != null) {
+        deepAssign(this.devMetadata, {directories: extraMetadata.directories})
+        delete extraMetadata.directories
+      }
     }
 
     this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
