@@ -67,6 +67,7 @@ export default class SquirrelWindowsTarget extends Target {
     const options: any = Object.assign({
       name: appInfo.name,
       productName: appInfo.productName,
+      appId: appInfo.id,
       version: appInfo.version,
       description: appInfo.description,
       authors: appInfo.companyName,
