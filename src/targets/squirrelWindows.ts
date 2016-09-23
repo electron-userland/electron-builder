@@ -6,6 +6,7 @@ import { warn, log } from "../util/log"
 import { getRepositoryInfo } from "../repositoryInfo"
 import { getBinFromBintray } from "../util/binDownload"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
+import { SquirrelWindowsOptions } from "../options/winOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -15,6 +16,8 @@ const SW_VERSION = "1.4.4"
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
 export default class SquirrelWindowsTarget extends Target {
+  private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.squirrelWindows)
+
   constructor(private packager: WinPackager) {
     super("squirrel")
   }
@@ -48,7 +51,7 @@ export default class SquirrelWindowsTarget extends Target {
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
     const packager = this.packager
-    let iconUrl = packager.platformSpecificBuildOptions.iconUrl || packager.devMetadata.build.iconUrl
+    let iconUrl = this.options.iconUrl || packager.devMetadata.build.iconUrl
     if (iconUrl == null) {
       const info = await getRepositoryInfo(packager.appInfo.metadata, packager.devMetadata)
       if (info != null) {
@@ -60,13 +63,14 @@ export default class SquirrelWindowsTarget extends Target {
       }
     }
 
-    checkConflictingOptions(packager.platformSpecificBuildOptions)
+    checkConflictingOptions(this.options)
 
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const options: any = Object.assign({
       name: appInfo.name,
       productName: appInfo.productName,
+      appId: this.options.useAppIdAsId ? appInfo.id : appInfo.name,
       version: appInfo.version,
       description: appInfo.description,
       authors: appInfo.companyName,
@@ -75,7 +79,7 @@ export default class SquirrelWindowsTarget extends Target {
       copyright: appInfo.copyright,
       packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
       vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
-    }, packager.platformSpecificBuildOptions)
+    }, this.options)
 
     if (options.remoteToken == null) {
       options.remoteToken = packager.info.options.githubToken

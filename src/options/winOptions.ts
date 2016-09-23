@@ -7,40 +7,9 @@ import { PlatformSpecificBuildOptions } from "../metadata"
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   Target package type: list of `squirrel`, `nsis`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
+   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
   */
   readonly target?: Array<string> | null
-
-  /*
-   *Squirrel.Windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
-
-   Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
-
-   * If you don't plan to build windows installer, you can omit it.
-   * If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
-   */
-  readonly iconUrl?: string | null
-
-  /*
-   *Squirrel.Windows-only.* The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
-   (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
-   */
-  readonly loadingGif?: string | null
-
-  /*
-   *Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
-   */
-  readonly msi?: boolean
-
-  /*
-   *Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
-   */
-  readonly remoteReleases?: string | boolean | null
-
-  /*
-   *Squirrel.Windows-only.* Authentication token for remote updates
-   */
-  readonly remoteToken?: string | null
 
   /*
    Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
@@ -80,7 +49,7 @@ export interface NsisOptions {
   /*
   One-click installation. Defaults to `true`.
    */
-  readonly oneClick?: boolean | null
+  readonly oneClick?: boolean
 
   /*
   Defaults to `false`.
@@ -89,17 +58,17 @@ export interface NsisOptions {
 
   If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
    */
-  readonly perMachine?: boolean | null
+  readonly perMachine?: boolean
 
   /*
    *boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
    */
-  readonly allowElevation?: boolean | null
+  readonly allowElevation?: boolean
 
   /*
    *one-click installer only.* Run application after finish. Defaults to `true`.
    */
-  readonly runAfterFinish?: boolean | null
+  readonly runAfterFinish?: boolean
 
   /*
   See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
@@ -138,5 +107,46 @@ export interface NsisOptions {
 
    If `warningsAsErrors` is `false`: NSIS will allow warnings.
    */
-  readonly warningsAsErrors?: boolean | null
+  readonly warningsAsErrors?: boolean
+}
+
+/*
+ ### `.build.squirrelWindows`
+ */
+export interface SquirrelWindowsOptions extends WinBuildOptions {
+  /*
+    A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+
+   Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+
+   * If you don't plan to build windows installer, you can omit it.
+   * If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
+   */
+  readonly iconUrl?: string | null
+
+  /*
+   The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
+   (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
+   */
+  readonly loadingGif?: string | null
+
+  /*
+   *Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+   */
+  readonly msi?: boolean
+
+  /*
+   *Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+   */
+  readonly remoteReleases?: string | boolean | null
+
+  /*
+   *Squirrel.Windows-only.* Authentication token for remote updates
+   */
+  readonly remoteToken?: string | null
+
+  /*
+   Use `appId` to identify package instead of `name`.
+   */
+  readonly useAppIdAsId?: boolean
 }

@@ -38,6 +38,7 @@ export interface SquirrelOptions {
   remoteToken?: string
   loadingGif?: string
   productName?: string
+  appId?: string
   name: string
   packageCompressionLevel?: number
   version: string
@@ -121,7 +122,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   const nuspecContent = `<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <id>${options.name}</id>
+    <id>${options.appId}</id>
     <version>${version}</version>
     <title>${options.productName}</title>
     <authors>${author}</authors>
@@ -165,7 +166,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
                 xmlns="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">
   <dc:creator>${author}</dc:creator>
   <dc:description>${options.description}</dc:description>
-  <dc:identifier>${options.name}</dc:identifier>
+  <dc:identifier>${options.appId}</dc:identifier>
   <version>${version}</version>
   <keywords/>
   <dc:title>${options.productName}</dc:title>

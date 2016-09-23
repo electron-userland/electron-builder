@@ -2,7 +2,7 @@ import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
 import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { PublishConfiguration } from "./options/publishOptions"
-import { WinBuildOptions, NsisOptions } from "./options/winOptions"
+import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions } from "./options/winOptions"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -173,6 +173,11 @@ export interface BuildMetadata {
    See [.build.nsis](#NsisOptions).
    */
   readonly nsis?: NsisOptions  | null
+
+  /**
+   See [.build.squirrelWindows](#SquirrelWindowsOptions).
+   */
+  readonly squirrelWindows?: SquirrelWindowsOptions  | null
 
   /*
    See [.build.linux](#LinuxBuildOptions).

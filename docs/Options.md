@@ -36,6 +36,7 @@ Don't customize paths to background and icon, — just follow conventions.
       * [.build.mas](#MasBuildOptions)
       * [.build.nsis](#NsisOptions)
       * [.build.protocols](#Protocol)
+      * [.build.squirrelWindows](#SquirrelWindowsOptions)
       * [.build.win](#WinBuildOptions)
     * [.directories](#MetadataDirectories)
 
@@ -74,6 +75,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#WinBuildOptions).
 | nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
+| squirrelWindows | <a name="BuildMetadata-squirrelWindows"></a>See [.build.squirrelWindows](#SquirrelWindowsOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
@@ -180,6 +182,17 @@ macOS only.
 | role | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 | **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
 
+<a name="SquirrelWindowsOptions"></a>
+### `.build.squirrelWindows`
+| Name | Description
+| --- | ---
+| iconUrl | <a name="SquirrelWindowsOptions-iconUrl"></a><p>A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
+| loadingGif | <a name="SquirrelWindowsOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
+| msi | <a name="SquirrelWindowsOptions-msi"></a>*Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+| remoteReleases | <a name="SquirrelWindowsOptions-remoteReleases"></a>*Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+| remoteToken | <a name="SquirrelWindowsOptions-remoteToken"></a>*Squirrel.Windows-only.* Authentication token for remote updates
+| useAppIdAsId | <a name="SquirrelWindowsOptions-useAppIdAsId"></a>Use `appId` to identify package instead of `name`.
+
 <a name="WinBuildOptions"></a>
 ### `.build.win`
 
@@ -187,12 +200,7 @@ Windows specific build options.
 
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a>Target package type: list of `squirrel`, `nsis`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
-| iconUrl | <a name="WinBuildOptions-iconUrl"></a><p>*Squirrel.Windows-only.* A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
-| loadingGif | <a name="WinBuildOptions-loadingGif"></a><p>*Squirrel.Windows-only.* The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
-| msi | <a name="WinBuildOptions-msi"></a>*Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
-| remoteReleases | <a name="WinBuildOptions-remoteReleases"></a>*Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
-| remoteToken | <a name="WinBuildOptions-remoteToken"></a>*Squirrel.Windows-only.* Authentication token for remote updates
+| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.

@@ -16,6 +16,7 @@ import { spawnNpmProduction } from "out/util/util"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
 import { AssertContext } from "ava-tf"
+import { SquirrelWindowsOptions } from "out/options/winOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -307,7 +308,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
       squirrel = true
       expectedFileNames.push("RELEASES", `${appInfo.productFilename} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
 
-      if (buildOptions != null && buildOptions.remoteReleases != null) {
+      if (buildOptions != null && (<SquirrelWindowsOptions>buildOptions).remoteReleases != null) {
         expectedFileNames.push(`${appInfo.name}-${convertVersion(appInfo.version)}-delta.nupkg`)
       }
 

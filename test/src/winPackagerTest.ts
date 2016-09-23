@@ -20,12 +20,19 @@ test.skip("delta and msi", app({
   targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
   devMetadata: {
     build: {
-      win: {
+      squirrelWindows: {
         remoteReleases: "https://github.com/develar/__test-app-releases",
         msi: true,
       },
     }
   },
+}))
+
+test.ifDevOrWinCi("beta version", app({
+  targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
+  devMetadata: <any>{
+    version: "3.0.0-beta.2",
+  }
 }))
 
 test.ifDevOrWinCi("beta version", app({
