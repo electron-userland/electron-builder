@@ -178,11 +178,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const p = pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
-      if (!this.info.isTwoPackageJsonProjectLayoutUsed) {
-        const result = await devDependencies(this.info.appDir)
-        for (let it of result) {
-          ignoreFiles.add(it)
-        }
+      // prune dev or not listed dependencies
+      const result = await devDependencies(this.info.appDir)
+      for (let it of result) {
+        ignoreFiles.add(it)
       }
 
       const patterns = this.getFileMatchers("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
