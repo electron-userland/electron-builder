@@ -360,7 +360,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     assertThat(expectedSpec).isEqualTo(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <id>TestApp</id>
+    <id>org.electron-builder.testApp</id>
     <version>${convertVersion(appInfo.version)}</version>
     <title>${appInfo.productName}</title>
     <authors>Foo Bar</authors>
