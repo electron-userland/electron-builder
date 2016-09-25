@@ -12,7 +12,7 @@ A complete solution to package and build a ready for distribution Electron app f
   * [MacOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Squirrel.Windows.
-* [Publishing artifacts to GitHub Releases](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
+* [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases and Bintray.
 
 [appdmg](https://github.com/LinusU/node-appdmg) are used under the hood.
 
@@ -45,25 +45,27 @@ See [options](https://github.com/electron-userland/electron-builder/wiki/Options
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
 
-## Quick setup guide
+## Quick Setup Guide
 
-1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors) (for Linux [homepage](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-homepage) and [license](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-license) are also required).
+1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
 2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) configuration in the development `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
-      "category": "your.app.category.type",
+      "mac": {
+        "category": "your.app.category.type",
+      },
       "win": {
         "iconUrl": "(windows-only) https link to icon"
       }
     }
     ```
-   See [options](https://github.com/electron-userland/electron-builder/wiki/Options). This object will be used as a source for the [electron-packager](https://www.npmjs.com/package/electron-packager#packageropts-callback) options. You can specify any other options here.
+   See [all options](https://github.com/electron-userland/electron-builder/wiki/Options).
 
-3. Create a directory `build` in the root of the project and save a `background.png` (MacOS DMG background), `icon.icns` (MacOS app icon) and `icon.ico` (Windows app icon) into it.
+3. Create a directory [build](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) in the root of the project and save a `background.png` (macOS DMG background), `icon.icns` (macOS app icon) and `icon.ico` (Windows app icon) into it.
 
-   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>The Linux icon set will be generated automatically based on the MacOS `icns` file (or you can put them into the `build/icons` directory if you want to specify them yourself. The filename must contain the size (e.g. `32x32.png`) of the icon).
+   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>The Linux icon set will be generated automatically based on the macOS `icns` file (or you can put them into the `build/icons` directory if you want to specify them yourself. The filename must contain the size (e.g. `32x32.png`) of the icon).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
@@ -88,7 +90,7 @@ Please note that everything is packaged into an asar archive [by default](https:
 # Auto Update
 `electron-builder` produces all required artifacts:
 
-* `.dmg`: MacOS installer, required for the initial installation process on Mac OS X.
+* `.dmg`: macOS installer, required for the initial installation process on macOS.
 * `-mac.zip`: required for Squirrel.Mac.
 * `.exe` and `-ia32.exe`: Windows installer, required for the initial installation process on Windows. Please note that [your app must handle Squirrel.Windows events](https://github.com/electronjs/windows-installer#handling-squirrel-events). See [real world example](https://github.com/develar/onshape-desktop-shell/blob/master/src/WinSquirrelStartupEventHandler.ts).
 * `.full-nupkg`: required for Squirrel.Windows.
@@ -98,7 +100,7 @@ You also need to deploy your releases to a server.
 Consider using [Nuts](https://github.com/GitbookIO/nuts) (uses GitHub as a backend to store the assets), [Electron Release Server](https://github.com/ArekSredzki/electron-release-server) or [Squirrel Updates Server](https://github.com/Aluxian/squirrel-updates-server).
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
 
-For Windows consider only [distributing 64-bit versions](https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130).
+For Windows consider only [distributing 64-bit versions](https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130). Or use NSIS.
 
 # CLI Usage
 Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
