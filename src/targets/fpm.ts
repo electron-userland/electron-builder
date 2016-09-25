@@ -80,7 +80,7 @@ export default class FpmTarget extends TargetEx {
     const args = [
       "-s", "dir",
       "-t", target,
-      "--architecture", arch === Arch.ia32 ? "i386" : "amd64",
+      "--architecture", arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l"),
       "--name", appInfo.name,
       "--force",
       "--after-install", scripts[0],

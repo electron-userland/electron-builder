@@ -28,6 +28,7 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
 
   x64?: boolean
   ia32?: boolean
+  armv7l?: boolean
 
   dir?: boolean
 
@@ -60,18 +61,18 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
 
     function commonArch(): Array<Arch> {
-      if (args.ia32 && args.x64) {
-        return [Arch.x64, Arch.ia32]
+      const result = Array<Arch>()
+      if (args.x64) {
+        result.push(Arch.x64)
       }
-      else if (args.ia32) {
-        return [Arch.ia32]
+      if (args.armv7l) {
+        result.push(Arch.armv7l)
       }
-      else if (args.x64) {
-        return [Arch.x64]
+      if (args.ia32) {
+        result.push(Arch.ia32)
       }
-      else {
-        return [archFromString(process.arch)]
-      }
+
+      return result.length === 0 ? [archFromString(process.arch)] : result
     }
 
     let archToType = targets.get(platform)
@@ -161,6 +162,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
   delete result.ia32
   delete result.x64
+  delete result.armv7l
   return result
 }
 

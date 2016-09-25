@@ -12,7 +12,7 @@ const __awaiter = require("./util/awaiter")
 
 const args: any = yargs
   .option("arch", {
-    choices: ["ia32", "x64"],
+    choices: ["ia32", "x64", "armv7l"],
   }).argv
 
 const projectDir = process.cwd()

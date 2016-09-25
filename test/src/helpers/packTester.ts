@@ -221,7 +221,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     }
   }))
 
-  const packageFile = `${outDir}/TestApp-${appInfo.version}-${arch === Arch.ia32 ? "ia32" : "amd64"}.deb`
+  const packageFile = `${outDir}/TestApp-${appInfo.version}-${arch === Arch.ia32 ? "ia32" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
   assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
     assertThat(await getContents(`${outDir}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)

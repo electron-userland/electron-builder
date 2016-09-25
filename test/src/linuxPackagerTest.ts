@@ -3,11 +3,14 @@ import { modifyPackageJson, app, appThrows } from "./helpers/packTester"
 import { remove } from "fs-extra-p"
 import * as path from "path"
 import { Platform } from "out"
+import { Arch } from "out/metadata"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
 
 test.ifNotWindows("deb", app({targets: Platform.LINUX.createTarget("deb")}))
+
+test.ifNotWindows("arm deb", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 

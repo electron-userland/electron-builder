@@ -91,7 +91,8 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
   }
 
   for (let platform of platforms) {
-    for (let arch of (platform === "mas" || platform === "darwin" ? ["x64"] : ["ia32", "x64"])) {
+    const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : ["ia32", "x64", "armv7l"])
+    for (let arch of archs) {
       downloadPromises.push(downloadElectron({
         version: ELECTRON_VERSION,
         arch: arch,

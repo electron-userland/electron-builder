@@ -40,6 +40,11 @@ export function createYargs(): any {
       describe: "Build for ia32",
       type: "boolean",
     })
+    .option("armv7l", {
+      group: buildGroup,
+      describe: "Build for armv7l",
+      type: "boolean",
+    })
     .option("dir", {
       group: buildGroup,
       describe: "Build unpacked dir. Useful to test.",

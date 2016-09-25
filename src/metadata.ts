@@ -446,7 +446,7 @@ export class Platform {
 }
 
 export enum Arch {
-  ia32, x64
+  ia32, x64, armv7l
 }
 
 export function archFromString(name: string): Arch {
@@ -455,6 +455,9 @@ export function archFromString(name: string): Arch {
   }
   if (name === "ia32") {
     return Arch.ia32
+  }
+  if (name === "armv7l") {
+    return Arch.armv7l
   }
 
   throw new Error(`Unsupported arch ${name}`)

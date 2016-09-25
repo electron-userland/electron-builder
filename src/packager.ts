@@ -257,7 +257,7 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
       return [Platform.MAC, Platform.LINUX, Platform.WINDOWS]
     }
     else if (process.platform === Platform.LINUX.nodeName) {
-      // MacOS code sign works only on MacOS
+      // macOS code sign works only on macOS
       return [Platform.LINUX, Platform.WINDOWS]
     }
     else {
