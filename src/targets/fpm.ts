@@ -2,7 +2,7 @@ import { LinuxBuildOptions, Arch } from "../metadata"
 import { smarten, PlatformPackager, TargetEx } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
-import { downloadFpm } from "../util/binDownload"
+import { getBin } from "../util/binDownload"
 import {  readFile, outputFile } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
@@ -15,8 +15,18 @@ const template = require("lodash.template")
 const __awaiter = require("../util/awaiter")
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
-  BluebirdPromise.resolve("fpm") :
-  downloadFpm(process.platform === "darwin" ? "1.5.1-20150715-2.2.2" : "1.5.0-2.3.1", process.platform === "darwin" ? "osx" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`)
+  BluebirdPromise.resolve("fpm") : downloadFpm()
+
+// can be called in parallel, all calls for the same version will get the same promise - will be downloaded only once
+function downloadFpm(): Promise<string> {
+  const version = process.platform === "darwin" ? "fpm-1.6.3-20150715-2.2.2" : "fpm-1.6.3-2.3.1"
+  const osAndArch = process.platform === "darwin" ? "mac" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`
+  const sha2 = process.platform === "darwin" ? "1b13080ecfd2b6fddb984ed6e1dfcb38cdf5b051a04d609c2a95227ed9a5ecbc" :
+    (process.arch === "ia32" ? "b55f25749a27097140171f073466c52e59f733a275fea99e2334c540627ffc62" : "4c6fc529e996f7ff850da2d0bb6c85080e43be672494b14c0c6bdcc03bf57328")
+
+  return getBin("fpm", version, `https://dl.bintray.com/electron-userland/bin/${version}-${osAndArch}.7z`, sha2)
+    .then(it => path.join(it, "fpm"))
+}
 
 export default class FpmTarget extends TargetEx {
   private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
