@@ -95,7 +95,7 @@
     "tunnel-agent": "^0.4.3",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
-    "yargs": "^5.0.0"
+    "yargs": "^6.0.0"
   },
   "optionalDependencies": {
     "appdmg-tf": "0.4.9"
@@ -118,7 +118,7 @@
     "ava-tf": "^0.16.0",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-destructuring": "^6.16.0",
-    "babel-plugin-transform-es2015-parameters": "^6.16.0",
+    "babel-plugin-transform-es2015-parameters": "^6.17.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",
     "decompress-zip": "^0.3.0",
     "diff": "^3.0.0",
@@ -148,8 +148,5 @@
   "release": {
     "verifyConditions": []
   },
-  "typings": "./out/electron-builder.d.ts",
-  "publishConfig": {
-    "tag": "next"
-  }
+  "typings": "./out/electron-builder.d.ts"
 }
