@@ -32,15 +32,18 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-export function spawnNpmProduction(command: string, appDir: string, env?: any): BluebirdPromise<any> {
+export function spawnNpmProduction(command: string, appDir: string, env?: any, forceBuild: boolean = true): BluebirdPromise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = [command, "--production", "--build-from-source", "--cache-min", "999999999"]
+  let npmExecArgs = [command, "--production", "--cache-min", "999999999"]
   if (npmExecPath == null) {
     npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
   else {
     npmExecArgs.unshift(npmExecPath)
     npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
+  }
+  if (forceBuild) {
+    npmExecArgs.push("--build-from-source")
   }
 
   return spawn(npmExecPath, npmExecArgs, {
