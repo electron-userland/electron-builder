@@ -28,7 +28,17 @@
       ${else}
         StrCpy $0 "/allusers"
       ${endif}
-      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
+
+      ClearErrors
+      ${GetParameters} $R4
+      ${GetOptions} $R4 "--delete-app-data" $R5
+      ${ifNot} ${Errors}
+        StrCpy $1 "--delete-app-data"
+      ${else}
+        StrCpy $1 ""
+      ${endif}
+
+      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 $1 _?=$R1'
     ${endif}
   ${endif}
 !macroend

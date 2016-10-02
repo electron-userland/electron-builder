@@ -44,8 +44,8 @@ Section "un.install"
 
   ClearErrors
   ${GetParameters} $R0
-  ${GetOptions} $R0 "/KEEP_APP_DATA" $R1
-  ${If} ${Errors}
+  ${GetOptions} $R0 "--delete-app-data" $R1
+  ${IfNot} ${Errors}
     # electron always uses per user app data
     ${if} $installMode == "all"
       SetShellVarContext current

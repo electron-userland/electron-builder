@@ -103,6 +103,11 @@ async function doTest(outDir: string, perUser: boolean) {
   fsChanges = diff(fsBefore, fsAfter, driveC)
   assertThat(fsChanges.added).isEqualTo([])
   assertThat(fsChanges.deleted).isEqualTo([])
+
+  await assertThat(appDataFile).isFile()
+
+  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S", "--delete-app-data")
+  await assertThat(appDataFile).doesNotExist()
 }
 
 test.ifNotCiOsx("boring", app({
