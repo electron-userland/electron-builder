@@ -16,8 +16,8 @@ export const debug7z = debugFactory("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install"): BluebirdPromise<any> {
-  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, getGypEnv(electronVersion, arch)))
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install", fromSource: boolean = true): BluebirdPromise<any> {
+  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, getGypEnv(electronVersion, arch), fromSource))
 }
 
 export function getGypEnv(electronVersion: string, arch: string): any {
