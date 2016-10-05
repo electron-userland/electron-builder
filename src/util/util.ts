@@ -81,6 +81,9 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
           if (stderr.length !== 0) {
             log(stderr)
           }
+          if (stdout.length !== 0) {
+            log(stdout)
+          }
         }
         resolve(stdout)
       }

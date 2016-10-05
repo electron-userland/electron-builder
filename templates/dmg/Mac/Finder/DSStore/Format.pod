@@ -1,0 +1,552 @@
+=head1 DS_Store Format
+
+Some notes on the format of the Macintosh Finder's F<.DS_Store> files.
+
+=head1 OVERVIEW
+
+The Mac OS X Finder stores information about how it displays directories
+and files in files named F<.DS_Store> in each directory which it has touched.
+(This seems to be a departure from the pre-OSX method of storing all the
+information in one file at the root of each filesystem).
+The format is not documented by Apple.
+The information in this file is based on the reverse-engineering notes
+by Mark Mentovai published on the Mozilla wiki,
+and further investigation by me (Wim Lewis).
+
+=head1 FILE FORMAT
+
+The F<.DS_Store> file holds a series of records giving attributes of
+the files in the directory or of the directory itself (referred to as
+F<.>). These records are stored in a B-tree, and the pages of the
+B-tree are stored in the file by a "buddy allocator" along with a
+small amount of metadata. The allocator also provides a level of
+indirection, from small integers to file offsets, presumably allowing
+blocks to be relocated as they grow and shrink.
+
+The file is generally big-endian. Unless otherwise noted, an "integer"
+is a four-byte (32-bit) big-endian number, probably unsigned (but I'm
+not always sure about that).
+
+=head2 Records
+
+A record has the following format:
+
+=over
+
+=item *
+
+Filename length, in characters, as an integer. (4 bytes)
+
+=item *
+
+Filename, in big-endian UTF-16. Presumably with the same Unicode
+composition rules as the HFS+ filesystem. (2 * length bytes)
+
+=item *
+
+Structure id or type, a FourCharCode indicating what property of the
+file this entry describes. (4 bytes)
+
+=item *
+
+Data type (4 bytes), indicating what kind of data field follows:
+
+=over
+
+=item C<'long'>
+
+An integer (4 bytes)
+
+=item C<'shor'>
+
+A short integer? Still stored as four bytes, but the first two are
+always zero.
+
+=item C<'bool'>
+
+A boolean value, stored as one byte.
+
+=item C<'blob'>
+
+An arbitrary block of bytes, stored as an integer followed by that
+many bytes of data.
+
+=item C<'type'>
+
+Four bytes, containing a FourCharCode.
+
+=item C<'ustr'>
+
+A Unicode text string, stored as an integer character count followed 
+by 2*count bytes of data in UTF-16.
+
+=item C<'comp'>
+
+An eight-byte (64-bit) integer.
+(I don't know why the abbreviation "comp" was chosen for this.)
+
+=item C<'dutc'>
+
+A datestamp, represented as an 8-byte integer count of the number
+of (1/65536)-second intervals since the Mac epoch in 1904. Given
+the name, this probably corresponds to the C<UTCDateTime> structure.
+
+=back
+
+=back
+
+A given structure id/type always seems to have the same type of data
+associated with it, and any structure id appears at most once per
+filename. Some only appear on files, and some only appear on
+directories (including the filename F<.>).
+
+Information about a directory (its Finder window view settings, for
+example) is usually held in its parent directory's store file, unless
+the directory is at the root of its volume, in which case it's held
+in the directory itself with the filename F<.>.
+
+I've encountered the following record types:
+
+=over
+
+=item C<'BKGD'>
+
+12-byte C<blob>, directories only. Indicates the background of the
+Finder window viewing this directory (in icon mode). The format
+depends on the kind of background:
+
+=over
+
+=item Default background
+
+FourCharCode C<DefB>, followed by eight unknown bytes, probably garbage.
+
+=item Solid color
+
+FourCharCode C<ClrB>, followed by an RGB value in six bytes, followed by two unknown bytes.
+
+=item Picture
+
+FourCharCode C<PctB>, followed by the the length of the blob
+stored in the C<'pict'> record, followed by four unknown bytes.
+The C<'pict'> record points to the actual background image.
+
+=back
+
+=item C<'ICVO'>
+
+C<bool>, directories only. Unknown meaning. Always seems to be 1, so
+presumably 0 is the default value.
+
+=item C<'Iloc'>
+
+16-byte C<blob>, attached to files and directories. 
+The file's icon location. Two 4-byte values representing the
+horizontal and vertical positions of the icon's center (not
+top-left). (Then, 6 bytes 0xff and 2 bytes 0?) For the purposes of the
+center, the icon only is taken into account, not any label. The icon's
+size comes from the icvo blob.
+
+=item C<'LSVO'>
+
+C<bool>, attached to directories. Purpose unknown.
+
+=item C<'bwsp'>
+
+A C<blob> containing a binary plist. This contains the size
+and layout of the window (including whether optional parts like
+the sidebar or path bar are visible).
+This appeared in Snow Leopard (10.6).
+
+The plist contains the keys C<WindowBounds> (a string in the same
+format in which AppKit saves window frames); C<SidebarWidth> (a
+float), and booleans C<ShowSidebar>, C<ShowToolbar>, C<ShowStatusBar>,
+and C<ShowPathbar>.  Sometimes contains C<ViewStyle> (a string),
+C<TargetURL> (a string), and C<TargetPath> (an array of strings).
+
+=item C<'cmmt'>
+
+C<ustr>, containing a file's "Spotlight Comments".
+(The comment is also stored in the C<com.apple.metadata:kMDItemFinderComment>
+xattr; this copy may be historical.)
+
+=item C<'dilc'>
+
+32-byte C<blob>, attached to files and directories.
+Unknown, may indicate the icon location
+when files are displayed on the desktop.
+
+=item C<'dscl'>
+
+C<bool>, attached to subdirectories. Indicates that the
+subdirectory is open (disclosed) in list view.
+
+=item C<'extn'>
+
+C<ustr>. Often contains the file extension of the file, but sometimes
+contains a different extension.
+Purpose unknown.
+
+=item C<'fwi0'>
+
+16-byte C<blob>, directories only.
+Finder window information.
+The data is first four two-byte values representing the top, left,
+bottom, and right edges of the rect defining the content area of the
+window. The next four bytes represent the view of the window: C<icnv>
+is icon view, other values are C<clmv> and C<Nlsv>.
+The next four bytes are unknown, and are either zeroes or
+C<00 01 00 00>.
+
+On Leopard (10.5), the view-type information seems to be ignored,
+but see C<vstl>. On Snow Leopard (10.6), some more of this record's
+function seems to have been taken over by the plist records C<bwsp>,
+C<lsvp>, and and C<lsvP>.
+
+=item C<'fwsw'>
+
+C<long>, directories only. Finder window sidebar width, in
+pixels/points. Zero if collapsed.
+
+=item C<'fwvh'>
+
+C<shor>, directories only.
+Finder window vertical height. If present, it overrides the height
+defined by the rect in fwi0. The Finder seems to create these (at
+least on 10.4) even though it will do the right thing for window
+height with only an fwi0 around, perhaps this is because the stored
+height is weird when accounting for toolbars and status bars. 
+
+=item C<'GRP0'>
+
+C<ustr>. Unknown; I've only seen this once.
+
+=item C<'icgo'>
+
+8-byte C<blob>, directories (and files?).
+Unknown. Probably two integers, and often the value C<00 00 00 00 00
+00 00 04>.
+
+=item C<'icsp'>
+
+8-byte C<blob>, directories only.
+Unknown, usually all but the last two bytes are zeroes.
+
+=item C<'icvo'>
+
+18- or 26-byte C<blob>, directories only.
+Icon view options. There seem to be two formats for this blob.
+
+If the first 4 bytes are "icvo", then 8 unknown bytes (flags?), then 2 bytes
+corresponding to the selected icon view size, then 4 unknown bytes
+C<6e 6f 6e 65> (the text "none", guess that this is the "keep
+arranged by" setting?).
+
+If the first 4 bytes are "icv4", then:
+two bytes indicating the icon size in pixels, typically 48;
+a 4CC indicating the "keep arranged by" setting
+(or C<none> for none or C<grid> for align to grid);
+another 4CC, either C<botm> or C<rght>,  indicating the label position I<w.r.t.> the icon;
+and then 12 unknown bytes (flags?).
+
+Of the flag bytes, the low-order bit of the second byte is 1 if "Show
+item info" is checked, and the low-order bit of the 12th (last) byte
+is 1 if the "Show icon preview" checkbox is checked. The tenth byte
+usually has the value 4, and the remainder are zero.
+
+=item C<'icvp'>
+
+A C<blob> containing a plist, giving settings for the icon view.
+Appeared in Snow Leopard (10.6), probably supplanting C<'icvo'>.
+
+The plist holds a dictionary with several key-value pairs:
+booleans C<showIconPreview>, C<showItemInfo>, and C<labelOnBottom>;
+numbers C<scrollPositionX>, C<scrollPositionY>, C<gridOffsetX>, C<gridOffsetY>,
+C<textSize>, C<iconSize>, C<gridSpacing>, and C<viewOptionsVersion>;
+string C<arrangeBy>.
+
+The value of the C<backgroundType> key (an integer) presumably controls
+the presence of further optional keys such as C<backgroundColorRed>/C<backgroundColorGreen>/C<backgroundColorBlue>.
+
+=item C<'icvt'>
+
+C<shor>, directories only.
+Icon view text label (filename) size, in points.
+
+=item C<'info'>
+
+40- or 48-byte C<blob>, attached to directories and files.
+Unknown. The first 8 bytes look like a timestamp as in C<dutc>.
+
+=item C<'logS'> or C<'lg1S'>
+
+C<comp>, directories only. Appears to contain the logical size in
+bytes of the directory's contents, perhaps as a cache to speed up
+display in the Finder.
+I think that C<'logS'> appeared in 10.7 and was
+supplanted by C<'lg1S'> in 10.8. See also C<'ph1S'>.
+
+=item C<'lssp'>
+
+8-byte C<blob>, directories only.
+Unknown. Possibly the scroll position in list view mode?
+
+=item C<'lsvo'>
+
+76-byte C<blob>, directories only.
+List view options. Seems to contain the columns displayed in list
+view, their widths, and their sort ordering if any. Presumably
+supplanted by C<lsvp> and/or C<lsvP>.
+
+These list view settings are shared between list view and the list
+portion of coverflow view.
+
+=item C<'lsvt'>
+
+C<shor>, directories only.
+List view text (filename) size, in points.
+
+=item C<'lsvp'>
+
+A C<blob> containing a binary plist. List view settings, perhaps
+supplanting the C<'lsvo'> record. Appeared in Snow Leopard (10.6).
+
+The plist contains boolean values for the keys C<showIconPreview>,
+C<useRelativeDates>, and C<calculateAllSizes>; numbers for
+C<scrollPositionX>, C<scrollPositionY>, C<textSize>, C<iconSize>, and
+C<viewOptionsVersion> (typically 1); and a string, C<sortColumn>.
+
+There is also a C<columns> key containing the set of columns, their widths,
+visibility, column ordering, sort ordering.
+The only difference between C<lsvp> and C<lsvP> appears to be the
+format of the columns specification: an array or a dictionary.
+
+=item C<'lsvP'>
+
+A C<blob> containing a binary plist.
+Often occurs with C<lsvp>, but may have appeared in 10.7 or 10.8.
+
+=item C<'modD'> and C<'moDD'>
+
+C<dutc> timestamps; directories only.
+One or both may appear.
+Typically the same as the directory's modification date.
+Unknown purpose; appeared in 10.7 or 10.8.
+Possibly used to detect when C<logS> needs to be recalculated?
+
+=item C<'phyS'> or C<'ph1S'>
+
+C<comp>, directories only. This number is always a multiple of
+8192 and slightly larger than C<'logS'> / C<'lg1S'>, which always
+seems to be present if this is (though the reverse is not always true).
+Presumably it is the corresponding physical size (an integer number of
+8k-byte disk blocks). 
+
+=item C<'pict'>
+
+Variable-length C<blob>, directories only.
+Despite the name, this contains not a PICT image but an Alias record
+(see I<Inside Macintosh: Files>) which resolves to the file containing
+the actual background image. See also C<'BKGD'>.
+
+=item C<'vSrn'>
+
+C<long>, attached to directories.
+Always appears to contain the value 1.
+Appeared in 10.7 or 10.8.
+
+=item C<'vstl'>
+
+C<type>, directories only. Indicates the style of the view
+(one of C<icnv>, C<clmv>, C<Nlsv>, or C<Flwv>,
+indicating respectively: icon view, column/browser view, list view, and coverflow view)
+selected by the Finder's "Always open in icon [or other style] view"
+checkbox.
+This appears to be a new addition to the Leopard (10.5) Finder.
+
+=back
+
+=head2 B-Tree
+
+The records are stored in a B-tree structure. The B-tree consists of a
+small master block containing a few statistics and a pointer to the
+root node; one or more leaf (external) nodes; and zero or more
+non-leaf (internal) nodes.
+
+The header block is pointed to by the C<DSDB> entry in the buddy
+allocator's directory. It is 20 bytes long and contains five integers:
+
+=over
+
+=item
+
+The block number of the root node of the B-tree
+
+=item
+
+The number of levels of internal nodes (tree height minus one --- that
+is, for a tree containing only a single, leaf, node this will be zero)
+
+=item
+
+The number of records in the tree
+
+=item
+
+The number of nodes in the tree (tree nodes, not including this header
+block)
+
+=item
+
+Always 0x1000, probably the tree node page size 
+
+=back
+
+Individual nodes are either leaf nodes containing a bunch of records,
+or non-leaf (internal) nodes containing N records and N+1 pointers to
+child nodes.
+
+Each node starts with two integers, C<P> and C<count>. If C<P> is 0,
+then this is a leaf node and C<count> is immediately followed by that
+many records. If C<P> is nonzero, then this is an internal node, and
+C<count> is followed by the block number of the leftmost child, then a
+record, then another block number, I<etc.>, for a total of C<count>
+child pointers and C<count> records. C<P> is itself the rightmost
+child pointer, that is, it is logically at the end of the node.
+
+This relies on 0 not being a valid value for a block number. As far as
+I can tell, 0 is a valid value for a block number but it always holds
+the block containing the buddy allocator's internal information,
+presumably because that block is allocated first.
+
+The ordering of records within the B-tree is by case-insensitive
+comparison of their filenames, secondarily sorted on the structure
+ID (record type) field. My guess is that the string comparison follows
+the same rules as HFS+ described in Apple's TN1150.
+
+=head2 Buddy Allocator
+
+B-tree pages and other info are stored in blocks managed by a buddy
+allocator. The allocator maintains a list of the offsets and sizes of
+blocks (indexed by small integers) and a freelist. 
+The allocator also stores a small amount of metadata, including a
+directory or table of contents which maps short strings to block
+numbers. The only entry in that table of contents maps the string
+C<DSDB> ("desktop services database"?) to the B-tree's master block.
+
+The buddy allocator is in charge of all but the first 36 bytes of
+the file, and manages a notional 2GB address space, although the file is
+of course truncated to the last allocated block. All its offsets are
+relative to the fourth byte of the file. Another way to describe this
+is that the file consists of a four-byte header (always C<00 00 00
+01>) followed by a 2GB buddy-allocated area, the first 32-byte block
+of which is allocated but does not appear on the buddy allocator's
+allocation list.
+
+The 32-byte header has the following fields:
+
+=over
+
+=item *
+
+Magic number C<Bud1> (C<42 75 64 31>)
+
+=item *
+
+Offset to the allocator's bookkeeping information block
+
+=item *
+
+Size of the allocator's bookkeeping information block
+
+=item *
+
+A second copy of the offset; the Finder will refuse to read the file
+if this does not match the first copy. Perhaps this is a safeguard
+against corruption from an interrupted write transaction.
+
+=item *
+
+Sixteen bytes of unknown purpose.
+These might simply be the unused space at the end of the block,
+since
+the minimum allocation size is 32 bytes, as will be seen later.
+
+=back
+
+The offset and size indicate where to find the block containing the
+rest of the buddy allocator's state. That block has the following
+fields:
+
+=over
+
+=item Block count
+
+Integer. The number of blocks in the allocated-blocks list.
+
+=item Unknown
+
+Four unknown bytes. Appear to always be 0.
+
+=item Block addresses
+
+Array of integers. There are I<block count> block addresses here, with
+unassigned block numbers represented by zeroes. This is followed by
+enough zeroes to round the section up to the next multiple of 256
+entries (1024 bytes).
+
+=item Directory count
+
+Integer, indicates the number of directory entries.
+
+=item Directory entries
+
+Each consists of a 1-byte count, followed by that many bytes of name
+(in ASCII or perhaps some 1-byte superset such as MacRoman), followed
+by a 4-byte integer containing the entry's block number.
+
+=item Free lists
+
+There are 32 freelists, one for each power of two from 2^0 to
+2^31. Each freelist has a count followed by that many offsets.
+
+=back
+
+There are three different ways to refer to a given block. Most of the
+file uses what I call block numbers or block IDs, which are indexes
+into the C<block address> table. Block ID 0 always seems to refer to
+the buddy allocator's metadata block itself.
+
+The entries in the block address table are what I call block addresses.
+Each address is a packed offset+size. The least-significant 5 bits of
+the number indicate the block's size, as a power of 2 (from 2^5 to
+2^31). If those bits are masked off, the result is the starting offset
+of the block (keeping in mind the 4-byte fudge factor). Since the
+lower 5 bits are unusable to store an offset, blocks must be allocated
+on 32-byte boundaries, and as a side effect the minimum block size is
+32 bytes
+(in which case the least significant 5 bits are equal to C<0x05>).
+
+The free lists contain actual block offsets, not "addresses". The
+size of the referenced blocks is implied by which freelist the block
+is in; a free block in freelist N is 2^N bytes long.
+
+Although the header block is not explicitly allocated, the allocator
+behaves as if it is; other blocks are split in order to accommodate it
+in the buddy scheme, and its buddy block (at 0x20) is either on the
+freelist or allocated. (Usually it holds the B-tree's master block.)
+
+Other than the 4-byte prefix and the 32-byte header block, every byte
+in the file is either in a block on the allocated blocks list, or is in a
+block on one of the free lists.
+
+=head1 CREDITS
+
+Original reverse-engineering effort by Mark Mentovai,
+L<https://wiki.mozilla.org/DS_Store_File_Format>. Some of the text
+describing record types has been copied from that wiki page.
+
+Further investigation and documentation by Wim Lewis
+E<lt>wiml@hhhh.orgE<gt>.
+
+Also thanks to Yvan BARTHE<Eacute>LEMY for investigation and bugfixes.

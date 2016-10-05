@@ -59,21 +59,82 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 /*
  ### `.build.dmg`
 
- MacOS DMG specific options.
-
- See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
+ macOS DMG specific options.
  */
 export interface DmgOptions {
   /*
-   The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
+   The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
+   If background is not specified, use `window.size`. Default locations expected background size to be 540x380.
+
+   See [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).
+   */
+  readonly background?: string | null
+
+  /*
+  The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
+   */
+  readonly backgroundColor?: string | null
+
+  /*
+   The path to DMG icon (volume icon), which will be shown when mounted. Defaults to application icon (`build/icon.icns`).
    */
   readonly icon?: string | null
 
   /*
-   The path to background (default: `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
-   If background is not specified, use `window.size`, see [specification](https://github.com/LinusU/node-appdmg#json-specification).
+  The size of all the icons inside the DMG. Defaults to 80.
    */
-  readonly background?: string | null
+  readonly iconSize?: number | null
+
+  /*
+  The size of all the icon texts inside the DMG. Defaults to 12.
+   */
+  readonly iconTextSize?: number | null
+
+  /*
+  The content — to customize icon locations.
+   */
+  readonly contents?: Array<DmgContent>
+
+  /*
+   The disk image format, one of `UDRW`, `UDRO`, `UDCO`, `UDZO`, `UDBZ`, `ULFO` (lzfse-compressed image (OS X 10.11+ only)). Defaults to `UDBZ` (bzip2-compressed image).
+   */
+  readonly format?: string
+
+  /*
+  The DMG windows position and size. See [.build.dmg.window](#DmgWindow).
+   */
+  window?: DmgWindow
+}
+
+/*
+ ### `.build.dmg.window`
+
+ The DMG windows position and size.
+ */
+export interface DmgWindow {
+  /*
+  The X position relative to left of the screen. Defaults to 400.
+   */
+  x?: number
+  /*
+   The Y position relative to top of the screen. Defaults to 100.
+   */
+  y?: number
+  /**
+   * The width. Defaults to background image width or 540.
+   */
+  width?: number
+  /**
+   * The height. Defaults to background image height or 380.
+   */
+  height?: number
+}
+
+export interface DmgContent {
+  x: number
+  y: number
+  type?: "link" | "file"
+  path?: string
 }
 
 /*

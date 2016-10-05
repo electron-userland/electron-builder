@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed, app, appThrows } from "./helpers/packTester"
 import OsXPackager from "out/macPackager"
-import { move, writeFile, deleteFile, remove } from "fs-extra-p"
+import { writeFile, remove, copy } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -12,6 +12,7 @@ import { Arch } from "out"
 import { Target } from "out/platformPackager"
 import { DmgTarget } from "out/targets/dmg"
 import { DIR_TARGET } from "out/targets/targetFactory"
+import { attachAndExecute } from "out/targets/dmg"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -33,7 +34,6 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
   }, {expectedContents: expectedContents, signed: target.includes("mas")})
 }
 
-test.ifOsx("only dmg", createTargetTest(["dmg"], ["Test App ßW-1.1.0.dmg"]))
 test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 test.ifOsx("invalid target", t => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
@@ -116,8 +116,48 @@ else {
   })
 }
 
-test.ifOsx("no background", app(platform(Platform.MAC), {
-  projectDirCreated: projectDir => deleteFile(path.join(projectDir, "build", "background.png"))
+// test also "only dmg"
+test.ifOsx("no background", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  devMetadata: {
+    build: {
+      // dmg can mount only one volume name, so, to test in parallel, we set different product name
+      productName: "Test ß",
+      dmg: {
+        background: null,
+      },
+    }
+  }
+}, {
+  expectedContents: ["Test ß-1.1.0.dmg"],
+  packed: (context) => {
+    return attachAndExecute(path.join(context.outDir, "mac/Test ß-1.1.0.dmg"), false, () => {
+      return assertThat(path.join("/Volumes/Test ß 1.1.0/.background")).doesNotExist()
+    })
+  }
+}))
+
+test.ifOsx("unset dmg icon", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  devMetadata: {
+    build: {
+      // dmg can mount only one volume name, so, to test in parallel, we set different product name
+      productName: "Test ß No Volume Icon",
+      dmg: {
+        icon: null,
+      },
+    }
+  }
+}, {
+  expectedContents: ["Test ß No Volume Icon-1.1.0.dmg"],
+  packed: (context) => {
+    return attachAndExecute(path.join(context.outDir, "mac/Test ß No Volume Icon-1.1.0.dmg"), false, () => {
+      return BluebirdPromise.all([
+        assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
+        assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
+      ])
+    })
+  }
 }))
 
 test.ifOsx("no build directory", app(platform(Platform.MAC), {
@@ -126,13 +166,13 @@ test.ifOsx("no build directory", app(platform(Platform.MAC), {
 
 test.ifOsx("custom background - old way", () => {
   let platformPackager: CheckingMacPackager = null
-  const customBackground = "customBackground.png"
+  const customBackground = "customBackground.tiff"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
-      move(path.join(projectDir, "build", "background.png"), path.join(projectDir, customBackground)),
+      copy(path.join(__dirname, "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.osx = {
           background: customBackground,
@@ -156,7 +196,7 @@ test.ifOsx("custom background - new way", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
-      move(path.join(projectDir, "build", "background.png"), path.join(projectDir, customBackground)),
+      copy(path.join(__dirname, "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.mac = {
           icon: "customIcon"
@@ -181,7 +221,7 @@ test.ifOsx("custom background - new way", () => {
   })
 })
 
-test.ifOsx("disable dmg icon, bundleVersion", () => {
+test.ifOsx("disable dmg icon (light), bundleVersion", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
@@ -226,7 +266,7 @@ class CheckingMacPackager extends OsXPackager {
     for (let target of targets) {
       // do not use instanceof to avoid dmg require
       if (target.name === "dmg") {
-        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions(outDir)
+        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions()
         break
       }
     }

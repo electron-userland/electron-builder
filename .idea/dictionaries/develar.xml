@@ -33,6 +33,7 @@
       <w>electronuserland</w>
       <w>enoent</w>
       <w>eperm</w>
+      <w>fseventsd</w>
       <w>github</w>
       <w>globaldots</w>
       <w>globby</w>
@@ -42,10 +43,12 @@
       <w>gsettings</w>
       <w>gtar</w>
       <w>guid</w>
+      <w>hdiutil</w>
       <w>headerimage</w>
       <w>hicolor</w>
       <w>hrtime</w>
       <w>icnsutils</w>
+      <w>icnv</w>
       <w>iconset</w>
       <w>iconutil</w>
       <w>idms</w>
@@ -63,11 +66,13 @@
       <w>libgcrypt</w>
       <w>libgnome</w>
       <w>libnotify</w>
+      <w>lzfse</w>
       <w>lzip</w>
       <w>lzma</w>
       <w>lzop</w>
       <w>macroend</w>
       <w>makedeb</w>
+      <w>makedmg</w>
       <w>makensis</w>
       <w>minimatch</w>
       <w>mkdirp</w>
@@ -104,18 +109,27 @@
       <w>semver</w>
       <w>signcode</w>
       <w>signtool</w>
+      <w>srcfolder</w>
       <w>templating</w>
       <w>testapp</w>
       <w>timestamping</w>
       <w>tsconfig</w>
       <w>udbz</w>
+      <w>udco</w>
+      <w>udif</w>
       <w>udro</w>
+      <w>udrw</w>
+      <w>ulfo</w>
       <w>unassociate</w>
       <w>unicon</w>
+      <w>unmounting</w>
+      <w>unorm</w>
       <w>userprofile</w>
       <w>valuename</w>
+      <w>versioner</w>
       <w>veyor</w>
       <w>volid</w>
+      <w>volname</w>
       <w>winedlloverrides</w>
       <w>winstaller</w>
       <w>xamarin</w>

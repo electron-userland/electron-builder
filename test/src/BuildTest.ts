@@ -65,7 +65,8 @@ test("cli", () => {
   }}))
 })
 
-test("custom buildResources dir", app(allPlatforms(), {
+// only dir - avoid DMG
+test("custom buildResources dir", app(allPlatforms(false), {
   projectDirCreated: projectDir => BluebirdPromise.all([
     modifyPackageJson(projectDir, data => {
       data.directories = {

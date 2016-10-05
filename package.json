@@ -46,7 +46,6 @@
     "packager",
     "pack",
     "nsis",
-    "appdmg",
     "app",
     "dmg",
     "msi",
@@ -84,6 +83,7 @@
     "mime": "^1.3.4",
     "minimatch": "^3.0.3",
     "normalize-package-data": "^2.3.5",
+    "parse-color": "^1.0.0",
     "plist": "^2.0.1",
     "pretty-ms": "^2.1.0",
     "progress": "^1.1.8",
@@ -96,9 +96,6 @@
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
     "yargs": "^6.0.0"
-  },
-  "optionalDependencies": {
-    "appdmg-tf": "0.4.9"
   },
   "config": {
     "pre-git": {
@@ -148,5 +145,8 @@
   "release": {
     "verifyConditions": []
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }

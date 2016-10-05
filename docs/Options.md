@@ -30,6 +30,7 @@ Don't customize paths to background and icon, — just follow conventions.
   * [Development package.json](#DevMetadata)
     * [.build](#BuildMetadata)
       * [.build.dmg](#DmgOptions)
+      * [.build.dmg.window](#DmgWindow)
       * [.build.fileAssociations](#FileAssociation)
       * [.build.linux](#LinuxBuildOptions)
       * [.build.mac](#MacOptions)
@@ -86,14 +87,30 @@ Don't customize paths to background and icon, — just follow conventions.
 <a name="DmgOptions"></a>
 ### `.build.dmg`
 
-MacOS DMG specific options.
-
-See all [appdmg options](https://www.npmjs.com/package/appdmg#json-specification).
+macOS DMG specific options.
 
 | Name | Description
 | --- | ---
-| icon | <a name="DmgOptions-icon"></a>The path to DMG icon, which will be shown when mounted. Defaults to `build/icon.icns`.
-| background | <a name="DmgOptions-background"></a><p>The path to background (default: <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>, see [specification](https://github.com/LinusU/node-appdmg#json-specification).</p>
+| background | <a name="DmgOptions-background"></a><p>The path to background image (default: <code>build/background.tiff</code> or <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>. Default locations expected background size to be 540x380.</p> <p>See [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).</p>
+| backgroundColor | <a name="DmgOptions-backgroundColor"></a>The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
+| icon | <a name="DmgOptions-icon"></a>The path to DMG icon (volume icon), which will be shown when mounted. Defaults to application icon (`build/icon.icns`).
+| iconSize | <a name="DmgOptions-iconSize"></a>The size of all the icons inside the DMG. Defaults to 80.
+| iconTextSize | <a name="DmgOptions-iconTextSize"></a>The size of all the icon texts inside the DMG. Defaults to 12.
+| contents | <a name="DmgOptions-contents"></a>The content — to customize icon locations.
+| format | <a name="DmgOptions-format"></a>The disk image format, one of `UDRW`, `UDRO`, `UDCO`, `UDZO`, `UDBZ`, `ULFO` (lzfse-compressed image (OS X 10.11+ only)). Defaults to `UDBZ` (bzip2-compressed image).
+| window | <a name="DmgOptions-window"></a>The DMG windows position and size. See [.build.dmg.window](#DmgWindow).
+
+<a name="DmgWindow"></a>
+### `.build.dmg.window`
+
+The DMG windows position and size.
+
+| Name | Description
+| --- | ---
+| x | <a name="DmgWindow-x"></a>The X position relative to left of the screen. Defaults to 400.
+| y | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. Defaults to 100.
+| width | <a name="DmgWindow-width"></a>* The width. Defaults to background image width or 540.
+| height | <a name="DmgWindow-height"></a>* The height. Defaults to background image height or 380.
 
 <a name="FileAssociation"></a>
 ### `.build.fileAssociations`
