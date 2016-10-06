@@ -10,7 +10,7 @@ On a macOS development machine valid and appropriate identity from your keychain
 If you are building Windows on Mac and need to set a different certificate and password (than the ones set in `CSC_*` env vars) you can use [`certificateFile`](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-certificateFile) and [`certificatePassword`](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-certificatePassword) in `.build.win` section.
 
 ## Travis, AppVeyor and other CI Servers
-To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and `CSC_INSTALLER_LINK`, `CSC_INSTALLER_KEY_PASSWORD` if you build for Mac App Store):
+To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
 
 1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
  Consider to not use special characters (for bash) in the password because “*values are not escaped when your builds are executed*”.
@@ -18,7 +18,7 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD` (and 
 
    Or upload `*.p12` file (e.g. on Google Drive, use [direct link generator](http://www.syncwithtech.org/p/direct-download-link-generator.html) to get correct download link).
 
-3. Set `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables (and `CSC_INSTALLER_LINK`/`CSC_INSTALLER_KEY_PASSWORD` in addition if you build MAS). See [Travis](https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings) or [AppVeyor](https://www.appveyor.com/docs/build-configuration#environment-variables) documentation.
+3. Set `CSC_LINK` and `CSC_KEY_PASSWORD` environment variables. See [Travis](https://docs.travis-ci.com/user/environment-variables/#Defining-Variables-in-Repository-Settings) or [AppVeyor](https://www.appveyor.com/docs/build-configuration#environment-variables) documentation.
    Recommended to set it in the CI Project Settings, not in the `.travis.yml`/`appveyor.yml`. If you use link to file (not base64 encoded data), make sure to escape special characters (for bash) accordingly.
 
    In case of AppVeyor, don't forget to click on lock icon to “Toggle variable encryption”.

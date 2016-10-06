@@ -26,7 +26,14 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    */
   readonly legalTrademarks?: string | null
 
+  /*
+  The path to the *.pfx certificate you want to sign with. Required only if you build on macOS and need different certificate than the one set in `CSC_LINK` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   */
   readonly certificateFile?: string
+
+  /*
+  The password to the certificate provided in `certificateFile`. Required only if you build on macOS and need to use a different password than the one set in `CSC_KEY_PASSWORD` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   */
   readonly certificatePassword?: string
 
   /*
