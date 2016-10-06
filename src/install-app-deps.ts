@@ -30,7 +30,7 @@ async function main() {
     throw new Error("install-app-deps is only useful for two package.json structure")
   }
 
-  let useSource = !devMetadata.build.npmSkipBuildFromSource
+  let useSource = !(this.devMetadata.build.npmSkipBuildFromSource === true)
   await installDependencies(results[0], results[1], args.arch, undefined, useSource)
 }
 
