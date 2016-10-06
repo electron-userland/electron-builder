@@ -95,7 +95,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir)
       if (checkOptions.npmInstallBefore) {
-        await spawnNpmProduction("install", projectDir)
+        await spawnNpmProduction("install", projectDir, false)
       }
     }
 

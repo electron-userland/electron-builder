@@ -16,8 +16,8 @@ export const debug7z = debugFactory("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, command: string = "install", fromSource: boolean = true): BluebirdPromise<any> {
-  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, getGypEnv(electronVersion, arch), fromSource))
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install"): BluebirdPromise<any> {
+  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch)))
 }
 
 export function getGypEnv(electronVersion: string, arch: string): any {
@@ -32,9 +32,9 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-export function spawnNpmProduction(command: string, appDir: string, env?: any, forceBuild: boolean = true): BluebirdPromise<any> {
+export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any): BluebirdPromise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  let npmExecArgs = [command, "--production", "--cache-min", "999999999"]
+  const npmExecArgs = [command, "--production", "--cache-min", "999999999"]
   if (npmExecPath == null) {
     npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
@@ -42,7 +42,7 @@ export function spawnNpmProduction(command: string, appDir: string, env?: any, f
     npmExecArgs.unshift(npmExecPath)
     npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
-  if (forceBuild) {
+  if (forceBuildFromSource) {
     npmExecArgs.push("--build-from-source")
   }
 
