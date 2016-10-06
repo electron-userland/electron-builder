@@ -202,6 +202,11 @@ export interface BuildMetadata {
   readonly npmRebuild?: boolean
 
   /*
+   *two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
+   */
+  readonly npmSkipBuildFromSource?: boolean
+
+  /*
    Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
    */
   readonly nodeGypRebuild?: boolean

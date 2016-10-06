@@ -235,7 +235,8 @@ export class Packager implements BuildInfo {
         log("Skip app dependencies rebuild because npmRebuild is set to false")
       }
       else if (platform.nodeName === process.platform) {
-        await installDependencies(this.appDir, this.electronVersion, Arch[arch], (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild")
+        let doSourceBuild = !(this.devMetadata.build.npmSkipBuildFromSource === true)
+        await installDependencies(this.appDir, this.electronVersion, Arch[arch], (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild", doSourceBuild)
       }
       else {
         log("Skip app dependencies rebuild because platform is different")
