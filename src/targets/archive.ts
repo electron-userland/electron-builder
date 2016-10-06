@@ -75,7 +75,7 @@ export async function archiveApp(compression: CompressionLevel | n, format: stri
     args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
   }
 
-  args.push(outFile, withoutDir ? "." : dirToArchive)
+  args.push(outFile, withoutDir ? "." : path.basename(dirToArchive))
 
   await spawn(path7za, args, {
     cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
