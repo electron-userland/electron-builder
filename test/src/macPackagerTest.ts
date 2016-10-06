@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed, app, appThrows } from "./helpers/packTester"
 import OsXPackager from "out/macPackager"
-import { writeFile, remove, copy } from "fs-extra-p"
+import { writeFile, remove, copy, mkdir } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
 import { Promise as BluebirdPromise } from "bluebird"
@@ -13,6 +13,8 @@ import { Target } from "out/platformPackager"
 import { DmgTarget } from "out/targets/dmg"
 import { DIR_TARGET } from "out/targets/targetFactory"
 import { attachAndExecute } from "out/targets/dmg"
+import { getTempName } from "out/util/util"
+import { exec } from "out/util/util"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("out/util/awaiter")
@@ -31,10 +33,27 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
         }
       }
     }
-  }, {expectedContents: expectedContents, signed: target.includes("mas")})
+  }, {
+    expectedContents: expectedContents,
+    signed: target.includes("mas"),
+    packed: async (context) => {
+      if (!target.includes("tar.gz")) {
+        return
+      }
+
+      const tempDir = path.join(context.outDir, getTempName())
+      await mkdir(tempDir)
+      await exec("tar", ["xf", path.join(context.outDir, "mac", "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
+      await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
+    }
+  })
 }
 
 test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
+
+test("tar.gz", createTargetTest(["tar.gz"], ["Test App ßW-1.1.0-mac.tar.gz"]))
+test("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
+
 test.ifOsx("invalid target", t => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
 
 if (process.env.CSC_KEY_PASSWORD == null || process.platform !== "darwin") {

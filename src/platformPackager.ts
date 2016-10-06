@@ -410,7 +410,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    return archiveApp(this.devMetadata.build.compression, format, outFile, this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir)
+    const isMac = this.platform === Platform.MAC
+    return archiveApp(this.devMetadata.build.compression, format, outFile, isMac ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir, isMac)
   }
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {
