@@ -67,9 +67,21 @@ export class DmgTarget extends Target {
         exec("ln", ["-s", "/Applications", `${volumePath}/Applications`]),
       ]
 
-      const contents = specification.contents!!
+      let contents = specification.contents
+      if (contents == null) {
+        contents = [
+          {
+            "x": 130, "y": 220
+          },
+          {
+            "x": 410, "y": 220, "type": "link", "path": "/Applications"
+          }
+        ]
+      }
+
       const location: DmgContent = contents.find(it => it.path == null && it.type !== "link")!
       const applicationsLocation: DmgContent = contents.find(it => it.type === "link" && (it.path === "/Applications" || it.path === "Applications"))!
+
       const window = specification.window!
       const env = Object.assign({}, process.env, {
         volumePath: volumePath,
@@ -142,14 +154,6 @@ export class DmgTarget extends Target {
   async computeDmgOptions(): Promise<DmgOptions> {
     const packager = this.packager
     const specification: any = deepAssign({
-      contents: [
-        {
-          "x": 410, "y": 220, "type": "link", "path": "/Applications"
-        },
-        {
-          "x": 130, "y": 220,
-        }
-      ],
       window: {
         x: 400,
         y: 100,

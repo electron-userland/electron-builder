@@ -7,7 +7,7 @@ In the development `package.json` custom `build` field can be specified to custo
     "contents": [
       {
           "x": 130,
-          "y": 220,
+          "y": 220
       },
       {
         "x": 410,
