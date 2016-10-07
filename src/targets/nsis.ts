@@ -45,7 +45,7 @@ export default class NsisTarget extends Target {
     const packager = this.packager
     const archSuffix = Arch[arch]
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${archSuffix}.nsis.7z`)
-    this.archs.set(arch, task(`Creating NSIS ${archSuffix} package`, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true)))
+    this.archs.set(arch, task(`Creating NSIS ${archSuffix} package`, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, false, true)))
   }
 
   finishBuild(): Promise<any> {
