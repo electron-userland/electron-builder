@@ -6,14 +6,14 @@ In the development `package.json` custom `build` field can be specified to custo
   "dmg": {
     "contents": [
       {
-          "x": 130,
-          "y": 220,
-      },
-      {
         "x": 410,
         "y": 220,
         "type": "link",
         "path": "/Applications"
+      },
+      {
+        "x": 130,
+        "y": 220
       }
     ]
   }
