@@ -68,7 +68,7 @@ export class DmgTarget extends Target {
       ]
 
       const contents = specification.contents!!
-      const location: DmgContent = contents.find(it => it.path == null && it.type === "file")!
+      const location: DmgContent = contents.find(it => it.path == null && it.type !== "link")!
       const applicationsLocation: DmgContent = contents.find(it => it.type === "link" && (it.path === "/Applications" || it.path === "Applications"))!
       const window = specification.window!
       const env = Object.assign({}, process.env, {
@@ -147,7 +147,7 @@ export class DmgTarget extends Target {
           "x": 410, "y": 220, "type": "link", "path": "/Applications"
         },
         {
-          "x": 130, "y": 220, "type": "file"
+          "x": 130, "y": 220,
         }
       ],
       window: {

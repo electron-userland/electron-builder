@@ -1,21 +1,19 @@
 # Options
 
-In the development `package.json` custom `build` field can be specified to customize format:
+In the development `package.json` custom `build` field can be specified to customize format. For example, to change icon locations for DMG:
 ```json
 "build": {
   "dmg": {
     "contents": [
       {
+          "x": 130,
+          "y": 220,
+      },
+      {
         "x": 410,
         "y": 220,
         "type": "link",
         "path": "/Applications"
-      },
-      {
-        "x": 130,
-        "y": 220,
-        "type": "file",
-        "path": "computed path to artifact, do not specify it - will be overwritten"
       }
     ]
   }
