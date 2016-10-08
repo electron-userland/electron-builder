@@ -1,6 +1,6 @@
 import test from "./helpers/avaEx"
 import { assertThat } from "./helpers/fileAssert"
-import { NsisUpdater } from "out/nsis-auto-updater/src/nsis-updater"
+import { NsisUpdater } from "out/nsis-auto-updater/src/NsisUpdater"
 import * as path from "path"
 
 //noinspection JSUnusedLocalSymbols
@@ -12,7 +12,7 @@ const __awaiter = require("out/util/awaiter");
   }
 }
 
-const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/nsis-updater").NsisUpdater
+const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
 test("check updates - no versions at all", async (t) => {
   const updater: NsisUpdater = new NsisUpdaterClass({

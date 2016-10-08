@@ -1,16 +1,15 @@
 {
-  "name": "nsis-auto-updater",
+  "name": "electron-updater",
   "version": "0.0.1",
   "description": "NSIS Auto Updater",
-  "main": "out/nsis-auto-updater/src/nsis-updater.js",
+  "main": "out/nsis-auto-updater/src/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out",
-    "nm"
+    "out"
   ],
   "dependencies": {
     "bluebird": "^3.4.6",
@@ -26,5 +25,5 @@
     "ini",
     "tunnel-agent"
   ],
-  "typings": "./out/nsis-updater.d.ts"
+  "typings": "./out/electron-updater.d.ts"
 }

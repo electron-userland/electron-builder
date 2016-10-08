@@ -14,5 +14,5 @@ dist/
 .DS_Store
 .idea/shelf/
 /test/typings/electron-builder.d.ts
-/test/typings/nsis-updater.d.ts
+/test/typings/electron-updater.d.ts
 /nsis-auto-updater/nm

@@ -1,8 +1,5 @@
 import test from "./helpers/avaEx"
-import {
-  assertPack, modifyPackageJson, platform, getPossiblePlatforms, currentPlatform,
-  app, appThrows, packageJson
-} from "./helpers/packTester"
+import { assertPack, modifyPackageJson, platform, getPossiblePlatforms, app, appThrows, packageJson } from "./helpers/packTester"
 import { move, outputJson } from "fs-extra-p"
 import { Promise as BluebirdPromise } from "bluebird"
 import * as path from "path"
@@ -337,5 +334,11 @@ test.ifWinCi("Build MacOS on Windows is not supported", appThrows(/Build for Mac
 function allPlatforms(dist: boolean = true): PackagerOptions {
   return {
     targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
+  }
+}
+
+function currentPlatform(): PackagerOptions {
+  return {
+    targets: Platform.fromString(process.platform).createTarget(DIR_TARGET),
   }
 }

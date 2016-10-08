@@ -1,10 +1,4 @@
-import { NsisUpdater } from "./nsis-updater"
+import { NsisUpdater } from "./NsisUpdater"
 
-if (process.platform === "win32") {
-  module.exports = require("electron").autoUpdater
-}
-else {
-  const updater: NsisUpdater = new (require("./nsis-updater").NsisUpdater)()
-
-  module.exports = updater
-}
+// autoUpdater to mimic electron bundled autoUpdater
+export const autoUpdater = process.platform === "win32" ? new (require("./NsisUpdater").NsisUpdater)() : require("electron").autoUpdater

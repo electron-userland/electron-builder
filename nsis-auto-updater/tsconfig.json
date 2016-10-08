@@ -16,7 +16,8 @@
     "skipLibCheck": true
   },
   "declaration": {
-    "": "../test/typings/nsis-updater.d.ts"
+    "electron-updater": "out/electron-updater.d.ts",
+    "": "../test/typings/electron-updater.d.ts"
   },
   "files": [
     "../node_modules/@types/node/index.d.ts",

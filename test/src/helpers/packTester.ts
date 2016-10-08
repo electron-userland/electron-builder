@@ -427,9 +427,3 @@ export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, str
   }
   return createTargets(platforms, type)
 }
-
-export function currentPlatform(dist: boolean = true): PackagerOptions {
-  return {
-    targets: Platform.fromString(process.platform).createTarget(dist ? null : DIR_TARGET),
-  }
-}

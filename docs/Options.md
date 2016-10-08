@@ -85,7 +85,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>*two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
-| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#publish).
+| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
 
 <a name="DmgOptions"></a>
 ### `.build.dmg`
@@ -205,6 +205,7 @@ macOS only.
 <a name="PublishConfiguration"></a>
 ### `.build.publish`
 
+Can be specified in [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
 Please see [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
 Array of option objects.

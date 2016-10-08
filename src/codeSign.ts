@@ -19,13 +19,19 @@ export interface CodeSigningInfo {
   keychainName?: string | null
 }
 
-export function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): BluebirdPromise<string> {
+export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): Promise<string> {
   if (urlOrBase64.startsWith("file://")) {
-    return BluebirdPromise.resolve(urlOrBase64.substring("file://".length))
+    return urlOrBase64.substring("file://".length)
   }
 
-  return tmpDir.getTempFile(".p12")
-    .then(tempFile => (urlOrBase64.startsWith("https://") ? download(urlOrBase64, tempFile) : outputFile(tempFile, new Buffer(urlOrBase64, "base64"))).thenReturn(tempFile))
+  const tempFile = await tmpDir.getTempFile(".p12")
+  if (urlOrBase64.startsWith("https://")) {
+    await download(urlOrBase64, tempFile)
+  }
+  else {
+    await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+  }
+  return tempFile
 }
 
 let bundledCertKeychainAdded: Promise<any> | null = null

@@ -7,15 +7,15 @@ import { Promise as BluebirdPromise } from "bluebird"
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
 
-export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>("api.github.com", path, token, data, method)
 }
 
-export function bintrayRequest<T>(path: string, auth: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+export function bintrayRequest<T>(path: string, auth: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>("api.bintray.com", path, auth, data, method)
 }
 
-function request<T>(hostname: string, path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): BluebirdPromise<T> {
+function request<T>(hostname: string, path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   const options: any = {
     hostname: hostname,
     path: path,
@@ -38,7 +38,7 @@ function request<T>(hostname: string, path: string, token: string | null, data: 
   return doApiRequest<T>(options, token, it => it.end(encodedData))
 }
 
-export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): BluebirdPromise<T> {
+export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<T> {
   if (token != null) {
     (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
