@@ -6,7 +6,8 @@ import { log } from "../util/log"
 import { debug } from "../util/util"
 import { basename } from "path"
 import { stat } from "fs-extra-p"
-import { BintrayClient, Version, BintrayOptions } from "./bintray"
+import { BintrayClient, Version } from "./bintray"
+import { BintrayOptions } from "../options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -17,7 +18,7 @@ export class BintrayPublisher implements Publisher {
   private readonly client: BintrayClient
 
   constructor(private info: BintrayOptions, private version: string, private options: PublishOptions) {
-    this.client = new BintrayClient(info.user, info.package, info.repo, options.bintrayToken)
+    this.client = new BintrayClient(info.owner!, info.package!, info.repo, options.bintrayToken)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 
@@ -54,7 +55,7 @@ export class BintrayPublisher implements Publisher {
       try {
         return await doApiRequest<any>({
           hostname: "api.bintray.com",
-          path: `/content/${this.client.user}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
+          path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",
           headers: {
             "User-Agent": "electron-builder",

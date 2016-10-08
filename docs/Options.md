@@ -35,6 +35,9 @@ Don't customize paths to background and icon, — just follow conventions.
       * [.build.mas](#MasBuildOptions)
       * [.build.nsis](#NsisOptions)
       * [.build.protocols](#Protocol)
+      * [.build.publish](#PublishConfiguration)
+      * [.build.publish Bintray](#BintrayOptions)
+      * [.build.publish GitHub](#GithubOptions)
       * [.build.squirrelWindows](#SquirrelWindowsOptions)
       * [.build.win](#WinBuildOptions)
     * [.directories](#MetadataDirectories)
@@ -82,6 +85,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>*two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
+| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#publish).
 
 <a name="DmgOptions"></a>
 ### `.build.dmg`
@@ -114,7 +118,7 @@ The DMG windows position and size.
 <a name="FileAssociation"></a>
 ### `.build.fileAssociations`
 
-NSIS and MacOS only.
+macOS and NSIS only. Array of option objects.
 
 | Name | Description
 | --- | ---
@@ -134,7 +138,7 @@ Linux specific build options.
 | category | <a name="LinuxBuildOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 | packageCategory | <a name="LinuxBuildOptions-packageCategory"></a>The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
 | description | <a name="LinuxBuildOptions-description"></a>As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
-| target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>AppImage</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>. Defaults to <code>AppImage</code>.</p> <p>The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.</p> <p>Only <code>deb</code> and <code>AppImage</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
+| target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>AppImage</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>AppImage</code>.</p> <p>The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.</p> <p>Only <code>deb</code> and <code>AppImage</code> is tested. Feel free to file issues for <code>rpm</code> and other package formats.</p>
 | synopsis | <a name="LinuxBuildOptions-synopsis"></a>*deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
 | maintainer | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author).
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
@@ -150,7 +154,7 @@ MacOS specific build options.
 | Name | Description
 | --- | ---
 | category | <a name="MacOptions-category"></a><p>The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>&quot;category&quot;: &quot;public.app-category.developer-tools&quot;</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
-| target | <a name="MacOptions-target"></a>Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+| target | <a name="MacOptions-target"></a>Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
 | identity | <a name="MacOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
 | icon | <a name="MacOptions-icon"></a>The path to application icon. Defaults to `build/icon.icns` (consider using this convention instead of complicating your configuration).
 | entitlements | <a name="MacOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.mac.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
@@ -198,6 +202,32 @@ macOS only.
 | role | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 | **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
 
+<a name="PublishConfiguration"></a>
+### `.build.publish`
+
+Please see [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
+
+Array of option objects.
+
+| Name | Description
+| --- | ---
+| **provider** | <a name="PublishConfiguration-provider"></a>The provider, one of `github`, `bintray`.
+| owner | <a name="PublishConfiguration-owner"></a>The owner.
+
+<a name="BintrayOptions"></a>
+### `.build.publish` Bintray
+| Name | Description
+| --- | ---
+| package | <a name="BintrayOptions-package"></a>The Bintray package name.
+| repo | <a name="BintrayOptions-repo"></a>The Bintray repository name. Defaults to `generic`.
+
+<a name="GithubOptions"></a>
+### `.build.publish` GitHub
+| Name | Description
+| --- | ---
+| repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
+| vPrefixedTagName | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. Defaults to `true`.
+
 <a name="SquirrelWindowsOptions"></a>
 ### `.build.squirrelWindows`
 | Name | Description
@@ -216,7 +246,7 @@ Windows specific build options.
 
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
+| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `squirrel`.
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.

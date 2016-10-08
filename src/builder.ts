@@ -10,8 +10,7 @@ import { Platform, Arch, archFromString } from "./metadata"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
-import { BintrayOptions } from "./publish/bintray"
-import { PublishConfiguration, GithubPublishConfiguration } from "./options/publishOptions"
+import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -300,7 +299,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
   })
 }
 
-export async function createPublisher(packager: Packager, options: PublishOptions, publishConfig: PublishConfiguration | GithubPublishConfiguration, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+export async function createPublisher(packager: Packager, options: PublishOptions, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   async function getInfo() {
     const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
     if (info != null) {
@@ -312,37 +311,35 @@ export async function createPublisher(packager: Packager, options: PublishOption
     }
 
     warn("Cannot detect repository by .git/config")
-    throw new Error(`Please specify 'repository' in the dev package.json ('${packager.devPackageFile}')`)
+    throw new Error(`Please specify "repository" in the dev package.json ('${packager.devPackageFile}').\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
   }
 
-  if (publishConfig.provider === "github") {
-    const config = <GithubPublishConfiguration>publishConfig
-    let user = config.owner
-    let repo = config.repo
-    if (!user || !repo) {
-      const info = await getInfo()
-      if (info == null) {
-        return null
-      }
-
-      user = info.user
-      repo = info.project
-    }
-
-    const version = packager.metadata.version!
-    log(`Creating Github Publisher — user: ${user}, project: ${repo}, version: ${version}`)
-    return new GitHubPublisher(user, repo, version, options, isPublishOptionGuessed, config)
-  }
-  if (publishConfig.provider === "bintray") {
+  let owner = publishConfig.owner
+  let project = publishConfig.provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
+  if (!owner || !project) {
     const info = await getInfo()
     if (info == null) {
       return null
     }
 
+    if (!owner) {
+      owner = info.user
+    }
+    if (!project) {
+      project = info.project
+    }
+  }
+
+  if (publishConfig.provider === "github") {
+    const config = <GithubOptions>publishConfig
     const version = packager.metadata.version!
-    //noinspection ReservedWordAsName
-    const bintrayInfo: BintrayOptions = {user: info.user, package: info.project, repo: "generic"}
-    log(`Creating Bintray Publisher — user: ${bintrayInfo.user}, package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
+    log(`Creating Github Publisher — owner: ${owner}, project: ${project}, version: ${version}`)
+    return new GitHubPublisher(owner, project, version, options, isPublishOptionGuessed, config)
+  }
+  if (publishConfig.provider === "bintray") {
+    const version = packager.metadata.version!
+    const bintrayInfo: BintrayOptions = Object.assign({}, publishConfig, {owner: owner, package: project, repo: "generic"})
+    log(`Creating Bintray Publisher — user: ${bintrayInfo.owner}, package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
     return new BintrayPublisher(bintrayInfo, version, options)
   }
   return null

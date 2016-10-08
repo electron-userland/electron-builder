@@ -21,6 +21,7 @@ const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === 
 function downloadFpm(): Promise<string> {
   const version = process.platform === "darwin" ? "fpm-1.6.3-20150715-2.2.2" : "fpm-1.6.3-2.3.1"
   const osAndArch = process.platform === "darwin" ? "mac" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`
+  //noinspection SpellCheckingInspection
   const sha2 = process.platform === "darwin" ? "1b13080ecfd2b6fddb984ed6e1dfcb38cdf5b051a04d609c2a95227ed9a5ecbc" :
     (process.arch === "ia32" ? "b55f25749a27097140171f073466c52e59f733a275fea99e2334c540627ffc62" : "4c6fc529e996f7ff850da2d0bb6c85080e43be672494b14c0c6bdcc03bf57328")
 
@@ -57,8 +58,8 @@ export default class FpmTarget extends TargetEx {
       return path.resolve(packager.projectDir, value)
     }
 
-    const afterInstallFilePath = writeConfigFile(this.packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
-    const afterRemoveFilePath = writeConfigFile(this.packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
+    const afterInstallFilePath = writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
+    const afterRemoveFilePath = writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
 
     return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
   }

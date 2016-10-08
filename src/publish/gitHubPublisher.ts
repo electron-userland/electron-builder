@@ -9,7 +9,7 @@ import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
 import { Promise as BluebirdPromise } from "bluebird"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 import { uploadFile } from "./uploader"
-import { GithubPublishConfiguration } from "../options/publishOptions"
+import { GithubOptions } from "../options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -39,7 +39,7 @@ export class GitHubPublisher implements Publisher {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubPublishConfiguration | null) {
+  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubOptions | null) {
     if (isEmptyOrSpaces(options.githubToken)) {
       throw new Error("GitHub Personal Access Token is not specified")
     }

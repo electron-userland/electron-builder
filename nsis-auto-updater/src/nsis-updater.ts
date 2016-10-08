@@ -2,12 +2,12 @@ import { EventEmitter } from "events"
 import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
-import { BintrayOptions } from "../../src/publish/bintray"
 import semver = require("semver")
 import { download } from "../../src/util/httpRequest"
 import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import { Promise as BluebirdPromise } from "bluebird"
+import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../../src/util/awaiter")
@@ -22,24 +22,37 @@ export class NsisUpdater extends EventEmitter {
 
   private readonly app: any
 
-  constructor(public updateUrl?: string) {
+  constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
     super()
 
     this.app = (<any>global).__test_app || require("electron").app
+
+    if (options != null) {
+      this.setFeedURL(options)
+    }
   }
 
   getFeedURL(): string | null | undefined {
-    return this.updateUrl
+    return JSON.stringify(this.client, null, 2)
   }
 
-  setFeedURL(value: string | BintrayOptions) {
-    this.updateUrl = value.toString()
-
-    this.client = new BintrayProvider(<BintrayOptions>value)
+  setFeedURL(value: string | PublishConfiguration | BintrayOptions | GithubOptions) {
+    if (typeof value === "string") {
+      throw new Error("Please pass PublishConfiguration object")
+    }
+    else {
+      const provider = (<PublishConfiguration>value).provider
+      if (provider === "bintray") {
+        this.client = new BintrayProvider(<BintrayOptions>value)
+      }
+      else {
+        throw new Error(`Unsupported provider: ${provider}`)
+      }
+    }
   }
 
   checkForUpdates(): Promise<UpdateCheckResult> {
-    if (this.updateUrl == null) {
+    if (this.client == null) {
       const message = "Update URL is not set"
       this.emitError(message)
       return BluebirdPromise.reject(new Error(message))

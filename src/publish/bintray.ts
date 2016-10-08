@@ -14,22 +14,22 @@ export interface File {
   sha256: string
 }
 
-export interface BintrayOptions {
-  readonly user: string
-  //noinspection ReservedWordAsName
-  readonly package: string
-  readonly repo?: string
-}
-
 export class BintrayClient {
   private readonly basePath: string
   readonly auth: string | null
   readonly repo: string
 
-  constructor(public user: string, public packageName: string, repo?: string, apiKey?: string | null) {
+  constructor(public owner: string, public packageName: string, repo?: string, apiKey?: string | null) {
+    if (owner == null) {
+      throw new Error("owner is not specified")
+    }
+    if (packageName == null) {
+      throw new Error("package is not specified")
+    }
+
     this.repo = repo || "generic"
-    this.auth = apiKey == null ? null : `Basic ${new Buffer(`${user}:${apiKey}`).toString("base64")}`
-    this.basePath = `/packages/${this.user}/${this.repo}/${this.packageName}`
+    this.auth = apiKey == null ? null : `Basic ${new Buffer(`${owner}:${apiKey}`).toString("base64")}`
+    this.basePath = `/packages/${this.owner}/${this.repo}/${this.packageName}`
   }
 
   getVersion(version: string): Promise<Version> {
@@ -47,6 +47,6 @@ export class BintrayClient {
   }
 
   deleteVersion(version: string): Promise<any> {
-    return bintrayRequest(`/packages/${this.user}/${this.repo}/${this.packageName}/versions/${version}`, this.auth, null, "DELETE")
+    return bintrayRequest(`/packages/${this.owner}/${this.repo}/${this.packageName}/versions/${version}`, this.auth, null, "DELETE")
   }
 }

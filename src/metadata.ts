@@ -223,6 +223,9 @@ export interface BuildMetadata {
 
   readonly dereference?: boolean
 
+  /*
+  See [.build.publish](#PublishConfiguration).
+   */
   readonly publish?: string | Array<string> | null | PublishConfiguration
 }
 
@@ -257,7 +260,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly description?: string | null
 
   /*
-   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `AppImage`.
+   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `AppImage`.
 
    The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
 
@@ -305,7 +308,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
 /*
  ### `.build.fileAssociations`
 
- NSIS and MacOS only.
+ macOS and NSIS only. Array of option objects.
  */
 export interface FileAssociation {
   /*

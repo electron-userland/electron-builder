@@ -7,7 +7,7 @@ import { PlatformSpecificBuildOptions } from "../metadata"
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`. Defaults to `squirrel`.
+   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `squirrel`.
   */
   readonly target?: Array<string> | null
 

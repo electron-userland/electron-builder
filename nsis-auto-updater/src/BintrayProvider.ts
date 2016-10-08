@@ -1,6 +1,7 @@
 import { Provider, VersionInfo, FileInfo } from "./api"
-import { BintrayClient, BintrayOptions } from "../../src/publish/bintray"
+import { BintrayClient } from "../../src/publish/bintray"
 import { HttpError } from "../../src/publish/restApiRequest"
+import { BintrayOptions } from "../../src/options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../../src/util/awaiter")
@@ -9,7 +10,7 @@ export class BintrayProvider implements Provider {
   private client: BintrayClient
 
   constructor(configuration: BintrayOptions) {
-    this.client = new BintrayClient(configuration.user, configuration.package, configuration.repo)
+    this.client = new BintrayClient(configuration.owner!, configuration.package!, configuration.repo)
   }
 
   async getLatestVersion(): Promise<VersionInfo> {
@@ -35,7 +36,7 @@ export class BintrayProvider implements Provider {
         if (file.name.endsWith(suffix) && file.name.includes("Setup")) {
           return {
             name: file.name,
-            url: `https://dl.bintray.com/${this.client.user}/${this.client.repo}/${file.name}`,
+            url: `https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${file.name}`,
           }
         }
       }
