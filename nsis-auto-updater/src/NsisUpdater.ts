@@ -8,6 +8,7 @@ import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import { Promise as BluebirdPromise } from "bluebird"
 import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
+import { readJson } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../../src/util/awaiter")
@@ -18,7 +19,7 @@ export class NsisUpdater extends EventEmitter {
   private updateAvailable = false
   private quitAndInstallCalled = false
 
-  private client: Provider
+  private clientPromise: Promise<Provider>
 
   private readonly app: any
 
@@ -27,32 +28,24 @@ export class NsisUpdater extends EventEmitter {
 
     this.app = (<any>global).__test_app || require("electron").app
 
-    if (options != null) {
+    if (options == null) {
+      this.clientPromise = loadUpdateConfig()
+    }
+    else {
       this.setFeedURL(options)
     }
   }
 
   getFeedURL(): string | null | undefined {
-    return JSON.stringify(this.client, null, 2)
+    return JSON.stringify(this.clientPromise, null, 2)
   }
 
   setFeedURL(value: string | PublishConfiguration | BintrayOptions | GithubOptions) {
-    if (typeof value === "string") {
-      throw new Error("Please pass PublishConfiguration object")
-    }
-    else {
-      const provider = (<PublishConfiguration>value).provider
-      if (provider === "bintray") {
-        this.client = new BintrayProvider(<BintrayOptions>value)
-      }
-      else {
-        throw new Error(`Unsupported provider: ${provider}`)
-      }
-    }
+    this.clientPromise = BluebirdPromise.resolve(createClient(value))
   }
 
   checkForUpdates(): Promise<UpdateCheckResult> {
-    if (this.client == null) {
+    if (this.clientPromise == null) {
       const message = "Update URL is not set"
       this.emitError(message)
       return BluebirdPromise.reject(new Error(message))
@@ -64,7 +57,8 @@ export class NsisUpdater extends EventEmitter {
   }
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
-    const versionInfo = await this.client.getLatestVersion()
+    const client = await this.clientPromise
+    const versionInfo = await client.getLatestVersion()
 
     const latestVersion = semver.valid(versionInfo.version)
     if (latestVersion == null) {
@@ -84,7 +78,7 @@ export class NsisUpdater extends EventEmitter {
       }
     }
 
-    const fileInfo = await this.client.getUpdateFile(versionInfo)
+    const fileInfo = await client.getUpdateFile(versionInfo)
 
     this.updateAvailable = true
     this.emit("update-available")
@@ -127,4 +121,24 @@ export class NsisUpdater extends EventEmitter {
   private emitError(message: string) {
     return this.emit("error", new Error(message), message)
   }
+}
+
+function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {
+  if (typeof data === "string") {
+    throw new Error("Please pass PublishConfiguration object")
+  }
+  else {
+    const provider = (<PublishConfiguration>data).provider
+    if (provider === "bintray") {
+      return new BintrayProvider(<BintrayOptions>data)
+    }
+    else {
+      throw new Error(`Unsupported provider: ${provider}`)
+    }
+  }
+}
+
+async function loadUpdateConfig() {
+  const data = await readJson(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, ".app-update.json"), "utf-8")
+  return createClient(data)
 }

@@ -2,11 +2,14 @@ import test from "./helpers/avaEx"
 import { assertThat } from "./helpers/fileAssert"
 import { NsisUpdater } from "out/nsis-auto-updater/src/NsisUpdater"
 import * as path from "path"
+import { TmpDir } from "out/util/tmp"
+import { outputJson } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter");
+const __awaiter = require("out/util/awaiter")
 
-(<any>global).__test_app = {
+const g = (<any>global)
+g.__test_app = {
   getVersion: function () {
     return "0.0.1"
   }
@@ -35,11 +38,15 @@ test("cannot find suitable file for version", async (t) => {
 })
 
 test("file url", async () => {
-  const updater: NsisUpdater = new NsisUpdaterClass({
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputJson(path.join(testResourcesPath, ".app-update.json"), {
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
   })
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
 
   const updateCheckResult = await updater.checkForUpdates()
   assertThat(updateCheckResult.fileInfo).hasProperties({
