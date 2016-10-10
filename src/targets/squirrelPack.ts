@@ -187,7 +187,7 @@ async function releasify(options: SquirrelOptions, nupkgPath: string, outputDire
     maxBuffer: 4 * 1024000,
   })).trim()
   if (debug.enabled) {
-    debug(out)
+    debug(`Squirrel output: ${out}`)
   }
 
   const lines = out.split("\n")
@@ -198,7 +198,7 @@ async function releasify(options: SquirrelOptions, nupkgPath: string, outputDire
     }
   }
 
-  throw new Error("Invalid output, cannot find last release entry")
+  throw new Error(`Invalid output, cannot find last release entry, output: ${out}`)
 }
 
 async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: string, outputDirectory: string, outFile: string) {
