@@ -117,10 +117,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
 
-  protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
-  }
-
   async sign(file: string) {
     const cscInfo = await this.cscInfo
     if (cscInfo != null) {
