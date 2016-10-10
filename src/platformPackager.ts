@@ -144,8 +144,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return use(this.devMetadata.directories, it => it!.buildResources) || "build"
   }
 
-  protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+  protected computeAppOutDir(outDir:string, arch:Arch):string {
+    return path.join(outDir, this.platform.buildConfigurationKey, getArchSuffix(arch), `${ this.platform === Platform.MAC ? "" : "unpacked" }`);
   }
 
   dispatchArtifactCreated(file: string, artifactName?: string) {
