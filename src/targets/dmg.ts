@@ -134,7 +134,7 @@ export class DmgTarget extends Target {
         env.backgroundFilename = backgroundFilename
       }
 
-      await exec("perl", [path.join(this.helperDir, "dmgProperties.pl")], {
+      await exec("/usr/bin/perl", [path.join(this.helperDir, "dmgProperties.pl")], {
         cwd: this.helperDir,
         env: env
       })
