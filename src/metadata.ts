@@ -1,7 +1,7 @@
 import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
 import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
-import { PublishConfiguration } from "./options/publishOptions"
+import { PublishConfiguration, BintrayOptions } from "./options/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions } from "./options/winOptions"
 
 export interface Metadata {
@@ -226,7 +226,7 @@ export interface BuildMetadata {
   /*
   See [.build.publish](#PublishConfiguration).
    */
-  readonly publish?: string | Array<string> | null | PublishConfiguration
+  readonly publish?: string | Array<string> | PublishConfiguration | BintrayOptions | Array<PublishConfiguration> | Array<BintrayOptions> | null
 }
 
 export interface AfterPackContext {
@@ -392,7 +392,7 @@ export interface PlatformSpecificBuildOptions {
 
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
-  readonly publish?: string | Array<string> | null
+  readonly publish?: string | Array<string> | PublishConfiguration | BintrayOptions | Array<PublishConfiguration> | Array<BintrayOptions> | null
 }
 
 export class Platform {

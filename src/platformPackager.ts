@@ -16,6 +16,8 @@ import { pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
+import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
+import { getRepositoryInfo } from "./repositoryInfo"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("./util/awaiter")
@@ -55,10 +57,13 @@ export interface PackagerOptions {
 export interface BuildInfo {
   options: BuildOptions
 
+  metadata: AppMetadata
+
   devMetadata: DevMetadata
 
   projectDir: string
   appDir: string
+  devPackageFile: string
 
   electronVersion: string
 
@@ -508,4 +513,81 @@ export function smarten(s: string): string {
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
+}
+
+export function getPublishConfigs(packager: PlatformPackager<any>, platformSpecificBuildOptions: PlatformSpecificBuildOptions): Array<PublishConfiguration> | null {
+  // check build.nsis (target)
+  let publishers = platformSpecificBuildOptions.publish
+  // if explicitly set to null - do not publish
+  if (publishers === null) {
+    return null
+  }
+
+  // check build.win (platform)
+  if (packager.platformSpecificBuildOptions !== platformSpecificBuildOptions) {
+    publishers = packager.platformSpecificBuildOptions.publish
+    if (publishers === null) {
+      return null
+    }
+  }
+
+  if (publishers == null) {
+    publishers = packager.info.devMetadata.build.publish
+    if (publishers === null) {
+      return null
+    }
+
+    if (publishers == null && packager.info.options.githubToken != null) {
+      publishers = [{provider: "github"}]
+    }
+    // if both tokens are set — still publish to github (because default publisher is github)
+    if (publishers == null && packager.info.options.bintrayToken != null) {
+      publishers = [{provider: "bintray"}]
+    }
+  }
+
+  return asArray<PublishConfiguration | string>(publishers)
+    .map(it => typeof it === "string" ? {provider: <any>it} : it)
+}
+
+export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
+  async function getInfo() {
+    const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+    if (info != null) {
+      return info
+    }
+
+    if (!errorIfCannot) {
+      return null
+    }
+
+    warn("Cannot detect repository by .git/config")
+    throw new Error(`Please specify "repository" in the dev package.json ('${packager.devPackageFile}').\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
+  }
+
+  let owner = publishConfig.owner
+  let project = publishConfig.provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
+  if (!owner || !project) {
+    const info = await getInfo()
+    if (info == null) {
+      return null
+    }
+
+    if (!owner) {
+      owner = info.user
+    }
+    if (!project) {
+      project = info.project
+    }
+  }
+
+  if (publishConfig.provider === "github") {
+    return Object.assign({}, publishConfig, {owner: owner, repo: project})
+  }
+  else if (publishConfig.provider === "bintray") {
+    return Object.assign({}, publishConfig, {owner: owner, package: project, repo: "generic"})
+  }
+  else {
+    return null
+  }
 }

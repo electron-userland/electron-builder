@@ -1,13 +1,12 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { PackagerOptions } from "./platformPackager"
+import { PackagerOptions, getPublishConfigs, getResolvedPublishConfig } from "./platformPackager"
 import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
 import { Promise as BluebirdPromise } from "bluebird"
-import { isEmptyOrSpaces, isCi, asArray, debug } from "./util/util"
-import { log, warn } from "./util/log"
+import { isEmptyOrSpaces, isCi, debug } from "./util/util"
+import { log } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
-import { getRepositoryInfo } from "./repositoryInfo"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
@@ -256,39 +255,19 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
 function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: BuildOptions, isPublishOptionGuessed: boolean) {
   const nameToPublisher = new Map<string, Promise<Publisher>>()
   packager.artifactCreated(event => {
-    let publishers = event.packager.platformSpecificBuildOptions.publish
+    const publishers = getPublishConfigs(event.packager, event.packager.platformSpecificBuildOptions)
     // if explicitly set to null - do not publish
     if (publishers === null) {
-      debug(`${event.file} is not published: publish set to null`)
+      debug(`${event.file} is not published: publish is set to null`)
       return
     }
 
-    if (publishers == null) {
-      publishers = event.packager.info.devMetadata.build.publish
-      if (publishers === null) {
-        debug(`${event.file} is not published: publish set to null in the "build"`)
-        return
-      }
-
-      if (publishers == null && options.githubToken != null) {
-        publishers = {provider: "github"}
-      }
-      // if both tokens are set — still publish to github (because default publisher is github)
-      if (publishers == null && options.bintrayToken != null) {
-        publishers = {provider: "bintray"}
-      }
-    }
-
-    for (let publishConfig of asArray(publishers)) {
-      if (typeof publishConfig === "string") {
-        publishConfig = {provider: publishConfig}
-      }
-
-      const publisherName = publishConfig.provider
-      let publisher = nameToPublisher.get(publisherName)
+    for (let publishConfig of publishers) {
+      const provider = publishConfig.provider
+      let publisher = nameToPublisher.get(provider)
       if (publisher == null) {
         publisher = createPublisher(packager, options, publishConfig, isPublishOptionGuessed)
-        nameToPublisher.set(publisherName, publisher)
+        nameToPublisher.set(provider, publisher)
       }
 
       if (publisher != null) {
@@ -300,45 +279,19 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
 }
 
 export async function createPublisher(packager: Packager, options: PublishOptions, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
-  async function getInfo() {
-    const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
-    if (info != null) {
-      return info
-    }
-
-    if (isPublishOptionGuessed) {
-      return null
-    }
-
-    warn("Cannot detect repository by .git/config")
-    throw new Error(`Please specify "repository" in the dev package.json ('${packager.devPackageFile}').\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
+  const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
+  if (config == null) {
+    return null
   }
 
-  let owner = publishConfig.owner
-  let project = publishConfig.provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
-  if (!owner || !project) {
-    const info = await getInfo()
-    if (info == null) {
-      return null
-    }
-
-    if (!owner) {
-      owner = info.user
-    }
-    if (!project) {
-      project = info.project
-    }
-  }
-
+  const version = packager.metadata.version!
   if (publishConfig.provider === "github") {
-    const config = <GithubOptions>publishConfig
-    const version = packager.metadata.version!
-    log(`Creating Github Publisher — owner: ${owner}, project: ${project}, version: ${version}`)
-    return new GitHubPublisher(owner, project, version, options, isPublishOptionGuessed, config)
+    const githubInfo: GithubOptions = config
+    log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
+    return new GitHubPublisher(githubInfo.owner!, githubInfo.repo!, version, options, isPublishOptionGuessed, githubInfo)
   }
   if (publishConfig.provider === "bintray") {
-    const version = packager.metadata.version!
-    const bintrayInfo: BintrayOptions = Object.assign({}, publishConfig, {owner: owner, package: project, repo: "generic"})
+    const bintrayInfo: BintrayOptions = config
     log(`Creating Bintray Publisher — user: ${bintrayInfo.owner}, package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
     return new BintrayPublisher(bintrayInfo, version, options)
   }

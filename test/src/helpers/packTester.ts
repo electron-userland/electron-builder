@@ -46,7 +46,7 @@ interface PackedContext {
   readonly projectDir: string,
   readonly outDir: string
 
-  readonly getResources: (platform: Platform) => string
+  readonly getResources: (platform: Platform, arch?: Arch) => string
   readonly getContent: (platform: Platform) => string
 }
 
@@ -115,14 +115,14 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     }, packagerOptions), checkOptions)
 
     if (checkOptions.packed != null) {
-      function base(platform: Platform): string {
-        return path.join(outDir, `${platform.buildConfigurationKey}${platform === Platform.MAC ? "" : "-unpacked"}`)
+      function base(platform: Platform, arch?: Arch): string {
+        return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
       }
 
       await checkOptions.packed({
           projectDir: projectDir,
           outDir: outDir,
-          getResources: platform => path.join(base(platform), "resources"),
+          getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
           getContent: platform => base(platform),
       })
     }

@@ -1,7 +1,7 @@
 import { Platform, Arch } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, getTestAsset, app } from "./helpers/packTester"
-import { copy, outputFile } from "fs-extra-p"
+import { copy, outputFile, readJson } from "fs-extra-p"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
@@ -19,6 +19,11 @@ test("one-click", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   devMetadata: {
     build: {
+      publish: {
+        provider: "bintray",
+        owner: "actperepo",
+        package: "TestApp",
+      },
       // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
       // productName: "TestApp",
     }
@@ -26,8 +31,14 @@ test("one-click", app({
 }, {
   useTempDir: true,
   signed: true,
-  packed: context => {
-    return doTest(context.outDir, true)
+  packed: async (context) => {
+    await doTest(context.outDir, true)
+
+    assertThat(await readJson(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), ".app-update.json"))).hasProperties({
+      provider: "bintray",
+      owner: "actperepo",
+      package: "TestApp",
+    })
   }
 }))
 

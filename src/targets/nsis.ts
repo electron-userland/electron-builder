@@ -5,12 +5,13 @@ import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, TargetEx } from "../platformPackager"
+import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
 import { unlink, readFile } from "fs-extra-p"
 import semver = require("semver")
 import { NsisOptions } from "../options/winOptions"
+import { writeJson } from "fs-extra-p"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -25,7 +26,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 
 export default class NsisTarget extends TargetEx {
-  private readonly options: NsisOptions
+  private readonly options: NsisOptions = this.packager.info.devMetadata.build.nsis || Object.create(null)
 
   private archs: Map<Arch, Promise<string>> = new Map()
 
@@ -33,15 +34,17 @@ export default class NsisTarget extends TargetEx {
 
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
-
-    this.options = packager.info.devMetadata.build.nsis || Object.create(null)
-
-    // CFBundleTypeName
-    // https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685
-    // CFBundleTypeExtensions
   }
 
   async build(appOutDir: string, arch: Arch) {
+    const publishConfigs = getPublishConfigs(this.packager, this.options)
+    if (publishConfigs != null && publishConfigs.length > 0) {
+      const publishConfig = await getResolvedPublishConfig(this.packager.info, publishConfigs[0], true)
+      if (publishConfig != null) {
+        writeJson(path.join(appOutDir, "resources", ".app-update.json"), publishConfig)
+      }
+    }
+
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
     this.archs.set(arch, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, false, true))
