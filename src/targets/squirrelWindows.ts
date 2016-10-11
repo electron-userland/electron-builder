@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { getArchSuffix, Target } from "../platformPackager"
+import { getArchSuffix, TargetEx } from "../platformPackager"
 import { Arch } from "../metadata"
 import * as path from "path"
 import { warn, log } from "../util/log"
@@ -15,14 +15,14 @@ const SW_VERSION = "1.4.4"
 //noinspection SpellCheckingInspection
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
-export default class SquirrelWindowsTarget extends Target {
+export default class SquirrelWindowsTarget extends TargetEx {
   private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.squirrelWindows)
 
   constructor(private packager: WinPackager) {
     super("squirrel")
   }
 
-  async build(arch: Arch, appOutDir: string) {
+  async build(appOutDir: string, arch: Arch) {
     if (arch === Arch.ia32) {
       warn("For windows consider only distributing 64-bit, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }

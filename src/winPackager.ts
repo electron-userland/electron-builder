@@ -1,6 +1,6 @@
 import { downloadCertificate } from "./codeSign"
 import { Promise as BluebirdPromise } from "bluebird"
-import { PlatformPackager, BuildInfo, getArchSuffix, Target } from "./platformPackager"
+import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import * as path from "path"
 import { log, task } from "./util/log"
@@ -117,10 +117,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
   }
 
-  protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return path.join(outDir, `win${getArchSuffix(arch)}-unpacked`)
-  }
-
   async sign(file: string) {
     const cscInfo = await this.cscInfo
     if (cscInfo != null) {
@@ -181,11 +177,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
-      if (target instanceof SquirrelWindowsTarget) {
-        promises.push(task(`Building Squirrel.Windows installer`, target.build(arch, appOutDir)))
-      }
-      else if (target instanceof NsisTarget) {
-        promises.push(target.build(arch, appOutDir))
+      if (target instanceof TargetEx) {
+        promises.push(task(`Building ${target.name} ${Arch[arch]} installer`, target.build(appOutDir, arch)))
       }
       else {
         const format = target.name
