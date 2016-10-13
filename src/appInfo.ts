@@ -42,19 +42,26 @@ export class AppInfo {
   }
 
   get id(): string {
-    const appId = this.devMetadata.build["app-bundle-id"]
+    let appId = this.devMetadata.build["app-bundle-id"]
     if (appId != null) {
       warn("app-bundle-id is deprecated, please use appId")
     }
 
     if (this.devMetadata.build.appId != null) {
-      return this.devMetadata.build.appId
+      appId = this.devMetadata.build.appId
     }
 
-    if (appId == null) {
+    const generateDefaultAppId = () => {
       return `com.electron.${this.metadata.name.toLowerCase()}`
     }
-    return appId
+
+    if (appId === "your.id" || isEmptyOrSpaces(appId)) {
+      const incorrectAppId = appId
+      appId = generateDefaultAppId()
+      warn(`Do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)
+    }
+
+    return appId == null ? generateDefaultAppId() : appId
   }
 
   get name(): string {

@@ -4,7 +4,7 @@ import { log, warn } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import { Promise as BluebirdPromise } from "bluebird"
-import { debug, use, exec, statOrNull } from "../util/util"
+import { debug, use, exec, statOrNull, isEmptyOrSpaces } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 
@@ -79,7 +79,17 @@ export class DmgTarget extends Target {
         ]
       }
 
-      const location: DmgContent = contents.find(it => it.path == null && it.type !== "link")!
+      let location = contents.find(it => it.path == null && it.type !== "link")
+      if (location == null) {
+        location = contents.find(it => {
+          if (it.path != null && it.path.endsWith(".app") && it.type !== "link") {
+            warn(`Do not specify path for application: "${it.path}". Actual path to app will be used instead.`)
+            return true
+          }
+          return false
+        })!
+      }
+
       const applicationsLocation: DmgContent = contents.find(it => it.type === "link" && (it.path === "/Applications" || it.path === "Applications"))!
 
       const window = specification.window!
@@ -181,13 +191,22 @@ export class DmgTarget extends Target {
     }
 
     if (specification.title != null) {
-      warn("dmg.title is not supported, file issue if need")
+      if (specification.title === packager.appInfo.productName) {
+        warn(`Do not specify unnecessary dmg.title ("${specification.title}") — application name ("${packager.appInfo.productFilename}") is used by default`)
+      }
+      else {
+        warn("dmg.title is not supported, file issue if need")
+      }
     }
 
     if (!("icon" in specification)) {
       use(await packager.getIconPath(), it => {
         specification.icon = it
       })
+    }
+
+    if (specification.icon != null && isEmptyOrSpaces(specification.icon)) {
+      throw new Error("dmg.icon cannot be specified as empty string")
     }
 
     if (specification["background-color"] != null) {
