@@ -16,8 +16,8 @@
     "skipLibCheck": true
   },
   "declaration": {
-    "electron-updater": "out/electron-updater.d.ts",
-    "": "../test/typings/electron-updater.d.ts"
+    "electron-auto-updater": "out/electron-auto-updater.d.ts",
+    "": "../test/typings/electron-auto-updater.d.ts"
   },
   "files": [
     "../node_modules/@types/node/index.d.ts",

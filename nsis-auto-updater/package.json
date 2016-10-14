@@ -1,5 +1,5 @@
 {
-  "name": "electron-updater",
+  "name": "electron-auto-updater",
   "version": "0.0.1",
   "description": "NSIS Auto Updater",
   "main": "out/nsis-auto-updater/src/main.js",
@@ -25,5 +25,5 @@
     "ini",
     "tunnel-agent"
   ],
-  "typings": "./out/electron-updater.d.ts"
+  "typings": "./out/electron-auto-updater.d.ts"
 }
