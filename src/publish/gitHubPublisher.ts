@@ -35,17 +35,22 @@ export class GitHubPublisher implements Publisher {
   private readonly token: string
   private readonly policy: PublishPolicy
 
+  private readonly options: PublishOptions
+
   get releasePromise(): Promise<Release | null> {
     return this._releasePromise
   }
 
-  constructor(private owner: string, private repo: string, private version: string, private options: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubOptions | null) {
-    if (isEmptyOrSpaces(options.githubToken)) {
-      throw new Error("GitHub Personal Access Token is not specified")
+  constructor(private info: GithubOptions, private version: string, options?: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubOptions | null) {
+    let token = info.token
+    if (isEmptyOrSpaces(token)) {
+      token = process.env.GH_TOKEN
+      throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
     }
 
-    this.token = options.githubToken!
-    this.policy = options.publish || "always"
+    this.token = token!
+    this.options = options || {}
+    this.policy = this.options.publish || "always"
 
     if (version.startsWith("v")) {
       throw new Error(`Version must not starts with "v": ${version}`)
@@ -58,7 +63,7 @@ export class GitHubPublisher implements Publisher {
   private async init(): Promise<Release | null> {
     const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
-    const releases = await githubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
+    const releases = await githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (let release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
         if (release.draft) {
@@ -120,10 +125,10 @@ export class GitHubPublisher implements Publisher {
           if (e.response.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
             log(`Artifact ${fileName} already exists, overwrite one`)
-            const assets = await githubRequest<Array<Asset>>(`/repos/${this.owner}/${this.repo}/releases/${release.id}/assets`, this.token)
+            const assets = await githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token)
             for (let asset of assets) {
               if (asset!.name === fileName) {
-                await githubRequest<void>(`/repos/${this.owner}/${this.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
+                await githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
                 continue uploadAttempt
               }
             }
@@ -142,7 +147,7 @@ export class GitHubPublisher implements Publisher {
   }
 
   private createRelease() {
-    return githubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases`, this.token, {
+    return githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.version,
       draft: this.options.draft == null || this.options.draft,
@@ -153,7 +158,7 @@ export class GitHubPublisher implements Publisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return githubRequest<Release>(`/repos/${this.owner}/${this.repo}/releases/${this._releasePromise.value().id}`, this.token)
+    return githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${this._releasePromise.value().id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -169,7 +174,7 @@ export class GitHubPublisher implements Publisher {
 
     for (let i = 0; i < 3; i++) {
       try {
-        return await githubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
+        return await githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
       }
       catch (e) {
         if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {

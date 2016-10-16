@@ -12,6 +12,7 @@ import { unlink, readFile } from "fs-extra-p"
 import semver = require("semver")
 import { NsisOptions } from "../options/winOptions"
 import { writeJson } from "fs-extra-p"
+import { PublishConfiguration } from "../options/publishOptions"
 
 //noinspection JSUnusedLocalSymbols
 const __awaiter = require("../util/awaiter")
@@ -32,22 +33,36 @@ export default class NsisTarget extends TargetEx {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
+  private readonly publishConfig = this.computePublishConfig()
+
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
   }
 
-  async build(appOutDir: string, arch: Arch) {
+  private computePublishConfig(): Promise<PublishConfiguration | null> {
     const publishConfigs = getPublishConfigs(this.packager, this.options)
     if (publishConfigs != null && publishConfigs.length > 0) {
-      const publishConfig = await getResolvedPublishConfig(this.packager.info, publishConfigs[0], true)
-      if (publishConfig != null) {
-        writeJson(path.join(appOutDir, "resources", ".app-update.json"), publishConfig)
-      }
+      return getResolvedPublishConfig(this.packager.info, publishConfigs[0], true)
+    }
+    else {
+      return BluebirdPromise.resolve(null)
+    }
+  }
+
+  build(appOutDir: string, arch: Arch) {
+    this.archs.set(arch, this.doBuild(appOutDir, arch))
+    return BluebirdPromise.resolve(null)
+  }
+
+  private async doBuild(appOutDir: string, arch: Arch) {
+    const publishConfig = await this.publishConfig
+    if (publishConfig != null) {
+      await writeJson(path.join(appOutDir, "resources", ".app-update.json"), publishConfig)
     }
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
-    this.archs.set(arch, archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, false, true))
+    return await archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, false, true)
   }
 
   finishBuild(): Promise<any> {

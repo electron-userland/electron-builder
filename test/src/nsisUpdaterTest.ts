@@ -48,9 +48,19 @@ test("file url", async () => {
   g.__test_resourcesPath = testResourcesPath
   const updater: NsisUpdater = new NsisUpdaterClass()
 
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
+  for (let eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
   const updateCheckResult = await updater.checkForUpdates()
   assertThat(updateCheckResult.fileInfo).hasProperties({
     url: "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe"
   })
   assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  assertThat(actualEvents).isEqualTo(expectedEvents)
 })

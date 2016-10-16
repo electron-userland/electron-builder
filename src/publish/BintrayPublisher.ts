@@ -3,7 +3,7 @@ import { Promise as BluebirdPromise } from "bluebird"
 import { HttpError, doApiRequest } from "./restApiRequest"
 import { uploadFile } from "./uploader"
 import { log } from "../util/log"
-import { debug } from "../util/util"
+import { debug, isEmptyOrSpaces } from "../util/util"
 import { basename } from "path"
 import { stat } from "fs-extra-p"
 import { BintrayClient, Version } from "./bintray"
@@ -17,8 +17,16 @@ export class BintrayPublisher implements Publisher {
 
   private readonly client: BintrayClient
 
-  constructor(private info: BintrayOptions, private version: string, private options: PublishOptions) {
-    this.client = new BintrayClient(info.owner!, info.package!, info.repo, options.bintrayToken)
+  constructor(private info: BintrayOptions, private version: string, private options?: PublishOptions) {
+    let token = info.token
+    if (isEmptyOrSpaces(token)) {
+      token = process.env.BT_TOKEN
+      if (isEmptyOrSpaces(token)) {
+        throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN"`)
+      }
+    }
+
+    this.client = new BintrayClient(info.owner!, info.package!, info.repo, token)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 
@@ -28,7 +36,7 @@ export class BintrayPublisher implements Publisher {
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        if (this.options.publish !== "onTagOrDraft") {
+        if (this.options != null && this.options.publish !== "onTagOrDraft") {
           log(`Version ${this.version} doesn't exist, creating one`)
           return this.client.createVersion(this.version)
         }

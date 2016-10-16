@@ -107,6 +107,7 @@
       <w>repos</w>
       <w>rimraf</w>
       <w>semver</w>
+      <w>shorthash</w>
       <w>signcode</w>
       <w>signtool</w>
       <w>srcfolder</w>

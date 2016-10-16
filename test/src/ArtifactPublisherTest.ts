@@ -54,7 +54,7 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
 test("Bintray upload", async () => {
   const version = versionNumber()
   //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher({provider: "bintray", owner: "actperepo", package: "test", repo: "generic"}, version, {bintrayToken: "5df2cadec86dff91392e4c419540785813c3db15"})
+  const publisher = new BintrayPublisher({provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
   try {
     const artifactName = `icon-${version}.icns`
     await publisher.upload(iconPath, artifactName)
@@ -66,9 +66,7 @@ test("Bintray upload", async () => {
 })
 
 testAndIgnoreApiRate("GitHub upload", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
-    githubToken: token
-  })
+  const publisher = new GitHubPublisher({provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber())
   try {
     await publisher.upload(iconPath)
     // test overwrite
@@ -80,8 +78,7 @@ testAndIgnoreApiRate("GitHub upload", async () => {
 })
 
 testAndIgnoreApiRate("prerelease", async () => {
-  const publisher = new GitHubPublisher("actperepo", "ecb2", versionNumber(), {
-    githubToken: token,
+  const publisher = new GitHubPublisher({provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber(), {
     draft: false,
     prerelease: true,
   })
@@ -100,9 +97,7 @@ testAndIgnoreApiRate("prerelease", async () => {
 
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
-  const publisher = new GitHubPublisher("builder-gh-test", "darpa", versionNumber(), {
-      githubToken: token
-    })
+  const publisher = new GitHubPublisher({provider: "github", owner: "builder-gh-test", repo: "darpa", token: token}, versionNumber())
   try {
     await publisher.upload(iconPath)
   }
@@ -120,9 +115,7 @@ test("create publisher", async () => {
       repository: "develar/test"
     },
   }
-  const publisher = await createPublisher(packager, {
-    githubToken: "__test__",
-  }, {provider: "github", vPrefixedTagName: false})
+  const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: token})
 
   assertThat(publisher).hasProperties({
     "owner": "develar",

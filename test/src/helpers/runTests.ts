@@ -1,7 +1,7 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { Promise as BluebirdPromise } from "bluebird"
-import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, remove } from "fs-extra-p"
+import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, removeSync } from "fs-extra-p"
 import { Platform } from "out/metadata"
 import { cpus, homedir, tmpdir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
@@ -22,10 +22,11 @@ const testPackageDir = path.join(tmpdir(), "electron_builder_published")
 const testNodeModules = path.join(testPackageDir, "node_modules")
 
 async function main() {
+  const testDir = TEST_DIR
   await BluebirdPromise.all([
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
-    emptyDir(TEST_DIR),
+    emptyDir(testDir),
     outputFile(path.join(testPackageDir, "package.json"), `{
       "private": true,
       "version": "1.0.0",
@@ -42,11 +43,16 @@ async function main() {
   await exec(["install", "--cache-min", "999999999", "--production", rootDir])
   // prune stale packages
   await exec(["prune", "--production"])
+
+  process.on("SIGINT", () => {
+    removeSync(testDir)
+  })
+
   try {
     await runTests()
   }
   finally {
-    await remove(TEST_DIR)
+    removeSync(testDir)
   }
 }
 

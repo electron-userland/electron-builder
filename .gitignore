@@ -1,7 +1,6 @@
 node_modules/
 *.log
 out/
-npm-debug.log
 dist/
 /.idea/compiler.xml
 /.idea/encodings.xml
@@ -15,4 +14,3 @@ dist/
 .idea/shelf/
 /test/typings/electron-builder.d.ts
 /test/typings/electron-auto-updater.d.ts
-/nsis-auto-updater/nm

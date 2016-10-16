@@ -82,7 +82,7 @@ export default class SquirrelWindowsTarget extends TargetEx {
     }, this.options)
 
     if (options.remoteToken == null) {
-      options.remoteToken = packager.info.options.githubToken
+      options.remoteToken = process.env.GH_TOKEN
     }
 
     if (!("loadingGif" in options)) {

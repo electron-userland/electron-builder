@@ -87,7 +87,7 @@ export class Target {
 }
 
 export abstract class TargetEx extends Target {
-  abstract async build(appOutDir: string, arch: Arch): Promise<any>
+  abstract build(appOutDir: string, arch: Arch): Promise<any>
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -537,11 +537,11 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
       return null
     }
 
-    if (publishers == null && packager.info.options.githubToken != null) {
+    if (publishers == null && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
       publishers = [{provider: "github"}]
     }
     // if both tokens are set — still publish to github (because default publisher is github)
-    if (publishers == null && packager.info.options.bintrayToken != null) {
+    if (publishers == null && !isEmptyOrSpaces(process.env.BT_TOKEN)) {
       publishers = [{provider: "bintray"}]
     }
   }

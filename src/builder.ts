@@ -193,12 +193,6 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   if (options.cscInstallerKeyPassword === undefined && !isEmptyOrSpaces(process.env.CSC_INSTALLER_KEY_PASSWORD)) {
     options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
   }
-  if (options.githubToken === undefined && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
-    options.githubToken = process.env.GH_TOKEN
-  }
-  if (options.bintrayToken === undefined && !isEmptyOrSpaces(process.env.BT_TOKEN)) {
-    options.bintrayToken = process.env.BT_TOKEN
-  }
 
   if (options.draft === undefined && !isEmptyOrSpaces(process.env.EP_DRAFT)) {
     options.draft = process.env.EP_DRAFT.toLowerCase() === "true"
@@ -212,7 +206,7 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
     if (process.env.npm_lifecycle_event === "release") {
       options.publish = "always"
     }
-    else if (options.githubToken != null) {
+    else if (isAuthTokenSet() ) {
       const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
       if (!isEmptyOrSpaces(tag)) {
         log(`Tag ${tag} is defined, so artifacts will be published`)
@@ -231,7 +225,8 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   const publishTasks: Array<BluebirdPromise<any>> = []
 
   if (options.publish != null && options.publish !== "never") {
-    if (options.githubToken != null || options.bintrayToken != null) {
+    // todo if token set as option
+    if (isAuthTokenSet()) {
       publishManager(packager, publishTasks, options, isPublishOptionGuessed)
     }
     else if (isCi()) {
@@ -252,6 +247,10 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
   })
 }
 
+function isAuthTokenSet() {
+  return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
+}
+
 function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: BuildOptions, isPublishOptionGuessed: boolean) {
   const nameToPublisher = new Map<string, Promise<Publisher>>()
   packager.artifactCreated(event => {
@@ -266,7 +265,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
       const provider = publishConfig.provider
       let publisher = nameToPublisher.get(provider)
       if (publisher == null) {
-        publisher = createPublisher(packager, options, publishConfig, isPublishOptionGuessed)
+        publisher = createPublisher(packager, publishConfig, options, isPublishOptionGuessed)
         nameToPublisher.set(provider, publisher)
       }
 
@@ -278,7 +277,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
   })
 }
 
-export async function createPublisher(packager: Packager, options: PublishOptions, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options?: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
   if (config == null) {
     return null
@@ -288,7 +287,7 @@ export async function createPublisher(packager: Packager, options: PublishOption
   if (publishConfig.provider === "github") {
     const githubInfo: GithubOptions = config
     log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
-    return new GitHubPublisher(githubInfo.owner!, githubInfo.repo!, version, options, isPublishOptionGuessed, githubInfo)
+    return new GitHubPublisher(githubInfo, version, options, isPublishOptionGuessed, githubInfo)
   }
   if (publishConfig.provider === "bintray") {
     const bintrayInfo: BintrayOptions = config

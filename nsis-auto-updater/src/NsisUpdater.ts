@@ -83,33 +83,38 @@ export class NsisUpdater extends EventEmitter {
     this.updateAvailable = true
     this.emit("update-available")
 
-    const mkdtemp: any = BluebirdPromise.promisify(require("fs").mkdtemp)
+    const mkdtemp: (prefix: string) => Promise<string> = require("fs-extra-p").mkdtemp
     return {
       versionInfo: versionInfo,
       fileInfo: fileInfo,
       downloadPromise: mkdtemp(`${path.join(tmpdir(), "up")}-`)
-        .then((it: string) => {
-          this.setupPath = path.join(it, fileInfo.name)
-          return download(fileInfo.url, this.setupPath)
-        }),
+        .then(it => download(fileInfo.url, path.join(it, fileInfo.name)))
+        .then(it => {
+          this.setupPath = it
+          this.emit("update-downloaded", {}, null, versionInfo.version, null, null, () => {
+            this.quitAndInstall()
+          })
+          return it
+        })
+        .catch(error => this.emitError(error)),
     }
   }
 
   quitAndInstall(): void {
+    if (this.quitAndInstallCalled) {
+      return
+    }
+
     const setupPath = this.setupPath
     if (!this.updateAvailable || setupPath == null) {
       this.emitError("No update available, can't quit and install")
       return
     }
 
-    if (this.quitAndInstallCalled) {
-      return
-    }
-
     // prevent calling several times
     this.quitAndInstallCalled = true
 
-    spawn(setupPath!!, ["/S"], {
+    spawn(setupPath, ["/S"], {
       detached: true,
       stdio: "ignore",
     }).unref()

@@ -51,6 +51,7 @@ interface PackedContext {
 }
 
 let tmpDirCounter = 0
+const testDir = path.join(TEST_DIR, process.pid.toString(16))
 
 export function appThrows(error: RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
   return (t: AssertContext) => t.throws(assertPack("test-app-one", packagerOptions, checkOptions), error)
@@ -74,7 +75,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   let dirToDelete: string | null = null
   if (useTempDir) {
     // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(TEST_DIR, `${(tmpDirCounter++).toString(16)}`) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? path.join(testDir, `${(tmpDirCounter++).toString(16)}`) : path.resolve(customTmpDir)
     if (customTmpDir == null) {
       dirToDelete = dir
     }
@@ -101,7 +102,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
     // never output to test fixture app
     if (!useTempDir) {
-      dirToDelete = path.join(TEST_DIR, `${(tmpDirCounter++).toString(16)}`)
+      dirToDelete = path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
       const devMetadata = packagerOptions.devMetadata
       if (devMetadata != null && devMetadata.directories != null) {
         throw new Error("unsupported")

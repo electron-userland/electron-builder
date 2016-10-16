@@ -23,12 +23,13 @@
     "pretest": "npm run compile && npm run lint && npm run pack-updater",
     "test": "node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
-    "pack-updater": "cd nsis-auto-updater && npm install --production --no-bin-links && npm prune --production && cd ..",
+    "pack-updater": "cd nsis-auto-updater && npm install --production --no-bin-links && cd ..",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
-    "docker-images": "docker/build.sh"
+    "docker-images": "docker/build.sh",
+    "precommit": "validate-commit-msg"
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
@@ -93,14 +94,6 @@
     "uuid-1345": "^0.99.6",
     "yargs": "^6.0.0"
   },
-  "config": {
-    "pre-git": {
-      "commit-msg": "conventional"
-    },
-    "pre-commit": [
-      "npm run whitespace"
-    ]
-  },
   "devDependencies": {
     "@develar/semantic-release": "^6.3.6",
     "@types/debug": "0.0.29",
@@ -108,19 +101,20 @@
     "@types/progress": "^1.1.28",
     "@types/semver": "^5.3.30",
     "@types/source-map-support": "^0.2.28",
-    "ava-tf": "^0.16.0",
+    "ava-tf": "^0.16.2",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-es2015-destructuring": "^6.16.0",
     "babel-plugin-transform-es2015-parameters": "^6.17.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",
     "decompress-zip": "^0.3.0",
     "diff": "^3.0.1",
+    "husky": "^0.11.9",
     "json8": "^0.9.2",
     "path-sort": "^0.1.0",
-    "pre-git": "^3.10.0",
     "ts-babel": "^1.0.13",
     "tslint": "^3.15.1",
     "typescript": "^2.0.3",
+    "validate-commit-msg": "^2.8.2",
     "whitespace": "^2.1.0"
   },
   "babel": {

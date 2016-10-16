@@ -18,6 +18,8 @@ export interface PublishConfiguration {
   The owner.
    */
   owner?: string
+
+  token?: string
 }
 
 /*
