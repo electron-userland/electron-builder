@@ -88,7 +88,7 @@
     "read-installed": "^4.0.3",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.3.0",
-    "source-map-support": "^0.4.3",
+    "source-map-support": "^0.4.4",
     "tunnel-agent": "^0.4.3",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",

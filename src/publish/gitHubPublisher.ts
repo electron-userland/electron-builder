@@ -45,7 +45,9 @@ export class GitHubPublisher implements Publisher {
     let token = info.token
     if (isEmptyOrSpaces(token)) {
       token = process.env.GH_TOKEN
-      throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
+      if (isEmptyOrSpaces(token)) {
+        throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
+      }
     }
 
     this.token = token!

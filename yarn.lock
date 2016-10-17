@@ -267,8 +267,8 @@ async-each@^1.0.0:
   resolved "https://registry.yarnpkg.com/async-each/-/async-each-1.0.1.tgz#19d386a1d9edc6e7c1c85d388aedbcc56d33602d"
 
 async@^2.0.0:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/async/-/async-2.1.1.tgz#e11b6d10043f2254efb61a21163d840ccddb8d28"
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/async/-/async-2.1.2.tgz#612a4ab45ef42a70cde806bad86ee6db047e8385"
   dependencies:
     lodash "^4.14.0"
 
@@ -3943,8 +3943,8 @@ yargs-parser@^4.0.2:
     camelcase "^3.0.0"
 
 yargs@^6.0.0:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-6.1.1.tgz#95968cdd9bda89d973215b43969b2c82ce0c8032"
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-6.2.0.tgz#9001048953def85495a2ce1dcfa690b7ab060fd1"
   dependencies:
     camelcase "^3.0.0"
     cliui "^3.2.0"
