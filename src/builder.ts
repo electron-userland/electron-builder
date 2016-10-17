@@ -277,7 +277,9 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
   })
 }
 
-export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options?: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+// visible only for tests
+// call only from this file or from tests
+export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
   if (config == null) {
     return null
@@ -287,7 +289,7 @@ export async function createPublisher(packager: Packager, publishConfig: Publish
   if (publishConfig.provider === "github") {
     const githubInfo: GithubOptions = config
     log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
-    return new GitHubPublisher(githubInfo, version, options, isPublishOptionGuessed, githubInfo)
+    return new GitHubPublisher(githubInfo, version, options, isPublishOptionGuessed)
   }
   if (publishConfig.provider === "bintray") {
     const bintrayInfo: BintrayOptions = config

@@ -168,7 +168,7 @@ function runTests(): BluebirdPromise<any> {
     args.push("test/out/*.js", "!test/out/macPackagerTest.js", "!test/out/linuxPackagerTest.js", "!test/out/CodeSignTest.js", "!test/out/ArtifactPublisherTest.js", "!test/out/httpRequestTest.js")
   }
   else if (!util.isCi()) {
-    args.push("test/out/*.js", "!test/out/ArtifactPublisherTest.js", "!test/out/httpRequestTest.js")
+    args.push("test/out/*.js", "!test/out/httpRequestTest.js")
   }
 
   return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {

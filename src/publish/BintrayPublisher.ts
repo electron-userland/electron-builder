@@ -17,7 +17,7 @@ export class BintrayPublisher implements Publisher {
 
   private readonly client: BintrayClient
 
-  constructor(private info: BintrayOptions, private version: string, private options?: PublishOptions) {
+  constructor(private readonly info: BintrayOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
     let token = info.token
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
@@ -36,7 +36,7 @@ export class BintrayPublisher implements Publisher {
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        if (this.options != null && this.options.publish !== "onTagOrDraft") {
+        if (this.options.publish !== "onTagOrDraft") {
           log(`Version ${this.version} doesn't exist, creating one`)
           return this.client.createVersion(this.version)
         }

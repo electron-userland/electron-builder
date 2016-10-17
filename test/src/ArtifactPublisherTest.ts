@@ -115,12 +115,17 @@ test("create publisher", async () => {
       repository: "develar/test"
     },
   }
-  const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: token})
+  const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
 
   assertThat(publisher).hasProperties({
-    "owner": "develar",
-    "repo": "test",
-    "token": "__test__",
+    info: {
+      provider: "github",
+      vPrefixedTagName: false,
+      owner: "develar",
+      repo: "test",
+      token: "__test__",
+    },
+    token: "__test__",
     "version": "2.0.0",
     "tag": "2.0.0",
   })

@@ -35,13 +35,11 @@ export class GitHubPublisher implements Publisher {
   private readonly token: string
   private readonly policy: PublishPolicy
 
-  private readonly options: PublishOptions
-
   get releasePromise(): Promise<Release | null> {
     return this._releasePromise
   }
 
-  constructor(private info: GithubOptions, private version: string, options?: PublishOptions, private isPublishOptionGuessed: boolean = false, config?: GithubOptions | null) {
+  constructor(private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}, private readonly isPublishOptionGuessed: boolean = false) {
     let token = info.token
     if (isEmptyOrSpaces(token)) {
       token = process.env.GH_TOKEN
@@ -58,7 +56,7 @@ export class GitHubPublisher implements Publisher {
       throw new Error(`Version must not starts with "v": ${version}`)
     }
 
-    this.tag = config != null && config.vPrefixedTagName === false ? version : `v${version}`
+    this.tag = info.vPrefixedTagName === false ? version : `v${version}`
     this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : <BluebirdPromise<Release>>this.init()
   }
 
