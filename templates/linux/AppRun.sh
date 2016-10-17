@@ -2,26 +2,13 @@
 
 set -e
 
-if [ -z "$APPDIR" ] ; then
-  APPDIR=$(dirname $(readlink -f "${0}"))
-fi
-
-echo "$APPDIR"
-
-THIS="$0"
-
-export PATH="${APPDIR}/usr/bin:${APPDIR}/usr/sbin:${PATH}"
-export XDG_DATA_DIRS="./share/:${XDG_DATA_DIRS}"
-export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
-export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS}"
-export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
-
 # Be verbose if $DEBUG=1 is set
 if [ ! -z "$DEBUG" ] ; then
   env
   set -x
 fi
 
+THIS="$0"
 args=("$@") # http://stackoverflow.com/questions/3190818/
 NUMBER_OF_ARGS="$#"
 
@@ -29,6 +16,28 @@ NUMBER_OF_ARGS="$#"
 # belonging to AppImages to be recognized by future AppImageKit components
 # such as desktop integration daemons
 VENDORPREFIX=appimagekit
+
+find-up () {
+  path="$(dirname "$(readlink -f "${THIS}")")"
+  while [[ "$path" != "" && ! -e "$path/$1" ]]; do
+    path=${path%/*}
+  done
+  # echo "$path"
+}
+
+if [ -z $APPDIR ] ; then
+  # Find the AppDir. It is the directory that contains AppRun.
+  # This assumes that this script resides inside the AppDir or a subdirectory.
+  # If this script is run inside an AppImage, then the AppImage runtime
+  # likely has already set $APPDIR
+  APPDIR=$(find-up "AppRun")
+fi
+
+export PATH="${APPDIR}/usr/bin:${APPDIR}/usr/sbin:${PATH}"
+export XDG_DATA_DIRS="./share/:${XDG_DATA_DIRS}"
+export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
+export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS}"
+export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
 
 trap atexit EXIT
 
@@ -38,12 +47,8 @@ trap atexit EXIT
 # http://stackoverflow.com/questions/3190818
 atexit()
 {
-if [ "$NUMBER_OF_ARGS" -eq 0 ] ; then
-#  if [ -z $(which "gtk-launch") ] ; then
-    exec "${BIN}"
-#  else
-#    gtk-launch "${DESKTOP_FILE}"
-#  fi
+if [ $NUMBER_OF_ARGS -eq 0 ] ; then
+  exec "${BIN}"
 else
   exec "${BIN}" "${args[@]}"
 fi
@@ -68,7 +73,7 @@ yesno()
   TITLE=$1
   TEXT=$2
   if [ -x /usr/bin/zenity ] ; then
-    LD_LIBRARY_PATH="" zenity --question --title="$TITLE" --text="$TEXT" || exit 0
+    LD_LIBRARY_PATH="" zenity --question --title="$TITLE" --text="$TEXT" 2>/dev/null || exit 0
   elif [ -x /usr/bin/kdialog ] ; then
     LD_LIBRARY_PATH="" kdialog --caption "Disk auswerfen?" --title "$TITLE" -yesno "$TEXT" || exit 0
   elif [ -x /usr/bin/Xdialog ] ; then
@@ -188,22 +193,22 @@ if [ -z "$SKIP" ] ; then
   xdg-icon-resource uninstall --noupdate --size 1024 "$RESOURCE_NAME"
 
   # Install the icon files for the application
-  ICONS=$(find "$APPDIR/usr/share/icons/" -path "*/apps/$APP.png" || true)
+  ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/apps/${APP}.png" 2>/dev/null || true)
   for ICON in $ICONS ; do
-    ICON_SIZE=$(echo "$ICON" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
-    xdg-icon-resource install --noupdate --context apps --size "$ICON_SIZE" "$ICON" "$RESOURCE_NAME"
+    ICON_SIZE=$(echo "${ICON}" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
+    xdg-icon-resource install --context apps --size ${ICON_SIZE} "${ICON}" "${RESOURCE_NAME}"
   done
 
   xdg-icon-resource forceupdate
 
   # Install mime type
-  find "$APPDIR/usr/share/mime/" -type f -name "*xml" -exec xdg-mime install ${SYSTEM_WIDE} --novendor {} \; 2>/dev/null || true
+  find "${APPDIR}/usr/share/mime/" -type f -name *xml -exec xdg-mime install $SYSTEM_WIDE --novendor {} \; 2>/dev/null || true
 
   # Install the icon files for the mime type; TODO: scalable
   ICONS=$(find "${APPDIR}/usr/share/icons/" -wholename "*/mimetypes/*.png" 2>/dev/null || true)
   for ICON in $ICONS ; do
-    ICON_SIZE=$(echo "$ICON" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
-    xdg-icon-resource install --context mimetypes --size "$ICON_SIZE" "$ICON" $(basename "$ICON" | sed -e 's/.png//g')
+    ICON_SIZE=$(echo "${ICON}" | rev | cut -d "/" -f 3 | rev | cut -d "x" -f 1)
+    xdg-icon-resource install --context mimetypes --size ${ICON_SIZE} "${ICON}" $(basename $ICON | sed -e 's/.png//g')
   done
 
   xdg-desktop-menu forceupdate
