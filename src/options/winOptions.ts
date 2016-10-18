@@ -103,6 +103,11 @@ export interface NsisOptions {
   readonly script?: string | null
 
   /*
+  The path to EULA license file. Defaults to `build/license.rtf` or `build/license.txt`.
+   */
+  readonly license?: string | null
+
+  /*
    * [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
    */
   readonly language?: string | null

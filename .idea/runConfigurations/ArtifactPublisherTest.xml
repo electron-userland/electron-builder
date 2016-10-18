@@ -8,7 +8,7 @@
       <profiling v8-profiler-path="" />
     </EXTENSION>
     <method>
-      <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="true" CONFIG_PATH="" />
+      <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="true" />
     </method>
   </configuration>
 </component>

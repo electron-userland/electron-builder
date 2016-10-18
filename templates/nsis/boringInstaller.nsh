@@ -12,6 +12,10 @@
   !define MUI_FINISHPAGE_RUN
   !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
+  !ifdef LICENSE_FILE
+    !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+  !endif
+
   !ifndef INSTALL_MODE_PER_ALL_USERS
     !insertmacro PAGE_INSTALL_MODE
     Function GuiInit
@@ -20,6 +24,7 @@
 
     !define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
   !endif
+
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 !else

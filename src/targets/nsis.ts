@@ -176,6 +176,11 @@ export default class NsisTarget extends TargetEx {
       return
     }
 
+    const licenseFile = await this.packager.getResource(this.options.license, "license.rtf", "license.txt")
+    if (licenseFile != null) {
+      defines.LICENSE_FILE = licenseFile
+    }
+
     const customScriptPath = await this.packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
 

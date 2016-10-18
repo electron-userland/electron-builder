@@ -1,7 +1,7 @@
 !include "nsProcess.nsh"
 
 # http://nsis.sourceforge.net/Allow_only_one_installer_instance
-!macro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+!macro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
   BringToFront
   !define /ifndef SYSTYPE_PTR p ; NSIS v3.0+
   System::Call 'kernel32::CreateMutex(${SYSTYPE_PTR}0, i1, t"${APP_GUID}")?e'

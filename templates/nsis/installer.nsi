@@ -1,7 +1,7 @@
 !include "common.nsh"
 !include "MUI2.nsh"
 !include "multiUser.nsh"
-!include "allowOnlyOneInstallerInstace.nsh"
+!include "allowOnlyOneInstallerInstance.nsh"
 
 !ifdef INSTALL_MODE_PER_ALL_USERS
   !ifdef BUILD_UNINSTALLER
@@ -41,10 +41,10 @@ Function .onInit
     !insertmacro initMultiUser
 
     !ifdef ONE_CLICK
-      !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+      !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
     !else
       ${IfNot} ${UAC_IsInnerInstance}
-        !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTACE
+        !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
       ${EndIf}
     !endif
 

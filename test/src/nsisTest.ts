@@ -63,7 +63,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
 }, {
   projectDirCreated: projectDir => {
     let headerIconPath = path.join(projectDir, "build", "foo.ico")
-    return copy(getTestAsset("headerIcon.ico"), headerIconPath)
+    return BluebirdPromise.all([copy(getTestAsset("headerIcon.ico"), headerIconPath), copy(getTestAsset("license.txt"), path.join(projectDir, "build", "license.txt"))])
   },
   packed: context => {
     return doTest(context.outDir, false)
@@ -134,7 +134,12 @@ test.ifNotCiOsx("boring", app({
       },
     }
   }
-}, {signed: true}))
+}, {
+  signed: true,
+  projectDirCreated: projectDir => {
+    return copy(getTestAsset("license.txt"), path.join(projectDir, "build", "license.txt"))
+  },
+}))
 
 test.ifNotCiOsx("boring, only perMachine", app({
   targets: nsisTarget,

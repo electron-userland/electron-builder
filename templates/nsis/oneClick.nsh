@@ -11,6 +11,10 @@
   !endif
 !endif
 
+!ifdef LICENSE_FILE
+  !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+!endif
+
 !insertmacro MUI_PAGE_INSTFILES
 !ifdef BUILD_UNINSTALLER
   !insertmacro MUI_UNPAGE_INSTFILES

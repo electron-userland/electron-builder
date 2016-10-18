@@ -3,6 +3,9 @@
     <words>
       <w>actperepo</w>
       <w>addincludedir</w>
+      <w>adminrequired</w>
+      <w>allusersnotpossible</w>
+      <w>andif</w>
       <w>appdir</w>
       <w>appimage</w>
       <w>appleid</w>
@@ -24,6 +27,7 @@
       <w>cpus</w>
       <w>crypto</w>
       <w>cuint</w>
+      <w>customfunction</w>
       <w>debian</w>
       <w>difflet</w>
       <w>digester</w>
@@ -33,39 +37,50 @@
       <w>electronuserland</w>
       <w>enoent</w>
       <w>eperm</w>
+      <w>finishpage</w>
       <w>fseventsd</w>
       <w>github</w>
       <w>globaldots</w>
       <w>globby</w>
       <w>gnubin</w>
+      <w>goglobal</w>
       <w>graphicsmagick</w>
       <w>grün</w>
       <w>gsettings</w>
       <w>gtar</w>
       <w>guid</w>
+      <w>guiinit</w>
       <w>hdiutil</w>
       <w>headerimage</w>
       <w>hicolor</w>
+      <w>hkcu</w>
+      <w>hklm</w>
       <w>hrtime</w>
       <w>icnsutils</w>
       <w>icnv</w>
       <w>iconset</w>
       <w>iconutil</w>
       <w>idms</w>
+      <w>ifdef</w>
+      <w>ifmacrodef</w>
+      <w>ifndef</w>
       <w>inno</w>
       <w>insertmacro</w>
       <w>installmode</w>
       <w>instdir</w>
+      <w>instfiles</w>
       <w>ircs</w>
       <w>isbinaryfile</w>
       <w>joliet</w>
       <w>keyserver</w>
+      <w>langs</w>
       <w>lcid</w>
       <w>libappindicator</w>
       <w>libexec</w>
       <w>libgcrypt</w>
       <w>libgnome</w>
       <w>libnotify</w>
+      <w>lockfile</w>
       <w>lzfse</w>
       <w>lzip</w>
       <w>lzma</w>
@@ -86,6 +101,7 @@
       <w>noninteractive</w>
       <w>npmrc</w>
       <w>nsis</w>
+      <w>nsisdir</w>
       <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
@@ -95,6 +111,7 @@
       <w>passin</w>
       <w>pkcs</w>
       <w>postinstall</w>
+      <w>powerrequired</w>
       <w>prerelease</w>
       <w>productbuild</w>
       <w>progexe</w>
@@ -110,6 +127,7 @@
       <w>shorthash</w>
       <w>signcode</w>
       <w>signtool</w>
+      <w>smprograms</w>
       <w>srcfolder</w>
       <w>templating</w>
       <w>testapp</w>
@@ -125,6 +143,7 @@
       <w>unicon</w>
       <w>unmounting</w>
       <w>unorm</w>
+      <w>unpage</w>
       <w>userprofile</w>
       <w>valuename</w>
       <w>versioner</w>

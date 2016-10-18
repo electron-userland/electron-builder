@@ -467,18 +467,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return asArray(this.devMetadata.build.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 
-  async getResource(custom: string | n, name: string): Promise<string | null> {
-    let result = custom
-    if (result === undefined) {
+  async getResource(custom: string | n, ...names: Array<string>): Promise<string | null> {
+    if (custom === undefined) {
       const resourceList = await this.resourceList
-      if (resourceList.includes(name)) {
-        return path.join(this.buildResourcesDir, name)
+      for (let name of names) {
+        if (resourceList.includes(name)) {
+          return path.join(this.buildResourcesDir, name)
+        }
       }
     }
-    else {
-      return path.resolve(this.projectDir, result)
+    else if (!isEmptyOrSpaces(custom)) {
+      return path.resolve(this.projectDir, custom)
     }
-
     return null
   }
 }
