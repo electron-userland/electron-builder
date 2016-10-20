@@ -4,14 +4,11 @@ import { assertPack, platform, modifyPackageJson, getTestAsset, app } from "./he
 import { outputFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 test.ifNotCiOsx("win", app({targets: Platform.WINDOWS.createTarget(["default", "zip"])}, {signed: true}))
 

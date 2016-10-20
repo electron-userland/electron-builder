@@ -1,5 +1,5 @@
 import { underline } from "chalk"
-import yargs = require("yargs")
+import yargs from "yargs"
 
 const publishGroup = "Publishing:"
 const buildGroup = "Building:"

@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, modifyPackageJson, platform, getPossiblePlatforms, app, appThrows, packageJson } from "./helpers/packTester"
 import { move, outputJson } from "fs-extra-p"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
@@ -9,9 +9,6 @@ import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 test("cli", () => {
   const yargs = createYargs()

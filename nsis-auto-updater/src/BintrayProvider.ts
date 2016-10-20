@@ -3,9 +3,6 @@ import { BintrayClient } from "../../src/publish/bintray"
 import { HttpError } from "../../src/publish/restApiRequest"
 import { BintrayOptions } from "../../src/options/publishOptions"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../../src/util/awaiter")
-
 export class BintrayProvider implements Provider {
   private client: BintrayClient
 

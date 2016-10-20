@@ -3,16 +3,13 @@ import { log, warn } from "../util/log"
 import { debug } from "../util/util"
 import { basename } from "path"
 import { parse as parseUrl } from "url"
-import * as mime from "mime"
+import mime from "mime"
 import { stat } from "fs-extra-p"
 import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 import { uploadFile } from "./uploader"
 import { GithubOptions } from "../options/publishOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 export interface Release {
   id: number

@@ -4,10 +4,7 @@ import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
-import { Promise as BluebirdPromise } from "bluebird"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+import BluebirdPromise from "bluebird"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

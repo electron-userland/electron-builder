@@ -2,12 +2,9 @@ import { exec } from "out/util/util"
 import { homedir } from "os"
 import { emptyDir, readFile, writeFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
-import pathSorter = require("path-sort")
+import BluebirdPromise from "bluebird"
+import pathSorter from "path-sort"
 import { unlinkIfExists } from "out/util/util"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 export class WineManager {
   wineDir: string

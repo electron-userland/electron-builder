@@ -2,11 +2,8 @@ import { tmpdir } from "os"
 import { remove, mkdirs, removeSync } from "fs-extra-p"
 import * as path from "path"
 import { getTempName, use } from "./util"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { warn } from "./log"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
 
 const mkdtemp: any | null = use(require("fs").mkdtemp, it => BluebirdPromise.promisify(it))
 

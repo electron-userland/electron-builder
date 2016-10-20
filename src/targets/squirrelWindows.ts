@@ -8,9 +8,6 @@ import { getBinFromBintray } from "../util/binDownload"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 import { SquirrelWindowsOptions } from "../options/winOptions"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
-
 const SW_VERSION = "1.4.4"
 //noinspection SpellCheckingInspection
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"

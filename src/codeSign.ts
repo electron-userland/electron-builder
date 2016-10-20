@@ -3,13 +3,10 @@ import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
 import * as path from "path"
 import { executeFinally, all } from "./util/promise"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { randomBytes } from "crypto"
 import { homedir } from "os"
 import { TmpDir } from "./util/tmp"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
 

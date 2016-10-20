@@ -3,9 +3,6 @@ import { readFile } from "fs-extra-p"
 import { AppMetadata, Metadata } from "./metadata"
 import * as path from "path"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
-
 export interface RepositorySlug {
   user: string
   project: string

@@ -3,15 +3,12 @@ import test from "./helpers/avaEx"
 import { assertPack, getTestAsset, app } from "./helpers/packTester"
 import { copy, outputFile, readJson } from "fs-extra-p"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
 import { walk } from "out/asarUtil"
 import { nsisPerMachineInstall } from "./helpers/expectedContents"
 import { WineManager, diff } from "./helpers/wine"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 

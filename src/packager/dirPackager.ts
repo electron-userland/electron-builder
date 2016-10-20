@@ -1,4 +1,4 @@
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { emptyDir, copy, chmod } from "fs-extra-p"
 import { warn } from "../util/log"
 import { PlatformPackager } from "../platformPackager"
@@ -7,9 +7,6 @@ import { path7za } from "7zip-bin"
 import * as path from "path"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
   const downloadOpts = Object.assign({

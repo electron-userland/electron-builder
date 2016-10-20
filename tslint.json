@@ -6,10 +6,7 @@
       "variables-before-functions"
     ],
     "no-unused-variable": [
-      true,
-      {
-        "ignore-pattern": "^_+awaiter$"
-      }
+      true
     ],
     "one-line": [
       true,

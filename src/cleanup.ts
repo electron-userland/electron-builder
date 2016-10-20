@@ -2,11 +2,8 @@
 
 import { homedir } from "os"
 import { readdir, lstat, Stats, remove, readFile } from "fs-extra-p"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 async function main() {
   const dir = path.join(homedir(), ".cache", "fpm")

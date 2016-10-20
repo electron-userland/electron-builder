@@ -2,16 +2,18 @@ import { EventEmitter } from "events"
 import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
-import semver = require("semver")
+import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
 import { download } from "../../src/util/httpRequest"
 import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
 import { readJson } from "fs-extra-p"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../../src/util/awaiter")
+BluebirdPromise.config({
+  longStackTraces: true,
+  cancellation: true
+})
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null
@@ -60,17 +62,17 @@ export class NsisUpdater extends EventEmitter {
     const client = await this.clientPromise
     const versionInfo = await client.getLatestVersion()
 
-    const latestVersion = semver.valid(versionInfo.version)
+    const latestVersion = parseVersion(versionInfo.version)
     if (latestVersion == null) {
       throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
-    const currentVersion = semver.valid(this.app.getVersion())
+    const currentVersion = parseVersion(this.app.getVersion())
     if (currentVersion == null) {
       throw new Error(`App version is not valid semver version: "${currentVersion}`)
     }
 
-    if (semver.gte(currentVersion, latestVersion)) {
+    if (isVersionGreaterThan(currentVersion, latestVersion)) {
       this.updateAvailable = false
       this.emit("update-not-available")
       return {

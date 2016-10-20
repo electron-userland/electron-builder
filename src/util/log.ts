@@ -1,9 +1,9 @@
 import { yellow, green, blue } from "chalk"
 import WritableStream = NodeJS.WritableStream
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { eraseLines } from "ansi-escapes"
 import * as cursor from "cli-cursor"
-import prettyMs = require("pretty-ms")
+import prettyMs from "pretty-ms"
 
 interface Line {
   // text must be \n terminated

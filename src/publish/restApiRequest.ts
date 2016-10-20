@@ -2,10 +2,7 @@ import * as https from "https"
 import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
-import { Promise as BluebirdPromise } from "bluebird"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
+import BluebirdPromise from "bluebird"
 
 export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>("api.github.com", path, token, data, method)

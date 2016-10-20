@@ -12,5 +12,5 @@ declare module "progress-stream" {
 
   function progress(options: Options, onProgress?: (progress: Progress) => void): ReadWriteStream
 
-  export = progress
+  export default progress
 }

@@ -1,5 +1,5 @@
 import { downloadCertificate } from "./codeSign"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import * as path from "path"
@@ -12,9 +12,6 @@ import NsisTarget from "./targets/nsis"
 import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 import { rename } from "fs-extra-p"
 import { WinBuildOptions } from "./options/winOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 export interface FileCodeSigningInfo {
   readonly file?: string | null

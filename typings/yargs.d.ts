@@ -96,5 +96,5 @@ declare module 'yargs' {
   type AsyncCompletionFunction = (current: string, argv: any, done: (completion: string[]) => void) => void;
 
   const yargs: Yargs;
-  export = yargs;
+  export default yargs;
 }

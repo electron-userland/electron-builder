@@ -9,17 +9,14 @@ import { exec } from "out/util/util"
 import { log, warn } from "out/util/log"
 import { createTargets } from "out"
 import { getArchSuffix, Target } from "out/platformPackager"
-import pathSorter = require("path-sort")
-import DecompressZip = require("decompress-zip")
+import pathSorter from "path-sort"
+import DecompressZip from "decompress-zip"
 import { convertVersion } from "out/targets/squirrelPack"
 import { spawnNpmProduction } from "out/util/util"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
 import { AssertContext } from "ava-tf"
 import { SquirrelWindowsOptions } from "out/options/winOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 if (process.env.TRAVIS !== "true") {
   // we don't use CircleCI, so, we can safely set this env

@@ -1,15 +1,12 @@
 import { spawn } from "child_process"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, removeSync } from "fs-extra-p"
 import { Platform } from "out/metadata"
 import { cpus, homedir, tmpdir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../../../out/util/awaiter")
-
 const util = require("../../../out/util/util")
 const utilSpawn = util.spawn
 const isEmptyOrSpaces = util.isEmptyOrSpaces
@@ -140,6 +137,10 @@ function runTests(): BluebirdPromise<any> {
 
   args.push(`--concurrency=${cpus().length}`)
 
+  if (process.env.FAIL_FAST === "true") {
+    args.push("--fail-fast")
+  }
+
   const baseDir = path.join("test", "out")
   const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]
   let skipWin = false
@@ -149,8 +150,6 @@ function runTests(): BluebirdPromise<any> {
       // test it only on Linux in any case
       args.push(...baseForLinuxTests)
     }
-
-    console.log(`Test files: ${args.join(", ")}`)
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
@@ -171,6 +170,7 @@ function runTests(): BluebirdPromise<any> {
     args.push("test/out/*.js", "!test/out/httpRequestTest.js")
   }
 
+  console.log(args)
   return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {
     cwd: rootDir,
     env: Object.assign({}, process.env, {

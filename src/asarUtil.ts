@@ -4,7 +4,7 @@ import {
   lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson,
   writeFile, realpath
 } from "fs-extra-p"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
 import { log } from "./util/log"
 import { Minimatch } from "minimatch"
@@ -16,62 +16,57 @@ const pickle = require ("chromium-pickle-js")
 const Filesystem = require("asar-electron-builder/lib/filesystem")
 const UINT64 = require("cuint").UINT64
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
-
 const MAX_FILE_REQUESTS = 32
 const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
-export function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): BluebirdPromise<Array<string>> {
-  return readdir(dirPath)
-    .then(names => BluebirdPromise.map(names, name => {
-      const filePath = dirPath + path.sep + name
-      return lstat(filePath)
-        .then((stat): any => {
-          if (filter != null && !filter(filePath, stat)) {
-            return null
-          }
+export async function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): Promise<Array<string>> {
+  const list = await BluebirdPromise.map(await readdir(dirPath), name => {
+    const filePath = dirPath + path.sep + name
+    return lstat(filePath)
+      .then((stat): any => {
+        if (filter != null && !filter(filePath, stat)) {
+          return null
+        }
 
-          if (consumer != null) {
-            consumer(filePath, stat)
-          }
-          if (stat.isDirectory()) {
-            return walk(filePath, consumer, filter, true)
-          }
-          return filePath
-        })
-    }, concurrency))
-    .then(list => {
-      list.sort((a, b) => {
-        // files before directories
-        if (Array.isArray(a) && Array.isArray(b)) {
-          return 0
+        if (consumer != null) {
+          consumer(filePath, stat)
         }
-        else if (a == null || Array.isArray(a)) {
-          return 1
+        if (stat.isDirectory()) {
+          return walk(filePath, consumer, filter, true)
         }
-        else if (b == null || Array.isArray(b)) {
-          return -1
-        }
-        else {
-          return a.localeCompare(b)
-        }
+        return filePath
       })
+  }, concurrency)
 
-      const result: Array<string> = addRootToResult ? [dirPath] : []
-      for (let item of list) {
-        if (item != null) {
-          if (Array.isArray(item)) {
-            result.push.apply(result, item)
-          }
-          else {
-            result.push(item)
-          }
-        }
+  list.sort((a, b) => {
+    // files before directories
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return 0
+    }
+    else if (a == null || Array.isArray(a)) {
+      return 1
+    }
+    else if (b == null || Array.isArray(b)) {
+      return -1
+    }
+    else {
+      return a.localeCompare(b)
+    }
+  })
+
+  const result: Array<string> = addRootToResult ? [dirPath] : []
+  for (let item of list) {
+    if (item != null) {
+      if (Array.isArray(item)) {
+        result.push.apply(result, item)
       }
-      return result
-    })
+      else {
+        result.push(item)
+      }
+    }
+  }
+  return result
 }
 
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter): Promise<any> {

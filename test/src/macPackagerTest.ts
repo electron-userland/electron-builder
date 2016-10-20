@@ -4,7 +4,7 @@ import OsXPackager from "out/macPackager"
 import { writeFile, remove, copy, mkdir } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "out/platformPackager"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, MacOptions, createTargets } from "out"
 import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
@@ -15,9 +15,6 @@ import { DIR_TARGET } from "out/targets/targetFactory"
 import { attachAndExecute } from "out/targets/dmg"
 import { getTempName } from "out/util/util"
 import { exec } from "out/util/util"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 test.ifOsx("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 
@@ -292,7 +289,8 @@ class CheckingMacPackager extends OsXPackager {
         break
       }
     }
-    return await super.pack(outDir, arch, targets, postAsyncTasks)
+    // http://madole.xyz/babel-plugin-transform-async-to-module-method-gotcha/
+    return await OsXPackager.prototype.pack.call(this, outDir, arch, targets, postAsyncTasks)
   }
 
   async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {

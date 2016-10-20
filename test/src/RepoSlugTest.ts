@@ -1,11 +1,8 @@
 import { Info } from "hosted-git-info"
 import { assertThat } from "./helpers/fileAssert"
 import test from "ava-tf"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { getRepositoryInfo } from "out/repositoryInfo"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 test("repo slug from TRAVIS_REPO_SLUG", () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG

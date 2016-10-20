@@ -1,4 +1,4 @@
-import pathSorter = require("path-sort")
+import pathSorter from "path-sort"
 
 //noinspection SpellCheckingInspection
 export const expectedLinuxContents = ["/",

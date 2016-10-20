@@ -4,15 +4,12 @@ import { use, exec } from "../util/util"
 import * as path from "path"
 import { getBin } from "../util/binDownload"
 import {  readFile, outputFile } from "fs-extra-p"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
 import { TmpDir } from "../util/tmp"
 
 const template = require("lodash.template")
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
   BluebirdPromise.resolve("fpm") : downloadFpm()

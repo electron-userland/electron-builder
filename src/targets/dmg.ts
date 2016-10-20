@@ -3,13 +3,10 @@ import * as path from "path"
 import { log, warn } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { debug, use, exec, statOrNull, isEmptyOrSpaces } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 export class DmgTarget extends Target {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")

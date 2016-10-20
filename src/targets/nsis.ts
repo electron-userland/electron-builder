@@ -2,20 +2,17 @@ import { WinPackager } from "../winPackager"
 import { Arch } from "../metadata"
 import { exec, debug, doSpawn, handleProcess, use, asArray } from "../util/util"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
 import { unlink, readFile } from "fs-extra-p"
-import semver = require("semver")
+import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
 import { writeJson } from "fs-extra-p"
 import { PublishConfiguration } from "../options/publishOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 const NSIS_VERSION = "3.0.1"
 //noinspection SpellCheckingInspection
@@ -135,7 +132,7 @@ export default class NsisTarget extends TargetEx {
 
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
-    const parsedVersion = new semver.SemVer(appInfo.version)
+    const parsedVersion = new SemVer(appInfo.version)
     const localeId = this.options.language || "1033"
     const versionKey = [
       `/LANG=${localeId} ProductName "${appInfo.productName}"`,

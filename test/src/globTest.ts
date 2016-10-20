@@ -2,15 +2,12 @@ import test from "./helpers/avaEx"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { outputFile, symlink } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app, appThrows } from "./helpers/packTester"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, DIR_TARGET } from "out"
-import pathSorter = require("path-sort")
+import pathSorter from "path-sort"
 import { statFile } from "asar-electron-builder"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),

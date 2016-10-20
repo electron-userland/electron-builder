@@ -5,7 +5,7 @@ declare module "decompress-zip" {
     path: string
   }
 
-  export = class DecompressZip extends EventEmitter {
+  export default class DecompressZip extends EventEmitter {
     constructor(filename: string)
 
     list(): void

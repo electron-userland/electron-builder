@@ -2,11 +2,8 @@ import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { exec, debug, isEmptyOrSpaces } from "../util/util"
 import { PlatformPackager } from "../platformPackager"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { LinuxBuildOptions } from "../metadata"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 export const installPrefix = "/opt"
 

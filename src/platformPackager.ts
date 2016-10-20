@@ -1,6 +1,6 @@
 import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
 import { readdir, remove } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray } from "./util/util"
@@ -18,9 +18,6 @@ import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter 
 import { BuildOptions } from "./builder"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>

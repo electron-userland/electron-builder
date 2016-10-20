@@ -3,8 +3,6 @@ import { rename } from "fs-extra-p"
 import * as path from "path"
 import { release } from "os"
 import { getBinFromBintray } from "./util/binDownload"
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 const TOOLS_VERSION = "1.4.2"
 
@@ -136,7 +134,7 @@ function getOutputPath(inputPath: string, hash: string) {
   return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
 }
 
-async function getToolPath() {
+async function getToolPath(): Promise<string> {
   if (process.env.USE_SYSTEM_SIGNCODE) {
     return "osslsigncode"
   }

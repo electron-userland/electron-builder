@@ -2,7 +2,7 @@ import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { log, warn, task } from "./util/log"
 import { createKeychain, CodeSigningInfo, findIdentity } from "./codeSign"
 import { deepAssign } from "./util/deepAssign"
@@ -10,9 +10,6 @@ import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from 
 import { DmgTarget } from "./targets/dmg"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>

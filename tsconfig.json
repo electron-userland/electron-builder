@@ -1,33 +1,34 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es6",
+    "module": "es2015",
+    "target": "es2017",
     "noImplicitAny": true,
     "outDir": "out",
     "newLine": "LF",
-    "noResolve": true,
     "noEmitOnError": true,
     "inlineSources": true,
     "sourceMap": true,
     "noImplicitReturns": true,
     "strictNullChecks": true,
     "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true
+    "noFallthroughCasesInSwitch": true
+//    "skipLibCheck": true
   },
   "declaration": {
     "electron-builder": "out/electron-builder.d.ts",
     "": "test/typings/electron-builder.d.ts"
   },
   "docs": "docs/Options.md",
+  "files": [
+    "node_modules/fs-extra-p/index.d.ts",
+    "node_modules/7zip-bin/index.d.ts",
+    "node_modules/electron-osx-sign-tf/index.d.ts"
+  ],
   "include": [
     "src/**/*.ts",
     "typings/**/*.d.ts",
-    "node_modules/fs-extra-p/index.d.ts",
-    "node_modules/7zip-bin/index.d.ts",
-    "node_modules/fs-extra-p/bluebird.d.ts",
-    "node_modules/electron-osx-sign-tf/index.d.ts",
-    "node_modules/@types/**/*.d.ts"
+    "node_modules/@types/**/*.d.ts",
+    "node_modules/@develar/types/*.d.ts"
   ],
   "exclude": [
   ]

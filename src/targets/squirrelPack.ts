@@ -1,5 +1,5 @@
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
 import { spawn, exec } from "../util/util"
 import { debug } from "../util/util"
@@ -8,9 +8,6 @@ import { log } from "../util/log"
 
 const archiverUtil = require("archiver-utils")
 const archiver = require("archiver")
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 export function convertVersion(version: string): string {
   const parts = version.split("-")

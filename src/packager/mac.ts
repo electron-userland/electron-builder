@@ -1,13 +1,10 @@
 import { rename, readFile, writeFile, copy, unlink } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { use, asArray } from "../util/util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "../util/log"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 function doRename (basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -43,7 +40,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   const result = await BluebirdPromise.all<any | n>([
     initializeApp(),
-    BluebirdPromise.map<any | null>([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
+    BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   ])
   const fileContents: Array<string> = result[1]!
   const appPlist = parsePlist(fileContents[0])

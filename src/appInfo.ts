@@ -3,10 +3,7 @@ import { warn } from "./util/log"
 import { smarten } from "./platformPackager"
 import { isEmptyOrSpaces } from "./util/util"
 import { getRepositoryInfo } from "./repositoryInfo"
-import sanitizeFileName = require("sanitize-filename")
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
+import sanitizeFileName from "sanitize-filename"
 
 export class AppInfo {
   readonly description = smarten(this.metadata.description!)

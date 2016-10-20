@@ -1,5 +1,5 @@
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, LinuxBuildOptions, Arch } from "./metadata"
 import FpmTarget from "./targets/fpm"
@@ -7,9 +7,6 @@ import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   constructor(info: BuildInfo) {

@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es6",
+    "module": "es2015",
+    "target": "es2017",
     "noImplicitAny": true,
     "removeComments": true,
     "outDir": "out",
     "newLine": "LF",
-    "noResolve": true,
     "noEmitOnError": true,
     "inlineSources": true,
     "sourceMap": true,
@@ -15,17 +14,20 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true
   },
+  "rootDirs": [
+    "src",
+    "../src"
+  ],
   "include": [
     "../typings/**/*.d.ts",
     "typings/**/*.d.ts",
     "src/**/*.ts",
     "../node_modules/ava-tf/types/generated.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
-    "../node_modules/fs-extra-p/bluebird.d.ts",
     "../node_modules/electron-osx-sign-tf/index.d.ts",
-    "../node_modules/@types/**/*.d.ts"
+    "../node_modules/@types/**/*.d.ts",
+    "../node_modules/@develar/types/*.d.ts"
   ],
   "exclude": [
-    "../node_modules/@types/node/node-*.d.ts"
   ]
 }

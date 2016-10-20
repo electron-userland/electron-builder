@@ -1,5 +1,5 @@
 import { Publisher, PublishOptions } from "./publisher"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { HttpError, doApiRequest } from "./restApiRequest"
 import { uploadFile } from "./uploader"
 import { log } from "../util/log"
@@ -8,9 +8,6 @@ import { basename } from "path"
 import { stat } from "fs-extra-p"
 import { BintrayClient, Version } from "./bintray"
 import { BintrayOptions } from "../options/publishOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("../util/awaiter")
 
 export class BintrayPublisher implements Publisher {
   private _versionPromise: BluebirdPromise<Version>

@@ -5,9 +5,6 @@ import { CSC_LINK } from "./helpers/codeSignData"
 import { removePassword } from "out/util/util"
 import { TmpDir } from "out/util/tmp"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
-
 const tmpDir = new TmpDir()
 
 if (process.env.CSC_KEY_PASSWORD == null) {

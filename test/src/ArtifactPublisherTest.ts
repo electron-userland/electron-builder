@@ -6,8 +6,12 @@ import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
+import BluebirdPromise from "bluebird"
+
+BluebirdPromise.config({
+  longStackTraces: true,
+  cancellation: true
+})
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min

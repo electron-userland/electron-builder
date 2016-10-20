@@ -1,20 +1,25 @@
 import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { homedir } from "os"
 import * as path from "path"
 import { readJson, stat, Stats, unlink } from "fs-extra-p"
 import { yellow, red } from "chalk"
-import debugFactory = require("debug")
+import _debug from "debug"
 import { warn, task, log } from "./log"
 import { createHash } from "crypto"
+import Debugger = debug.Debugger
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
+import "source-map-support/register"
 
-export const debug = debugFactory("electron-builder")
-export const debug7z = debugFactory("electron-builder:7z")
+export const debug: Debugger = _debug("electron-builder")
+export const debug7z: Debugger = _debug("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
+
+BluebirdPromise.config({
+  longStackTraces: true,
+  cancellation: true
+})
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install"): BluebirdPromise<any> {
   return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch)))

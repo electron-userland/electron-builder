@@ -3,14 +3,11 @@ import { IncomingMessage, ClientRequest, Agent } from "http"
 import * as https from "https"
 import { createWriteStream, ensureDir, readFile } from "fs-extra-p"
 import { parse as parseUrl } from "url"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import * as path from "path"
 import { createHash } from "crypto"
 import { Transform } from "stream"
 import { homedir } from "os"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
 
 const maxRedirects = 10
 

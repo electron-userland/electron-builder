@@ -5,8 +5,7 @@ import * as path from "path"
 import { TmpDir } from "out/util/tmp"
 import { outputJson } from "fs-extra-p"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("out/util/awaiter")
+const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
 const g = (<any>global)
 g.__test_app = {
@@ -14,8 +13,6 @@ g.__test_app = {
     return "0.0.1"
   }
 }
-
-const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
 test("check updates - no versions at all", async (t) => {
   const updater: NsisUpdater = new NsisUpdaterClass({

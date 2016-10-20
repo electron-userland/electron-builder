@@ -3,16 +3,13 @@ import { PackagerOptions, getPublishConfigs, getResolvedPublishConfig } from "./
 import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { isEmptyOrSpaces, isCi, debug } from "./util/util"
 import { log } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }

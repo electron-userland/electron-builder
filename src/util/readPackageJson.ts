@@ -1,9 +1,6 @@
 import * as path from "path"
 import { readJson, readFile } from "fs-extra-p"
 
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
-
 const normalizeData = require("normalize-package-data")
 
 export async function readPackageJson(file: string): Promise<any> {

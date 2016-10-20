@@ -1,8 +1,5 @@
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { red } from "chalk"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./awaiter")
 
 export function printErrorAndExit(error: Error) {
   console.error(red((error.stack || error).toString()))

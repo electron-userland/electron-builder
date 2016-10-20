@@ -5,14 +5,14 @@ import {
 } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
 import { PlatformPackager, BuildInfo, ArtifactCreated, Target } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
 import { deepAssign } from "./util/deepAssign"
-import semver = require("semver")
+import { lt as isVersionLessThan } from "semver"
 import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
 import MacPackager from "./macPackager"
@@ -20,9 +20,6 @@ import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "./util/tmp"
 import { BuildOptions } from "./builder"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -304,7 +301,7 @@ async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion += ".0"
   }
 
-  if (semver.lt(wineVersion, "1.8.0")) {
+  if (isVersionLessThan(wineVersion, "1.8.0")) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
 }

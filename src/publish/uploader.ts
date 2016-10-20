@@ -1,5 +1,5 @@
-import progressStream = require("progress-stream")
-import ProgressBar = require("progress")
+import progressStream from "progress-stream"
+import ProgressBar from "progress"
 import { createReadStream, Stats } from "fs-extra-p"
 import { ReadStream } from "tty"
 import { ClientRequest } from "http"

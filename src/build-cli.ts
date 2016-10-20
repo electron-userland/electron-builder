@@ -7,7 +7,7 @@ import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { dim, reset, green, cyan } from "chalk"
 
-import updateNotifier = require("update-notifier")
+import updateNotifier from "update-notifier"
 import { warn } from "./util/log"
 
 if (process.env.CI == null && process.env.NO_UPDATE_NOTIFIER == null) {

@@ -3,13 +3,10 @@
 import { computeDefaultAppDirectory, installDependencies, getElectronVersion, use } from "./util/util"
 import { printErrorAndExit } from "./util/promise"
 import * as path from "path"
-import { Promise as BluebirdPromise } from "bluebird"
+import BluebirdPromise from "bluebird"
 import { DevMetadata } from "./metadata"
-import yargs = require("yargs")
+import yargs from "yargs"
 import { readPackageJson } from "./util/readPackageJson"
-
-//noinspection JSUnusedLocalSymbols
-const __awaiter = require("./util/awaiter")
 
 const args: any = yargs
   .option("arch", {
