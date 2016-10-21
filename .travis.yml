@@ -32,11 +32,11 @@ install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "4" ]]; then npm install npm -g ; fi
-- npm install
-- npm prune
+- curl -o- -L https://yarnpkg.com/install.sh | bash
+- export PATH="$PATH:$HOME/.yarn/bin"
+- yarn install
 
 script:
-- sudo ntpdate -u time.apple.com
 - npm run test
 
 after_success:

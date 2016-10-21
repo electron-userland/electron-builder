@@ -80,6 +80,7 @@
       <w>libgcrypt</w>
       <w>libgnome</w>
       <w>libnotify</w>
+      <w>localappdata</w>
       <w>lockfile</w>
       <w>lzfse</w>
       <w>lzip</w>

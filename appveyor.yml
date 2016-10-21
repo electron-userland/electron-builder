@@ -7,8 +7,9 @@ cache:
 
 install:
   - ps: Install-Product node 6 x64
-  - npm install
-  - npm prune
+  - choco install -i yarn
+  - refreshenv
+  - yarn install
 
 build: off
 
