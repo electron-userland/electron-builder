@@ -1,11 +1,11 @@
 import { tmpdir } from "os"
 import { remove, mkdirs, removeSync } from "fs-extra-p"
 import * as path from "path"
-import { getTempName, use } from "./util"
+import { getTempName } from "./util"
 import BluebirdPromise from "bluebird"
 import { warn } from "./log"
 
-const mkdtemp: any | null = use(require("fs").mkdtemp, it => BluebirdPromise.promisify(it))
+const mkdtemp: any | null = require("fs-extra-p").mkdtemp
 
 export class TmpDir {
   private tmpFileCounter = 0
@@ -21,7 +21,7 @@ export class TmpDir {
         promise = mkdirs(dir, {mode: 448}).thenReturn(dir)
       }
       else {
-        promise = mkdtemp(`${path.join(tmpdir(), "electron-builder")}-`)
+        promise = mkdtemp(`${path.join(process.env.TEST_DIR || tmpdir(), "electron-builder")}-`)
       }
 
       this.tempDirectoryPromise = promise

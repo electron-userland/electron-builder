@@ -17,10 +17,11 @@
   "scripts": {
     "compile": "ts-babel . nsis-auto-updater test",
     "lint": "tslint 'src/**/*.ts' 'test/src/**/*.ts' 'nsis-auto-updater/src/**/*.ts'",
-    "pretest": "npm run compile && npm run lint && npm run pack-updater",
+    "pretest": "yarn run compile && yarn run lint",
+    "check-deps": "node ./test/out/helpers/checkDeps.js",
     "test": "node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
-    "pack-updater": "cd nsis-auto-updater && npm install --production --no-bin-links && cd ..",
+    "pack-updater": "cd nsis-auto-updater && yarn --production && cd ..",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
@@ -76,7 +77,6 @@
     "lodash.template": "^4.4.0",
     "mime": "^1.3.4",
     "minimatch": "^3.0.3",
-    "nodent-runtime": "^3.0.1",
     "normalize-package-data": "^2.3.5",
     "parse-color": "^1.0.0",
     "plist": "^2.0.1",
@@ -86,15 +86,14 @@
     "read-installed": "^4.0.3",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.3.0",
-    "source-map-support": "^0.4.4",
+    "source-map-support": "^0.4.5",
     "tunnel-agent": "^0.4.3",
     "update-notifier": "^1.0.2",
     "uuid-1345": "^0.99.6",
-    "yargs": "^6.0.0"
+    "yargs": "^6.3.0"
   },
   "devDependencies": {
-    "@develar/babel-plugin-transform-inline-imports-commonjs": "^1.0.0",
-    "@develar/semantic-release": "^6.3.6",
+    "@develar/semantic-release": "^6.3.7",
     "@develar/types": "^1.0.1",
     "@types/source-map-support": "^0.2.28",
     "ava-tf": "^0.16.4",
@@ -103,7 +102,9 @@
     "babel-plugin-transform-es2015-destructuring": "^6.16.0",
     "babel-plugin-transform-es2015-parameters": "^6.17.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",
+    "babel-plugin-transform-inline-imports-commonjs": "^1.2.0",
     "decompress-zip": "^0.3.0",
+    "depcheck": "^0.6.4",
     "diff": "^3.0.1",
     "husky": "^0.11.9",
     "json8": "^0.9.2",
@@ -127,7 +128,7 @@
       "transform-es2015-spread",
       "transform-es2015-destructuring",
       "array-includes",
-      "@develar/babel-plugin-transform-inline-imports-commonjs"
+      "transform-inline-imports-commonjs"
     ]
   },
   "ava": {

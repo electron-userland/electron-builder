@@ -1,9 +1,8 @@
-import { spawn } from "child_process"
 import * as path from "path"
 import BluebirdPromise from "bluebird"
-import { copy, emptyDir, outputFile, readdir, readFileSync, readJson, unlink, removeSync } from "fs-extra-p"
+import { emptyDir, readdir, unlink, removeSync } from "fs-extra-p"
 import { Platform } from "out/metadata"
-import { cpus, homedir, tmpdir } from "os"
+import { cpus, homedir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
@@ -15,8 +14,6 @@ const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisi
 const packager = require("../../../out/packager")
 
 const rootDir = path.join(__dirname, "..", "..", "..")
-const testPackageDir = path.join(tmpdir(), "electron_builder_published")
-const testNodeModules = path.join(testPackageDir, "node_modules")
 
 async function main() {
   const testDir = TEST_DIR
@@ -24,27 +21,11 @@ async function main() {
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
     emptyDir(testDir),
-    outputFile(path.join(testPackageDir, "package.json"), `{
-      "private": true,
-      "version": "1.0.0",
-      "name": "test",
-      "dependencies": {
-        "electron-builder": "file:${path.posix.join(__dirname.replace(/\\/g, "/"), "..", "..")}"
-      }
-    }`)
-      .then(() => copyDependencies())
   ])
-
-  // install from cache - all dependencies are already installed before run test
-  // https://github.com/npm/npm/issues/2568
-  await exec(["install", "--cache-min", "999999999", "--production", rootDir])
-  // prune stale packages
-  await exec(["prune", "--production"])
 
   process.on("SIGINT", () => {
     removeSync(testDir)
   })
-
   try {
     await runTests()
   }
@@ -106,28 +87,6 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
   return BluebirdPromise.all(downloadPromises)
 }
 
-// npm is very slow and not reliable - so, just copy and then prune dev dependencies
-async function copyDependencies() {
-  await emptyDir(testNodeModules)
-  const devDeps = Object.keys((await readJson(path.join(rootDir, "package.json"), "utf-8")).devDependencies)
-  const filtered = new Set()
-  /*eslint prefer-const: 0*/
-  for (let name of devDeps) {
-    filtered.add(path.join(rootDir, "node_modules", name))
-  }
-
-  filtered.add(path.join(rootDir, "node_modules", ".bin"))
-
-  return copy(path.join(rootDir, "node_modules"), testNodeModules, {
-    filter: it => {
-      if (it.includes("node_modules" + path.sep + "babel-")) {
-        return false
-      }
-      return !filtered.has(it)
-    }
-  })
-}
-
 /**
  * CIRCLE_NODE_INDEX=2 — test nodejs 4 (on Circle).
  */
@@ -174,46 +133,12 @@ function runTests(): BluebirdPromise<any> {
   return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {
     cwd: rootDir,
     env: Object.assign({}, process.env, {
-      NODE_PATH: path.join(testNodeModules, "electron-builder"),
+      NODE_PATH: rootDir,
       SKIP_WIN: skipWin,
       CSC_IDENTITY_AUTO_DISCOVERY: "false",
+      TEST_DIR: TEST_DIR,
     }),
     shell: process.platform === "win32",
     stdio: "inherit"
-  })
-}
-
-function exec(args: Array<string>) {
-  return new BluebirdPromise((resolve, reject) => {
-    let command = "npm"
-    const npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-    if (npmExecPath != null) {
-      args.unshift(npmExecPath)
-      command = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
-    }
-
-    const effectiveOptions = {
-      stdio: ["ignore", "ignore", "inherit"],
-      cwd: testPackageDir,
-    }
-    // console.log(`Execute ${command} ${args.join(" ")} (cwd: ${effectiveOptions.cwd})`)
-    const child = spawn(command, args, effectiveOptions)
-    child.on("close", (code: number) => {
-      if (code === 0) {
-        resolve()
-      }
-      else {
-        try {
-          console.error(readFileSync(path.join(testPackageDir, "npm-debug.log"), "utf8"))
-        }
-        catch (e) {
-          // ignore
-        }
-        reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`))
-      }
-    })
-    child.on("error", (error: Error) => {
-      reject(new Error(`Failed to start child process: ${command} ${args.join(" ")}` + (error.stack || error)))
-    })
   })
 }

@@ -19,7 +19,6 @@ import { AssertContext } from "ava-tf"
 import { SquirrelWindowsOptions } from "out/options/winOptions"
 
 if (process.env.TRAVIS !== "true") {
-  // we don't use CircleCI, so, we can safely set this env
   process.env.CIRCLE_BUILD_NUM = 42
 }
 

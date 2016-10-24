@@ -19,9 +19,9 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
 
-fs-extra-p@^1.1.10:
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-1.1.10.tgz#10ff1f1091454b99d9cd6c6eaad84ca8ae85d977"
+fs-extra-p@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-1.2.0.tgz#16abed58ec63219cf9244a5a54ba200d4864b347"
   dependencies:
     bluebird "^3.4.6"
     fs-extra-tf "^0.30.3"

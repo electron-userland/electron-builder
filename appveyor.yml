@@ -9,7 +9,9 @@ install:
   - ps: Install-Product node 6 x64
   - choco install -i yarn
   - refreshenv
-  - yarn install
+  # unknown yarn error
+  - npm install
+  - npm prune
 
 build: off
 
