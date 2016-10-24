@@ -231,12 +231,14 @@ export class Packager implements BuildInfo {
       if (this.devMetadata.build.npmRebuild === false) {
         log("Skip app dependencies rebuild because npmRebuild is set to false")
       }
-      else if (platform.nodeName === process.platform) {
-        const forceBuildFromSource = this.devMetadata.build.npmSkipBuildFromSource !== true
-        await installDependencies(this.appDir, this.electronVersion, Arch[arch], forceBuildFromSource, (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild")
-      }
       else {
-        log("Skip app dependencies rebuild because platform is different")
+        const forceBuildFromSource = this.devMetadata.build.npmSkipBuildFromSource !== true
+        if (platform.nodeName !== process.platform && forceBuildFromSource) {
+          log("Skip app dependencies rebuild because platform is different")
+        }
+        else {
+          await installDependencies(this.appDir, this.electronVersion, Arch[arch], forceBuildFromSource, (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild")
+        }
       }
     }
     else {
