@@ -94,6 +94,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
   private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
     if (process.platform !== "darwin") {
+      warn("Mac application signing not supported on this platform, skipping.")
       return
     }
 
