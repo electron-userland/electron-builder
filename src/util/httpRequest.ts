@@ -8,6 +8,7 @@ import * as path from "path"
 import { createHash } from "crypto"
 import { Transform } from "stream"
 import { homedir } from "os"
+import { parse as parseIni } from "ini"
 
 const maxRedirects = 10
 
@@ -146,7 +147,7 @@ async function proxyFromNpm() {
   }
 
   try {
-    const config = require("ini").parse(data)
+    const config = parseIni(data)
     return config["https-proxy"] || config.proxy
   }
   catch (e) {

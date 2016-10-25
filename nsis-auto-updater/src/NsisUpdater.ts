@@ -8,7 +8,8 @@ import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird"
 import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
-import { readJson } from "fs-extra-p"
+import { readFile } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
 
 BluebirdPromise.config({
   longStackTraces: true,
@@ -146,6 +147,6 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
 }
 
 async function loadUpdateConfig() {
-  const data = await readJson(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, ".app-update.json"), "utf-8")
+  const data = safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8"))
   return createClient(data)
 }

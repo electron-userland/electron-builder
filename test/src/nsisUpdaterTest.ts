@@ -3,7 +3,8 @@ import { assertThat } from "./helpers/fileAssert"
 import { NsisUpdater } from "out/nsis-auto-updater/src/NsisUpdater"
 import * as path from "path"
 import { TmpDir } from "out/util/tmp"
-import { outputJson } from "fs-extra-p"
+import { outputFile } from "fs-extra-p"
+import { safeDump } from "js-yaml"
 
 const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
@@ -37,11 +38,11 @@ test("cannot find suitable file for version", async (t) => {
 test("file url", async () => {
   const tmpDir = new TmpDir()
   const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputJson(path.join(testResourcesPath, ".app-update.json"), {
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump({
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
-  })
+  }))
   g.__test_resourcesPath = testResourcesPath
   const updater: NsisUpdater = new NsisUpdaterClass()
 

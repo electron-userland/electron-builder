@@ -8,11 +8,11 @@ import { v5 as uuid5 } from "uuid-1345"
 import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
-import { unlink, readFile } from "fs-extra-p"
+import { unlink, readFile, writeFile } from "fs-extra-p"
 import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
-import { writeJson } from "fs-extra-p"
 import { PublishConfiguration } from "../options/publishOptions"
+import { safeDump } from "js-yaml"
 
 const NSIS_VERSION = "3.0.1"
 //noinspection SpellCheckingInspection
@@ -54,7 +54,7 @@ export default class NsisTarget extends TargetEx {
   private async doBuild(appOutDir: string, arch: Arch) {
     const publishConfig = await this.publishConfig
     if (publishConfig != null) {
-      await writeJson(path.join(appOutDir, "resources", ".app-update.json"), publishConfig)
+      await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfig))
     }
 
     const packager = this.packager
