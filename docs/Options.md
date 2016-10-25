@@ -222,6 +222,7 @@ Array of option objects.
 | --- | ---
 | package | <a name="BintrayOptions-package"></a>The Bintray package name.
 | repo | <a name="BintrayOptions-repo"></a>The Bintray repository name. Defaults to `generic`.
+| user | <a name="BintrayOptions-user"></a>The Bintray user account.  Used in cases where the owner is an organization.
 
 <a name="GithubOptions"></a>
 ### `.build.publish` GitHub
