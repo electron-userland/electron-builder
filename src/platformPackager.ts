@@ -132,7 +132,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void
 
   protected getCscPassword(): string {
-    const password = this.options.cscKeyPassword || process.env.CSC_KEY_PASSWORD
+    const password = this.doGetCscPassword()
     if (isEmptyOrSpaces(password)) {
       log("CSC_KEY_PASSWORD is not defined, empty password will be used")
       return ""
@@ -140,6 +140,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     else {
       return password.trim()
     }
+  }
+
+  protected doGetCscPassword() {
+    return this.options.cscKeyPassword || process.env.CSC_KEY_PASSWORD
   }
 
   get relativeBuildResourcesDirname() {

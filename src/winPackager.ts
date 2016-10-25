@@ -32,7 +32,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     if (subjectName == null) {
       const certificateFile = this.platformSpecificBuildOptions.certificateFile
       if (certificateFile != null) {
-        const certificatePassword = this.platformSpecificBuildOptions.certificatePassword || this.getCscPassword()
+        const certificatePassword = this.getCscPassword()
         this.cscInfo = BluebirdPromise.resolve({
           file: certificateFile,
           password: certificatePassword == null ? null : certificatePassword.trim(),
@@ -61,6 +61,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     this.iconPath = this.getValidIconPath()
+  }
+
+  protected doGetCscPassword(): string {
+    return this.platformSpecificBuildOptions.certificatePassword || process.env.WIN_CSC_KEY_PASSWORD || super.doGetCscPassword()
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
