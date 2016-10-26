@@ -3,7 +3,7 @@ import { PackagerOptions, getPublishConfigs, getResolvedPublishConfig } from "./
 import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { isEmptyOrSpaces, isCi, debug } from "./util/util"
 import { log } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"

@@ -22,7 +22,7 @@
     "../typings/semver.d.ts",
     "../node_modules/@types/node/index.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
-    "../node_modules/@develar/types/bluebird.d.ts",
+    "../node_modules/bluebird-lst-c/index.d.ts",
     "../src/util/httpRequest.ts",
     "../src/publish/restApiRequest.ts",
     "../src/publish/restApiRequest.ts",

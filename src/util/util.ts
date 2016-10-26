@@ -1,5 +1,5 @@
 import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { homedir } from "os"
 import * as path from "path"
 import { readJson, stat, Stats, unlink } from "fs-extra-p"
@@ -16,12 +16,7 @@ export const debug7z: Debugger = _debug("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-BluebirdPromise.config({
-  longStackTraces: true,
-  cancellation: true
-})
-
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install"): BluebirdPromise<any> {
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install"): Promise<any> {
   return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch)))
 }
 
@@ -37,7 +32,7 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any): BluebirdPromise<any> {
+export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any): Promise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = [command, "--production", "--cache-min", "999999999"]
   if (npmExecPath == null) {

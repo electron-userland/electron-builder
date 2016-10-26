@@ -1,14 +1,15 @@
 import { Platform, Arch } from "out"
 import test from "./helpers/avaEx"
 import { assertPack, getTestAsset, app } from "./helpers/packTester"
-import { copy, outputFile, readJson } from "fs-extra-p"
+import { copy, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "./helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
 import { walk } from "out/asarUtil"
 import { nsisPerMachineInstall } from "./helpers/expectedContents"
 import { WineManager, diff } from "./helpers/wine"
+import { safeLoad } from "js-yaml"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -31,7 +32,7 @@ test("one-click", app({
   packed: async (context) => {
     await doTest(context.outDir, true)
 
-    assertThat(await readJson(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), ".app-update.json"))).hasProperties({
+    assertThat(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).hasProperties({
       provider: "bintray",
       owner: "actperepo",
       package: "TestApp",

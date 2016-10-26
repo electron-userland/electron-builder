@@ -1,7 +1,7 @@
 import { copy, Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 const readInstalled = require("read-installed")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp

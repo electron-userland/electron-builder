@@ -1,5 +1,5 @@
 import { Publisher, PublishOptions } from "./publisher"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { HttpError, doApiRequest } from "./restApiRequest"
 import { uploadFile } from "./uploader"
 import { log } from "../util/log"

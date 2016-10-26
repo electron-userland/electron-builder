@@ -1,10 +1,4 @@
 import test from "ava-tf"
-import BluebirdPromise from "bluebird"
-
-BluebirdPromise.config({
-  longStackTraces: true,
-  cancellation: true
-})
 
 /* tslint:disable:no-invalid-this no-namespace */
 

@@ -1,6 +1,6 @@
 import { yellow, green, blue } from "chalk"
 import WritableStream = NodeJS.WritableStream
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { eraseLines } from "ansi-escapes"
 import * as cursor from "cli-cursor"
 import prettyMs from "pretty-ms"

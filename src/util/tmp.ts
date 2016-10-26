@@ -2,7 +2,7 @@ import { tmpdir } from "os"
 import { remove, mkdirs, removeSync } from "fs-extra-p"
 import * as path from "path"
 import { getTempName } from "./util"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { warn } from "./log"
 
 const mkdtemp: any | null = require("fs-extra-p").mkdtemp

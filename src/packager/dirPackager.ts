@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, copy, chmod } from "fs-extra-p"
 import { warn } from "../util/log"
 import { PlatformPackager } from "../platformPackager"

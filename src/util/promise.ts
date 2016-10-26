@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { red } from "chalk"
 
 export function printErrorAndExit(error: Error) {

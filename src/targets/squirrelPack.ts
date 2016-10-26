@@ -1,5 +1,5 @@
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
 import { spawn, exec } from "../util/util"
 import { debug } from "../util/util"

@@ -4,7 +4,7 @@ import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import { homedir } from "os"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

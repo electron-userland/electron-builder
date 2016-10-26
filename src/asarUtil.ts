@@ -4,7 +4,7 @@ import {
   lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson,
   writeFile, realpath
 } from "fs-extra-p"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "./util/log"
 import { Minimatch } from "minimatch"

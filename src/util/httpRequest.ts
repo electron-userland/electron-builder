@@ -3,11 +3,12 @@ import { IncomingMessage, ClientRequest, Agent } from "http"
 import * as https from "https"
 import { createWriteStream, ensureDir, readFile } from "fs-extra-p"
 import { parse as parseUrl } from "url"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { createHash } from "crypto"
 import { Transform } from "stream"
 import { homedir } from "os"
+import { parse as parseIni } from "ini"
 
 const maxRedirects = 10
 
@@ -146,7 +147,7 @@ async function proxyFromNpm() {
   }
 
   try {
-    const config = require("ini").parse(data)
+    const config = parseIni(data)
     return config["https-proxy"] || config.proxy
   }
   catch (e) {

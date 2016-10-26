@@ -1,7 +1,7 @@
 import { Info } from "hosted-git-info"
 import { assertThat } from "./helpers/fileAssert"
 import test from "ava-tf"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { getRepositoryInfo } from "out/repositoryInfo"
 
 test("repo slug from TRAVIS_REPO_SLUG", () => {

@@ -1,13 +1,12 @@
 import * as path from "path"
 import { readJson } from "fs-extra-p"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import depCheck, { DepCheckResult } from "depcheck"
 
 const printErrorAndExit = require("../../../out/util/promise").printErrorAndExit
 
 const knownUnusedDevDependencies = new Set([
   "@develar/types",
-  "@types/source-map-support",
   "ava-tf",
   "decompress-zip",
   "diff",
@@ -23,7 +22,7 @@ async function main(): Promise<void> {
 
   console.log(`Checking ${projectDir}`)
 
-  const result = await  new BluebirdPromise<DepCheckResult>(function (resolve) {
+  const result = await new BluebirdPromise<DepCheckResult>(function (resolve) {
     depCheck(projectDir, {
       ignoreDirs: [
         "out", "test", "docs", "typings", "docker", "certs", "templates", "nsis-auto-updater", ".idea", ".github",
@@ -35,7 +34,7 @@ async function main(): Promise<void> {
     throw new Error(`Unused dependencies: ${JSON.stringify(result.dependencies, null, 2)}`)
   }
 
-  const unusedDevDependencies = result.devDependencies.filter(it => !knownUnusedDevDependencies.has(it))
+  const unusedDevDependencies = result.devDependencies.filter(it => !it.startsWith("@types/") && !knownUnusedDevDependencies.has(it))
   if (unusedDevDependencies.length > 0) {
     throw new Error(`Unused devDependencies: ${JSON.stringify(unusedDevDependencies, null, 2)}`)
   }

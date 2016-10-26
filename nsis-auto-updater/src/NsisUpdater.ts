@@ -6,14 +6,10 @@ import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
 import { download } from "../../src/util/httpRequest"
 import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
-import { readJson } from "fs-extra-p"
-
-BluebirdPromise.config({
-  longStackTraces: true,
-  cancellation: true
-})
+import { readFile } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null
@@ -146,6 +142,6 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
 }
 
 async function loadUpdateConfig() {
-  const data = await readJson(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, ".app-update.json"), "utf-8")
+  const data = safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8"))
   return createClient(data)
 }

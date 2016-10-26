@@ -2,7 +2,7 @@ import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { exec, debug, isEmptyOrSpaces } from "../util/util"
 import { PlatformPackager } from "../platformPackager"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { LinuxBuildOptions } from "../metadata"
 
 export const installPrefix = "/opt"

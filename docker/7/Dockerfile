@@ -1,6 +1,6 @@
 FROM electronuserland/electron-builder:base
 
-ENV NODE_VERSION 4.6.1
+ENV NODE_VERSION 7.0.0
 
 # https://github.com/npm/npm/issues/4531
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \

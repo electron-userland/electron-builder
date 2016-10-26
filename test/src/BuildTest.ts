@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { assertPack, modifyPackageJson, platform, getPossiblePlatforms, app, appThrows, packageJson } from "./helpers/packTester"
 import { move, outputJson } from "fs-extra-p"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"

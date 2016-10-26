@@ -2,7 +2,7 @@ import * as https from "https"
 import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 
 export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>("api.github.com", path, token, data, method)
