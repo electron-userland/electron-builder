@@ -5,7 +5,7 @@ import { exec, unlinkIfExists } from "../util/util"
 import { open, write, createReadStream, createWriteStream, close, chmod } from "fs-extra-p"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getBin } from "../util/binDownload"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { v1 as uuid1 } from "uuid-1345"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"

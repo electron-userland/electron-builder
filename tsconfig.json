@@ -11,24 +11,29 @@
     "noImplicitReturns": true,
     "strictNullChecks": true,
     "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true
-//    "skipLibCheck": true
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true
   },
   "declaration": {
     "electron-builder": "out/electron-builder.d.ts",
     "": "test/typings/electron-builder.d.ts"
   },
   "docs": "docs/Options.md",
+  "paths": {
+    "fs-extra-p": [
+      "node_modules/fs-extra-p/index.d.ts"
+    ]
+  },
   "files": [
     "node_modules/fs-extra-p/index.d.ts",
+    "node_modules/bluebird-lst-c/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/electron-osx-sign-tf/index.d.ts"
   ],
   "include": [
     "src/**/*.ts",
-    "typings/**/*.d.ts",
-    "node_modules/@types/**/*.d.ts",
-    "node_modules/@develar/types/*.d.ts"
+    "typings/*.d.ts",
+    "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [
   ]

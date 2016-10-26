@@ -1,6 +1,6 @@
 import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation } from "./metadata"
 import EventEmitter = NodeJS.EventEmitter
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray } from "./util/util"

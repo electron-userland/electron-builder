@@ -1,5 +1,5 @@
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, readdir, unlink, removeSync } from "fs-extra-p"
 import { Platform } from "out/metadata"
 import { cpus, homedir } from "os"

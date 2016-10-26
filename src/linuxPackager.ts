@@ -1,5 +1,5 @@
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, LinuxBuildOptions, Arch } from "./metadata"
 import FpmTarget from "./targets/fpm"

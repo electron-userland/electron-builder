@@ -6,15 +6,10 @@ import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
 import { download } from "../../src/util/httpRequest"
 import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
-
-BluebirdPromise.config({
-  longStackTraces: true,
-  cancellation: true
-})
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null

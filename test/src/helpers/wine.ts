@@ -2,7 +2,7 @@ import { exec } from "out/util/util"
 import { homedir } from "os"
 import { emptyDir, readFile, writeFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import pathSorter from "path-sort"
 import { unlinkIfExists } from "out/util/util"
 

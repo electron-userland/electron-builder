@@ -2,7 +2,7 @@
 
 import { homedir } from "os"
 import { readdir, lstat, Stats, remove, readFile } from "fs-extra-p"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 
 async function main() {

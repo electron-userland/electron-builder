@@ -1,6 +1,6 @@
 import * as path from "path"
 import { readJson } from "fs-extra-p"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import depCheck, { DepCheckResult } from "depcheck"
 
 const printErrorAndExit = require("../../../out/util/promise").printErrorAndExit

@@ -1,7 +1,7 @@
 import { rename, readFile, writeFile, copy, unlink } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { use, asArray } from "../util/util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "../util/log"

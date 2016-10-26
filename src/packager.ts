@@ -5,7 +5,7 @@ import {
 } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
 import { PlatformPackager, BuildInfo, ArtifactCreated, Target } from "./platformPackager"
 import { WinPackager } from "./winPackager"

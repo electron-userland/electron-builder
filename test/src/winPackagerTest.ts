@@ -4,7 +4,7 @@ import { assertPack, platform, modifyPackageJson, getTestAsset, app } from "./he
 import { outputFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
-import BluebirdPromise from "bluebird"
+import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
