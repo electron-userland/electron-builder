@@ -6,7 +6,7 @@ cache:
   - '%USERPROFILE%\.electron'
 
 install:
-  - ps: Install-Product node 6 x64
+  - ps: Install-Product node 7 x64
   - choco install -i yarn
   - refreshenv
   # unknown yarn error
