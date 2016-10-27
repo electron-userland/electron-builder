@@ -18,8 +18,9 @@ export class BintrayClient {
   private readonly basePath: string
   readonly auth: string | null
   readonly repo: string
+  readonly user: string
 
-  constructor(public owner: string, public packageName: string, repo?: string, apiKey?: string | null) {
+  constructor(public owner: string, public packageName: string, repo?: string, apiKey?: string | null, user?: string | null) {
     if (owner == null) {
       throw new Error("owner is not specified")
     }
@@ -28,7 +29,8 @@ export class BintrayClient {
     }
 
     this.repo = repo || "generic"
-    this.auth = apiKey == null ? null : `Basic ${new Buffer(`${owner}:${apiKey}`).toString("base64")}`
+    this.user = user || owner
+    this.auth = apiKey == null ? null : `Basic ${new Buffer(`${this.user}:${apiKey}`).toString("base64")}`
     this.basePath = `/packages/${this.owner}/${this.repo}/${this.packageName}`
   }
 

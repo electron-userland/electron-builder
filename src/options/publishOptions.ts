@@ -50,4 +50,9 @@ export interface BintrayOptions extends PublishConfiguration {
    The Bintray repository name. Defaults to `generic`.
    */
   repo?: string
+
+  /*
+   The Bintray user account.  Used in cases where the owner is an organization.
+   */
+  user?: string
 }
