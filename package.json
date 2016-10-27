@@ -94,7 +94,7 @@
     "yargs": "^6.3.0"
   },
   "devDependencies": {
-    "@develar/semantic-release": "^6.3.13",
+    "@develar/semantic-release": "^6.3.17",
     "@types/ini": "^1.3.29",
     "@types/js-yaml": "^3.5.28",
     "@types/source-map-support": "^0.2.28",

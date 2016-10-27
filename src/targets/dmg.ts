@@ -4,7 +4,7 @@ import { log, warn } from "../util/log"
 import { Target, PlatformPackager } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
-import { debug, use, exec, statOrNull, isEmptyOrSpaces } from "../util/util"
+import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 
@@ -43,14 +43,13 @@ export class DmgTarget extends Target {
 
     const volumeName = `${appInfo.productFilename} ${appInfo.version}`
     //noinspection SpellCheckingInspection
-    await exec("hdiutil", ["create",
+    await spawn("hdiutil", addVerboseIfNeed(["create",
       "-srcfolder", backgroundDir,
       "-srcfolder", path.join(appOutDir, `${packager.appInfo.productFilename}.app`),
       "-volname", volumeName,
-      "-anyowners", "-nospotlight", "-quiet", "-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16",
+      "-anyowners", "-nospotlight", "-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16",
       "-format", "UDRW",
-      tempDmg,
-    ])
+    ]).concat(tempDmg))
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await statOrNull(volumePath) != null) {
@@ -151,8 +150,8 @@ export class DmgTarget extends Target {
 
     const artifactPath = path.join(appOutDir, `${appInfo.productFilename}-${appInfo.version}.dmg`)
     //noinspection SpellCheckingInspection
-    await exec("hdiutil", ["convert", tempDmg, "-format", packager.devMetadata.build.compression === "store" ? "UDRO" : "UDBZ", "-imagekey", "zlib-level=9", "-o", artifactPath])
-    await exec("hdiutil", ["internet-enable", "-no", artifactPath])
+    await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-format", packager.devMetadata.build.compression === "store" ? "UDRO" : "UDBZ", "-imagekey", "zlib-level=9", "-o", artifactPath]))
+    await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
 
     this.packager.dispatchArtifactCreated(artifactPath, `${appInfo.name}-${appInfo.version}.dmg`)
   }
@@ -263,8 +262,9 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
   if (readWrite) {
     args.push("-readwrite")
   }
+  addVerboseIfNeed(args)
   args.push(dmgPath)
-  const attachResult = await exec("hdiutil", args, {maxBuffer: 1024 * 1024})
+  const attachResult = await exec("hdiutil", args, {maxBuffer: 2 * 1024 * 1024})
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
   const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
   if (device == null) {
@@ -272,4 +272,11 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
   }
 
   await executeFinally(task(), () => detach(device))
+}
+
+function addVerboseIfNeed(args: Array<string>): Array<string> {
+  if (debug.enabled) {
+    args.push("-verbose")
+  }
+  return args
 }
