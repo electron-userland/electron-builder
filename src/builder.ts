@@ -290,7 +290,7 @@ export async function createPublisher(packager: Packager, publishConfig: Publish
   }
   if (publishConfig.provider === "bintray") {
     const bintrayInfo: BintrayOptions = config
-    log(`Creating Bintray Publisher — user: ${bintrayInfo.owner}, package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
+    log(`Creating Bintray Publisher — user: ${bintrayInfo.user || bintrayInfo.owner}, owner: ${bintrayInfo.owner},  package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
     return new BintrayPublisher(bintrayInfo, version, options)
   }
   return null
