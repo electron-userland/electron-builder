@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="TypeScriptCompiler">
-    <option name="isCompilerEnabled" value="true" />
     <option name="typeScriptServiceDirectory" value="$PROJECT_DIR$/node_modules/typescript/lib" />
     <option name="trackFileSystemChanges" value="false" />
     <option name="useConfig" value="true" />

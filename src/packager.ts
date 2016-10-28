@@ -209,6 +209,10 @@ export class Packager implements BuildInfo {
         throw new Error(util.format(errorMessages.nameInBuildSpecified, appPackageFile))
       }
 
+      if (build.directories != null) {
+        throw new Error(`'directories' in the 'build' is not correct. Please move 'directories' from 'build' to root`)
+      }
+
       if (build.osx != null) {
         warn('"build.osx" is deprecated — please use "mac" instead of "osx"')
       }
