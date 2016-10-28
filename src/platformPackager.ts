@@ -582,11 +582,24 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     }
   }
 
+  const copy: PublishConfiguration = Object.assign({}, publishConfig)
+  if (copy.owner == null) {
+    copy.owner = owner
+  }
+
   if (publishConfig.provider === "github") {
-    return Object.assign({}, publishConfig, {owner: owner, repo: project})
+    const options = <GithubOptions>copy
+    if (options.repo == null) {
+      options.repo = project
+    }
+    return options
   }
   else if (publishConfig.provider === "bintray") {
-    return Object.assign({}, publishConfig, {owner: owner, package: project, repo: "generic"})
+    const options = <BintrayOptions>copy
+    if (options.package == null) {
+      options.package = project
+    }
+    return options
   }
   else {
     return null

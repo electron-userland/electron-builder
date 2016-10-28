@@ -1,4 +1,5 @@
 import { bintrayRequest } from "./restApiRequest"
+import { BintrayOptions } from "../options/publishOptions"
 
 export interface Version {
   readonly name: string
@@ -18,18 +19,23 @@ export class BintrayClient {
   private readonly basePath: string
   readonly auth: string | null
   readonly repo: string
-  readonly user: string
 
-  constructor(public owner: string, public packageName: string, repo?: string, apiKey?: string | null, user?: string | null) {
-    if (owner == null) {
+  readonly owner: string
+  private readonly user: string
+  readonly packageName: string
+
+  constructor(options: BintrayOptions, apiKey?: string | null) {
+    if (options.owner == null) {
       throw new Error("owner is not specified")
     }
-    if (packageName == null) {
+    if (options.package == null) {
       throw new Error("package is not specified")
     }
 
-    this.repo = repo || "generic"
-    this.user = user || owner
+    this.repo = options.repo || "generic"
+    this.packageName = options.package
+    this.owner = options.owner
+    this.user = options.user || options.owner
     this.auth = apiKey == null ? null : `Basic ${new Buffer(`${this.user}:${apiKey}`).toString("base64")}`
     this.basePath = `/packages/${this.owner}/${this.repo}/${this.packageName}`
   }
@@ -49,6 +55,6 @@ export class BintrayClient {
   }
 
   deleteVersion(version: string): Promise<any> {
-    return bintrayRequest(`/packages/${this.owner}/${this.repo}/${this.packageName}/versions/${version}`, this.auth, null, "DELETE")
+    return bintrayRequest(`${this.basePath}/versions/${version}`, this.auth, null, "DELETE")
   }
 }

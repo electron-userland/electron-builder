@@ -7,7 +7,7 @@ export class BintrayProvider implements Provider {
   private client: BintrayClient
 
   constructor(configuration: BintrayOptions) {
-    this.client = new BintrayClient(configuration.owner!, configuration.package!, configuration.repo)
+    this.client = new BintrayClient(configuration)
   }
 
   async getLatestVersion(): Promise<VersionInfo> {

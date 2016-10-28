@@ -23,7 +23,7 @@ export class BintrayPublisher implements Publisher {
       }
     }
 
-    this.client = new BintrayClient(info.owner!, info.package!, info.repo, token, info.user!)
+    this.client = new BintrayClient(info, token)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 

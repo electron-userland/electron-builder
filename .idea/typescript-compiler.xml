@@ -5,7 +5,6 @@
     <option name="typeScriptServiceDirectory" value="$PROJECT_DIR$/node_modules/typescript/lib" />
     <option name="trackFileSystemChanges" value="false" />
     <option name="useConfig" value="true" />
-    <option name="useServiceCompletion" value="false" />
     <option name="versionType" value="SERVICE_DIRECTORY" />
   </component>
 </project>
