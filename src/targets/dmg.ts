@@ -27,7 +27,7 @@ export class DmgTarget extends Target {
     const backgroundDir = path.join(tempDir, ".background")
     const backgroundFilename = specification.background == null ? null : path.basename(specification.background)
     if (backgroundFilename != null) {
-      await copy(specification.background!, path.join(backgroundDir, backgroundFilename))
+      await copy(path.resolve(packager.info.projectDir, specification.background!), path.join(backgroundDir, backgroundFilename))
     }
 
     let preallocatedSize = 32 * 1024
