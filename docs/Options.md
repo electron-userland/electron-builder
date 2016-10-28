@@ -197,6 +197,8 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 
 macOS only.
 
+Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
+
 | Name | Description
 | --- | ---
 | **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`.

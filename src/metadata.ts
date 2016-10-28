@@ -341,6 +341,8 @@ export interface FileAssociation {
  ### `.build.protocols`
 
  macOS only.
+
+ Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
  */
 export interface Protocol {
   /*
