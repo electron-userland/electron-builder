@@ -4,6 +4,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { eraseLines } from "ansi-escapes"
 import * as cursor from "cli-cursor"
 import prettyMs from "pretty-ms"
+import { get as getEmoji } from "node-emoji"
 
 interface Line {
   // text must be \n terminated
@@ -35,11 +36,13 @@ class Logger {
   private lines: Array<Line> = []
   private logTime = process.env.LOG_TIME === "true"
 
+  private readonly isTTY = (<any>process.stdout).isTTY
+
   constructor(private stream: WritableStream) {
   }
 
   warn(message: string): void {
-   this.log(yellow(`Warning: ${message}`))
+    this.log((this.isTTY ? (getEmoji("warning") + "  ") : "Warning: ") + yellow(message))
   }
 
   log(message: string): void {
