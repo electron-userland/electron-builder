@@ -21,6 +21,8 @@ export class NsisUpdater extends EventEmitter {
 
   private readonly app: any
 
+  private quitHandlerAdded = false
+
   constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
     super()
 
@@ -68,7 +70,7 @@ export class NsisUpdater extends EventEmitter {
       throw new Error(`App version is not valid semver version: "${currentVersion}`)
     }
 
-    if (isVersionGreaterThan(currentVersion, latestVersion)) {
+    if (!isVersionGreaterThan(latestVersion, currentVersion)) {
       this.updateAvailable = false
       this.emit("update-not-available")
       return {
@@ -89,6 +91,7 @@ export class NsisUpdater extends EventEmitter {
         .then(it => download(fileInfo.url, path.join(it, fileInfo.name)))
         .then(it => {
           this.setupPath = it
+          this.addQuitHandler()
           this.emit("update-downloaded", {}, null, versionInfo.version, null, null, () => {
             this.quitAndInstall()
           })
@@ -98,15 +101,33 @@ export class NsisUpdater extends EventEmitter {
     }
   }
 
-  quitAndInstall(): void {
-    if (this.quitAndInstallCalled) {
+  private addQuitHandler() {
+    if (this.quitHandlerAdded) {
       return
+    }
+
+    this.quitHandlerAdded = true
+
+    this.app.on("quit", () => {
+      this.install()
+    })
+  }
+
+  quitAndInstall(): void {
+    if (this.install()) {
+      this.app.quit()
+    }
+  }
+
+  private install(): boolean {
+    if (this.quitAndInstallCalled) {
+      return false
     }
 
     const setupPath = this.setupPath
     if (!this.updateAvailable || setupPath == null) {
       this.emitError("No update available, can't quit and install")
-      return
+      return false
     }
 
     // prevent calling several times
@@ -117,7 +138,7 @@ export class NsisUpdater extends EventEmitter {
       stdio: "ignore",
     }).unref()
 
-    this.app.quit()
+    return true
   }
 
   // emit both error object and message, this is to keep compatibility with old APIs
