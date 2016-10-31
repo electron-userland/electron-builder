@@ -40,7 +40,7 @@ Section "un.install"
   !endif
 
   # delete the installed files
-  RMDir /r $INSTDIR
+  RMDir /r /REBOOTOK $INSTDIR
 
   ClearErrors
   ${GetParameters} $R0

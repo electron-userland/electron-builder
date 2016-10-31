@@ -12,7 +12,10 @@ const g = (<any>global)
 g.__test_app = {
   getVersion: function () {
     return "0.0.1"
-  }
+  },
+
+  on: function () {
+  },
 }
 
 test("check updates - no versions at all", async (t) => {
