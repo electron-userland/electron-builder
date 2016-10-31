@@ -34,7 +34,12 @@ export function getGypEnv(electronVersion: string, arch: string): any {
 
 export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any): Promise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = [command, "--production", "--cache-min", "999999999"]
+  const npmExecArgs = [command, "--production"]
+
+  if (npmExecPath == null || !npmExecPath.includes("yarn")) {
+    npmExecArgs.push("--cache-min", "999999999")
+  }
+
   if (npmExecPath == null) {
     npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
   }
