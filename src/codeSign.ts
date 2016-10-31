@@ -1,4 +1,4 @@
-import { exec, getTempName, isEmptyOrSpaces } from "./util/util"
+import { exec, getTempName, isEmptyOrSpaces, isCi } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
 import * as path from "path"
@@ -10,7 +10,7 @@ import { TmpDir } from "./util/tmp"
 
 const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
 
-export type CertType = "Developer ID Application" | "3rd Party Mac Developer Application" | "Developer ID Installer" | "3rd Party Mac Developer Installer"
+export type CertType = "Developer ID Application" | "3rd Party Mac Developer Application" | "Developer ID Installer" | "3rd Party Mac Developer Installer" | "Mac Developer"
 
 export interface CodeSigningInfo {
   keychainName?: string | null
@@ -133,7 +133,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
     ])
       .then(it => {
         const array = it[0].concat(it[1])
-          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd.") && !it.includes("Mac Developer:"))
+          .filter(it => !it.includes("(Missing required extension)") && !it.includes("valid identities found") && !it.includes("iPhone ") && !it.includes("com.apple.idms.appleid.prd."))
           // remove 1)
           .map(it => it.substring(it.indexOf(")") + 1).trim())
         return Array.from(new Set(array))
@@ -168,6 +168,10 @@ async function _findIdentity(namePrefix: CertType, qualifier?: string | null, ke
         continue
       }
 
+      if (line.includes("Mac Developer:")) {
+        continue
+      }
+
       for (let prefix of appleCertificatePrefixes) {
         if (line.includes(prefix)) {
           continue l
@@ -183,10 +187,12 @@ async function _findIdentity(namePrefix: CertType, qualifier?: string | null, ke
 export async function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
   let identity = process.env.CSC_NAME || qualifier
   if (isEmptyOrSpaces(identity)) {
-    if (keychain == null && process.env.CI == null && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
+    if (keychain == null && !isCi() && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
       return null
     }
-    return await _findIdentity(certType, null, keychain)
+    else {
+      return await _findIdentity(certType, null, keychain)
+    }
   }
   else {
     identity = identity.trim()

@@ -99,19 +99,27 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
 
     let keychainName = (await this.codeSigningInfo).keychainName
-    const masQualifier = masOptions == null ? null : (masOptions.identity || this.platformSpecificBuildOptions.identity)
+    const isMas = masOptions != null
+    const masQualifier = isMas ? (masOptions!!.identity || this.platformSpecificBuildOptions.identity) : null
 
-    let name = await findIdentity(masOptions == null ? "Developer ID Application" : "3rd Party Mac Developer Application", masOptions == null ? this.platformSpecificBuildOptions.identity : masQualifier, keychainName)
+    let name = await findIdentity(isMas ? "3rd Party Mac Developer Application" : "Developer ID Application", isMas ? masQualifier : this.platformSpecificBuildOptions.identity, keychainName)
     if (name == null) {
-      let message = "App is not signed: CSC_LINK is not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
-      if (masOptions == null) {
-        message += `\nMust be "Developer ID Application:" or custom non-Apple code signing certificate`
-        warn(message)
-        return
+      if (!isMas) {
+        name = await findIdentity("Mac Developer", this.platformSpecificBuildOptions.identity, keychainName)
+        if (name != null) {
+          warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
+        }
       }
-      else {
-        message += `\nMust be "3rd Party Mac Developer Application:" and "3rd Party Mac Developer Installer:"`
-        throw new Error(message)
+
+      if (name == null) {
+        let message = `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+        if (isMas) {
+          throw new Error(message)
+        }
+        else {
+          warn(message)
+          return
+        }
       }
     }
 
@@ -119,13 +127,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (masOptions != null) {
       installerName = await findIdentity("3rd Party Mac Developer Installer", masQualifier, keychainName)
       if (installerName == null) {
-        throw new Error("Cannot find valid installer certificate: CSC_LINK is not specified, and no valid identity in the keychain, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
+        throw new Error('Cannot find valid "3rd Party Mac Developer Installer" identity to sign MAS installer, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing')
       }
     }
 
     const baseSignOptions: BaseSignOptions = {
       app: path.join(appOutDir, `${this.appInfo.productFilename}.app`),
-      platform: masOptions == null ? "darwin" : "mas",
+      platform: isMas ? "mas" : "darwin",
       keychain: keychainName || undefined,
       version: this.info.electronVersion
     }
@@ -147,7 +155,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       signOptions.entitlements = customSignOptions.entitlements
     }
     else {
-      const p = `entitlements.${masOptions == null ? "mac" : "mas"}.plist`
+      const p = `entitlements.${isMas ? "mas" : "mac"}.plist`
       if (resourceList.includes(p)) {
         signOptions.entitlements = path.join(this.buildResourcesDir, p)
       }
@@ -157,7 +165,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
     }
     else {
-      const p = `entitlements.${masOptions == null ? "mac" : "mas"}.inherit.plist`
+      const p = `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`
       if (resourceList.includes(p)) {
         signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
       }

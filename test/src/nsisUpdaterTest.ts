@@ -15,6 +15,7 @@ g.__test_app = {
   },
 
   on: function () {
+    // ignored
   },
 }
 
