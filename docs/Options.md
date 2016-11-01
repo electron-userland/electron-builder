@@ -217,7 +217,7 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 
 Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
 
-Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name/` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
+Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
 
 | Name | Description
 | --- | ---
@@ -236,7 +236,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 ### `.build.publish` Generic (any https server)
 | Name | Description
 | --- | ---
-| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucketName.s3-website.eu-central-1.amazonaws.com`
+| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`
 | channel | <a name="GenericServerOptions-channel"></a>The channel. Defaults to `latest`.
 
 <a name="GithubOptions"></a>
