@@ -8,11 +8,12 @@ import { v5 as uuid5 } from "uuid-1345"
 import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig } from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
-import { unlink, readFile, writeFile } from "fs-extra-p"
+import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
 import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
 import { PublishConfiguration, GenericServerOptions } from "../options/publishOptions"
 import { safeDump } from "js-yaml"
+import { createHash } from "crypto"
 
 const NSIS_VERSION = "3.0.1"
 //noinspection SpellCheckingInspection
@@ -72,20 +73,6 @@ export default class NsisTarget extends TargetEx {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
-
-    const publishConfigs = await this.publishConfigs
-    if (publishConfigs != null) {
-      for (let publishConfig of publishConfigs) {
-        if (publishConfig.provider === "generic") {
-          const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump({
-            version: version,
-            file: installerFilename,
-          }))
-        }
-      }
-    }
-
     const iconPath = await packager.getIconPath()
 
     const installerPath = path.join(this.outDir, installerFilename)
@@ -215,6 +202,25 @@ export default class NsisTarget extends TargetEx {
     await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
     await packager.sign(installerPath)
 
+    const publishConfigs = await this.publishConfigs
+    if (publishConfigs != null) {
+      let sha2: string | null = null
+      for (let publishConfig of publishConfigs) {
+        if (publishConfig.provider === "generic") {
+          if (sha2 == null) {
+            sha2 = await sha256(installerPath)
+          }
+
+          const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump({
+            version: version,
+            file: installerFilename,
+            sha2: sha2,
+          }))
+        }
+      }
+    }
+
     this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
   }
 
@@ -305,4 +311,21 @@ export default class NsisTarget extends TargetEx {
       childProcess.stdin.end(script)
     })
   }
+}
+
+function sha256(file: string) {
+  return new BluebirdPromise<string>((resolve, reject) => {
+    const hash = createHash("sha256")
+    hash
+      .on("error", reject)
+      .setEncoding("hex")
+
+    createReadStream(file)
+      .on("error", reject)
+      .on("end", () => {
+        hash.end()
+        resolve(<string>hash.read())
+      })
+      .pipe(hash, {end: false})
+  })
 }

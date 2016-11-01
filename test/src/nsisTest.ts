@@ -72,10 +72,12 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
           provider: "generic",
           url: "https://develar.s3-website.eu-central-1.amazonaws.com/test",
         })
-    assertThat(safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))).hasProperties({
+    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
+    assertThat(updateInfo).hasProperties({
           version: "1.1.0",
           file: "TestApp Setup 1.1.0.exe",
         })
+    assertThat(updateInfo.sha2).isNotEmpty()
     await doTest(context.outDir, false)
   },
 }))
