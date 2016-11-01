@@ -1,9 +1,9 @@
-import { Provider, VersionInfo, FileInfo } from "./api"
+import { Provider, FileInfo } from "./api"
 import { BintrayClient } from "../../src/publish/bintray"
 import { HttpError } from "../../src/publish/restApiRequest"
-import { BintrayOptions } from "../../src/options/publishOptions"
+import { BintrayOptions, VersionInfo } from "../../src/options/publishOptions"
 
-export class BintrayProvider implements Provider {
+export class BintrayProvider implements Provider<VersionInfo> {
   private client: BintrayClient
 
   constructor(configuration: BintrayOptions) {
@@ -34,6 +34,7 @@ export class BintrayProvider implements Provider {
           return {
             name: file.name,
             url: `https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${file.name}`,
+            sha2: file.sha256,
           }
         }
       }

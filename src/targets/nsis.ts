@@ -11,7 +11,7 @@ import { subTask, task, log } from "../util/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
 import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
-import { PublishConfiguration, GenericServerOptions } from "../options/publishOptions"
+import { PublishConfiguration, GenericServerOptions, UpdateInfo } from "../options/publishOptions"
 import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 
@@ -212,9 +212,9 @@ export default class NsisTarget extends TargetEx {
           }
 
           const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump({
+          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump(<UpdateInfo>{
             version: version,
-            file: installerFilename,
+            path: installerFilename,
             sha2: sha2,
           }))
         }

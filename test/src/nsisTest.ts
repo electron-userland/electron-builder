@@ -70,7 +70,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   packed: async(context) => {
     assertThat(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).hasProperties({
           provider: "generic",
-          url: "https://develar.s3-website.eu-central-1.amazonaws.com/test",
+          url: "https://develar.s3.amazonaws.com/test",
         })
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     assertThat(updateInfo).hasProperties({

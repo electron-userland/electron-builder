@@ -1,17 +1,17 @@
-export interface VersionInfo {
-  readonly version: string
-}
+import { VersionInfo } from "../../src/options/publishOptions"
 
 export interface FileInfo {
   name: string
 
   url: string
+
+  sha2?: string
 }
 
-export interface Provider {
-  getLatestVersion(): Promise<VersionInfo>
+export interface Provider<T extends VersionInfo> {
+  getLatestVersion(): Promise<T>
 
-  getUpdateFile(versionInfo: VersionInfo): Promise<FileInfo>
+  getUpdateFile(versionInfo: T): Promise<FileInfo>
 }
 
 export interface UpdateCheckResult {

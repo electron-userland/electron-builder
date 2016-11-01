@@ -3,28 +3,34 @@ import { RequestOptions } from "https"
 import { IncomingMessage, ClientRequest } from "http"
 import { addTimeOutHandler } from "../util/httpRequest"
 import BluebirdPromise from "bluebird-lst-c"
+import { Url } from "url"
+import { safeLoad } from "js-yaml"
+import _debug from "debug"
+import Debugger = debug.Debugger
+
+const debug: Debugger = _debug("electron-builder")
 
 export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  return request<T>("api.github.com", path, token, data, method)
+  return request<T>({hostname: "api.github.com", path: path}, token, data, method)
 }
 
 export function bintrayRequest<T>(path: string, auth: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  return request<T>("api.bintray.com", path, auth, data, method)
+  return request<T>({hostname: "api.bintray.com", path: path}, auth, data, method)
 }
 
-function request<T>(hostname: string, path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  const options: any = {
-    hostname: hostname,
-    path: path,
+export function request<T>(url: Url, token: string | null = null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
+  const options: any = Object.assign({
     method: method,
     headers: {
       "User-Agent": "electron-builder"
     }
-  }
+  }, url)
 
-  if (hostname.includes("github")) {
+  if (url.hostname!!.includes("github")) {
     options.headers.Accept = "application/vnd.github.v3+json"
   }
+
+  debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
 
   const encodedData = data == null ? null : new Buffer(JSON.stringify(data))
   if (encodedData != null) {
@@ -64,9 +70,10 @@ Please double check that your authentication token is correct. Due to security r
 
         response.on("end", () => {
           try {
+            const contentType = response.headers["content-type"]
+            const isJson = contentType != null && contentType.includes("json")
             if (response.statusCode >= 400) {
-              const contentType = response.headers["content-type"]
-              if (contentType != null && contentType.includes("json")) {
+              if (isJson) {
                 reject(new HttpError(response, JSON.parse(data)))
               }
               else {
@@ -74,7 +81,7 @@ Please double check that your authentication token is correct. Due to security r
               }
             }
             else {
-              resolve(data.length === 0 ? null : JSON.parse(data))
+              resolve(data.length === 0 ? null : (isJson || !options.path!.includes(".yml")) ? JSON.parse(data) : safeLoad(data))
             }
           }
           catch (e) {

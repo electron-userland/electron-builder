@@ -7,9 +7,10 @@ import { download } from "../../src/util/httpRequest"
 import { Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
-import { BintrayOptions, PublishConfiguration, GithubOptions } from "../../src/options/publishOptions"
+import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptions } from "../../src/options/publishOptions"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
+import { GenericProvider } from "./GenericProvider"
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null
@@ -17,7 +18,7 @@ export class NsisUpdater extends EventEmitter {
   private updateAvailable = false
   private quitAndInstallCalled = false
 
-  private clientPromise: Promise<Provider>
+  private clientPromise: Promise<Provider<any>>
 
   private readonly app: any
 
@@ -40,7 +41,7 @@ export class NsisUpdater extends EventEmitter {
     return JSON.stringify(this.clientPromise, null, 2)
   }
 
-  setFeedURL(value: string | PublishConfiguration | BintrayOptions | GithubOptions) {
+  setFeedURL(value: string | PublishConfiguration | BintrayOptions | GithubOptions | GenericServerOptions) {
     this.clientPromise = BluebirdPromise.resolve(createClient(value))
   }
 
@@ -88,7 +89,7 @@ export class NsisUpdater extends EventEmitter {
       versionInfo: versionInfo,
       fileInfo: fileInfo,
       downloadPromise: mkdtemp(`${path.join(tmpdir(), "up")}-`)
-        .then(it => download(fileInfo.url, path.join(it, fileInfo.name)))
+        .then(it => download(fileInfo.url, path.join(it, fileInfo.name), fileInfo.sha2 == null ? null : {sha2: fileInfo.sha2}))
         .then(it => {
           this.setupPath = it
           this.addQuitHandler()
@@ -155,6 +156,9 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
     const provider = (<PublishConfiguration>data).provider
     if (provider === "bintray") {
       return new BintrayProvider(<BintrayOptions>data)
+    }
+    else if (provider === "generic") {
+      return new GenericProvider(<GenericServerOptions>data)
     }
     else {
       throw new Error(`Unsupported provider: ${provider}`)
