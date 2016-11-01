@@ -181,7 +181,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
       if (target instanceof TargetEx) {
-        promises.push(task(`Building ${target.name} ${Arch[arch]} installer`, target.build(appOutDir, arch)))
+        promises.push(task(`Building ${target.name} ${Arch[arch]}`, target.build(appOutDir, arch)))
       }
       else {
         const format = target.name

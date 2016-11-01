@@ -1,16 +1,21 @@
-export type PublishProvider = "github" | "bintray"
+export type PublishProvider = "github" | "bintray" | "generic"
+
+export type Publish = string | Array<string> | PublishConfiguration | GithubOptions | BintrayOptions | GenericServerOptions | Array<PublishConfiguration> | Array<GithubOptions> | Array<GenericServerOptions> | Array<BintrayOptions> | null
 
 /*
 ### `.build.publish`
 
-Can be specified in [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
+Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
 Please see [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
-Array of option objects.
+If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
+If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+
+Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
  */
 export interface PublishConfiguration {
   /*
-  The provider, one of `github`, `bintray`.
+  The provider, one of `github`, `bintray`, `generic`.
    */
   provider: PublishProvider
 
@@ -20,6 +25,21 @@ export interface PublishConfiguration {
   owner?: string
 
   token?: string
+}
+
+/*
+### `.build.publish` Generic (any https server)
+ */
+export interface GenericServerOptions extends PublishConfiguration {
+  /*
+  The base url. e.g. `https://bucketName.s3-website.eu-central-1.amazonaws.com`
+   */
+  url: string
+
+  /**
+  The channel. Defaults to `latest`.
+   */
+  channel?: string | null
 }
 
 /*
@@ -52,7 +72,7 @@ export interface BintrayOptions extends PublishConfiguration {
   repo?: string
 
   /*
-   The Bintray user account.  Used in cases where the owner is an organization.
+   The Bintray user account. Used in cases where the owner is an organization.
    */
   user?: string
 }

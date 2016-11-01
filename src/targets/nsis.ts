@@ -11,7 +11,7 @@ import { subTask, task, log } from "../util/log"
 import { unlink, readFile, writeFile } from "fs-extra-p"
 import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
-import { PublishConfiguration } from "../options/publishOptions"
+import { PublishConfiguration, GenericServerOptions } from "../options/publishOptions"
 import { safeDump } from "js-yaml"
 
 const NSIS_VERSION = "3.0.1"
@@ -30,16 +30,16 @@ export default class NsisTarget extends TargetEx {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  private readonly publishConfig = this.computePublishConfig()
+  private readonly publishConfigs = this.computePublishConfigs()
 
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
   }
 
-  private computePublishConfig(): Promise<PublishConfiguration | null> {
+  private computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
     const publishConfigs = getPublishConfigs(this.packager, this.options)
     if (publishConfigs != null && publishConfigs.length > 0) {
-      return getResolvedPublishConfig(this.packager.info, publishConfigs[0], true)
+      return BluebirdPromise.map(publishConfigs, it => getResolvedPublishConfig(this.packager.info, it, true))
     }
     else {
       return BluebirdPromise.resolve(null)
@@ -52,9 +52,9 @@ export default class NsisTarget extends TargetEx {
   }
 
   private async doBuild(appOutDir: string, arch: Arch) {
-    const publishConfig = await this.publishConfig
-    if (publishConfig != null) {
-      await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfig))
+    const publishConfigs = await this.publishConfigs
+    if (publishConfigs != null) {
+      await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
     }
 
     const packager = this.packager
@@ -69,12 +69,26 @@ export default class NsisTarget extends TargetEx {
 
   private async buildInstaller(): Promise<any> {
     const packager = this.packager
-
-    const iconPath = await packager.getIconPath()
     const appInfo = packager.appInfo
     const version = appInfo.version
+    const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
 
-    const installerPath = path.join(this.outDir, `${appInfo.productFilename} Setup ${version}.exe`)
+    const publishConfigs = await this.publishConfigs
+    if (publishConfigs != null) {
+      for (let publishConfig of publishConfigs) {
+        if (publishConfig.provider === "generic") {
+          const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump({
+            version: version,
+            file: installerFilename,
+          }))
+        }
+      }
+    }
+
+    const iconPath = await packager.getIconPath()
+
+    const installerPath = path.join(this.outDir, installerFilename)
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const defines: any = {
       APP_ID: appInfo.id,

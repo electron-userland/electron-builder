@@ -16,7 +16,7 @@ import { pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
-import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
+import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "./options/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
 
 export interface PackagerOptions {
@@ -551,7 +551,14 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
     .map(it => typeof it === "string" ? {provider: <any>it} : it)
 }
 
-export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
+export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions | GenericServerOptions, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
+  if (publishConfig.provider === "generic") {
+    if ((<GenericServerOptions>publishConfig).url == null) {
+      throw new Error(`Please specify "url" for "generic" update server`)
+    }
+    return publishConfig
+  }
+
   async function getInfo() {
     const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
     if (info != null) {
