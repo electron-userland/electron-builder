@@ -144,6 +144,7 @@ test.ifOsx("no background", app({
       productName: "Test ß",
       dmg: {
         background: null,
+        title: "Foo",
       },
     }
   }

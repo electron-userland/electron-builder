@@ -7,6 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
+import sanitizeFileName from "sanitize-filename"
 
 export class DmgTarget extends Target {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
@@ -41,7 +42,7 @@ export class DmgTarget extends Target {
     // allocate space for .DS_Store
     await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), new Buffer(preallocatedSize))
 
-    const volumeName = `${appInfo.productFilename} ${appInfo.version}`
+    const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
     //noinspection SpellCheckingInspection
     await spawn("hdiutil", addVerboseIfNeed(["create",
       "-srcfolder", backgroundDir,
@@ -156,6 +157,18 @@ export class DmgTarget extends Target {
     this.packager.dispatchArtifactCreated(artifactPath, `${appInfo.name}-${appInfo.version}.dmg`)
   }
 
+  computeVolumeName(custom?: string | null): string {
+    const appInfo = this.packager.appInfo
+    if (custom == null) {
+      return `${appInfo.productFilename} ${appInfo.version}`
+    }
+
+    return custom
+      .replace(/\$\{version}/g, appInfo.version)
+      .replace(/\$\{name}/g, appInfo.name)
+      .replace(/\$\{productName}/g, appInfo.productName)
+  }
+
   // public to test
   async computeDmgOptions(): Promise<DmgOptions> {
     const packager = this.packager
@@ -184,15 +197,6 @@ export class DmgTarget extends Target {
         specification.iconSize = specification["icon-size"]
       }
       warn("dmg.icon-size is deprecated, please use dmg.iconSize instead")
-    }
-
-    if (specification.title != null) {
-      if (specification.title === packager.appInfo.productName) {
-        warn(`Do not specify unnecessary dmg.title ("${specification.title}") — application name ("${packager.appInfo.productFilename}") is used by default`)
-      }
-      else {
-        warn("dmg.title is not supported, file issue if need")
-      }
     }
 
     if (!("icon" in specification)) {
@@ -262,7 +266,10 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
   if (readWrite) {
     args.push("-readwrite")
   }
-  addVerboseIfNeed(args)
+
+  // otherwise hangs
+  // addVerboseIfNeed(args)
+
   args.push(dmgPath)
   const attachResult = await exec("hdiutil", args, {maxBuffer: 2 * 1024 * 1024})
   const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
@@ -275,7 +282,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
 }
 
 function addVerboseIfNeed(args: Array<string>): Array<string> {
-  if (debug.enabled) {
+  if (process.env.DEBUG_DMG === "true") {
     args.push("-verbose")
   }
   return args

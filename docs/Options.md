@@ -100,6 +100,7 @@ macOS DMG specific options.
 | icon | <a name="DmgOptions-icon"></a>The path to DMG icon (volume icon), which will be shown when mounted. Defaults to application icon (`build/icon.icns`).
 | iconSize | <a name="DmgOptions-iconSize"></a>The size of all the icons inside the DMG. Defaults to 80.
 | iconTextSize | <a name="DmgOptions-iconTextSize"></a>The size of all the icon texts inside the DMG. Defaults to 12.
+| title | <a name="DmgOptions-title"></a><p>The title of the produced DMG, which will be shown when mounted (volume name). Defaults to <code>${productName} ${version}</code></p> <p>Macro <code>${productName}</code>, <code>${version}</code> and <code>${name}</code> are supported.</p>
 | contents | <a name="DmgOptions-contents"></a>The content — to customize icon locations.
 | format | <a name="DmgOptions-format"></a>The disk image format, one of `UDRW`, `UDRO`, `UDCO`, `UDZO`, `UDBZ`, `ULFO` (lzfse-compressed image (OS X 10.11+ only)). Defaults to `UDBZ` (bzip2-compressed image).
 | window | <a name="DmgOptions-window"></a>The DMG windows position and size. See [.build.dmg.window](#DmgWindow).

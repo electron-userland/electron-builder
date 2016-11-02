@@ -91,6 +91,13 @@ export interface DmgOptions {
   readonly iconTextSize?: number | null
 
   /*
+  The title of the produced DMG, which will be shown when mounted (volume name). Defaults to `${productName} ${version}`
+
+  Macro `${productName}`, `${version}` and `${name}` are supported.
+   */
+  readonly title?: string | null
+
+  /*
   The content — to customize icon locations.
    */
   readonly contents?: Array<DmgContent>
