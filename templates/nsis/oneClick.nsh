@@ -2,8 +2,8 @@
   !ifndef BUILD_UNINSTALLER
     Function StartApp
       !ifdef INSTALL_MODE_PER_ALL_USERS
-        !include UAC.nsh
-        !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
+        !include StdUtils.nsh
+        ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
       !else
         ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
       !endif

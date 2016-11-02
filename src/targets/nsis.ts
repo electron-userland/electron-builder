@@ -15,9 +15,9 @@ import { PublishConfiguration, GenericServerOptions, UpdateInfo } from "../optio
 import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 
-const NSIS_VERSION = "3.0.1"
+const NSIS_VERSION = "3.0.2"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "23280f66c07c923da6f29a3c318377720c8ecd7af4de3755256d1ecf60d07f74"
+const NSIS_SHA2 = "012c29d62e167ff74e858eeb929641dc2c9d7bfe7465e748648814660c61b419"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"

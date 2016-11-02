@@ -58,7 +58,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       },
       publish: {
         provider: "generic",
-        url: "https://develar.s3-website.eu-central-1.amazonaws.com/test",
+        url: "https://develar.s3.amazonaws.com/test",
       },
     }
   },
@@ -75,7 +75,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     assertThat(updateInfo).hasProperties({
           version: "1.1.0",
-          file: "TestApp Setup 1.1.0.exe",
+          path: "TestApp Setup 1.1.0.exe",
         })
     assertThat(updateInfo.sha2).isNotEmpty()
     await doTest(context.outDir, false)
