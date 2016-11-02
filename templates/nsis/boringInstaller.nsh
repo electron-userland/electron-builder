@@ -74,6 +74,19 @@
       StrCpy $hasPerUserInstallation "1"
     ${endif}
 
+    ${GetParameters} $R0
+    ${GetOptions} $R0 "/allusers" $R1
+    ${IfNot} ${Errors}
+      !insertmacro setInstallModePerAllUsers
+      Goto FEnd
+    ${EndIf}
+
+    ${GetOptions} $R0 "/currentuser" $R1
+    ${IfNot} ${Errors}
+      !insertmacro setInstallModePerUser
+      Goto FEnd
+    ${EndIf}
+
     ${if} $hasPerUserInstallation == "1"
      ${andif} $hasPerMachineInstallation == "0"
       !insertmacro setInstallModePerUser
@@ -88,6 +101,8 @@
         !insertmacro setInstallModePerUser
       !endif
     ${endif}
+
+    FEnd:
   !endif
 !macroend
 
