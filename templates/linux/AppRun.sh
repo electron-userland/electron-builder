@@ -39,6 +39,11 @@ export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS}"
 export GSETTINGS_SCHEMA_DIR="${APPDIR}/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR}"
 
+DESKTOP_FILE=$(find "$APPDIR" -maxdepth 1 -name "*.desktop" | head -n 1)
+DESKTOP_FILE_NAME=$(basename "${DESKTOP_FILE}")
+APP="${DESKTOP_FILE_NAME%.*}"
+BIN="$APPDIR/usr/bin/$APP"
+
 trap atexit EXIT
 
 # Note that the following handles 0, 1 or more arguments (file paths)
@@ -123,11 +128,6 @@ check_dep desktop-file-install
 check_dep xdg-icon-resource
 check_dep xdg-mime
 check_dep xdg-desktop-menu
-
-DESKTOP_FILE=$(find "$APPDIR" -maxdepth 1 -name "*.desktop" | head -n 1)
-DESKTOP_FILE_NAME=$(basename "${DESKTOP_FILE}")
-APP="${DESKTOP_FILE_NAME%.*}"
-BIN="$APPDIR/usr/bin/$APP"
 
 if [ ! -f "$DESKTOP_FILE" ] ; then
   echo "Desktop file is missing. Please run ${THIS} from within an AppImage."
