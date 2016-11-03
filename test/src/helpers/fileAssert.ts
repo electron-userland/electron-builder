@@ -48,7 +48,7 @@ class Assertions {
     compare(this.actual.slice().sort(), Array.from(expected).slice().sort())
   }
 
-  hasProperties<T>(expected: any) {
+  hasProperties(expected: any) {
     const actual = Object.create(null)
     for (let name of Object.getOwnPropertyNames(this.actual)) {
       if (name in expected) {

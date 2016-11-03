@@ -208,7 +208,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
   const productFilename = appInfo.productFilename
   const expectedContents = pathSorter(expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
-      return `/opt/${productFilename}/${productFilename}`
+      return `/opt/${productFilename}/TestApp`
     }
     else if (it === "/usr/share/applications/TestApp.desktop") {
       return `/usr/share/applications/${productFilename}.desktop`

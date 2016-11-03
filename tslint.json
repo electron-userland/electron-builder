@@ -5,9 +5,6 @@
       "static-before-instance",
       "variables-before-functions"
     ],
-    "no-unused-variable": [
-      true
-    ],
     "one-line": [
       true,
       "check-open-brace",

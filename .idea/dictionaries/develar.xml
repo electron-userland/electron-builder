@@ -14,9 +14,11 @@
       <w>archiver</w>
       <w>archs</w>
       <w>aspx</w>
+      <w>atexit</w>
       <w>atime</w>
       <w>authenticode</w>
       <w>awaiter</w>
+      <w>bashism</w>
       <w>bintray</w>
       <w>buildpack</w>
       <w>chown</w>
@@ -160,6 +162,7 @@
       <w>xenial</w>
       <w>xorriso</w>
       <w>yargs</w>
+      <w>zenity</w>
       <w>zisofs</w>
     </words>
   </dictionary>

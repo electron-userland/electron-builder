@@ -1,9 +1,9 @@
 import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { exec, debug, isEmptyOrSpaces } from "../util/util"
-import { PlatformPackager } from "../platformPackager"
 import BluebirdPromise from "bluebird-lst-c"
 import { LinuxBuildOptions } from "../options/linuxOptions"
+import { LinuxPackager } from "../linuxPackager"
 
 export const installPrefix = "/opt"
 
@@ -12,7 +12,7 @@ export class LinuxTargetHelper {
 
   maxIconPath: string | null = null
 
-  constructor(private packager: PlatformPackager<LinuxBuildOptions>) {
+  constructor(private packager: LinuxPackager) {
     this.icons = this.computeDesktopIcons()
   }
 
@@ -72,7 +72,7 @@ export class LinuxTargetHelper {
     const desktopMeta: any = Object.assign({
       Name: appInfo.productName,
       Comment: platformSpecificBuildOptions.description || appInfo.description,
-      Exec: exec == null ? `"${installPrefix}/${productFilename}/${productFilename}"` : exec,
+      Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}"` : exec,
       Terminal: "false",
       Type: "Application",
       Icon: appInfo.name,

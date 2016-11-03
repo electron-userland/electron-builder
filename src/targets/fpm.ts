@@ -1,5 +1,5 @@
 import { Arch } from "../metadata"
-import { smarten, PlatformPackager, TargetEx } from "../platformPackager"
+import { smarten, TargetEx } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
 import { getBin } from "../util/binDownload"
@@ -8,7 +8,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
 import { TmpDir } from "../util/tmp"
-import { LinuxBuildOptions } from "../options/linuxOptions"
+import { LinuxPackager } from "../linuxPackager"
 
 const template = require("lodash.template")
 
@@ -33,7 +33,7 @@ export default class FpmTarget extends TargetEx {
   private readonly scriptFiles: Promise<Array<string>>
   private readonly desktopEntry: Promise<string>
 
-  constructor(name: string, private packager: PlatformPackager<LinuxBuildOptions>, private helper: LinuxTargetHelper, private outDir: string) {
+  constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
     super(name)
 
     this.scriptFiles = this.createScripts()
@@ -46,7 +46,7 @@ export default class FpmTarget extends TargetEx {
     const packager = this.packager
     const templateOptions = Object.assign({
       // old API compatibility
-      executable: packager.appInfo.productFilename,
+      executable: this.packager.executableName,
     }, packager.platformSpecificBuildOptions)
 
     function getResource(value: string | n, defaultFile: string) {

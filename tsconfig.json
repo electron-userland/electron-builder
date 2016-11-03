@@ -12,6 +12,7 @@
     "strictNullChecks": true,
     "noEmitHelpers": true,
     "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true
   },
   "declaration": {

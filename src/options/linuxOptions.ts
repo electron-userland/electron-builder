@@ -65,4 +65,11 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
    */
   readonly depends?: string[] | null
+
+  /*
+   The executable name. Defaults to `productName`.
+
+   Cannot be specified per target, allowed only in the `.build.linux`.
+   */
+  readonly executableName?: string | null
 }

@@ -8,10 +8,16 @@ import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
 import { LinuxBuildOptions } from "./options/linuxOptions"
+import sanitizeFileName from "sanitize-filename"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
+  readonly executableName: string
+
   constructor(info: BuildInfo) {
     super(info)
+
+    let executableName = this.platformSpecificBuildOptions.executableName
+    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name : executableName)
   }
 
   normalizePlatformSpecificBuildOptions(options: LinuxBuildOptions | n): LinuxBuildOptions {
@@ -64,7 +70,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   }
 
   protected postInitApp(appOutDir: string): Promise<any> {
-    return rename(path.join(appOutDir, "electron"), path.join(appOutDir, this.appInfo.productFilename))
+    return rename(path.join(appOutDir, "electron"), path.join(appOutDir, this.executableName))
   }
 
   protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>): Promise<any> {

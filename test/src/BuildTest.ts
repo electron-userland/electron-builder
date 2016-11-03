@@ -234,7 +234,11 @@ test.ifDevOrLinuxCi("extra metadata", () => {
     foo: {
       bar: 12,
     },
-    productName: "NewName"
+    build: {
+      linux: {
+        executableName: "NewName"
+      }
+    }
   }
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -260,7 +264,11 @@ test.ifDevOrLinuxCi("extra metadata", () => {
 
 test.ifDevOrLinuxCi("extra metadata - two", () => {
   const extraMetadata = {
-    productName: "NewName"
+    build: {
+      linux: {
+        executableName: "NewName"
+      }
+    }
   }
   return assertPack("test-app", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),

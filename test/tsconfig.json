@@ -12,6 +12,7 @@
     "noImplicitReturns": true,
     "noEmitHelpers": true,
     "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true
   },
   "rootDirs": [

@@ -11,7 +11,16 @@ test.ifNotWindows("arm deb", app({targets: Platform.LINUX.createTarget("deb", Ar
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
-test.ifDevOrLinuxCi("AppImage - default icon", app({targets: Platform.LINUX.createTarget("appimage")}, {
+test.ifDevOrLinuxCi("AppImage - default icon", app({
+  targets: Platform.LINUX.createTarget("appimage"),
+  devMetadata: {
+    build: {
+      linux: {
+       executableName: "foo",
+      }
+    }
+  }
+}, {
   projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
