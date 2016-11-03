@@ -88,8 +88,8 @@ Only IntelliJ Platform IDEs (IntelliJ IDEA, WebStorm) support debug. [Forked ver
 
 Use one of the shared run configurations as a template and:
 
-* Ensure that `Before launch` contains `Compile TypeScript`.
-* Set `Node interpreter` to NodeJS 7. Yes — NodeJS 7 is required to debug. Download [nightly build](https://nodejs.org/download/nightly/).
+* Ensure that `Before launch` contains `Compile TypeScript` (note – currently do not add, please do`npm run compile` before run).
+* Set `Node interpreter` to NodeJS 7. NodeJS 7 is required to debug.
 * Set `Node parameters` to `--inspect`.
 * Set `Application Parameters` to `--match="test name" relative-test-file-name` if you want to debug particular test. E.g.
   ```

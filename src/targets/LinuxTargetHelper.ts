@@ -3,7 +3,7 @@ import * as path from "path"
 import { exec, debug, isEmptyOrSpaces } from "../util/util"
 import { PlatformPackager } from "../platformPackager"
 import BluebirdPromise from "bluebird-lst-c"
-import { LinuxBuildOptions } from "../metadata"
+import { LinuxBuildOptions } from "../options/linuxOptions"
 
 export const installPrefix = "/opt"
 

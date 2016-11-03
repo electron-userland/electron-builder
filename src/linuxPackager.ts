@@ -1,12 +1,13 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
-import { Platform, LinuxBuildOptions, Arch } from "./metadata"
+import { Platform, Arch } from "./metadata"
 import FpmTarget from "./targets/fpm"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
+import { LinuxBuildOptions } from "./options/linuxOptions"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   constructor(info: BuildInfo) {

@@ -1,4 +1,4 @@
-import { LinuxBuildOptions, Arch } from "../metadata"
+import { Arch } from "../metadata"
 import { smarten, PlatformPackager, TargetEx } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
@@ -8,6 +8,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
 import { TmpDir } from "../util/tmp"
+import { LinuxBuildOptions } from "../options/linuxOptions"
 
 const template = require("lodash.template")
 

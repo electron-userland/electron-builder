@@ -1,5 +1,5 @@
 import {  PlatformPackager, TargetEx } from "../platformPackager"
-import { LinuxBuildOptions, Arch } from "../metadata"
+import { Arch } from "../metadata"
 import * as path from "path"
 import { exec, unlinkIfExists } from "../util/util"
 import { open, write, createReadStream, createWriteStream, close, chmod } from "fs-extra-p"
@@ -7,6 +7,7 @@ import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getBin } from "../util/binDownload"
 import BluebirdPromise from "bluebird-lst-c"
 import { v1 as uuid1 } from "uuid-1345"
+import { LinuxBuildOptions } from "../options/linuxOptions"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
