@@ -21,23 +21,22 @@ const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
 export async function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): Promise<Array<string>> {
-  const list = await BluebirdPromise.map(await readdir(dirPath), name => {
-    const filePath = dirPath + path.sep + name
-    return lstat(filePath)
-      .then((stat): any => {
-        if (filter != null && !filter(filePath, stat)) {
-          return null
-        }
+  const childNames = await readdir(dirPath)
+  const list = await BluebirdPromise.map(childNames, name => lstat(dirPath + path.sep + name), concurrency)
+    .then(stats => BluebirdPromise.map(stats, (stat, index): any => {
+      const filePath = dirPath + path.sep + childNames[index]
+      if (filter != null && !filter(filePath, stat)) {
+        return null
+      }
 
-        if (consumer != null) {
-          consumer(filePath, stat)
-        }
-        if (stat.isDirectory()) {
-          return walk(filePath, consumer, filter, true)
-        }
-        return filePath
-      })
-  }, concurrency)
+      if (consumer != null) {
+        consumer(filePath, stat)
+      }
+      if (stat.isDirectory()) {
+        return walk(filePath, consumer, filter, true)
+      }
+      return filePath
+    }, concurrency))
 
   list.sort((a, b) => {
     // files before directories
