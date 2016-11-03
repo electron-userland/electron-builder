@@ -126,9 +126,8 @@ Var RadioButtonLabel1
 		SendMessage $MultiUser.InstallModePage.AllUsers ${BM_GETCHECK} 0 0 $MultiUser.InstallModePage.ReturnValue
 
 		${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
-			${if} ${UAC_IsAdmin}
-			  !insertmacro setInstallModePerAllUsers
-      ${else}
+		  !insertmacro setInstallModePerAllUsers
+			${IfNot} ${UAC_IsAdmin}
 				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
 					GetDlgItem $9 $HWNDParent 1
 					System::Call user32::GetFocus()i.s

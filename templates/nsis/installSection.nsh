@@ -43,6 +43,33 @@
   ${endif}
 !macroend
 
+!macro registryAddInstallInfo
+	WriteRegStr SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
+
+	${if} $installMode == "all"
+		StrCpy $0 "/allusers"
+		StrCpy $1 ""
+	${else}
+		StrCpy $0 "/currentuser"
+		StrCpy $1 " (only current user)"
+	${endif}
+
+  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
+  # https://github.com/electron-userland/electron-builder/issues/750
+  StrCpy $2 "$INSTDIR\${UNINSTALL_FILENAME}"
+  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
+
+	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
+	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
+	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
+	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
+
+	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+	IntFmt $0 "0x%08X" $0
+	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
+!macroend
+
 InitPluginsDir
 
 !ifdef HEADER_ICO

@@ -1,4 +1,5 @@
 !include UAC.nsh
+!include StdUtils.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh
@@ -6,7 +7,7 @@
 
 !ifndef BUILD_UNINSTALLER
   Function StartApp
-    !insertmacro UAC_AsUser_ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "" "" ""
+    ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
   FunctionEnd
 
   !define MUI_FINISHPAGE_RUN
@@ -41,10 +42,14 @@
     !insertmacro UAC_PageElevation_OnInit
 
     ${If} ${UAC_IsInnerInstance}
-    ${AndIfNot} ${UAC_IsAdmin}
-      # special return value for outer instance so it knows we did not have admin rights
-      SetErrorLevel 0x666666
-      Quit
+      ${If} ${UAC_IsAdmin}
+       !insertmacro setInstallModePerAllUsers
+       Goto functionEnd
+      ${else}
+        # special return value for outer instance so it knows we did not have admin rights
+        SetErrorLevel 0x666666
+        Quit
+      ${EndIf}
     ${EndIf}
 
     !ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED
@@ -78,13 +83,13 @@
     ${GetOptions} $R0 "/allusers" $R1
     ${IfNot} ${Errors}
       !insertmacro setInstallModePerAllUsers
-      Goto FEnd
+      Goto functionEnd
     ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${IfNot} ${Errors}
       !insertmacro setInstallModePerUser
-      Goto FEnd
+      Goto functionEnd
     ${EndIf}
 
     ${if} $hasPerUserInstallation == "1"
@@ -102,7 +107,7 @@
       !endif
     ${endif}
 
-    FEnd:
+    functionEnd:
   !endif
 !macroend
 

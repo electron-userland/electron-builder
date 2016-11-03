@@ -38,7 +38,6 @@ Function .onInit
     !insertmacro quitSuccess
   !else
     !insertmacro check64BitAndSetRegView
-    !insertmacro initMultiUser
 
     !ifdef ONE_CLICK
       !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
@@ -47,6 +46,8 @@ Function .onInit
         !insertmacro ALLOW_ONLY_ONE_INSTALLER_INSTANCE
       ${EndIf}
     !endif
+
+    !insertmacro initMultiUser
 
     !ifmacrodef customInit
       !insertmacro customInit
