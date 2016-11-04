@@ -1662,9 +1662,9 @@ electron-download@2.1.2:
     path-exists "^1.0.0"
     rc "^1.1.2"
 
-electron-osx-sign-tf@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/electron-osx-sign-tf/-/electron-osx-sign-tf-1.0.1.tgz#28b23ad68c99a549d244e35554af68f41527522d"
+electron-osx-sign-tf@~1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/electron-osx-sign-tf/-/electron-osx-sign-tf-1.1.0.tgz#f6d7ef8e94e47824ebd6a6c60d3464281d4abce9"
   dependencies:
     bluebird "^3.4.6"
     compare-version "^0.1.2"
@@ -3957,7 +3957,7 @@ ts-babel@^1.1.3:
     markdown-it "^8.0.1"
     source-map-support "^0.4.5"
 
-tslint@^4.0.0-dev.0:
+tslint@^4.0.0-dev.1:
   version "4.0.0-dev.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-4.0.0-dev.1.tgz#10146c7ff47e18ce41315c146ff03dbdb5eb8abc"
   dependencies:
@@ -3986,8 +3986,8 @@ typedarray@~0.0.5:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
 typescript@^2.1.0-dev.20161101:
-  version "2.1.0-dev.20161103"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161103.tgz#747a2e148526cd10d8e7723e731bdbbf57f3b65e"
+  version "2.1.0-dev.20161104"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161104.tgz#01ebabbc76b36c6fb56a77f9df34fc7fe5fe8512"
 
 uc.micro@^1.0.1, uc.micro@^1.0.3:
   version "1.0.3"
