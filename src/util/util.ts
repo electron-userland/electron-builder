@@ -37,7 +37,10 @@ export function spawnNpmProduction(command: string, appDir: string, forceBuildFr
   const npmExecArgs = [command, "--production"]
 
   if (npmExecPath == null || !npmExecPath.includes("yarn")) {
-    npmExecArgs.push("--no-bin-links", "--cache-min", "999999999")
+    if (process.env.NPM_NO_BIN_LINKS === "true") {
+      npmExecArgs.push("--no-bin-links")
+    }
+    npmExecArgs.push("--cache-min", "999999999")
   }
 
   if (npmExecPath == null) {
