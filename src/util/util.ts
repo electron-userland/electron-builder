@@ -23,7 +23,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
 export function getGypEnv(electronVersion: string, arch: string): any {
   const gypHome = path.join(homedir(), ".electron-gyp")
   return Object.assign({}, process.env, {
-    npm_config_disturl: "https://atom.io/download/atom-shell",
+    npm_config_disturl: "https://atom.io/download/electron",
     npm_config_target: electronVersion,
     npm_config_runtime: "electron",
     npm_config_arch: arch,
