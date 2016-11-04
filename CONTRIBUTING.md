@@ -98,3 +98,10 @@ Use one of the shared run configurations as a template and:
 * Set `Environment Variables`:
   * `NODE_PATH` to `.`.
   * Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test uses temporary directory (only if `--match` is used). Specified directory will be used instead of random temporary directory and *cleared* on each run.
+  
+## Run Test using CLI
+```sh
+TEST_APP_TMP_DIR=/tmp/electron-builder-test NODE_PATH=. ./node_modules/.bin/ava --match="boring" test/out/nsisTest.js
+```
+
+where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `boring` is the test name and `test/out/nsisTest.js` is the path to test file.

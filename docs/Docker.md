@@ -13,3 +13,5 @@ Or to avoid second step, append to first command `/bin/bash -c "npm install && n
 If you don't need to build Windows, use image `electronuserland/electron-builder:latest` (wine is not installed in this image).
 
 You can use `/test.sh` to install npm dependencies and run tests.
+
+**NOTICE**: _Do not use Docker Toolbox on macOS._ Only [Docker for Mac](https://docs.docker.com/engine/installation/mac/#/docker-for-mac) works.

@@ -7,6 +7,7 @@ import { Url } from "url"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
+import { parse as parseUrl } from "url"
 
 const debug: Debugger = _debug("electron-builder")
 
@@ -26,7 +27,7 @@ export function request<T>(url: Url, token: string | null = null, data: { [name:
     }
   }, url)
 
-  if (url.hostname!!.includes("github")) {
+  if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml")) {
     options.headers.Accept = "application/vnd.github.v3+json"
   }
 
@@ -41,7 +42,7 @@ export function request<T>(url: Url, token: string | null = null, data: { [name:
   return doApiRequest<T>(options, token, it => it.end(encodedData))
 }
 
-export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<T> {
+export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
   if (token != null) {
     (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
@@ -59,6 +60,24 @@ Please double check that your authentication token is correct. Due to security r
         else if (response.statusCode === 204) {
           // on DELETE request
           resolve()
+          return
+        }
+
+        const redirectUrl = response.headers.location
+        if (redirectUrl != null) {
+          if (redirectCount > 10) {
+            reject(new Error("Too many redirects (> 10)"))
+            return
+          }
+
+          if (options.path!.endsWith("/latest")) {
+            resolve(<any>{location: redirectUrl})
+          }
+          else {
+            doApiRequest(Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor)
+              .then(<any>resolve)
+              .catch(reject)
+          }
           return
         }
 

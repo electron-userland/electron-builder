@@ -6,6 +6,7 @@ import { TmpDir } from "out/util/tmp"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { GenericServerOptions } from "out/options/publishOptions"
+import { GithubOptions } from "out/options/publishOptions"
 
 const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
@@ -89,6 +90,34 @@ test("file url generic", async () => {
   const updateCheckResult = await updater.checkForUpdates()
   assertThat(updateCheckResult.fileInfo).hasProperties({
     url: "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe"
+  })
+  assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  assertThat(actualEvents).isEqualTo(expectedEvents)
+})
+
+test("file url github", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GithubOptions>{
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
+  for (let eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  assertThat(updateCheckResult.fileInfo).hasProperties({
+    url: "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe"
   })
   assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 

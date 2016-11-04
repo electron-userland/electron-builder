@@ -24,12 +24,7 @@ export class GenericProvider implements Provider<UpdateInfo> {
       throw e
     }
 
-    if (result.sha2 == null) {
-      throw new Error("Update info doesn't contain sha2 checksum")
-    }
-    if (result.path == null) {
-      throw new Error("Update info doesn't contain file path")
-    }
+    validateUpdateInfo(result)
     return result
   }
 
@@ -39,5 +34,14 @@ export class GenericProvider implements Provider<UpdateInfo> {
       url: url.format(Object.assign({}, this.baseUrl, {pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)})),
       sha2: versionInfo.sha2,
     }
+  }
+}
+
+export function validateUpdateInfo(info: UpdateInfo) {
+  if (info.sha2 == null) {
+    throw new Error("Update info doesn't contain sha2 checksum")
+  }
+  if (info.path == null) {
+    throw new Error("Update info doesn't contain file path")
   }
 }

@@ -11,6 +11,7 @@ import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptio
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
+import { GitHubProvider } from "./GitHubProvider"
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null
@@ -154,14 +155,11 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
   }
   else {
     const provider = (<PublishConfiguration>data).provider
-    if (provider === "bintray") {
-      return new BintrayProvider(<BintrayOptions>data)
-    }
-    else if (provider === "generic") {
-      return new GenericProvider(<GenericServerOptions>data)
-    }
-    else {
-      throw new Error(`Unsupported provider: ${provider}`)
+    switch (provider) {
+      case "github": return new GitHubProvider(<GithubOptions>data)
+      case "generic": return new GenericProvider(<GenericServerOptions>data)
+      case "bintray":  return new BintrayProvider(<BintrayOptions>data)
+      default: throw new Error(`Unsupported provider: ${provider}`)
     }
   }
 }
