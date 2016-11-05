@@ -208,6 +208,11 @@ export interface BuildMetadata {
   readonly npmSkipBuildFromSource?: boolean
 
   /*
+   *two package.json structure only* Additional command line arguments to use when installing app native deps. Defaults to `null`.
+   */
+  readonly npmArgs?: Array<string> | string | null
+
+  /*
    Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
    */
   readonly nodeGypRebuild?: boolean
