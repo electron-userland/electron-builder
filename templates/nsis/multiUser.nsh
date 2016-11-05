@@ -51,6 +51,12 @@ Var installMode
 
     StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCT_FILENAME}\${VERSION}"
 
+    !ifdef APP_64
+      ${if} ${RunningX64}
+        StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCT_FILENAME}\${VERSION}"
+      ${endif}
+    !endif
+
     # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
     !ifdef BUILD_UNINSTALLER
