@@ -16,56 +16,48 @@ const pickle = require ("chromium-pickle-js")
 const Filesystem = require("asar-electron-builder/lib/filesystem")
 const UINT64 = require("cuint").UINT64
 
-const MAX_FILE_REQUESTS = 32
+const MAX_FILE_REQUESTS = 8
 const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
 export async function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): Promise<Array<string>> {
   const childNames = await readdir(dirPath)
-  const list = await BluebirdPromise.map(childNames, name => lstat(dirPath + path.sep + name), concurrency)
-    .then(stats => BluebirdPromise.map(stats, (stat, index): any => {
-      const filePath = dirPath + path.sep + childNames[index]
-      if (filter != null && !filter(filePath, stat)) {
-        return null
-      }
-
-      if (consumer != null) {
-        consumer(filePath, stat)
-      }
-      if (stat.isDirectory()) {
-        return walk(filePath, consumer, filter, true)
-      }
-      return filePath
-    }, concurrency))
-
-  list.sort((a, b) => {
-    // files before directories
-    if (Array.isArray(a) && Array.isArray(b)) {
-      return 0
+  const stats = await BluebirdPromise.map(childNames, name => lstat(dirPath + path.sep + name), concurrency)
+  const dirs: Array<string> = []
+  const files: Array<string> = addRootToResult ? [dirPath] : []
+  await BluebirdPromise.map(stats, (stat, index): any => {
+    const filePath = dirPath + path.sep + childNames[index]
+    if (filter != null && !filter(filePath, stat)) {
+      return null
     }
-    else if (a == null || Array.isArray(a)) {
-      return 1
+
+    if (consumer != null) {
+      consumer(filePath, stat)
     }
-    else if (b == null || Array.isArray(b)) {
-      return -1
+
+    if (stat.isDirectory()) {
+      dirs.push(filePath)
     }
     else {
-      return a.localeCompare(b)
+      files.push(filePath)
     }
-  })
+  }, concurrency)
 
-  const result: Array<string> = addRootToResult ? [dirPath] : []
-  for (let item of list) {
-    if (item != null) {
-      if (Array.isArray(item)) {
-        result.push.apply(result, item)
-      }
-      else {
-        result.push(item)
-      }
+  files.sort()
+
+  if (dirs.length === 0) {
+    return files
+  }
+
+  dirs.sort()
+  const list = await BluebirdPromise.map(dirs, dir => walk(dir, consumer, filter, true), concurrency)
+  for (let subList of list) {
+    for (let file of subList) {
+      files.push(file)
     }
   }
-  return result
+
+  return files
 }
 
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter): Promise<any> {
