@@ -56,10 +56,10 @@ export function spawnNpmProduction(command: string, appDir: string, forceBuildFr
 
   if (additionalArgs) {
     if (Array.isArray(additionalArgs)) {
-      additionalArgs.push(...additionalArgs)
+      npmExecArgs.push(...additionalArgs)
     }
     else {
-      additionalArgs.push(additionalArgs)
+      npmExecArgs.push(additionalArgs)
     }
   }
 
