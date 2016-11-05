@@ -196,12 +196,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (defaultMatcher.isEmpty()) {
         defaultMatcher.addPattern("**/*")
       }
-      defaultMatcher.addPattern("!**/node_modules/*/{README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}")
+      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,.yarn-integrity}")
       defaultMatcher.addPattern("!**/node_modules/.bin")
       defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
       defaultMatcher.addPattern("!**/._*")
       //noinspection SpellCheckingInspection
-      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output}")
+      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock}")
 
       let rawFilter: any = null
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
