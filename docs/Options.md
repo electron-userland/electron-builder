@@ -84,6 +84,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
 | npmRebuild | <a name="BuildMetadata-npmRebuild"></a>*two package.json structure only* Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
 | npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>*two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
+| npmArgs | <a name="BuildMetadata-npmArgs"></a>*two package.json structure only* Additional command line arguments to use when installing app native deps. Defaults to `null`.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).

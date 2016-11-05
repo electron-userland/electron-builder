@@ -16,8 +16,8 @@ export const debug7z: Debugger = _debug("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install"): Promise<any> {
-  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch)))
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install", additionalArgs?: any): Promise<any> {
+  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch), additionalArgs))
 }
 
 export function getGypEnv(electronVersion: string, arch: string): any {
@@ -32,7 +32,7 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any): Promise<any> {
+export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any, additionalArgs?: any): Promise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = [command, "--production"]
 
@@ -52,6 +52,14 @@ export function spawnNpmProduction(command: string, appDir: string, forceBuildFr
   }
   if (forceBuildFromSource) {
     npmExecArgs.push("--build-from-source")
+  }
+
+  if (additionalArgs) {
+    if (Array.isArray(additionalArgs)) {
+      additionalArgs.forEach(arg => npmExecArgs.push(arg))
+    } else {
+      additionalArgs.push(additionalArgs)
+    }
   }
 
   return spawn(npmExecPath, npmExecArgs, {
