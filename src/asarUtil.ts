@@ -156,7 +156,7 @@ class AsarPackager {
         continue
       }
 
-      log(`${path.relative(this.src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
+      debug(`${path.relative(this.src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
 
       let fileParent = path.dirname(file)
 
