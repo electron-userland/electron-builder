@@ -1,12 +1,12 @@
 #! /usr/bin/env node
 
-import { homedir } from "os"
 import { readdir, lstat, Stats, remove, readFile } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
+import { getCacheDirectory } from "./util/util"
 
 async function main() {
-  const dir = path.join(homedir(), ".cache", "fpm")
+  const dir = path.join(getCacheDirectory(), "fpm")
   let items: string[] | null = null
   try {
     items = await readdir(dir)

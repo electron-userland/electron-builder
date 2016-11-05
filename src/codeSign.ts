@@ -1,11 +1,10 @@
-import { exec, getTempName, isEmptyOrSpaces, isCi } from "./util/util"
+import { exec, getTempName, isEmptyOrSpaces, isCi, getCacheDirectory } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
 import * as path from "path"
 import { executeFinally, all } from "./util/promise"
 import BluebirdPromise from "bluebird-lst-c"
 import { randomBytes } from "crypto"
-import { homedir } from "os"
 import { TmpDir } from "./util/tmp"
 
 const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
@@ -39,8 +38,8 @@ let bundledCertKeychainAdded: Promise<any> | null = null
 // https://github.com/electron-userland/electron-builder/issues/398
 async function createCustomCertKeychain() {
   // copy to temp and then atomic rename to final path
-  const tmpKeychainPath = path.join(homedir(), ".cache", getTempName("electron_builder_root_certs"))
-  const keychainPath = path.join(homedir(), ".cache", "electron_builder_root_certs.keychain")
+  const tmpKeychainPath = path.join(getCacheDirectory(), getTempName("electron-builder-root-certs"))
+  const keychainPath = path.join(getCacheDirectory(), "electron-builder-root-certs.keychain")
   const results = await BluebirdPromise.all<string>([
     exec("security", ["list-keychains"]),
     copy(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)

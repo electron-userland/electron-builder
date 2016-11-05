@@ -313,3 +313,15 @@ export function asArray<T>(v: n | T | Array<T>): Array<T> {
 export function isCi(): boolean {
   return (process.env.CI || "").toLowerCase() === "true"
 }
+
+export function getCacheDirectory(): string {
+  if (process.platform === "darwin") {
+    return path.join(homedir(), "Library", "Caches", "electron-builder")
+  }
+  else if (process.platform === "win32" && process.env.LOCALAPPDATA != null) {
+    return path.join(process.env.LOCALAPPDATA, "electron-builder", "cache")
+  }
+  else {
+    return path.join(homedir(), ".cache", "electron-builder")
+  }
+}

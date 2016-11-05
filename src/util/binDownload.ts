@@ -1,9 +1,8 @@
-import { statOrNull, spawn, debug, debug7zArgs, getTempName } from "./util"
+import { statOrNull, spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
 import { rename, unlink, emptyDir } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
-import { homedir } from "os"
 import BluebirdPromise from "bluebird-lst-c"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
@@ -30,7 +29,7 @@ export function getBin(name: string, dirName: string, url: string, sha2: string)
 // * don't pollute user project dir (important in case of 1-package.json project structure)
 // * simplify/speed-up tests (don't download fpm for each test project)
 async function doGetBin(name: string, dirName: string, url: string, sha2: string): Promise<string> {
-  const cachePath = path.join(homedir(), ".cache", name)
+  const cachePath = path.join(getCacheDirectory(), name)
   const dirPath = path.join(cachePath, dirName)
 
   const dirStat = await statOrNull(dirPath)
