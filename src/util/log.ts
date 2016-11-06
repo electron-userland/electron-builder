@@ -42,7 +42,12 @@ class Logger {
   }
 
   warn(message: string): void {
-    this.log((this.isTTY ? (getEmoji("warning") + "  ") : "Warning: ") + yellow(message))
+    if (this.isTTY) {
+      this.log(getEmoji("warning") + "  " + yellow(message))
+    }
+    else {
+      this.log(yellow(`Warning: ${message}`))
+    }
   }
 
   log(message: string): void {

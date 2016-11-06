@@ -1,5 +1,7 @@
 import { PlatformSpecificBuildOptions } from "../metadata"
 
+export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
+
 /*
  ### `.build.mac`
 
@@ -16,9 +18,9 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly category?: string | null
 
   /*
-   Target package type: list of `default`, `dmg`, `mas`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+   The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
-  readonly target?: Array<string> | null
+  readonly target?: Array<MacOsTargetName> | null
 
   /*
    The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).

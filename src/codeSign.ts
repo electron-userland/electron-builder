@@ -7,9 +7,9 @@ import BluebirdPromise from "bluebird-lst-c"
 import { randomBytes } from "crypto"
 import { TmpDir } from "./util/tmp"
 
-const appleCertificatePrefixes = ["Developer ID Application:", "3rd Party Mac Developer Application:", "Developer ID Installer:", "3rd Party Mac Developer Installer:"]
+const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
-export type CertType = "Developer ID Application" | "3rd Party Mac Developer Application" | "Developer ID Installer" | "3rd Party Mac Developer Installer" | "Mac Developer"
+export type CertType = "Developer ID Application" | "Developer ID Installer" | "3rd Party Mac Developer Application" | "3rd Party Mac Developer Installer" | "Mac Developer"
 
 export interface CodeSigningInfo {
   keychainName?: string | null

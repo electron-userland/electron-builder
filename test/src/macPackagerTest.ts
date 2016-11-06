@@ -7,7 +7,7 @@ import { BuildInfo } from "out/platformPackager"
 import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, MacOptions, createTargets } from "out"
-import { SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { SignOptions } from "electron-osx-sign-tf"
 import { Arch } from "out"
 import { Target } from "out/platformPackager"
 import { DmgTarget } from "out/targets/dmg"
@@ -15,12 +15,13 @@ import { DIR_TARGET } from "out/targets/targetFactory"
 import { attachAndExecute } from "out/targets/dmg"
 import { getTempName } from "out/util/util"
 import { exec } from "out/util/util"
+import { MacOsTargetName } from "out/options/macOptions"
 
 test.ifOsx("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 
 test.ifOsx("one-package", app(platform(Platform.MAC), {signed: true}))
 
-function createTargetTest(target: Array<string>, expectedContents: Array<string>) {
+function createTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
   return app({
     targets: Platform.MAC.createTarget(),
     devMetadata: {
@@ -33,7 +34,7 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
   }, {
     useTempDir: true,
     expectedContents: expectedContents,
-    signed: target.includes("mas"),
+    signed: target.includes("mas") || target.includes("pkg"),
     packed: async (context) => {
       if (!target.includes("tar.gz")) {
         return
@@ -49,12 +50,14 @@ function createTargetTest(target: Array<string>, expectedContents: Array<string>
 
 test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 
+test("pkg", createTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
+
 test("tar.gz", createTargetTest(["tar.gz"], ["Test App ßW-1.1.0-mac.tar.gz"]))
 
 // todo failed on Travis CI
 //test("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
-test.ifOsx("invalid target", t => t.throws(createTargetTest(["ttt"], [])(), "Unknown target: ttt"))
+test.ifOsx("invalid target", t => t.throws(createTargetTest([<any>"ttt"], [])(), "Unknown target: ttt"))
 
 if (process.env.CSC_KEY_PASSWORD == null || process.platform !== "darwin") {
   console.warn("Skip mas tests because CSC_KEY_PASSWORD is not defined")
@@ -276,7 +279,6 @@ test.ifOsx("electronDist", appThrows(/ENOENT: no such file or directory/, {
 class CheckingMacPackager extends OsXPackager {
   effectiveDistOptions: any
   effectiveSignOptions: SignOptions
-  effectiveFlatOptions: FlatOptions
 
   constructor(info: BuildInfo) {
     super(info)
@@ -302,8 +304,8 @@ class CheckingMacPackager extends OsXPackager {
     this.effectiveSignOptions = opts
   }
 
-  async doFlat(opts: FlatOptions): Promise<any> {
-    this.effectiveFlatOptions = opts
+  async doFlat(appPath: string, outFile: string, identity: string, keychain?: string | null): Promise<any> {
+    // skip
   }
 
   packageInDistributableFormat(appOutDir: string, targets: Array<Target>, promises: Array<Promise<any>>): void {

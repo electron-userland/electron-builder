@@ -1,6 +1,6 @@
 import { PlatformPackager, Target } from "../platformPackager"
 
-export const commonTargets = ["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"]
+const commonTargets = new Set(["dir", "zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 export const DEFAULT_TARGET = "default"
 export const DIR_TARGET = "dir"
 
@@ -31,9 +31,8 @@ function normalizeTargets(targets: Array<string> | string | null | undefined): A
 }
 
 export function createCommonTarget(target: string): Target {
-  if (!commonTargets.includes(target)) {
-    throw new Error(`Unknown target: ${target}`)
+  if (commonTargets.has(target)) {
+    return new Target(target)
   }
-
-  return new Target(target)
+  throw new Error(`Unknown target: ${target}`)
 }

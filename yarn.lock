@@ -3986,8 +3986,8 @@ typedarray@~0.0.5:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
 typescript@^2.1.0-dev.20161101:
-  version "2.1.0-dev.20161105"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161105.tgz#be261e6cfeccaad5026aeab22f938ae0d91f5897"
+  version "2.1.0-dev.20161106"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161106.tgz#f6197280f92e2b306f40c0bc89ccece954b5764d"
 
 uc.micro@^1.0.1, uc.micro@^1.0.3:
   version "1.0.3"

@@ -1,14 +1,34 @@
 import { exec } from "../util/util"
-import { BaseSignOptions } from "electron-osx-sign-tf"
+import { TargetEx } from "../platformPackager"
+import { Arch } from "../metadata"
+import MacPackager from "../macPackager"
+import * as path from "path"
 
-export function flatApplication(opts: BaseSignOptions, outFile: string, identity: string): Promise<any> {
+export class PkgTarget extends TargetEx {
+  constructor(private packager: MacPackager) {
+    super("pkg")
+  }
+
+  async build(appOutDir: string, arch: Arch): Promise<any> {
+    const packager = this.packager
+    const appInfo = packager.appInfo
+    const outFile = path.join(appOutDir, `${appInfo.productFilename}-${appInfo.version}.pkg`)
+    const keychainName = (await packager.codeSigningInfo).keychainName
+    const args = prepareProductBuildArgs(path.join(appOutDir, `${appInfo.productFilename}.app`), await packager.findInstallerIdentity(false, keychainName), keychainName)
+    args.push("--version", appInfo.buildVersion)
+    args.push(outFile)
+    await exec("productbuild", args)
+    packager.dispatchArtifactCreated(outFile, `${appInfo.name}-${appInfo.version}.pkg`)
+  }
+}
+
+export function prepareProductBuildArgs(appPath: string, identity: string, keychain: string | n) {
   const args = [
-    "--component", opts.app, "/Applications",
+    "--component", appPath, "/Applications",
     "--sign", identity,
   ]
-  if (opts.keychain != null) {
-    args.push("--keychain", opts.keychain)
+  if (keychain != null) {
+    args.push("--keychain", keychain)
   }
-  args.push(outFile)
-  return exec("productbuild", args)
+  return args
 }

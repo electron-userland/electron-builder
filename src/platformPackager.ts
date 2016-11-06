@@ -75,7 +75,7 @@ export interface BuildInfo {
 }
 
 export class Target {
-  constructor(public name: string) {
+  constructor(public readonly name: string) {
   }
 
   finishBuild(): Promise<any> {
@@ -103,7 +103,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  constructor(public info: BuildInfo) {
+  constructor(public readonly info: BuildInfo) {
     this.devMetadata = info.devMetadata
     this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>info.devMetadata.build)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)

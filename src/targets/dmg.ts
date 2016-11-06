@@ -1,25 +1,26 @@
 import { deepAssign } from "../util/deepAssign"
 import * as path from "path"
 import { log, warn } from "../util/log"
-import { Target, PlatformPackager } from "../platformPackager"
+import { PlatformPackager, TargetEx } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
 import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 import sanitizeFileName from "sanitize-filename"
+import { Arch } from "../metadata"
 
-export class DmgTarget extends Target {
+export class DmgTarget extends TargetEx {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
   constructor(private packager: PlatformPackager<MacOptions>) {
     super("dmg")
   }
 
-  async build(appOutDir: string) {
+  async build(appOutDir: string, arch: Arch) {
     const packager = this.packager
     const appInfo = packager.appInfo
-    log("Creating DMG")
+    log("Building DMG")
 
     const specification = await this.computeDmgOptions()
 

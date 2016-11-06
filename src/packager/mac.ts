@@ -84,11 +84,8 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   helperNPPlist.CFBundleName = `${appInfo.productName} Helper NP`
   helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
 
-  use(appInfo.version, it => {
-    appPlist.CFBundleShortVersionString = it
-    appPlist.CFBundleVersion = it
-  })
-  use(appInfo.buildVersion, it => appPlist.CFBundleVersion = it)
+  appPlist.CFBundleShortVersionString = appInfo.version
+  appPlist.CFBundleVersion = appInfo.buildVersion
 
   const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))
   if (protocols.length > 0) {

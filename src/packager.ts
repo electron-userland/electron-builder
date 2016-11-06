@@ -200,6 +200,10 @@ export class Packager implements BuildInfo {
       throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
     }
     else {
+      if (build["osx-sign"] != null) {
+        throw new Error("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
+      }
+
       const author = appMetadata.author
       if (author == null) {
         throw new Error(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name.`)
