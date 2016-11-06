@@ -204,14 +204,20 @@ export default class NsisTarget extends TargetEx {
 
     const publishConfigs = await this.publishConfigs
     if (publishConfigs != null) {
+      const writtenChannels = new Set<string>()
       let sha2: string | null = null
       for (let publishConfig of publishConfigs) {
-        if (publishConfig.provider === "generic") {
+        if (publishConfig.provider === "generic" || publishConfig.provider === "github") {
           if (sha2 == null) {
             sha2 = await sha256(installerPath)
           }
 
           const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+          if (writtenChannels.has(channel)) {
+            continue
+          }
+          writtenChannels.add(channel)
+
           await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump(<UpdateInfo>{
             version: version,
             path: installerFilename,
