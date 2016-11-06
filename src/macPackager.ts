@@ -6,10 +6,11 @@ import BluebirdPromise from "bluebird-lst-c"
 import { log, warn, task } from "./util/log"
 import { createKeychain, CodeSigningInfo, findIdentity } from "./codeSign"
 import { deepAssign } from "./util/deepAssign"
-import { signAsync, flatAsync, BaseSignOptions, SignOptions, FlatOptions } from "electron-osx-sign-tf"
+import { signAsync, BaseSignOptions, SignOptions } from "electron-osx-sign-tf"
 import { DmgTarget } from "./targets/dmg"
 import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
+import { flatApplication } from "./targets/pkg"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   codeSigningInfo: Promise<CodeSigningInfo>
@@ -133,13 +134,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const baseSignOptions: BaseSignOptions = {
       app: path.join(appOutDir, `${this.appInfo.productFilename}.app`),
-      platform: isMas ? "mas" : "darwin",
       keychain: keychainName || undefined,
-      version: this.info.electronVersion
     }
 
     const signOptions = Object.assign({
       identity: name,
+      platform: isMas ? "mas" : "darwin",
+      version: this.info.electronVersion,
     }, (<any>this.devMetadata.build)["osx-sign"], baseSignOptions)
 
     const resourceList = await this.resourceList
@@ -151,35 +152,31 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
 
     const customSignOptions = masOptions || this.platformSpecificBuildOptions
-    if (customSignOptions.entitlements != null) {
-      signOptions.entitlements = customSignOptions.entitlements
-    }
-    else {
+    if (customSignOptions.entitlements == null) {
       const p = `entitlements.${isMas ? "mas" : "mac"}.plist`
       if (resourceList.includes(p)) {
         signOptions.entitlements = path.join(this.buildResourcesDir, p)
       }
     }
-
-    if (customSignOptions.entitlementsInherit != null) {
-      signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
-    }
     else {
+      signOptions.entitlements = customSignOptions.entitlements
+    }
+
+    if (customSignOptions.entitlementsInherit == null) {
       const p = `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`
       if (resourceList.includes(p)) {
         signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
       }
     }
+    else {
+      signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
+    }
 
     await task(`Signing app (identity: ${name})`, this.doSign(signOptions))
 
     if (masOptions != null) {
-      await task(`Signing app (identity: ${name})`, this.doSign(signOptions))
       const pkg = path.join(appOutDir, `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
-      await this.doFlat(Object.assign({
-        pkg: pkg,
-        identity: installerName,
-      }, baseSignOptions))
+      await this.doFlat(baseSignOptions, pkg, installerName!!)
       this.dispatchArtifactCreated(pkg, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
     }
   }
@@ -190,8 +187,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(opts: FlatOptions): Promise<any> {
-    return flatAsync(opts)
+  protected async doFlat(opts: BaseSignOptions, outFile: string, identity: string): Promise<any> {
+    return flatApplication(opts, outFile, identity)
   }
 
   protected packageInDistributableFormat(appOutDir: string, targets: Array<Target>, promises: Array<Promise<any>>): void {
