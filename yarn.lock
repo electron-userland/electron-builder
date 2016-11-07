@@ -137,7 +137,7 @@ archiver-utils@^1.3.0:
     normalize-path "^2.0.0"
     readable-stream "^2.0.0"
 
-archiver@^1.1.0:
+archiver@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/archiver/-/archiver-1.2.0.tgz#fb5c6af5443b3fa6a426344753bad2a7b444aadd"
   dependencies:
@@ -378,7 +378,7 @@ babel-code-frame@^6.16.0:
     esutils "^2.0.2"
     js-tokens "^2.0.0"
 
-babel-core@^6.17.0, babel-core@^6.18.0:
+babel-core@^6.17.0, babel-core@^6.18.0, babel-core@^6.18.2:
   version "6.18.2"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.18.2.tgz#d8bb14dd6986fa4f3566a26ceda3964fa0e04e5b"
   dependencies:
@@ -1013,9 +1013,9 @@ block-stream@*:
   dependencies:
     inherits "~2.0.0"
 
-bluebird-lst-c@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/bluebird-lst-c/-/bluebird-lst-c-1.0.2.tgz#b9800c878d83bda4630f5ffbc0e39cc5f8a193e7"
+bluebird-lst-c@^1.0.2, bluebird-lst-c@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/bluebird-lst-c/-/bluebird-lst-c-1.0.3.tgz#5bd879f3de7288201b08f31e2fe5d5c11e2b61de"
   dependencies:
     bluebird "^3.4.6"
 
@@ -1870,21 +1870,14 @@ from@~0:
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/from/-/from-0.1.3.tgz#ef63ac2062ac32acf7862e0d40b44b896f22f3bc"
 
-fs-extra-p@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-1.2.0.tgz#16abed58ec63219cf9244a5a54ba200d4864b347"
+fs-extra-p@^2.0.3, fs-extra-p@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-2.0.5.tgz#a9f9bee515880198da4528d81a85f43e0cf9837b"
   dependencies:
-    bluebird "^3.4.6"
-    fs-extra-tf "^0.30.3"
-
-fs-extra-p@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-2.0.3.tgz#570072384028c95193a158b4ff080be0200fd007"
-  dependencies:
-    bluebird "^3.4.6"
+    bluebird-lst-c "^1.0.3"
     fs-extra-tf "^0.30.4"
 
-fs-extra-tf@^0.30.3, fs-extra-tf@^0.30.4:
+fs-extra-tf@^0.30.4:
   version "0.30.4"
   resolved "https://registry.yarnpkg.com/fs-extra-tf/-/fs-extra-tf-0.30.4.tgz#c31e0c83a92201bd948e788563e1c02f35583e8f"
   dependencies:
@@ -2729,7 +2722,7 @@ map-stream@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/map-stream/-/map-stream-0.1.0.tgz#e56aa94c4c8055a16404a0674b78f215f7c8e194"
 
-markdown-it@^8.0.1:
+markdown-it@^8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.1.0.tgz#38902d4e7bac2260c073eb67be623211fbb2c2e3"
   dependencies:
@@ -3673,7 +3666,7 @@ sort-keys@^1.1.1:
   dependencies:
     is-plain-obj "^1.0.0"
 
-source-map-support@^0.4.2, source-map-support@^0.4.4, source-map-support@^0.4.5, source-map-support@^0.4.6:
+source-map-support@^0.4.2, source-map-support@^0.4.4, source-map-support@^0.4.6:
   version "0.4.6"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.6.tgz#32552aa64b458392a85eab3b0b5ee61527167aeb"
   dependencies:
@@ -3946,16 +3939,16 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^1.1.3:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.1.3.tgz#e5565661bd940fe6cfdf42519340c0dcc08c9f8b"
+ts-babel@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.1.4.tgz#69339a1cc69e57c07bd4202eec01ca55092c9f4e"
   dependencies:
-    babel-core "^6.17.0"
-    bluebird "^3.4.6"
+    babel-core "^6.18.2"
+    bluebird-lst-c "^1.0.3"
     chalk "^1.1.3"
-    fs-extra-p "^1.2.0"
-    markdown-it "^8.0.1"
-    source-map-support "^0.4.5"
+    fs-extra-p "^2.0.5"
+    markdown-it "^8.1.0"
+    source-map-support "^0.4.6"
 
 tslint@^4.0.0-dev.1:
   version "4.0.0-dev.1"
@@ -3986,8 +3979,8 @@ typedarray@~0.0.5:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
 typescript@^2.1.0-dev.20161101:
-  version "2.1.0-dev.20161106"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161106.tgz#f6197280f92e2b306f40c0bc89ccece954b5764d"
+  version "2.1.0-dev.20161107"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.0-dev.20161107.tgz#420e8ea43693dde3ab62853fd1edbafce53087a3"
 
 uc.micro@^1.0.1, uc.micro@^1.0.3:
   version "1.0.3"
@@ -4227,8 +4220,8 @@ yargs-parser@^2.4.1:
     lodash.assign "^4.0.6"
 
 yargs-parser@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-4.0.2.tgz#7f7173a8c7cca1d81dc7c18692fc07c2c2e2b1e0"
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-4.1.0.tgz#313df030f20124124aeae8fbab2da53ec28c56d7"
   dependencies:
     camelcase "^3.0.0"
 

@@ -1,20 +1,20 @@
 import { Publisher, PublishOptions } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
 import { HttpError, doApiRequest } from "./restApiRequest"
-import { uploadFile } from "./uploader"
 import { log } from "../util/log"
 import { debug, isEmptyOrSpaces } from "../util/util"
-import { basename } from "path"
-import { stat } from "fs-extra-p"
 import { BintrayClient, Version } from "./bintray"
 import { BintrayOptions } from "../options/publishOptions"
+import { ClientRequest } from "http"
 
-export class BintrayPublisher implements Publisher {
+export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>
 
   private readonly client: BintrayClient
 
   constructor(info: BintrayOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
+    super()
+
     let token = info.token
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
@@ -46,15 +46,13 @@ export class BintrayPublisher implements Publisher {
     }
   }
 
-  async upload(file: string, artifactName?: string): Promise<any> {
-    const fileName = artifactName || basename(file)
+  protected async doUpload(fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
     const version = await this._versionPromise
     if (version == null) {
       debug(`Version ${this.version} doesn't exist and is not created, artifact ${fileName} is not published`)
       return
     }
 
-    const fileStat = await stat(file)
     let badGatewayCount = 0
     for (let i = 0; i < 3; i++) {
       try {
@@ -64,15 +62,15 @@ export class BintrayPublisher implements Publisher {
           method: "PUT",
           headers: {
             "User-Agent": "electron-builder",
-            "Content-Length": fileStat.size,
+            "Content-Length": dataLength,
             "X-Bintray-Override": "1",
             "X-Bintray-Publish": "1",
           }
-        }, this.client.auth, uploadFile.bind(this, file, fileStat, fileName))
+        }, this.client.auth, requestProcessor)
       }
       catch (e) {
         if (e instanceof HttpError && e.response.statusCode === 502 && badGatewayCount++ < 3) {
-            continue
+          continue
         }
 
         throw e

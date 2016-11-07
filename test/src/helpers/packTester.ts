@@ -146,10 +146,10 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
     assertThat(event.file).isAbsolute()
-    let list = artifacts.get(event.platform)
+    let list = artifacts.get(event.packager.platform)
     if (list == null) {
       list = []
-      artifacts.set(event.platform, list)
+      artifacts.set(event.packager.platform, list)
     }
     list.push(event)
   })

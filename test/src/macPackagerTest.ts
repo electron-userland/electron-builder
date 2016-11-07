@@ -50,7 +50,7 @@ function createTargetTest(target: Array<MacOsTargetName>, expectedContents: Arra
 
 test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 
-test("pkg", createTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
+test.ifOsx("pkg", createTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
 
 test("tar.gz", createTargetTest(["tar.gz"], ["Test App ßW-1.1.0-mac.tar.gz"]))
 

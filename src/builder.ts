@@ -250,8 +250,18 @@ function isAuthTokenSet() {
 
 function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: BuildOptions, isPublishOptionGuessed: boolean) {
   const nameToPublisher = new Map<string, Promise<Publisher>>()
+
+  function getOrCreatePublisher(publishConfig: PublishConfiguration): Promise<Publisher | null> {
+    let publisher = nameToPublisher.get(publishConfig.provider)
+    if (publisher == null) {
+      publisher = createPublisher(packager, publishConfig, options, isPublishOptionGuessed)
+      nameToPublisher.set(publishConfig.provider, publisher)
+    }
+    return publisher
+  }
+
   packager.artifactCreated(event => {
-    const publishers = getPublishConfigs(event.packager, event.packager.platformSpecificBuildOptions)
+    const publishers = event.publishConfig == null ? getPublishConfigs(event.packager, event.packager.platformSpecificBuildOptions) : [event.publishConfig]
     // if explicitly set to null - do not publish
     if (publishers === null) {
       debug(`${event.file} is not published: publish is set to null`)
@@ -259,16 +269,21 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
     }
 
     for (let publishConfig of publishers) {
-      const provider = publishConfig.provider
-      let publisher = nameToPublisher.get(provider)
-      if (publisher == null) {
-        publisher = createPublisher(packager, publishConfig, options, isPublishOptionGuessed)
-        nameToPublisher.set(provider, publisher)
-      }
-
+      const publisher = getOrCreatePublisher(publishConfig)
       if (publisher != null) {
         publisher
-          .then(it => it == null ? null : publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName)))
+          .then(it => {
+            if (it == null) {
+              return null
+            }
+
+            if (event.file == null) {
+              return publishTasks.push(<BluebirdPromise<any>>it.uploadData(event.data!, event.artifactName!))
+            }
+            else {
+              return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file!, event.artifactName))
+            }
+          })
       }
     }
   })

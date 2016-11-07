@@ -1,7 +1,6 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, readdir, unlink, removeSync } from "fs-extra-p"
-import { Platform } from "out/metadata"
 import { cpus, homedir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
@@ -11,7 +10,6 @@ const utilSpawn = util.spawn
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
-const packager = require("../../../out/packager")
 
 const rootDir = path.join(__dirname, "..", "..", "..")
 
@@ -69,7 +67,7 @@ async function deleteOldElectronVersion(): Promise<any> {
 function downloadAllRequiredElectronVersions(): Promise<any> {
   const downloadPromises: Array<Promise<any>> = []
 
-  const platforms = packager.normalizePlatforms(["all"]).map((it: Platform) => it.nodeName)
+  const platforms = process.platform === "win32" ? ["win32"] : ["darwin", "linux", "win32"]
   if (process.platform === "darwin") {
     platforms.push("mas")
   }

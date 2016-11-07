@@ -31,8 +31,6 @@ export function request<T>(url: Url, token: string | null = null, data: { [name:
     options.headers.Accept = "application/vnd.github.v3+json"
   }
 
-  debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
-
   const encodedData = data == null ? null : new Buffer(JSON.stringify(data))
   if (encodedData != null) {
     options.method = "post"
@@ -43,6 +41,8 @@ export function request<T>(url: Url, token: string | null = null, data: { [name:
 }
 
 export function doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+  debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
+
   if (token != null) {
     (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }

@@ -5,7 +5,10 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig } from "../platformPackager"
+import {
+  normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig,
+  ArtifactCreated
+} from "../platformPackager"
 import { archiveApp } from "./archive"
 import { subTask, task, log } from "../util/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
@@ -203,8 +206,8 @@ export default class NsisTarget extends TargetEx {
     await packager.sign(installerPath)
 
     const publishConfigs = await this.publishConfigs
+    const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
     if (publishConfigs != null) {
-      const writtenChannels = new Set<string>()
       let sha2: string | null = null
       for (let publishConfig of publishConfigs) {
         if (publishConfig.provider === "generic" || publishConfig.provider === "github") {
@@ -213,21 +216,30 @@ export default class NsisTarget extends TargetEx {
           }
 
           const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-          if (writtenChannels.has(channel)) {
-            continue
+          if (publishConfig.provider === "generic") {
+            await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump(<UpdateInfo>{
+              version: version,
+              path: installerFilename,
+              sha2: sha2,
+            }))
           }
-          writtenChannels.add(channel)
-
-          await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump(<UpdateInfo>{
-            version: version,
-            path: installerFilename,
-            sha2: sha2,
-          }))
+          else {
+            packager.info.eventEmitter.emit("artifactCreated", <ArtifactCreated>{
+              data: new Buffer(safeDump(<UpdateInfo>{
+                version: version,
+                path: githubArtifactName,
+                sha2: sha2,
+              })),
+              artifactName: `${channel}.yml`,
+              packager: packager,
+              publishConfig: publishConfig,
+            })
+          }
         }
       }
     }
 
-    this.packager.dispatchArtifactCreated(installerPath, `${appInfo.name}-Setup-${version}.exe`)
+    packager.dispatchArtifactCreated(installerPath, githubArtifactName)
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {

@@ -1,15 +1,13 @@
 import { isEmptyOrSpaces } from "../util/util"
 import { log, warn } from "../util/log"
 import { debug } from "../util/util"
-import { basename } from "path"
 import { parse as parseUrl } from "url"
 import mime from "mime"
-import { stat } from "fs-extra-p"
 import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
 import BluebirdPromise from "bluebird-lst-c"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
-import { uploadFile } from "./uploader"
 import { GithubOptions } from "../options/publishOptions"
+import { ClientRequest } from "http"
 
 export interface Release {
   id: number
@@ -25,7 +23,7 @@ interface Asset {
   name: string
 }
 
-export class GitHubPublisher implements Publisher {
+export class GitHubPublisher extends Publisher {
   private tag: string
   private _releasePromise: BluebirdPromise<Release>
 
@@ -37,6 +35,8 @@ export class GitHubPublisher implements Publisher {
   }
 
   constructor(private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}, private readonly isPublishOptionGuessed: boolean = false) {
+    super()
+
     let token = info.token
     if (isEmptyOrSpaces(token)) {
       token = process.env.GH_TOKEN
@@ -92,8 +92,7 @@ export class GitHubPublisher implements Publisher {
     }
   }
 
-  async upload(file: string, artifactName?: string): Promise<void> {
-    const fileName = artifactName || basename(file)
+  protected async doUpload(fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<void> {
     const release = await this.releasePromise
     if (release == null) {
       debug(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
@@ -101,7 +100,6 @@ export class GitHubPublisher implements Publisher {
     }
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
-    const fileStat = await stat(file)
     let badGatewayCount = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       try {
@@ -113,9 +111,9 @@ export class GitHubPublisher implements Publisher {
             Accept: "application/vnd.github.v3+json",
             "User-Agent": "electron-builder",
             "Content-Type": mime.lookup(fileName),
-            "Content-Length": fileStat.size
+            "Content-Length": dataLength
           }
-        }, this.token, uploadFile.bind(this, file, fileStat, fileName))
+        }, this.token, requestProcessor)
       }
       catch (e) {
         if (e instanceof HttpError) {

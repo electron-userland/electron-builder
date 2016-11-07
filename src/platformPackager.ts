@@ -158,7 +158,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.info.eventEmitter.emit("artifactCreated", {
       file: file,
       artifactName: artifactName,
-      platform: this.platform,
       packager: this,
     })
   }
@@ -491,10 +490,12 @@ export function getArchSuffix(arch: Arch): string {
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
 
-  readonly file: string
+  readonly file?: string
+  readonly data?: Buffer
+
   readonly artifactName?: string
 
-  readonly platform: Platform
+  readonly publishConfig?: PublishConfiguration
 }
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
