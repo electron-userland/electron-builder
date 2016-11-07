@@ -152,6 +152,7 @@ export default class NsisTarget extends TargetEx {
       OutFile: `"${installerPath}"`,
       VIProductVersion: `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${appInfo.buildNumber || "0"}`,
       VIAddVersionKey: versionKey,
+      Unicode: true,
     }
 
     if (packager.devMetadata.build.compression === "store") {

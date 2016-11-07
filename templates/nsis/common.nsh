@@ -8,7 +8,6 @@ ShowInstDetails nevershow
 !endif
 FileBufSize 64
 Name "${PRODUCT_NAME}"
-Unicode true
 
 !define APP_EXECUTABLE_FILENAME "${PRODUCT_FILENAME}.exe"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
