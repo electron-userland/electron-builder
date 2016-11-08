@@ -20,44 +20,50 @@ const MAX_FILE_REQUESTS = 8
 const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
 
-export async function walk(dirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter, addRootToResult?: boolean): Promise<Array<string>> {
-  const childNames = await readdir(dirPath)
-  const stats = await BluebirdPromise.map(childNames, name => lstat(dirPath + path.sep + name), concurrency)
-  const dirs: Array<string> = []
-  const files: Array<string> = addRootToResult ? [dirPath] : []
-  await BluebirdPromise.map(stats, (stat, index): any => {
-    const filePath = dirPath + path.sep + childNames[index]
-    if (filter != null && !filter(filePath, stat)) {
-      return null
-    }
-
-    if (consumer != null) {
-      consumer(filePath, stat)
-    }
-
-    if (stat.isDirectory()) {
-      dirs.push(filePath)
+export async function walk(initialDirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter): Promise<Array<string>> {
+  const result: Array<string> = []
+  const queue: Array<string> = [initialDirPath]
+  let addDirToResult = false
+  while (queue.length > 0) {
+    const dirPath = queue.pop()!
+    if (addDirToResult) {
+      result.push(dirPath)
     }
     else {
-      files.push(filePath)
+      addDirToResult = true
     }
-  }, concurrency)
 
-  files.sort()
+    const childNames = await readdir(dirPath)
+    childNames.sort()
 
-  if (dirs.length === 0) {
-    return files
+    const dirs: Array<string> = []
+    await BluebirdPromise.map(childNames, name => {
+      const filePath = dirPath + path.sep + name
+      return lstat(filePath)
+        .then(stat => {
+          if (filter != null && !filter(filePath, stat)) {
+            return
+          }
+
+          if (consumer != null) {
+            consumer(filePath, stat)
+          }
+
+          if (stat.isDirectory()) {
+            dirs.push(filePath)
+          }
+          else {
+            result.push(filePath)
+          }
+        })
+    }, concurrency)
+
+    for (let i = dirs.length - 1; i > -1; i--) {
+      queue.push(dirs[i])
+    }
   }
 
-  dirs.sort()
-  const list = await BluebirdPromise.map(dirs, dir => walk(dir, consumer, filter, true), concurrency)
-  for (let subList of list) {
-    for (let file of subList) {
-      files.push(file)
-    }
-  }
-
-  return files
+  return result
 }
 
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter): Promise<any> {
