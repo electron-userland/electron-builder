@@ -130,7 +130,7 @@ test.ifNotWindows("link", app({
 }))
 
 // skip on MacOS because we want test only / and \
-test.ifNotCiOsx("ignore node_modules known dev dep", () => {
+test.ifNotCiOsx("ignore node_modules dev dep", () => {
   const build: any = {
     asar: false,
     ignore: (file: string) => {

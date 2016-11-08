@@ -1,8 +1,6 @@
 import { copy, Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
-const readInstalled = require("read-installed")
 
 // we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
 export function copyFiltered(src: string, destination: string, filter: Filter, dereference: boolean): Promise<any> {
@@ -53,45 +51,6 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
 
     return minimatchAll(relative, patterns, stat) && (excludePatterns == null || !minimatchAll(relative, excludePatterns, stat))
   }
-}
-
-export function devDependencies(dir: string): Promise<Array<string>> {
-  return new BluebirdPromise((resolve, reject) => {
-    readInstalled(dir, (error: Error, data: any) => {
-      if (error) {
-        reject(error)
-      }
-      else {
-        resolve(flatDependencies(data, new Set()))
-      }
-    })
-  })
-}
-
-function flatDependencies(data: any, seen: Set<string>): any {
-  const deps = data.dependencies
-  if (deps == null) {
-    return []
-  }
-
-  return Object.keys(deps).map(function (d) {
-    if (typeof deps[d] !== "object" || seen.has(deps[d])) {
-      return null
-    }
-
-    seen.add(deps[d])
-    if (deps[d].extraneous) {
-      const extra = deps[d]
-      delete deps[d]
-      return extra.path
-    }
-    return flatDependencies(deps[d], seen)
-  })
-    .filter(it => it !== null)
-    .reduce(function flat(l, r): Array<string> {
-      return l.concat(Array.isArray(r) ? r.reduce(flat, []) : r)
-    }, [])
-
 }
 
 // https://github.com/joshwnj/minimatch-all/blob/master/index.js

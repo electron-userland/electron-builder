@@ -3,7 +3,7 @@ import EventEmitter = NodeJS.EventEmitter
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove } from "fs-extra-p"
-import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray } from "./util/util"
+import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, dependencies, debug } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
@@ -11,7 +11,7 @@ import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log, task } from "./util/log"
 import { AppInfo } from "./appInfo"
-import { copyFiltered, devDependencies } from "./util/filter"
+import { copyFiltered } from "./util/filter"
 import { pack } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
@@ -184,9 +184,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const p = pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
       const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
       // prune dev or not listed dependencies
-      const result = await devDependencies(this.info.appDir)
-      for (let it of result) {
-        ignoreFiles.add(it)
+      await dependencies(this.info.appDir, true, ignoreFiles)
+
+      if (debug.enabled) {
+        debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).join(", ")}`)
       }
 
       const patterns = this.getFileMatchers("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
@@ -206,10 +207,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const deprecatedIgnore = (<any>this.devMetadata.build).ignore
       if (deprecatedIgnore != null) {
         if (typeof deprecatedIgnore === "function") {
-          log(`"ignore is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+          warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
         else {
-          warn(`"ignore is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+          warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
         rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, this.info.appDir)
       }

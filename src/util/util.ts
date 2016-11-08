@@ -325,3 +325,34 @@ export function getCacheDirectory(): string {
     return path.join(homedir(), ".cache", "electron-builder")
   }
 }
+
+let readInstalled: any = null
+export function dependencies(dir: string, extraneousOnly: boolean, result: Set<string>): Promise<Array<string>> {
+  if (readInstalled == null) {
+    readInstalled = BluebirdPromise.promisify(require("read-installed"))
+  }
+  return readInstalled(dir)
+    .then((it: any) => flatDependencies(it, result, new Set(), extraneousOnly))
+}
+
+function flatDependencies(data: any, result: Set<string>, seen: Set<string>, extraneousOnly: boolean): void {
+  const deps = data.dependencies
+  if (deps == null) {
+    return
+  }
+
+  for (let d of Object.keys(deps)) {
+    const dep = deps[d]
+    if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
+      continue
+    }
+
+    if (extraneousOnly === dep.extraneous) {
+      seen.add(dep)
+      result.add(dep.path)
+    }
+    else {
+      flatDependencies(dep, result, seen, extraneousOnly)
+    }
+  }
+}
