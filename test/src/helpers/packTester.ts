@@ -12,11 +12,11 @@ import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter from "path-sort"
 import DecompressZip from "decompress-zip"
 import { convertVersion } from "out/targets/squirrelPack"
-import { spawnNpmProduction } from "out/util/util"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
 import { AssertContext } from "ava-tf"
 import { SquirrelWindowsOptions } from "out/options/winOptions"
+import { spawn } from "out/util/util"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -92,7 +92,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir)
       if (checkOptions.npmInstallBefore) {
-        await spawnNpmProduction("install", projectDir, false)
+        await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production"], {
+          cwd: projectDir
+        })
       }
     }
 

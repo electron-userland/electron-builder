@@ -3,7 +3,7 @@ import EventEmitter = NodeJS.EventEmitter
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove } from "fs-extra-p"
-import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, dependencies, debug } from "./util/util"
+import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, debug } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
@@ -18,6 +18,7 @@ import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter 
 import { BuildOptions } from "./builder"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "./options/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
+import { dependencies } from "./yarn"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>

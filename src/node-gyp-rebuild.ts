@@ -1,11 +1,12 @@
 #! /usr/bin/env node
 
-import { getElectronVersion, exec, getGypEnv } from "./util/util"
+import { getElectronVersion, exec } from "./util/util"
 import { printErrorAndExit } from "./util/promise"
 import * as path from "path"
 import yargs from "yargs"
 import { readPackageJson } from "./util/readPackageJson"
 import { log } from "./util/log"
+import { getGypEnv } from "./yarn"
 
 const args: any = yargs
   .option("arch", {

@@ -36,7 +36,7 @@ install:
 - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" && "$TRAVIS_TAG" == "" && "$PUBLISH_TO_NPM" == "true" ]]; then yarn add @develar/semantic-release@next --dev ; fi
 
 script:
-- npm run test
+- yarn run test
 
 after_success:
 - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" && "$TRAVIS_TAG" == "" && "$PUBLISH_TO_NPM" == "true" ]]; then npm run semantic-release ; fi

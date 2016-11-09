@@ -1,12 +1,13 @@
 #! /usr/bin/env node
 
-import { computeDefaultAppDirectory, installDependencies, getElectronVersion, use } from "./util/util"
+import { computeDefaultAppDirectory, getElectronVersion, use } from "./util/util"
 import { printErrorAndExit } from "./util/promise"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { DevMetadata } from "./metadata"
 import yargs from "yargs"
 import { readPackageJson } from "./util/readPackageJson"
+import { installDependencies } from "./yarn"
 
 const args: any = yargs
   .option("arch", {

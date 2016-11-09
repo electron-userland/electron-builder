@@ -2,10 +2,10 @@ import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_pro
 import BluebirdPromise from "bluebird-lst-c"
 import { homedir } from "os"
 import * as path from "path"
-import { readJson, stat, Stats, unlink } from "fs-extra-p"
+import { readJson, stat, Stats, unlink, access } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import _debug from "debug"
-import { warn, task, log } from "./log"
+import { warn, log } from "./log"
 import { createHash } from "crypto"
 import Debugger = debug.Debugger
 
@@ -15,59 +15,6 @@ export const debug: Debugger = _debug("electron-builder")
 export const debug7z: Debugger = _debug("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
-
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, command: string = "install", additionalArgs?: any): Promise<any> {
-  return task(`${(command === "install" ? "Installing" : "Rebuilding")} app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(command, appDir, forceBuildFromSource, getGypEnv(electronVersion, arch), additionalArgs))
-}
-
-export function getGypEnv(electronVersion: string, arch: string): any {
-  const gypHome = path.join(homedir(), ".electron-gyp")
-  return Object.assign({}, process.env, {
-    npm_config_disturl: "https://atom.io/download/electron",
-    npm_config_target: electronVersion,
-    npm_config_runtime: "electron",
-    npm_config_arch: arch,
-    HOME: gypHome,
-    USERPROFILE: gypHome,
-  })
-}
-
-export function spawnNpmProduction(command: string, appDir: string, forceBuildFromSource: boolean, env?: any, additionalArgs?: any): Promise<any> {
-  let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = [command, "--production"]
-
-  if (npmExecPath == null || !npmExecPath.includes("yarn")) {
-    if (process.env.NPM_NO_BIN_LINKS === "true") {
-      npmExecArgs.push("--no-bin-links")
-    }
-    npmExecArgs.push("--cache-min", "999999999")
-  }
-
-  if (npmExecPath == null) {
-    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
-  }
-  else {
-    npmExecArgs.unshift(npmExecPath)
-    npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
-  }
-  if (forceBuildFromSource) {
-    npmExecArgs.push("--build-from-source")
-  }
-
-  if (additionalArgs) {
-    if (Array.isArray(additionalArgs)) {
-      npmExecArgs.push(...additionalArgs)
-    }
-    else {
-      npmExecArgs.push(additionalArgs)
-    }
-  }
-
-  return spawn(npmExecPath, npmExecArgs, {
-    cwd: appDir,
-    env: env || process.env
-  })
-}
 
 export interface BaseExecOptions {
   cwd?: string
@@ -238,6 +185,16 @@ export async function statOrNull(file: string): Promise<Stats | null> {
   }
 }
 
+export async function exists(file: string): Promise<boolean> {
+  try {
+    await access(file)
+    return true
+  }
+  catch (e) {
+    return false
+  }
+}
+
 export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
   if (userAppDir != null) {
     const absolutePath = path.resolve(projectDir, userAppDir)
@@ -323,36 +280,5 @@ export function getCacheDirectory(): string {
   }
   else {
     return path.join(homedir(), ".cache", "electron-builder")
-  }
-}
-
-let readInstalled: any = null
-export function dependencies(dir: string, extraneousOnly: boolean, result: Set<string>): Promise<Array<string>> {
-  if (readInstalled == null) {
-    readInstalled = BluebirdPromise.promisify(require("read-installed"))
-  }
-  return readInstalled(dir)
-    .then((it: any) => flatDependencies(it, result, new Set(), extraneousOnly))
-}
-
-function flatDependencies(data: any, result: Set<string>, seen: Set<string>, extraneousOnly: boolean): void {
-  const deps = data.dependencies
-  if (deps == null) {
-    return
-  }
-
-  for (let d of Object.keys(deps)) {
-    const dep = deps[d]
-    if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
-      continue
-    }
-
-    if (extraneousOnly === dep.extraneous) {
-      seen.add(dep)
-      result.add(dep.path)
-    }
-    else {
-      flatDependencies(dep, result, seen, extraneousOnly)
-    }
   }
 }

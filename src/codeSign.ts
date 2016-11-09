@@ -186,7 +186,7 @@ async function _findIdentity(namePrefix: CertType, qualifier?: string | null, ke
 export async function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
   let identity = process.env.CSC_NAME || qualifier
   if (isEmptyOrSpaces(identity)) {
-    if (keychain == null && !isCi() && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
+    if (keychain == null && !isCi() && (process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false")) {
       return null
     }
     else {

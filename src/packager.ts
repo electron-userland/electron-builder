@@ -1,7 +1,7 @@
 import * as path from "path"
 import {
-  computeDefaultAppDirectory, installDependencies, getElectronVersion, use,
-  exec, isEmptyOrSpaces, statOrNull, getGypEnv
+  computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces, exists,
+  asArray
 } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
@@ -20,6 +20,7 @@ import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "./util/tmp"
 import { BuildOptions } from "./builder"
+import { getGypEnv, installDependencies, rebuild } from "./yarn"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -229,7 +230,7 @@ export class Packager implements BuildInfo {
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
     if (this.devMetadata.build.nodeGypRebuild === true) {
-      log(`Execute node-gyp rebuild for arch ${Arch[arch]}`)
+      log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
         env: getGypEnv(this.electronVersion, Arch[arch]),
       })
@@ -241,11 +242,20 @@ export class Packager implements BuildInfo {
       }
       else {
         const forceBuildFromSource = this.devMetadata.build.npmSkipBuildFromSource !== true
-        if (platform.nodeName !== process.platform && forceBuildFromSource) {
+        if (forceBuildFromSource && platform.nodeName !== process.platform) {
           log("Skip app dependencies rebuild because platform is different")
         }
         else {
-          await installDependencies(this.appDir, this.electronVersion, Arch[arch], forceBuildFromSource, (await statOrNull(path.join(this.appDir, "node_modules"))) == null ? "install" : "rebuild", this.devMetadata.build.npmArgs)
+          if (await exists(path.join(this.appDir, "node_modules"))) {
+            const args = asArray(this.devMetadata.build.npmArgs)
+            if (forceBuildFromSource) {
+              args.push("--build-from-source")
+            }
+            await rebuild(this.appDir, this.electronVersion, Arch[arch], args)
+          }
+          else {
+            await installDependencies(this.appDir, this.electronVersion, Arch[arch], forceBuildFromSource, this.devMetadata.build.npmArgs)
+          }
         }
       }
     }
