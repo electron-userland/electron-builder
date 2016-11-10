@@ -148,7 +148,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete r.l
   delete r.w
   delete r.windows
-  delete r.osx
   delete r.macos
   delete r.$0
   delete r._

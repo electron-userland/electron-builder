@@ -157,9 +157,6 @@ export interface BuildMetadata {
    */
   readonly dmg?: DmgOptions | null
 
-  // deprecated
-  readonly osx?: MacOptions | null
-
   /*
    See [.build.mas](#MasBuildOptions).
    */
@@ -377,7 +374,6 @@ export class Platform {
     switch (name) {
       case Platform.MAC.nodeName:
       case Platform.MAC.name:
-      case "osx":
         return Platform.MAC
 
       case Platform.WINDOWS.nodeName:

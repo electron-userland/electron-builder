@@ -70,7 +70,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   let dirToDelete: string | null = null
   if (useTempDir) {
-    // non-osx test uses the same dir as osx test, but we cannot share node_modules (because tests executed in parallel)
+    // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
     const dir = customTmpDir == null ? path.join(testDir, `${(tmpDirCounter++).toString(16)}`) : path.resolve(customTmpDir)
     if (customTmpDir == null) {
       dirToDelete = dir

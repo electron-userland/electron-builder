@@ -178,7 +178,7 @@ export class DmgTarget extends TargetEx {
         x: 400,
         y: 100,
       },
-    }, Object.assign({}, this.packager.devMetadata.build.osx, packager.devMetadata.build.dmg))
+    }, packager.devMetadata.build.dmg)
 
     // appdmg
     const oldPosition = specification.window.position

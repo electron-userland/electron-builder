@@ -201,6 +201,9 @@ export class Packager implements BuildInfo {
       if (build["osx-sign"] != null) {
         throw new Error("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
       }
+      if (build["osx"] != null) {
+        throw new Error(`"osx" in the "build" is deprecated and not supported — please see use "mac" instead`)
+      }
 
       const author = appMetadata.author
       if (author == null) {

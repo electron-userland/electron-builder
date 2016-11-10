@@ -26,7 +26,6 @@ test("cli", () => {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
-  assertThat(parse("--platform osx")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
   assertThat(parse("--platform mac")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
 
   const all = expected({targets: new Map([...Platform.MAC.createTarget(null, Arch.x64), ...Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), ...Platform.LINUX.createTarget(null, Arch.x64, Arch.ia32)])})
@@ -38,7 +37,6 @@ test("cli", () => {
   assertThat(parse("--ia32 --dir")).isEqualTo(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.ia32)}))
   assertThat(parse("--platform linux --dir")).isEqualTo(expected({targets: Platform.LINUX.createTarget(DIR_TARGET)}))
 
-  assertThat(parse("--osx")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
   assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
   assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
   assertThat(parse("--linux")).isEqualTo(expected({targets: Platform.LINUX.createTarget()}))

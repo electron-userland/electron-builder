@@ -14,7 +14,7 @@ export function createYargs(): any {
     .example("build --em.foo=bar", "set application package.json property `foo` to `bar`")
     .option("mac", {
       group: buildGroup,
-      alias: ["m", "o", "osx", "macos"],
+      alias: ["m", "o", "macos"],
       describe: `Build for MacOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
       type: "array",
     })
@@ -71,7 +71,7 @@ export function createYargs(): any {
     .option("platform", {
       group: deprecated,
       describe: "The target platform (preferred to use --mac, --win or --linux)",
-      choices: ["mac", "osx", "win", "linux", "darwin", "win32", "all"],
+      choices: ["mac", "win", "linux", "darwin", "win32", "all"],
     })
     .option("arch", {
       group: deprecated,

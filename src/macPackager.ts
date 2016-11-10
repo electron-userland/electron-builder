@@ -39,10 +39,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     return iconPath == null ? await this.getDefaultIcon("icns") : path.resolve(this.projectDir, iconPath)
   }
 
-  normalizePlatformSpecificBuildOptions(options: MacOptions | n): MacOptions {
-    return super.normalizePlatformSpecificBuildOptions(options == null ? (<any>this.info.devMetadata.build).osx : options)
-  }
-
   createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     for (let name of targets) {
       switch (name) {

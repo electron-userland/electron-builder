@@ -187,30 +187,6 @@ test.ifOsx("no build directory", app(platform(Platform.MAC), {
   projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
-test.ifOsx("custom background - old way", () => {
-  let platformPackager: CheckingMacPackager = null
-  const customBackground = "customBackground.tiff"
-  return assertPack("test-app-one", {
-    targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
-  }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
-      copy(path.join(__dirname, "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
-      modifyPackageJson(projectDir, data => {
-        data.build.osx = {
-          background: customBackground,
-          icon: "foo.icns",
-        }
-      })
-    ]),
-    packed: () => {
-      assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
-      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
-      return BluebirdPromise.resolve(null)
-    },
-  })
-})
-
 test.ifOsx("custom background - new way", () => {
   let platformPackager: CheckingMacPackager = null
   const customBackground = "customBackground.png"
@@ -228,11 +204,6 @@ test.ifOsx("custom background - new way", () => {
         data.build.dmg = {
           background: customBackground,
           icon: "foo.icns",
-        }
-
-        data.build.osx = {
-          background: null,
-          icon: "ignoreMe.icns",
         }
       })
     ]),
