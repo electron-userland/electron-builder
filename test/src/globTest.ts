@@ -190,7 +190,7 @@ test("extraResources", async () => {
     //noinspection SpellCheckingInspection
     await assertPack("test-app", {
       // to check NuGet package
-      targets: platform.createTarget(platform === Platform.WINDOWS ? null : DIR_TARGET),
+      targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
     }, {
       projectDirCreated: projectDir => {
         return BluebirdPromise.all([

@@ -82,9 +82,9 @@ Don't customize paths to background and icon, — just follow conventions.
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-| npmRebuild | <a name="BuildMetadata-npmRebuild"></a>*two package.json structure only* Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
-| npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>*two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
-| npmArgs | <a name="BuildMetadata-npmArgs"></a>*two package.json structure only* Additional command line arguments to use when installing app native deps. Defaults to `null`.
+| npmRebuild | <a name="BuildMetadata-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+| npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
+| npmArgs | <a name="BuildMetadata-npmArgs"></a>Additional command line arguments to use when installing app native deps. Defaults to `null`.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
@@ -255,9 +255,9 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | --- | ---
 | iconUrl | <a name="SquirrelWindowsOptions-iconUrl"></a><p>A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
 | loadingGif | <a name="SquirrelWindowsOptions-loadingGif"></a><p>The path to a .gif file to display during install. <code>build/install-spinner.gif</code> will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).</p>
-| msi | <a name="SquirrelWindowsOptions-msi"></a>*Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
-| remoteReleases | <a name="SquirrelWindowsOptions-remoteReleases"></a>*Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
-| remoteToken | <a name="SquirrelWindowsOptions-remoteToken"></a>*Squirrel.Windows-only.* Authentication token for remote updates
+| msi | <a name="SquirrelWindowsOptions-msi"></a>Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+| remoteReleases | <a name="SquirrelWindowsOptions-remoteReleases"></a>A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+| remoteToken | <a name="SquirrelWindowsOptions-remoteToken"></a>Authentication token for remote updates
 | useAppIdAsId | <a name="SquirrelWindowsOptions-useAppIdAsId"></a>Use `appId` to identify package instead of `name`.
 
 <a name="WinBuildOptions"></a>
@@ -267,7 +267,7 @@ Windows specific build options.
 
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `squirrel`.
+| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.

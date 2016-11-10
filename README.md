@@ -19,8 +19,6 @@ _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
-Consider to use `nsis` target for Windows ([auto-update](https://github.com/electron-userland/electron-builder/issues/529) will be implemented this month) for new projects.
-
 # Configuration
 
 See [options](https://github.com/electron-userland/electron-builder/wiki/Options) for a full reference but consider following the simple guide outlined below first.

@@ -131,7 +131,12 @@
       "transform-es2015-spread",
       "transform-es2015-destructuring",
       "array-includes",
-      "transform-inline-imports-commonjs"
+      [
+        "transform-inline-imports-commonjs",
+        {
+          "excludeModules": "path"
+        }
+      ]
     ]
   },
   "ava": {

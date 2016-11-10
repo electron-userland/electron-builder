@@ -10,11 +10,11 @@ import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
 
-test.ifNotCiOsx("win", app({targets: Platform.WINDOWS.createTarget(["default", "zip"])}, {signed: true}))
+test.ifNotCiOsx("win", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
 
 // very slow
 test.skip("delta and msi", app({
-  targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
+  targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
   devMetadata: {
     build: {
       squirrelWindows: {
@@ -39,8 +39,7 @@ test.ifDevOrWinCi("beta version", app({
   }
 }))
 
-test.ifNotCiOsx("msi as string", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS),
-  {
+test.ifNotCiOsx("msi as string", t => t.throws(assertPack("test-app-one", {targets: Platform.WINDOWS.createTarget("squirrel")}, {
     projectDirCreated: it => modifyPackageJson(it, data => {
       data.build.win = {
         msi: "false",
@@ -54,7 +53,7 @@ test("detect install-spinner, certificateFile/password", () => {
   let loadingGifPath: string = null
 
   return assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(),
+    targets: Platform.WINDOWS.createTarget("squirrel"),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
     devMetadata: {
       build: {
@@ -75,11 +74,10 @@ test("detect install-spinner, certificateFile/password", () => {
           }
         })])
     },
-    packed: () => {
+    packed: async () => {
       assertThat(platformPackager.effectiveDistOptions.loadingGif).isEqualTo(loadingGifPath)
       assertThat(platformPackager.signOptions.cert).isEqualTo("secretFile")
       assertThat(platformPackager.signOptions.password).isEqualTo("pass")
-      return BluebirdPromise.resolve(null)
     },
   })
 })
@@ -95,7 +93,7 @@ test.ifNotCiOsx("icon not an image", t => t.throws(assertPack("test-app-one", pl
 test.ifOsx("custom icon", () => {
   let platformPackager: CheckingWinPackager = null
   return assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(),
+    targets: Platform.WINDOWS.createTarget("squirrel"),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager)
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
@@ -108,7 +106,6 @@ test.ifOsx("custom icon", () => {
     ]),
     packed: async context => {
       assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(context.projectDir, "customIcon.ico"))
-      return BluebirdPromise.resolve()
     },
   })
 })

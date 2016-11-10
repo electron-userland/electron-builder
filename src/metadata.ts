@@ -195,17 +195,17 @@ export interface BuildMetadata {
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
   /*
-   *two package.json structure only* Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+   Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */
   readonly npmRebuild?: boolean
 
   /*
-   *two package.json structure only* Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
+   Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
    */
   readonly npmSkipBuildFromSource?: boolean
 
   /*
-   *two package.json structure only* Additional command line arguments to use when installing app native deps. Defaults to `null`.
+   Additional command line arguments to use when installing app native deps. Defaults to `null`.
    */
   readonly npmArgs?: Array<string> | string | null
 

@@ -9,7 +9,7 @@ import { AsarOptions } from "asar-electron-builder"
 import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
-import { warn, log, task } from "./util/log"
+import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { copyFiltered } from "./util/filter"
 import { pack } from "./packager/dirPackager"
@@ -182,7 +182,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
-    const p = pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async() => {
+    log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
+    await pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async () => {
       const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
       // prune dev or not listed dependencies
       await dependencies(this.info.appDir, true, ignoreFiles)
@@ -244,7 +245,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       promises.push(this.postInitApp(appOutDir))
       await BluebirdPromise.all(promises)
     })
-    await task(`Packaging for platform ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`, p)
 
     await this.doCopyExtraFiles(extraResourceMatchers)
     await this.doCopyExtraFiles(extraFileMatchers)

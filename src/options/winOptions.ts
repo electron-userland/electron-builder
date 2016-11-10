@@ -7,7 +7,7 @@ import { PlatformSpecificBuildOptions } from "../metadata"
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `squirrel`.
+   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
   */
   readonly target?: Array<string> | null
 
@@ -143,17 +143,17 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
   readonly loadingGif?: string | null
 
   /*
-   *Squirrel.Windows-only.* Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+   Whether to create an MSI installer. Defaults to `false` (MSI is not created).
    */
   readonly msi?: boolean
 
   /*
-   *Squirrel.Windows-only.* A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+   A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
    */
   readonly remoteReleases?: string | boolean | null
 
   /*
-   *Squirrel.Windows-only.* Authentication token for remote updates
+   Authentication token for remote updates
    */
   readonly remoteToken?: string | null
 

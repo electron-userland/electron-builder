@@ -20,6 +20,8 @@ export default class SquirrelWindowsTarget extends TargetEx {
   }
 
   async build(appOutDir: string, arch: Arch) {
+    log(`Building Squirrel.Windows for arch ${Arch[arch]}`)
+
     if (arch === Arch.ia32) {
       warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }

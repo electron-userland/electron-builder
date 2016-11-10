@@ -3,7 +3,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import * as path from "path"
-import { log, task } from "./util/log"
+import { log } from "./util/log"
 import { exec, use } from "./util/util"
 import { open, close, read } from "fs-extra-p"
 import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
@@ -73,13 +73,13 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         continue
       }
 
-      if (name === DEFAULT_TARGET || name === "squirrel") {
+      if (name === "squirrel") {
         mapper("squirrel", () => {
           const targetClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
           return new targetClass(this)
         })
       }
-      else if (name === "nsis") {
+      else if (name === DEFAULT_TARGET || name === "nsis") {
         mapper(name, outDir => {
           const targetClass: typeof NsisTarget = require("./targets/nsis").default
           return new targetClass(this, outDir)
@@ -181,7 +181,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     for (let target of targets) {
       if (target instanceof TargetEx) {
-        promises.push(task(`Building ${target.name} ${Arch[arch]}`, target.build(appOutDir, arch)))
+        promises.push(target.build(appOutDir, arch))
       }
       else {
         const format = target.name
