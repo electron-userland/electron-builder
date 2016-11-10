@@ -2,10 +2,11 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { task, log } from "./util/log"
 import { homedir } from "os"
-import { spawn, exists } from "./util/util"
+import { spawn, exists, asArray } from "./util/util"
+import { BuildMetadata } from "./metadata"
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, forceBuildFromSource: boolean, additionalArgs?: any): Promise<any> {
-  return task(`Installing app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(appDir, forceBuildFromSource, getGypEnv(electronVersion, arch), additionalArgs))
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>): Promise<any> {
+  return task(`Installing app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(appDir, getGypEnv(electronVersion, arch), additionalArgs))
 }
 
 export function getGypEnv(electronVersion: string, arch: string): any {
@@ -20,12 +21,20 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-function spawnNpmProduction(appDir: string, forceBuildFromSource: boolean, env?: any, additionalArgs?: any): Promise<any> {
+export function computeExtraArgs(options: BuildMetadata) {
+  const args = asArray(options.npmArgs)
+  if (options.npmSkipBuildFromSource !== true) {
+    args.push("--build-from-source")
+  }
+  return args
+}
+
+function spawnNpmProduction(appDir: string, env: any, additionalArgs: Array<string>): Promise<any> {
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = ["install", "--production"]
 
-  const isNotYarn = npmExecPath == null || !npmExecPath.includes("yarn")
-  if (isNotYarn) {
+  const isYarn = npmExecPath != null || npmExecPath.includes("yarn")
+  if (!isYarn) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       npmExecArgs.push("--no-bin-links")
     }
@@ -33,28 +42,23 @@ function spawnNpmProduction(appDir: string, forceBuildFromSource: boolean, env?:
   }
 
   if (npmExecPath == null) {
-    npmExecPath = process.platform === "win32" ? "npm.cmd" : "npm"
+    npmExecPath = getPackageToolPath()
   }
   else {
     npmExecArgs.unshift(npmExecPath)
     npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
-  if (isNotYarn && forceBuildFromSource) {
-    npmExecArgs.push("--build-from-source")
-  }
 
-  if (additionalArgs) {
-    if (Array.isArray(additionalArgs)) {
-      npmExecArgs.push(...additionalArgs)
-    }
-    else {
-      npmExecArgs.push(additionalArgs)
+  for (let a of additionalArgs) {
+    if (!isYarn || a !== "--build-from-source") {
+      npmExecArgs.push(a)
     }
   }
 
+  console.log("AAA " + npmExecPath + " " + npmExecArgs.join(" "))
   return spawn(npmExecPath, npmExecArgs, {
     cwd: appDir,
-    env: env || process.env
+    env: env
   })
 }
 
@@ -89,6 +93,15 @@ function flatDependencies(data: any, result: Set<string>, seen: Set<string>, ext
   }
 }
 
+function getPackageToolPath() {
+  if (process.env.FORCE_YARN === "true") {
+    return process.platform === "win32" ? "yarn.cmd" : "yarn"
+  }
+  else {
+    return process.platform === "win32" ? "npm.cmd" : "npm"
+  }
+}
+
 export async function rebuild(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>) {
   const deps = new Set<string>()
   await dependencies(appDir, false, deps)
@@ -98,18 +111,13 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
     return
   }
 
-  log(`Rebuilding native app dependencies for arch ${arch} to ${appDir}`)
+  log(`Rebuilding native production dependencies for arch ${arch}`)
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["run", "install", "--"]
 
   if (execPath == null) {
-    if (process.env.FORCE_YARN === "true") {
-      execPath = process.platform === "win32" ? "yarn.cmd" : "yarn"
-    }
-    else {
-      execPath = process.platform === "win32" ? "npm.cmd" : "npm"
-    }
+    execPath = getPackageToolPath()
   }
   else {
     execArgs.unshift(execPath)
@@ -128,10 +136,5 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
   execArgs.push(`--arch=${arch}`)
   execArgs.push(...additionalArgs)
 
-  for (let dir of nativeDeps) {
-    await spawn(execPath, execArgs, {
-      cwd: dir,
-      env: env
-    })
-  }
+  await BluebirdPromise.each(nativeDeps, it => spawn(execPath, execArgs, {cwd: it, env: env}))
 }

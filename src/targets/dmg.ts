@@ -4,7 +4,7 @@ import { log, warn } from "../util/log"
 import { PlatformPackager, TargetEx } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
-import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn } from "../util/util"
+import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn, exists } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 import sanitizeFileName from "sanitize-filename"
@@ -54,7 +54,7 @@ export class DmgTarget extends TargetEx {
     ]).concat(tempDmg))
 
     const volumePath = path.join("/Volumes", volumeName)
-    if (await statOrNull(volumePath) != null) {
+    if (await exists(volumePath)) {
       debug("Unmounting previous disk image")
       await detach(volumePath)
     }

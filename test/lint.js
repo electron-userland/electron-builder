@@ -1,4 +1,7 @@
-{
+const Linter = require("tslint")
+const path = require("path")
+
+const configuration = {
   "extends": "tslint:recommended",
   "rules": {
     "member-ordering": [
@@ -51,6 +54,22 @@
       "check-type"
     ],
     "no-bitwise": false,
-    "jsdoc-format": false
+    "jsdoc-format": false,
+    "no-for-in-array": true
+  }
+}
+const options = {
+  configuration: configuration,
+}
+
+for (let projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "nsis-auto-updater"), __dirname]) {
+  const program = Linter.createProgram("tsconfig.json", projectDir)
+  for (let file of Linter.getFileNames(program)) {
+    const fileContents = program.getSourceFile(file).getFullText()
+    const linter = new Linter(file, fileContents, options, program)
+    const out = linter.lint().output
+    if (out.length > 0) {
+      process.stdout.write(out)
+    }
   }
 }

@@ -7,7 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { DevMetadata } from "./metadata"
 import yargs from "yargs"
 import { readPackageJson } from "./util/readPackageJson"
-import { installDependencies } from "./yarn"
+import { installDependencies, computeExtraArgs } from "./yarn"
 
 const args: any = yargs
   .option("arch", {
@@ -28,7 +28,7 @@ async function main() {
     throw new Error("install-app-deps is only useful for two package.json structure")
   }
 
-  await installDependencies(results[0], results[1], args.arch, devMetadata.build.npmSkipBuildFromSource !== true)
+  await installDependencies(results[0], results[1], args.arch, computeExtraArgs(devMetadata.build))
 }
 
 main()

@@ -2,7 +2,7 @@
 A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
-  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (only if the [two-package.json project structure](#two-packagejson-structure) is used).
+  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation.
   * Development dependencies are never included. You don't need to ignore them explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
 * [Auto Update](#auto-update) ready application packaging.
@@ -12,6 +12,7 @@ A complete solution to package and build a ready for distribution Electron app f
   * [MacOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Squirrel.Windows.
+* [Two package.json Structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases and Bintray.
 
 _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
@@ -19,25 +20,6 @@ _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
 Consider to use `nsis` target for Windows ([auto-update](https://github.com/electron-userland/electron-builder/issues/529) will be implemented this month) for new projects.
-
-# Two package.json structure
-
-We recommend to use two package.json files (it is not required, you can build your project with any structure).
-
-1. For development (`./package.json`)
-
-   The `package.json` resides in the root of your project. Here you declare the dependencies for your development environment and build scripts (`devDependencies`).
-
-2. For your application (`./app/package.json`)
-
-   The `package.json` resides in the `app` directory. Declare your application dependencies (`depencencies`) here. *Only this directory is distributed with the final, packaged application.*
-
-Why?
-
-1. Native npm modules (those written in C, not JavaScript) need to be compiled and here we have two different compilation targets for them. Those used within the application need to be compiled against the electron runtime and all `devDependencies` need to be compiled against your local node.js environment. Thanks to the two `package.json` structure, this is trivial (see [#39](https://github.com/electron-userland/electron-builder/issues/39)).
-2. No need to specify which [files](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files) to include in the app (because development files reside outside the `app` directory).
-
-Please see [Loading App Dependencies Manually](https://github.com/electron-userland/electron-builder/wiki/Loading-App-Dependencies-Manually) and [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881).
 
 # Configuration
 

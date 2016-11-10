@@ -16,7 +16,7 @@
   },
   "scripts": {
     "compile": "ts-babel . nsis-auto-updater test",
-    "lint": "tslint 'src/**/*.ts' 'test/src/**/*.ts' 'nsis-auto-updater/src/**/*.ts'",
+    "lint": "node ./test/lint.js",
     "pretest": "yarn run compile && yarn run lint",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
     "test": "node ./test/out/helpers/runTests.js",

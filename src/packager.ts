@@ -1,8 +1,5 @@
 import * as path from "path"
-import {
-  computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces, exists,
-  asArray
-} from "./util/util"
+import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces, exists } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
@@ -20,7 +17,7 @@ import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "./util/tmp"
 import { BuildOptions } from "./builder"
-import { getGypEnv, installDependencies, rebuild } from "./yarn"
+import { getGypEnv, installDependencies, rebuild, computeExtraArgs } from "./yarn"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -236,31 +233,22 @@ export class Packager implements BuildInfo {
       })
     }
 
-    if (this.isTwoPackageJsonProjectLayoutUsed) {
-      if (this.devMetadata.build.npmRebuild === false) {
-        log("Skip app dependencies rebuild because npmRebuild is set to false")
-      }
-      else {
-        const forceBuildFromSource = this.devMetadata.build.npmSkipBuildFromSource !== true
-        if (forceBuildFromSource && platform.nodeName !== process.platform) {
-          log("Skip app dependencies rebuild because platform is different")
-        }
-        else {
-          if (await exists(path.join(this.appDir, "node_modules"))) {
-            const args = asArray(this.devMetadata.build.npmArgs)
-            if (forceBuildFromSource) {
-              args.push("--build-from-source")
-            }
-            await rebuild(this.appDir, this.electronVersion, Arch[arch], args)
-          }
-          else {
-            await installDependencies(this.appDir, this.electronVersion, Arch[arch], forceBuildFromSource, this.devMetadata.build.npmArgs)
-          }
-        }
-      }
+    if (this.devMetadata.build.npmRebuild === false) {
+      log("Skip app dependencies rebuild because npmRebuild is set to false")
+      return
+    }
+
+    if (this.devMetadata.build.npmSkipBuildFromSource !== true && platform.nodeName !== process.platform) {
+      log("Skip app dependencies rebuild because platform is different")
     }
     else {
-      log("Skip app dependencies rebuild because dev and app dependencies are not separated")
+      const args = computeExtraArgs(this.devMetadata.build)
+      if (await exists(path.join(this.appDir, "node_modules"))) {
+        await rebuild(this.appDir, this.electronVersion, Arch[arch], args)
+      }
+      else if (this.isTwoPackageJsonProjectLayoutUsed) {
+        await installDependencies(this.appDir, this.electronVersion, Arch[arch], args)
+      }
     }
   }
 }
