@@ -14,3 +14,5 @@ Why?
 2. No need to specify which [files](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files) to include in the app (because development files reside outside the `app` directory).
 
 Please see [Loading App Dependencies Manually](https://github.com/electron-userland/electron-builder/wiki/Loading-App-Dependencies-Manually) and [#379](https://github.com/electron-userland/electron-builder/issues/379#issuecomment-218503881).
+
+If you use the two-package.json project structure, you'll only have your `devDependencies` in your development `package.json` and your `dependencies` in your app `package.json`. To ensure your dependencies are always updated based on both files, simply add `"postinstall": "install-app-deps"` to your development `package.json`. This will basically automatically trigger an `npm install` within your app directory so you don't have to do this work every time you install/update your dependencies.

@@ -1,5 +1,5 @@
 import * as path from "path"
-import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces, exists } from "./util/util"
+import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
@@ -17,7 +17,7 @@ import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "./util/tmp"
 import { BuildOptions } from "./builder"
-import { getGypEnv, installDependencies, rebuild, computeExtraArgs } from "./yarn"
+import { getGypEnv, installOrRebuild } from "./yarn"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -229,29 +229,24 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.devMetadata.build.nodeGypRebuild === true) {
+    const options = this.devMetadata.build
+    if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
         env: getGypEnv(this.electronVersion, Arch[arch]),
       })
     }
 
-    if (this.devMetadata.build.npmRebuild === false) {
+    if (options.npmRebuild === false) {
       log("Skip app dependencies rebuild because npmRebuild is set to false")
       return
     }
 
-    if (this.devMetadata.build.npmSkipBuildFromSource !== true && platform.nodeName !== process.platform) {
+    if (options.npmSkipBuildFromSource !== true && platform.nodeName !== process.platform) {
       log("Skip app dependencies rebuild because platform is different")
     }
     else {
-      const args = computeExtraArgs(this.devMetadata.build)
-      if (await exists(path.join(this.appDir, "node_modules"))) {
-        await rebuild(this.appDir, this.electronVersion, Arch[arch], args)
-      }
-      else if (this.isTwoPackageJsonProjectLayoutUsed) {
-        await installDependencies(this.appDir, this.electronVersion, Arch[arch], args)
-      }
+      await installOrRebuild(options, this.appDir, this.electronVersion, Arch[arch])
     }
   }
 }

@@ -1,12 +1,18 @@
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { task, log } from "./util/log"
+import { log } from "./util/log"
 import { homedir } from "os"
 import { spawn, exists, asArray } from "./util/util"
 import { BuildMetadata } from "./metadata"
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>): Promise<any> {
-  return task(`Installing app dependencies for arch ${arch} to ${appDir}`, spawnNpmProduction(appDir, getGypEnv(electronVersion, arch), additionalArgs))
+export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, arch: string, forceInstall: boolean = false) {
+  const args = computeExtraArgs(options)
+  if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
+    await installDependencies(appDir, electronVersion, arch, args)
+  }
+  else {
+    await rebuild(appDir, electronVersion, arch, args)
+  }
 }
 
 export function getGypEnv(electronVersion: string, arch: string): any {
@@ -21,7 +27,7 @@ export function getGypEnv(electronVersion: string, arch: string): any {
   })
 }
 
-export function computeExtraArgs(options: BuildMetadata) {
+function computeExtraArgs(options: BuildMetadata) {
   const args = asArray(options.npmArgs)
   if (options.npmSkipBuildFromSource !== true) {
     args.push("--build-from-source")
@@ -29,7 +35,8 @@ export function computeExtraArgs(options: BuildMetadata) {
   return args
 }
 
-function spawnNpmProduction(appDir: string, env: any, additionalArgs: Array<string>): Promise<any> {
+export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>): Promise<any> {
+  log(`Installing app dependencies for arch ${arch} to ${appDir}`)
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = ["install", "--production"]
 
@@ -55,10 +62,9 @@ function spawnNpmProduction(appDir: string, env: any, additionalArgs: Array<stri
     }
   }
 
-  console.log("AAA " + npmExecPath + " " + npmExecArgs.join(" "))
   return spawn(npmExecPath, npmExecArgs, {
     cwd: appDir,
-    env: env
+    env: getGypEnv(electronVersion, arch),
   })
 }
 

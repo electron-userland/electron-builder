@@ -7,7 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { DevMetadata } from "./metadata"
 import yargs from "yargs"
 import { readPackageJson } from "./util/readPackageJson"
-import { installDependencies, computeExtraArgs } from "./yarn"
+import { installOrRebuild } from "./yarn"
 
 const args: any = yargs
   .option("arch", {
@@ -24,11 +24,8 @@ async function main() {
     getElectronVersion(devMetadata, devPackageFile)
   ])
 
-  if (results[0] === projectDir) {
-    throw new Error("install-app-deps is only useful for two package.json structure")
-  }
-
-  await installDependencies(results[0], results[1], args.arch, computeExtraArgs(devMetadata.build))
+  // if two package.json — force full install (user wants to install/update app deps in addition to dev)
+  await installOrRebuild(devMetadata.build, results[0], results[1], args.arch, results[0] !== projectDir)
 }
 
 main()
