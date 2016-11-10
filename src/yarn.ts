@@ -78,23 +78,30 @@ export function dependencies(dir: string, extraneousOnly: boolean, result: Set<s
 }
 
 function flatDependencies(data: any, result: Set<string>, seen: Set<string>, extraneousOnly: boolean): void {
-  const deps = data.dependencies
-  if (deps == null) {
+  if (data.dependencies == null) {
     return
   }
 
-  for (let d of Object.keys(deps)) {
-    const dep = deps[d]
-    if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
-      continue
-    }
+  const queue: Array<any> = [data.dependencies]
+  while (queue.length > 0) {
+    const deps = queue.pop()
+    for (let name of Object.keys(deps)) {
+      const dep = deps[name]
+      if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
+        continue
+      }
 
-    if (extraneousOnly === dep.extraneous) {
       seen.add(dep)
-      result.add(dep.path)
-    }
-    else {
-      flatDependencies(dep, result, seen, extraneousOnly)
+
+      if (extraneousOnly === dep.extraneous) {
+        result.add(dep.path)
+      }
+      else {
+        const childDeps = dep.dependencies
+        if (childDeps != null) {
+          queue.push(childDeps)
+        }
+      }
     }
   }
 }

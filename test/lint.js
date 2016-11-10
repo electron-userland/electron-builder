@@ -1,3 +1,5 @@
+"use strict"
+
 const Linter = require("tslint")
 const path = require("path")
 
