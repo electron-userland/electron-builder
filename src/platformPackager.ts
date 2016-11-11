@@ -169,7 +169,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
 
-  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
     return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
@@ -199,8 +199,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-      let defaultMatcher = patterns != null ? patterns[0] : new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions)
-
+      let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
       if (defaultMatcher.isEmpty()) {
         defaultMatcher.addPattern("**/*")
       }
@@ -243,9 +242,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
 
       const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
-      const promise = asarOptions == null ?
-        copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
-        : createAsarArchive(appDir, resourcesPath, asarOptions, filter)
+      let promise
+      if (asarOptions == null) {
+        promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
+      }
+      else {
+        const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+        const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+        promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
+      }
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
       if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
@@ -311,7 +316,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  private doCopyExtraFiles(patterns: Array<FileMatcher> | n): Promise<any> {
+  private doCopyExtraFiles(patterns: Array<FileMatcher> | null): Promise<any> {
     if (patterns == null || patterns.length === 0) {
       return BluebirdPromise.resolve()
     }
@@ -327,7 +332,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  private getFileMatchers(name: "files" | "extraFiles" | "extraResources", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
+  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
     let globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.devMetadata.build)[name]
     let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
@@ -370,7 +375,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       fileMatchers.unshift(defaultMatcher)
     }
 
-    return fileMatchers.length ? fileMatchers : null
+    return fileMatchers.length === 0 ? null : fileMatchers
   }
 
   private getResourcesDir(appOutDir: string): string {

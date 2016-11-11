@@ -66,9 +66,9 @@ export async function walk(initialDirPath: string, consumer?: (file: string, sta
   return result
 }
 
-export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter): Promise<any> {
+export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter, unpackPattern: Filter | null): Promise<any> {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
-  await new AsarPackager(src, resourcesPath, options).pack(filter)
+  await new AsarPackager(src, resourcesPath, options, unpackPattern).pack(filter)
 }
 
 function isUnpackDir(path: string, pattern: Minimatch, rawPattern: string): boolean {
@@ -83,7 +83,7 @@ class AsarPackager {
 
   private srcRealPath: Promise<string>
 
-  constructor(private src: string, private resourcesPath: string, private options: AsarOptions) {
+  constructor(private readonly src: string, private readonly resourcesPath: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(this.resourcesPath, "app.asar")
   }
 
@@ -234,7 +234,7 @@ class AsarPackager {
         const fileSize = newData == null ? stat.size : Buffer.byteLength(newData)
         const node = this.fs.searchNodeFromPath(file)
         node.size = fileSize
-        if (dirNode.unpacked || (unpack != null && unpack.match(file))) {
+        if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat)) || (unpack != null && unpack.match(file))) {
           node.unpacked = true
 
           if (!dirNode.unpacked) {

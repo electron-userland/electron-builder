@@ -29,7 +29,7 @@ export function hasMagic(pattern: Minimatch) {
 export type Filter = (file: string, stat: Stats) => boolean
 
 export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
-  return function filter(it, stat) {
+  return function (it, stat) {
     if (src === it) {
       return true
     }

@@ -100,16 +100,6 @@ export interface BuildMetadata {
    */
   readonly copyright?: string | null
 
-  /*
-   Whether to package the application's source code into an archive, using [Electron's archive format](https://github.com/electron/asar). Defaults to `true`.
-   Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/latest/tutorial/application-packaging/#limitations-on-node-api/).
-
-   Or you can pass object of any asar options.
-
-   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set `asar.unpackDir` - please file issue if this doesn't work.
-   */
-  readonly asar?: AsarOptions | boolean | null
-
   // deprecated
   readonly iconUrl?: string | null
 
@@ -136,6 +126,21 @@ export interface BuildMetadata {
    The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<string> | string | null
+
+  /*
+   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
+   Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/tutorial/application-packaging/#limitations-of-the-node-api).
+
+   Or you can pass object of any asar options.
+
+   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set `asarUnpack` - please file issue if this doesn't work.
+   */
+  readonly asar?: AsarOptions | boolean | null
+
+  /**
+   A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+   */
+  readonly asarUnpack?: Array<string> | string | null
 
   /*
   The file associations. See [.build.fileAssociations](#FileAssociation).
@@ -321,6 +326,8 @@ export interface PlatformSpecificBuildOptions {
   readonly files?: Array<string> | null
   readonly extraFiles?: Array<string> | null
   readonly extraResources?: Array<string> | null
+
+  readonly asarUnpack?: Array<string> | null
 
   readonly asar?: AsarOptions | boolean
 
