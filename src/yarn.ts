@@ -40,7 +40,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
   let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = ["install", "--production"]
 
-  const isYarn = npmExecPath != null || npmExecPath.includes("yarn")
+  const isYarn = npmExecPath != null && npmExecPath.includes("yarn")
   if (!isYarn) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       npmExecArgs.push("--no-bin-links")

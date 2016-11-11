@@ -4,9 +4,9 @@ import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { log, warn, task } from "./util/log"
-import { createKeychain, CodeSigningInfo, findIdentity } from "./codeSign"
+import { createKeychain, CodeSigningInfo, findIdentity, appleCertificatePrefixes } from "./codeSign"
 import { deepAssign } from "./util/deepAssign"
-import { signAsync, SignOptions } from "electron-osx-sign-tf"
+import { signAsync, SignOptions } from "electron-macos-sign"
 import { DmgTarget } from "./targets/dmg"
 import { createCommonTarget, DEFAULT_TARGET, DIR_TARGET } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
@@ -126,11 +126,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const appPath = path.join(appOutDir, `${this.appInfo.productFilename}.app`)
     const signOptions: any = {
-      identity: name,
+      identity: name!,
       platform: isMas ? "mas" : "darwin",
       version: this.info.electronVersion,
       app: appPath,
       keychain: keychainName || undefined,
+      "gatekeeper-assess": appleCertificatePrefixes.find(it => name!.startsWith(it)) != null
     }
 
     const resourceList = await this.resourceList

@@ -1,7 +1,7 @@
 import test from "./helpers/avaEx"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { outputFile, symlink } from "fs-extra-p"
-import { assertPack, modifyPackageJson, getPossiblePlatforms, app, appThrows } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -148,16 +148,16 @@ test.ifNotCiOsx("ignore node_modules dev dep", () => {
       return BluebirdPromise.all([
         modifyPackageJson(projectDir, data => {
           data.devDependencies = Object.assign({
-              "electron-osx-sign-tf": "*",
+              "electron-macos-sign": "*",
             }, data.devDependencies)
         }),
-        outputFile(path.join(projectDir, "node_modules", "electron-osx-sign-tf", "package.json"), "{}"),
+        outputFile(path.join(projectDir, "node_modules", "electron-macos-sign", "package.json"), "{}"),
         outputFile(path.join(projectDir, "ignoreMe"), ""),
       ])
     },
     packed: context => {
       return BluebirdPromise.all([
-        assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign-tf")).doesNotExist(),
+        assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-macos-sign")).doesNotExist(),
         assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
       ])
     },
@@ -319,23 +319,3 @@ test("extraResources - one-package", async () => {
     })
   }
 })
-
-test.ifDevOrLinuxCi("copy only js files - no asar", appThrows(/Application "package.json" does not exist/, {
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      "files": ["**/*.js"],
-      asar: false,
-    }
-  }
-}))
-
-test.ifDevOrLinuxCi("copy only js files - asar", appThrows(/Application "package.json" in the /, {
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      "files": ["**/*.js"],
-      asar: true,
-    }
-  }
-}))
