@@ -8,6 +8,7 @@ import { getBin } from "../util/binDownload"
 import BluebirdPromise from "bluebird-lst-c"
 import { v1 as uuid1 } from "uuid-1345"
 import { LinuxPackager } from "../linuxPackager"
+import { log } from "../util/log"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
@@ -31,6 +32,8 @@ export default class AppImageTarget extends TargetEx {
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
+    log(`Building AppImage`)
+
     const packager = this.packager
 
     // avoid spaces in the file name

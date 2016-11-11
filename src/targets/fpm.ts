@@ -9,6 +9,7 @@ import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
 import { TmpDir } from "../util/tmp"
 import { LinuxPackager } from "../linuxPackager"
+import { log } from "../util/log"
 
 const template = require("lodash.template")
 
@@ -64,6 +65,9 @@ export default class FpmTarget extends TargetEx {
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const target = this.name
+
+    log(`Building ${target}`)
+
     const destination = path.join(this.outDir, this.packager.generateName(target, arch, true /* on Linux we use safe name — without space */))
 
     const scripts = await this.scriptFiles

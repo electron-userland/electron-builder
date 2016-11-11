@@ -85,6 +85,10 @@ export class Target {
 }
 
 export abstract class TargetEx extends Target {
+  constructor(name: string, public readonly isAsyncSupported: boolean = true) {
+    super(name)
+  }
+
   abstract build(appOutDir: string, arch: Arch): Promise<any>
 }
 
@@ -203,10 +207,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       else {
         defaultMatcher.addPattern("package.json")
       }
-      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
       defaultMatcher.addPattern("!**/node_modules/.bin")
       defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
       defaultMatcher.addPattern("!**/._*")
+      defaultMatcher.addPattern("!.idea")
+      defaultMatcher.addPattern("!*.iml")
       //noinspection SpellCheckingInspection
       defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}")
 
@@ -322,19 +328,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | n {
-    let globalPatterns: Array<string | FilePattern> | string | n = (<any>this.devMetadata.build)[name]
+    let globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.devMetadata.build)[name]
     let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
     const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, fileMatchOptions)
     const fileMatchers: Array<FileMatcher> = []
 
-    function addPatterns(patterns: Array<string | FilePattern> | string | n) {
+    function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
       if (patterns == null) {
         return
       }
       else if (!Array.isArray(patterns)) {
-        defaultMatcher.addPattern(patterns)
-        return
+        if (typeof patterns === "string") {
+          defaultMatcher.addPattern(patterns)
+          return
+        }
+        patterns = [patterns]
       }
 
       for (let i = 0; i < patterns.length; i++) {

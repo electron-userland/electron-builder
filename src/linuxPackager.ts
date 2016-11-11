@@ -75,26 +75,24 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
   protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>): Promise<any> {
     // todo fix fpm - if run in parallel, get strange tar errors
+    // https://github.com/electron-userland/electron-builder/issues/460
+    // for some reasons in parallel to fmp we cannot use tar
     for (let t of targets) {
-      if (t instanceof TargetEx) {
+      if (t instanceof TargetEx && !t.isAsyncSupported) {
         await t.build(appOutDir, arch)
       }
     }
 
-    const promises: Array<Promise<any>> = []
-    // https://github.com/electron-userland/electron-builder/issues/460
-    // for some reasons in parallel to fmp we cannot use tar
-    for (let t of targets) {
-      const target = t.name
+    await BluebirdPromise.map(targets, it => {
+      const target = it.name
       if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
         const destination = path.join(outDir, this.generateName(target, arch, true))
-        promises.push(this.archiveApp(target, appOutDir, destination)
-          .then(() => this.dispatchArtifactCreated(destination)))
+        return this.archiveApp(target, appOutDir, destination)
+          .then(() => this.dispatchArtifactCreated(destination))
       }
-    }
-
-    if (promises.length > 0) {
-      await BluebirdPromise.all(promises)
-    }
+      else {
+        return it instanceof TargetEx && it.isAsyncSupported ? it.build(appOutDir, arch) : null
+      }
+    })
   }
 }
