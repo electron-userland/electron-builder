@@ -290,11 +290,11 @@ Windows specific build options.
 
 [build.files](#BuildMetadata-files) defaults to:
 * `**/*`
-* `!**/node_modules/*/{README.md,README,readme.md,readme,test}`
+* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
 * `!**/node_modules/.bin`
 * `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
 * `!**/._*`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.idea,appveyor.yml,.travis.yml,circle.yml}`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
 
 [Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
 
@@ -304,6 +304,8 @@ Development dependencies are never copied in any case. You don't need to ignore 
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 Remember that default pattern `**/*` is not added to your custom, so, you have to add it explicitly — e.g. `["**/*", "!ignoreMe${/*}"]`.
+
+`package.json` is added to your custom in any case.
 
 May be specified in the platform options (e.g. in the `build.mac`).
 

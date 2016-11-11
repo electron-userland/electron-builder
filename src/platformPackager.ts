@@ -184,21 +184,26 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
     await pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async () => {
-      const ignoreFiles = new Set([path.resolve(this.info.appDir, outDir), path.resolve(this.info.appDir, this.buildResourcesDir)])
+      const appDir = this.info.appDir
+      const ignoreFiles = new Set([path.resolve(appDir, outDir), path.resolve(appDir, this.buildResourcesDir)])
       // prune dev or not listed dependencies
-      await dependencies(this.info.appDir, true, ignoreFiles)
+      await dependencies(appDir, true, ignoreFiles)
 
       if (debug.enabled) {
-        debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).join(", ")}`)
+        const nodeModulesDir = path.join(appDir, "node_modules")
+        debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
       }
 
-      const patterns = this.getFileMatchers("files", this.info.appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-      let defaultMatcher = patterns != null ? patterns[0] : new FileMatcher(this.info.appDir, path.join(resourcesPath, "app"), fileMatchOptions)
+      const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+      let defaultMatcher = patterns != null ? patterns[0] : new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions)
 
       if (defaultMatcher.isEmpty()) {
         defaultMatcher.addPattern("**/*")
       }
-      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}")
+      else {
+        defaultMatcher.addPattern("package.json")
+      }
+      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
       defaultMatcher.addPattern("!**/node_modules/.bin")
       defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
       defaultMatcher.addPattern("!**/._*")
@@ -214,7 +219,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         else {
           warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
         }
-        rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, this.info.appDir)
+        rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
       }
 
       let excludePatterns: Array<Minimatch> = []
@@ -233,8 +238,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
       const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
       const promise = asarOptions == null ?
-        copyFiltered(this.info.appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
-        : createAsarArchive(this.info.appDir, resourcesPath, asarOptions, filter)
+        copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
+        : createAsarArchive(appDir, resourcesPath, asarOptions, filter)
 
       const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
       if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
