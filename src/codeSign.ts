@@ -145,10 +145,11 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
   return result
 }
 
-async function _findIdentity(namePrefix: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
+async function _findIdentity(type: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
   // https://github.com/electron-userland/electron-builder/issues/484
   //noinspection SpellCheckingInspection
   const lines = await getValidIdentities(keychain)
+  const namePrefix = `${type}:`
   for (let line of lines) {
     if (qualifier != null && !line.includes(qualifier)) {
       continue
@@ -159,7 +160,7 @@ async function _findIdentity(namePrefix: CertType, qualifier?: string | null, ke
     }
   }
 
-  if (namePrefix === "Developer ID Application") {
+  if (type === "Developer ID Application") {
     // find non-Apple certificate
     // https://github.com/electron-userland/electron-builder/issues/458
     l: for (let line of lines) {
