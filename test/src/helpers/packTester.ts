@@ -92,7 +92,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir)
       if (checkOptions.npmInstallBefore) {
-        await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production"], {
+        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--cache-min", "999999999", "--no-bin-links"], {
           cwd: projectDir
         })
       }

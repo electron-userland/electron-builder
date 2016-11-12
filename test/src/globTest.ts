@@ -253,7 +253,7 @@ test("extraResources - one-package", async () => {
     //noinspection SpellCheckingInspection
     await assertPack("test-app-one", {
       // to check NuGet package
-      targets: platform.createTarget(platform === Platform.WINDOWS ? null : DIR_TARGET),
+      targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
       devMetadata: {
         build: {
           asar: true,

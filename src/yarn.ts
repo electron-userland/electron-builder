@@ -15,7 +15,7 @@ export async function installOrRebuild(options: BuildMetadata, appDir: string, e
   }
 }
 
-export function getGypEnv(electronVersion: string, arch: string): any {
+export function getGypEnv(electronVersion: string, arch: string) {
   const gypHome = path.join(homedir(), ".electron-gyp")
   return Object.assign({}, process.env, {
     npm_config_disturl: "https://atom.io/download/electron",
@@ -37,10 +37,10 @@ function computeExtraArgs(options: BuildMetadata) {
 
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>): Promise<any> {
   log(`Installing app dependencies for arch ${arch} to ${appDir}`)
-  let npmExecPath = process.env.npm_execpath || process.env.NPM_CLI_JS
+  let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const npmExecArgs = ["install", "--production"]
 
-  const isYarn = npmExecPath != null && npmExecPath.includes("yarn")
+  const isYarn = isYarnPath(execPath)
   if (!isYarn) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       npmExecArgs.push("--no-bin-links")
@@ -48,12 +48,12 @@ export function installDependencies(appDir: string, electronVersion: string, arc
     npmExecArgs.push("--cache-min", "999999999")
   }
 
-  if (npmExecPath == null) {
-    npmExecPath = getPackageToolPath()
+  if (execPath == null) {
+    execPath = getPackageToolPath()
   }
   else {
-    npmExecArgs.unshift(npmExecPath)
-    npmExecPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
+    npmExecArgs.unshift(execPath)
+    execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
   for (let a of additionalArgs) {
@@ -62,7 +62,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
     }
   }
 
-  return spawn(npmExecPath, npmExecArgs, {
+  return spawn(execPath, npmExecArgs, {
     cwd: appDir,
     env: getGypEnv(electronVersion, arch),
   })
@@ -115,6 +115,10 @@ function getPackageToolPath() {
   }
 }
 
+function isYarnPath(execPath: string | null) {
+  return execPath != null && path.basename(execPath).startsWith("yarn")
+}
+
 export async function rebuild(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>) {
   const deps = new Set<string>()
   await dependencies(appDir, false, deps)
@@ -127,27 +131,28 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
   log(`Rebuilding native production dependencies for arch ${arch}`)
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const execArgs = ["run", "install", "--"]
-
+  const execArgs: Array<string> = []
   if (execPath == null) {
     execPath = getPackageToolPath()
   }
   else {
-    execArgs.unshift(execPath)
+    execArgs.push(execPath)
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
-  const gypHome = path.join(homedir(), ".electron-gyp")
-  const env = Object.assign({}, process.env, {
-    HOME: gypHome,
-    USERPROFILE: gypHome,
-  })
-
-  execArgs.push("--disturl=https://atom.io/download/electron")
-  execArgs.push(`--target=${electronVersion}`)
-  execArgs.push("--runtime=electron")
-  execArgs.push(`--arch=${arch}`)
-  execArgs.push(...additionalArgs)
-
-  await BluebirdPromise.each(nativeDeps, it => spawn(execPath, execArgs, {cwd: it, env: env}))
+  const env = getGypEnv(electronVersion, arch)
+  if (isYarnPath(execPath)) {
+    execArgs.push("run", "install", "--")
+    execArgs.push("--disturl=https://atom.io/download/electron")
+    execArgs.push(`--target=${electronVersion}`)
+    execArgs.push("--runtime=electron")
+    execArgs.push(`--arch=${arch}`)
+    execArgs.push(...additionalArgs)
+    await BluebirdPromise.each(nativeDeps, it => spawn(execPath, execArgs, {cwd: it, env: env}))
+  }
+  else {
+    execArgs.push("rebuild")
+    execArgs.push(...nativeDeps.map(it => path.basename(it)))
+    await spawn(execPath, execArgs, {cwd: appDir, env: env})
+  }
 }
