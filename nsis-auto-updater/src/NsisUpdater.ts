@@ -46,16 +46,22 @@ export class NsisUpdater extends EventEmitter {
     this.clientPromise = BluebirdPromise.resolve(createClient(value))
   }
 
-  checkForUpdates(): Promise<UpdateCheckResult> {
+  async checkForUpdates(): Promise<UpdateCheckResult> {
     if (this.clientPromise == null) {
       const message = "Update URL is not set"
-      this.emitError(message)
-      return BluebirdPromise.reject(new Error(message))
+      const error = new Error(message)
+      this.emit("error", error, message)
+      throw error
     }
 
     this.emit("checking-for-update")
-    return this.doCheckForUpdates()
-      .catch(error => this.emitError(error))
+    try {
+      return this.doCheckForUpdates()
+    }
+    catch (e) {
+      this.emit("error", e, (e.stack || e).toString())
+      throw e
+    }
   }
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
@@ -99,7 +105,10 @@ export class NsisUpdater extends EventEmitter {
           })
           return it
         })
-        .catch(error => this.emitError(error)),
+        .catch(e => {
+          this.emit("error", e, (e.stack || e).toString())
+          throw e
+        }),
     }
   }
 
@@ -128,7 +137,8 @@ export class NsisUpdater extends EventEmitter {
 
     const setupPath = this.setupPath
     if (!this.updateAvailable || setupPath == null) {
-      this.emitError("No update available, can't quit and install")
+      const message = "No update available, can't quit and install"
+      this.emit("error", new Error(message), message)
       return false
     }
 
@@ -141,11 +151,6 @@ export class NsisUpdater extends EventEmitter {
     }).unref()
 
     return true
-  }
-
-  // emit both error object and message, this is to keep compatibility with old APIs
-  private emitError(message: string) {
-    return this.emit("error", new Error(message), message)
   }
 }
 
