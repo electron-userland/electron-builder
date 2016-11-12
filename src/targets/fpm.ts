@@ -35,7 +35,7 @@ export default class FpmTarget extends TargetEx {
   private readonly desktopEntry: Promise<string>
 
   constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
-    super(name)
+    super(name, false)
 
     this.scriptFiles = this.createScripts()
     this.desktopEntry = helper.computeDesktopEntry(this.options)

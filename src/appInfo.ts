@@ -66,13 +66,7 @@ export class AppInfo {
   }
 
   get copyright(): string {
-    const metadata = this.devMetadata.build
-    const old = (<any>metadata)["app-copyright"]
-    if (old != null) {
-      warn('"app-copyright" is deprecated — please use "copyright" instead')
-    }
-
-    const copyright = metadata.copyright || old
+    const copyright = this.devMetadata.build.copyright
     if (copyright != null) {
       return copyright
     }

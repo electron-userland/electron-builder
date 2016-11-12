@@ -202,7 +202,13 @@ export class Packager implements BuildInfo {
         throw new Error("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
       }
       if (build["osx"] != null) {
-        throw new Error(`"osx" in the "build" is deprecated and not supported — please see use "mac" instead`)
+        throw new Error(`build.osx is deprecated and not supported — please use build.mac instead`)
+      }
+      if (build["app-copyright"] != null) {
+        throw new Error(`build.app-copyright is deprecated and not supported — please use build.copyright instead`)
+      }
+      if (build["app-category-type"] != null) {
+        throw new Error(`build.app-category-type is deprecated and not supported — please use build.mac.category instead`)
       }
 
       const author = appMetadata.author
@@ -216,10 +222,6 @@ export class Packager implements BuildInfo {
 
       if (build.directories != null) {
         throw new Error(`'directories' in the 'build' is not correct. Please move 'directories' from 'build' to root`)
-      }
-
-      if (build.osx != null) {
-        warn('"build.osx" is deprecated — please use "mac" instead of "osx"')
       }
 
       if (build.prune != null) {

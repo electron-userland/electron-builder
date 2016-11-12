@@ -1,4 +1,4 @@
-import { rename, readFile, writeFile, copy, unlink } from "fs-extra-p"
+import { rename, readFile, writeFile, copy, unlink, utimes } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import BluebirdPromise from "bluebird-lst-c"
@@ -117,14 +117,8 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     })
   }
 
-  const oldCategory = (<any>buildMetadata)["app-category-type"]
-  if (oldCategory != null) {
-    warn("app-category-type is deprecated, please set as build.mac.category")
-  }
-
-  let category = packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category || oldCategory
-  use(category || oldCategory, it => appPlist.LSApplicationCategoryType = it)
-  use(appInfo.copyright, it => appPlist.NSHumanReadableCopyright = it)
+  use(packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category, it => appPlist.LSApplicationCategoryType = it)
+  appPlist.NSHumanReadableCopyright = appInfo.copyright
 
   const promises: Array<BluebirdPromise<any | n>> = [
     writeFile(appPlistFilename, buildPlist(appPlist)),
@@ -142,5 +136,9 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   await BluebirdPromise.all(promises)
 
   await moveHelpers(frameworksPath, appFilename)
-  await rename(path.dirname(contentsPath), path.join(appOutDir, `${appFilename}.app`))
+  const appPath = path.join(appOutDir, `${appFilename}.app`)
+  await rename(path.dirname(contentsPath), appPath)
+  // https://github.com/electron-userland/electron-builder/issues/840
+  const now = Date.now() / 1000
+  await utimes(appPath, now, now)
 }
