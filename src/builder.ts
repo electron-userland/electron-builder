@@ -174,7 +174,7 @@ export function createTargets(platforms: Array<Platform>, type?: string | null, 
   return targets
 }
 
-export async function build(rawOptions?: CliOptions): Promise<void> {
+export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   const options = normalizeOptions(rawOptions || {})
 
   if (options.cscLink === undefined && !isEmptyOrSpaces(process.env.CSC_LINK)) {
@@ -230,7 +230,14 @@ export async function build(rawOptions?: CliOptions): Promise<void> {
     }
   }
 
-  await executeFinally(packager.build(), errorOccurred => {
+  const artifactPaths: Array<string> = []
+  packager.artifactCreated(event => {
+    if (event.file != null) {
+      artifactPaths.push(event.file)
+    }
+  })
+
+  return await executeFinally(packager.build().then(() => artifactPaths), errorOccurred => {
     if (errorOccurred) {
       for (let task of publishTasks) {
         task!.cancel()
