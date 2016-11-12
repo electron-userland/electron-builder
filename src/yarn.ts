@@ -38,31 +38,31 @@ function computeExtraArgs(options: BuildMetadata) {
 export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>): Promise<any> {
   log(`Installing app dependencies for arch ${arch} to ${appDir}`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
-  const npmExecArgs = ["install", "--production"]
+  const execArgs = ["install", "--production"]
 
   const isYarn = isYarnPath(execPath)
   if (!isYarn) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
-      npmExecArgs.push("--no-bin-links")
+      execArgs.push("--no-bin-links")
     }
-    npmExecArgs.push("--cache-min", "999999999")
+    execArgs.push("--cache-min", "999999999")
   }
 
   if (execPath == null) {
     execPath = getPackageToolPath()
   }
   else {
-    npmExecArgs.unshift(execPath)
+    execArgs.unshift(execPath)
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
   for (let a of additionalArgs) {
     if (!isYarn || a !== "--build-from-source") {
-      npmExecArgs.push(a)
+      execArgs.push(a)
     }
   }
 
-  return spawn(execPath, npmExecArgs, {
+  return spawn(execPath, execArgs, {
     cwd: appDir,
     env: getGypEnv(electronVersion, arch),
   })
@@ -152,6 +152,7 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
   }
   else {
     execArgs.push("rebuild")
+    execArgs.push(...additionalArgs)
     execArgs.push(...nativeDeps.map(it => path.basename(it)))
     await spawn(execPath, execArgs, {cwd: appDir, env: env})
   }
