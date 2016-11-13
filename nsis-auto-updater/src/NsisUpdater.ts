@@ -56,7 +56,7 @@ export class NsisUpdater extends EventEmitter {
 
     this.emit("checking-for-update")
     try {
-      return this.doCheckForUpdates()
+      return await this.doCheckForUpdates()
     }
     catch (e) {
       this.emit("error", e, (e.stack || e).toString())
