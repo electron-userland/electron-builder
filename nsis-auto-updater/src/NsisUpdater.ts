@@ -31,7 +31,7 @@ export class NsisUpdater extends EventEmitter {
     this.app = (<any>global).__test_app || require("electron").app
 
     if (options == null) {
-      this.clientPromise = loadUpdateConfig()
+      this.clientPromise = this.loadUpdateConfig()
     }
     else {
       this.setFeedURL(options)
@@ -152,6 +152,16 @@ export class NsisUpdater extends EventEmitter {
 
     return true
   }
+
+  async loadUpdateConfig() {
+    try {
+      return createClient(safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8")))
+    }
+    catch (e) {
+      this.emit("error", e, (e.stack || e).toString())
+      throw e
+    }
+  }
 }
 
 function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {
@@ -167,9 +177,4 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
       default: throw new Error(`Unsupported provider: ${provider}`)
     }
   }
-}
-
-async function loadUpdateConfig() {
-  const data = safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8"))
-  return createClient(data)
 }

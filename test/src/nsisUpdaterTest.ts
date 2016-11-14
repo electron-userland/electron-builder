@@ -7,6 +7,7 @@ import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { GenericServerOptions } from "out/options/publishOptions"
 import { GithubOptions } from "out/options/publishOptions"
+import BluebirdPromise from "bluebird-lst-c"
 
 const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 
@@ -122,4 +123,30 @@ test("file url github", async () => {
   assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   assertThat(actualEvents).isEqualTo(expectedEvents)
+})
+
+test("test error", async (t) => {
+  const updater: NsisUpdater = new NsisUpdaterClass()
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "error"]
+  for (let eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  t.throws(updater.checkForUpdates(), "Path must be a string. Received undefined")
+  await new BluebirdPromise(function (resolve, reject) {
+    setTimeout(() => {
+      try {
+        assertThat(actualEvents).isEqualTo(expectedEvents)
+      }
+      catch (e) {
+        reject(e)
+      }
+
+      resolve()
+    }, 500)
+  })
 })
