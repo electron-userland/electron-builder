@@ -30,6 +30,7 @@ before_install:
 install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
+- mkdir -p ~/Library/Caches/Yarn
 - curl -o- -L https://yarnpkg.com/install.sh | bash
 - export PATH="$PATH:$HOME/.yarn/bin"
 - yarn install --pure-lockfile
