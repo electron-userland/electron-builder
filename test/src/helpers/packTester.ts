@@ -192,7 +192,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
         result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
       else if (target === "deb") {
-        result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "amd64" : Arch[arch]}.deb`)
+        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.deb`)
       }
       else {
         result.push(`TestApp-${appInfo.version}.${target}`)
@@ -220,10 +220,10 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     }
   }))
 
-  const packageFile = `${outDir}/TestApp-${appInfo.version}-${arch === Arch.ia32 ? "ia32" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
+  const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "ia32" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
   assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${outDir}/TestApp-${appInfo.version}-i386.deb`)).isEqualTo(expectedContents)
+    assertThat(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).isEqualTo(expectedContents)
   }
 
   assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).hasProperties({

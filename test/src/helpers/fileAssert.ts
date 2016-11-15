@@ -1,4 +1,4 @@
-import { stat } from "fs-extra-p"
+import { stat, Stats } from "fs-extra-p"
 import * as json8 from "json8"
 import { green, red, gray } from "chalk"
 import { diffJson } from "diff"
@@ -65,14 +65,14 @@ class Assertions {
   }
 
   async isFile() {
-    const info = await stat(this.actual)
+    const info: Stats = await stat(this.actual)
     if (!info.isFile()) {
       throw new Error(`Path ${this.actual} is not a file`)
     }
   }
 
   async isDirectory() {
-    const info = await stat(this.actual)
+    const info: Stats = await stat(this.actual)
     if (!info.isDirectory()) {
       throw new Error(`Path ${this.actual} is not a directory`)
     }

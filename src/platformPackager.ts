@@ -249,6 +249,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       else {
         const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
         const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+        //noinspection ES6MissingAwait
         promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
       }
 
@@ -435,7 +436,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
-  protected async archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
+  protected archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
     const isMac = this.platform === Platform.MAC
     return archiveApp(this.devMetadata.build.compression, format, outFile, isMac ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir, isMac)
   }
@@ -465,7 +466,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   generateName2(ext: string | null, classifier: string | n, deployment: boolean): string {
     const dotExt = ext == null ? "" : `.${ext}`
-    return `${deployment ? this.appInfo.name : this.appInfo.productFilename}-${this.appInfo.version}${classifier == null ? "" : `-${classifier}`}${dotExt}`
+    const separator = ext === "deb" ? "_" : "-"
+    return `${deployment ? this.appInfo.name : this.appInfo.productFilename}${separator}${this.appInfo.version}${classifier == null ? "" : `${separator}${classifier}`}${dotExt}`
   }
 
   async getDefaultIcon(ext: string) {

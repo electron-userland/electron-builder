@@ -140,7 +140,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doSign(options: SignOptions): Promise<any> {
+  protected doSign(options: SignOptions): Promise<any> {
     return sign(options)
   }
 

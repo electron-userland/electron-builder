@@ -20,10 +20,10 @@ export class LinuxTargetHelper {
   private async computeDesktopIcons(): Promise<Array<Array<string>>> {
     const resourceList = await this.packager.resourceList
     if (resourceList.includes("icons")) {
-      return this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
+      return await this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
     }
     else {
-      return this.createFromIcns(await this.packager.getTempFile("electron-builder-linux.iconset").then(it => ensureDir(it).thenReturn(it)))
+      return await this.createFromIcns(await this.packager.getTempFile("electron-builder-linux.iconset").then(it => ensureDir(it).thenReturn(it)))
     }
   }
 
@@ -97,7 +97,7 @@ export class LinuxTargetHelper {
   private async createFromIcns(tempDir: string): Promise<Array<Array<string>>> {
     const iconPath = await this.getIcns()
     if (iconPath == null) {
-      return this.iconsFromDir(path.join(__dirname, "..", "..", "templates", "linux", "electron-icons"))
+      return await this.iconsFromDir(path.join(__dirname, "..", "..", "templates", "linux", "electron-icons"))
     }
 
     if (process.platform === "darwin") {

@@ -65,7 +65,7 @@ test("file url", async () => {
   assertThat(updateCheckResult.fileInfo).hasProperties({
     url: "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe"
   })
-  assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   assertThat(actualEvents).isEqualTo(expectedEvents)
 })
@@ -92,7 +92,7 @@ test("file url generic", async () => {
   assertThat(updateCheckResult.fileInfo).hasProperties({
     url: "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe"
   })
-  assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   assertThat(actualEvents).isEqualTo(expectedEvents)
 })
@@ -120,7 +120,7 @@ test("file url github", async () => {
   assertThat(updateCheckResult.fileInfo).hasProperties({
     url: "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe"
   })
-  assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   assertThat(actualEvents).isEqualTo(expectedEvents)
 })

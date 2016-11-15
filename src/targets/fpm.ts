@@ -57,10 +57,11 @@ export default class FpmTarget extends TargetEx {
       return path.resolve(packager.projectDir, value)
     }
 
-    const afterInstallFilePath = writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions)
-    const afterRemoveFilePath = writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
-
-    return await BluebirdPromise.all<string>([afterInstallFilePath, afterRemoveFilePath])
+    //noinspection ES6MissingAwait
+    return await BluebirdPromise.all<string>([
+      writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions),
+      writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
+    ])
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

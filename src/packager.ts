@@ -97,7 +97,7 @@ export class Packager implements BuildInfo {
 
     this.appInfo = new AppInfo(this.metadata, this.devMetadata)
     const cleanupTasks: Array<() => Promise<any>> = []
-    return executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
+    return await executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
   }
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
@@ -126,7 +126,7 @@ export class Packager implements BuildInfo {
 
         if (checkWine && wineCheck != null) {
           checkWine = false
-          checkWineVersion(wineCheck)
+          await checkWineVersion(wineCheck)
         }
 
         await helper.pack(outDir, arch, createTargets(nameToTarget, targets, outDir, helper, cleanupTasks), distTasks)
