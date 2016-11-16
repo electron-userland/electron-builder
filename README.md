@@ -1,5 +1,5 @@
 # electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder) [![donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
-A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box.
+A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
   * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation.
@@ -9,7 +9,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-  * [MacOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
+  * [macOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Squirrel.Windows.
 * [Two package.json Structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  

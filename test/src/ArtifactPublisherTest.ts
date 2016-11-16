@@ -1,10 +1,15 @@
-import test from "./helpers/avaEx"
 import { GitHubPublisher } from "out/publish/gitHubPublisher"
 import { HttpError } from "out/publish/restApiRequest"
 import { join } from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
+
+if (process.env.CI && process.platform === "win32") {
+  fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
+    console.warn("[SKIP] Skip ArtifactPublisherTest suite on Windows CI")
+  })
+}
 
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
@@ -103,7 +108,7 @@ testAndIgnoreApiRate("GitHub upload org", async () => {
   }
 })
 
-test("create publisher", async () => {
+it("create publisher", async () => {
   const packager: any = {
     metadata: {
       version: "2.0.0",

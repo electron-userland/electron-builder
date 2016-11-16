@@ -109,7 +109,7 @@ export class Packager implements BuildInfo {
     let checkWine = this.options.platformPackagerFactory == null
     for (let [platform, archToType] of this.options.targets!) {
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new Error("Build for MacOS is supported only on MacOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
+        throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
       }
 
       let wineCheck: Promise<string> | null = null

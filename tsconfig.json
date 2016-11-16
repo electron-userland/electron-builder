@@ -34,7 +34,10 @@
   "include": [
     "src/**/*.ts",
     "typings/*.d.ts",
-    "node_modules/@types/**/*.d.ts"
+    "node_modules/@types/ini/*.d.ts",
+    "node_modules/@types/js-yaml/*.d.ts",
+    "node_modules/@types/node/*.d.ts",
+    "node_modules/@types/source-map-support/*.d.ts"
   ],
   "exclude": [
   ]

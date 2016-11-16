@@ -23,7 +23,7 @@ export interface FileCodeSigningInfo {
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
   readonly cscInfo: Promise<FileCodeSigningInfo | null> | null
 
-  private readonly iconPath: Promise<string>
+  private iconPath: Promise<string> | null
 
   constructor(info: BuildInfo) {
     super(info)
@@ -59,8 +59,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         subjectName: subjectName
       })
     }
-
-    this.iconPath = this.getValidIconPath()
   }
 
   protected doGetCscPassword(): string {
@@ -95,8 +93,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return Platform.WINDOWS
   }
 
-  async getIconPath() {
-    return await this.iconPath
+  getIconPath() {
+    if (this.iconPath == null) {
+      this.iconPath = this.getValidIconPath()
+    }
+    return this.iconPath
   }
 
   private async getValidIconPath(): Promise<string | null> {

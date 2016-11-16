@@ -1,4 +1,3 @@
-import test from "./helpers/avaEx"
 import { assertPack, platform, modifyPackageJson, signed, app, appThrows } from "./helpers/packTester"
 import OsXPackager from "out/macPackager"
 import { writeFile, remove, copy, mkdir } from "fs-extra-p"
@@ -17,9 +16,9 @@ import { getTempName } from "out/util/util"
 import { exec } from "out/util/util"
 import { MacOsTargetName } from "out/options/macOptions"
 
-test.ifOsx("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
+test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 
-test.ifOsx("one-package", app(platform(Platform.MAC), {signed: true}))
+test.ifMac("one-package", app(platform(Platform.MAC), {signed: true}))
 
 function createTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
   return app({
@@ -50,23 +49,23 @@ function createTargetTest(target: Array<MacOsTargetName>, expectedContents: Arra
 
 test("only zip", createTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 
-test.ifOsx("pkg", createTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
+test.ifMac("pkg", createTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
 
 test("tar.gz", createTargetTest(["tar.gz"], ["Test App ßW-1.1.0-mac.tar.gz"]))
 
 // todo failed on Travis CI
 //test("tar.xz", createTargetTest(["tar.xz"], ["Test App ßW-1.1.0-mac.tar.xz"]))
 
-test.ifOsx("invalid target", t => t.throws(createTargetTest([<any>"ttt"], [])(), "Unknown target: ttt"))
+test.ifMac("invalid target", () => assertThat(createTargetTest([<any>"ttt"], [])()).throws("Unknown target: ttt"))
 
 if (process.env.CSC_KEY_PASSWORD == null || process.platform !== "darwin") {
   console.warn("Skip mas tests because CSC_KEY_PASSWORD is not defined")
 }
 else {
-  test.ifOsx("mas", createTargetTest(["mas"], ["Test App ßW-1.1.0.pkg"]))
-  test.ifOsx("mas and 7z", createTargetTest(["mas", "7z"], ["Test App ßW-1.1.0-mac.7z", "Test App ßW-1.1.0.pkg"]))
+  test.ifMac("mas", createTargetTest(["mas"], ["Test App ßW-1.1.0.pkg"]))
+  test.ifMac("mas and 7z", createTargetTest(["mas", "7z"], ["Test App ßW-1.1.0-mac.7z", "Test App ßW-1.1.0.pkg"]))
 
-  test.ifOsx("custom mas", () => {
+  test.ifMac("custom mas", () => {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
@@ -93,7 +92,7 @@ else {
     })
   })
 
-  test.ifOsx("entitlements in the package.json", () => {
+  test.ifMac("entitlements in the package.json", () => {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
@@ -117,7 +116,7 @@ else {
     })
   })
 
-  test.ifOsx("entitlements in build dir", () => {
+  test.ifMac("entitlements in build dir", () => {
     let platformPackager: CheckingMacPackager = null
     return assertPack("test-app-one", signed({
       targets: Platform.MAC.createTarget(),
@@ -139,12 +138,12 @@ else {
 }
 
 // test also "only dmg"
-test.ifOsx("no background", app({
+test.ifMac("no background", app({
   targets: Platform.MAC.createTarget("dmg"),
   devMetadata: {
     build: {
       // dmg can mount only one volume name, so, to test in parallel, we set different product name
-      productName: "Test ß",
+      productName: "NoBackground",
       dmg: {
         background: null,
         title: "Foo",
@@ -152,15 +151,15 @@ test.ifOsx("no background", app({
     }
   }
 }, {
-  expectedContents: ["Test ß-1.1.0.dmg"],
+  expectedContents: ["NoBackground-1.1.0.dmg"],
   packed: (context) => {
-    return attachAndExecute(path.join(context.outDir, "mac/Test ß-1.1.0.dmg"), false, () => {
-      return assertThat(path.join("/Volumes/Test ß 1.1.0/.background")).doesNotExist()
+    return attachAndExecute(path.join(context.outDir, "mac/NoBackground-1.1.0.dmg"), false, () => {
+      return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
     })
   }
 }))
 
-test.ifOsx("unset dmg icon", app({
+test.ifMac("unset dmg icon", app({
   targets: Platform.MAC.createTarget("dmg"),
   devMetadata: {
     build: {
@@ -183,11 +182,20 @@ test.ifOsx("unset dmg icon", app({
   }
 }))
 
-test.ifOsx("no build directory", app(platform(Platform.MAC), {
+test.ifMac("no build directory", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  devMetadata: {
+    build: {
+      // dmg can mount only one volume name, so, to test in parallel, we set different product name
+      productName: "NoBuildDirectory",
+    }
+  }
+}, {
+  expectedContents: ["NoBuildDirectory-1.1.0.dmg"],
   projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
 }))
 
-test.ifOsx("custom background - new way", () => {
+test.ifMac("custom background - new way", () => {
   let platformPackager: CheckingMacPackager = null
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
@@ -208,14 +216,14 @@ test.ifOsx("custom background - new way", () => {
       })
     ]),
     packed: async context => {
-      assertThat(platformPackager.effectiveDistOptions.background).isEqualTo(customBackground)
-      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo("foo.icns")
-      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(context.projectDir, "customIcon.icns"))
+      expect(platformPackager.effectiveDistOptions.background).toEqual(customBackground)
+      expect(platformPackager.effectiveDistOptions.icon).toEqual("foo.icns")
+      expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.icns"))
     },
   })
 })
 
-test.ifOsx("disable dmg icon (light), bundleVersion", () => {
+test.ifMac("disable dmg icon (light), bundleVersion", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
@@ -232,20 +240,22 @@ test.ifOsx("disable dmg icon (light), bundleVersion", () => {
     }
   }, {
     packed: async () => {
-      assertThat(platformPackager.effectiveDistOptions.icon).isEqualTo(null)
-      assertThat(await platformPackager.getIconPath()).isNotEqualTo(null)
-      assertThat(platformPackager.appInfo.buildVersion).isEqualTo("50")
+      expect(platformPackager.effectiveDistOptions.icon).toBeNull()
+      expect(await platformPackager.getIconPath()).not.toBeNull()
+      expect(platformPackager.appInfo.buildVersion).toEqual("50")
     },
   })
 })
 
-test.ifOsx("electronDist", appThrows(/ENOENT: no such file or directory/, {
+test.ifMac("electronDist", appThrows(/ENOENT: no such file or directory/, {
   targets: Platform.OSX.createTarget(DIR_TARGET),
 }, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.build.electronDist = "foo"
   })
 }))
+
+test.ifWinCi("Build macOS on Windows is not supported", appThrows(/Build for macOS is supported only on macOS.+/, platform(Platform.MAC)))
 
 class CheckingMacPackager extends OsXPackager {
   effectiveDistOptions: any

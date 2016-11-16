@@ -1,17 +1,14 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, readdir, unlink, removeSync } from "fs-extra-p"
-import { cpus, homedir } from "os"
+import {  homedir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 const util = require("../../../out/util/util")
-const utilSpawn = util.spawn
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
-
-const rootDir = path.join(__dirname, "..", "..", "..")
 
 async function main() {
   const testDir = TEST_DIR
@@ -21,15 +18,12 @@ async function main() {
     emptyDir(testDir),
   ])
 
-  process.on("SIGINT", () => {
-    removeSync(testDir)
-  })
-  try {
-    await runTests()
-  }
-  finally {
+  const exitHandler = () => {
     removeSync(testDir)
   }
+  process.on("SIGINT", exitHandler)
+  process.on("exit", exitHandler)
+  runTests()
 }
 
 main()
@@ -88,23 +82,16 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
 /**
  * CIRCLE_NODE_INDEX=2 — test nodejs 4 (on Circle).
  */
-function runTests(): BluebirdPromise<any> {
-  const args: Array<string> = []
-  const testFiles = process.env.TEST_FILES
+function runTests() {
+  const testFiles: string | null = process.env.TEST_FILES
 
-  args.push(`--concurrency=${cpus().length}`)
-
-  if (process.env.FAIL_FAST === "true") {
-    args.push("--fail-fast")
-  }
-
+  const args = []
   const baseDir = path.join("test", "out")
   const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]
   let skipWin = false
   if (!isEmptyOrSpaces(testFiles)) {
-    args.push(...testFiles.split(",").map((it: string) => path.join(baseDir, it.trim() + ".js")))
+    args.push(...testFiles.split(",").map(it => path.join(baseDir, `${it.trim()}.js`)))
     if (process.platform === "linux") {
-      // test it only on Linux in any case
       args.push(...baseForLinuxTests)
     }
   }
@@ -120,23 +107,18 @@ function runTests(): BluebirdPromise<any> {
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
-  else if (process.platform === "win32") {
-    args.push("test/out/*.js", "!test/out/macPackagerTest.js", "!test/out/linuxPackagerTest.js", "!test/out/CodeSignTest.js", "!test/out/ArtifactPublisherTest.js", "!test/out/httpRequestTest.js")
-  }
-  else if (!util.isCi()) {
-    args.push("test/out/*.js", "!test/out/httpRequestTest.js")
-  }
 
-  console.log(args)
-  return utilSpawn(path.join(rootDir, "node_modules", ".bin", "ava"), args, {
-    cwd: rootDir,
-    env: Object.assign({}, process.env, {
-      NODE_PATH: rootDir,
-      SKIP_WIN: skipWin,
-      CSC_IDENTITY_AUTO_DISCOVERY: "false",
-      TEST_DIR: TEST_DIR,
-    }),
-    shell: process.platform === "win32",
-    stdio: "inherit"
+  process.env.SKIP_WIN = skipWin
+  process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
+  process.env.TEST_DIR = TEST_DIR
+
+  const rootDir = path.join(__dirname, "..", "..", "..")
+  require("jest-cli").runCLI({
+    bail: process.env.TEST_BAIL === "true",
+    runInBand: process.env.RUN_IN_BAND === "true",
+    testPathPattern: args.length > 0 ? args.join("|") : null,
+  }, rootDir, (result: any) => {
+    const code = !result || result.success ? 0 : 1
+    process.on("exit", () => process.exit(code))
   })
 }

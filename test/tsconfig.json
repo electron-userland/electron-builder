@@ -23,7 +23,6 @@
     "../typings/*.d.ts",
     "typings/*.d.ts",
     "src/**/*.ts",
-    "../node_modules/ava-tf/types/generated.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/bluebird-lst-c/index.d.ts",
     "../node_modules/electron-macos-sign/index.d.ts",

@@ -8,14 +8,14 @@ const deprecated = "Deprecated:"
 export function createYargs(): any {
   //noinspection ReservedWordAsName
   return yargs
-    .example("build -mwl", "build for MacOS, Windows and Linux")
+    .example("build -mwl", "build for macOS, Windows and Linux")
     .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("build --win --ia32", "build for Windows ia32")
     .example("build --em.foo=bar", "set application package.json property `foo` to `bar`")
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
-      describe: `Build for MacOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
+      describe: `Build for macOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
       type: "array",
     })
     .option("linux", {

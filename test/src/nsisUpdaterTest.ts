@@ -1,4 +1,3 @@
-import test from "./helpers/avaEx"
 import { assertThat } from "./helpers/fileAssert"
 import { NsisUpdater } from "out/nsis-auto-updater/src/NsisUpdater"
 import * as path from "path"
@@ -22,24 +21,24 @@ g.__test_app = {
   },
 }
 
-test("check updates - no versions at all", async (t) => {
+test("check updates - no versions at all", async () => {
   const updater: NsisUpdater = new NsisUpdaterClass({
       provider: "bintray",
       owner: "actperepo",
       package: "no-versions",
     })
 
-  t.throws(updater.checkForUpdates(), /No latest version, please ensure that/)
+  await assertThat(updater.checkForUpdates()).throws(/No latest version, please ensure that/)
 })
 
-test("cannot find suitable file for version", async (t) => {
+test("cannot find suitable file for version", async () => {
   const updater: NsisUpdater = new NsisUpdaterClass({
     provider: "bintray",
     owner: "actperepo",
     package: "incorrect-file-version",
   })
 
-  t.throws(updater.checkForUpdates(), /Cannot find suitable file for version 1.0.0 in/)
+  await assertThat(updater.checkForUpdates()).throws(/Cannot find suitable file for version 1.0.0 in/)
 })
 
 test("file url", async () => {
@@ -67,7 +66,7 @@ test("file url", async () => {
   })
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  assertThat(actualEvents).isEqualTo(expectedEvents)
+  expect(actualEvents).toEqual(expectedEvents)
 })
 
 test("file url generic", async () => {
@@ -94,7 +93,7 @@ test("file url generic", async () => {
   })
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  assertThat(actualEvents).isEqualTo(expectedEvents)
+  expect(actualEvents).toEqual(expectedEvents)
 })
 
 test("file url github", async () => {
@@ -122,10 +121,10 @@ test("file url github", async () => {
   })
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  assertThat(actualEvents).isEqualTo(expectedEvents)
+  expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("test error", async (t) => {
+test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdaterClass()
 
   const actualEvents: Array<string> = []
@@ -136,11 +135,11 @@ test("test error", async (t) => {
     })
   }
 
-  t.throws(updater.checkForUpdates(), "Path must be a string. Received undefined")
+  await assertThat(updater.checkForUpdates()).throws("Path must be a string. Received undefined")
   await new BluebirdPromise(function (resolve, reject) {
     setTimeout(() => {
       try {
-        assertThat(actualEvents).isEqualTo(expectedEvents)
+        expect(actualEvents).toEqual(expectedEvents)
       }
       catch (e) {
         reject(e)

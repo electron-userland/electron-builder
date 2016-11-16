@@ -1,5 +1,4 @@
 import { Platform, Arch } from "out"
-import test from "./helpers/avaEx"
 import { assertPack, getTestAsset, app } from "./helpers/packTester"
 import { copy, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
@@ -113,8 +112,8 @@ async function doTest(outDir: string, perUser: boolean) {
   let fsAfter = await listFiles()
 
   let fsChanges = diff(fsBefore, fsAfter, driveC)
-  assertThat(fsChanges.added).isEqualTo(nsisPerMachineInstall)
-  assertThat(fsChanges.deleted).isEqualTo([])
+  expect(fsChanges.added).toEqual(nsisPerMachineInstall)
+  expect(fsChanges.deleted).toEqual([])
 
   // run installer again to test uninstall
   const appDataFile = path.join(wine.userDir, "Application Data", "TestApp", "doNotDeleteMe")
@@ -124,8 +123,8 @@ async function doTest(outDir: string, perUser: boolean) {
   fsAfter = await listFiles()
 
   fsChanges = diff(fsBefore, fsAfter, driveC)
-  assertThat(fsChanges.added).isEqualTo([])
-  assertThat(fsChanges.deleted).isEqualTo([])
+  expect(fsChanges.added).toEqual([])
+  expect(fsChanges.deleted).toEqual([])
 
   await assertThat(appDataFile).isFile()
 
@@ -133,7 +132,7 @@ async function doTest(outDir: string, perUser: boolean) {
   await assertThat(appDataFile).doesNotExist()
 }
 
-test.ifNotCiOsx("boring", app({
+test.ifNotCiMac("boring", app({
   targets: nsisTarget,
   devMetadata: {
     build: {
@@ -153,7 +152,7 @@ test.ifNotCiOsx("boring", app({
   },
 }))
 
-test.ifNotCiOsx("boring, only perMachine", app({
+test.ifNotCiMac("boring, only perMachine", app({
   targets: nsisTarget,
   devMetadata: {
     build: {
@@ -165,13 +164,13 @@ test.ifNotCiOsx("boring, only perMachine", app({
   }
 }))
 
-test.ifNotCiOsx("installerHeaderIcon", () => {
+test.ifNotCiMac("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
       effectiveOptionComputed: options => {
         const defines = options[0]
-        assertThat(defines.HEADER_ICO).isEqualTo(headerIconPath)
+        expect(defines.HEADER_ICO).toEqual(headerIconPath)
         return false
       }
     }, {
@@ -183,7 +182,7 @@ test.ifNotCiOsx("installerHeaderIcon", () => {
   )
 })
 
-test.ifNotCiOsx("boring, MUI_HEADER", () => {
+test.ifNotCiMac("boring, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
@@ -196,9 +195,9 @@ test.ifNotCiOsx("boring, MUI_HEADER", () => {
       },
       effectiveOptionComputed: options => {
         const defines = options[0]
-        assertThat(defines.MUI_HEADERIMAGE).isEqualTo(null)
-        assertThat(defines.MUI_HEADERIMAGE_BITMAP).isEqualTo(installerHeaderPath)
-        assertThat(defines.MUI_HEADERIMAGE_RIGHT).isEqualTo(null)
+        expect(defines.MUI_HEADERIMAGE).toBeNull()
+        expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
+        expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()
         // speedup, do not build - another MUI_HEADER test will test build
         return true
       }
@@ -211,7 +210,7 @@ test.ifNotCiOsx("boring, MUI_HEADER", () => {
   )
 })
 
-test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
+test.ifNotCiMac("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
@@ -225,9 +224,9 @@ test.ifNotCiOsx("boring, MUI_HEADER as option", () => {
       },
       effectiveOptionComputed: options => {
         const defines = options[0]
-        assertThat(defines.MUI_HEADERIMAGE).isEqualTo(null)
-        assertThat(defines.MUI_HEADERIMAGE_BITMAP).isEqualTo(installerHeaderPath)
-        assertThat(defines.MUI_HEADERIMAGE_RIGHT).isEqualTo(null)
+        expect(defines.MUI_HEADERIMAGE).toBeNull()
+        expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
+        expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()
         // test that we can build such installer
         return false
       }

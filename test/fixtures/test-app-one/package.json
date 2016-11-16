@@ -12,6 +12,7 @@
     "appId": "org.electron-builder.testApp",
     "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
     "compression": "store",
+    "npmRebuild": false,
     "mac": {
       "category": "your.app.category.type"
     },

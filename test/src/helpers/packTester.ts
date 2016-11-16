@@ -14,7 +14,6 @@ import DecompressZip from "decompress-zip"
 import { convertVersion } from "out/targets/squirrelPack"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
-import { AssertContext } from "ava-tf"
 import { SquirrelWindowsOptions } from "out/options/winOptions"
 import { spawn } from "out/util/util"
 
@@ -44,13 +43,19 @@ interface PackedContext {
 
   readonly getResources: (platform: Platform, arch?: Arch) => string
   readonly getContent: (platform: Platform) => string
+
+  readonly packager: Packager
 }
 
 let tmpDirCounter = 0
 const testDir = path.join(TEST_DIR, process.pid.toString(16))
 
 export function appThrows(error: RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return (t: AssertContext) => t.throws(assertPack("test-app-one", packagerOptions, checkOptions), error)
+  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws(error)
+}
+
+export function appTwoThrows(error: string | RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return () => assertThat(assertPack("test-app", packagerOptions, checkOptions)).throws(error)
 }
 
 export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -109,7 +114,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     }
 
     const outDir = useTempDir ? path.join(projectDir, OUT_DIR_NAME) : dirToDelete
-    await packAndCheck(outDir, Object.assign({
+    const packager = await packAndCheck(outDir, Object.assign({
       projectDir: projectDir,
     }, packagerOptions), checkOptions)
 
@@ -118,11 +123,12 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
       }
 
-      await checkOptions.packed({
-          projectDir: projectDir,
-          outDir: outDir,
-          getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
-          getContent: platform => base(platform),
+      await checkOptions.packed(<PackedContext>{
+        projectDir: projectDir,
+        outDir: outDir,
+        getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
+        getContent: platform => base(platform),
+        packager: packager,
       })
     }
   }
@@ -142,7 +148,7 @@ export function getTestAsset(file: string) {
   return path.join(__dirname, "..", "..", "fixtures", file)
 }
 
-async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<void> {
+async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
   const packager = new Packager(packagerOptions)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
@@ -159,7 +165,7 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
   const platformToTarget = await packager.build()
 
   if (packagerOptions.platformPackagerFactory != null || packagerOptions.effectiveOptionComputed != null) {
-    return
+    return packager
   }
 
   c: for (let [platform, archToType] of packagerOptions.targets) {
@@ -180,6 +186,8 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
       }
     }
   }
+
+  return packager
 }
 
 async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
@@ -221,9 +229,9 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
   }))
 
   const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "ia32" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
-  assertThat(await getContents(packageFile)).isEqualTo(expectedContents)
+  expect(await getContents(packageFile)).toEqual(expectedContents)
   if (arch === Arch.ia32) {
-    assertThat(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).isEqualTo(expectedContents)
+    expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toEqual(expectedContents)
   }
 
   assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).hasProperties({
@@ -270,20 +278,20 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
 
   if (packagerOptions.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])
-    assertThat(result).doesNotMatch(/is not signed at all/)
+    expect(result).not.toMatch(/is not signed at all/)
   }
 
   const actualFiles = artifacts.map(it => path.basename(it.file)).sort()
   if (checkOptions != null && checkOptions.expectedContents != null) {
-    assertThat(actualFiles).isEqualTo(checkOptions.expectedContents)
+    expect(actualFiles).toEqual(checkOptions.expectedContents)
   }
   else {
-    assertThat(actualFiles).isEqualTo([
+    expect(actualFiles).toEqual([
       `${appInfo.productFilename}-${appInfo.version}-mac.zip`,
       `${appInfo.productFilename}-${appInfo.version}.dmg`,
     ].sort())
 
-    assertThat(artifacts.map(it => it.artifactName).sort()).isEqualTo([
+    expect(artifacts.map(it => it.artifactName).sort()).toEqual([
       `TestApp-${appInfo.version}-mac.zip`,
       `TestApp-${appInfo.version}.dmg`,
     ].sort())
@@ -339,7 +347,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
-  assertThat(files).isEqualTo(pathSorter(expectedContents.map(it => {
+  expect(files).toEqual(pathSorter(expectedContents.map(it => {
     if (it === "lib/net45/TestApp.exe") {
       if (appInfo.productFilename === "Test App ßW") {
         return `lib/net45/Test%20App%20%C3%9FW.exe`
@@ -357,7 +365,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     })
     const expectedSpec = (await readFile(path.join(path.dirname(packageFile), "TestApp.nuspec"), "utf8")).replace(/\r\n/g, "\n")
     // console.log(expectedSpec)
-    assertThat(expectedSpec).isEqualTo(`<?xml version="1.0"?>
+    expect(expectedSpec).toEqual(`<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>TestApp</id>
@@ -414,9 +422,7 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
 export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
   const platforms = [Platform.fromString(process.platform)]
   if (process.platform === Platform.MAC.nodeName) {
-    if (process.env.LINUX_SKIP == null) {
-      platforms.push(Platform.LINUX)
-    }
+    platforms.push(Platform.LINUX)
     if (process.env.CI == null) {
       platforms.push(Platform.WINDOWS)
     }

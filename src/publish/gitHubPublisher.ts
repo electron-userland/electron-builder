@@ -25,7 +25,7 @@ interface Asset {
 
 export class GitHubPublisher extends Publisher {
   private tag: string
-  private _releasePromise: BluebirdPromise<Release>
+  private _releasePromise: Promise<Release>
 
   private readonly token: string
   private readonly policy: PublishPolicy
@@ -54,7 +54,7 @@ export class GitHubPublisher extends Publisher {
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
-    this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : <BluebirdPromise<Release>>this.init()
+    this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : this.init()
   }
 
   private async init(): Promise<Release | null> {
@@ -153,16 +153,12 @@ export class GitHubPublisher extends Publisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${this._releasePromise.value().id}`, this.token)
+    return githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise).id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols
   async deleteRelease(): Promise<any> {
-    if (!this._releasePromise.isFulfilled()) {
-      return
-    }
-
-    const release = this._releasePromise.value()
+    const release = await this._releasePromise
     if (release == null) {
       return
     }
@@ -172,8 +168,14 @@ export class GitHubPublisher extends Publisher {
         return await githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
       }
       catch (e) {
-        if (e instanceof HttpError && (e.response.statusCode === 405 || e.response.statusCode === 502)) {
-          continue
+        if (e instanceof HttpError) {
+          if (e.response.statusCode === 404) {
+            warn(`Cannot delete release ${release.id} — doesn't exist`)
+            return
+          }
+          else if (e.response.statusCode === 405 || e.response.statusCode === 502) {
+            continue
+          }
         }
 
         throw e

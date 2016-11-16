@@ -7,6 +7,8 @@ import { warn } from "./log"
 
 const mkdtemp: any | null = require("fs-extra-p").mkdtemp
 
+process.setMaxListeners(20)
+
 export class TmpDir {
   private tmpFileCounter = 0
   private tempDirectoryPromise: BluebirdPromise<string>
@@ -27,7 +29,7 @@ export class TmpDir {
       this.tempDirectoryPromise = promise
         .then(dir => {
           this.dir = dir
-          process.on("SIGINT", () => {
+          const cleanup = () => {
             if (this.dir == null) {
               return
             }
@@ -41,7 +43,10 @@ export class TmpDir {
                 warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
               }
             }
-          })
+          }
+          process.on("exit", cleanup)
+          process.on("uncaughtException", cleanup)
+          process.on("SIGINT", cleanup)
           return dir
         })
     }

@@ -1,4 +1,3 @@
-import test from "./helpers/avaEx"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { outputFile, symlink } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
@@ -130,7 +129,7 @@ test.ifNotWindows("link", app({
 }))
 
 // skip on MacOS because we want test only / and \
-test.ifNotCiOsx("ignore node_modules dev dep", () => {
+test.ifNotCiMac("ignore node_modules dev dep", () => {
   const build: any = {
     asar: false,
     ignore: (file: string) => {
@@ -188,7 +187,7 @@ test("extraResources", async () => {
     const winDirPrefix = "lib/net45/resources/"
 
     //noinspection SpellCheckingInspection
-    await assertPack("test-app", {
+    await assertPack("test-app-one", {
       // to check NuGet package
       targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
     }, {
@@ -219,19 +218,22 @@ test("extraResources", async () => {
           outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
         ])
       },
-      packed: async context => {
-        const base = path.join(context.outDir, platform.buildConfigurationKey + `${platform === Platform.MAC ? "" : "-unpacked"}`)
+      packed: context => {
+        const base = path.join(context.outDir, `${platform.buildConfigurationKey}${platform === Platform.MAC ? "" : "-unpacked"}`)
         let resourcesDir = path.join(base, "resources")
         if (platform === Platform.MAC) {
-          resourcesDir = path.join(base, "TestApp.app", "Contents", "Resources")
+          resourcesDir = path.join(base, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
         }
-        await assertThat(path.join(resourcesDir, "foo")).isDirectory()
-        await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()
-        await assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile()
-        await assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile()
-        await assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile()
-        await assertThat(path.join(resourcesDir, "platformSpecificR")).isFile()
-        await assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist()
+
+        return BluebirdPromise.all([
+          assertThat(path.join(resourcesDir, "foo")).isDirectory(),
+          assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
+          assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
+          assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
+          assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
+          assertThat(path.join(resourcesDir, "platformSpecificR")).isFile(),
+          assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
+        ])
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         winDirPrefix + "bar/hello.txt",

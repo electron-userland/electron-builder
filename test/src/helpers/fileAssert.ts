@@ -1,4 +1,4 @@
-import { stat, Stats } from "fs-extra-p"
+import { stat, Stats, access } from "fs-extra-p"
 import * as json8 from "json8"
 import { green, red, gray } from "chalk"
 import { diffJson } from "diff"
@@ -26,22 +26,8 @@ class Assertions {
     compare(this.actual, expected)
   }
 
-  isNotEqualTo(expected: any) {
-    compare(this.actual, expected, true)
-  }
-
   isNotEmpty() {
     compare(this.actual, "", true)
-  }
-
-  isNotNull() {
-    compare(this.actual, null, true)
-  }
-
-  doesNotMatch(pattern: RegExp) {
-    if ((<string>this.actual).match(pattern)) {
-      throw new Error(`${this.actual} matches ${pattern}`)
-    }
   }
 
   containsAll<T>(expected: Iterable<T>) {
@@ -80,13 +66,33 @@ class Assertions {
 
   async doesNotExist() {
     try {
-      await stat(this.actual)
+      await access(this.actual)
     }
     catch (e) {
       return
     }
 
     throw new Error(`Path ${this.actual} must not exist`)
+  }
+
+  async throws(error: string | RegExp) {
+    let actualError: Error | null
+    let result: any
+    try {
+      result = await this.actual
+    }
+    catch (e) {
+      actualError = e
+    }
+
+    expect(() => {
+      if (actualError == null) {
+        return result
+      }
+      else {
+        throw actualError
+      }
+    }).toThrowError(error)
   }
 }
 

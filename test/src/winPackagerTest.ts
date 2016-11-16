@@ -1,16 +1,14 @@
 import { Platform, Arch, BuildInfo } from "out"
-import test from "./helpers/avaEx"
-import { assertPack, platform, modifyPackageJson, getTestAsset, app } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, getTestAsset, app, appThrows } from "./helpers/packTester"
 import { outputFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { WinPackager } from "out/winPackager"
 import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "./helpers/fileAssert"
 import { SignOptions } from "out/windowsCodeSign"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { Target } from "out/platformPackager"
 
-test.ifNotCiOsx("win", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
+test.ifNotCiMac("win", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
 
 // very slow
 test.skip("delta and msi", app({
@@ -32,21 +30,13 @@ test.ifDevOrWinCi("beta version", app({
   }
 }))
 
-test.ifDevOrWinCi("beta version", app({
-  targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
-  devMetadata: <any>{
-    version: "3.0.0-beta.2",
-  }
+test.ifNotCiMac("msi as string", () => appThrows(/msi expected to be boolean value, but string '"false"' was specified/, {targets: Platform.WINDOWS.createTarget("squirrel")}, {
+  projectDirCreated: it => modifyPackageJson(it, data => {
+    data.build.win = {
+      msi: "false",
+    }
+  })
 }))
-
-test.ifNotCiOsx("msi as string", t => t.throws(assertPack("test-app-one", {targets: Platform.WINDOWS.createTarget("squirrel")}, {
-    projectDirCreated: it => modifyPackageJson(it, data => {
-      data.build.win = {
-        msi: "false",
-      }
-    })
-  }), `msi expected to be boolean value, but string '"false"' was specified`)
-)
 
 test("detect install-spinner, certificateFile/password", () => {
   let platformPackager: CheckingWinPackager = null
@@ -75,22 +65,22 @@ test("detect install-spinner, certificateFile/password", () => {
         })])
     },
     packed: async () => {
-      assertThat(platformPackager.effectiveDistOptions.loadingGif).isEqualTo(loadingGifPath)
-      assertThat(platformPackager.signOptions.cert).isEqualTo("secretFile")
-      assertThat(platformPackager.signOptions.password).isEqualTo("pass")
+      expect(platformPackager.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
+      expect(platformPackager.signOptions.cert).toEqual("secretFile")
+      expect(platformPackager.signOptions.password).toEqual("pass")
     },
   })
 })
 
-test.ifNotCiOsx("icon < 256", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+test.ifNotCiMac("icon < 256", t => appThrows(/Windows icon size must be at least 256x256, please fix ".+/, platform(Platform.WINDOWS), {
   projectDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
-}), /Windows icon size must be at least 256x256, please fix ".+/))
+}))
 
-test.ifNotCiOsx("icon not an image", t => t.throws(assertPack("test-app-one", platform(Platform.WINDOWS), {
+test.ifNotCiMac("icon not an image", appThrows(/Windows icon is not valid ico file, please fix ".+/, platform(Platform.WINDOWS), {
   projectDirCreated: projectDir => outputFile(path.join(projectDir, "build", "icon.ico"), "foo")
-}), /Windows icon is not valid ico file, please fix ".+/))
+}))
 
-test.ifOsx("custom icon", () => {
+test.ifMac("custom icon", () => {
   let platformPackager: CheckingWinPackager = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
@@ -105,12 +95,12 @@ test.ifOsx("custom icon", () => {
       })
     ]),
     packed: async context => {
-      assertThat(await platformPackager.getIconPath()).isEqualTo(path.join(context.projectDir, "customIcon.ico"))
+      expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },
   })
 })
 
-test.ifNotWindows("ev", t => t.throws(assertPack("test-app-one", {
+it.ifNotWindows("ev", () => appThrows(/certificateSubjectName supported only on Windows/, {
   targets: Platform.WINDOWS.createTarget(["dir"]),
   devMetadata: {
     build: {
@@ -119,7 +109,7 @@ test.ifNotWindows("ev", t => t.throws(assertPack("test-app-one", {
       }
     }
   }
-}), /certificateSubjectName supported only on Windows/))
+}))
 
 class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

@@ -1,4 +1,3 @@
-import test from "./helpers/avaEx"
 import { modifyPackageJson, app, appThrows } from "./helpers/packTester"
 import { remove } from "fs-extra-p"
 import * as path from "path"
