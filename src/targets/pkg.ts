@@ -1,10 +1,10 @@
 import { exec } from "../util/util"
-import { TargetEx } from "../platformPackager"
+import { Target } from "../platformPackager"
 import { Arch } from "../metadata"
 import MacPackager from "../macPackager"
 import * as path from "path"
 
-export class PkgTarget extends TargetEx {
+export class PkgTarget extends Target {
   constructor(private packager: MacPackager) {
     super("pkg")
   }

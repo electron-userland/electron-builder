@@ -16,32 +16,30 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
   "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
 }
 
-// withoutDir - not applicable for tar.* formats
-export async function archiveApp(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, isMacApp: boolean = false, withoutDir: boolean = false): Promise<string> {
-  const storeOnly = compression === "store"
-
-  if (format.startsWith("tar.")) {
-    // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on MacOS and often hangs on Linux (even if use pipe-io lib)
-    // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
-    const info = extToCompressionDescriptor[format]
-    let tarEnv = process.env
-    if (compression != null && compression !== "normal") {
-      tarEnv = Object.assign({}, process.env)
-      tarEnv[info.env] = storeOnly ? info.minLevel : info.maxLevel
-    }
-
-    const args = [info.flag, "-cf", outFile]
-    if (!isMacApp) {
-      args.push("--transform", `s,^\.,${path.basename(outFile, "." + format)},`)
-    }
-    args.push(isMacApp ? path.basename(dirToArchive) : ".")
-    await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
-      cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
-      env: tarEnv
-    })
-    return outFile
+export async function tar(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, isMacApp: boolean = false) {
+  // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on MacOS and often hangs on Linux (even if use pipe-io lib)
+  // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
+  const info = extToCompressionDescriptor[format]
+  let tarEnv = process.env
+  if (compression != null && compression !== "normal") {
+    tarEnv = Object.assign({}, process.env)
+    tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
   }
 
+  const args = [info.flag, "-cf", outFile]
+  if (!isMacApp) {
+    args.push("--transform", `s,^\.,${path.basename(outFile, "." + format)},`)
+  }
+  args.push(isMacApp ? path.basename(dirToArchive) : ".")
+  await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
+    cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
+    env: tarEnv
+  })
+  return outFile
+}
+
+export async function archive(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<string> {
+  const storeOnly = compression === "store"
   const args = debug7zArgs("a")
   if (format === "7z" || format.endsWith(".7z")) {
     if (!storeOnly) {

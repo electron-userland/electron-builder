@@ -5,8 +5,8 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, TargetEx, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
-import { archiveApp } from "./archive"
+import { normalizeExt, Target, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
+import { archive } from "./archive"
 import { subTask, log } from "../util/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
 import { SemVer } from "semver"
@@ -24,7 +24,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 
-export default class NsisTarget extends TargetEx {
+export default class NsisTarget extends Target {
   private readonly options: NsisOptions = this.packager.info.devMetadata.build.nsis || Object.create(null)
 
   private archs: Map<Arch, Promise<string>> = new Map()
@@ -62,7 +62,7 @@ export default class NsisTarget extends TargetEx {
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
-    return await archiveApp(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, false, true)
+    return await archive(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true)
   }
 
   async finishBuild(): Promise<any> {

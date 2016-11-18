@@ -1,7 +1,7 @@
 import { downloadCertificate } from "./codeSign"
 import BluebirdPromise from "bluebird-lst-c"
-import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
-import { Platform, Arch } from "./metadata"
+import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { Platform } from "./metadata"
 import * as path from "path"
 import { log } from "./util/log"
 import { exec, use } from "./util/util"
@@ -84,7 +84,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         })
       }
       else {
-        mapper(name, () => createCommonTarget(name))
+        mapper(name, outDir => createCommonTarget(name, outDir, this))
       }
     }
   }
@@ -115,29 +115,25 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return iconPath
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-    this.packageInDistributableFormat(outDir, appOutDir, arch, targets, postAsyncTasks)
-  }
-
   async sign(file: string) {
     const cscInfo = await this.cscInfo
-    if (cscInfo != null) {
-      log(`Signing ${path.basename(file)} (certificate file "${cscInfo.file}")`)
-      await this.doSign({
-        path: file,
-
-        cert: cscInfo.file,
-        subjectName: cscInfo.subjectName,
-
-        password: cscInfo.password,
-        name: this.appInfo.productName,
-        site: await this.appInfo.computePackageUrl(),
-        hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
-        tr: this.platformSpecificBuildOptions.rfc3161TimeStampServer,
-      })
+    if (cscInfo == null) {
+      return
     }
+
+    log(`Signing ${path.basename(file)} (certificate file "${cscInfo.file}")`)
+    await this.doSign({
+      path: file,
+
+      cert: cscInfo.file,
+      subjectName: cscInfo.subjectName,
+
+      password: cscInfo.password,
+      name: this.appInfo.productName,
+      site: await this.appInfo.computePackageUrl(),
+      hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
+      tr: this.platformSpecificBuildOptions.rfc3161TimeStampServer,
+    })
   }
 
   //noinspection JSMethodCanBeStatic
@@ -177,22 +173,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, "electron.exe"), executable)
     await this.signAndEditResources(executable)
-  }
-
-  protected packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
-    for (let target of targets) {
-      if (target instanceof TargetEx) {
-        promises.push(target.build(appOutDir, arch))
-      }
-      else {
-        const format = target.name
-        log(`Building Windows ${format}`)
-        // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(outDir, this.generateName(format, arch, false, "win"))
-        promises.push(this.archiveApp(format, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, this.generateName(format, arch, true, "win"))))
-      }
-    }
   }
 }
 

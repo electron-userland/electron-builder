@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { getArchSuffix, TargetEx } from "../platformPackager"
+import { getArchSuffix, Target } from "../platformPackager"
 import { Arch } from "../metadata"
 import * as path from "path"
 import { warn, log } from "../util/log"
@@ -12,7 +12,7 @@ const SW_VERSION = "1.4.4"
 //noinspection SpellCheckingInspection
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
-export default class SquirrelWindowsTarget extends TargetEx {
+export default class SquirrelWindowsTarget extends Target {
   private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.squirrelWindows)
 
   constructor(private packager: WinPackager) {

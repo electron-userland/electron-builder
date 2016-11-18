@@ -1,7 +1,7 @@
 import { deepAssign } from "../util/deepAssign"
 import * as path from "path"
 import { log, warn } from "../util/log"
-import { PlatformPackager, TargetEx } from "../platformPackager"
+import { PlatformPackager, Target } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
 import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn, exists } from "../util/util"
@@ -10,7 +10,7 @@ import { executeFinally } from "../util/promise"
 import sanitizeFileName from "sanitize-filename"
 import { Arch } from "../metadata"
 
-export class DmgTarget extends TargetEx {
+export class DmgTarget extends Target {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
   constructor(private packager: PlatformPackager<MacOptions>) {

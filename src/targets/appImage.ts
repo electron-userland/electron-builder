@@ -1,4 +1,4 @@
-import { TargetEx } from "../platformPackager"
+import { Target } from "../platformPackager"
 import { Arch } from "../metadata"
 import * as path from "path"
 import { exec, unlinkIfExists } from "../util/util"
@@ -16,7 +16,7 @@ const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef
 //noinspection SpellCheckingInspection
 const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
 
-export default class AppImageTarget extends TargetEx {
+export default class AppImageTarget extends Target {
   private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
   private readonly desktopEntry: Promise<string>
 

@@ -6,29 +6,31 @@ const isWindows = process.platform === "win32"
 const isCi = (process.env.CI || "").toLowerCase() === "true"
 
 // Squirrel.Windows msi is very slow
-jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 10 : 10) * 1000 * 60
+jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 10) * 1000 * 60
 
-if (process.env.RUN_IN_BAND !== "true" && (!isWindows || isCi)) {
+const skip = test.skip
+
+if (process.env.RUN_IN_BAND !== "true") {
   //noinspection JSUnresolvedVariable
-  it = it.concurrent
+  // it = it.concurrent
   //noinspection JSUnresolvedVariable
-  test = it
+  // test = it
 }
 
-test.ifMac = process.platform === "darwin" ? test : test.skip
-test.ifNotWindows = isWindows ? test.skip : test
+test.ifMac = process.platform === "darwin" ? test : skip
+test.ifNotWindows = isWindows ? skip : test
 
 if (isCi) {
   test.ifCi = test
-  test.ifNotCi = test.skip
+  test.ifNotCi = skip
 }
 else {
-  test.ifCi = test.skip
+  test.ifCi = skip
   test.ifNotCi = test
 }
 
-test.ifNotCiMac = isCi && process.platform === "darwin" ? test.skip : test
+test.ifNotCiMac = isCi && process.platform === "darwin" ? skip : test
 
-test.ifDevOrWinCi = !isCi || isWindows ? test : test.skip
-test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : test.skip
-test.ifWinCi = isCi && isWindows ? test : test.skip
+test.ifDevOrWinCi = !isCi || isWindows ? test : skip
+test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip
+test.ifWinCi = isCi && isWindows ? test : skip

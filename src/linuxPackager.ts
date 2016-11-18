@@ -1,9 +1,8 @@
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
-import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
-import { Platform, Arch } from "./metadata"
+import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { Platform } from "./metadata"
 import FpmTarget from "./targets/fpm"
-import { createCommonTarget, DEFAULT_TARGET } from "./targets/targetFactory"
+import { createCommonTarget, DEFAULT_TARGET, DIR_TARGET } from "./targets/targetFactory"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
@@ -34,7 +33,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     for (let name of targets) {
-      if (name === "dir") {
+      if (name === DIR_TARGET) {
         continue
       }
 
@@ -59,7 +58,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
         mapper(name, outDir => new targetClass(name, this,  getHelper(), outDir))
       }
       else {
-        mapper(name, () => createCommonTarget(name))
+        mapper(name, outDir => createCommonTarget(name, outDir, this))
       }
     }
   }
@@ -68,36 +67,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return Platform.LINUX
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-    postAsyncTasks.push(this.packageInDistributableFormat(outDir, appOutDir, arch, targets))
-  }
-
   protected postInitApp(appOutDir: string): Promise<any> {
     return rename(path.join(appOutDir, "electron"), path.join(appOutDir, this.executableName))
-  }
-
-  protected async packageInDistributableFormat(outDir: string, appOutDir: string, arch: Arch, targets: Array<Target>): Promise<any> {
-    // todo fix fpm - if run in parallel, get strange tar errors
-    // https://github.com/electron-userland/electron-builder/issues/460
-    // for some reasons in parallel to fmp we cannot use tar
-    for (let t of targets) {
-      if (t instanceof TargetEx && !t.isAsyncSupported) {
-        await t.build(appOutDir, arch)
-      }
-    }
-
-    await BluebirdPromise.map(targets, it => {
-      const target = it.name
-      if (target === "zip" || target === "7z" || target.startsWith("tar.")) {
-        const destination = path.join(outDir, this.generateName(target, arch, true))
-        return this.archiveApp(target, appOutDir, destination)
-          .then(() => this.dispatchArtifactCreated(destination))
-      }
-      else {
-        return it instanceof TargetEx && it.isAsyncSupported ? it.build(appOutDir, arch) : null
-      }
-    })
   }
 }

@@ -1,4 +1,4 @@
-import { TargetEx } from "../platformPackager"
+import { Target } from "../platformPackager"
 import { Arch } from "../metadata"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { LinuxPackager } from "../linuxPackager"
@@ -10,7 +10,7 @@ import { safeDump } from "js-yaml"
 import { spawn, unlinkIfExists } from "../util/util"
 import { homedir } from "os"
 
-export default class SnapTarget extends TargetEx {
+export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
   private readonly desktopEntry: Promise<string>
 
@@ -48,12 +48,13 @@ export default class SnapTarget extends TargetEx {
 
     const snapDir = `${appOutDir}-snap`
 
-    snap.apps = {}
-    snap.apps[snap.name] = {
-      command: `desktop-launch $SNAP/${packager.executableName}`,
-      plugs: [
-        "browser-support", "network", "unity7", "gsettings", "pulseaudio", "opengl",
-      ]
+    snap.apps = {
+      [snap.name]: {
+        command: `desktop-launch $SNAP/${packager.executableName}`,
+        plugs: [
+          "browser-support", "network", "unity7", "gsettings", "pulseaudio", "opengl",
+        ]
+      }
     }
 
     const isUseDocker = process.platform !== "linux"

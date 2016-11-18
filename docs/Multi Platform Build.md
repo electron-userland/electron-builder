@@ -20,17 +20,17 @@ build -mwl
 Build performed in parallel, so, it is highly recommended to not use npm task per platform (e.g. `npm run dist:mac && npm run dist:win32`), but specify multiple platforms/targets in one build command.
 You don't need to clean dist output before build — output directory is cleaned automatically.
 
-## MacOS
+## macOS
 
 Use [brew](http://brew.sh) to install required packages.
 
-### To build app for Windows on MacOS:
+### To build app for Windows on macOS:
 ```
 brew install wine --without-x11
 brew install mono
 ```
 
-### To build app for Linux on MacOS:
+### To build app for Linux on macOS:
 ```
 brew install gnu-tar graphicsmagick xz
 ```

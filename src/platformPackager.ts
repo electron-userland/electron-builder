@@ -6,7 +6,6 @@ import { readdir, remove } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, debug } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
-import { archiveApp } from "./targets/archive"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "./util/log"
@@ -75,21 +74,15 @@ export interface BuildInfo {
   readonly tempDirManager: TmpDir
 }
 
-export class Target {
-  constructor(public readonly name: string) {
+export abstract class Target {
+  constructor(public readonly name: string, public readonly isAsyncSupported: boolean = true) {
   }
+
+  abstract build(appOutDir: string, arch: Arch): Promise<any>
 
   finishBuild(): Promise<any> {
     return BluebirdPromise.resolve()
   }
-}
-
-export abstract class TargetEx extends Target {
-  constructor(name: string, public readonly isAsyncSupported: boolean = true) {
-    super(name)
-  }
-
-  abstract build(appOutDir: string, arch: Arch): Promise<any>
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -167,7 +160,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  abstract pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any>
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    const appOutDir = this.computeAppOutDir(outDir, arch)
+    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
+    this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
+  }
+
+  protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): void {
+    postAsyncTasks.push(BluebirdPromise.map(targets, it => it.isAsyncSupported ? it.build(appOutDir, arch) : null)
+      .then(() => BluebirdPromise.each(targets, it => it.isAsyncSupported ? null : it.build(appOutDir, arch))))
+  }
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
@@ -434,11 +436,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourcesDir = this.getResourcesDir(appOutDir)
     await this.checkFileInPackage(resourcesDir, this.appInfo.metadata.main || "index.js", "Application entry file", isAsar)
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
-  }
-
-  protected archiveApp(format: string, appOutDir: string, outFile: string): Promise<any> {
-    const isMac = this.platform === Platform.MAC
-    return archiveApp(this.devMetadata.build.compression, format, outFile, isMac ? path.join(appOutDir, `${this.appInfo.productFilename}.app`) : appOutDir, isMac)
   }
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {

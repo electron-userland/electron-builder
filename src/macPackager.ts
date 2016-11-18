@@ -1,14 +1,14 @@
-import { PlatformPackager, BuildInfo, Target, TargetEx } from "./platformPackager"
+import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { log, warn, task } from "./util/log"
+import { warn, task } from "./util/log"
 import { createKeychain, CodeSigningInfo, findIdentity, appleCertificatePrefixes } from "./codeSign"
 import { deepAssign } from "./util/deepAssign"
 import { signAsync, SignOptions } from "electron-macos-sign"
 import { DmgTarget } from "./targets/dmg"
-import { createCommonTarget, DEFAULT_TARGET, DIR_TARGET } from "./targets/targetFactory"
+import { createCommonTarget, DEFAULT_TARGET, DIR_TARGET, NoOpTarget } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "./util/util"
@@ -39,7 +39,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     return iconPath == null ? await this.getDefaultIcon("icns") : path.resolve(this.projectDir, iconPath)
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: () => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     for (let name of targets) {
       switch (name) {
         case DIR_TARGET:
@@ -47,7 +47,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
         case DEFAULT_TARGET:
           mapper("dmg", () => new DmgTarget(this))
-          mapper("zip", () => new Target("zip"))
+          mapper("zip", outDir => createCommonTarget("zip", outDir, this))
           break
 
         case "dmg":
@@ -59,7 +59,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
           break
 
         default:
-          mapper(name, () => name === "mas" ? new Target(name) : createCommonTarget(name))
+          mapper(name, outDir => name === "mas" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
           break
       }
     }
@@ -78,7 +78,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
         .then(() => this.sign(appOutDir, null))
-        .then(() => this.packageInDistributableFormat(appOutDir, targets, postAsyncTasks))
+        .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
 
     if (hasMas) {
@@ -198,21 +198,5 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const args = prepareProductBuildArgs(appPath, identity, keychain)
     args.push(outFile)
     return exec("productbuild", args)
-  }
-
-  protected packageInDistributableFormat(appOutDir: string, targets: Array<Target>, promises: Array<Promise<any>>): void {
-    for (let t of targets) {
-      const target = t.name
-      if (t instanceof TargetEx) {
-        promises.push(t.build(appOutDir, Arch.x64))
-      }
-      else if (target !== "mas") {
-        log(`Building macOS ${target}`)
-        // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-        const outFile = path.join(appOutDir, this.generateName2(target, "mac", false))
-        promises.push(this.archiveApp(target, appOutDir, outFile)
-          .then(() => this.dispatchArtifactCreated(outFile, this.generateName2(target, "mac", true))))
-      }
-    }
   }
 }

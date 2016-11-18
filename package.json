@@ -19,7 +19,7 @@
     "lint": "node ./test/lint.js",
     "pretest": "yarn run compile && yarn run lint",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
-    "test": "node --trace-warnings ./test/out/helpers/runTests.js",
+    "test": "node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
     "pack-updater": "cd nsis-auto-updater && yarn --production && cd ..",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",

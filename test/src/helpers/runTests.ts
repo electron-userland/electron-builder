@@ -1,7 +1,7 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { emptyDir, readdir, unlink, removeSync } from "fs-extra-p"
-import {  homedir } from "os"
+import { emptyDir, readdir, unlink, removeSync, readJson } from "fs-extra-p"
+import { homedir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
@@ -23,7 +23,7 @@ async function main() {
   }
   process.on("SIGINT", exitHandler)
   process.on("exit", exitHandler)
-  runTests()
+  await runTests()
 }
 
 main()
@@ -82,15 +82,14 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
 /**
  * CIRCLE_NODE_INDEX=2 — test nodejs 4 (on Circle).
  */
-function runTests() {
+async function runTests() {
   const testFiles: string | null = process.env.TEST_FILES
 
   const args = []
-  const baseDir = path.join("test", "out")
-  const baseForLinuxTests = [path.join(baseDir, "ArtifactPublisherTest.js"), path.join(baseDir, "httpRequestTest.js"), path.join(baseDir, "RepoSlugTest.js")]
+  const baseForLinuxTests = ["ArtifactPublisherTest.js", "httpRequestTest.js", "RepoSlugTest.js"]
   let skipWin = false
   if (!isEmptyOrSpaces(testFiles)) {
-    args.push(...testFiles.split(",").map(it => path.join(baseDir, `${it.trim()}.js`)))
+    args.push(...testFiles.split(",").map(it => `${it.trim()}.js`))
     if (process.platform === "linux") {
       args.push(...baseForLinuxTests)
     }
@@ -99,10 +98,10 @@ function runTests() {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
-      args.push(path.join(baseDir, "linuxPackagerTest.js"), path.join(baseDir, "BuildTest.js"), path.join(baseDir, "globTest.js"))
+      args.push("linuxPackagerTest.js", "linuxArchiveTest.js", "debTest.js", "fpmTest.js", "BuildTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
     }
     else {
-      args.push(path.join(baseDir, "winPackagerTest.js"), path.join(baseDir, "nsisTest.js"), path.join(baseDir, "macPackagerTest.js"))
+      args.push("winPackagerTest.js", "squirrelWindowsTest.js", "nsisTest.js", "nsisBoring.js", "squirrelWindowsTest.js", "macPackagerTest.js", "macArchiveTest.js", "masTest.js", "dmgTest.js")
       args.push(...baseForLinuxTests)
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
@@ -113,7 +112,16 @@ function runTests() {
   process.env.TEST_DIR = TEST_DIR
 
   const rootDir = path.join(__dirname, "..", "..", "..")
+
+  const config = (await readJson(path.join(rootDir, "package.json"))).jest
+  // use custom cache dir to avoid https://github.com/facebook/jest/issues/1903#issuecomment-261212137
+  config.cacheDirectory = process.env.JEST_CACHE_DIR || "/tmp/jest-electron-builder-tests"
+  // no need to transform — compiled before
+  config.transformIgnorePatterns = [".*"]
+
   require("jest-cli").runCLI({
+    verbose: true,
+    config: config,
     bail: process.env.TEST_BAIL === "true",
     runInBand: process.env.RUN_IN_BAND === "true",
     testPathPattern: args.length > 0 ? args.join("|") : null,

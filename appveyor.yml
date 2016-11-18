@@ -5,6 +5,9 @@ cache:
   - node_modules
   - '%USERPROFILE%\.electron'
 
+environment:
+  RUN_IN_BAND: true
+
 install:
   - ps: Install-Product node 6 x64
   # unknown yarn error

@@ -18,13 +18,6 @@ test("repo slug from TRAVIS_REPO_SLUG", async () => {
   }
 })
 
-function restoreEnv(name: string, value: string) {
-  if (value != null) {
-    // otherwise will be set to string value "undefined"
-    process.env[name] = value
-  }
-}
-
 test("repo slug from APPVEYOR", async () => {
   const oldAppveyorAccountName = process.env.APPVEYOR_ACCOUNT_NAME
   const oldAppveyorProjectName = process.env.APPVEYOR_PROJECT_NAME
@@ -50,3 +43,10 @@ test("repo slug from APPVEYOR", async () => {
     }
   }
 })
+
+function restoreEnv(name: string, value: string) {
+  if (value != null) {
+    // otherwise will be set to string value "undefined"
+    process.env[name] = value
+  }
+}

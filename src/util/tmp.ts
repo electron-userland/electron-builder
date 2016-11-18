@@ -7,7 +7,7 @@ import { warn } from "./log"
 
 const mkdtemp: any | null = require("fs-extra-p").mkdtemp
 
-process.setMaxListeners(20)
+process.setMaxListeners(30)
 
 export class TmpDir {
   private tmpFileCounter = 0

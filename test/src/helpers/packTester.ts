@@ -1,4 +1,4 @@
-import { copy, emptyDir, remove, writeJson, readJson, readFile } from "fs-extra-p"
+import { copy, emptyDir, remove, writeJson, readJson, readFile, mkdir } from "fs-extra-p"
 import { assertThat } from "./fileAssert"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
@@ -16,6 +16,16 @@ import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
 import { SquirrelWindowsOptions } from "out/options/winOptions"
 import { spawn } from "out/util/util"
+import { SignOptions } from "out/windowsCodeSign"
+import { BuildInfo } from "out/platformPackager"
+import { WinPackager } from "out/winPackager"
+import SquirrelWindowsTarget from "out/targets/squirrelWindows"
+import { DmgTarget } from "out/targets/dmg"
+import { MacOptions } from "out/options/macOptions"
+import OsXPackager from "out/macPackager"
+import { SignOptions as MacSignOptions } from "electron-macos-sign"
+import { MacOsTargetName } from "out/options/macOptions"
+import { getTempName } from "out/util/util"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -431,4 +441,99 @@ export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, str
     platforms.push(Platform.WINDOWS)
   }
   return createTargets(platforms, type)
+}
+
+export class CheckingWinPackager extends WinPackager {
+  effectiveDistOptions: any
+  signOptions: SignOptions | null
+
+  constructor(info: BuildInfo) {
+    super(info)
+  }
+
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    // skip pack
+    const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
+    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
+
+    await this.sign(this.computeAppOutDir(outDir, arch))
+  }
+
+  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
+    // skip
+  }
+
+  protected async doSign(opts: SignOptions): Promise<any> {
+    this.signOptions = opts
+  }
+}
+
+export class CheckingMacPackager extends OsXPackager {
+  effectiveDistOptions: any
+  effectiveSignOptions: MacSignOptions
+
+  constructor(info: BuildInfo) {
+    super(info)
+  }
+
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+    for (let target of targets) {
+      // do not use instanceof to avoid dmg require
+      if (target.name === "dmg") {
+        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions()
+        break
+      }
+    }
+    // http://madole.xyz/babel-plugin-transform-async-to-module-method-gotcha/
+    return await OsXPackager.prototype.pack.call(this, outDir, arch, targets, postAsyncTasks)
+  }
+
+  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {
+    // skip
+  }
+
+  async doSign(opts: MacSignOptions): Promise<any> {
+    this.effectiveSignOptions = opts
+  }
+
+  async doFlat(appPath: string, outFile: string, identity: string, keychain?: string | null): Promise<any> {
+    // skip
+  }
+
+  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
+    // skip
+  }
+}
+
+export function createMacTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
+  return app({
+    targets: Platform.MAC.createTarget(),
+    devMetadata: {
+      build: {
+        mac: {
+          target: target,
+        }
+      }
+    }
+  }, {
+    useTempDir: true,
+    expectedContents: expectedContents,
+    signed: target.includes("mas") || target.includes("pkg"),
+    packed: async (context) => {
+      if (!target.includes("tar.gz")) {
+        return
+      }
+
+      const tempDir = path.join(context.outDir, getTempName())
+      await mkdir(tempDir)
+      await exec("tar", ["xf", path.join(context.outDir, "mac", "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
+      await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
+    }
+  })
+}
+
+export function allPlatforms(dist: boolean = true): PackagerOptions {
+  return {
+    targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
+  }
 }

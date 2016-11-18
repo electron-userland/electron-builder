@@ -15,7 +15,7 @@ ENV USE_SYSTEM_7ZA true
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true
 
-RUN apt-key adv --keyserver pgp.mit.edu --recv D101F7899D41F3C3 && apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+RUN apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
 apt-get update -y && \
   apt-get install --no-install-recommends -y git snapcraft yarn xorriso bsdtar build-essential autoconf libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
   apt-get clean && \
