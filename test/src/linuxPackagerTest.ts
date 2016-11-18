@@ -10,6 +10,8 @@ test.ifNotWindows("arm deb", app({targets: Platform.LINUX.createTarget("deb", Ar
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
+test.ifNotCi("snap", app({targets: Platform.LINUX.createTarget("snap")}))
+
 test.ifDevOrLinuxCi("AppImage - default icon", app({
   targets: Platform.LINUX.createTarget("appimage"),
   devMetadata: {

@@ -78,12 +78,13 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 
   if (debug.enabled) {
-    debug(`Spawning ${command} ${removePassword(args.join(" "))}`)
+    const argsString = args.join(" ")
+    debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
   }
   return _spawn(command, args, options)
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): BluebirdPromise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): Promise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
     handleProcess("close", doSpawn(command, args || [], options), command, resolve, reject)
   })

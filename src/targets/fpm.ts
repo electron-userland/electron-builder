@@ -99,7 +99,7 @@ export default class FpmTarget extends TargetEx {
       "--force",
       "--after-install", scripts[0],
       "--after-remove", scripts[1],
-      "--description", smarten(target === "rpm" ? options.description! : `${synopsis || ""}\n ${options.description}`),
+      "--description", smarten(target === "rpm" ? this.helper.getDescription(options)! : `${synopsis || ""}\n ${this.helper.getDescription(options)}`),
       "--maintainer", author,
       "--vendor", options.vendor || author,
       "--version", appInfo.version,

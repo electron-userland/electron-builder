@@ -8,7 +8,7 @@ const isCi = (process.env.CI || "").toLowerCase() === "true"
 // Squirrel.Windows msi is very slow
 jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 10 : 10) * 1000 * 60
 
-if (!isWindows || isCi) {
+if (process.env.RUN_IN_BAND !== "true" && (!isWindows || isCi)) {
   //noinspection JSUnresolvedVariable
   it = it.concurrent
   //noinspection JSUnresolvedVariable

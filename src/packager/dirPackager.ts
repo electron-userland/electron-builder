@@ -6,7 +6,7 @@ import { debug7zArgs, spawn } from "../util/util"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
+const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
   const downloadOpts = Object.assign({

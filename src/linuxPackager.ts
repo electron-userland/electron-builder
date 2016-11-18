@@ -9,6 +9,7 @@ import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
 import { LinuxBuildOptions } from "./options/linuxOptions"
 import sanitizeFileName from "sanitize-filename"
+import SnapTarget from "./targets/snap"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   readonly executableName: string
@@ -48,6 +49,10 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       if (name === DEFAULT_TARGET || name === "appimage") {
         const targetClass: typeof AppImageTarget = require("./targets/appImage").default
         mapper("appimage", outDir => new targetClass(this, getHelper(), outDir))
+      }
+      else if (name === "snap") {
+        const targetClass: typeof SnapTarget = require("./targets/snap").default
+        mapper("snap", outDir => new targetClass(this, getHelper(), outDir))
       }
       else if (name === "deb" || name === "rpm" || name === "sh" || name === "freebsd" || name === "pacman" || name === "apk" || name === "p5p") {
         const targetClass: typeof FpmTarget = require("./targets/fpm").default

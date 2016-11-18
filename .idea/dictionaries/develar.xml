@@ -34,6 +34,7 @@
       <w>customfunction</w>
       <w>debian</w>
       <w>depcheck</w>
+      <w>devmode</w>
       <w>difflet</w>
       <w>digester</w>
       <w>disturl</w>
@@ -44,6 +45,7 @@
       <w>enoent</w>
       <w>eperm</w>
       <w>finishpage</w>
+      <w>fontconfig</w>
       <w>fseventsd</w>
       <w>github</w>
       <w>globaldots</w>
@@ -82,10 +84,15 @@
       <w>langs</w>
       <w>lcid</w>
       <w>libappindicator</w>
+      <w>libdbusmenu</w>
       <w>libexec</w>
+      <w>libgconf</w>
       <w>libgcrypt</w>
       <w>libgnome</w>
       <w>libnotify</w>
+      <w>libnss</w>
+      <w>libunity</w>
+      <w>libxss</w>
       <w>localappdata</w>
       <w>lockfile</w>
       <w>lzfse</w>
@@ -112,6 +119,7 @@
       <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
+      <w>opengl</w>
       <w>osslsigncode</w>
       <w>packagejson</w>
       <w>pacman</w>
@@ -124,6 +132,7 @@
       <w>progexe</w>
       <w>promisify</w>
       <w>psmdcp</w>
+      <w>pulseaudio</w>
       <w>rcedit</w>
       <w>readpass</w>
       <w>regedit</w>
@@ -136,6 +145,7 @@
       <w>signcode</w>
       <w>signtool</w>
       <w>smprograms</w>
+      <w>snapcraft</w>
       <w>srcfolder</w>
       <w>templating</w>
       <w>testapp</w>

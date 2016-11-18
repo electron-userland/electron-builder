@@ -63,6 +63,10 @@ export class LinuxTargetHelper {
     return iconPath == null ? await this.packager.getDefaultIcon("icns") : path.resolve(this.packager.projectDir, iconPath)
   }
 
+  getDescription(options: LinuxBuildOptions) {
+    return options.description || this.packager.appInfo.description
+  }
+
   async computeDesktopEntry(platformSpecificBuildOptions: LinuxBuildOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
     const appInfo = this.packager.appInfo
 
@@ -71,7 +75,7 @@ export class LinuxTargetHelper {
 
     const desktopMeta: any = Object.assign({
       Name: appInfo.productName,
-      Comment: platformSpecificBuildOptions.description || appInfo.description,
+      Comment: this.getDescription(platformSpecificBuildOptions),
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}"` : exec,
       Terminal: "false",
       Type: "Application",

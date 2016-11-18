@@ -32,19 +32,19 @@ export default class AppImageTarget extends TargetEx {
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
-    log(`Building AppImage`)
+    log(`Building AppImage for arch ${Arch[arch]}`)
 
     const packager = this.packager
 
     // avoid spaces in the file name
-    const image = path.join(this.outDir, packager.generateName("AppImage", arch, true))
-    await unlinkIfExists(image)
+    const resultFile = path.join(this.outDir, packager.generateName("AppImage", arch, true))
+    await unlinkIfExists(resultFile)
 
     const appImagePath = await appImagePathPromise
     const args = [
       "-joliet", "on",
       "-volid", "AppImage",
-      "-dev", image,
+      "-dev", resultFile,
       "-padding", "0",
       "-map", appOutDir, "/usr/bin",
       "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), "/AppRun",
@@ -70,13 +70,13 @@ export default class AppImageTarget extends TargetEx {
     await new BluebirdPromise((resolve, reject) => {
       const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
       rd.on("error", reject)
-      const wr = createWriteStream(image, {flags: "r+"})
+      const wr = createWriteStream(resultFile, {flags: "r+"})
       wr.on("error", reject)
       wr.on("finish", resolve)
       rd.pipe(wr)
     })
 
-    const fd = await open(image, "r+")
+    const fd = await open(resultFile, "r+")
     try {
       const magicData = new Buffer([0x41, 0x49, 0x01])
       await write(fd, magicData, 0, magicData.length, 8)
@@ -85,8 +85,8 @@ export default class AppImageTarget extends TargetEx {
       await close(fd)
     }
 
-    await chmod(image, "0755")
+    await chmod(resultFile, "0755")
 
-    packager.dispatchArtifactCreated(image, packager.generateName("AppImage", arch, true))
+    packager.dispatchArtifactCreated(resultFile, packager.generateName("AppImage", arch, true))
   }
 }

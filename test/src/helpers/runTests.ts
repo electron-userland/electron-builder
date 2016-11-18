@@ -8,7 +8,7 @@ import { TEST_DIR, ELECTRON_VERSION } from "./config"
 const util = require("../../../out/util/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download"))
+const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 async function main() {
   const testDir = TEST_DIR

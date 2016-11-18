@@ -22,11 +22,9 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly description?: string | null
 
   /*
-   Target package type: list of `AppImage`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `AppImage`.
+   Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `AppImage`.
 
    The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
-
-   Only `deb` and `AppImage` is tested. Feel free to file issues for `rpm` and other package formats.
    */
   readonly target?: Array<string> | null
 
@@ -72,4 +70,27 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    Cannot be specified per target, allowed only in the `.build.linux`.
    */
   readonly executableName?: string | null
+}
+
+export interface SnapOptions extends LinuxBuildOptions {
+  /*
+  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces).
+   */
+  confinement?: "devmode" | "strict" | null
+
+  /*
+  The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
+   */
+  summary?: string | null
+
+  /*
+  The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).
+  Defaults to `stable`.
+   */
+  grade?: "devel" | "stable" | null
+
+  /*
+  The list of features that must be supported by the core in order for this snap to install.
+   */
+  assumes?: Array<string> | null
 }

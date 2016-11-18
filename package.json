@@ -19,7 +19,7 @@
     "lint": "node ./test/lint.js",
     "pretest": "yarn run compile && yarn run lint",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
-    "test": "node ./test/out/helpers/runTests.js",
+    "test": "node --trace-warnings ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
     "pack-updater": "cd nsis-auto-updater && yarn --production && cd ..",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
@@ -68,7 +68,7 @@
     "cli-cursor": "^1.0.2",
     "cuint": "^0.2.2",
     "debug": "^2.3.2",
-    "electron-download": "2.1.2",
+    "electron-download-tf": "3.1.0",
     "electron-macos-sign": "1.0.1",
     "fs-extra-p": "^2.0.7",
     "hosted-git-info": "^2.1.5",
@@ -143,13 +143,6 @@
       ]
     ]
   },
-  "ava": {
-    "verbose": true,
-    "cache": false,
-    "files": [
-      "test/out/*.js"
-    ]
-  },
   "jest": {
     "testEnvironment": "node",
     "testPathDirs": [
@@ -167,5 +160,8 @@
   "release": {
     "verifyConditions": []
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }
