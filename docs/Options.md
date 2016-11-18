@@ -41,6 +41,7 @@ Don't customize paths to background and icon, — just follow conventions.
       * [.build.publish GitHub](#GithubOptions)
       * [.build.squirrelWindows](#SquirrelWindowsOptions)
       * [.build.win](#WinBuildOptions)
+      * [.build.download](#ElectronDownloadOptions)
     * [.directories](#MetadataDirectories)
 
 <a name="AppMetadata"></a>
@@ -276,6 +277,13 @@ Windows specific build options.
 | certificatePassword | <a name="WinBuildOptions-certificatePassword"></a>The password to the certificate provided in `certificateFile`. Required only if you build on macOS and need to use a different password than the one set in `CSC_KEY_PASSWORD` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
 | certificateSubjectName | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
+
+<a name="ElectronDownloadOptions"></a>
+### `.build.download`
+
+electron-download options.
+
+See the [doc](https://github.com/electron-userland/electron-download)
 
 <a name="MetadataDirectories"></a>
 ## `.directories`
