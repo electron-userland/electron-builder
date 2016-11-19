@@ -115,7 +115,7 @@
     "json8": "^0.9.2",
     "path-sort": "^0.1.0",
     "ts-babel": "^1.1.4",
-    "tslint": "^4.0.0-dev.1",
+    "tslint": "4.0.0-dev.1",
     "typescript": "^2.1.1",
     "validate-commit-msg": "^2.8.2",
     "whitespace": "^2.1.0"

@@ -32,7 +32,7 @@ export default class SnapTarget extends Target {
     await unlinkIfExists(resultFile)
 
     const snap: any = {}
-    snap.name = appInfo.name.toLowerCase()
+    snap.name = packager.executableName
     snap.version = appInfo.version
     snap.summary = options.summary || appInfo.productName
     snap.description = this.helper.getDescription(options)
@@ -52,23 +52,16 @@ export default class SnapTarget extends Target {
       [snap.name]: {
         command: `desktop-launch $SNAP/${packager.executableName}`,
         plugs: [
-          "browser-support", "network", "unity7", "gsettings", "pulseaudio", "opengl",
+          "home", "unity7", "x11", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
         ]
       }
     }
 
     const isUseDocker = process.platform !== "linux"
     snap.parts = {
-      "deps": {
-        plugin: "nil",
-        "stage-packages": ["libgconf-2-4", "libnss3", "libxss1", "fontconfig-config"],
-      },
-      "desktop-integration": {
-        plugin: "nil",
-        "stage-packages": ["libappindicator1", "libdbusmenu-glib4", "libnotify4", "libunity9"],
-      },
       app: {
         plugin: "dump",
+        "stage-packages": ["libappindicator1", "libdbusmenu-glib4", "libnotify4", "libunity9", "libgconf-2-4", "libnss3", "libxss1", "fontconfig-config", "libnotify-bin"],
         source: isUseDocker ? `/out/${path.basename(snapDir)}` : appOutDir,
         filesets: {
           app: [`${appOutDir}/*`]

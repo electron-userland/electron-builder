@@ -17,7 +17,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     super(info)
 
     let executableName = this.platformSpecificBuildOptions.executableName
-    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name : executableName)
+    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name : executableName).toLowerCase()
   }
 
   normalizePlatformSpecificBuildOptions(options: LinuxBuildOptions | n): LinuxBuildOptions {
