@@ -88,6 +88,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | npmArgs | <a name="BuildMetadata-npmArgs"></a>Additional command line arguments to use when installing app native deps. Defaults to `null`.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
+| electronDownload | <a name="BuildMetadata-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
 
 <a name="DmgOptions"></a>

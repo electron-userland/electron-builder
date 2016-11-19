@@ -9,10 +9,14 @@ import * as path from "path"
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
+  if (opts.download != null) {
+    warn(`"build.download is deprecated — please use build.electronDownload instead`)
+  }
+
   const downloadOpts = Object.assign({
     cache: opts.cache,
     strictSSL: opts["strict-ssl"]
-  }, opts.download)
+  }, opts.electronDownload || opts.download)
 
   subOptionWarning(downloadOpts, "download", "platform", platform)
   subOptionWarning(downloadOpts, "download", "arch", arch)
