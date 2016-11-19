@@ -1,4 +1,4 @@
-import { assertPack, platform, modifyPackageJson, app, appThrows } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, app, appThrows } from "../helpers/packTester"
 import { Platform, createTargets } from "out"
 import { DIR_TARGET } from "out/targets/targetFactory"
 

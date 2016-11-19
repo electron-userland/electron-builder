@@ -1,5 +1,5 @@
 import { Platform, Arch } from "out"
-import { assertPack, getTestAsset, app } from "./helpers/packTester"
+import { assertPack, getTestAsset, app } from "../helpers/packTester"
 import { copy } from "fs-extra-p"
 import * as path from "path"
 

@@ -1,8 +1,8 @@
-import { assertPack, signed, CheckingMacPackager, createMacTargetTest } from "./helpers/packTester"
+import { assertPack, signed, CheckingMacPackager, createMacTargetTest } from "../helpers/packTester"
 import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "./helpers/fileAssert"
+import { assertThat } from "../helpers/fileAssert"
 import { Platform } from "out"
 
 if (process.platform !== "darwin") {

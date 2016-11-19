@@ -1,5 +1,5 @@
 import { Platform } from "out"
-import { assertPack, platform, modifyPackageJson, app, appThrows, CheckingWinPackager } from "./helpers/packTester"
+import { assertPack, platform, modifyPackageJson, app, appThrows, CheckingWinPackager } from "../helpers/packTester"
 import { outputFile, rename } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"

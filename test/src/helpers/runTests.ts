@@ -98,10 +98,10 @@ async function runTests() {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
-      args.push("linuxPackagerTest.js", "linuxArchiveTest.js", "debTest.js", "fpmTest.js", "BuildTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
     }
     else {
-      args.push("winPackagerTest.js", "squirrelWindowsTest.js", "nsisTest.js", "nsisBoring.js", "squirrelWindowsTest.js", "macPackagerTest.js", "macArchiveTest.js", "masTest.js", "dmgTest.js")
+      args.push("windows.*", "mac.*")
       args.push(...baseForLinuxTests)
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)

@@ -1,5 +1,5 @@
-import { createMacTargetTest } from "./helpers/packTester"
-import { assertThat } from "./helpers/fileAssert"
+import { createMacTargetTest } from "../helpers/packTester"
+import { assertThat } from "../helpers/fileAssert"
 
 test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"], [])()).throws("Unknown target: ttt"))
 

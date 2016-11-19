@@ -1,6 +1,6 @@
 import { createKeychain } from "out/codeSign"
-import { assertThat } from "./helpers/fileAssert"
-import { CSC_LINK } from "./helpers/codeSignData"
+import { assertThat } from "../helpers/fileAssert"
+import { CSC_LINK } from "../helpers/codeSignData"
 import { removePassword } from "out/util/util"
 import { TmpDir } from "out/util/tmp"
 

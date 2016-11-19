@@ -1,6 +1,6 @@
 // "apk" is very slow, don't test for now
 import { Platform } from "out"
-import { app } from "./helpers/packTester"
+import { app } from "../helpers/packTester"
 
 test.ifDevOrLinuxCi("targets", app({targets: Platform.LINUX.createTarget(["sh", "freebsd", "pacman", "zip", "7z"])}))
 

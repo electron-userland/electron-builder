@@ -1,8 +1,8 @@
-import { assertPack, modifyPackageJson, app, CheckingMacPackager } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, app, CheckingMacPackager } from "../helpers/packTester"
 import { remove, copy } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "./helpers/fileAssert"
+import { assertThat } from "../helpers/fileAssert"
 import { Platform } from "out"
 import { attachAndExecute } from "out/targets/dmg"
 
@@ -27,7 +27,7 @@ test.ifMac("custom background - new way", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
-      copy(path.join(__dirname, "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
+      copy(path.join(__dirname, "..", "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.mac = {
           icon: "customIcon"

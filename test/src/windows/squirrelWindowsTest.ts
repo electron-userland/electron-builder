@@ -1,5 +1,5 @@
 import { Platform, Arch } from "out"
-import { app, modifyPackageJson, appThrows, getTestAsset, assertPack, CheckingWinPackager } from "./helpers/packTester"
+import { app, modifyPackageJson, appThrows, getTestAsset, assertPack, CheckingWinPackager } from "../helpers/packTester"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { copy } from "fs-extra-p"

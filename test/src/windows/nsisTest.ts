@@ -1,13 +1,13 @@
 import { Platform, Arch } from "out"
-import { assertPack, getTestAsset, app } from "./helpers/packTester"
+import { assertPack, getTestAsset, app } from "../helpers/packTester"
 import { copy, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "./helpers/fileAssert"
+import { assertThat } from "../helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
 import { walk } from "out/asarUtil"
-import { nsisPerMachineInstall } from "./helpers/expectedContents"
-import { WineManager, diff } from "./helpers/wine"
+import { nsisPerMachineInstall } from "../helpers/expectedContents"
+import { WineManager, diff } from "../helpers/wine"
 import { safeLoad } from "js-yaml"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])

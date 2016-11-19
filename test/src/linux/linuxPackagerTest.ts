@@ -1,11 +1,11 @@
-import { modifyPackageJson, app, appThrows } from "./helpers/packTester"
+import { modifyPackageJson, app, appThrows } from "../helpers/packTester"
 import { remove } from "fs-extra-p"
 import * as path from "path"
 import { Platform } from "out"
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
-test.ifNotCi("snap", app({targets: Platform.LINUX.createTarget("snap")}))
+// test.ifNotCi("snap", app({targets: Platform.LINUX.createTarget("snap")}))
 
 test.ifDevOrLinuxCi("AppImage - default icon", app({
   targets: Platform.LINUX.createTarget("appimage"),
