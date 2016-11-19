@@ -120,17 +120,17 @@ export class NsisUpdater extends EventEmitter {
     this.quitHandlerAdded = true
 
     this.app.on("quit", () => {
-      this.install()
+      this.install(true)
     })
   }
 
   quitAndInstall(): void {
-    if (this.install()) {
+    if (this.install(false)) {
       this.app.quit()
     }
   }
 
-  private install(): boolean {
+  private install(isSilent: boolean): boolean {
     if (this.quitAndInstallCalled) {
       return false
     }
@@ -145,7 +145,7 @@ export class NsisUpdater extends EventEmitter {
     // prevent calling several times
     this.quitAndInstallCalled = true
 
-    spawn(setupPath, ["/S"], {
+    spawn(setupPath, isSilent ? ["/S"] : [], {
       detached: true,
       stdio: "ignore",
     }).unref()
