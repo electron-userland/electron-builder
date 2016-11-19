@@ -10,7 +10,6 @@
   ],
   "bin": {
     "build": "./out/build-cli.js",
-    "cleanup": "./out/cleanup.js",
     "install-app-deps": "./out/install-app-deps.js",
     "node-gyp-rebuild": "./out/node-gyp-rebuild.js"
   },
@@ -102,13 +101,12 @@
     "@types/source-map-support": "^0.2.28",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-transform-async-to-module-method": "^6.16.0",
-    "babel-plugin-transform-es2015-destructuring": "^6.18.0",
+    "babel-plugin-transform-es2015-destructuring": "^6.19.0",
     "babel-plugin-transform-es2015-parameters": "^6.18.0",
     "babel-plugin-transform-es2015-spread": "^6.8.0",
     "babel-plugin-transform-inline-imports-commonjs": "^1.2.0",
-    "babel-register": "^6.18.0",
     "decompress-zip": "^0.3.0",
-    "depcheck": "^0.6.4",
+    "depcheck": "^0.6.5",
     "diff": "^3.0.1",
     "husky": "^0.11.9",
     "jest-cli": "^17.0.3",

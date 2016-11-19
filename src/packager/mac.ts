@@ -24,7 +24,7 @@ function filterCFBundleIdentifier(identifier: string) {
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
-export async function createApp(packager: PlatformPackager<any>, appOutDir: string, initializeApp: () => Promise<any>) {
+export async function createApp(packager: PlatformPackager<any>, appOutDir: string) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
@@ -37,12 +37,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
 
   const buildMetadata = packager.devMetadata.build!
-
-  const result = await BluebirdPromise.all<any | n>([
-    initializeApp(),
-    BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
-  ])
-  const fileContents: Array<string> = result[1]!
+  const fileContents: Array<string> = await BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   const appPlist = parsePlist(fileContents[0])
   const helperPlist = parsePlist(fileContents[1])
   const helperEHPlist = parsePlist(fileContents[2])

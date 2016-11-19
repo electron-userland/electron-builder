@@ -7,13 +7,14 @@ const printErrorAndExit = require("../../../out/util/promise").printErrorAndExit
 
 const knownUnusedDevDependencies = new Set([
   "@develar/types",
-  "ava-tf",
+  "jest-cli",
   "decompress-zip",
   "diff",
   "husky",
   "json8",
   "path-sort",
   "typescript",
+  "tslint",
   "depcheck"
 ])
 

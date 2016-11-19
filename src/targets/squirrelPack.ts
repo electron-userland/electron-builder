@@ -152,7 +152,6 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <Default Extension="exe" ContentType="application/octet" />
   <Default Extension="dat" ContentType="application/octet" />
   <Default Extension="psmdcp" ContentType="application/vnd.openxmlformats-package.core-properties+xml" />
-  <Override PartName="/lib/net45/LICENSE" ContentType="application/octet" />
   <Default Extension="diff" ContentType="application/octet" />
   <Default Extension="bsdiff" ContentType="application/octet" />
   <Default Extension="shasum" ContentType="text/plain" />

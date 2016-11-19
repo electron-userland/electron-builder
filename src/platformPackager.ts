@@ -2,7 +2,7 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch,
 import EventEmitter = NodeJS.EventEmitter
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { readdir, remove } from "fs-extra-p"
+import { readdir, remove, rename } from "fs-extra-p"
 import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, debug } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
@@ -11,7 +11,7 @@ import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
 import { copyFiltered } from "./util/filter"
-import { pack } from "./packager/dirPackager"
+import { unpackElectron } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
@@ -189,81 +189,89 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
     log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
-    await pack(this, appOutDir, platformName, Arch[arch], this.info.electronVersion, async () => {
-      const appDir = this.info.appDir
-      const ignoreFiles = new Set([path.resolve(appDir, outDir), path.resolve(appDir, this.buildResourcesDir)])
-      // prune dev or not listed dependencies
-      await dependencies(appDir, true, ignoreFiles)
 
-      if (debug.enabled) {
-        const nodeModulesDir = path.join(appDir, "node_modules")
-        debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
-      }
+    const appDir = this.info.appDir
+    const ignoreFiles = new Set([path.resolve(appDir, outDir), path.resolve(appDir, this.buildResourcesDir)])
+    // prune dev or not listed dependencies
+    await BluebirdPromise.all([
+      dependencies(appDir, true, ignoreFiles),
+      unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion),
+    ])
 
-      const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-      let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
-      if (defaultMatcher.isEmpty()) {
-        defaultMatcher.addPattern("**/*")
+    if (debug.enabled) {
+      const nodeModulesDir = path.join(appDir, "node_modules")
+      debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
+    }
+
+    const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+    let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
+    if (defaultMatcher.isEmpty()) {
+      defaultMatcher.addPattern("**/*")
+    }
+    else {
+      defaultMatcher.addPattern("package.json")
+    }
+    defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+    defaultMatcher.addPattern("!**/node_modules/.bin")
+    defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
+    defaultMatcher.addPattern("!**/._*")
+    defaultMatcher.addPattern("!.idea")
+    defaultMatcher.addPattern("!*.iml")
+    //noinspection SpellCheckingInspection
+    defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}")
+
+    let rawFilter: any = null
+    const deprecatedIgnore = (<any>this.devMetadata.build).ignore
+    if (deprecatedIgnore != null) {
+      if (typeof deprecatedIgnore === "function") {
+        warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
       }
       else {
-        defaultMatcher.addPattern("package.json")
+        warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
       }
-      defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
-      defaultMatcher.addPattern("!**/node_modules/.bin")
-      defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
-      defaultMatcher.addPattern("!**/._*")
-      defaultMatcher.addPattern("!.idea")
-      defaultMatcher.addPattern("!*.iml")
-      //noinspection SpellCheckingInspection
-      defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}")
+      rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
+    }
 
-      let rawFilter: any = null
-      const deprecatedIgnore = (<any>this.devMetadata.build).ignore
-      if (deprecatedIgnore != null) {
-        if (typeof deprecatedIgnore === "function") {
-          warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-        }
-        else {
-          warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
-        }
-        rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
+    let excludePatterns: Array<Minimatch> = []
+    if (extraResourceMatchers != null) {
+      for (let i = 0; i < extraResourceMatchers.length; i++) {
+        const patterns = extraResourceMatchers[i].getParsedPatterns(this.info.projectDir)
+        excludePatterns = excludePatterns.concat(patterns)
       }
+    }
+    if (extraFileMatchers != null) {
+      for (let i = 0; i < extraFileMatchers.length; i++) {
+        const patterns = extraFileMatchers[i].getParsedPatterns(this.info.projectDir)
+        excludePatterns = excludePatterns.concat(patterns)
+      }
+    }
 
-      let excludePatterns: Array<Minimatch> = []
-      if (extraResourceMatchers != null) {
-        for (let i = 0; i < extraResourceMatchers.length; i++) {
-          const patterns = extraResourceMatchers[i].getParsedPatterns(this.info.projectDir)
-          excludePatterns = excludePatterns.concat(patterns)
-        }
-      }
-      if (extraFileMatchers != null) {
-        for (let i = 0; i < extraFileMatchers.length; i++) {
-          const patterns = extraFileMatchers[i].getParsedPatterns(this.info.projectDir)
-          excludePatterns = excludePatterns.concat(patterns)
-        }
-      }
+    const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
+    let promise
+    if (asarOptions == null) {
+      promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
+    }
+    else {
+      const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+      const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+      promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
+    }
 
-      const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
-      let promise
-      if (asarOptions == null) {
-        promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
-      }
-      else {
-        const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-        const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-        //noinspection ES6MissingAwait
-        promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
-      }
+    //noinspection ES6MissingAwait
+    const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(appOutDir)]
+    if (this.platform !== Platform.MAC) {
+      promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")) .catch(() => {/* ignore */}))
+    }
+    if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
+      // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
+      promises.push(remove(path.join(resourcesPath, "default_app")))
+    }
 
-      const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version"))]
-      if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
-        // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
-        promises.push(remove(path.join(resourcesPath, "default_app")))
-      }
+    await BluebirdPromise.all(promises)
 
-      promises.push(this.postInitApp(appOutDir))
-      await BluebirdPromise.all(promises)
-    })
+    if (platformName === "darwin" || platformName === "mas") {
+      await (<any>require("./packager/mac")).createApp(this, appOutDir)
+    }
 
     await this.doCopyExtraFiles(extraResourceMatchers)
     await this.doCopyExtraFiles(extraFileMatchers)
@@ -280,8 +288,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
-  protected postInitApp(executableFile: string): Promise<any> {
-    return BluebirdPromise.resolve(null)
+  protected async postInitApp(executableFile: string): Promise<any> {
   }
 
   async getIconPath(): Promise<string | null> {

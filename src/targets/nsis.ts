@@ -7,7 +7,7 @@ import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
 import { normalizeExt, Target, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
 import { archive } from "./archive"
-import { subTask, log } from "../util/log"
+import { subTask, log, warn } from "../util/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
 import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
@@ -35,6 +35,11 @@ export default class NsisTarget extends Target {
 
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
+
+    const deps = packager.info.metadata.dependencies
+    if (deps != null && deps["electron-squirrel-startup"] != null) {
+      warn('"electron-squirrel-startup" dependency is not required for NSIS')
+    }
   }
 
   private computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {

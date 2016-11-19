@@ -421,7 +421,7 @@ babel-plugin-transform-async-to-module-method@^6.16.0:
     babel-runtime "^6.0.0"
     babel-types "^6.16.0"
 
-babel-plugin-transform-es2015-destructuring@^6.18.0:
+babel-plugin-transform-es2015-destructuring@^6.19.0:
   version "6.19.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-destructuring/-/babel-plugin-transform-es2015-destructuring-6.19.0.tgz#ff1d911c4b3f4cab621bd66702a869acd1900533"
   dependencies:
@@ -1072,7 +1072,7 @@ delegates@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
 
-depcheck@^0.6.4:
+depcheck@^0.6.5:
   version "0.6.5"
   resolved "https://registry.yarnpkg.com/depcheck/-/depcheck-0.6.5.tgz#baee2148e83f1295d372d7c50fd6f7205ccdb8fa"
   dependencies:
