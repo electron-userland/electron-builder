@@ -448,6 +448,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         c = "amd64"
       }
     }
+    else if (arch === Arch.ia32 && ext === "deb") {
+      c = "i386"
+    }
     else {
       c = Arch[arch]
     }
