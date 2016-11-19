@@ -41,7 +41,7 @@ test.ifDevOrLinuxCi("extra metadata - two", () => {
   const extraMetadata = {
     build: {
       linux: {
-        executableName: "NewName"
+        executableName: "new-name"
       }
     }
   }
@@ -50,7 +50,7 @@ test.ifDevOrLinuxCi("extra metadata - two", () => {
     extraMetadata: extraMetadata,
   }, {
     packed: async context => {
-      await assertThat(path.join(context.getContent(Platform.LINUX), "NewName")).isFile()
+      await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
     }
   })
 })
@@ -66,6 +66,6 @@ test.ifMac("extra metadata - override icon", appTwoThrows(/ENOENT: no such file 
   },
 }, {
   packed: async context => {
-    await assertThat(path.join(context.getContent(Platform.LINUX), "NewName")).isFile()
+    await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
   }
 }))
