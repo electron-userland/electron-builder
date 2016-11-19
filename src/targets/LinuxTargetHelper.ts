@@ -67,11 +67,10 @@ export class LinuxTargetHelper {
     return options.description || this.packager.appInfo.description
   }
 
-  async computeDesktopEntry(platformSpecificBuildOptions: LinuxBuildOptions, exec?: string, extra?: { [key: string]: string; }): Promise<string> {
+  async computeDesktopEntry(platformSpecificBuildOptions: LinuxBuildOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
     const appInfo = this.packager.appInfo
 
     const productFilename = appInfo.productFilename
-    const tempFile = await this.packager.getTempFile(`${productFilename}.desktop`)
 
     const desktopMeta: any = Object.assign({
       Name: appInfo.productName,
@@ -80,6 +79,7 @@ export class LinuxTargetHelper {
       Terminal: "false",
       Type: "Application",
       Icon: appInfo.name,
+      StartupWMClass: `"${productFilename}"`,
     }, extra, platformSpecificBuildOptions.desktop)
 
     const category = platformSpecificBuildOptions.category
@@ -94,6 +94,7 @@ export class LinuxTargetHelper {
     }
     data += "\n"
 
+    const tempFile = destination || await this.packager.getTempFile(`${productFilename}.desktop`)
     await outputFile(tempFile, data)
     return tempFile
   }

@@ -25,7 +25,7 @@ export default class AppImageTarget extends Target {
 
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed
     this.desktopEntry = BluebirdPromise.promisify(uuid1)({mac: false})
-      .then(uuid => helper.computeDesktopEntry(this.options, "AppRun", {
+      .then(uuid => helper.computeDesktopEntry(this.options, "AppRun", null, {
         "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
         "X-AppImage-BuildId": uuid,
       }))
@@ -65,7 +65,7 @@ export default class AppImageTarget extends Target {
     args.push("-zisofs", `level=${packager.devMetadata.build.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
 
-    await exec(process.env.USE_SYSTEM_FPM === "true" || process.arch !== "x64" ? "xorriso" : path.join(appImagePath, "xorriso"), args)
+    await exec(process.arch === "x64" ? path.join(appImagePath, "xorriso") : "xorriso", args)
 
     await new BluebirdPromise((resolve, reject) => {
       const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
@@ -87,6 +87,6 @@ export default class AppImageTarget extends Target {
 
     await chmod(resultFile, "0755")
 
-    packager.dispatchArtifactCreated(resultFile, packager.generateName("AppImage", arch, true))
+    packager.dispatchArtifactCreated(resultFile)
   }
 }

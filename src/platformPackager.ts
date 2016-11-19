@@ -636,3 +636,7 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     return null
   }
 }
+
+export function toDebArch(arch: Arch) {
+  return arch === Arch.ia32 ? "i386" : "amd64"
+}

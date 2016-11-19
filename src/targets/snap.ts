@@ -1,24 +1,20 @@
-import { Target } from "../platformPackager"
+import { Target, toDebArch } from "../platformPackager"
 import { Arch } from "../metadata"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "../util/log"
 import { SnapOptions } from "../options/linuxOptions"
-import { emptyDir, writeFile } from "fs-extra-p"
+import { emptyDir, writeFile, rename, copy } from "fs-extra-p"
 import * as path from "path"
 import { safeDump } from "js-yaml"
-import { spawn, unlinkIfExists } from "../util/util"
+import { spawn } from "../util/util"
 import { homedir } from "os"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
-  private readonly desktopEntry: Promise<string>
 
   constructor(private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
     super("snap")
-
-    // we add X-AppImage-BuildId to ensure that new desktop file will be installed
-    this.desktopEntry = helper.computeDesktopEntry(this.options, "AppRun")
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {
@@ -28,8 +24,8 @@ export default class SnapTarget extends Target {
     const appInfo = packager.appInfo
     const options = this.options
 
-    const resultFile = path.join(this.outDir, packager.generateName("snap", arch, true))
-    await unlinkIfExists(resultFile)
+    const snapDir = `${appOutDir}-snap`
+    await emptyDir(snapDir)
 
     const snap: any = {}
     snap.name = packager.executableName
@@ -39,14 +35,18 @@ export default class SnapTarget extends Target {
     snap.confinement = options.confinement || "strict"
     snap.grade = options.grade || "stable"
 
+    await this.helper.icons
+    if (this.helper.maxIconPath != null) {
+      snap.icon = "setup/gui/icon.png"
+      await copy(this.helper.maxIconPath, path.join(snapDir, "setup", "gui", "icon.png"))
+    }
+
     if (options.assumes != null) {
       if (!Array.isArray(options.assumes)) {
         throw new Error("snap.assumes must be an array of strings")
       }
       snap.assumes = options.assumes
     }
-
-    const snapDir = `${appOutDir}-snap`
 
     snap.apps = {
       [snap.name]: {
@@ -57,6 +57,10 @@ export default class SnapTarget extends Target {
       }
     }
 
+    await this.helper.computeDesktopEntry(this.options, "$snap.$app", path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
+      "Icon": "${SNAP}/meta/gui/icon.png"
+    })
+
     const isUseDocker = process.platform !== "linux"
     snap.parts = {
       app: {
@@ -64,21 +68,14 @@ export default class SnapTarget extends Target {
         "stage-packages": ["libappindicator1", "libdbusmenu-glib4", "libnotify4", "libunity9", "libgconf-2-4", "libnss3", "libxss1", "fontconfig-config", "libnotify-bin"],
         source: isUseDocker ? `/out/${path.basename(snapDir)}` : appOutDir,
         filesets: {
-          app: [`${appOutDir}/*`]
+          app: [`${appOutDir}/*`],
         },
         after: ["desktop-glib-only"]
       }
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
-    await emptyDir(snapDir)
     await writeFile(snapcraft, safeDump(snap))
-
-//     await writeFile(path.join(snapDir, "wrapper"), `
-// #!/bin/bash
-// unset XDG_CONFIG_DIRS
-// exec $SNAP/${packager.executableName}
-// `)
 
     // const args = ["snapcraft", path.relative(snapDir)]
     // snap /out/${path.basename(snapDir)} --output /out/${path.basename(resultFile)}
@@ -100,6 +97,9 @@ export default class SnapTarget extends Target {
       })
     }
 
-    packager.dispatchArtifactCreated(resultFile, packager.generateName("snap", arch, true))
+    const snapName = `${snap.name}_${snap.version}_${toDebArch(arch)}.snap`
+    const resultFile = path.join(this.outDir, snapName)
+    await rename(path.join(snapDir, snapName), resultFile)
+    packager.dispatchArtifactCreated(resultFile)
   }
 }
