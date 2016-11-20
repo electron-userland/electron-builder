@@ -2,7 +2,7 @@ import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
 import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { Publish } from "./options/publishOptions"
-import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions } from "./options/winOptions"
+import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions } from "./options/linuxOptions"
 
 export interface Metadata {
@@ -167,20 +167,25 @@ export interface BuildMetadata {
    */
   readonly mas?: MasBuildOptions | null
 
-  /**
+  /*
    See [.build.win](#WinBuildOptions).
    */
   readonly win?: WinBuildOptions  | null
 
-  /**
+  /*
    See [.build.nsis](#NsisOptions).
    */
   readonly nsis?: NsisOptions  | null
 
-  /**
+  /*
    See [.build.squirrelWindows](#SquirrelWindowsOptions).
    */
   readonly squirrelWindows?: SquirrelWindowsOptions  | null
+
+  /*
+   See [.build.appx](#AppXOptions).
+   */
+  readonly appx?: AppXOptions  | null
 
   /*
    See [.build.linux](#LinuxBuildOptions).
@@ -358,10 +363,6 @@ export class Platform {
   }
 
   toString() {
-    return this.name
-  }
-
-  toJSON() {
     return this.name
   }
 

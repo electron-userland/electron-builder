@@ -4,6 +4,7 @@ import { smarten } from "./platformPackager"
 import { isEmptyOrSpaces } from "./util/util"
 import { getRepositoryInfo } from "./repositoryInfo"
 import sanitizeFileName from "sanitize-filename"
+import { SemVer } from "semver"
 
 export class AppInfo {
   readonly description = smarten(this.metadata.description!)
@@ -32,6 +33,11 @@ export class AppInfo {
 
     this.productName = getProductName(this.metadata, this.devMetadata)
     this.productFilename = sanitizeFileName(this.productName)
+  }
+
+  get versionInWeirdWindowsForm(): string {
+    const parsedVersion = new SemVer(this.version)
+    return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${this.buildNumber || "0"}`
   }
 
   get companyName() {

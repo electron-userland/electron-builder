@@ -80,6 +80,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | win | <a name="BuildMetadata-win"></a>See [.build.win](#WinBuildOptions).
 | nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
 | squirrelWindows | <a name="BuildMetadata-squirrelWindows"></a>See [.build.squirrelWindows](#SquirrelWindowsOptions).
+| appx | <a name="BuildMetadata-appx"></a>See [.build.appx](#AppXOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.

@@ -12,6 +12,8 @@
       <w>appimage</w>
       <w>appleid</w>
       <w>appveyor</w>
+      <w>appx</w>
+      <w>appxmanifest</w>
       <w>archiver</w>
       <w>archs</w>
       <w>aspx</w>
@@ -27,6 +29,7 @@
       <w>clcerts</w>
       <w>cleanuper</w>
       <w>codesigning</w>
+      <w>controlfields</w>
       <w>coroutine</w>
       <w>cpus</w>
       <w>crypto</w>
@@ -34,6 +37,7 @@
       <w>customfunction</w>
       <w>debian</w>
       <w>depcheck</w>
+      <w>devel</w>
       <w>devmode</w>
       <w>difflet</w>
       <w>digester</w>
@@ -45,6 +49,7 @@
       <w>enoent</w>
       <w>eperm</w>
       <w>finishpage</w>
+      <w>flattennpmmodules</w>
       <w>fontconfig</w>
       <w>fseventsd</w>
       <w>github</w>
@@ -63,6 +68,7 @@
       <w>hicolor</w>
       <w>hkcu</w>
       <w>hklm</w>
+      <w>homedir</w>
       <w>hrtime</w>
       <w>icnsutils</w>
       <w>icnv</w>
@@ -99,7 +105,9 @@
       <w>lzip</w>
       <w>lzma</w>
       <w>lzop</w>
+      <w>macos</w>
       <w>macroend</w>
+      <w>makeappx</w>
       <w>makedeb</w>
       <w>makedmg</w>
       <w>makensis</w>
@@ -162,6 +170,7 @@
       <w>unmounting</w>
       <w>unorm</w>
       <w>unpage</w>
+      <w>userland</w>
       <w>userprofile</w>
       <w>valuename</w>
       <w>versioner</w>

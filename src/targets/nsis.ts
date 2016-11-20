@@ -5,15 +5,15 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "../util/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, Target, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
+import { normalizeExt, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
 import { archive } from "./archive"
 import { subTask, log, warn } from "../util/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
-import { SemVer } from "semver"
 import { NsisOptions } from "../options/winOptions"
 import { PublishConfiguration, GenericServerOptions, UpdateInfo } from "../options/publishOptions"
 import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
+import { Target } from "./targetFactory"
 
 const NSIS_VERSION = "3.0.2"
 //noinspection SpellCheckingInspection
@@ -145,7 +145,6 @@ export default class NsisTarget extends Target {
 
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
-    const parsedVersion = new SemVer(appInfo.version)
     const localeId = this.options.language || "1033"
     const versionKey = [
       `/LANG=${localeId} ProductName "${appInfo.productName}"`,
@@ -159,7 +158,7 @@ export default class NsisTarget extends Target {
 
     const commands: any = {
       OutFile: `"${installerPath}"`,
-      VIProductVersion: `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${appInfo.buildNumber || "0"}`,
+      VIProductVersion: appInfo.versionInWeirdWindowsForm,
       VIAddVersionKey: versionKey,
       Unicode: true,
     }

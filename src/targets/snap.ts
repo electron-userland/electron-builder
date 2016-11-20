@@ -1,4 +1,4 @@
-import { Target, toDebArch } from "../platformPackager"
+import { toDebArch } from "../platformPackager"
 import { Arch } from "../metadata"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { LinuxPackager } from "../linuxPackager"
@@ -9,12 +9,13 @@ import * as path from "path"
 import { safeDump } from "js-yaml"
 import { spawn } from "../util/util"
 import { homedir } from "os"
+import { Target } from "./targetFactory"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
 
-  constructor(private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
-    super("snap")
+  constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
+    super(name)
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

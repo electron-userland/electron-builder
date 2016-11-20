@@ -4,28 +4,34 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET } from "out"
-import { exec } from "out/util/util"
+import {
+  Packager,
+  PackagerOptions,
+  Platform,
+  ArtifactCreated,
+  Arch,
+  DIR_TARGET,
+  createTargets,
+  getArchSuffix,
+  MacOsTargetName,
+  Target,
+  MacOptions,
+  BuildInfo,
+  SquirrelWindowsOptions
+} from "out"
+import { exec, spawn, getTempName } from "out/util/util"
 import { log, warn } from "out/util/log"
-import { createTargets } from "out"
-import { getArchSuffix, Target } from "out/platformPackager"
 import pathSorter from "path-sort"
 import DecompressZip from "decompress-zip"
 import { convertVersion } from "out/targets/squirrelPack"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "out/util/deepAssign"
-import { SquirrelWindowsOptions } from "out/options/winOptions"
-import { spawn } from "out/util/util"
 import { SignOptions } from "out/windowsCodeSign"
-import { BuildInfo } from "out/platformPackager"
 import { WinPackager } from "out/winPackager"
 import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { DmgTarget } from "out/targets/dmg"
-import { MacOptions } from "out/options/macOptions"
 import OsXPackager from "out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
-import { MacOsTargetName } from "out/options/macOptions"
-import { getTempName } from "out/util/util"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -454,7 +460,7 @@ export class CheckingWinPackager extends WinPackager {
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
     const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
-    this.effectiveDistOptions = await (new helperClass(this).computeEffectiveDistOptions())
+    this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))
   }

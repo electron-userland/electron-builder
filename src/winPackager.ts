@@ -1,16 +1,16 @@
 import { downloadCertificate } from "./codeSign"
 import BluebirdPromise from "bluebird-lst-c"
-import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform } from "./metadata"
 import * as path from "path"
 import { log } from "./util/log"
 import { exec, use } from "./util/util"
-import { open, close, read } from "fs-extra-p"
+import { open, close, read, rename } from "fs-extra-p"
 import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
 import SquirrelWindowsTarget from "./targets/squirrelWindows"
+import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
-import { DEFAULT_TARGET, createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
-import { rename } from "fs-extra-p"
+import { createCommonTarget, DIR_TARGET, Target } from "./targets/targetFactory"
 import { WinBuildOptions } from "./options/winOptions"
 
 export interface FileCodeSigningInfo {
@@ -61,31 +61,34 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
+  get defaultTarget(): Array<string> {
+    return ["nsis"]
+  }
+
   protected doGetCscPassword(): string {
     return this.platformSpecificBuildOptions.certificatePassword || process.env.WIN_CSC_KEY_PASSWORD || super.doGetCscPassword()
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
-    for (let name of targets) {
+    for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
       }
 
-      if (name === "squirrel") {
-        mapper("squirrel", () => {
-          const targetClass: typeof SquirrelWindowsTarget = require("./targets/squirrelWindows").default
-          return new targetClass(this)
-        })
-      }
-      else if (name === DEFAULT_TARGET || name === "nsis") {
-        mapper(name, outDir => {
-          const targetClass: typeof NsisTarget = require("./targets/nsis").default
-          return new targetClass(this, outDir)
-        })
-      }
-      else {
-        mapper(name, outDir => createCommonTarget(name, outDir, this))
-      }
+      const targetClass: typeof NsisTarget | typeof AppXTarget | typeof SquirrelWindowsTarget | null = (() => {
+        switch (name) {
+          case "nsis":
+            return require("./targets/nsis").default
+          case "squirrel":
+            return require("./targets/squirrelWindows").default
+          case "appx":
+            return require("./targets/appx").default
+          default:
+            return null
+        }
+      })()
+
+      mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new targetClass(this, outDir))
     }
   }
 

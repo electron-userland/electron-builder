@@ -1,4 +1,4 @@
-import { PlatformPackager, BuildInfo, Target } from "./platformPackager"
+import { PlatformPackager, BuildInfo } from "./platformPackager"
 import { Platform, Arch } from "./metadata"
 import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
@@ -8,7 +8,7 @@ import { createKeychain, CodeSigningInfo, findIdentity, appleCertificatePrefixes
 import { deepAssign } from "./util/deepAssign"
 import { signAsync, SignOptions } from "electron-macos-sign"
 import { DmgTarget } from "./targets/dmg"
-import { createCommonTarget, DEFAULT_TARGET, DIR_TARGET, NoOpTarget } from "./targets/targetFactory"
+import { createCommonTarget, DIR_TARGET, NoOpTarget, Target } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "./util/util"
@@ -27,6 +27,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
+  get defaultTarget(): Array<string> {
+    return ["zip", "dmg"]
+  }
+
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
     return new AppInfo(appInfo.metadata, this.devMetadata, this.platformSpecificBuildOptions.bundleVersion)
   }
@@ -43,11 +47,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     for (let name of targets) {
       switch (name) {
         case DIR_TARGET:
-          break
-
-        case DEFAULT_TARGET:
-          mapper("dmg", () => new DmgTarget(this))
-          mapper("zip", outDir => createCommonTarget("zip", outDir, this))
           break
 
         case "dmg":
@@ -181,10 +180,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
 
     if (isMas) {
-      throw new Error(`Cannot find valid "${name}" identity to sign MAS installer, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+      throw new Error(`Cannot find valid "${name}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
     else {
-      throw new Error(`Cannot find valid "${name}" to sign standalone installer, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+      throw new Error(`Cannot find valid "${name}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
   }
 

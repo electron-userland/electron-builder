@@ -39,7 +39,7 @@ test.ifMac("custom icon", () => {
   })
 })
 
-it.ifNotWindows("ev", appThrows(/certificateSubjectName supported only on Windows/, {
+it.ifDevOrLinuxCi("ev", appThrows(/certificateSubjectName supported only on Windows/, {
   targets: Platform.WINDOWS.createTarget(["dir"]),
   devMetadata: {
     build: {

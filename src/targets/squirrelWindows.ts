@@ -1,5 +1,5 @@
 import { WinPackager } from "../winPackager"
-import { getArchSuffix, Target } from "../platformPackager"
+import { getArchSuffix } from "../platformPackager"
 import { Arch } from "../metadata"
 import * as path from "path"
 import { warn, log } from "../util/log"
@@ -7,6 +7,7 @@ import { getRepositoryInfo } from "../repositoryInfo"
 import { getBinFromBintray } from "../util/binDownload"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 import { SquirrelWindowsOptions } from "../options/winOptions"
+import { Target } from "./targetFactory"
 
 const SW_VERSION = "1.4.4"
 //noinspection SpellCheckingInspection
@@ -15,7 +16,7 @@ const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853b
 export default class SquirrelWindowsTarget extends Target {
   private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.squirrelWindows)
 
-  constructor(private packager: WinPackager) {
+  constructor(private readonly packager: WinPackager, private readonly outDir: string) {
     super("squirrel")
   }
 
@@ -31,7 +32,7 @@ export default class SquirrelWindowsTarget extends Target {
     const archSuffix = getArchSuffix(arch)
     const setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
 
-    const installerOutDir = path.join(appOutDir, "..", `win${getArchSuffix(arch)}`)
+    const installerOutDir = path.join(this.outDir, `win${getArchSuffix(arch)}`)
 
     const distOptions = await this.computeEffectiveDistOptions()
 

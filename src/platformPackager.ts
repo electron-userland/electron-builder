@@ -1,5 +1,4 @@
 import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation } from "./metadata"
-import EventEmitter = NodeJS.EventEmitter
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
@@ -18,6 +17,8 @@ import { BuildOptions } from "./builder"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "./options/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
+import { Target } from "./targets/targetFactory"
+import EventEmitter = NodeJS.EventEmitter
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -74,17 +75,6 @@ export interface BuildInfo {
   readonly tempDirManager: TmpDir
 }
 
-export abstract class Target {
-  constructor(public readonly name: string, public readonly isAsyncSupported: boolean = true) {
-  }
-
-  abstract build(appOutDir: string, arch: Arch): Promise<any>
-
-  finishBuild(): Promise<any> {
-    return BluebirdPromise.resolve()
-  }
-}
-
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly options: PackagerOptions
 
@@ -118,6 +108,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         return []
       })
   }
+
+  abstract get defaultTarget(): Array<string>
 
   protected prepareAppInfo(appInfo: AppInfo) {
     return appInfo

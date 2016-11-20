@@ -1,4 +1,3 @@
-import { Target } from "../platformPackager"
 import { Arch } from "../metadata"
 import * as path from "path"
 import { exec, unlinkIfExists } from "../util/util"
@@ -9,6 +8,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { v1 as uuid1 } from "uuid-1345"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "../util/log"
+import { Target } from "./targetFactory"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
@@ -20,7 +20,7 @@ export default class AppImageTarget extends Target {
   private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
   private readonly desktopEntry: Promise<string>
 
-  constructor(private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
+  constructor(ignored: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
     super("appImage")
 
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed

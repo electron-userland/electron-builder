@@ -59,24 +59,23 @@ async function deleteOldElectronVersion(): Promise<any> {
 }
 
 function downloadAllRequiredElectronVersions(): Promise<any> {
-  const downloadPromises: Array<Promise<any>> = []
-
   const platforms = process.platform === "win32" ? ["win32"] : ["darwin", "linux", "win32"]
   if (process.platform === "darwin") {
     platforms.push("mas")
   }
 
+  const versions: Array<any> = []
   for (let platform of platforms) {
     const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : ["ia32", "x64", "armv7l"])
     for (let arch of archs) {
-      downloadPromises.push(downloadElectron({
+      versions.push({
         version: ELECTRON_VERSION,
         arch: arch,
         platform: platform,
-      }))
+      })
     }
   }
-  return BluebirdPromise.all(downloadPromises)
+  return BluebirdPromise.map(versions, it => downloadElectron(it), {concurrency: 3})
 }
 
 /**
