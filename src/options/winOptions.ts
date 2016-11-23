@@ -165,7 +165,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 
 export interface AppXOptions {
   // readonly flatten?: boolean
-  readonly packageBackgroundColor?: string | null
+  readonly backgroundColor?: string | null
   readonly makeappxArgs?: Array<string> | null
 
   readonly publisher?: string | null

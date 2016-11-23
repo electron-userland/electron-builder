@@ -1,8 +1,7 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
-import { spawn, exec } from "../util/util"
-import { debug } from "../util/util"
+import { spawn, exec, prepareArgs, execWine, debug } from "../util/util"
 import { WinPackager } from "../winPackager"
 import { log } from "../util/log"
 
@@ -93,7 +92,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   await embeddedArchivePromise
 
   const writeZipToSetup = path.join(options.vendorPath, "WriteZipToSetup.exe")
-  await exec(process.platform === "win32" ? writeZipToSetup : "wine", prepareArgs([setupPath, embeddedArchiveFile], writeZipToSetup))
+  await execWine(writeZipToSetup, [setupPath, embeddedArchiveFile])
 
   await packager.signAndEditResources(setupPath)
   if (options.msi && process.platform === "win32") {
@@ -218,13 +217,6 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
     unlink(path.join(outputDirectory, "Setup.wixobj")),
     unlink(path.join(outputDirectory, outFile.replace(".msi", ".wixpdb"))).catch(e => debug(e.toString())),
   ])
-}
-
-function prepareArgs(args: Array<string>, exePath: string) {
-  if (process.platform !== "win32") {
-    args.unshift(exePath)
-  }
-  return args
 }
 
 function encodedZip(archive: any, dir: string, prefix: string) {

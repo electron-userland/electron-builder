@@ -1,4 +1,4 @@
-import { exec, getTempName, isEmptyOrSpaces, isCi, getCacheDirectory } from "./util/util"
+import { exec, getTempName, isEmptyOrSpaces, isCi, getCacheDirectory, statOrNull } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
 import * as path from "path"
@@ -6,6 +6,7 @@ import { executeFinally, all } from "./util/promise"
 import BluebirdPromise from "bluebird-lst-c"
 import { randomBytes } from "crypto"
 import { TmpDir } from "./util/tmp"
+import { homedir } from "os"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -16,18 +17,37 @@ export interface CodeSigningInfo {
 }
 
 export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): Promise<string> {
-  if (urlOrBase64.startsWith("file://")) {
-    return urlOrBase64.substring("file://".length)
+  let file: string | null = null
+  if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/")) {
+    file = urlOrBase64
   }
-
-  const tempFile = await tmpDir.getTempFile(".p12")
-  if (urlOrBase64.startsWith("https://")) {
-    await download(urlOrBase64, tempFile)
+  else if (urlOrBase64.startsWith("file://")) {
+    file = urlOrBase64.substring("file://".length)
+  }
+  else if (urlOrBase64.startsWith("~/")) {
+    file = path.join(homedir(), urlOrBase64.substring("~/".length))
   }
   else {
-    await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+    const tempFile = await tmpDir.getTempFile(".p12")
+    if (urlOrBase64.startsWith("https://")) {
+      await download(urlOrBase64, tempFile)
+    }
+    else {
+      await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+    }
+    return tempFile
   }
-  return tempFile
+
+  const stat = await statOrNull(file)
+  if (stat == null) {
+    throw new Error(`${file} doesn't exist`)
+  }
+  else if (!stat.isFile()) {
+    throw new Error(`${file} not a file`)
+  }
+  else {
+    return file
+  }
 }
 
 let bundledCertKeychainAdded: Promise<any> | null = null
@@ -95,7 +115,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
   }
 }
 
-export function sign(path: string, name: string, keychain: string): BluebirdPromise<any> {
+export function sign(path: string, name: string, keychain: string): Promise<any> {
   const args = ["--deep", "--force", "--sign", name, path]
   if (keychain != null) {
     args.push("--keychain", keychain)

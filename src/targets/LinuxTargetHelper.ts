@@ -111,7 +111,7 @@ export class LinuxTargetHelper {
       const imagePath = iconFiles.includes("icon_512x512.png") ? path.join(tempDir, "icon_512x512.png") : path.join(tempDir, "icon_256x256.png")
       this.maxIconPath = imagePath
 
-      function resize(size: number): BluebirdPromise<any> {
+      function resize(size: number): Promise<any> {
         const filename = `icon_${size}x${size}.png`
 
         if (iconFiles.includes(filename)) {
@@ -140,7 +140,7 @@ export class LinuxTargetHelper {
 
       this.maxIconPath = imagePath
 
-      function resize(size: number): BluebirdPromise<any> {
+      function resize(size: number): Promise<any> {
         const sizeArg = `${size}x${size}`
         return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, `icon_${size}x${size}x32.png`)])
       }

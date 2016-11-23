@@ -9,14 +9,15 @@ const mkdtemp: any | null = require("fs-extra-p").mkdtemp
 
 process.setMaxListeners(30)
 
+let tempDirectoryPromise: Promise<string>
+
 export class TmpDir {
   private tmpFileCounter = 0
-  private tempDirectoryPromise: BluebirdPromise<string>
 
   private dir: string | null
 
-  getTempFile(suffix: string): BluebirdPromise<string> {
-    if (this.tempDirectoryPromise == null) {
+  getTempFile(suffix: string | null): Promise<string> {
+    if (tempDirectoryPromise == null) {
       let promise: BluebirdPromise<string>
       if (mkdtemp == null) {
         const dir = path.join(tmpdir(), getTempName("electron-builder"))
@@ -26,7 +27,7 @@ export class TmpDir {
         promise = mkdtemp(`${path.join(process.env.TEST_DIR || tmpdir(), "electron-builder")}-`)
       }
 
-      this.tempDirectoryPromise = promise
+      tempDirectoryPromise = promise
         .then(dir => {
           this.dir = dir
           const cleanup = () => {
@@ -51,8 +52,8 @@ export class TmpDir {
         })
     }
 
-    return this.tempDirectoryPromise
-      .then(it => path.join(it, `t-${process.pid.toString(16)}-${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
+    return tempDirectoryPromise
+      .then(it => suffix == null ? it : path.join(it, `t-${process.pid.toString(16)}-${(this.tmpFileCounter++).toString(16)}${suffix.startsWith(".") ? suffix : `-${suffix}`}`))
   }
 
   cleanup(): Promise<any> {

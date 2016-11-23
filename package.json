@@ -9,9 +9,9 @@
     "certs/root_certs.keychain"
   ],
   "bin": {
-    "build": "./out/build-cli.js",
-    "install-app-deps": "./out/install-app-deps.js",
-    "node-gyp-rebuild": "./out/node-gyp-rebuild.js"
+    "build": "./out/cli/build-cli.js",
+    "install-app-deps": "./out/cli/install-app-deps.js",
+    "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },
   "scripts": {
     "compile": "ts-babel . nsis-auto-updater test",

@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="lint" type="js.build_tools.npm" factoryName="npm" nameIsGenerated="true">
     <package-json value="$PROJECT_DIR$/package.json" />
-    <command value="run-script" />
+    <command value="run" />
     <scripts>
       <script value="lint" />
     </scripts>

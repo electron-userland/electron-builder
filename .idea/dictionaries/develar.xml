@@ -23,6 +23,7 @@
       <w>awaiter</w>
       <w>bashism</w>
       <w>bintray</w>
+      <w>bootstrapper</w>
       <w>buildpack</w>
       <w>chown</w>
       <w>circleci</w>
@@ -35,6 +36,7 @@
       <w>crypto</w>
       <w>cuint</w>
       <w>customfunction</w>
+      <w>dcterms</w>
       <w>debian</w>
       <w>depcheck</w>
       <w>devel</w>
@@ -108,6 +110,7 @@
       <w>macos</w>
       <w>macroend</w>
       <w>makeappx</w>
+      <w>makecert</w>
       <w>makedeb</w>
       <w>makedmg</w>
       <w>makensis</w>
@@ -135,6 +138,7 @@
       <w>pkcs</w>
       <w>postinstall</w>
       <w>powerrequired</w>
+      <w>powershell</w>
       <w>prerelease</w>
       <w>productbuild</w>
       <w>progexe</w>
@@ -144,6 +148,7 @@
       <w>rcedit</w>
       <w>readpass</w>
       <w>regedit</w>
+      <w>releasify</w>
       <w>rels</w>
       <w>repos</w>
       <w>rimraf</w>

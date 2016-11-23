@@ -27,8 +27,12 @@ export interface SignOptions {
 export async function sign(options: SignOptions) {
   let hashes = options.hash
   // msi does not support dual-signing
-  if (path.extname(options.path) === ".msi") {
+  const ext = path.extname(options.path)
+  if (ext === ".msi") {
     hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
+  }
+  else if (ext === "appx") {
+    hashes = ["sha256"]
   }
   else {
     if (hashes == null) {
@@ -55,16 +59,18 @@ export async function sign(options: SignOptions) {
 
 // on windows be aware of http://stackoverflow.com/a/32640183/1910191
 async function spawnSign(options: SignOptions, inputPath: string, outputPath: string, hash: string, nest: boolean) {
-  const timestampingServiceUrl = "http://timestamp.verisign.com/scripts/timstamp.dll"
   const isWin = process.platform === "win32"
-  const args = isWin ? [
-    "sign",
-    nest || hash === "sha256" ? "/tr" : "/t", nest || hash === "sha256" ? (options.tr || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl
-  ] : [
-    "-in", inputPath,
-    "-out", outputPath,
-    "-t", timestampingServiceUrl
-  ]
+  const args = isWin ? ["sign"] : ["-in", inputPath, "-out", outputPath]
+
+  if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
+    const timestampingServiceUrl = "http://timestamp.verisign.com/scripts/timstamp.dll"
+    if (isWin) {
+      args.push(nest || hash === "sha256" ? "/tr" : "/t", nest || hash === "sha256" ? (options.tr || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
+    }
+    else {
+      args.push("-t", timestampingServiceUrl)
+    }
+  }
 
   const certificateFile = options.cert
   if (certificateFile == null) {
@@ -146,7 +152,12 @@ async function getToolPath(): Promise<string> {
 
   const vendorPath = await getSignVendorPath()
   if (process.platform === "win32") {
-    return path.join(vendorPath, `windows-${(release().startsWith("6.") ? "6" : "10")}`, "signtool.exe")
+    if (release().startsWith("6.")) {
+      return path.join(vendorPath, "windows-6", "signtool.exe")
+    }
+    else {
+      return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+    }
   }
   else if (process.platform === "darwin" && process.env.CI) {
     return path.join(vendorPath, process.platform, "ci", "osslsigncode")

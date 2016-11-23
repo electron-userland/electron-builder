@@ -1,6 +1,12 @@
 import {
-  assertPack, modifyPackageJson, getPossiblePlatforms, app, appThrows, packageJson,
-  appTwoThrows, allPlatforms
+  assertPack,
+  modifyPackageJson,
+  getPossiblePlatforms,
+  app,
+  appThrows,
+  packageJson,
+  appTwoThrows,
+  allPlatforms
 } from "./helpers/packTester"
 import { move, outputJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
@@ -8,7 +14,7 @@ import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
 import { normalizeOptions } from "out/builder"
-import { createYargs } from "out/cliOptions"
+import { createYargs } from "out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
 

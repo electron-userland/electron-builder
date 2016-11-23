@@ -3,15 +3,15 @@
    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
-  <Identity Name="${packageName}"
+  <Identity Name="${name}"
     ProcessorArchitecture="x64"
-    Publisher="${publisherName}"
-    Version="${packageVersion}" />
+    Publisher="${publisher}"
+    Version="${version}" />
   <Properties>
-    <DisplayName>${packageDisplayName}</DisplayName>
-    <PublisherDisplayName>Reserved</PublisherDisplayName>
-    <Description>No description entered</Description>
-    <Logo>assets\SampleAppx.50x50.png</Logo>
+    <DisplayName>${displayName}</DisplayName>
+    <PublisherDisplayName>${author}</PublisherDisplayName>
+    <Description>${description}</Description>
+    <Logo>assets\${safeName}.50x50.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -23,14 +23,14 @@
     <rescap:Capability Name="runFullTrust"/>
   </Capabilities>
   <Applications>
-    <Application Id="${packageName}" Executable="${packageExecutable}" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="${name}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-       BackgroundColor="${packageBackgroundColor}"
-       DisplayName="${packageDisplayName}"
-       Square150x150Logo="assets\SampleAppx.150x150.png"
-       Square44x44Logo="assets\SampleAppx.44x44.png"
-       Description="${packageDescription}">
-        <uap:DefaultTile Wide310x150Logo="assets\SampleAppx.310x150.png" />
+       BackgroundColor="${backgroundColor}"
+       DisplayName="${displayName}"
+       Square150x150Logo="assets\${safeName}.150x150.png"
+       Square44x44Logo="assets\${safeName}.44x44.png"
+       Description="${description}">
+        <uap:DefaultTile Wide310x150Logo="assets\${safeName}.310x150.png" />
       </uap:VisualElements>
     </Application>
   </Applications>

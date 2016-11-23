@@ -7,9 +7,8 @@ import { yellow, red } from "chalk"
 import _debug from "debug"
 import { warn, log } from "./log"
 import { createHash } from "crypto"
-import Debugger = debug.Debugger
-
 import "source-map-support/register"
+import Debugger = debug.Debugger
 
 export const debug: Debugger = _debug("electron-builder")
 export const debug7z: Debugger = _debug("electron-builder:7z")
@@ -36,7 +35,18 @@ export function removePassword(input: string): string {
   })
 }
 
-export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): BluebirdPromise<string> {
+export function execWine(file: string, args: Array<string>, options?: ExecOptions): Promise<string> {
+  return exec(process.platform === "win32" ? file : "wine", prepareArgs(args, file), options)
+}
+
+export function prepareArgs(args: Array<string>, exePath: string) {
+  if (process.platform !== "win32") {
+    args.unshift(exePath)
+  }
+  return args
+}
+
+export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): Promise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
   }
