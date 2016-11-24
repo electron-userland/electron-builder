@@ -7,12 +7,16 @@ import { PlatformSpecificBuildOptions } from "../metadata"
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
+   Target package type: list of `nsis`, `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
+
+   AppX package can be built only on Windows 10.
   */
   readonly target?: Array<string> | null
 
   /*
    Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
+
+   Fo AppX `sha256` is always used.
    */
   readonly signingHashAlgorithms?: Array<string> | null
 
@@ -27,12 +31,14 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /*
-  The path to the *.pfx certificate you want to sign with. Required only if you build on macOS and need different certificate than the one set in `CSC_LINK` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+  The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
+  Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
    */
   readonly certificateFile?: string
 
   /*
-  The password to the certificate provided in `certificateFile`. Required only if you build on macOS and need to use a different password than the one set in `CSC_KEY_PASSWORD` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+  The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
+  Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
    */
   readonly certificatePassword?: string
 

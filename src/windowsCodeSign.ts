@@ -4,10 +4,10 @@ import * as path from "path"
 import { release } from "os"
 import { getBinFromBintray } from "./util/binDownload"
 
-const TOOLS_VERSION = "1.4.2"
+const TOOLS_VERSION = "1.5.0"
 
 export function getSignVendorPath() {
-  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "ca94097071ce6433a2e18a14518b905ac162afaef82ed88713a8a91c32a55b21")
+  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "5febefb4494f0f62f0f5c0cd6408f0930caf5943ccfeea2bbf90d2eeb34c571d")
 }
 
 export interface SignOptions {
@@ -27,11 +27,10 @@ export interface SignOptions {
 export async function sign(options: SignOptions) {
   let hashes = options.hash
   // msi does not support dual-signing
-  const ext = path.extname(options.path)
-  if (ext === ".msi") {
+  if (options.path.endsWith(".msi")) {
     hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
   }
-  else if (ext === "appx") {
+  else if (options.path.endsWith(".appx")) {
     hashes = ["sha256"]
   }
   else {
@@ -91,7 +90,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
 
   if (!isWin || hash !== "sha1") {
     args.push(isWin ? "/fd" : "-h", hash)
-    if (isWin) {
+    if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
       args.push("/td", "sha256")
     }
   }

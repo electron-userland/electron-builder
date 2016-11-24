@@ -4,7 +4,7 @@ On a macOS development machine valid and appropriate identity from your keychain
 
 | Env Name       |  Description
 | -------------- | -----------
-| `CSC_LINK`                   | The HTTPS link (or base64-encoded data, or `file://` link) to certificate (`*.p12` or `*.pfx` file).
+| `CSC_LINK`                   | The HTTPS link (or base64-encoded data, or `file://` link, or local path) to certificate (`*.p12` or `*.pfx` file). Shorthand `~/` is supported (home directory).
 | `CSC_KEY_PASSWORD`           | The password to decrypt the certificate given in `CSC_LINK`.
 | `CSC_NAME`                   | *macOS-only* Name of certificate (to retrieve from login.keychain). Useful on a development machine (not on CI) if you have several identities (otherwise don't specify it).
 | `CSC_IDENTITY_AUTO_DISCOVERY`| `true` or `false`. Defaults to `true` — on a macOS development machine valid and appropriate identity from your keychain will be automatically used.

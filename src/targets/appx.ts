@@ -1,7 +1,7 @@
 import { getArchSuffix } from "../platformPackager"
 import { Arch } from "../metadata"
 import { WinPackager } from "../winPackager"
-import { use, exec } from "../util/util"
+import { use, spawn } from "../util/util"
 import { emptyDir, copy, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AppXOptions } from "../options/winOptions"
@@ -52,11 +52,11 @@ export default class AppXTarget extends Target {
     ])
 
     const destination = path.join(this.outDir, packager.generateName("appx", arch, false))
-    const args = ["pack", "/d", preAppx, "/p", destination]
+    const args = ["pack", "/o", "/d", preAppx, "/p", destination]
     use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
     // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await exec(path.join(await getSignVendorPath(), "windows-10", process.arch, "makeappx.exe"), args)
+    await spawn(path.join(await getSignVendorPath(), "windows-10", process.arch, "makeappx.exe"), args)
 
     await packager.sign(destination)
     packager.dispatchArtifactCreated(destination, packager.generateName("appx", arch, true))
