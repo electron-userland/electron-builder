@@ -41,6 +41,7 @@ export default class AppImageTarget extends Target {
     await unlinkIfExists(resultFile)
 
     const appImagePath = await appImagePathPromise
+    const desktopFile = await this.desktopEntry
     const args = [
       "-joliet", "on",
       "-volid", "AppImage",
@@ -49,9 +50,9 @@ export default class AppImageTarget extends Target {
       "-map", appOutDir, "/usr/bin",
       "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), "/AppRun",
       // we get executable name in the AppRun by desktop file name, so, must be named as executable
-      "-map", await this.desktopEntry, `/${this.packager.executableName}.desktop`,
+      "-map", desktopFile, `/${this.packager.executableName}.desktop`,
     ]
-    for (let [from, to] of (await this.helper.icons)) {
+    for (const [from, to] of (await this.helper.icons)) {
       args.push("-map", from, `/usr/share/icons/default/${to}`)
     }
 
@@ -64,6 +65,10 @@ export default class AppImageTarget extends Target {
     args.push("-chown_r", "0", "/", "--")
     args.push("-zisofs", `level=${packager.devMetadata.build.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
+
+    if (this.packager.options.effectiveOptionComputed != null && await this.packager.options.effectiveOptionComputed([args, desktopFile])) {
+      return
+    }
 
     await exec(process.arch === "x64" ? path.join(appImagePath, "xorriso") : "xorriso", args)
 

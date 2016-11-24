@@ -153,7 +153,7 @@ export default class FpmTarget extends Target {
     use(options.fpm, it => args.push(...<any>it))
 
     args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
-    for (let mapping of (await this.helper.icons)) {
+    for (const mapping of (await this.helper.icons)) {
       args.push(mapping.join("=/usr/share/icons/hicolor/"))
     }
 

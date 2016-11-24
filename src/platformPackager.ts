@@ -47,7 +47,7 @@ export interface PackagerOptions {
    */
   readonly appMetadata?: AppMetadata
 
-  readonly effectiveOptionComputed?: (options: any) => boolean
+  readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
   readonly extraMetadata?: any
 }

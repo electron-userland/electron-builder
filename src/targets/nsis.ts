@@ -182,7 +182,7 @@ export default class NsisTarget extends Target {
     debug(defines)
     debug(commands)
 
-    if (this.packager.options.effectiveOptionComputed != null && this.packager.options.effectiveOptionComputed([defines, commands])) {
+    if (this.packager.options.effectiveOptionComputed != null && await this.packager.options.effectiveOptionComputed([defines, commands])) {
       return
     }
 

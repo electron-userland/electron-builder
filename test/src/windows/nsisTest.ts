@@ -136,8 +136,8 @@ test.ifNotCiMac("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
-      effectiveOptionComputed: options => {
-        const defines = options[0]
+      effectiveOptionComputed: async (it) => {
+        const defines = it[0]
         expect(defines.HEADER_ICO).toEqual(headerIconPath)
         return false
       }

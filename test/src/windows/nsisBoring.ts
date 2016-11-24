@@ -16,8 +16,8 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
           }
         }
       },
-      effectiveOptionComputed: options => {
-        const defines = options[0]
+      effectiveOptionComputed: async (it) => {
+        const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
         expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()
@@ -45,8 +45,8 @@ test.ifNotCiMac("boring, MUI_HEADER as option", () => {
           }
         }
       },
-      effectiveOptionComputed: options => {
-        const defines = options[0]
+      effectiveOptionComputed: async (it) => {
+        const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
         expect(defines.MUI_HEADERIMAGE_RIGHT).toBeNull()

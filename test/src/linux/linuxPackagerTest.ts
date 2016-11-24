@@ -1,5 +1,5 @@
 import { modifyPackageJson, app, appThrows } from "../helpers/packTester"
-import { remove } from "fs-extra-p"
+import { remove, readFile } from "fs-extra-p"
 import * as path from "path"
 import { Platform } from "out"
 
@@ -7,17 +7,27 @@ test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
 // test.ifNotCi("snap", app({targets: Platform.LINUX.createTarget("snap")}))
 
-test.ifDevOrLinuxCi("AppImage - default icon", app({
+test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),
+  effectiveOptionComputed: async (it) => {
+    const content = await readFile(it[1], "utf-8")
+    expect (content.includes("Foo=bar")).toBeTruthy()
+    expect (content.includes("Terminal=true")).toBeTruthy()
+    return false
+  },
   devMetadata: {
     build: {
       linux: {
-       executableName: "foo",
+        executableName: "foo",
+        desktop: {
+          Foo: "bar",
+          Terminal: "true",
+        },
       }
     }
   }
 }, {
-  projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
+  projectDirCreated: it => remove(path.join(it, "build")),
 }))
 
 test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()}, {

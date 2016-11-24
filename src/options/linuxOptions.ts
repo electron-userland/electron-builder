@@ -47,7 +47,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly fpm?: Array<string> | null
 
   /**
-   The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries.
+   The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
    */
   readonly desktop?: { [key: string]: string; } | null
 
