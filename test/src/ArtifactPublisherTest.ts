@@ -11,6 +11,12 @@ if (process.env.CI && process.platform === "win32") {
   })
 }
 
+if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
+  fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
+    console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
+  })
+}
+
 function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }

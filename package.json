@@ -26,6 +26,7 @@
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh",
+    "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "precommit": "validate-commit-msg"
   },
   "repository": "electron-userland/electron-builder",

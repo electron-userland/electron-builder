@@ -5,7 +5,9 @@ test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"], 
 
 test("only zip", createMacTargetTest(["zip"], ["Test App ßW-1.1.0-mac.zip"]))
 
-test.ifMac("pkg", createMacTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
+if (process.env.CSC_KEY_PASSWORD != null) {
+  test.ifMac("pkg", createMacTargetTest(["pkg"], ["Test App ßW-1.1.0.pkg"]))
+}
 
 test("tar.gz", createMacTargetTest(["tar.gz"], ["Test App ßW-1.1.0-mac.tar.gz"]))
 

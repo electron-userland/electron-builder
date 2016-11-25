@@ -17,7 +17,7 @@ export function hasMagic(pattern: Minimatch) {
     return true
   }
 
-  for (let i of set[0]) {
+  for (const i of set[0]) {
     if (typeof i !== "string") {
       return true
     }
@@ -44,7 +44,6 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
     }
 
     let relative = it.substring(src.length + 1)
-
     if (path.sep === "\\") {
       relative = relative.replace(/\\/g, "/")
     }
@@ -56,7 +55,7 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
 // https://github.com/joshwnj/minimatch-all/blob/master/index.js
 function minimatchAll(path: string, patterns: Array<Minimatch>, stat: Stats): boolean {
   let match = false
-  for (let pattern of patterns) {
+  for (const pattern of patterns) {
     // If we've got a match, only re-test for exclusions.
     // if we don't have a match, only re-test for inclusions.
     if (match !== pattern.negate) {

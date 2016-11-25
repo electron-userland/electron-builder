@@ -107,7 +107,6 @@ async function runTests() {
   }
 
   process.env.SKIP_WIN = skipWin
-  process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
   process.env.TEST_DIR = TEST_DIR
 
   const rootDir = path.join(__dirname, "..", "..", "..")

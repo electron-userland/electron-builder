@@ -197,7 +197,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
     let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
-    if (defaultMatcher.isEmpty()) {
+    if (defaultMatcher.isEmpty() || defaultMatcher.containsOnlyIgnore()) {
       defaultMatcher.addPattern("**/*")
     }
     else {
@@ -252,7 +252,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     //noinspection ES6MissingAwait
     const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(appOutDir)]
     if (this.platform !== Platform.MAC) {
-      promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")) .catch(() => {/* ignore */}))
+      promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
     }
     if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
       // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file

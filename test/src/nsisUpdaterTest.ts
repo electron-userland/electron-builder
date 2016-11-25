@@ -4,9 +4,14 @@ import * as path from "path"
 import { TmpDir } from "out/util/tmp"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
-import { GenericServerOptions } from "out/options/publishOptions"
-import { GithubOptions } from "out/options/publishOptions"
+import { GenericServerOptions, GithubOptions } from "out/options/publishOptions"
 import BluebirdPromise from "bluebird-lst-c"
+
+if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
+  fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
+    console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
+  })
+}
 
 const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
 

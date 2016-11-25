@@ -270,12 +270,12 @@ Windows specific build options.
 
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
-| signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
+| target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p>
+| signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a><p>Array of signing algorithms used. Defaults to <code>['sha1', 'sha256']</code></p> <p>Fo AppX <code>sha256</code> is always used.</p>
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.
-| certificateFile | <a name="WinBuildOptions-certificateFile"></a>The path to the *.pfx certificate you want to sign with. Required only if you build on macOS and need different certificate than the one set in `CSC_LINK` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
-| certificatePassword | <a name="WinBuildOptions-certificatePassword"></a>The password to the certificate provided in `certificateFile`. Required only if you build on macOS and need to use a different password than the one set in `CSC_KEY_PASSWORD` - see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+| certificateFile | <a name="WinBuildOptions-certificateFile"></a><p>The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).</p>
+| certificatePassword | <a name="WinBuildOptions-certificatePassword"></a><p>The password to the certificate provided in <code>certificateFile</code>. Please use it only if you cannot use env variable <code>CSC_KEY_PASSWORD</code> (<code>WIN_CSC_KEY_PASSWORD</code>) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).</p>
 | certificateSubjectName | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 
@@ -306,9 +306,8 @@ Development dependencies are never copied in any case. You don't need to ignore 
 [Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to mac, linux or win according to current platform) and `${arch}` in the pattern.
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
-Remember that default pattern `**/*` is not added to your custom, so, you have to add it explicitly — e.g. `["**/*", "!ignoreMe${/*}"]`.
-
-`package.json` is added to your custom in any case.
+Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
+ `package.json` is added to your custom in any case.
 
 May be specified in the platform options (e.g. in the `build.mac`).
 

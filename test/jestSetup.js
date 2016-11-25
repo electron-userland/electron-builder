@@ -34,3 +34,6 @@ test.ifNotCiMac = isCi && process.platform === "darwin" ? skip : test
 test.ifDevOrWinCi = !isCi || isWindows ? test : skip
 test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip
 test.ifWinCi = isCi && isWindows ? test : skip
+
+delete process.env.CSC_NAME
+process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"

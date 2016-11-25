@@ -9,12 +9,18 @@ import BluebirdPromise from "bluebird-lst-c"
 import { Target } from "./targetFactory"
 import { getSignVendorPath } from "../windowsCodeSign"
 import sanitizeFileName from "sanitize-filename"
+import { release } from "os"
 
 export default class AppXTarget extends Target {
   private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.appx)
 
   constructor(private readonly packager: WinPackager, private readonly outDir: string) {
     super("appx")
+
+    const osVersion = release()
+    if (process.platform !== "win32" || parseInt(osVersion.substring(0, osVersion.indexOf(".")), 10) < 10) {
+      throw new Error("AppX is supported only on Windows 10")
+    }
   }
 
   // no flatten - use asar or npm 3 or yarn
