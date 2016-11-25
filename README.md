@@ -34,7 +34,7 @@ For an app that will be shipped to production, you should sign your application.
     "build": {
       "appId": "your.id",
       "mac": {
-        "category": "your.app.category.type",
+        "category": "your.app.category.type"
       },
       "win": {
         "iconUrl": "(windows-only) https link to icon"
