@@ -2,12 +2,13 @@ import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_pro
 import BluebirdPromise from "bluebird-lst-c"
 import { homedir } from "os"
 import * as path from "path"
-import { readJson, stat, Stats, unlink, access } from "fs-extra-p"
+import { readJson } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import _debug from "debug"
 import { warn, log } from "./log"
 import { createHash } from "crypto"
 import "source-map-support/register"
+import { statOrNull } from "./fs"
 import Debugger = debug.Debugger
 
 export const debug: Debugger = _debug("electron-builder")
@@ -182,30 +183,6 @@ function findFromElectronPrebuilt(packageData: any): any {
   return null
 }
 
-export async function statOrNull(file: string): Promise<Stats | null> {
-  try {
-    return await stat(file)
-  }
-  catch (e) {
-    if (e.code === "ENOENT") {
-      return null
-    }
-    else {
-      throw e
-    }
-  }
-}
-
-export async function exists(file: string): Promise<boolean> {
-  try {
-    await access(file)
-    return true
-  }
-  catch (e) {
-    return false
-  }
-}
-
 export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
   if (userAppDir != null) {
     const absolutePath = path.resolve(projectDir, userAppDir)
@@ -258,13 +235,6 @@ export function getTempName(prefix?: string | n): string {
 
 export function isEmptyOrSpaces(s: string | n) {
   return s == null || s.trim().length === 0
-}
-
-export function unlinkIfExists(file: string) {
-  return unlink(file)
-    .catch(() => {
-      // ignore
-    })
 }
 
 export function asArray<T>(v: n | T | Array<T>): Array<T> {

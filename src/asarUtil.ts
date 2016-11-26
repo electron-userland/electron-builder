@@ -1,78 +1,19 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
-import { statOrNull, debug, isCi } from "./util/util"
-import {
-  lstat,
-  readdir,
-  readFile,
-  Stats,
-  createWriteStream,
-  ensureDir,
-  createReadStream,
-  readJson,
-  writeFile,
-  realpath,
-  link
-} from "fs-extra-p"
+import { debug, isCi } from "./util/util"
+import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, realpath, link } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "./util/log"
 import { deepAssign } from "./util/deepAssign"
 import { Filter } from "./util/filter"
+import { walk, statOrNull, CONCURRENCY, MAX_FILE_REQUESTS } from "./util/fs"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
 const Filesystem = require("asar-electron-builder/lib/filesystem")
 const UINT64 = require("cuint").UINT64
 
-const MAX_FILE_REQUESTS = 8
-const concurrency = {concurrency: MAX_FILE_REQUESTS}
 const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
-
-export async function walk(initialDirPath: string, consumer?: (file: string, stat: Stats) => void, filter?: Filter): Promise<Array<string>> {
-  const result: Array<string> = []
-  const queue: Array<string> = [initialDirPath]
-  let addDirToResult = false
-  while (queue.length > 0) {
-    const dirPath = queue.pop()!
-    if (addDirToResult) {
-      result.push(dirPath)
-    }
-    else {
-      addDirToResult = true
-    }
-
-    const childNames = await readdir(dirPath)
-    childNames.sort()
-
-    const dirs: Array<string> = []
-    await BluebirdPromise.map(childNames, name => {
-      const filePath = dirPath + path.sep + name
-      return lstat(filePath)
-        .then(stat => {
-          if (filter != null && !filter(filePath, stat)) {
-            return
-          }
-
-          if (consumer != null) {
-            consumer(filePath, stat)
-          }
-
-          if (stat.isDirectory()) {
-            dirs.push(filePath)
-          }
-          else {
-            result.push(filePath)
-          }
-        })
-    }, concurrency)
-
-    for (let i = dirs.length - 1; i > -1; i--) {
-      queue.push(dirs[i])
-    }
-  }
-
-  return result
-}
 
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter, unpackPattern: Filter | null): Promise<any> {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
@@ -191,7 +132,7 @@ class AsarPackager {
         const base = path.join(unpackedDest, it)
         await ensureDir(base)
         await BluebirdPromise.each(dirToCreate.get(it)!, it => ensureDir(path.join(base, it)))
-      }, concurrency)
+      }, CONCURRENCY)
     }
   }
 

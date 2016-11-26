@@ -1,11 +1,12 @@
 import yargs from "yargs"
 import { printErrorAndExit } from "../util/promise"
-import { exec, spawn, unlinkIfExists } from "../util/util"
+import { exec, spawn } from "../util/util"
 import { getSignVendorPath } from "../windowsCodeSign"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { log } from "../util/log"
 import { TmpDir } from "../util/tmp"
+import { unlinkIfExists } from "../util/fs"
 
 async function main() {
   const args: any = yargs
@@ -31,7 +32,7 @@ async function main() {
   log(`${pfx} created. Please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing how do use it to sign.`)
 
   const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
-  log(`${pfx} will be imported into ${certLocation} Operation will be succeded only if runned from root. Otherwise import file manually.`)
+  log(`${pfx} will be imported into ${certLocation} Operation will be succeed only if runned from root. Otherwise import file manually.`)
   await spawn("powershell.exe", ["Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", ""])
   tmpDir.cleanup()
 }

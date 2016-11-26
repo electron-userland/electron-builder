@@ -22,6 +22,7 @@
         </JSCodeStyleSettings>
         <TypeScriptCodeStyleSettings>
           <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
+          <option name="IMPORTS_WRAP" value="0" />
           <option name="SPACES_WITHIN_IMPORTS" value="true" />
         </TypeScriptCodeStyleSettings>
         <XML>

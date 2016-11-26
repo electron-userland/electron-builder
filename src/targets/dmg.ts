@@ -4,12 +4,13 @@ import { log, warn } from "../util/log"
 import { PlatformPackager } from "../platformPackager"
 import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
-import { debug, use, exec, statOrNull, isEmptyOrSpaces, spawn, exists } from "../util/util"
+import { debug, use, exec, isEmptyOrSpaces, spawn } from "../util/util"
 import { copy, unlink, outputFile, remove } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 import sanitizeFileName from "sanitize-filename"
 import { Arch } from "../metadata"
 import { Target } from "./targetFactory"
+import { exists, statOrNull } from "../util/fs"
 
 export class DmgTarget extends Target {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")

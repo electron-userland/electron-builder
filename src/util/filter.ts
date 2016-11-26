@@ -2,7 +2,6 @@ import { copy, Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 
-// we use relative path to avoid canonical path issue - e.g. /tmp vs /private/tmp
 export function copyFiltered(src: string, destination: string, filter: Filter, dereference: boolean): Promise<any> {
   return copy(src, destination, {
     dereference: dereference,

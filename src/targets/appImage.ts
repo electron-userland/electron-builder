@@ -1,6 +1,6 @@
 import { Arch } from "../metadata"
 import * as path from "path"
-import { exec, unlinkIfExists } from "../util/util"
+import { exec } from "../util/util"
 import { open, write, createReadStream, createWriteStream, close, chmod } from "fs-extra-p"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { getBin } from "../util/binDownload"
@@ -9,6 +9,7 @@ import { v1 as uuid1 } from "uuid-1345"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "../util/log"
 import { Target } from "./targetFactory"
+import { unlinkIfExists } from "../util/fs"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection

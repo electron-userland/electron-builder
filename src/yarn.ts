@@ -2,8 +2,9 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "./util/log"
 import { homedir } from "os"
-import { spawn, exists, asArray } from "./util/util"
+import { spawn, asArray } from "./util/util"
 import { BuildMetadata } from "./metadata"
+import { exists } from "./util/fs"
 
 export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, arch: string, forceInstall: boolean = false) {
   const args = computeExtraArgs(options)

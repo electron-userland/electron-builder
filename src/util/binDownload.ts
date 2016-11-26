@@ -1,9 +1,10 @@
-import { statOrNull, spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
+import { spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
 import { rename, unlink, emptyDir } from "fs-extra-p"
 import { download } from "./httpRequest"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
+import { statOrNull } from "./fs"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

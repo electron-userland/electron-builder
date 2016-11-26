@@ -2,7 +2,7 @@ import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch,
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
-import { statOrNull, use, unlinkIfExists, isEmptyOrSpaces, asArray, debug } from "./util/util"
+import { use, isEmptyOrSpaces, asArray, debug } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { Minimatch } from "minimatch"
@@ -19,6 +19,7 @@ import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
 import { Target } from "./targets/targetFactory"
 import { deepAssign } from "./util/deepAssign"
+import { statOrNull, unlinkIfExists } from "./util/fs"
 import EventEmitter = NodeJS.EventEmitter
 
 export interface PackagerOptions {
@@ -242,7 +243,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
     let promise
     if (asarOptions == null) {
-      promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.info.devMetadata.build.dereference || this.platform === Platform.WINDOWS)
+      promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
     }
     else {
       const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
@@ -330,16 +331,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (patterns == null || patterns.length === 0) {
       return BluebirdPromise.resolve()
     }
-    else {
-      const promises: Array<Promise<any>> = []
-      for (const pattern of patterns) {
-        if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
-          pattern.addAllPattern()
-        }
-        promises.push(copyFiltered(pattern.from, pattern.to, pattern.createFilter(), this.platform === Platform.WINDOWS))
+
+    return BluebirdPromise.map(patterns, pattern => {
+      if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
+        pattern.addAllPattern()
       }
-      return BluebirdPromise.all(promises)
-    }
+      return copyFiltered(pattern.from, pattern.to, pattern.createFilter(), this.platform === Platform.WINDOWS)
+    })
   }
 
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {

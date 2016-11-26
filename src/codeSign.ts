@@ -1,4 +1,4 @@
-import { exec, getTempName, isEmptyOrSpaces, isCi, getCacheDirectory, statOrNull } from "./util/util"
+import { exec, getTempName, isEmptyOrSpaces, isCi, getCacheDirectory } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "./util/httpRequest"
 import * as path from "path"
@@ -7,6 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { randomBytes } from "crypto"
 import { TmpDir } from "./util/tmp"
 import { homedir } from "os"
+import { statOrNull } from "./util/fs"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
