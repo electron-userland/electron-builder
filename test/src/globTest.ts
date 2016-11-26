@@ -10,9 +10,7 @@ test.ifDevOrLinuxCi("unpackDir one", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   devMetadata: {
     build: {
-      asar: {
-        unpackDir: "{assets,b2}"
-      },
+      asarUnpack: ["assets", "b2"],
     }
   }
 }, {
@@ -35,9 +33,7 @@ test.ifDevOrLinuxCi("unpackDir", () => {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     devMetadata: {
       build: {
-        asar: {
-          unpackDir: "{assets,b2}"
-        },
+        asarUnpack: ["assets", "b2"],
       }
     }
   }, {

@@ -1,13 +1,21 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
-import { statOrNull, debug } from "./util/util"
+import { statOrNull, debug, isCi } from "./util/util"
 import {
-  lstat, readdir, readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson,
-  writeFile, realpath
+  lstat,
+  readdir,
+  readFile,
+  Stats,
+  createWriteStream,
+  ensureDir,
+  createReadStream,
+  readJson,
+  writeFile,
+  realpath,
+  link
 } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "./util/log"
-import { Minimatch } from "minimatch"
 import { deepAssign } from "./util/deepAssign"
 import { Filter } from "./util/filter"
 
@@ -69,10 +77,6 @@ export async function walk(initialDirPath: string, consumer?: (file: string, sta
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter, unpackPattern: Filter | null): Promise<any> {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   await new AsarPackager(src, resourcesPath, options, unpackPattern).pack(filter)
-}
-
-function isUnpackDir(path: string, pattern: Minimatch, rawPattern: string): boolean {
-  return path.startsWith(rawPattern) || pattern.match(path)
 }
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
@@ -193,19 +197,15 @@ class AsarPackager {
 
   async createPackageFromFiles(files: Array<string>, metadata: Map<string, Stats>) {
     // search auto unpacked dir
-    const autoUnpackDirs = new Set<string>()
+    const unpackedDirs = new Set<string>()
     const unpackedDest = `${this.outFile}.unpacked`
     const fileIndexToModulePackageData = new Map<number, BluebirdPromise<string>>()
+    await ensureDir(path.dirname(this.outFile))
+
     if (this.options.smartUnpack !== false) {
-      await this.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest, fileIndexToModulePackageData)
+      await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest, fileIndexToModulePackageData)
     }
 
-    const unpackDir = this.options.unpackDir == null ? null : new Minimatch(this.options.unpackDir)
-    const unpack = this.options.unpack == null ? null : new Minimatch(this.options.unpack, {
-      matchBase: true
-    })
-
-    const createDirPromises: Array<Promise<any>> = [ensureDir(path.dirname(this.outFile))]
     const copyPromises: Array<Promise<any>> = []
     const mainPackageJson = path.join(this.src, "package.json")
     for (let i = 0, n = files.length; i < n; i++) {
@@ -214,12 +214,6 @@ class AsarPackager {
       if (stat.isFile()) {
         const fileParent = path.dirname(file)
         const dirNode = this.fs.searchNodeFromPath(fileParent)
-
-        if (dirNode.unpacked && createDirPromises.length > 0) {
-          await BluebirdPromise.all(createDirPromises)
-          createDirPromises.length = 0
-        }
-
         const packageDataPromise = fileIndexToModulePackageData.get(i)
         let newData: any | null = null
         if (packageDataPromise == null) {
@@ -234,19 +228,12 @@ class AsarPackager {
         const fileSize = newData == null ? stat.size : Buffer.byteLength(newData)
         const node = this.fs.searchNodeFromPath(file)
         node.size = fileSize
-        if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat)) || (unpack != null && unpack.match(file))) {
+        if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))) {
           node.unpacked = true
 
-          if (!dirNode.unpacked) {
-            const promise = ensureDir(path.join(unpackedDest, path.relative(this.src, fileParent)))
-            if (createDirPromises.length === 0) {
-              await createDirPromises
-            }
-            else {
-              createDirPromises.push(promise)
-              await BluebirdPromise.all(createDirPromises)
-              createDirPromises.length = 0
-            }
+          if (!dirNode.unpacked && !unpackedDirs.has(fileParent)) {
+            unpackedDirs.add(fileParent)
+            await ensureDir(path.join(unpackedDest, path.relative(this.src, fileParent)))
           }
 
           const unpackedFile = path.join(unpackedDest, path.relative(this.src, file))
@@ -276,24 +263,18 @@ class AsarPackager {
       }
       else if (stat.isDirectory()) {
         let unpacked = false
-        if (autoUnpackDirs.has(file)) {
+        if (unpackedDirs.has(file)) {
           unpacked = true
         }
         else {
-          unpacked = unpackDir != null && isUnpackDir(path.relative(this.src, file), unpackDir, this.options.unpackDir!)
-          if (unpacked) {
-            createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(this.src, file))))
-          }
-          else {
-            for (let d of autoUnpackDirs) {
-              if (file.length > (d.length + 2) && file[d.length] === path.sep && file.startsWith(d)) {
-                unpacked = true
-                autoUnpackDirs.add(file)
-                // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
-                // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-                createDirPromises.push(ensureDir(path.join(unpackedDest, path.relative(this.src, file))))
-                break
-              }
+          for (const dir of unpackedDirs) {
+            if (file.length > (dir.length + 2) && file[dir.length] === path.sep && file.startsWith(dir)) {
+              unpacked = true
+              unpackedDirs.add(file)
+              // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
+              // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
+              await ensureDir(path.join(unpackedDest, path.relative(this.src, file)))
+              break
             }
           }
         }
@@ -362,7 +343,7 @@ class AsarPackager {
     })
   }
 
-  async order(filenames: Array<string>) {
+  private async order(filenames: Array<string>) {
     const orderingFiles = (await readFile(this.options.ordering!, "utf8")).split("\n").map(line => {
       if (line.indexOf(":") !== -1) {
         line = line.split(":").pop()!
@@ -375,7 +356,7 @@ class AsarPackager {
     })
 
     const ordering: Array<string> = []
-    for (let file of orderingFiles) {
+    for (const file of orderingFiles) {
       let pathComponents = file.split(path.sep)
       let str = this.src
       for (let pathComponent of pathComponents) {
@@ -387,12 +368,12 @@ class AsarPackager {
     const filenamesSorted: Array<string> = []
     let missing = 0
     const total = filenames.length
-    for (let file of ordering) {
+    for (const file of ordering) {
       if (!filenamesSorted.includes(file) && filenames.includes(file)) {
         filenamesSorted.push(file)
       }
     }
-    for (let file of filenames) {
+    for (const file of filenames) {
       if (!filenamesSorted.includes(file)) {
         filenamesSorted.push(file)
         missing += 1
@@ -406,7 +387,7 @@ class AsarPackager {
 function cleanupPackageJson(data: any): any {
   try {
     let changed = false
-    for (let prop of Object.getOwnPropertyNames(data)) {
+    for (const prop of Object.getOwnPropertyNames(data)) {
       if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords") {
         delete data[prop]
         changed = true
@@ -459,6 +440,10 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
 }
 
 function copyFile(src: string, dest: string, stats: Stats) {
+  if (process.platform != "win32" && (isCi || process.env.USE_HARD_LINKS === "true")) {
+    return link(src, dest)
+  }
+
   return new BluebirdPromise(function (resolve, reject) {
     const readStream = createReadStream(src)
     const writeStream = createWriteStream(dest, {mode: stats.mode})

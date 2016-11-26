@@ -30,6 +30,11 @@ export class FileMatcher {
     this.patterns.push(pattern)
   }
 
+  addAllPattern() {
+    // must be first, see minimatchAll implementation
+    this.patterns.unshift("**/*")
+  }
+
   isEmpty() {
     return this.patterns.length === 0
   }

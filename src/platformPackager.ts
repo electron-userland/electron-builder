@@ -18,6 +18,7 @@ import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptio
 import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
 import { Target } from "./targets/targetFactory"
+import { deepAssign } from "./util/deepAssign"
 import EventEmitter = NodeJS.EventEmitter
 
 export interface PackagerOptions {
@@ -198,7 +199,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
     let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
     if (defaultMatcher.isEmpty() || defaultMatcher.containsOnlyIgnore()) {
-      defaultMatcher.addPattern("**/*")
+      defaultMatcher.addAllPattern()
     }
     else {
       defaultMatcher.addPattern("package.json")
@@ -288,34 +289,41 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private computeAsarOptions(customBuildOptions: DC): AsarOptions | null {
-    let result = this.devMetadata.build.asar
-    let platformSpecific = customBuildOptions.asar
-    if (platformSpecific != null) {
-      result = platformSpecific
+    function errorMessage(name: string) {
+      return `${name} is deprecated is deprecated and not supported — please use build.asarUnpack`
     }
+
+    const buildMetadata = <any>this.devMetadata.build
+    if (buildMetadata["asar-unpack"] != null) {
+      throw new Error(errorMessage("asar-unpack"))
+    }
+    if (buildMetadata["asar-unpack-dir"] != null) {
+      throw new Error(errorMessage("asar-unpack-dir"))
+    }
+
+    const platformSpecific = customBuildOptions.asar
+    const result = platformSpecific == null ? this.devMetadata.build.asar : platformSpecific
 
     if (result === false) {
       return null
     }
 
-    const buildMetadata = <any>this.devMetadata.build
-    if (buildMetadata["asar-unpack"] != null) {
-      warn("asar-unpack is deprecated, please set as asar.unpack")
-    }
-    if (buildMetadata["asar-unpack-dir"] != null) {
-      warn("asar-unpack-dir is deprecated, please set as asar.unpackDir")
+    const defaultOptions = {
+      extraMetadata: this.options.extraMetadata,
     }
 
     if (result == null || result === true) {
-      result = {
-        unpack: buildMetadata["asar-unpack"],
-        unpackDir: buildMetadata["asar-unpack-dir"]
-      }
+      return defaultOptions
     }
 
-    return Object.assign(result, {
-      extraMetadata: this.options.extraMetadata
-    })
+    if ((<any>result).unpackDir != null) {
+      throw new Error(errorMessage("asar.unpackDir"))
+    }
+    if ((<any>result).unpack != null) {
+      throw new Error(errorMessage("asar.unpack"))
+    }
+
+    return deepAssign({}, result, defaultOptions)
   }
 
   private doCopyExtraFiles(patterns: Array<FileMatcher> | null): Promise<any> {
@@ -324,11 +332,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     else {
       const promises: Array<Promise<any>> = []
-      for (let i = 0; i < patterns.length; i++) {
-        if (patterns[i].isEmpty()) {
-          patterns[i].addPattern("**/*")
+      for (const pattern of patterns) {
+        if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
+          pattern.addAllPattern()
         }
-        promises.push(copyFiltered(patterns[i].from, patterns[i].to, patterns[i].createFilter(), this.platform === Platform.WINDOWS))
+        promises.push(copyFiltered(pattern.from, pattern.to, pattern.createFilter(), this.platform === Platform.WINDOWS))
       }
       return BluebirdPromise.all(promises)
     }

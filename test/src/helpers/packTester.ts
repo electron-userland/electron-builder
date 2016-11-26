@@ -78,6 +78,10 @@ export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOp
   return () => assertPack("test-app-one", packagerOptions, checkOptions)
 }
 
+export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return () => assertPack("test-app", packagerOptions, checkOptions)
+}
+
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   if (checkOptions.signed) {
     packagerOptions = signed(packagerOptions)

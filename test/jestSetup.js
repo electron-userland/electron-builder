@@ -37,3 +37,4 @@ test.ifWinCi = isCi && isWindows ? test : skip
 
 delete process.env.CSC_NAME
 process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
+process.env.USE_HARD_LINKS = "true"

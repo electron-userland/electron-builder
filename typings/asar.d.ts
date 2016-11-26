@@ -5,8 +5,6 @@ declare module "asar-electron-builder" {
   }
 
   interface AsarOptions {
-    unpack?: string
-    unpackDir?: string
     dot?: boolean
 
     smartUnpack?: boolean
