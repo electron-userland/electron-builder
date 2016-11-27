@@ -1,14 +1,7 @@
-import { copy, Stats } from "fs-extra-p"
+import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-
-export function copyFiltered(src: string, destination: string, filter: Filter, dereference: boolean): Promise<any> {
-  return copy(src, destination, {
-    dereference: dereference,
-    filter: <any>filter,
-    passStats: true,
-  })
-}
+import { Filter } from "./fs"
 
 export function hasMagic(pattern: Minimatch) {
   const set = pattern.set
@@ -24,8 +17,6 @@ export function hasMagic(pattern: Minimatch) {
 
   return false
 }
-
-export type Filter = (file: string, stat: Stats) => boolean
 
 export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
   return function (it, stat) {

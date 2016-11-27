@@ -1,6 +1,6 @@
 "use strict"
 
-const Linter = require("tslint")
+const Linter = require("tslint").Linter
 const path = require("path")
 
 const configuration = {
@@ -61,17 +61,24 @@ const configuration = {
   }
 }
 const options = {
-  configuration: configuration,
+  formatter: "stylish",
 }
 
-for (let projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "nsis-auto-updater"), __dirname]) {
+let hasErrors = false
+for (const projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "nsis-auto-updater"), __dirname]) {
   const program = Linter.createProgram("tsconfig.json", projectDir)
-  for (let file of Linter.getFileNames(program)) {
+  for (const file of Linter.getFileNames(program)) {
     const fileContents = program.getSourceFile(file).getFullText()
-    const linter = new Linter(file, fileContents, options, program)
-    const out = linter.lint().output
-    if (out.length > 0) {
-      process.stdout.write(out)
+    const linter = new Linter(options, program)
+    linter.lint(file, fileContents, configuration)
+    const result = linter.getResult()
+    if (result.failures.length > 0) {
+      hasErrors = true
+      process.stdout.write(result.output)
     }
   }
+}
+
+if (hasErrors) {
+  process.exit(1)
 }

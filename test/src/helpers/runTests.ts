@@ -3,6 +3,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, readdir, unlink, removeSync, readJson } from "fs-extra-p"
 import { homedir } from "os"
 import { TEST_DIR, ELECTRON_VERSION } from "./config"
+import isCi from "is-ci"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
 const util = require("../../../out/util/util")
@@ -33,7 +34,7 @@ main()
   })
 
 async function deleteOldElectronVersion(): Promise<any> {
-  if (!process.env.CI) {
+  if (!isCi) {
     return
   }
 
@@ -97,7 +98,7 @@ async function runTests() {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
-      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js", "nsisUpdaterTest")
     }
     else {
       args.push("windows.*", "mac.*")

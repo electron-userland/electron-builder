@@ -1,7 +1,8 @@
 import * as path from "path"
-import { createFilter, hasMagic, Filter } from "./util/filter"
+import { createFilter, hasMagic } from "./util/filter"
 import { Minimatch } from "minimatch"
 import { asArray } from "./util/util"
+import { Filter } from "./util/fs"
 
 export interface FilePattern {
   from?: string

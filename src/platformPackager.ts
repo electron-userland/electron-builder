@@ -9,7 +9,6 @@ import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "./util/log"
 import { AppInfo } from "./appInfo"
-import { copyFiltered } from "./util/filter"
 import { unpackElectron } from "./packager/dirPackager"
 import { TmpDir } from "./util/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
@@ -19,7 +18,7 @@ import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
 import { Target } from "./targets/targetFactory"
 import { deepAssign } from "./util/deepAssign"
-import { statOrNull, unlinkIfExists } from "./util/fs"
+import { statOrNull, unlinkIfExists, copyDir } from "./util/fs"
 import EventEmitter = NodeJS.EventEmitter
 
 export interface PackagerOptions {
@@ -243,7 +242,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
     let promise
     if (asarOptions == null) {
-      promise = copyFiltered(appDir, path.join(resourcesPath, "app"), filter, this.platform === Platform.WINDOWS)
+      promise = copyDir(appDir, path.join(resourcesPath, "app"), filter)
     }
     else {
       const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
@@ -304,8 +303,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const platformSpecific = customBuildOptions.asar
     const result = platformSpecific == null ? this.devMetadata.build.asar : platformSpecific
-
     if (result === false) {
+      warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
+        "Please enable asar and use asarUnpack to unpack files that must be externally available.")
       return null
     }
 
@@ -317,13 +317,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return defaultOptions
     }
 
-    if ((<any>result).unpackDir != null) {
-      throw new Error(errorMessage("asar.unpackDir"))
+    for (const name of ["unpackDir", "unpack"]) {
+      if ((<any>result)[name] != null) {
+        throw new Error(errorMessage(`asar.${name}`))
+      }
     }
-    if ((<any>result).unpack != null) {
-      throw new Error(errorMessage("asar.unpack"))
-    }
-
     return deepAssign({}, result, defaultOptions)
   }
 
@@ -336,7 +334,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
         pattern.addAllPattern()
       }
-      return copyFiltered(pattern.from, pattern.to, pattern.createFilter(), this.platform === Platform.WINDOWS)
+      return copyDir(pattern.from, pattern.to, pattern.createFilter())
     })
   }
 

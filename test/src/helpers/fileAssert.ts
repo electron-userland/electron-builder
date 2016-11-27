@@ -1,9 +1,10 @@
-import { stat, Stats, access } from "fs-extra-p"
+import { stat, Stats } from "fs-extra-p"
 import * as json8 from "json8"
 import { green, red, gray } from "chalk"
 import { diffJson } from "diff"
 import { AssertionError } from "assert"
 import * as path from "path"
+import { exists } from "out/util/fs"
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(actual: any): Assertions {
@@ -65,14 +66,9 @@ class Assertions {
   }
 
   async doesNotExist() {
-    try {
-      await access(this.actual)
+    if (await exists(this.actual)) {
+      throw new Error(`Path ${this.actual} must not exist`)
     }
-    catch (e) {
-      return
-    }
-
-    throw new Error(`Path ${this.actual} must not exist`)
   }
 
   async throws(error: string | RegExp) {

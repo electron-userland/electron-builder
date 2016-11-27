@@ -1,4 +1,4 @@
-import { rename, readFile, writeFile, copy, unlink, utimes } from "fs-extra-p"
+import { rename, readFile, writeFile, unlink, utimes, copy } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import BluebirdPromise from "bluebird-lst-c"
@@ -115,7 +115,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   use(packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category, it => appPlist.LSApplicationCategoryType = it)
   appPlist.NSHumanReadableCopyright = appInfo.copyright
 
-  const promises: Array<BluebirdPromise<any | n>> = [
+  const promises: Array<Promise<any | n>> = [
     writeFile(appPlistFilename, buildPlist(appPlist)),
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
     writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),

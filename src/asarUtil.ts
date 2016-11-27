@@ -1,12 +1,11 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
-import { debug, isCi } from "./util/util"
-import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, realpath, link } from "fs-extra-p"
+import { debug } from "./util/util"
+import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, realpath } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "./util/log"
 import { deepAssign } from "./util/deepAssign"
-import { Filter } from "./util/filter"
-import { walk, statOrNull, CONCURRENCY, MAX_FILE_REQUESTS } from "./util/fs"
+import { walk, statOrNull, CONCURRENCY, MAX_FILE_REQUESTS, Filter, FileCopier } from "./util/fs"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -31,6 +30,24 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   }
 }
 
+interface UnpackedFileTask {
+  stats: Stats
+  src?: string
+  data?: string
+  destination: string
+}
+
+function writeUnpackedFiles(filesToUnpack: Array<UnpackedFileTask>, fileCopier: FileCopier): Promise<any> {
+  return BluebirdPromise.map(filesToUnpack, it => {
+    if (it.data == null) {
+      return fileCopier.copy(it.src!, it.destination, it.stats)
+    }
+    else {
+      return writeFile(it.destination, it.data)
+    }
+  })
+}
+
 class AsarPackager {
   private readonly toPack: Array<string> = []
   private readonly fs = new Filesystem(this.src)
@@ -39,16 +56,13 @@ class AsarPackager {
 
   private srcRealPath: Promise<string>
 
-  constructor(private readonly src: string, private readonly resourcesPath: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
-    this.outFile = path.join(this.resourcesPath, "app.asar")
+  constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
+    this.outFile = path.join(destination, "app.asar")
   }
 
   async pack(filter: Filter) {
     const metadata = new Map<string, Stats>()
-    const files = await walk(this.src, (it, stat) => {
-      metadata.set(it, stat)
-    }, filter)
-
+    const files = await walk(this.src, filter, (it, stat) => metadata.set(it, stat))
     await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files), metadata)
     await this.writeAsarFile()
   }
@@ -83,7 +97,7 @@ class AsarPackager {
       const nodeModuleDir = file.substring(0, nextSlashIndex)
 
       if (file.length === (nodeModuleDir.length + 1 + packageJsonStringLength) && file.endsWith("package.json")) {
-        fileIndexToModulePackageData.set(i, readJson(file).then(it => cleanupPackageJson(it)))
+        fileIndexToModulePackageData.set(i, <BluebirdPromise<string>>readJson(file).then(it => cleanupPackageJson(it)))
       }
 
       if (autoUnpackDirs.has(nodeModuleDir)) {
@@ -147,8 +161,9 @@ class AsarPackager {
       await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest, fileIndexToModulePackageData)
     }
 
-    const copyPromises: Array<Promise<any>> = []
+    const filesToUnpack: Array<UnpackedFileTask> = []
     const mainPackageJson = path.join(this.src, "package.json")
+    const fileCopier = new FileCopier()
     for (let i = 0, n = files.length; i < n; i++) {
       const file = files[i]
       const stat = metadata.get(file)!
@@ -174,14 +189,14 @@ class AsarPackager {
 
           if (!dirNode.unpacked && !unpackedDirs.has(fileParent)) {
             unpackedDirs.add(fileParent)
-            await ensureDir(path.join(unpackedDest, path.relative(this.src, fileParent)))
+            await ensureDir(fileParent.replace(this.src, unpackedDest))
           }
 
-          const unpackedFile = path.join(unpackedDest, path.relative(this.src, file))
-          copyPromises.push(newData == null ? copyFile(file, unpackedFile, stat) : writeFile(unpackedFile, newData))
-          if (copyPromises.length > MAX_FILE_REQUESTS) {
-            await BluebirdPromise.all(copyPromises)
-            copyPromises.length = 0
+          const unpackedFile = file.replace(this.src, unpackedDest)
+          filesToUnpack.push(newData == null ? {src: file, destination: unpackedFile, stats: stat} : {destination: unpackedFile, data: newData, stats: stat})
+          if (filesToUnpack.length > MAX_FILE_REQUESTS) {
+            await writeUnpackedFiles(filesToUnpack, fileCopier)
+            filesToUnpack.length = 0
           }
         }
         else {
@@ -214,7 +229,7 @@ class AsarPackager {
               unpackedDirs.add(file)
               // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
               // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-              await ensureDir(path.join(unpackedDest, path.relative(this.src, file)))
+              await ensureDir(file.replace(this.src, unpackedDest))
               break
             }
           }
@@ -226,8 +241,9 @@ class AsarPackager {
       }
     }
 
-    if (copyPromises.length > 0) {
-      await BluebirdPromise.all(copyPromises)
+    if (filesToUnpack.length > MAX_FILE_REQUESTS) {
+      await writeUnpackedFiles(filesToUnpack, fileCopier)
+      filesToUnpack.length = 0
     }
   }
 
@@ -300,7 +316,7 @@ class AsarPackager {
     for (const file of orderingFiles) {
       let pathComponents = file.split(path.sep)
       let str = this.src
-      for (let pathComponent of pathComponents) {
+      for (const pathComponent of pathComponents) {
         str = path.join(str, pathComponent)
         ordering.push(str)
       }
@@ -378,24 +394,4 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   if (stat.size === 0) {
     throw error(`is corrupted: size 0`)
   }
-}
-
-function copyFile(src: string, dest: string, stats: Stats) {
-  if (process.platform != "win32" && (isCi || process.env.USE_HARD_LINKS === "true")) {
-    return link(src, dest)
-  }
-
-  return new BluebirdPromise(function (resolve, reject) {
-    const readStream = createReadStream(src)
-    const writeStream = createWriteStream(dest, {mode: stats.mode})
-
-    readStream.on("error", reject)
-    writeStream.on("error", reject)
-
-    writeStream.on("open", function () {
-      readStream.pipe(writeStream)
-    })
-
-    writeStream.once("finish", resolve)
-  })
 }

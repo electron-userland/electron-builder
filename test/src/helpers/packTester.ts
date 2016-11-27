@@ -1,24 +1,10 @@
-import { copy, emptyDir, remove, writeJson, readJson, readFile, mkdir } from "fs-extra-p"
+import { emptyDir, remove, writeJson, readJson, readFile, mkdir } from "fs-extra-p"
 import { assertThat } from "./fileAssert"
 import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import {
-  Packager,
-  PackagerOptions,
-  Platform,
-  ArtifactCreated,
-  Arch,
-  DIR_TARGET,
-  createTargets,
-  getArchSuffix,
-  MacOsTargetName,
-  Target,
-  MacOptions,
-  BuildInfo,
-  SquirrelWindowsOptions
-} from "out"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo, SquirrelWindowsOptions } from "out"
 import { exec, spawn, getTempName } from "out/util/util"
 import { log, warn } from "out/util/log"
 import pathSorter from "path-sort"
@@ -32,6 +18,8 @@ import SquirrelWindowsTarget from "out/targets/squirrelWindows"
 import { DmgTarget } from "out/targets/dmg"
 import OsXPackager from "out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
+import { copyDir, FileCopier } from "out/util/fs"
+import isCi from "is-ci"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -104,12 +92,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       log(`Custom temp dir used: ${customTmpDir}`)
     }
     await emptyDir(dir)
-    await copy(projectDir, dir, {
-      filter: it => {
-        const basename = path.basename(it)
-        return basename !== OUT_DIR_NAME && basename !== "node_modules" && basename[0] !== "."
-      }
-    })
+    await copyDir(projectDir, dir, it => {
+      const basename = path.basename(it)
+      return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
+    }, it => path.basename(it) != "package.json")
     projectDir = dir
   }
 
@@ -164,8 +150,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 }
 
-export function getTestAsset(file: string) {
-  return path.join(__dirname, "..", "..", "fixtures", file)
+const fileCopier = new FileCopier()
+
+export function copyTestAsset(name: string, destination: string): Promise<void> {
+  return fileCopier.copy(path.join(__dirname, "..", "..", "fixtures", name), destination, undefined)
 }
 
 async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
@@ -412,11 +400,11 @@ async function getContents(path: string) {
     )
 }
 
-export function packageJson(task: (data: any) => void, isApp: boolean = false) {
+export function packageJson(task: (data: any) => void, isApp = false) {
   return (projectDir: string) => modifyPackageJson(projectDir, task, isApp)
 }
 
-export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp: boolean = false): Promise<any> {
+export async function modifyPackageJson(projectDir: string, task: (data: any) => void, isApp = false): Promise<any> {
   const file = isApp ? path.join(projectDir, "app", "package.json") : path.join(projectDir, "package.json")
   const data = await readJson(file)
   task(data)
@@ -443,7 +431,7 @@ export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, str
   const platforms = [Platform.fromString(process.platform)]
   if (process.platform === Platform.MAC.nodeName) {
     platforms.push(Platform.LINUX)
-    if (process.env.CI == null) {
+    if (!isCi) {
       platforms.push(Platform.WINDOWS)
     }
   }
@@ -542,7 +530,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, expectedCont
   })
 }
 
-export function allPlatforms(dist: boolean = true): PackagerOptions {
+export function allPlatforms(dist = true): PackagerOptions {
   return {
     targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
   }

@@ -4,12 +4,13 @@ import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "./util/promise"
 import BluebirdPromise from "bluebird-lst-c"
-import { isEmptyOrSpaces, isCi, debug } from "./util/util"
+import { isEmptyOrSpaces, debug } from "./util/util"
 import { log } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
+import isCi from "is-ci"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -209,7 +210,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
         options.publish = "onTag"
         isPublishOptionGuessed = true
       }
-      else if (isCi()) {
+      else if (isCi) {
         log("CI detected, so artifacts will be published if draft release exists")
         options.publish = "onTagOrDraft"
         isPublishOptionGuessed = true
@@ -225,7 +226,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     if (isAuthTokenSet()) {
       publishManager(packager, publishTasks, options, isPublishOptionGuessed)
     }
-    else if (isCi()) {
+    else if (isCi) {
       log(`CI detected, publish is set to ${options.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
     }
   }

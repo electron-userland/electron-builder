@@ -1,33 +1,39 @@
 import { expectedWinContents } from "./helpers/expectedContents"
-import { outputFile } from "fs-extra-p"
+import { outputFile, stat } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { Platform, DIR_TARGET } from "out"
 import pathSorter from "path-sort"
+import Mode from "stat-mode"
+import { Permissions } from "stat-mode"
 
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   devMetadata: {
     build: {
       asar: false,
-      files: ["!ignoreMe${/*}"]
+      files: ["!ignoreMe${/*}", "!**/bar"],
     }
   }
 }, {
-  projectDirCreated: projectDir => {
-    return outputFile(path.join(projectDir, "ignoreMe", "foo"), "data")
-  },
+  projectDirCreated: projectDir => BluebirdPromise.all([
+    outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
+    outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+  ]),
   packed: context => {
-    return assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist()
+    const resources = path.join(context.getResources(Platform.LINUX), "app")
+    return BluebirdPromise.all([
+      assertThat(path.join(resources, "ignoreMe")).doesNotExist(),
+      assertThat(path.join(resources, "ignoreEmptyDir")).doesNotExist(),
+    ])
   },
 }))
 
 test("extraResources", async () => {
   for (const platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
-
     const winDirPrefix = "lib/net45/resources/"
 
     //noinspection SpellCheckingInspection
@@ -114,6 +120,7 @@ test("extraResources - one-package", () => {
             "bar/hello.txt",
             "bar/${arch}.txt",
             "${os}/${arch}.txt",
+            "executable*",
           ]
 
           data.build[osName] = {
@@ -126,11 +133,13 @@ test("extraResources - one-package", () => {
           }
         }),
         outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
-        outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
+        outputFile(path.join(projectDir, "bar/hello.txt"), "data", {mode: "400"}),
         outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
         outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
         outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
         outputFile(path.join(projectDir, "ignoreMe.txt"), "ignoreMe"),
+        outputFile(path.join(projectDir, "executable"), "executable", {mode: "755"}),
+        outputFile(path.join(projectDir, "executableOnlyOwner"), "executable", {mode: "740"}),
       ])
     },
     packed: async context => {
@@ -141,20 +150,25 @@ test("extraResources - one-package", () => {
       }
       const appDir = path.join(resourcesDir, "app")
 
-      await assertThat(path.join(resourcesDir, "foo")).isDirectory()
-      await assertThat(path.join(appDir, "foo")).doesNotExist()
-
-      await assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile()
-      await assertThat(path.join(appDir, "foo", "nameWithoutDot")).doesNotExist()
-
-      await assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile()
-      await assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile()
-      await assertThat(path.join(appDir, "bar", `${process.arch}.txt`)).doesNotExist()
-
       await BluebirdPromise.all([
+        assertThat(path.join(resourcesDir, "foo")).isDirectory(),
+        assertThat(path.join(appDir, "foo")).doesNotExist(),
+
+        assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
+        assertThat(path.join(appDir, "foo", "nameWithoutDot")).doesNotExist(),
+
+        assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
+        assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
+        assertThat(path.join(appDir, "bar", `${process.arch}.txt`)).doesNotExist(),
+
         assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
         assertThat(path.join(resourcesDir, "platformSpecificR")).isFile(),
         assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
+
+        allCan(path.join(resourcesDir, "executable"), true),
+        allCan(path.join(resourcesDir, "executableOnlyOwner"), true),
+
+        allCan(path.join(resourcesDir, "bar", "hello.txt"), false),
       ])
     },
     expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
@@ -166,3 +180,27 @@ test("extraResources - one-package", () => {
     )) : null,
   })
 })
+
+async function allCan(file: string, execute: Boolean) {
+  const mode = new Mode(await stat(file))
+
+  function checkExecute(value: Permissions) {
+    if (value.execute !== execute) {
+      throw new Error(`${file} is ${execute ? "not " : ""}executable`)
+    }
+  }
+
+  function checkRead(value: Permissions) {
+    if (!value.read) {
+      throw new Error(`${file} is not readable`)
+    }
+  }
+
+  checkExecute(mode.owner)
+  checkExecute(mode.group)
+  checkExecute(mode.others)
+
+  checkRead(mode.owner)
+  checkRead(mode.group)
+  checkRead(mode.others)
+}

@@ -10,6 +10,7 @@ import { Target } from "./targetFactory"
 import { getSignVendorPath } from "../windowsCodeSign"
 import sanitizeFileName from "sanitize-filename"
 import { release } from "os"
+import { copyDir } from "../util/fs"
 
 export default class AppXTarget extends Target {
   private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.appx)
@@ -53,7 +54,7 @@ export default class AppXTarget extends Target {
         }
         return copy(path.join(templatePath, "assets", `SampleAppx.${size}.png`), target)
       }),
-      copy(appOutDir, path.join(preAppx, "app")),
+      copyDir(appOutDir, path.join(preAppx, "app")),
       this.writeManifest(templatePath, preAppx, safeName)
     ])
 

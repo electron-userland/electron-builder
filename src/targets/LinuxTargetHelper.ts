@@ -23,7 +23,9 @@ export class LinuxTargetHelper {
       return await this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
     }
     else {
-      return await this.createFromIcns(await this.packager.getTempFile("electron-builder-linux.iconset").then(it => ensureDir(it).thenReturn(it)))
+      const iconDir = await this.packager.getTempFile("linux.iconset")
+      ensureDir(iconDir)
+      return await this.createFromIcns(iconDir)
     }
   }
 

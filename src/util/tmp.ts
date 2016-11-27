@@ -11,16 +11,16 @@ process.setMaxListeners(30)
 
 export class TmpDir {
   private tmpFileCounter = 0
-  private tempDirectoryPromise: BluebirdPromise<string>
+  private tempDirectoryPromise: Promise<string>
 
   private dir: string | null
 
   getTempFile(suffix: string | null): Promise<string> {
     if (this.tempDirectoryPromise == null) {
-      let promise: BluebirdPromise<string>
+      let promise: Promise<string>
       if (mkdtemp == null) {
         const dir = path.join(tmpdir(), getTempName("electron-builder"))
-        promise = mkdirs(dir, {mode: 448}).thenReturn(dir)
+        promise = mkdirs(dir, {mode: 448}).then(() => dir)
       }
       else {
         promise = mkdtemp(`${path.join(process.env.TEST_DIR || tmpdir(), "electron-builder")}-`)

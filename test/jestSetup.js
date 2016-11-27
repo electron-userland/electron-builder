@@ -1,9 +1,9 @@
 "use strict"
 
 require('source-map-support').install()
+const isCi = require("is-ci")
 
 const isWindows = process.platform === "win32"
-const isCi = (process.env.CI || "").toLowerCase() === "true"
 
 // Squirrel.Windows msi is very slow
 jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 10) * 1000 * 60

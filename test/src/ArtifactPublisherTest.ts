@@ -4,8 +4,9 @@ import { join } from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
+import isCi from "is-ci"
 
-if (process.env.CI && process.platform === "win32") {
+if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
     console.warn("[SKIP] Skip ArtifactPublisherTest suite on Windows CI")
   })

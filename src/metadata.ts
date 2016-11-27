@@ -115,26 +115,24 @@ export interface BuildMetadata {
    */
   readonly files?: Array<string> | string | null
 
-  /**
+  /*
    A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
 
    Glob rules the same as for [files](#multiple-glob-patterns).
    */
   readonly extraResources?: Array<string> | string | null
 
-  /**
+  /*
    The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<string> | string | null
 
   /*
-   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
-   Reasons why you may want to disable this feature are described in [an application packaging tutorial in Electron's documentation](http://electron.atom.io/docs/tutorial/application-packaging/#limitations-of-the-node-api).
+  Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#BuildMetadata-asarUnpack) - please file issue if this doesn't work.
 
-   Or you can pass object of any asar options.
-
-   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set `asarUnpack` - please file issue if this doesn't work.
-   */
+  Or you can pass object of asar options.
+  */
   readonly asar?: AsarOptions | boolean | null
 
   /**

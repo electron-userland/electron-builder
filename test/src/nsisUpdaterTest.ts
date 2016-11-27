@@ -86,7 +86,7 @@ test("file url generic", async () => {
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (let eventName of expectedEvents) {
+  for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })
@@ -114,7 +114,7 @@ test("file url github", async () => {
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (let eventName of expectedEvents) {
+  for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })
@@ -130,11 +130,12 @@ test("file url github", async () => {
 })
 
 test("test error", async () => {
+  g.__test_resourcesPath = null
   const updater: NsisUpdater = new NsisUpdaterClass()
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "error"]
-  for (let eventName of expectedEvents) {
+  for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })

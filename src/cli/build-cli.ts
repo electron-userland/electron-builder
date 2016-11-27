@@ -7,8 +7,9 @@ import * as path from "path"
 import { dim, reset, green, cyan } from "chalk"
 import updateNotifier from "update-notifier"
 import { warn } from "../util/log"
+import isCi from "is-ci"
 
-if (process.env.CI == null && process.env.NO_UPDATE_NOTIFIER == null) {
+if (!isCi && process.env.NO_UPDATE_NOTIFIER == null) {
   readJson(path.join(__dirname, "..", "..", "package.json"))
     .then(it => {
       const notifier = updateNotifier({pkg: it})

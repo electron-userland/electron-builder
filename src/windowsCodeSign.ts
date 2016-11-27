@@ -3,6 +3,7 @@ import { rename } from "fs-extra-p"
 import * as path from "path"
 import { release } from "os"
 import { getBinFromBintray } from "./util/binDownload"
+import isCi from "is-ci"
 
 const TOOLS_VERSION = "1.5.0"
 
@@ -158,7 +159,7 @@ async function getToolPath(): Promise<string> {
       return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
     }
   }
-  else if (process.platform === "darwin" && process.env.CI) {
+  else if (process.platform === "darwin" && isCi) {
     return path.join(vendorPath, process.platform, "ci", "osslsigncode")
   }
   else {

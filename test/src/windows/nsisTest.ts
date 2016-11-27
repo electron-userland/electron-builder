@@ -1,6 +1,6 @@
 import { Platform, Arch } from "out"
-import { assertPack, getTestAsset, app } from "../helpers/packTester"
-import { copy, outputFile, readFile } from "fs-extra-p"
+import { assertPack, app, copyTestAsset } from "../helpers/packTester"
+import { outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "../helpers/fileAssert"
@@ -63,8 +63,10 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   },
 }, {
   projectDirCreated: projectDir => {
-    let headerIconPath = path.join(projectDir, "build", "foo.ico")
-    return BluebirdPromise.all([copy(getTestAsset("headerIcon.ico"), headerIconPath), copy(getTestAsset("license.txt"), path.join(projectDir, "build", "license.txt"))])
+    return BluebirdPromise.all([
+      copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo.ico")),
+      copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"),
+      )])
   },
   packed: async(context) => {
     assertThat(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).hasProperties({
@@ -144,14 +146,14 @@ test.ifNotCiMac("installerHeaderIcon", () => {
     }, {
       projectDirCreated: projectDir => {
         headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
-        return copy(getTestAsset("headerIcon.ico"), headerIconPath)
+        return copyTestAsset("headerIcon.ico", headerIconPath)
       }
     }
   )
 })
 
 test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets: nsisTarget}, {
-  projectDirCreated: projectDir => copy(getTestAsset("installer.nsh"), path.join(projectDir, "build", "installer.nsh")),
+  projectDirCreated: projectDir => copyTestAsset("installer.nsh", path.join(projectDir, "build", "installer.nsh")),
   packed: context => BluebirdPromise.all([
     assertThat(path.join(context.projectDir, "build", "customHeader")).isFile(),
     assertThat(path.join(context.projectDir, "build", "customInit")).isFile(),
@@ -160,6 +162,6 @@ test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets:
 }))
 
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
-  projectDirCreated: projectDir => copy(getTestAsset("installer.nsi"), path.join(projectDir, "build", "installer.nsi")),
+  projectDirCreated: projectDir => copyTestAsset("installer.nsi", path.join(projectDir, "build", "installer.nsi")),
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))

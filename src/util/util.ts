@@ -9,10 +9,9 @@ import { warn, log } from "./log"
 import { createHash } from "crypto"
 import "source-map-support/register"
 import { statOrNull } from "./fs"
-import Debugger = debug.Debugger
 
-export const debug: Debugger = _debug("electron-builder")
-export const debug7z: Debugger = _debug("electron-builder:7z")
+export const debug = _debug("electron-builder")
+export const debug7z = _debug("electron-builder:7z")
 
 const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
@@ -30,7 +29,7 @@ export interface ExecOptions extends BaseExecOptions {
   killSignal?: string
 }
 
-export function removePassword(input: string): string {
+export function removePassword(input: string) {
   return input.replace(/(-P |pass:|\/p|-pass )([^ ]+)/, function (match, p1, p2) {
     return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
@@ -248,10 +247,6 @@ export function asArray<T>(v: n | T | Array<T>): Array<T> {
     return [v]
   }
 }
-export function isCi(): boolean {
-  return (process.env.CI || "").toLowerCase() === "true"
-}
-
 export function getCacheDirectory(): string {
   if (process.platform === "darwin") {
     return path.join(homedir(), "Library", "Caches", "electron-builder")

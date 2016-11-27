@@ -1,6 +1,5 @@
 import { Platform, Arch } from "out"
-import { assertPack, getTestAsset, app } from "../helpers/packTester"
-import { copy } from "fs-extra-p"
+import { assertPack, app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
@@ -27,7 +26,7 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
     }, {
       projectDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "build", "installerHeader.bmp")
-        return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
+        return copyTestAsset("installerHeader.bmp", installerHeaderPath)
       }
     }
   )
@@ -56,7 +55,7 @@ test.ifNotCiMac("boring, MUI_HEADER as option", () => {
     }, {
       projectDirCreated: projectDir => {
         installerHeaderPath = path.join(projectDir, "foo.bmp")
-        return copy(getTestAsset("installerHeader.bmp"), installerHeaderPath)
+        return copyTestAsset("installerHeader.bmp", installerHeaderPath)
       },
     }
   )
@@ -90,6 +89,6 @@ test.ifNotCiMac("boring", app({
 }, {
   signed: true,
   projectDirCreated: projectDir => {
-    return copy(getTestAsset("license.txt"), path.join(projectDir, "build", "license.txt"))
+    return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
   },
 }))

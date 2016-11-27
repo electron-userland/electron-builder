@@ -17,6 +17,7 @@ import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
+import isCi from "is-ci"
 
 test("cli", async () => {
   const yargs = createYargs()
@@ -156,7 +157,7 @@ test("www as default dir", () => assertPack("test-app", currentPlatform(), {
 }))
 
 test("afterPack", () => {
-  const targets = process.env.CI ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+  const targets = isCi ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
   let called = 0
   return assertPack("test-app-one", {
     targets: targets,
