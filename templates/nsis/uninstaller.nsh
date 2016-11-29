@@ -50,7 +50,7 @@ Section "un.install"
     ${if} $installMode == "all"
       SetShellVarContext current
     ${endif}
-    RMDir /r "$APPDATA\${PRODUCT_FILENAME}"
+    RMDir /r "$APPDATA\${APP_FILENAME}"
     ${if} $installMode == "all"
       SetShellVarContext all
     ${endif}

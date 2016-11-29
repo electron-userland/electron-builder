@@ -224,7 +224,7 @@ export function debug7zArgs(command: "a" | "x"): Array<string> {
   return args
 }
 
-let tmpDirCounter = 0
+export let tmpDirCounter = 0
 // add date to avoid use stale temp dir
 const tempDirPrefix = `${process.pid.toString(16)}-${Date.now().toString(16)}`
 

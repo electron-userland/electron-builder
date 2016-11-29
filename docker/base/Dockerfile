@@ -1,4 +1,4 @@
-FROM buildpack-deps:yakkety-curl
+FROM buildpack-deps:xenial-curl
 
 # rpm is required for FPM to build rpm package
 # yasm is required to build p7zip
@@ -15,9 +15,8 @@ ENV USE_SYSTEM_7ZA true
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true
 
-RUN apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-apt-get update -y && \
-  apt-get install --no-install-recommends -y git snapcraft yarn xorriso bsdtar build-essential autoconf libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
+RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv dist yarn && ln -s /yarn/bin/yarn /usr/local/bin/yarn  && apt-get update -y && \
+  apt-get install --no-install-recommends -y git snapcraft xorriso bsdtar build-essential autoconf libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   curl -L http://tukaani.org/xz/xz-$XZ_VERSION.tar.xz | tar -xJ && cd xz-$XZ_VERSION && ./configure && make && make install && cd .. && rm -rf xz-$XZ_VERSION && ldconfig && \
@@ -49,3 +48,4 @@ RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+ENV PATH "$HOME/.yarn/bin:$PATH"

@@ -16,7 +16,7 @@ async function main() {
 
   const tmpDir = new TmpDir()
   const targetDir = process.cwd()
-  const tempPrefix = path.join(await tmpDir.getTempFile(null), sanitizeFileName(args.publisher))
+  const tempPrefix = path.join(await tmpDir.getTempFile(""), sanitizeFileName(args.publisher))
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 

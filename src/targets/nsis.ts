@@ -94,6 +94,7 @@ export default class NsisTarget extends Target {
       APP_GUID: guid,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
+      APP_FILENAME: appInfo.name,
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 
