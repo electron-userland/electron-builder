@@ -305,6 +305,10 @@ async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion = wineVersion.substring("wine-".length)
   }
 
+  if (wineVersion.split(" ").length > 1) {
+    wineVersion = wineVersion.split(" ")[0]
+  }
+
   if (wineVersion.split(".").length === 2) {
     wineVersion += ".0"
   }
