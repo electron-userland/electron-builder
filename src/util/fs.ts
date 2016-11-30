@@ -83,7 +83,7 @@ export async function walk(initialDirPath: string, filter?: Filter, consumer?: (
   return result
 }
 
-const _isUseHardLink = process.platform != "win32" && (isCi || process.env.USE_HARD_LINKS === "true")
+const _isUseHardLink = process.platform != "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
 
 /**
  * Hard links is used if supported and allowed.

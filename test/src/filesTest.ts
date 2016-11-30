@@ -1,5 +1,5 @@
 import { expectedWinContents } from "./helpers/expectedContents"
-import { outputFile, stat } from "fs-extra-p"
+import { outputFile, stat, readFile } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
@@ -170,6 +170,8 @@ test("extraResources - one-package", () => {
 
         allCan(path.join(resourcesDir, "bar", "hello.txt"), false),
       ])
+
+      expect(await readFile(path.join(resourcesDir, "bar", "hello.txt"), "utf-8")).toEqual("data")
     },
     expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
       winDirPrefix + "bar/hello.txt",

@@ -98,7 +98,10 @@ async function runTests() {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0 || circleNodeIndex === 2) {
       skipWin = true
-      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js", "nsisUpdaterTest")
+      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      if (circleNodeIndex === 0) {
+        args.push("nsisUpdaterTest")
+      }
     }
     else {
       args.push("windows.*", "mac.*")
