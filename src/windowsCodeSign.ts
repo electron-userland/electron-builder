@@ -4,10 +4,12 @@ import * as path from "path"
 import { release } from "os"
 import { getBinFromBintray } from "./util/binDownload"
 import isCi from "is-ci"
+import { WinBuildOptions } from "./options/winOptions"
 
 const TOOLS_VERSION = "1.5.0"
 
 export function getSignVendorPath() {
+  //noinspection SpellCheckingInspection
   return getBinFromBintray("winCodeSign", TOOLS_VERSION, "5febefb4494f0f62f0f5c0cd6408f0930caf5943ccfeea2bbf90d2eeb34c571d")
 }
 
@@ -20,13 +22,12 @@ export interface SignOptions {
   readonly name?: string | null
   readonly password?: string | null
   readonly site?: string | null
-  readonly hash?: Array<string> | null
 
-  readonly tr?: string | null
+  readonly options: WinBuildOptions
 }
 
 export async function sign(options: SignOptions) {
-  let hashes = options.hash
+  let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
     hashes = [hashes != null && !hashes.includes("sha1") ? "sha256" : "sha1"]
@@ -47,7 +48,7 @@ export async function sign(options: SignOptions) {
   let nest = false
   //noinspection JSUnusedAssignment
   let outputPath = ""
-  for (let hash of hashes) {
+  for (const hash of hashes) {
     outputPath = isWin ? options.path : getOutputPath(options.path, hash)
     await spawnSign(options, options.path, outputPath, hash, nest)
     nest = true
@@ -63,9 +64,9 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
   const args = isWin ? ["sign"] : ["-in", inputPath, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
-    const timestampingServiceUrl = "http://timestamp.verisign.com/scripts/timstamp.dll"
+    const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.verisign.com/scripts/timstamp.dll"
     if (isWin) {
-      args.push(nest || hash === "sha256" ? "/tr" : "/t", nest || hash === "sha256" ? (options.tr || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
+      args.push(nest || hash === "sha256" ? "/tr" : "/t", nest || hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
     }
     else {
       args.push("-t", timestampingServiceUrl)

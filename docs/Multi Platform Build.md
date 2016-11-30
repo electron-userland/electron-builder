@@ -81,4 +81,4 @@ dist: trusty
 
 ## Windows
 
-Use [Docker](https://github.com/electron-userland/electron-builder/wiki/Docker).
+Please use [Docker](https://github.com/electron-userland/electron-builder/wiki/Docker).

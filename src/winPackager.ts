@@ -134,8 +134,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       password: cscInfo.password,
       name: this.appInfo.productName,
       site: await this.appInfo.computePackageUrl(),
-      hash: this.platformSpecificBuildOptions.signingHashAlgorithms,
-      tr: this.platformSpecificBuildOptions.rfc3161TimeStampServer,
+      options: this.platformSpecificBuildOptions,
     })
   }
 

@@ -51,6 +51,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
    */
   readonly rfc3161TimeStampServer?: string
+
+  /*
+  The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
+   */
+  readonly timeStampServer?: string
 }
 
 /*

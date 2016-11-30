@@ -285,7 +285,7 @@ function checkConflictingOptions(options: any) {
 
 async function checkWineVersion(checkPromise: Promise<string>) {
   function wineError(prefix: string): string {
-    return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "os-x")}`
+    return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "macos")}`
   }
 
   let wineVersion: string
@@ -305,8 +305,9 @@ async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion = wineVersion.substring("wine-".length)
   }
 
-  if (wineVersion.split(" ").length > 1) {
-    wineVersion = wineVersion.split(" ")[0]
+  const spaceIndex = wineVersion.indexOf(" ")
+  if (spaceIndex > 0) {
+    wineVersion = wineVersion.substring(0, spaceIndex)
   }
 
   if (wineVersion.split(".").length === 2) {
