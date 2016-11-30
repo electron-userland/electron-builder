@@ -5,6 +5,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { use, asArray } from "../util/util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "../util/log"
+import { unlinkIfExists } from "../util/fs"
 
 function doRename (basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -120,7 +121,9 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
     writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
     writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
-    doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable)
+    doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable),
+    unlinkIfExists(path.join(appOutDir, "LICENSE")),
+    unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ]
 
   if (icon != null) {

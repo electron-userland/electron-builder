@@ -193,7 +193,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     if (debug.enabled) {
       const nodeModulesDir = path.join(appDir, "node_modules")
-      debug(`Pruned dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
+      debug(`Dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
     }
 
     const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
@@ -208,10 +208,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     defaultMatcher.addPattern("!**/node_modules/.bin")
     defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
     defaultMatcher.addPattern("!**/._*")
-    defaultMatcher.addPattern("!.idea")
     defaultMatcher.addPattern("!*.iml")
     //noinspection SpellCheckingInspection
-    defaultMatcher.addPattern("!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}")
+    defaultMatcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
+      "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
+      ".editorconfig,.flowconfig,.jshintrc," +
+      ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
+      ".idea," +
+      "appveyor.yml,.travis.yml,circle.yml," +
+      ".nyc_output}")
 
     let rawFilter: any = null
     const deprecatedIgnore = (<any>this.devMetadata.build).ignore
