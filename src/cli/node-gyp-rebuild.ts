@@ -19,7 +19,7 @@ async function main() {
   const arch = args.arch || process.arch
   log(`Execute node-gyp rebuild for arch ${arch}`)
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-    env: getGypEnv(await getElectronVersion(await readPackageJson(devPackageFile), devPackageFile), arch),
+    env: getGypEnv(await getElectronVersion(await readPackageJson(devPackageFile), devPackageFile), arch, true),
   })
 }
 

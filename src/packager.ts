@@ -235,7 +235,7 @@ export class Packager implements BuildInfo {
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-        env: getGypEnv(this.electronVersion, Arch[arch]),
+        env: getGypEnv(this.electronVersion, Arch[arch], true),
       })
     }
 
