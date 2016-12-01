@@ -58,9 +58,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^16.0.0":
-  version "16.0.0"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-16.0.0.tgz#5fe49adee6db194357a52438c0d80695b59a45e9"
+"@types/jest@^16.0.1":
+  version "16.0.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-16.0.1.tgz#c7820ab2bedefe121d0e5ffaa8d0b22f44793f24"
 
 "@types/js-yaml@^3.5.28":
   version "3.5.28"
@@ -2435,9 +2435,9 @@ map-stream@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/map-stream/-/map-stream-0.1.0.tgz#e56aa94c4c8055a16404a0674b78f215f7c8e194"
 
-markdown-it@^8.1.0:
-  version "8.1.0"
-  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.1.0.tgz#38902d4e7bac2260c073eb67be623211fbb2c2e3"
+markdown-it@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.2.0.tgz#089e924bc2efd3886a2eb8ab869109c5ceb73958"
   dependencies:
     argparse "^1.0.7"
     entities "~1.1.1"
@@ -3485,15 +3485,15 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.1.5.tgz#5a83460bb66eeb6c5af727ad18afb4f3c6e189b8"
+ts-babel@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.2.2.tgz#d2e315c9202924b4979adcf56c047aa7ba1e002d"
   dependencies:
     babel-core "^6.18.2"
     bluebird-lst-c "^1.0.5"
     chalk "^1.1.3"
-    fs-extra-p "^3.0.2"
-    markdown-it "^8.1.0"
+    fs-extra-p "^3.0.3"
+    markdown-it "^8.2.0"
     source-map-support "^0.4.6"
 
 tslint@^4.0.2:

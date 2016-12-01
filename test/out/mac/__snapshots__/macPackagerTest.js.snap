@@ -1,0 +1,35 @@
+exports[`test one-package 1`] = `
+Object {
+  "BuildMachineOSBuild": "15E65",
+  "CFBundleDisplayName": "Test App ß/W",
+  "CFBundleDocumentTypes": Array [
+    Object {
+      "CFBundleTypeExtensions": Array [
+        "foo",
+      ],
+      "CFBundleTypeIconFile": "foo.icns",
+      "CFBundleTypeName": "Foo",
+      "CFBundleTypeRole": "Viewer",
+    },
+  ],
+  "CFBundleExecutable": "Test App ßW",
+  "CFBundleIconFile": "Test App ßW.icns",
+  "CFBundleIdentifier": "org.electron-builder.testApp",
+  "CFBundleInfoDictionaryVersion": "6.0",
+  "CFBundleName": "Test App ß/W",
+  "CFBundlePackageType": "APPL",
+  "CFBundleShortVersionString": "1.1.0",
+  "CFBundleVersion": "1.1.0.42",
+  "DTSDKBuild": "14D125",
+  "DTSDKName": "macosx10.1010.10",
+  "DTXcode": "0721",
+  "DTXcodeBuild": "7C1002",
+  "LSApplicationCategoryType": "your.app.category.type",
+  "LSMinimumSystemVersion": "10.9.0",
+  "NSHighResolutionCapable": true,
+  "NSHumanReadableCopyright": "Copyright © 2016 Foo Bar",
+  "NSMainNibFile": "MainMenu",
+  "NSPrincipalClass": "AtomApplication",
+  "NSSupportsAutomaticGraphicsSwitching": true,
+}
+`;

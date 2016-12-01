@@ -34,6 +34,7 @@ interface AssertPackOptions {
   readonly expectedArtifacts?: Array<string>
 
   readonly expectedDepends?: string
+  readonly checkMacApp?: (appDir: string, info: any) => Promise<any>
 
   readonly useTempDir?: boolean
   readonly signed?: boolean
@@ -184,7 +185,7 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
 
       const nameToTarget = platformToTarget.get(platform)
       if (platform === Platform.MAC) {
-        await checkOsXResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
+        await checkMacResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
       }
       else if (platform === Platform.LINUX) {
         await checkLinuxResult(outDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
@@ -273,7 +274,7 @@ function parseDebControl(info: string): any {
   return metadata
 }
 
-async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const appInfo = packager.appInfo
   const packedAppDir = path.join(path.dirname(artifacts[0].file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
@@ -283,6 +284,10 @@ async function checkOsXResult(packager: Packager, packagerOptions: PackagerOptio
     LSApplicationCategoryType: "your.app.category.type",
     CFBundleVersion: `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
   })
+
+  if (checkOptions.checkMacApp != null) {
+    await checkOptions.checkMacApp(packedAppDir, info)
+  }
 
   if (packagerOptions.cscLink != null) {
     const result = await exec("codesign", ["--verify", packedAppDir])

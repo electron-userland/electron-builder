@@ -5,7 +5,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { use, asArray } from "../util/util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "../util/log"
-import { unlinkIfExists } from "../util/fs"
+import { unlinkIfExists, copyFile } from "../util/fs"
 
 function doRename (basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -98,17 +98,25 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     })
   }
 
+  const resourcesPath = path.join(contentsPath, "Resources")
+
   const fileAssociations = packager.getFileAssociations()
   if (fileAssociations.length > 0) {
     appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)
       const customIcon = await packager.getResource(fileAssociation.icon, `${extensions[0]}.icns`)
+      let iconFile = appPlist.CFBundleIconFile
+      if (customIcon != null) {
+        iconFile = path.basename(customIcon)
+        await copyFile(customIcon, path.join(resourcesPath, iconFile))
+      }
+
       // todo rename electron.icns
       return <any>{
         CFBundleTypeExtensions: extensions,
         CFBundleTypeName: fileAssociation.name,
         CFBundleTypeRole: fileAssociation.role || "Editor",
-        CFBundleTypeIconFile: customIcon || appPlist.CFBundleIconFile
+        CFBundleTypeIconFile: iconFile
       }
     })
   }
@@ -127,8 +135,8 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   ]
 
   if (icon != null) {
-    promises.push(unlink(path.join(contentsPath, "Resources", oldIcon)))
-    promises.push(copy(icon, path.join(contentsPath, "Resources", appPlist.CFBundleIconFile)))
+    promises.push(unlink(path.join(resourcesPath, oldIcon)))
+    promises.push(copy(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
   }
 
   await BluebirdPromise.all(promises)
