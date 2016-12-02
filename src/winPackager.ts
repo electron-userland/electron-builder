@@ -149,7 +149,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const args = [
       file,
       "--set-version-string", "CompanyName", appInfo.companyName,
-      "--set-version-string", "FileDescription", appInfo.description,
+      "--set-version-string", "FileDescription", appInfo.productName,
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "InternalName", path.basename(appInfo.productFilename, ".exe"),
       "--set-version-string", "LegalCopyright", appInfo.copyright,
