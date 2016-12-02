@@ -241,9 +241,8 @@ class AsarPackager {
       }
     }
 
-    if (filesToUnpack.length > MAX_FILE_REQUESTS) {
+    if (filesToUnpack.length > 0) {
       await writeUnpackedFiles(filesToUnpack, fileCopier)
-      filesToUnpack.length = 0
     }
   }
 
