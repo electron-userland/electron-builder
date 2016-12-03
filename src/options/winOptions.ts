@@ -94,6 +94,11 @@ export interface NsisOptions {
   readonly guid?: string | null
 
   /*
+   The path to installer icon. Defaults to `build/installerIcon.ico` or application icon.
+   */
+  readonly installerIcon?: string | null
+
+  /*
    *boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
    */
   readonly installerHeader?: string | null
