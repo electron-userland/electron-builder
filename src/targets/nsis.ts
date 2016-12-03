@@ -85,7 +85,7 @@ export default class NsisTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
-    const iconPath = await packager.getIconPath()
+    const iconPath = await this.packager.getResource(this.options.installerIcon, "installerIcon.ico") || await this.packager.getIconPath()
 
     const installerPath = path.join(this.outDir, installerFilename)
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
