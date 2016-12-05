@@ -1,0 +1,5 @@
+files: ["test/src/**/*", "!**/helpers/**/*"]
+script: "node_modules/.bin/jest"
+lineRegExp: '^\s*(?:test|it)(?:\.\w+)?\("([^"'']+)'
+scriptArgs: ["-i", "-t", "${0regExp}", "${fileNameWithoutExt}"]
+beforeRun: typescript

@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="winPackagerTest (debug logging)" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/out/winPackagerTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters --harmony_array_includes" working-dir="$PROJECT_DIR$">
-    <envs>
-      <env name="NODE_PATH" value="." />
-      <env name="DEBUG" value="electron-windows-installer:*" />
-    </envs>
-    <method />
-  </configuration>
-</component>

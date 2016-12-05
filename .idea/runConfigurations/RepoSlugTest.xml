@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="RepoSlugTest" type="NodeJSConfigurationType" factoryName="Node.js" singleton="true" path-to-node="project" path-to-js-file="node_modules/.bin/ava" application-parameters="test/RepoSlugTest.js" node-parameters="--harmony_rest_parameters --harmony_default_parameters --harmony_array_includes" working-dir="$PROJECT_DIR$">
-    <method />
-  </configuration>
-</component>
