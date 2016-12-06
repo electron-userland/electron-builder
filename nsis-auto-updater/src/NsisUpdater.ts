@@ -145,7 +145,11 @@ export class NsisUpdater extends EventEmitter {
     // prevent calling several times
     this.quitAndInstallCalled = true
 
-    spawn(setupPath, isSilent ? ["/S"] : [], {
+    const args = ["--updated"];
+    if(isSilent) {
+      args.push("/S");
+    }
+    spawn(setupPath, args, {
       detached: true,
       stdio: "ignore",
     }).unref()
