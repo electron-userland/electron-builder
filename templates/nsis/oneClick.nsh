@@ -5,7 +5,13 @@
       !ifdef INSTALL_MODE_PER_ALL_USERS
         ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
       !else
-        ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+        ${GetParameters} $R0
+        ${GetOptions} $R0 "--update" $R1
+        ${IfNot} ${Errors}
+          ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "--updated"
+        ${Else}
+          ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+        ${endif}
       !endif
     FunctionEnd
   !endif
