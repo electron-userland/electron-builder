@@ -18,6 +18,8 @@
 !endif
 
 
+!ifdef LICENSE_FILE
+
   Function licensePre
       ${GetParameters} $R0
       ${GetOptions} $R0 "--update" $R1
@@ -26,8 +28,6 @@
       ${endif}
   FunctionEnd
 
-
-!ifdef LICENSE_FILE
   !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
   !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
 !endif
