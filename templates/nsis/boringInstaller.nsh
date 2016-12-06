@@ -16,10 +16,19 @@
     ${endif}
   FunctionEnd
 
+  Function licensePre
+      ${GetParameters} $R0
+      ${GetOptions} $R0 "--update" $R1
+      ${IfNot} ${Errors}
+        Abort
+      ${endif}
+  FunctionEnd
+
   !define MUI_FINISHPAGE_RUN
   !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
   !ifdef LICENSE_FILE
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
     !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
   !endif
 
