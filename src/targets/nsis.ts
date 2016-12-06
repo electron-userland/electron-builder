@@ -85,7 +85,7 @@ export default class NsisTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
-    const iconPath = await this.packager.getResource(this.options.installerIcon, "installerIcon.ico") || await this.packager.getIconPath()
+    const iconPath = await packager.getResource(this.options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
 
     const installerPath = path.join(this.outDir, installerFilename)
     const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
@@ -100,8 +100,8 @@ export default class NsisTarget extends Target {
 
       COMPANY_NAME: appInfo.companyName,
 
-      PROJECT_DIR: this.packager.projectDir,
-      BUILD_RESOURCES_DIR: this.packager.buildResourcesDir,
+      PROJECT_DIR: packager.projectDir,
+      BUILD_RESOURCES_DIR: packager.buildResourcesDir,
     }
 
     if (iconPath != null) {
@@ -115,14 +115,14 @@ export default class NsisTarget extends Target {
 
     const oneClick = this.options.oneClick !== false
 
-    const installerHeader = oneClick ? null : await this.packager.getResource(this.options.installerHeader, "installerHeader.bmp")
+    const installerHeader = oneClick ? null : await packager.getResource(this.options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {
       defines.MUI_HEADERIMAGE = null
       defines.MUI_HEADERIMAGE_RIGHT = null
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
     }
 
-    const installerHeaderIcon = oneClick ? await this.packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
+    const installerHeaderIcon = oneClick ? await packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
     if (installerHeaderIcon != null) {
       defines.HEADER_ICO = installerHeaderIcon
     }
@@ -155,7 +155,7 @@ export default class NsisTarget extends Target {
       `/LANG=${localeId} FileDescription "${appInfo.description}"`,
       `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
-    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
+    use(packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
 
     const commands: any = {
       OutFile: `"${installerPath}"`,
@@ -183,16 +183,16 @@ export default class NsisTarget extends Target {
     debug(defines)
     debug(commands)
 
-    if (this.packager.options.effectiveOptionComputed != null && await this.packager.options.effectiveOptionComputed([defines, commands])) {
+    if (packager.options.effectiveOptionComputed != null && await packager.options.effectiveOptionComputed([defines, commands])) {
       return
     }
 
-    const licenseFile = await this.packager.getResource(this.options.license, "license.rtf", "license.txt")
+    const licenseFile = await packager.getResource(this.options.license, "license.rtf", "license.txt")
     if (licenseFile != null) {
       defines.LICENSE_FILE = licenseFile
     }
 
-    const customScriptPath = await this.packager.getResource(this.options.script, "installer.nsi")
+    const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath == null) {

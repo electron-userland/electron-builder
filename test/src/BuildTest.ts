@@ -18,6 +18,7 @@ import { createYargs } from "out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
 import isCi from "is-ci"
+import { checkWineVersion } from "out/packager"
 
 test("cli", async () => {
   const yargs = createYargs()
@@ -211,6 +212,10 @@ test.ifDevOrLinuxCi("smart unpack", () => {
       return BluebirdPromise.resolve()
     }
   })
+})
+
+test("wine version", async () => {
+  await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))
 })
 
 function currentPlatform(): PackagerOptions {
