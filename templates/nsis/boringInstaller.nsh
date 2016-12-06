@@ -7,7 +7,13 @@
 
 !ifndef BUILD_UNINSTALLER
   Function StartApp
-    ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
+    ${GetParameters} $R0
+    ${GetOptions} $R0 "--update" $R1
+    ${IfNot} ${Errors}
+      ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" "--updated"
+    ${Else}
+      ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
+    ${endif}
   FunctionEnd
 
   !define MUI_FINISHPAGE_RUN
