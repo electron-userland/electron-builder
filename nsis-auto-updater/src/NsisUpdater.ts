@@ -4,7 +4,7 @@ import * as path from "path"
 import { tmpdir } from "os"
 import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
 import { download } from "../../src/util/httpRequest"
-import { Provider, UpdateCheckResult } from "./api"
+import { FileInfo, Provider, UpdateCheckResult } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
 import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptions } from "../../src/options/publishOptions"
@@ -12,9 +12,15 @@ import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
+import { VersionInfo } from "../../src/options/publishOptions"
 
 export class NsisUpdater extends EventEmitter {
+  public autoDownload = true
+
   private setupPath: string | null
+
+  private versionInfo: VersionInfo | null
+  private fileInfo: FileInfo | null
 
   private updateAvailable = false
   private quitAndInstallCalled = false
@@ -91,25 +97,42 @@ export class NsisUpdater extends EventEmitter {
     this.updateAvailable = true
     this.emit("update-available")
 
-    const mkdtemp: (prefix: string) => Promise<string> = require("fs-extra-p").mkdtemp
+    this.versionInfo = versionInfo
+    this.fileInfo = fileInfo
+
     return {
       versionInfo: versionInfo,
       fileInfo: fileInfo,
-      downloadPromise: mkdtemp(`${path.join(tmpdir(), "up")}-`)
-        .then(it => download(fileInfo.url, path.join(it, fileInfo.name), fileInfo.sha2 == null ? null : {sha2: fileInfo.sha2}))
-        .then(it => {
-          this.setupPath = it
-          this.addQuitHandler()
-          this.emit("update-downloaded", {}, null, versionInfo.version, null, null, () => {
-            this.quitAndInstall()
-          })
-          return it
-        })
-        .catch(e => {
-          this.emit("error", e, (e.stack || e).toString())
-          throw e
-        }),
+      downloadPromise: this.autoDownload ? this.downloadUpdate() : null,
     }
+  }
+
+  async downloadUpdate() {
+    if (!this.versionInfo || !this.fileInfo) {
+      const message = "Check update first"
+      const error = new Error(message)
+      this.emit("error", error, message)
+      throw error
+    }
+
+    const versionInfo = this.versionInfo
+    const fileInfo = this.fileInfo
+
+    const mkdtemp: (prefix: string) => Promise<string> = require("fs-extra-p").mkdtemp
+    return mkdtemp(`${path.join(tmpdir(), "up")}-`)
+      .then(it => download(fileInfo.url, path.join(it, fileInfo.name), fileInfo.sha2 == null ? null : {sha2: fileInfo.sha2}))
+      .then(it => {
+        this.setupPath = it
+        this.addQuitHandler()
+        this.emit("update-downloaded", {}, null, versionInfo.version, null, null, () => {
+          this.quitAndInstall()
+        })
+        return it
+      })
+      .catch(e => {
+        this.emit("error", e, (e.stack || e).toString())
+        throw e
+      })
   }
 
   private addQuitHandler() {
