@@ -326,7 +326,8 @@ function checkDependencies(dependencies?: { [key: string]: string }) {
 
   for (let name of ["electron", "electron-prebuilt", "electron-builder"]) {
     if (name in dependencies) {
-      throw new Error(`${name} must be in the devDependencies`)
+      throw new Error(`Package "${name}" is only allowed in "devDependencies". `
+        + `Please remove it from the "dependencies" section in your package.json.`)
     }
   }
 }
