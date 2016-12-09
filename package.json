@@ -26,8 +26,7 @@
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh",
-    "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
-    "precommit": "validate-commit-msg"
+    "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11"
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
@@ -50,7 +49,8 @@
     "Windows",
     "OS X",
     "MacOS",
-    "Mac"
+    "Mac",
+    "appx"
   ],
   "author": "Stefan Judis",
   "license": "MIT",
@@ -109,16 +109,15 @@
     "babel-plugin-transform-es2015-spread": "^6.8.0",
     "babel-plugin-transform-inline-imports-commonjs": "^1.2.0",
     "decompress-zip": "^0.3.0",
-    "depcheck": "^0.6.6",
+    "depcheck": "^0.6.7",
     "diff": "^3.1.0",
-    "husky": "^0.11.9",
     "jest-cli": "^17.0.3",
+    "jest-environment-node-debug": "^0.0.2",
     "json8": "^0.9.2",
     "path-sort": "^0.1.0",
     "ts-babel": "^1.2.2",
     "tslint": "^4.0.2",
-    "typescript": "^2.1.1",
-    "validate-commit-msg": "^2.8.2",
+    "typescript": "^2.1.4",
     "whitespace": "^2.1.0"
   },
   "babel": {
@@ -145,6 +144,7 @@
     ],
     "env": {
       "test": {
+        "sourceMaps": "inline",
         "plugins": [
           [
             "transform-async-to-module-method",
@@ -178,9 +178,6 @@
       "<rootDir>"
     ],
     "setupTestFrameworkScriptFile": "test/jestSetup.js"
-  },
-  "release": {
-    "verifyConditions": []
   },
   "typings": "./out/electron-builder.d.ts"
 }

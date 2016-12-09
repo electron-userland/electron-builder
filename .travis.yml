@@ -30,8 +30,7 @@ install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
 - mkdir -p ~/Library/Caches/Yarn
-- curl -o- -L https://yarnpkg.com/install.sh | bash
-- export PATH="$PATH:$HOME/.yarn/bin"
+- ln -sf $PWD/test/yarn.js /usr/local/bin/yarn
 - yarn install --pure-lockfile
 - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" && "$TRAVIS_TAG" == "" && "$PUBLISH_TO_NPM" == "true" ]]; then yarn add @develar/semantic-release@next --dev ; fi
 
