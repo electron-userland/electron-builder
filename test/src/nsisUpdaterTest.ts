@@ -101,6 +101,36 @@ test("file url generic", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
+test("file url generic download", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
+  updater.autoDownload = false
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  assertThat(updateCheckResult.fileInfo).hasProperties({
+    url: "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe"
+  })
+  assertThat(updateCheckResult.downloadPromise).isEqualTo(null)
+
+  await assertThat(path.join(await updater.downloadUpdate())).isFile()
+
+  expect(actualEvents).toEqual(expectedEvents)
+})
+
 test("file url github", async () => {
   const tmpDir = new TmpDir()
   const testResourcesPath = await tmpDir.getTempFile("update-config")
