@@ -8,14 +8,12 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
-      devMetadata: {
-        build: {
-          nsis: {
-            oneClick: false,
-          }
+      config: {
+        nsis: {
+          oneClick: false,
         }
       },
-      effectiveOptionComputed: async (it) => {
+      effectiveOptionComputed: async(it) => {
         const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
@@ -35,15 +33,13 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
 test.ifNotCiMac("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
-      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
-      devMetadata: {
-        build: {
-          nsis: {
-            oneClick: false,
-            installerHeader: "foo.bmp"
-          }
-        }
-      },
+    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
+    config: {
+      nsis: {
+        oneClick: false,
+        installerHeader: "foo.bmp"
+      }
+    },
       effectiveOptionComputed: async (it) => {
         const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
@@ -63,28 +59,24 @@ test.ifNotCiMac("boring, MUI_HEADER as option", () => {
 
 test.ifNotCiMac("boring, only perMachine", app({
   targets: nsisTarget,
-  devMetadata: {
-    build: {
-      nsis: {
-        oneClick: false,
-        perMachine: true,
-      }
+  config: {
+    nsis: {
+      oneClick: false,
+      perMachine: true,
     }
   }
 }))
 
 test.ifNotCiMac("boring", app({
   targets: nsisTarget,
-  devMetadata: {
-    build: {
-      nsis: {
-        oneClick: false,
-        language: "1031",
-      },
-      win: {
-        legalTrademarks: "My Trademark"
-      },
-    }
+  config: {
+    nsis: {
+      oneClick: false,
+      language: "1031",
+    },
+    win: {
+      legalTrademarks: "My Trademark"
+    },
   }
 }, {
   signed: true,

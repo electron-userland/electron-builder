@@ -11,11 +11,9 @@ import { Permissions } from "stat-mode"
 
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      asar: false,
-      files: ["!ignoreMe${/*}", "!**/bar"],
-    }
+  config: {
+    asar: false,
+    files: ["!ignoreMe${/*}", "!**/bar"],
   }
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
@@ -106,10 +104,8 @@ test("extraResources - one-package", () => {
   return assertPack("test-app-one", {
     // to check NuGet package
     targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
-    devMetadata: {
-      build: {
-        asar: true,
-      },
+    config: {
+      asar: true,
     },
   }, {
     projectDirCreated: projectDir => {

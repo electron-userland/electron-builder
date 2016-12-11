@@ -20,6 +20,9 @@
           <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
           <option name="SPACES_WITHIN_IMPORTS" value="true" />
         </JSCodeStyleSettings>
+        <JSON>
+          <option name="ARRAY_WRAPPING" value="0" />
+        </JSON>
         <TypeScriptCodeStyleSettings>
           <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
           <option name="IMPORTS_WRAP" value="0" />

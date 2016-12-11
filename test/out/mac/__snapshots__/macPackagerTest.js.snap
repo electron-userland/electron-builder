@@ -19,7 +19,6 @@ Object {
   "CFBundleName": "Test App ß/W",
   "CFBundlePackageType": "APPL",
   "CFBundleShortVersionString": "1.1.0",
-  "CFBundleVersion": "1.1.0.42",
   "DTSDKBuild": "14D125",
   "DTSDKName": "macosx10.1010.10",
   "DTXcode": "0721",

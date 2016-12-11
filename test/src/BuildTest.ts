@@ -162,18 +162,15 @@ test("afterPack", () => {
   let called = 0
   return assertPack("test-app-one", {
     targets: targets,
-    devMetadata: {
-      build: {
-        afterPack: () => {
-          called++
-          return BluebirdPromise.resolve()
-        }
+    config: {
+      afterPack: () => {
+        called++
+        return BluebirdPromise.resolve()
       }
     }
   }, {
-    packed: () => {
+    packed: async () => {
       expect(called).toEqual(targets.size)
-      return BluebirdPromise.resolve()
     }
   })
 })

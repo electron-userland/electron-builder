@@ -7,10 +7,8 @@ import { Platform, DIR_TARGET } from "out"
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      asar: false
-    }
+  config: {
+    asar: false
   }
 }, {
   projectDirCreated: projectDir => {
@@ -23,10 +21,8 @@ test.ifDevOrLinuxCi("ignore build resources", app({
 
 test.ifDevOrLinuxCi("ignore known ignored files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      asar: false
-    }
+  config: {
+    asar: false
   }
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
@@ -48,18 +44,14 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
 
 // skip on macOS because we want test only / and \
 test.ifNotCiMac("ignore node_modules dev dep", () => {
-  const build: any = {
-    asar: false,
-    ignore: (file: string) => {
-      return file === "/ignoreMe"
-    }
-  }
-
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
-    devMetadata: {
-      build: build
-    }
+    config: <any>{
+      asar: false,
+      ignore: (file: string) => {
+        return file === "/ignoreMe"
+      }
+    },
   }, {
     projectDirCreated: projectDir => {
       return BluebirdPromise.all([

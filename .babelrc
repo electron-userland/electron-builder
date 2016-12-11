@@ -1,0 +1,43 @@
+{
+  env: {
+    development: {
+      plugins: [
+        [
+          "transform-async-to-module-method",
+          {
+            module: "bluebird-lst-c",
+            method: "coroutine"
+          }
+        ],
+        "transform-es2015-parameters",
+        "transform-es2015-spread",
+        "transform-es2015-destructuring",
+        "array-includes",
+        [
+          "transform-inline-imports-commonjs",
+          {
+            excludeModules: ["path"]
+          }
+        ],
+      ],
+    },
+    test: {
+      sourceMaps: "inline",
+      plugins: [
+        [
+          "transform-async-to-module-method",
+          {
+            module: "bluebird-lst-c",
+            method: "coroutine"
+          }
+        ],
+        [
+          "transform-inline-imports-commonjs",
+          {
+            excludeModules: ["path"]
+          }
+        ],
+      ]
+    }
+  }
+}

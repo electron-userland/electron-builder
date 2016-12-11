@@ -9,17 +9,15 @@ test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([
 
 test.ifMac("one-package", app({
   targets: Platform.MAC.createTarget(),
-  devMetadata: {
-    build: {
-      mac: {
-        fileAssociations: [
-          {
-            ext: "foo",
-            name: "Foo",
-            role: "Viewer",
-          },
-        ]
-      }
+  config: {
+    mac: {
+      fileAssociations: [
+        {
+          ext: "foo",
+          name: "Foo",
+          role: "Viewer",
+        },
+      ]
     }
   }
 }, {

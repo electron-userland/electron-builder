@@ -30,7 +30,7 @@ function downloadFpm(): Promise<string> {
 }
 
 export default class FpmTarget extends Target {
-  private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
+  private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
   private readonly scriptFiles: Promise<Array<string>>
   private readonly desktopEntry: Promise<string>
@@ -114,10 +114,10 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      args.push("--deb-compression", options.compression || (packager.devMetadata.build.compression === "store" ? "gz" : "xz"))
+      args.push("--deb-compression", options.compression || (packager.config.compression === "store" ? "gz" : "xz"))
     }
     else if (target === "rpm") {
-      // args.push("--rpm-compression", options.compression || (this.devMetadata.build.compression === "store" ? "none" : "xz"))
+      // args.push("--rpm-compression", options.compression || (this.config.compression === "store" ? "none" : "xz"))
       args.push("--rpm-os", "linux")
 
       if (synopsis != null) {
@@ -147,7 +147,7 @@ export default class FpmTarget extends Target {
       args.push("--depends", dep)
     }
 
-    use(packager.appInfo.metadata.license || packager.devMetadata.license, it => args.push("--license", it!))
+    use(packager.appInfo.metadata.license, it => args.push("--license", it!))
     use(appInfo.buildNumber, it => args.push("--iteration", it!))
 
     use(options.fpm, it => args.push(...<any>it))

@@ -16,6 +16,8 @@
       <w>appxmanifest</w>
       <w>archiver</w>
       <w>archs</w>
+      <w>armv</w>
+      <w>asar</w>
       <w>aspx</w>
       <w>atexit</w>
       <w>atime</w>
@@ -40,6 +42,7 @@
       <w>debian</w>
       <w>depcheck</w>
       <w>devel</w>
+      <w>develar</w>
       <w>devmode</w>
       <w>difflet</w>
       <w>digester</w>
@@ -72,6 +75,7 @@
       <w>hklm</w>
       <w>homedir</w>
       <w>hrtime</w>
+      <w>icns</w>
       <w>icnsutils</w>
       <w>icnv</w>
       <w>iconset</w>

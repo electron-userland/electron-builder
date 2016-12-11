@@ -15,15 +15,13 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
     expect (content.includes("Terminal=true")).toBeTruthy()
     return false
   },
-  devMetadata: {
-    build: {
-      linux: {
-        executableName: "foo",
-        desktop: {
-          Foo: "bar",
-          Terminal: "true",
-        },
-      }
+  config: {
+    linux: {
+      executableName: "foo",
+      desktop: {
+        Foo: "bar",
+        Terminal: "true",
+      },
     }
   }
 }, {

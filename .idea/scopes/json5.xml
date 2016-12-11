@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="json5" pattern="file:.babelrc" />
+</component>

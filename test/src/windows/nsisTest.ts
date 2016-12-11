@@ -14,16 +14,14 @@ const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
 test("one-click", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-  devMetadata: {
-    build: {
-      publish: {
-        provider: "bintray",
-        owner: "actperepo",
-        package: "TestApp",
-      },
-      // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
-      // productName: "TestApp",
-    }
+  config: {
+    publish: {
+      provider: "bintray",
+      owner: "actperepo",
+      package: "TestApp",
+    },
+    // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
+    // productName: "TestApp",
   }
 }, {
   useTempDir: true,
@@ -41,25 +39,23 @@ test("one-click", app({
 
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-  devMetadata: {
-    build: {
-      // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
-      productName: "TestApp",
-      fileAssociations: [
-        {
-          ext: "foo",
-          name: "Test Foo",
-        }
-      ],
-      nsis: {
-        perMachine: true,
-        runAfterFinish: false,
-      },
-      publish: {
-        provider: "generic",
-        url: "https://develar.s3.amazonaws.com/test",
-      },
-    }
+  config: {
+    // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
+    productName: "TestApp",
+    fileAssociations: [
+      {
+        ext: "foo",
+        name: "Test Foo",
+      }
+    ],
+    nsis: {
+      perMachine: true,
+      runAfterFinish: false,
+    },
+    publish: {
+      provider: "generic",
+      url: "https://develar.s3.amazonaws.com/test",
+    },
   },
 }, {
   projectDirCreated: projectDir => {

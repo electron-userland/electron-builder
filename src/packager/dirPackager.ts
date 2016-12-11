@@ -33,10 +33,10 @@ function subOptionWarning (properties: any, optionName: any, parameter: any, val
 }
 
 export async function unpackElectron(packager: PlatformPackager<any>, out: string, platform: string, arch: string, electronVersion: string) {
-  const electronDist = packager.devMetadata.build.electronDist
+  const electronDist = packager.config.electronDist
   if (electronDist == null) {
     const zipPath = (await BluebirdPromise.all<any>([
-      downloadElectron(createDownloadOpts(packager.devMetadata.build, platform, arch, electronVersion)),
+      downloadElectron(createDownloadOpts(packager.config, platform, arch, electronVersion)),
       emptyDir(out)
     ]))[0]
 

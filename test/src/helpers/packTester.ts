@@ -77,7 +77,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
-  const useTempDir = process.env.TEST_APP_TMP_DIR != null || (checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.devMetadata != null || checkOptions.npmInstallBefore))
+  const useTempDir = process.env.TEST_APP_TMP_DIR != null || (checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.config != null || checkOptions.npmInstallBefore))
 
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
@@ -113,11 +113,11 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     // never output to test fixture app
     if (!useTempDir) {
       dirToDelete = path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
-      const devMetadata = packagerOptions.devMetadata
-      if (devMetadata != null && devMetadata.directories != null) {
+      const config = packagerOptions.config
+      if (config != null && config.directories != null) {
         throw new Error("unsupported")
       }
-      packagerOptions = deepAssign({}, packagerOptions, {devMetadata: {directories: {output: dirToDelete}}})
+      packagerOptions = deepAssign({}, packagerOptions, {config: {directories: {output: dirToDelete}}})
     }
 
     const outDir = useTempDir ? path.join(projectDir, OUT_DIR_NAME) : dirToDelete
@@ -285,6 +285,8 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     CFBundleVersion: `${appInfo.version}.${(process.env.TRAVIS_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM)}`
   })
 
+  // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
+  delete info.CFBundleVersion
   if (checkOptions.checkMacApp != null) {
     await checkOptions.checkMacApp(packedAppDir, info)
   }
@@ -322,7 +324,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const artifactNames: Array<string> = []
   const expectedFileNames: Array<string> = []
   const archSuffix = getArchSuffix(arch)
-  const buildOptions = packager.devMetadata.build.win
+  const buildOptions = packager.config.win
   for (let target of nameToTarget.keys()) {
     if (target === "squirrel") {
       squirrel = true
@@ -511,11 +513,9 @@ export class CheckingMacPackager extends OsXPackager {
 export function createMacTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
   return app({
     targets: Platform.MAC.createTarget(),
-    devMetadata: {
-      build: {
-        mac: {
-          target: target,
-        }
+    config: {
+      mac: {
+        target: target,
       }
     }
   }, {

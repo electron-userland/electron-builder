@@ -119,8 +119,6 @@ it("create publisher", async () => {
   const packager: any = {
     metadata: {
       version: "2.0.0",
-    },
-    devMetadata: {
       repository: "develar/test"
     },
   }

@@ -1,4 +1,4 @@
-import { DevMetadata, AppMetadata } from "./metadata"
+import { DevMetadata, AppMetadata, BuildMetadata } from "./metadata"
 import { warn } from "./util/log"
 import { smarten } from "./platformPackager"
 import { isEmptyOrSpaces } from "./util/util"
@@ -15,10 +15,14 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
+  private get config(): BuildMetadata {
+    return this.devMetadata.build
+  }
+
   constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, buildVersion?: string | null) {
     this.version = metadata.version!
 
-    this.buildNumber = (<any>this.devMetadata.build)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    this.buildNumber = (<any>this.config)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
 
     if (isEmptyOrSpaces(buildVersion)) {
       buildVersion = this.version
@@ -31,7 +35,7 @@ export class AppInfo {
       this.buildVersion = buildVersion!
     }
 
-    this.productName = getProductName(this.metadata, this.devMetadata)
+    this.productName = this.config.productName || metadata.productName || metadata.name
     this.productFilename = sanitizeFileName(this.productName)
   }
 
@@ -45,13 +49,13 @@ export class AppInfo {
   }
 
   get id(): string {
-    let appId = this.devMetadata.build["app-bundle-id"]
+    let appId = this.config["app-bundle-id"]
     if (appId != null) {
       warn("app-bundle-id is deprecated, please use appId")
     }
 
-    if (this.devMetadata.build.appId != null) {
-      appId = this.devMetadata.build.appId
+    if (this.config.appId != null) {
+      appId = this.config.appId
     }
 
     const generateDefaultAppId = () => {
@@ -72,7 +76,7 @@ export class AppInfo {
   }
 
   get copyright(): string {
-    const copyright = this.devMetadata.build.copyright
+    const copyright = this.config.copyright
     if (copyright != null) {
       return copyright
     }
@@ -80,19 +84,12 @@ export class AppInfo {
   }
 
   async computePackageUrl(): Promise<string | null> {
-    const url = this.metadata.homepage || this.devMetadata.homepage
+    const url = this.metadata.homepage
     if (url != null) {
       return url
     }
 
     const info = await getRepositoryInfo(this.metadata, this.devMetadata)
-    if (info != null) {
-      return `https://github.com/${info.user}/${info.project}`
-    }
-    return null
+    return info == null ? null : `https://github.com/${info.user}/${info.project}`
   }
-}
-
-function getProductName(metadata: AppMetadata, devMetadata: DevMetadata) {
-  return devMetadata.build.productName || metadata.productName || metadata.name
 }

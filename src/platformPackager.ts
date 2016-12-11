@@ -1,8 +1,8 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation, BuildMetadata } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
-import { use, isEmptyOrSpaces, asArray, debug } from "./util/util"
+import { use, isEmptyOrSpaces, asArray, debug, getDirectoriesConfig } from "./util/util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { Minimatch } from "minimatch"
@@ -41,6 +41,11 @@ export interface PackagerOptions {
    */
   readonly devMetadata?: DevMetadata
 
+  /*
+   See [.build](#BuildMetadata).
+   */
+  readonly config?: BuildMetadata
+
   /**
    * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).
    *
@@ -59,6 +64,8 @@ export interface BuildInfo {
   metadata: AppMetadata
 
   devMetadata: DevMetadata
+
+  config: BuildMetadata
 
   projectDir: string
   appDir: string
@@ -82,7 +89,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly projectDir: string
   readonly buildResourcesDir: string
 
-  readonly devMetadata: DevMetadata
+  readonly config: BuildMetadata
 
   readonly platformSpecificBuildOptions: DC
 
@@ -92,9 +99,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  constructor(public readonly info: BuildInfo) {
-    this.devMetadata = info.devMetadata
-    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>info.devMetadata.build)[this.platform.buildConfigurationKey])
+  constructor(readonly info: BuildInfo) {
+    this.config = info.config
+    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
     this.options = info.options
     this.projectDir = info.projectDir
@@ -138,7 +145,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   get relativeBuildResourcesDirname() {
-    return use(this.devMetadata.directories, it => it!.buildResources) || "build"
+    return use(getDirectoriesConfig(this.info.devMetadata), it => it!.buildResources) || "build"
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
@@ -219,7 +226,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       ".nyc_output}")
 
     let rawFilter: any = null
-    const deprecatedIgnore = (<any>this.devMetadata.build).ignore
+    const deprecatedIgnore = (<any>this.config).ignore
     if (deprecatedIgnore != null) {
       if (typeof deprecatedIgnore === "function") {
         warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
@@ -274,11 +281,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.doCopyExtraFiles(extraResourceMatchers)
     await this.doCopyExtraFiles(extraFileMatchers)
 
-    const afterPack = this.devMetadata.build.afterPack
+    const afterPack = this.config.afterPack
     if (afterPack != null) {
       await afterPack({
         appOutDir: appOutDir,
-        options: this.devMetadata.build,
+        options: this.config,
         packager: this,
       })
     }
@@ -298,7 +305,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return `${name} is deprecated is deprecated and not supported — please use build.asarUnpack`
     }
 
-    const buildMetadata = <any>this.devMetadata.build
+    const buildMetadata = <any>this.config
     if (buildMetadata["asar-unpack"] != null) {
       throw new Error(errorMessage("asar-unpack"))
     }
@@ -307,7 +314,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const platformSpecific = customBuildOptions.asar
-    const result = platformSpecific == null ? this.devMetadata.build.asar : platformSpecific
+    const result = platformSpecific == null ? this.config.asar : platformSpecific
     if (result === false) {
       warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
         "Please enable asar and use asarUnpack to unpack files that must be externally available.")
@@ -344,7 +351,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
-    let globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.devMetadata.build)[name]
+    let globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
     let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
     const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, fileMatchOptions)
@@ -495,7 +502,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   getFileAssociations(): Array<FileAssociation> {
-    return asArray(this.devMetadata.build.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
+    return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 
   async getResource(custom: string | n, ...names: Array<string>): Promise<string | null> {
@@ -565,7 +572,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
   }
 
   if (publishers == null) {
-    publishers = packager.info.devMetadata.build.publish
+    publishers = packager.config.publish
     if (publishers === null) {
       return null
     }

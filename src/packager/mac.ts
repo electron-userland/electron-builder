@@ -37,7 +37,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   const helperEHPlistFilename = path.join(frameworksPath, "Electron Helper EH.app", "Contents", "Info.plist")
   const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
 
-  const buildMetadata = packager.devMetadata.build!
+  const buildMetadata = packager.config!
   const fileContents: Array<string> = await BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   const appPlist = parsePlist(fileContents[0])
   const helperPlist = parsePlist(fileContents[1])

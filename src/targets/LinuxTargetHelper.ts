@@ -57,7 +57,7 @@ export class LinuxTargetHelper {
   }
 
   private async getIcns(): Promise<string | null> {
-    const build = this.packager.devMetadata.build
+    const build = this.packager.config
     let iconPath = (build.mac || {}).icon || build.icon
     if (iconPath != null && !iconPath.endsWith(".icns")) {
       iconPath += ".icns"

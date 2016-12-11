@@ -8,10 +8,8 @@ import { statFile } from "asar-electron-builder"
 
 test.ifDevOrLinuxCi("unpackDir one", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
-  devMetadata: {
-    build: {
-      asarUnpack: ["assets", "b2"],
-    }
+  config: {
+    asarUnpack: ["assets", "b2"],
   }
 }, {
   projectDirCreated: projectDir => {
@@ -31,10 +29,8 @@ test.ifDevOrLinuxCi("unpackDir one", app({
 test.ifDevOrLinuxCi("unpackDir", () => {
   return assertPack("test-app", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
-    devMetadata: {
-      build: {
-        asarUnpack: ["assets", "b2"],
-      }
+    config: {
+      asarUnpack: ["assets", "b2"],
     }
   }, {
     projectDirCreated: projectDir => {

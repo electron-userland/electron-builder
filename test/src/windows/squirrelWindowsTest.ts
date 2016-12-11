@@ -8,12 +8,10 @@ test.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(
 // very slow
 test.skip("delta and msi", app({
   targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),
-  devMetadata: {
-    build: {
-      squirrelWindows: {
-        remoteReleases: "https://github.com/develar/__test-app-releases",
-        msi: true,
-      },
+  config: {
+    squirrelWindows: {
+      remoteReleases: "https://github.com/develar/__test-app-releases",
+      msi: true,
     }
   },
 }))
@@ -33,11 +31,9 @@ test("detect install-spinner, certificateFile/password", () => {
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
-    devMetadata: {
-      build: {
-        win: {
-          certificatePassword: "pass",
-        }
+    config: {
+      win: {
+        certificatePassword: "pass",
       }
     }
   }, {

@@ -7,11 +7,9 @@ test.ifNotWindows("arm deb", app({targets: Platform.LINUX.createTarget("deb", Ar
 
 test.ifNotWindows("custom depends", app({
     targets: Platform.LINUX.createTarget("deb"),
-    devMetadata: {
-      build: {
-        deb: {
-          depends: ["foo"],
-        }
+    config: {
+      deb: {
+        depends: ["foo"],
       }
     }
   },

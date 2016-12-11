@@ -25,7 +25,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 
 export default class NsisTarget extends Target {
-  private readonly options: NsisOptions = this.packager.info.devMetadata.build.nsis || Object.create(null)
+  private readonly options: NsisOptions = this.packager.config.nsis || Object.create(null)
 
   private archs: Map<Arch, Promise<string>> = new Map()
 
@@ -67,7 +67,7 @@ export default class NsisTarget extends Target {
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
-    return await archive(packager.devMetadata.build.compression, "7z", archiveFile, appOutDir, true)
+    return await archive(packager.config.compression, "7z", archiveFile, appOutDir, true)
   }
 
   async finishBuild(): Promise<any> {
@@ -164,7 +164,7 @@ export default class NsisTarget extends Target {
       Unicode: true,
     }
 
-    if (packager.devMetadata.build.compression === "store") {
+    if (packager.config.compression === "store") {
       commands.SetCompress = "off"
       defines.COMPRESS = "off"
     }

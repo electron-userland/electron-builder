@@ -14,7 +14,7 @@ const SW_VERSION = "1.4.4"
 const SW_SHA2 = "98e1d81c80d7afc1bcfb37f3b224dc4f761088506b9c28ccd72d1cf8752853ba"
 
 export default class SquirrelWindowsTarget extends Target {
-  private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.squirrelWindows)
+  private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
 
   constructor(private readonly packager: WinPackager, private readonly outDir: string) {
     super("squirrel")
@@ -51,9 +51,9 @@ export default class SquirrelWindowsTarget extends Target {
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
     const packager = this.packager
-    let iconUrl = this.options.iconUrl || packager.devMetadata.build.iconUrl
+    let iconUrl = this.options.iconUrl || packager.config.iconUrl
     if (iconUrl == null) {
-      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.devMetadata)
+      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.info.devMetadata)
       if (info != null) {
         iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
@@ -77,7 +77,7 @@ export default class SquirrelWindowsTarget extends Target {
       iconUrl: iconUrl,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: packager.devMetadata.build.compression === "store" ? 0 : 9,
+      packageCompressionLevel: packager.config.compression === "store" ? 0 : 9,
       vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, this.options)
 
@@ -93,7 +93,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (options.remoteReleases === true) {
-      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.devMetadata)
+      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.info.devMetadata)
       if (info == null) {
         warn("remoteReleases set to true, but cannot get repository info")
       }

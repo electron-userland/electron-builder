@@ -32,11 +32,11 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    return new AppInfo(appInfo.metadata, this.devMetadata, this.platformSpecificBuildOptions.bundleVersion)
+    return new AppInfo(appInfo.metadata, this.info.devMetadata, this.platformSpecificBuildOptions.bundleVersion)
   }
 
   async getIconPath(): Promise<string | null> {
-    let iconPath = this.platformSpecificBuildOptions.icon || this.devMetadata.build.icon
+    let iconPath = this.platformSpecificBuildOptions.icon || this.config.icon
     if (iconPath != null && !iconPath.endsWith(".icns")) {
       iconPath += ".icns"
     }
@@ -82,7 +82,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     if (hasMas) {
       const appOutDir = path.join(outDir, "mas")
-      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.devMetadata.build).mas)
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
       await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
       await this.sign(appOutDir, masBuildOptions)
     }
@@ -113,7 +113,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
       if (name == null) {
         let message = `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
-        if (isMas) {
+        if (isMas || this.platformSpecificBuildOptions.forceCodeSigning) {
           throw new Error(message)
         }
         else {
@@ -172,7 +172,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   async findInstallerIdentity(isMas: boolean, keychainName: string | n): Promise<string> {
-    const targetSpecificOptions: MacOptions = (<any>this.devMetadata.build)[isMas ? "mas" : "pkg"] || this.platformSpecificBuildOptions
+    const targetSpecificOptions: MacOptions = (<any>this.config)[isMas ? "mas" : "pkg"] || this.platformSpecificBuildOptions
     const name = isMas ? "3rd Party Mac Developer Installer" : "Developer ID Installer"
     let installerName = await findIdentity(name, targetSpecificOptions.identity, keychainName)
     if (installerName != null) {

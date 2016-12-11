@@ -1,6 +1,6 @@
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import { readFile } from "fs-extra-p"
-import { AppMetadata, Metadata } from "./metadata"
+import { AppMetadata, Metadata, RepositoryInfo } from "./metadata"
 import * as path from "path"
 
 export interface RepositorySlug {
@@ -12,7 +12,7 @@ let info: Promise<Info> | null
 
 export function getRepositoryInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<Info | null> {
   if (info == null) {
-    info = _getInfo(metadata, devMetadata)
+    info = _getInfo(<RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
   }
   return info
 }
@@ -45,8 +45,7 @@ async function getGitUrlFromGitConfig(): Promise<string | null> {
   return null
 }
 
-async function _getInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<RepositorySlug | null> {
-  const repo = metadata == null ? null : (devMetadata!.repository || metadata!.repository)
+async function _getInfo(repo?: RepositoryInfo | null): Promise<RepositorySlug | null> {
   if (repo == null) {
     let url = process.env.TRAVIS_REPO_SLUG
     if (url == null) {

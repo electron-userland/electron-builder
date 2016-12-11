@@ -1,5 +1,5 @@
 #! /usr/bin/env node
-import { computeDefaultAppDirectory, getElectronVersion, use } from "../util/util"
+import { computeDefaultAppDirectory, getElectronVersion, use, getDirectoriesConfig } from "../util/util"
 import { printErrorAndExit } from "../util/promise"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
@@ -19,7 +19,7 @@ async function main() {
 
   const devMetadata: DevMetadata = await readPackageJson(devPackageFile)
   const results: Array<string> = await BluebirdPromise.all([
-    computeDefaultAppDirectory(projectDir, use(devMetadata.directories, it => it!.app)),
+    computeDefaultAppDirectory(projectDir, use(getDirectoriesConfig(devMetadata), it => it!.app)),
     getElectronVersion(devMetadata, devPackageFile)
   ])
 

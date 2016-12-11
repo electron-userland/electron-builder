@@ -8,11 +8,9 @@ import { attachAndExecute } from "out/targets/dmg"
 
 test.ifMac("no build directory", app({
   targets: Platform.MAC.createTarget("dmg"),
-  devMetadata: {
-    build: {
-      // dmg can mount only one volume name, so, to test in parallel, we set different product name
-      productName: "NoBuildDirectory",
-    }
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "NoBuildDirectory",
   }
 }, {
   expectedContents: ["NoBuildDirectory-1.1.0.dmg"],
@@ -49,13 +47,11 @@ test.ifMac("custom background - new way", () => {
 
 test.ifMac("unset dmg icon", app({
   targets: Platform.MAC.createTarget("dmg"),
-  devMetadata: {
-    build: {
-      // dmg can mount only one volume name, so, to test in parallel, we set different product name
-      productName: "Test ß No Volume Icon",
-      dmg: {
-        icon: null,
-      },
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "Test ß No Volume Icon",
+    dmg: {
+      icon: null,
     }
   }
 }, {
@@ -73,14 +69,12 @@ test.ifMac("unset dmg icon", app({
 // test also "only dmg"
 test.ifMac("no background", app({
   targets: Platform.MAC.createTarget("dmg"),
-  devMetadata: {
-    build: {
-      // dmg can mount only one volume name, so, to test in parallel, we set different product name
-      productName: "NoBackground",
-      dmg: {
-        background: null,
-        title: "Foo",
-      },
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "NoBackground",
+    dmg: {
+      background: null,
+      title: "Foo",
     }
   }
 }, {
@@ -97,14 +91,12 @@ test.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
-    devMetadata: {
-      build: {
-        dmg: {
-          icon: null,
-        },
-        mac: {
-          bundleVersion: "50"
-        },
+    config: {
+      dmg: {
+        icon: null,
+      },
+      mac: {
+        bundleVersion: "50"
       },
     }
   }, {

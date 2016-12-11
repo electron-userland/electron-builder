@@ -1,9 +1,9 @@
 import * as path from "path"
-import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces } from "./util/util"
+import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces, getDirectoriesConfig } from "./util/util"
 import { all, executeFinally } from "./util/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
-import { AppMetadata, DevMetadata, Platform, Arch } from "./metadata"
+import { AppMetadata, DevMetadata, Platform, Arch, BuildMetadata } from "./metadata"
 import { PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -28,7 +28,12 @@ export class Packager implements BuildInfo {
   appDir: string
 
   metadata: AppMetadata
+
   devMetadata: DevMetadata
+
+  get config(): BuildMetadata {
+    return this.devMetadata.build
+  }
 
   isTwoPackageJsonProjectLayoutUsed = true
 
@@ -55,12 +60,21 @@ export class Packager implements BuildInfo {
   }
 
   async build(): Promise<Map<Platform, Map<String, Target>>> {
-    const devPackageFile = this.devPackageFile
-
     const extraMetadata = this.options.extraMetadata
     const extraBuildMetadata = extraMetadata == null ? null : extraMetadata.build
 
-    this.devMetadata = deepAssign(await readPackageJson(devPackageFile), this.options.devMetadata)
+    let devMetadataFromOptions = this.options.devMetadata
+    const buildConfigFromOptions = this.options.config
+    if (buildConfigFromOptions != null) {
+      if (devMetadataFromOptions != null) {
+        throw new Error("devMetadata and config cannot be used in conjunction")
+      }
+      devMetadataFromOptions = {build: buildConfigFromOptions}
+    }
+
+    const devPackageFile = this.devPackageFile
+    this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
+
     if (extraMetadata != null) {
       if (extraBuildMetadata != null) {
         deepAssign(this.devMetadata, {build: extraBuildMetadata})
@@ -72,7 +86,7 @@ export class Packager implements BuildInfo {
       }
     }
 
-    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(this.devMetadata.directories, it => it!.app))
+    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(getDirectoriesConfig(this.devMetadata), it => it!.app))
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
 
@@ -91,7 +105,7 @@ export class Packager implements BuildInfo {
     }
 
     this.checkMetadata(appPackageFile, devPackageFile)
-    checkConflictingOptions(this.devMetadata.build)
+    checkConflictingOptions(this.config)
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
@@ -102,7 +116,7 @@ export class Packager implements BuildInfo {
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
     const distTasks: Array<Promise<any>> = []
-    const outDir = path.resolve(this.projectDir, use(this.devMetadata.directories, it => it!.output) || "dist")
+    const outDir = path.resolve(this.projectDir, use(getDirectoriesConfig(this.devMetadata), it => it!.output) || "dist")
 
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
     // custom packager - don't check wine
@@ -193,7 +207,7 @@ export class Packager implements BuildInfo {
       }
     }
 
-    const build = <any>this.devMetadata.build
+    const build = <any>this.config
     if (build == null) {
       throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
     }
@@ -220,10 +234,6 @@ export class Packager implements BuildInfo {
         throw new Error(util.format(errorMessages.nameInBuildSpecified, appPackageFile))
       }
 
-      if (build.directories != null) {
-        throw new Error(`'directories' in the 'build' is not correct. Please move 'directories' from 'build' to root`)
-      }
-
       if (build.prune != null) {
         warn("prune is deprecated — development dependencies are never copied in any case")
       }
@@ -231,7 +241,7 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    const options = this.devMetadata.build
+    const options = this.config
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {

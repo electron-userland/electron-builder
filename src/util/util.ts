@@ -9,6 +9,7 @@ import { warn, log } from "./log"
 import { createHash } from "crypto"
 import "source-map-support/register"
 import { statOrNull } from "./fs"
+import { DevMetadata } from "../metadata"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -257,4 +258,8 @@ export function getCacheDirectory(): string {
   else {
     return path.join(homedir(), ".cache", "electron-builder")
   }
+}
+
+export function getDirectoriesConfig(m: DevMetadata) {
+  return m.build.directories || (<any>m).directories
 }

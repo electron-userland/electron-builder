@@ -13,7 +13,7 @@ import { release } from "os"
 import { copyDir } from "../util/fs"
 
 export default class AppXTarget extends Target {
-  private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.devMetadata.build.appx)
+  private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
   constructor(private readonly packager: WinPackager, private readonly outDir: string) {
     super("appx")

@@ -58,7 +58,6 @@ Don't customize paths to background and icon, — just follow conventions.
 | Name | Description
 | --- | ---
 | **build** | <a name="DevMetadata-build"></a>See [.build](#BuildMetadata).
-| directories | <a name="DevMetadata-directories"></a>See [.directories](#MetadataDirectories)
 
 <a name="BuildMetadata"></a>
 ## `.build`
@@ -91,6 +90,8 @@ Don't customize paths to background and icon, — just follow conventions.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
 | electronDownload | <a name="BuildMetadata-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
+| forceCodeSigning | <a name="BuildMetadata-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+| directories | <a name="BuildMetadata-directories"></a>See [.directories](#MetadataDirectories)
 
 <a name="DmgOptions"></a>
 ### `.build.dmg`

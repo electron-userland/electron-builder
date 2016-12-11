@@ -12,7 +12,7 @@ import { homedir } from "os"
 import { Target } from "./targetFactory"
 
 export default class SnapTarget extends Target {
-  private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.devMetadata.build)[this.name])
+  private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
   constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
     super(name)

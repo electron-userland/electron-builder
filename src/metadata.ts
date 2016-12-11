@@ -58,17 +58,6 @@ export interface DevMetadata extends Metadata {
    See [.build](#BuildMetadata).
    */
   readonly build: BuildMetadata
-
-  // deprecated
-  readonly homepage?: string | null
-
-  // deprecated
-  readonly license?: string | null
-
-  /*
-   See [.directories](#MetadataDirectories)
-   */
-  readonly directories?: MetadataDirectories | null
 }
 
 export interface RepositoryInfo {
@@ -241,6 +230,16 @@ export interface BuildMetadata {
   See [.build.publish](#PublishConfiguration).
    */
   readonly publish?: Publish
+
+  /*
+  Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+   */
+  readonly forceCodeSigning?: boolean
+
+  /*
+   See [.directories](#MetadataDirectories)
+   */
+  readonly directories?: MetadataDirectories | null
 }
 
 export interface AfterPackContext {
@@ -344,6 +343,8 @@ export interface PlatformSpecificBuildOptions {
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
   readonly publish?: Publish
+
+  readonly forceCodeSigning?: boolean
 }
 
 export class Platform {

@@ -102,10 +102,10 @@ class ArchiveTarget extends Target {
 
     const dirToArchive = isMac ? path.join(appOutDir, `${packager.appInfo.productFilename}.app`) : appOutDir
     if (format.startsWith("tar.")) {
-      await tar(packager.devMetadata.build.compression, format, outFile, dirToArchive, isMac)
+      await tar(packager.config.compression, format, outFile, dirToArchive, isMac)
     }
     else {
-      await archive(packager.devMetadata.build.compression, format, outFile, dirToArchive)
+      await archive(packager.config.compression, format, outFile, dirToArchive)
     }
 
     packager.dispatchArtifactCreated(outFile, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))

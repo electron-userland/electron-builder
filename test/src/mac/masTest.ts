@@ -24,15 +24,13 @@ test("custom mas", () => {
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
-    devMetadata: {
-      build: {
-        mac: {
-          target: ["mas"],
-        },
-        mas: {
-          entitlements: "mas-entitlements file path",
-          entitlementsInherit: "mas-entitlementsInherit file path",
-        }
+    config: {
+      mac: {
+        target: ["mas"],
+      },
+      mas: {
+        entitlements: "mas-entitlements file path",
+        entitlementsInherit: "mas-entitlementsInherit file path",
       }
     }
   }), {
@@ -51,12 +49,10 @@ test("entitlements in the package.json", () => {
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
-    devMetadata: {
-      build: {
-        mac: {
-          entitlements: "osx-entitlements file path",
-          entitlementsInherit: "osx-entitlementsInherit file path",
-        }
+    config: {
+      mac: {
+        entitlements: "osx-entitlements file path",
+        entitlementsInherit: "osx-entitlementsInherit file path",
       }
     }
   }), {

@@ -6,7 +6,7 @@ import BluebirdPromise from "bluebird-lst-c"
 
 test.ifDevOrWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
-  devMetadata: <any>{
+  appMetadata: <any>{
     version: "3.0.0-beta.2",
   }
 }))
@@ -46,11 +46,16 @@ test.ifMac("custom icon", () => {
 
 it.ifDevOrLinuxCi("ev", appThrows(/certificateSubjectName supported only on Windows/, {
   targets: Platform.WINDOWS.createTarget(["dir"]),
-  devMetadata: {
-    build: {
-      win: {
-        certificateSubjectName: "ev",
-      }
+  config: {
+    win: {
+      certificateSubjectName: "ev",
     }
+  }
+}))
+
+it.ifDevOrLinuxCi("forceCodeSigning", appThrows(/App is not signed and "forceCodeSigning"/, {
+  targets: Platform.WINDOWS.createTarget(["dir"]),
+  config: {
+    forceCodeSigning: true,
   }
 }))
