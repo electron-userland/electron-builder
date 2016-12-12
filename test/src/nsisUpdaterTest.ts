@@ -5,7 +5,6 @@ import { TmpDir } from "out/util/tmp"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { GenericServerOptions, GithubOptions } from "out/options/publishOptions"
-import BluebirdPromise from "bluebird-lst-c"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
@@ -134,7 +133,7 @@ test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdaterClass()
 
   const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "error"]
+  const expectedEvents = ["checking-for-update", "error", "error"]
   for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
@@ -142,16 +141,5 @@ test("test error", async () => {
   }
 
   await assertThat(updater.checkForUpdates()).throws("Path must be a string. Received undefined")
-  await new BluebirdPromise(function (resolve, reject) {
-    setTimeout(() => {
-      try {
-        expect(actualEvents).toEqual(expectedEvents)
-      }
-      catch (e) {
-        reject(e)
-      }
-
-      resolve()
-    }, 500)
-  })
+  expect(actualEvents).toEqual(expectedEvents)
 })

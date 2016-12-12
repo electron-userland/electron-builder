@@ -30,10 +30,7 @@ export class NsisUpdater extends EventEmitter {
 
     this.app = (<any>global).__test_app || require("electron").app
 
-    if (options == null) {
-      this.clientPromise = this.loadUpdateConfig()
-    }
-    else {
+    if (options != null) {
       this.setFeedURL(options)
     }
   }
@@ -47,15 +44,11 @@ export class NsisUpdater extends EventEmitter {
   }
 
   async checkForUpdates(): Promise<UpdateCheckResult> {
-    if (this.clientPromise == null) {
-      const message = "Update URL is not set"
-      const error = new Error(message)
-      this.emit("error", error, message)
-      throw error
-    }
-
     this.emit("checking-for-update")
     try {
+      if (this.clientPromise == null) {
+        this.clientPromise = NsisUpdater.loadUpdateConfig()
+      }
       return await this.doCheckForUpdates()
     }
     catch (e) {
@@ -157,14 +150,8 @@ export class NsisUpdater extends EventEmitter {
     return true
   }
 
-  async loadUpdateConfig() {
-    try {
-      return createClient(safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8")))
-    }
-    catch (e) {
-      this.emit("error", e, (e.stack || e).toString())
-      throw e
-    }
+  private static async loadUpdateConfig() {
+    return createClient(safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8")))
   }
 }
 
