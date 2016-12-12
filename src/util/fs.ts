@@ -173,9 +173,13 @@ export function copyDir(src: string, destination: string, filter?: Filter, isUse
 
   const createdSourceDirs = new Set<string>()
   const fileCopier = new FileCopier(isUseHardLink)
+
+  type Link = { link: string, file: string }
+  const links: Array<Link> = []
+
   return walk(src, filter, async (file, stat, parent) => {
     if (stat.isSymbolicLink()) {
-      await symlink(await readlink(file), file.replace(src, destination))
+      links.push( <Link>{"file": file, "link": await readlink(file)} )
       return
     }
 
@@ -189,5 +193,10 @@ export function copyDir(src: string, destination: string, filter?: Filter, isUse
     }
 
     await fileCopier.copy(file, file.replace(src, destination), stat)
+  }).then(() => {
+    while (links.length > 0) {
+      const ln = links.pop()!
+      symlink(ln.link, ln.file.replace(src, destination))
+    }
   })
 }
