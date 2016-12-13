@@ -2,6 +2,5 @@ files: ["test/src/**/*", "!**/helpers/**/*"]
 script: "node_modules/.bin/jest"
 lineRegExp: '^\s*(?:test|it)(?:\.\w+)?\("([^"'']+)'
 scriptArgs: ["-i", "-t", "${0regExp}", "--env", "jest-environment-node-debug", "${fileNameWithoutExt}"]
-nodeArgs: ["--trace-warnings"]
 beforeRun: typescript
 rcName: "${fileNameWithoutExt}.${0}"

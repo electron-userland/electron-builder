@@ -173,13 +173,9 @@ export function copyDir(src: string, destination: string, filter?: Filter, isUse
 
   const createdSourceDirs = new Set<string>()
   const fileCopier = new FileCopier(isUseHardLink)
-  return walk(src, filter, async (file, stat, parent) => {
-    if (stat.isSymbolicLink()) {
-      await symlink(await readlink(file), file.replace(src, destination))
-      return
-    }
-
-    if (!stat.isFile()) {
+  const links: Array<Link> = []
+  return walk(src, filter, async(file, stat, parent) => {
+    if (!stat.isFile() && !stat.isSymbolicLink()) {
       return
     }
 
@@ -188,6 +184,18 @@ export function copyDir(src: string, destination: string, filter?: Filter, isUse
       createdSourceDirs.add(parent)
     }
 
-    await fileCopier.copy(file, file.replace(src, destination), stat)
+    const destFile = file.replace(src, destination)
+    if (stat.isFile()) {
+      await fileCopier.copy(file, destFile, stat)
+    }
+    else {
+      links.push({"file": destFile, "link": await readlink(file)})
+    }
   })
+    .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
+}
+
+interface Link {
+  readonly link: string,
+  readonly file: string
 }

@@ -1,5 +1,5 @@
 import { expectedWinContents } from "./helpers/expectedContents"
-import { outputFile, stat, readFile } from "fs-extra-p"
+import { outputFile, stat, symlink, readFile } from "fs-extra-p"
 import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
@@ -8,6 +8,8 @@ import { Platform, DIR_TARGET } from "out"
 import pathSorter from "path-sort"
 import Mode from "stat-mode"
 import { Permissions } from "stat-mode"
+import { TmpDir } from "out/util/tmp"
+import { copyDir } from "out/util/fs"
 
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -177,6 +179,23 @@ test("extraResources - one-package", () => {
       winDirPrefix + "win/x64.txt"
     )) : null,
   })
+})
+
+// https://github.com/electron-userland/electron-builder/pull/998
+// copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
+test("postpone symlink", async () => {
+  const tmpDir = new TmpDir()
+  const source = await tmpDir.getTempFile("src")
+  const aSourceFile = path.join(source, "z", "Z")
+  const bSourceFileLink = path.join(source, "B")
+  await outputFile(aSourceFile, "test")
+  await symlink(aSourceFile, bSourceFileLink)
+
+
+  const dest = await tmpDir.getTempFile("dest")
+  await copyDir(source, dest)
+
+  await tmpDir.cleanup()
 })
 
 async function allCan(file: string, execute: Boolean) {
