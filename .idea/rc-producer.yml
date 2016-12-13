@@ -1,6 +1,12 @@
-files: ["test/src/**/*", "!**/helpers/**/*"]
-script: "node_modules/.bin/jest"
-lineRegExp: '^\s*(?:test|it)(?:\.\w+)?\("([^"'']+)'
-scriptArgs: ["-i", "-t", "${0regExp}", "--env", "jest-environment-node-debug", "${fileNameWithoutExt}"]
-beforeRun: typescript
-rcName: "${fileNameWithoutExt}.${0}"
+- &defaults
+  files: ["test/src/**/*", "!**/helpers/**/*"]
+  script: "node_modules/.bin/jest"
+  scriptArgs: ["-i", "--env", "jest-environment-node-debug", &filePattern '/${fileNameWithoutExt}\.\w+$']
+  rcName: "${fileNameWithoutExt}"
+  beforeRun: typescript
+
+-
+  <<: *defaults
+  lineRegExp: '^\s*(?:test|it)(?:\.\w+)?\("([^"'']+)'
+  scriptArgs: ["-i", "--env", "jest-environment-node-debug", "-t", "${0regExp}", *filePattern]
+  rcName: "${fileNameWithoutExt}.${0}"

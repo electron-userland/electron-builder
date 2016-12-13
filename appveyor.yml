@@ -6,15 +6,13 @@ cache:
   - '%USERPROFILE%\.electron'
 
 environment:
-  RUN_IN_BAND: true
+  TEST_FILES: BuildTest,extraMetadataTest,filesTest,globTest
 
 install:
   - ps: Install-Product node 6 x64
-  # unknown yarn error
-  - npm install
-  - npm prune
+  - node ./test/yarn.js
 
 build: off
 
 test_script:
-  - npm run test
+  - node ./test/yarn.js test

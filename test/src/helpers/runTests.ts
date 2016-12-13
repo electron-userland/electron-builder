@@ -79,9 +79,6 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
   return BluebirdPromise.map(versions, it => downloadElectron(it), {concurrency: 3})
 }
 
-/**
- * CIRCLE_NODE_INDEX=2 — test nodejs 4 (on Circle).
- */
 async function runTests() {
   const testFiles: string | null = process.env.TEST_FILES
 
