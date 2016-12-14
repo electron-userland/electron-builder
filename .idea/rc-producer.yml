@@ -10,3 +10,5 @@
   lineRegExp: '^\s*(?:test|it)(?:\.\w+)?\("([^"'']+)'
   scriptArgs: ["-i", "--env", "jest-environment-node-debug", "-t", "${0regExp}", *filePattern]
   rcName: "${fileNameWithoutExt}.${0}"
+  env:
+    TEST_APP_TMP_DIR: /tmp/electron-builder-test
