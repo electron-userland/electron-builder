@@ -29,8 +29,6 @@ before_install:
 install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "6" ]]; then npm install npm -g ; fi
-- mkdir -p ~/Library/Caches/Yarn
 - ln -sf $PWD/test/yarn.js /usr/local/bin/yarn
 - yarn install --pure-lockfile
 - if [[ "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == "false" && "$AUTO_PUBLISH" != "false" && "$TRAVIS_TAG" == "" && "$PUBLISH_TO_NPM" == "true" ]]; then yarn add @develar/semantic-release@next --dev ; fi

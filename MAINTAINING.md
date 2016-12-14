@@ -6,7 +6,7 @@ new version with tag `next` will be published if `fix`, `feat` or `BREAKING CHAN
 # Sync wiki
 To add `wiki` upstream:
 ```
-git remote add upstream https://github.com/electron-userland/electron-builder.wiki.git
+git remote add wiki git@github.com:electron-userland/electron-builder.wiki.git
 ```
 
-To sync: `npm run update-wiki`
+To sync: `yarn update-wiki`

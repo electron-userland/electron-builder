@@ -15,9 +15,9 @@ import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 import { Target } from "./targetFactory"
 
-const NSIS_VERSION = "3.0.3"
+const NSIS_VERSION = "3.0.4"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "666271c2c5b4492b2bbe412ffb0262fe58e05117fccff8f7fa685e38564f33a4"
+const NSIS_SHA2 = "c29883cb9a04733489590420b910ea7a91ba0f9b776fe4c647d9801f23175225"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
