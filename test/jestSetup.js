@@ -30,6 +30,7 @@ else {
 }
 
 test.ifNotCiMac = isCi && process.platform === "darwin" ? skip : test
+test.ifNotCiWin = isCi && isWindows ? skip : test
 
 test.ifDevOrWinCi = !isCi || isWindows ? test : skip
 test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip

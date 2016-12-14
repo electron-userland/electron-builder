@@ -29,6 +29,7 @@ before_install:
 install:
 - nvm install $NODE_VERSION
 - nvm use --delete-prefix $NODE_VERSION
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$NODE_VERSION" == "6" ]]; then npm install npm -g ; fi
 - mkdir -p ~/Library/Caches/Yarn
 - ln -sf $PWD/test/yarn.js /usr/local/bin/yarn
 - yarn install --pure-lockfile

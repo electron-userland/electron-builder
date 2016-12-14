@@ -31,7 +31,7 @@ test.ifDevOrLinuxCi("files", app({
   },
 }))
 
-test("extraResources", async () => {
+test.ifNotCiWin("extraResources", async () => {
   for (const platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey
     const winDirPrefix = "lib/net45/resources/"
@@ -96,7 +96,7 @@ test("extraResources", async () => {
   }
 })
 
-test("extraResources - one-package", () => {
+test.ifNotCiWin("extraResources - one-package", () => {
   const platform = process.platform === "win32" ? Platform.WINDOWS : Platform.LINUX
   const osName = platform.buildConfigurationKey
 
