@@ -273,7 +273,7 @@ Windows specific build options.
 | Name | Description
 | --- | ---
 | target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p>
-| signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a><p>Array of signing algorithms used. Defaults to <code>['sha1', 'sha256']</code></p> <p>Fo AppX <code>sha256</code> is always used.</p>
+| signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a><p>Array of signing algorithms used. Defaults to <code>['sha1', 'sha256']</code></p> <p>For AppX <code>sha256</code> is always used.</p>
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.
 | certificateFile | <a name="WinBuildOptions-certificateFile"></a><p>The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable <code>CSC_LINK</code> (<code>WIN_CSC_LINK</code>) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).</p>

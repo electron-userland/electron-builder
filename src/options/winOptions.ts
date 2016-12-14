@@ -16,7 +16,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
    Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
 
-   Fo AppX `sha256` is always used.
+   For AppX `sha256` is always used.
    */
   readonly signingHashAlgorithms?: Array<string> | null
 
