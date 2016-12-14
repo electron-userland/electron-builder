@@ -40,6 +40,6 @@ It means that you **should not change appId** once your application in use (or n
 
 You can explicitly set guid using option [nsis.guid](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-guid), but it is not recommended — consider using [appId](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-appId).
 
-It is also important to set the Application User Model ID (AUMID) to the [appId](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-appId) of the application, inorder for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUIMD should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed.
+It is also important to set the Application User Model ID (AUMID) to the [appId](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-appId) of the application, in order for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUIMD should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed.
 
 `app.setAppUserModelId(appId)`
