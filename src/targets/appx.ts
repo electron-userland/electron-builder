@@ -102,7 +102,7 @@ export default class AppXTarget extends Target {
             return safeName
             
           case "arch":
-            return arch === "x86" ? arch : "x64"
+            return arch === Arch.ia32 ? "x86" : "x64"
 
           default:
             throw new Error(`Macro ${p1} is not defined`)
