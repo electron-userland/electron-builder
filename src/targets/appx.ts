@@ -85,12 +85,18 @@ export default class AppXTarget extends Target {
 
           case "name":
             return appInfo.name
+            
+          case "identityName":
+            return this.options.identityName ? this.options.identityName : appInfo.name;
 
           case "executable":
             return `app\\${appInfo.productFilename}.exe`
 
           case "displayName":
-            return appInfo.productName
+            return this.options.displayName ? this.options.displayName : appInfo.productName
+            
+          case "publisherDisplayName":
+            return this.options.publisherDisplayName ? this.options.publisherDisplayName : appInfo.companyName
 
           case "description":
             return appInfo.description || appInfo.productName
