@@ -69,7 +69,7 @@ export default class AppXTarget extends Target {
     packager.dispatchArtifactCreated(destination, packager.generateName("appx", arch, true))
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: string) {
+  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
       .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
