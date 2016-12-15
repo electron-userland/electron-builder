@@ -121,6 +121,7 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
   log(`Rebuilding native production dependencies for arch ${arch}`)
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
+  const isYarn = isYarnPath(execPath)
   const execArgs: Array<string> = []
   if (execPath == null) {
     execPath = getPackageToolPath()
@@ -131,7 +132,7 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
   }
 
   const env = getGypEnv(electronVersion, arch, buildFromSource)
-  if (isYarnPath(execPath)) {
+  if (isYarn) {
     execArgs.push("run", "install", "--")
     execArgs.push(...additionalArgs)
     await BluebirdPromise.each(nativeDeps, it => spawn(execPath, execArgs, {cwd: it, env: env}))
