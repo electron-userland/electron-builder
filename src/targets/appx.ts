@@ -63,7 +63,7 @@ export default class AppXTarget extends Target {
     use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
     // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await spawn(path.join(await getSignVendorPath(), "windows-10", arch == Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
+    await spawn(path.join(await getSignVendorPath(), "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
 
     await packager.sign(destination)
     packager.dispatchArtifactCreated(destination, packager.generateName("appx", arch, true))
@@ -102,7 +102,7 @@ export default class AppXTarget extends Target {
             return safeName
             
           case "arch":
-            return arch == Arch.ia32 ? "x86" : "x64"
+            return arch === Arch.ia32 ? "x86" : "x64"
 
           default:
             throw new Error(`Macro ${p1} is not defined`)
