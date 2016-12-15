@@ -185,6 +185,6 @@ export interface AppXOptions {
   readonly makeappxArgs?: Array<string> | null
 
   readonly publisher?: string | null
-  readonly publisherDisplayName=: string | null
+  readonly publisherDisplayName?: string | null
   readonly identityName?: string | null
 }
