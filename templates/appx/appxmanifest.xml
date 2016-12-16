@@ -4,7 +4,7 @@
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <Identity Name="${name}"
-    ProcessorArchitecture="x64"
+    ProcessorArchitecture="${arch}"
     Publisher="${publisher}"
     Version="${version}" />
   <Properties>
