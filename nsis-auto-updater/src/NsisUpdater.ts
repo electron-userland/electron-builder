@@ -28,7 +28,7 @@ export class NsisUpdater extends EventEmitter {
   constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
     super()
 
-    this.app = (<any>global).__test_app || require("electron").app
+    this.app = (<any>global).__test_app || require("electron").app || require("electron").remote.app
 
     if (options != null) {
       this.setFeedURL(options)
