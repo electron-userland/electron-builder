@@ -11,6 +11,12 @@ import { parse as parseUrl } from "url"
 
 const debug: Debugger = _debug("electron-builder")
 
+export class HttpError extends Error {
+  constructor(public response: IncomingMessage, public description: any = null) {
+    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, <any>null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, <any>null, "  "))
+  }
+}
+
 export function githubRequest<T>(path: string, token: string | null, data: { [name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>({hostname: "api.github.com", path: path}, token, data, method)
 }
@@ -117,10 +123,4 @@ Please double check that your authentication token is correct. Due to security r
     requestProcessor(request, reject)
     onCancel!(() => request.abort())
   })
-}
-
-export class HttpError extends Error {
-  constructor(public response: IncomingMessage, public description: any = null) {
-    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, <any>null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, <any>null, "  "))
-  }
 }

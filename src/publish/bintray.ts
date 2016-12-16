@@ -1,5 +1,6 @@
 import { bintrayRequest } from "./restApiRequest"
 import { BintrayOptions } from "../options/publishOptions"
+export { HttpError } from "./restApiRequest"
 
 export interface Version {
   readonly name: string

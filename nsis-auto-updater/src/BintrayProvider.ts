@@ -1,6 +1,5 @@
 import { Provider, FileInfo } from "./api"
-import { BintrayClient } from "../../src/publish/bintray"
-import { HttpError } from "../../src/publish/restApiRequest"
+import { BintrayClient, HttpError } from "../../src/publish/bintray"
 import { BintrayOptions, VersionInfo } from "../../src/options/publishOptions"
 
 export class BintrayProvider implements Provider<VersionInfo> {

@@ -102,7 +102,7 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | Name | Description
 | --- | ---
 | backgroundColor | <a name="AppXOptions-backgroundColor"></a>The background color of the app tile. Please see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
-| publisher | <a name="AppXOptions-publisher"></a>* Describes the publisher information. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. For now, required.
+| publisher | <a name="AppXOptions-publisher"></a>Describes the publisher information. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. For now, required.
 | displayName | <a name="AppXOptions-displayName"></a>A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
 | publisherDisplayName | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
 | identityName | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
