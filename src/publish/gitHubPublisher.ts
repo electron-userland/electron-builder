@@ -61,7 +61,7 @@ export class GitHubPublisher extends Publisher {
     const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
-    for (let release of releases) {
+    for (const release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
         if (release.draft) {
           return release
@@ -121,7 +121,7 @@ export class GitHubPublisher extends Publisher {
             // delete old artifact and re-upload
             log(`Artifact ${fileName} already exists, overwrite one`)
             const assets = await githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token)
-            for (let asset of assets) {
+            for (const asset of assets) {
               if (asset!.name === fileName) {
                 await githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
                 continue uploadAttempt
@@ -187,7 +187,7 @@ export class GitHubPublisher extends Publisher {
 
   // async deleteOldReleases() {
   //   const releases = await githubRequest<Array<Release>>(`/repos/${this.owner}/${this.repo}/releases`, this.token)
-  //   for (let release of releases) {
+  //   for (const release of releases) {
   //     await githubRequest(`/repos/${this.owner}/${this.repo}/releases/${release.id}`, this.token, null, "DELETE")
   //   }
   // }

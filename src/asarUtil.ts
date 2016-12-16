@@ -78,6 +78,7 @@ class AsarPackager {
     const packageJsonStringLength = "package.json".length
     const dirToCreate = new Map<string, Array<string>>()
 
+    /* tslint:disable:rule1 prefer-const */
     for (let i = 0, n = files.length; i < n; i++) {
       const file = files[i]
       const index = file.lastIndexOf(NODE_MODULES_PATTERN)
@@ -164,6 +165,7 @@ class AsarPackager {
     const filesToUnpack: Array<UnpackedFileTask> = []
     const mainPackageJson = path.join(this.src, "package.json")
     const fileCopier = new FileCopier()
+    /* tslint:disable:rule1 prefer-const */
     for (let i = 0, n = files.length; i < n; i++) {
       const file = files[i]
       const stat = metadata.get(file)!
@@ -313,7 +315,7 @@ class AsarPackager {
 
     const ordering: Array<string> = []
     for (const file of orderingFiles) {
-      let pathComponents = file.split(path.sep)
+      const pathComponents = file.split(path.sep)
       let str = this.src
       for (const pathComponent of pathComponents) {
         str = path.join(str, pathComponent)

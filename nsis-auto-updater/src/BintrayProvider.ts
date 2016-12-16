@@ -29,7 +29,7 @@ export class BintrayProvider implements Provider<VersionInfo> {
     try {
       const files = await this.client.getVersionFiles(versionInfo.version)
       const suffix = `${versionInfo.version}.exe`
-      for (let file of files) {
+      for (const file of files) {
         if (file.name.endsWith(suffix) && file.name.includes("Setup")) {
           return {
             name: file.name,

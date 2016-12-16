@@ -37,7 +37,7 @@ class Assertions {
 
   hasProperties(expected: any) {
     const actual = Object.create(null)
-    for (let name of Object.getOwnPropertyNames(this.actual)) {
+    for (const name of Object.getOwnPropertyNames(this.actual)) {
       if (name in expected) {
         actual[name] = this.actual[name]
       }

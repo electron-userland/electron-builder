@@ -82,11 +82,11 @@ export function diff(oldList: Array<string>, newList: Array<string>, rootDir: st
   }
   const deltaMap = new Map<string, ChangeType>()
   // const objHolder = new Set(oldList)
-  for (let item of oldList) {
+  for (const item of oldList) {
     deltaMap.set(item, ChangeType.REMOVED)
   }
 
-  for (let item of newList) {
+  for (const item of newList) {
     // objHolder.add(item)
     const d = deltaMap.get(item)
     if (d === ChangeType.REMOVED) {
@@ -97,7 +97,7 @@ export function diff(oldList: Array<string>, newList: Array<string>, rootDir: st
     }
   }
 
-  for (let [item, changeType] of deltaMap.entries()) {
+  for (const [item, changeType] of deltaMap.entries()) {
     if (changeType === ChangeType.REMOVED) {
       delta.deleted.push(item.substring(rootDir.length + 1))
     }

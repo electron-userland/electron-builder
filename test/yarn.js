@@ -619,7 +619,7 @@ let getEolFromFile = (() => {
 
     const buffer = yield readFileBuffer(path);
 
-    for (let i = 0; i < buffer.length; ++i) {
+    for (const i = 0; i < buffer.length; ++i) {
       if (buffer[i] === cr) {
         return '\r\n';
       }
@@ -1168,7 +1168,7 @@ const _camelCase = __webpack_require__(343);
 function sortAlpha(a, b) {
   // sort alphabetically in a deterministic way
   const shortLen = Math.min(a.length, b.length);
-  for (let i = 0; i < shortLen; i++) {
+  for (const i = 0; i < shortLen; i++) {
     const aChar = a.charCodeAt(i);
     const bChar = b.charCodeAt(i);
     if (aChar !== bChar) {
@@ -30177,7 +30177,7 @@ class NpmRegistry extends (_baseRegistry || _load_baseRegistry()).default {
       return this.token;
     }
 
-    for (let registry of [this.getRegistry(packageName), '', DEFAULT_REGISTRY]) {
+    for (const registry of [this.getRegistry(packageName), '', DEFAULT_REGISTRY]) {
       registry = registry.replace(/^https?:/, '');
 
       // Check for bearer token.
@@ -33047,7 +33047,7 @@ function queue(arr, promiseProducer) {
   }
 
   return new Promise((resolve, reject) => {
-    for (let i = 0; i < concurrency; i++) {
+    for (const i = 0; i < concurrency; i++) {
       next();
     }
 
@@ -35628,7 +35628,7 @@ function _stringify(obj, options) {
 
   let addedKeys = [];
 
-  for (let i = 0; i < keys.length; i++) {
+  for (const i = 0; i < keys.length; i++) {
     const key = keys[i];
     const val = obj[key];
     if (val == null || addedKeys.indexOf(key) >= 0) {
@@ -35640,7 +35640,7 @@ function _stringify(obj, options) {
 
     // get all keys that have the same value equality, we only want this for objects
     if (typeof val === 'object') {
-      for (let j = i + 1; j < keys.length; j++) {
+      for (const j = i + 1; j < keys.length; j++) {
         const key = keys[j];
         if (val === obj[key]) {
           valKeys.push(key);
@@ -41695,7 +41695,7 @@ function* tokenise(input) {
     } else if (input[0] === ' ') {
       if (lastNewline) {
         let indent = '';
-        for (let i = 0; input[i] === ' '; i++) {
+        for (const i = 0; input[i] === ' '; i++) {
           indent += input[i];
         }
 
@@ -41711,7 +41711,7 @@ function* tokenise(input) {
     } else if (input[0] === '"') {
       let val = '';
 
-      for (let i = 0;; i++) {
+      for (const i = 0;; i++) {
         const currentChar = input[i];
         val += currentChar;
 
@@ -41736,7 +41736,7 @@ function* tokenise(input) {
       }
     } else if (/^[0-9]/.test(input)) {
       let val = '';
-      for (let i = 0; /^[0-9]$/.test(input[i]); i++) {
+      for (const i = 0; /^[0-9]$/.test(input[i]); i++) {
         val += input[i];
       }
       chop = val.length;
@@ -41756,7 +41756,7 @@ function* tokenise(input) {
       chop++;
     } else if (/^[a-zA-Z]/g.test(input)) {
       let name = "";
-      for (let i = 0; i < input.length; i++) {
+      for (const i = 0; i < input.length; i++) {
         const char = input[i];
         if (char === ':' || char === ' ' || char === '\n' || char === ',') {
           break;
@@ -42117,7 +42117,7 @@ class JSONReporter extends (_baseReporter || _load_baseReporter()).default {
     this._dump('activitySetStart', { id, total, workers });
 
     const spinners = [];
-    for (let i = 0; i < workers; i++) {
+    for (const i = 0; i < workers; i++) {
       let current = 0;
       let header = '';
 
@@ -50746,7 +50746,7 @@ class PackageLinker {
 
       // find a dependency in the tree above us that matches
       let searchPatterns = [];
-      for (let request of ref.requests) {
+      for (const request of ref.requests) {
         do {
           // get resolved pattern for this request
           const dep = this.resolver.getResolvedPattern(request.pattern);
@@ -61410,7 +61410,7 @@ let args = process.argv.slice(2);
 
 // ignore all arguments after a --
 let endArgs = [];
-for (let i = 0; i < args.length; i++) {
+for (const i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === '--') {
     endArgs = args.slice(i + 1);
@@ -63721,7 +63721,7 @@ let run = exports.run = (() => {
         if (human !== hoistedKey) {
           const humanParts = human.split('#');
 
-          for (let i = 0; i < humanParts.length; i++) {
+          for (const i = 0; i < humanParts.length; i++) {
             const humanPart = humanParts[i];
 
             if (hoistedParts[0] === humanPart) {
@@ -63763,7 +63763,7 @@ let run = exports.run = (() => {
           // find the package that this will resolve to, factoring in hoisting
           const possibles = [];
           let depPkgLoc;
-          for (let i = parts.length; i >= 0; i--) {
+          for (const i = parts.length; i >= 0; i--) {
             const myParts = parts.slice(0, i).concat(name);
 
             // build package.json location for this position
@@ -68195,7 +68195,7 @@ class PackageHoister {
     const name = parts.pop();
 
     //
-    for (let i = parts.length - 1; i >= 0; i--) {
+    for (const i = parts.length - 1; i >= 0; i--) {
       const checkParts = parts.slice(0, i).concat(name);
       const checkKey = this.implodeKey(checkParts);
       info.addHistory(`Looked at ${ checkKey } for a match`);
@@ -68342,7 +68342,7 @@ class PackageHoister {
    */
 
   taintParents(info, processParts, start) {
-    for (let i = start; i < processParts.length; i++) {
+    for (const i = start; i < processParts.length; i++) {
       const parts = processParts.slice(0, i).concat(info.pkg.name);
       const key = this.implodeKey(parts);
 
@@ -68388,7 +68388,7 @@ class PackageHoister {
       // decompress the location and push it to the flat tree. this path could be made
       const parts = [];
       const keyParts = key.split('#');
-      for (let i = 0; i < keyParts.length; i++) {
+      for (const i = 0; i < keyParts.length; i++) {
         const key = keyParts.slice(0, i + 1).join('#');
         const hoisted = this.tree.get(key);
         invariant(hoisted, 'expected hoisted manifest');
@@ -69535,7 +69535,7 @@ class BaseRegistry {
 
   mergeEnv(prefix) {
     // try environment variables
-    for (let key in process.env) {
+    for (const key in process.env) {
       key = key.toLowerCase();
 
       // only accept keys prefixed with the prefix
@@ -69869,14 +69869,14 @@ class ConsoleReporter extends (_baseReporter || _load_baseReporter()).default {
 
     // get column widths
     const cols = [];
-    for (let i = 0; i < head.length; i++) {
+    for (const i = 0; i < head.length; i++) {
       const widths = rows.map(row => this.format.stripColor(row[i]).length);
       cols[i] = Math.max(...widths);
     }
 
     //
     const builtRows = rows.map(row => {
-      for (let i = 0; i < row.length; i++) {
+      for (const i = 0; i < row.length; i++) {
         const field = row[i];
         const padding = cols[i] - this.format.stripColor(field).length;
 
@@ -70024,11 +70024,11 @@ class ConsoleReporter extends (_baseReporter || _load_baseReporter()).default {
 
     const spinners = [];
 
-    for (let i = 1; i < workers; i++) {
+    for (const i = 1; i < workers; i++) {
       this.log('');
     }
 
-    for (let i = 0; i < workers; i++) {
+    for (const i = 0; i < workers; i++) {
       const spinner = new (_spinnerProgress || _load_spinnerProgress()).default(this.stderr, i);
       spinner.start();
 
@@ -70128,7 +70128,7 @@ class ConsoleReporter extends (_baseReporter || _load_baseReporter()).default {
     return new Promise(resolve => {
       this.info(header);
 
-      for (let i = 0; i < questions.length; i++) {
+      for (const i = 0; i < questions.length; i++) {
         this.log(`  ${ this.format.dim(`${ i + 1 })`) } ${ questions[i] }`);
       }
 
@@ -70211,7 +70211,7 @@ function sortTrees(trees) {
 function recurseTree(tree, level, recurseFunc) {
   const treeLen = tree.length;
   const treeEnd = treeLen - 1;
-  for (let i = 0; i < treeLen; i++) {
+  for (const i = 0; i < treeLen; i++) {
     recurseFunc(tree[i], level + 1, i === treeEnd);
   }
 }
@@ -71627,7 +71627,7 @@ exports.default = (() => {
     if (Array.isArray(licenses) && !info.license) {
       let licenseTypes = [];
 
-      for (let license of licenses) {
+      for (const license of licenses) {
         if (license && typeof license === 'object') {
           license = license.type;
         }

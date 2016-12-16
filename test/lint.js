@@ -57,7 +57,8 @@ const configuration = {
     ],
     "no-bitwise": false,
     "jsdoc-format": false,
-    "no-for-in-array": true
+    "no-for-in-array": true,
+    "prefer-const": true,
   }
 }
 const options = {

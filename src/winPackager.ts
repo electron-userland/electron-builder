@@ -198,7 +198,7 @@ async function checkIcon(file: string): Promise<void> {
   }
 
   const sizes = parseIco(buffer)
-  for (let size of sizes) {
+  for (const size of sizes) {
     if (size!.w >= 256 && size!.h >= 256) {
       return
     }

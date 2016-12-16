@@ -21,7 +21,7 @@ function assignKey(to: any, from: any, key: string) {
 
 function assign(to: any, from: any) {
   if (to !== from) {
-    for (let key of Object.getOwnPropertyNames(from)) {
+    for (const key of Object.getOwnPropertyNames(from)) {
       assignKey(to, from, key)
     }
   }
@@ -29,7 +29,7 @@ function assign(to: any, from: any) {
 }
 
 export function deepAssign(target: any, ...objects: Array<any>) {
-  for (let o of objects) {
+  for (const o of objects) {
     if (o != null) {
       assign(target, o)
     }

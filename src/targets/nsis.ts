@@ -109,7 +109,7 @@ export default class NsisTarget extends Target {
       defines.MUI_UNICON = iconPath
     }
 
-    for (let [arch, file] of this.archs) {
+    for (const [arch, file] of this.archs) {
       defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
     }
 
@@ -219,7 +219,7 @@ export default class NsisTarget extends Target {
     const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
     if (publishConfigs != null) {
       let sha2: string | null = null
-      for (let publishConfig of publishConfigs) {
+      for (const publishConfig of publishConfigs) {
         if (publishConfig.provider === "generic" || publishConfig.provider === "github") {
           if (sha2 == null) {
             sha2 = await sha256(installerPath)
@@ -254,7 +254,7 @@ export default class NsisTarget extends Target {
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
     const args: Array<string> = (this.options.warningsAsErrors === false) ? [] : ["-WX"]
-    for (let name of Object.keys(defines)) {
+    for (const name of Object.keys(defines)) {
       const value = defines[name]
       if (value == null) {
         args.push(`-D${name}`)
@@ -264,10 +264,10 @@ export default class NsisTarget extends Target {
       }
     }
 
-    for (let name of Object.keys(commands)) {
+    for (const name of Object.keys(commands)) {
       const value = commands[name]
       if (Array.isArray(value)) {
-        for (let c of value) {
+        for (const c of value) {
           args.push(`-X${name} ${c}`)
         }
       }
@@ -293,9 +293,9 @@ export default class NsisTarget extends Target {
       script = "!include FileAssociation.nsh\n" + script
       if (isInstaller) {
         let registerFileAssociationsScript = ""
-        for (let item of fileAssociations) {
+        for (const item of fileAssociations) {
           const extensions = asArray(item.ext).map(normalizeExt)
-          for (let ext of extensions) {
+          for (const ext of extensions) {
             const customIcon = await packager.getResource(item.icon, `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
@@ -314,8 +314,8 @@ export default class NsisTarget extends Target {
       }
       else {
         let unregisterFileAssociationsScript = ""
-        for (let item of fileAssociations) {
-          for (let ext of asArray(item.ext)) {
+        for (const item of fileAssociations) {
+          for (const ext of asArray(item.ext)) {
             unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name}"\n`
           }
         }

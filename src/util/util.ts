@@ -148,7 +148,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
     return build.electronVersion
   }
 
-  for (let name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
     try {
       return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", name, "package.json"))).version
     }
@@ -169,7 +169,7 @@ export async function getElectronVersion(packageData: any, packageJsonPath: stri
 }
 
 function findFromElectronPrebuilt(packageData: any): any {
-  for (let name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
     const devDependencies = packageData.devDependencies
     let dep = devDependencies == null ? null : devDependencies[name]
     if (dep == null) {
@@ -199,7 +199,7 @@ export async function computeDefaultAppDirectory(projectDir: string, userAppDir:
     return absolutePath
   }
 
-  for (let dir of DEFAULT_APP_DIR_NAMES) {
+  for (const dir of DEFAULT_APP_DIR_NAMES) {
     const absolutePath = path.join(projectDir, dir)
     const packageJson = path.join(absolutePath, "package.json")
     const stat = await statOrNull(packageJson)

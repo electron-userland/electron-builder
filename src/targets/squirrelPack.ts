@@ -226,7 +226,7 @@ function encodedZip(archive: any, dir: string, prefix: string) {
       return
     }
 
-    for (let file of files) {
+    for (const file of files) {
       if (file.stats.isDirectory()) {
         continue
       }

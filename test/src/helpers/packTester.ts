@@ -177,8 +177,8 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
     return packager
   }
 
-  c: for (let [platform, archToType] of packagerOptions.targets) {
-    for (let [arch, targets] of archToType) {
+  c: for (const [platform, archToType] of packagerOptions.targets) {
+    for (const [arch, targets] of archToType) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
@@ -204,7 +204,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
 
   function getExpected(): Array<string> {
     const result: Array<string> = []
-    for (let target of nameToTarget.keys()) {
+    for (const target of nameToTarget.keys()) {
       if (target === "appimage") {
         result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
@@ -325,7 +325,7 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const expectedFileNames: Array<string> = []
   const archSuffix = getArchSuffix(arch)
   const buildOptions = packager.config.win
-  for (let target of nameToTarget.keys()) {
+  for (const target of nameToTarget.keys()) {
     if (target === "squirrel") {
       squirrel = true
       expectedFileNames.push("RELEASES", `${appInfo.productFilename} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
@@ -482,7 +482,7 @@ export class CheckingMacPackager extends OsXPackager {
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    for (let target of targets) {
+    for (const target of targets) {
       // do not use instanceof to avoid dmg require
       if (target.name === "dmg") {
         this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions()

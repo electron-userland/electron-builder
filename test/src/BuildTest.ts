@@ -182,7 +182,7 @@ test("afterPack", () => {
 //     useTempDir: false,
 //     packed: async context => {
 //       const data = await readJson(path.join(context.outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
-//       for (let name of Object.getOwnPropertyNames(data)) {
+//       for (const name of Object.getOwnPropertyNames(data)) {
 //         if (name[0] === "_") {
 //           throw new Error("Property name starts with _")
 //         }

@@ -143,7 +143,7 @@ export default class FpmTarget extends Target {
       }
     }
 
-    for (let dep of depends) {
+    for (const dep of depends) {
       args.push("--depends", dep)
     }
 

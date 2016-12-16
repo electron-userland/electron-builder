@@ -75,7 +75,7 @@ function flatDependencies(data: any, result: Set<string>, seen: Set<string>, ext
   const queue: Array<any> = [data.dependencies]
   while (queue.length > 0) {
     const deps = queue.pop()
-    for (let name of Object.keys(deps)) {
+    for (const name of Object.keys(deps)) {
       const dep = deps[name]
       if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
         continue

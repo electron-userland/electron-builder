@@ -204,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-    let defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
+    const defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
     if (defaultMatcher.isEmpty() || defaultMatcher.containsOnlyIgnore()) {
       defaultMatcher.addAllPattern()
     }
@@ -351,8 +351,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
-    let globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
-    let platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
+    const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
+    const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
     const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, fileMatchOptions)
     const fileMatchers: Array<FileMatcher> = []
@@ -508,7 +508,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   async getResource(custom: string | n, ...names: Array<string>): Promise<string | null> {
     if (custom === undefined) {
       const resourceList = await this.resourceList
-      for (let name of names) {
+      for (const name of names) {
         if (resourceList.includes(name)) {
           return path.join(this.buildResourcesDir, name)
         }

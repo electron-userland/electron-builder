@@ -121,7 +121,7 @@ export class Packager implements BuildInfo {
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
     // custom packager - don't check wine
     let checkWine = this.options.platformPackagerFactory == null
-    for (let [platform, archToType] of this.options.targets!) {
+    for (const [platform, archToType] of this.options.targets!) {
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
       }
@@ -135,7 +135,7 @@ export class Packager implements BuildInfo {
       const nameToTarget: Map<String, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
-      for (let [arch, targets] of archToType) {
+      for (const [arch, targets] of archToType) {
         await this.installAppDependencies(platform, arch)
 
         if (checkWine && wineCheck != null) {
@@ -146,7 +146,7 @@ export class Packager implements BuildInfo {
         await helper.pack(outDir, arch, createTargets(nameToTarget, targets, outDir, helper, cleanupTasks), distTasks)
       }
 
-      for (let target of nameToTarget.values()) {
+      for (const target of nameToTarget.values()) {
         distTasks.push(target.finishBuild())
       }
     }
@@ -286,7 +286,7 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
 }
 
 function checkConflictingOptions(options: any) {
-  for (let name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name", "extra-resource"]) {
+  for (const name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name", "extra-resource"]) {
     if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }
@@ -334,7 +334,7 @@ function checkDependencies(dependencies?: { [key: string]: string }) {
     return
   }
 
-  for (let name of ["electron", "electron-prebuilt", "electron-builder"]) {
+  for (const name of ["electron", "electron-prebuilt", "electron-builder"]) {
     if (name in dependencies) {
       throw new Error(`Package "${name}" is only allowed in "devDependencies". `
         + `Please remove it from the "dependencies" section in your package.json.`)

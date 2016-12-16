@@ -146,7 +146,7 @@ async function getToolPath(): Promise<string> {
     return "osslsigncode"
   }
 
-  let result = process.env.SIGNTOOL_PATH
+  const result = process.env.SIGNTOOL_PATH
   if (result) {
     return result
   }

@@ -108,7 +108,7 @@ export default class SquirrelWindowsTarget extends Target {
 }
 
 function checkConflictingOptions(options: any) {
-  for (let name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
+  for (const name of ["outputDirectory", "appDirectory", "exe", "fixUpPaths", "usePackageJson", "extraFileSpecs", "extraMetadataSpecs", "skipUpdateIcon", "setupExe"]) {
     if (name in options) {
       throw new Error(`Option ${name} is ignored, do not specify it.`)
     }

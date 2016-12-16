@@ -58,7 +58,7 @@ test("file url", async () => {
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (let eventName of expectedEvents) {
+  for (const eventName of expectedEvents) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })

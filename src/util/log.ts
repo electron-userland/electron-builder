@@ -101,7 +101,7 @@ class Logger {
     let out = ""
     let firstPendingLineIndex = 0
     while (firstPendingLineIndex < prevLineCount) {
-      let line = this.lines[firstPendingLineIndex]
+      const line = this.lines[firstPendingLineIndex]
       if (line.promise == null || !line.promise.isPending()) {
         out += line.text
         firstPendingLineIndex++
@@ -122,7 +122,7 @@ class Logger {
       this.lines.splice(0, firstPendingLineIndex)
     }
 
-    for (let line of this.lines) {
+    for (const line of this.lines) {
       out += line.text
     }
 

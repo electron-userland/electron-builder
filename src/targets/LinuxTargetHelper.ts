@@ -32,7 +32,7 @@ export class LinuxTargetHelper {
   private async iconsFromDir(iconsDir: string) {
     const mappings: Array<Array<string>> = []
     let maxSize = 0
-    for (let file of (await readdir(iconsDir))) {
+    for (const file of (await readdir(iconsDir))) {
       if (file.endsWith(".png") || file.endsWith(".PNG")) {
         // If parseInt encounters a character that is not a numeral in the specified radix,
         // it returns the integer value parsed up to that point
@@ -90,7 +90,7 @@ export class LinuxTargetHelper {
     }
 
     let data = `[Desktop Entry]`
-    for (let name of Object.keys(desktopMeta)) {
+    for (const name of Object.keys(desktopMeta)) {
       const value = desktopMeta[name]
       data += `\n${name}=${value}`
     }

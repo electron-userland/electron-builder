@@ -45,13 +45,13 @@ async function main(): Promise<void> {
   }
 
   const packageData = await readJson(path.join(projectDir, "package.json"))
-  for (let name of Object.keys(packageData.devDependencies)) {
+  for (const name of Object.keys(packageData.devDependencies)) {
     const usages = result.using[name]
     if (usages == null || usages.length === 0) {
       continue
     }
 
-    for (let file of usages) {
+    for (const file of usages) {
       if (file.startsWith(path.join(projectDir, "src") + path.sep)) {
         throw new Error(`Dev dependency ${name} is used in the sources`)
       }

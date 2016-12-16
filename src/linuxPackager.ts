@@ -16,7 +16,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   constructor(info: BuildInfo) {
     super(info)
 
-    let executableName = this.platformSpecificBuildOptions.executableName
+    const executableName = this.platformSpecificBuildOptions.executableName
     this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name : executableName).toLowerCase()
   }
 
@@ -44,7 +44,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       return helper
     }
 
-    for (let name of targets) {
+    for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
       }

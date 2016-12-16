@@ -44,7 +44,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
-    for (let name of targets) {
+    for (const name of targets) {
       switch (name) {
         case DIR_TARGET:
           break
@@ -112,7 +112,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
 
       if (name == null) {
-        let message = `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+        const message = `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
         if (isMas || this.platformSpecificBuildOptions.forceCodeSigning) {
           throw new Error(message)
         }
@@ -174,7 +174,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   async findInstallerIdentity(isMas: boolean, keychainName: string | n): Promise<string> {
     const targetSpecificOptions: MacOptions = (<any>this.config)[isMas ? "mas" : "pkg"] || this.platformSpecificBuildOptions
     const name = isMas ? "3rd Party Mac Developer Installer" : "Developer ID Installer"
-    let installerName = await findIdentity(name, targetSpecificOptions.identity, keychainName)
+    const installerName = await findIdentity(name, targetSpecificOptions.identity, keychainName)
     if (installerName != null) {
       return installerName
     }

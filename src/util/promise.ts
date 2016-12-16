@@ -36,7 +36,7 @@ export class NestedError extends Error {
   constructor(errors: Array<Error>, message: string = "Compound error: ") {
     let m = message
     let i = 1
-    for (let error of errors) {
+    for (const error of errors) {
       const prefix = "Error #" + i++ + " "
       m += "\n\n" + prefix + "-".repeat(80) + "\n" + error!.stack
     }

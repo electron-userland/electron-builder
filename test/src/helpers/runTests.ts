@@ -41,7 +41,7 @@ async function deleteOldElectronVersion(): Promise<any> {
   const cacheDir = path.join(homedir(), ".electron")
   try {
     const deletePromises: Array<Promise<any>> = []
-    for (let file of (await readdir(cacheDir))) {
+    for (const file of (await readdir(cacheDir))) {
       if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
         console.log(`Remove old electron ${file}`)
         deletePromises.push(unlink(path.join(cacheDir, file)))
@@ -66,9 +66,9 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
   }
 
   const versions: Array<any> = []
-  for (let platform of platforms) {
+  for (const platform of platforms) {
     const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : ["ia32", "x64", "armv7l"])
-    for (let arch of archs) {
+    for (const arch of archs) {
       versions.push({
         version: ELECTRON_VERSION,
         arch: arch,

@@ -369,7 +369,7 @@ export class Platform {
       archs = [Arch.x64]
     }
 
-    for (let arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
+    for (const arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
       archToType.set(arch, type == null ? [] : (Array.isArray(type) ? type : [type]))
     }
     return new Map([[this, archToType]])
