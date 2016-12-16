@@ -134,5 +134,8 @@
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
   },
-  "typings": "./out/electron-builder.d.ts"
+  "typings": "./out/electron-builder.d.ts",
+  "publishConfig": {
+    "tag": "next"
+  }
 }

@@ -27,6 +27,7 @@ Don't customize paths to background and icon, — just follow conventions.
   * [Application package.json](#AppMetadata)
   * [Development package.json](#DevMetadata)
     * [.build](#BuildMetadata)
+      * [.build.appx](#AppXOptions)
       * [.build.dmg](#DmgOptions)
       * [.build.dmg.window](#DmgWindow)
       * [.build.fileAssociations](#FileAssociation)
@@ -92,6 +93,19 @@ Don't customize paths to background and icon, — just follow conventions.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
 | forceCodeSigning | <a name="BuildMetadata-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | directories | <a name="BuildMetadata-directories"></a>See [.directories](#MetadataDirectories)
+
+<a name="AppXOptions"></a>
+### `.build.appx`
+
+Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
+
+| Name | Description
+| --- | ---
+| backgroundColor | <a name="AppXOptions-backgroundColor"></a>The background color of the app tile. Please see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+| publisher | <a name="AppXOptions-publisher"></a>* Describes the publisher information. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. For now, required.
+| displayName | <a name="AppXOptions-displayName"></a>A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
+| publisherDisplayName | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
+| identityName | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
 
 <a name="DmgOptions"></a>
 ### `.build.dmg`

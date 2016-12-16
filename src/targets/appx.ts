@@ -77,21 +77,24 @@ export default class AppXTarget extends Target {
           case "publisher":
             return this.options.publisher!
 
-          case "author":
-            return appInfo.companyName
+          case "publisherDisplayName":
+            return this.options.publisherDisplayName || appInfo.companyName
 
           case "version":
             return appInfo.versionInWeirdWindowsForm
 
           case "name":
             return appInfo.name
+            
+          case "identityName":
+            return this.options.identityName  || appInfo.name
 
           case "executable":
             return `app\\${appInfo.productFilename}.exe`
 
           case "displayName":
-            return appInfo.productName
-
+            return this.options.displayName || appInfo.productName
+            
           case "description":
             return appInfo.description || appInfo.productName
 

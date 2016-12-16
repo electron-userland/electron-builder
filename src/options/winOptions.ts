@@ -179,10 +179,36 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
   readonly useAppIdAsId?: boolean
 }
 
+/*
+ ### `.build.appx`
+
+ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
+ */
 export interface AppXOptions {
-  // readonly flatten?: boolean
+  /*
+   The background color of the app tile. Please see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+   */
   readonly backgroundColor?: string | null
+
   readonly makeappxArgs?: Array<string> | null
 
+  /*
+   Describes the publisher information. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. For now, required.
+   */
   readonly publisher?: string | null
+
+  /*
+   A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
+   */
+  readonly displayName?: string | null
+
+  /*
+   A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
+   */
+  readonly publisherDisplayName?: string | null
+
+  /*
+   Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+   */
+  readonly identityName?: string | null
 }
