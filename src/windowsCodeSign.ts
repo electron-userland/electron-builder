@@ -107,7 +107,10 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
 
   // msi does not support dual-signing
   if (nest) {
-    args.push(isWin ? "/as" : "-nest")
+    // msi does not support dual-signing
+    if (path.extname(inputPath) !== ".msi") {
+      args.push(isWin ? "/as" : "-nest")
+    }
   }
 
   if (options.password) {
