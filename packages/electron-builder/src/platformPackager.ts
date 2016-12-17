@@ -20,6 +20,7 @@ import { Target } from "./targets/targetFactory"
 import { deepAssign } from "./util/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "./util/fs"
 import EventEmitter = NodeJS.EventEmitter
+import { Stats } from "fs"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -322,8 +323,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const platformSpecific = customBuildOptions.asar
     const result = platformSpecific == null ? this.config.asar : platformSpecific
     if (result === false) {
-      warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
-        "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+      statOrNull(path.join(this.info.appDir, "app.asar"))
+        .then((appAsarStat: Stats | null) => {
+          if (!appAsarStat || !appAsarStat.isFile()) {
+            warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
+              "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+          }
+        })
       return null
     }
 
