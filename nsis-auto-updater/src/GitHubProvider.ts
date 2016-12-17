@@ -1,8 +1,9 @@
 import { Provider, FileInfo } from "./api"
 import { VersionInfo, GithubOptions, UpdateInfo } from "../../src/options/publishOptions"
-import { request, HttpError } from "../../src/publish/restApiRequest"
+import { request } from "../../src/publish/restApiRequest"
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
+import { HttpError } from "../../src/util/httpExecutor"
 
 export class GitHubProvider implements Provider<VersionInfo> {
   constructor(private readonly options: GithubOptions) {

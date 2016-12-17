@@ -1,10 +1,10 @@
 import { GitHubPublisher } from "out/publish/gitHubPublisher"
-import { HttpError } from "out/publish/restApiRequest"
 import { join } from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
 import isCi from "is-ci"
+import { HttpError } from "out/util/httpExecutor"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {

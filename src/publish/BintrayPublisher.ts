@@ -1,14 +1,16 @@
 import { Publisher, PublishOptions } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
-import { HttpError, doApiRequest } from "./restApiRequest"
 import { log } from "../util/log"
 import { debug, isEmptyOrSpaces } from "../util/util"
 import { BintrayClient, Version } from "./bintray"
 import { BintrayOptions } from "../options/publishOptions"
 import { ClientRequest } from "http"
+import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
+import { HttpError } from "../util/httpExecutor"
 
 export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>
+  private readonly httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
 
   private readonly client: BintrayClient
 
@@ -56,7 +58,7 @@ export class BintrayPublisher extends Publisher {
     let badGatewayCount = 0
     for (let i = 0; i < 3; i++) {
       try {
-        return await doApiRequest<any>({
+        return await this.httpExecutor.doApiRequest<any>({
           hostname: "api.bintray.com",
           path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",

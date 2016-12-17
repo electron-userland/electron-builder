@@ -1,4 +1,5 @@
 import { Provider, FileInfo } from "./api"
+
 import { BintrayClient, HttpError } from "../../src/publish/bintray"
 import { BintrayOptions, VersionInfo } from "../../src/options/publishOptions"
 
