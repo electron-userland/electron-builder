@@ -6,7 +6,7 @@ Since version 8 electron-builder rebuilds only production dependencies, so, you 
 
 2. For your application (`./app/package.json`)
 
-   The `package.json` resides in the `app` directory. Declare your application dependencies (`depencencies`) here. *Only this directory is distributed with the final, packaged application.*
+   The `package.json` resides in the `app` directory. Declare your application dependencies (`dependencies`) here. *Only this directory is distributed with the final, packaged application.*
 
 Why?
 
