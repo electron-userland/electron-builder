@@ -173,6 +173,25 @@ test("afterPack", () => {
   })
 })
 
+test("beforeBuild", () => {
+  const targets = isCi ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+  let called = 0
+  return assertPack("test-app-one", {
+    targets: targets,
+    config: {
+      npmRebuild: true,
+      beforeBuild: () => {
+        called++
+        return BluebirdPromise.resolve()
+      }
+    }
+  }, {
+    packed: async () => {
+      expect(called).toEqual(targets.size)
+    }
+  })
+})
+
 // ifMac("app-executable-deps", () => {
 //   return assertPack("app-executable-deps", {
 //     targets: Platform.current().createTarget(DIR_TARGET),

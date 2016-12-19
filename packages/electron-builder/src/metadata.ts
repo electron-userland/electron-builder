@@ -197,6 +197,11 @@ export interface BuildMetadata {
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
   /*
+   *programmatic API only* The function to be run before dependencies from package.json are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to false will skip dependencies install or rebuild.
+   */
+  readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
+
+  /*
    Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
    */
   readonly npmRebuild?: boolean
@@ -254,6 +259,13 @@ export interface AfterPackContext {
   readonly options: any
 
   readonly packager: PlatformPackager<any>
+}
+
+export interface BeforeBuildContext {
+  readonly appDir: string
+  readonly electronVersion: string
+  readonly platform: Platform
+  readonly arch: string
 }
 
 /*
