@@ -1,6 +1,10 @@
-import { bintrayRequest } from "./restApiRequest"
 import { BintrayOptions } from "../options/publishOptions"
-export { HttpError } from "./restApiRequest"
+import { request } from "../util/httpExecutor"
+export { HttpError, request } from "../util/httpExecutor"
+
+export function bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
+  return request<T>({hostname: "api.bintray.com", path: path}, auth, data, method)
+}
 
 export interface Version {
   readonly name: string

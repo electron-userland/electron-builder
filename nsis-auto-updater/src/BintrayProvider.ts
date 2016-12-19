@@ -17,7 +17,7 @@ export class BintrayProvider implements Provider<VersionInfo> {
       }
     }
     catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
+      if ("response" in e && e.response.statusCode === 404) {
         throw new Error(`No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. ${e.stack || e.message}`)
       }
       throw e

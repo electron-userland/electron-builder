@@ -3,11 +3,12 @@ import { log, warn } from "../util/log"
 import { debug } from "../util/util"
 import { parse as parseUrl } from "url"
 import mime from "mime"
-import { githubRequest, HttpError, doApiRequest } from "./restApiRequest"
 import BluebirdPromise from "bluebird-lst-c"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 import { GithubOptions } from "../options/publishOptions"
 import { ClientRequest } from "http"
+import { HttpError, githubRequest } from "../util/httpExecutor"
+import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
 
 export interface Release {
   id: number
@@ -26,6 +27,7 @@ interface Asset {
 export class GitHubPublisher extends Publisher {
   private tag: string
   private _releasePromise: Promise<Release>
+  private readonly httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
 
   private readonly token: string
   private readonly policy: PublishPolicy
@@ -60,6 +62,7 @@ export class GitHubPublisher extends Publisher {
   private async init(): Promise<Release | null> {
     const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
+
     const releases = await githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
@@ -103,7 +106,7 @@ export class GitHubPublisher extends Publisher {
     let badGatewayCount = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       try {
-        return await doApiRequest<any>({
+        return await this.httpExecutor.doApiRequest<any>({
           hostname: parsedUrl.hostname,
           path: parsedUrl.path,
           method: "POST",
@@ -120,7 +123,8 @@ export class GitHubPublisher extends Publisher {
           if (e.response.statusCode === 422 && e.description != null && e.description.errors != null && e.description.errors[0].code === "already_exists") {
             // delete old artifact and re-upload
             log(`Artifact ${fileName} already exists, overwrite one`)
-            const assets = await githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token)
+
+            const assets = await githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
             for (const asset of assets) {
               if (asset!.name === fileName) {
                 await githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")

@@ -12,6 +12,8 @@ import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
+import { executorHolder } from "../../src/util/httpExecutor"
+import { ElectronHttpExecutor } from "./electronHttpExecutor"
 
 export class NsisUpdater extends EventEmitter {
   private setupPath: string | null
@@ -21,6 +23,8 @@ export class NsisUpdater extends EventEmitter {
 
   private clientPromise: Promise<Provider<any>>
 
+  private readonly untilAppReady: Promise<boolean>
+
   private readonly app: any
 
   private quitHandlerAdded = false
@@ -28,7 +32,23 @@ export class NsisUpdater extends EventEmitter {
   constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
     super()
 
-    this.app = (<any>global).__test_app || require("electron").app
+    if ((<any>global).__test_app) {
+      this.app = (<any>global).__test_app
+      this.untilAppReady = BluebirdPromise.resolve()
+    }
+    else {
+      this.app = require("electron").app
+      executorHolder.httpExecutor = new ElectronHttpExecutor()
+      this.untilAppReady = new BluebirdPromise((resolve, reject) => {
+        if (this.app.isReady()) {
+          resolve()
+        }
+        else {
+          this.app.on("ready", resolve)
+        }
+      })
+    }
+
 
     if (options != null) {
       this.setFeedURL(options)
@@ -44,6 +64,7 @@ export class NsisUpdater extends EventEmitter {
   }
 
   async checkForUpdates(): Promise<UpdateCheckResult> {
+    await this.untilAppReady
     this.emit("checking-for-update")
     try {
       if (this.clientPromise == null) {
@@ -159,13 +180,16 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
   if (typeof data === "string") {
     throw new Error("Please pass PublishConfiguration object")
   }
-  else {
-    const provider = (<PublishConfiguration>data).provider
-    switch (provider) {
-      case "github": return new GitHubProvider(<GithubOptions>data)
-      case "generic": return new GenericProvider(<GenericServerOptions>data)
-      case "bintray":  return new BintrayProvider(<BintrayOptions>data)
-      default: throw new Error(`Unsupported provider: ${provider}`)
-    }
+
+  const provider = (<PublishConfiguration>data).provider
+  switch (provider) {
+    case "github":
+      return new GitHubProvider(<GithubOptions>data)
+    case "generic":
+      return new GenericProvider(<GenericServerOptions>data)
+    case "bintray":
+      return new BintrayProvider(<BintrayOptions>data)
+    default:
+      throw new Error(`Unsupported provider: ${provider}`)
   }
 }

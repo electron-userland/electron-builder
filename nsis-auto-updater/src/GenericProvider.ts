@@ -1,8 +1,8 @@
 import { Provider, FileInfo } from "./api"
-import { HttpError, request } from "../../src/publish/restApiRequest"
 import { GenericServerOptions, UpdateInfo } from "../../src/options/publishOptions"
 import * as url from "url"
 import * as path from "path"
+import { HttpError, request } from "../../src/util/httpExecutor"
 
 export class GenericProvider implements Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
