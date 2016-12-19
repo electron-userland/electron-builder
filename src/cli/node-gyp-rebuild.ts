@@ -8,18 +8,22 @@ import { log } from "../util/log"
 import { getGypEnv } from "../yarn"
 
 const args: any = yargs
+  .option("platform", {
+    choices: ["linux", "darwin", "win32"],
+    default: process.platform,
+  })
   .option("arch", {
     choices: ["ia32", "x64", "armv7l"],
+    default: process.arch,
   }).argv
 
 const projectDir = process.cwd()
 const devPackageFile = path.join(projectDir, "package.json")
 
 async function main() {
-  const arch = args.arch || process.arch
-  log(`Execute node-gyp rebuild for arch ${arch}`)
+  log(`Execute node-gyp rebuild for ${args.platform}:${args.arch}`)
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-    env: getGypEnv(await getElectronVersion(await readPackageJson(devPackageFile), devPackageFile), arch, true),
+    env: getGypEnv(await getElectronVersion(await readPackageJson(devPackageFile), devPackageFile), args.platform, args.arch, true),
   })
 }
 

@@ -245,7 +245,7 @@ export class Packager implements BuildInfo {
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-        env: getGypEnv(this.electronVersion, Arch[arch], true),
+        env: getGypEnv(this.electronVersion, platform.nodeName, Arch[arch], true),
       })
     }
 
@@ -258,7 +258,7 @@ export class Packager implements BuildInfo {
       log("Skip app dependencies rebuild because platform is different")
     }
     else {
-      await installOrRebuild(options, this.appDir, this.electronVersion, Arch[arch])
+      await installOrRebuild(options, this.appDir, this.electronVersion, platform.nodeName, Arch[arch])
     }
   }
 }

@@ -33610,7 +33610,7 @@ function isDate (d) {
 module.exports = {
 	"name": "yarn",
 	"installationMethod": "unknown",
-	"version": "0.18.0",
+	"version": "0.18.1",
 	"license": "BSD-2-Clause",
 	"preferGlobal": true,
 	"dependencies": {
@@ -68041,7 +68041,7 @@ let historyCounter = 0;
 
 class HoistManifest {
   constructor(key, parts, pkg, loc, isIgnored) {
-    this.ignore = isIgnored;
+    this.isIgnored = isIgnored;
     this.loc = loc;
     this.pkg = pkg;
 
@@ -68155,13 +68155,17 @@ class PackageHoister {
 
     //
     let parentParts = [];
-    let isIgnored = ref.ignore;
+    let isIgnored = () => ref.ignore;
 
     if (parent) {
       if (!this.tree.get(parent.key)) {
         return null;
       }
-      isIgnored = isIgnored || parent.ignore;
+      // non ignored dependencies inherit parent's ignored status
+      // parent may transition from ignored to non ignored when hoisted if it is used in another non ignored branch
+      if (!isIgnored() && parent.isIgnored()) {
+        isIgnored = () => !!parent && parent.isIgnored();
+      }
       parentParts = parent.parts;
     }
 
@@ -68203,9 +68207,9 @@ class PackageHoister {
       const existing = this.tree.get(checkKey);
       if (existing) {
         if (existing.loc === info.loc) {
-          // deduping an unignored reference to an ignored one
-          if (existing.ignore && !info.ignore) {
-            existing.ignore = false;
+          // switch to non ignored if earlier deduped version was ignored
+          if (existing.isIgnored() && !info.isIgnored()) {
+            existing.isIgnored = info.isIgnored;
           }
 
           existing.addHistory(`Deduped ${ fullKey } to this item`);
@@ -68300,8 +68304,6 @@ class PackageHoister {
     // remove this item from the `tree` map so we can ignore it
 
     this.tree.delete(key);
-
-    //
 
     var _getNewParts = this.getNewParts(key, info, rawParts.slice());
 
@@ -68423,7 +68425,7 @@ class PackageHoister {
       const ref = info.pkg._reference;
       invariant(ref, 'expected reference');
 
-      if (info.ignore) {
+      if (info.isIgnored()) {
         info.addHistory('Deleted as this module was ignored');
       } else {
         visibleFlatTree.push([loc, info]);

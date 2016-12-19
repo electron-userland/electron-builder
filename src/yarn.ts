@@ -6,17 +6,17 @@ import { spawn, asArray } from "./util/util"
 import { BuildMetadata } from "./metadata"
 import { exists } from "./util/fs"
 
-export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, arch: string, forceInstall: boolean = false) {
+export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, platform: string, arch: string, forceInstall: boolean = false) {
   const args = asArray(options.npmArgs)
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
-    await installDependencies(appDir, electronVersion, arch, args, !options.npmSkipBuildFromSource)
+    await installDependencies(appDir, electronVersion, platform, arch, args, !options.npmSkipBuildFromSource)
   }
   else {
-    await rebuild(appDir, electronVersion, arch, args, !options.npmSkipBuildFromSource)
+    await rebuild(appDir, electronVersion, arch, platform, args, !options.npmSkipBuildFromSource)
   }
 }
 
-export function getGypEnv(electronVersion: string, arch: string, buildFromSource: boolean) {
+export function getGypEnv(electronVersion: string, platform: string, arch: string, buildFromSource: boolean) {
   const gypHome = path.join(homedir(), ".electron-gyp")
   return Object.assign({}, process.env, {
     npm_config_disturl: "https://atom.io/download/electron",
@@ -24,13 +24,14 @@ export function getGypEnv(electronVersion: string, arch: string, buildFromSource
     npm_config_runtime: "electron",
     npm_config_arch: arch,
     npm_config_target_arch: arch,
+    npm_config_platform: platform,
     npm_config_build_from_source: buildFromSource,
     HOME: gypHome,
     USERPROFILE: gypHome,
   })
 }
 
-export function installDependencies(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean): Promise<any> {
+function installDependencies(appDir: string, electronVersion: string, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean): Promise<any> {
   log(`Installing app dependencies for arch ${arch} to ${appDir}`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
@@ -54,7 +55,7 @@ export function installDependencies(appDir: string, electronVersion: string, arc
   execArgs.push(...additionalArgs)
   return spawn(execPath, execArgs, {
     cwd: appDir,
-    env: getGypEnv(electronVersion, arch, buildFromSource),
+    env: getGypEnv(electronVersion, arch, platform, buildFromSource),
   })
 }
 
@@ -109,16 +110,17 @@ function isYarnPath(execPath: string | null) {
   return execPath != null && path.basename(execPath).startsWith("yarn")
 }
 
-export async function rebuild(appDir: string, electronVersion: string, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean) {
+export async function rebuild(appDir: string, electronVersion: string, arch: string = process.arch, platform: string = process.platform, additionalArgs: Array<string>, buildFromSource: boolean) {
   const deps = new Set<string>()
   await dependencies(appDir, false, deps)
   const nativeDeps = await BluebirdPromise.filter(deps, it => exists(path.join(it, "binding.gyp")), {concurrency: 8})
 
   if (nativeDeps.length === 0) {
+    log(`No native production dependencies`)
     return
   }
 
-  log(`Rebuilding native production dependencies for arch ${arch}`)
+  log(`Rebuilding native production dependencies for ${platform}:${arch}`)
 
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const isYarn = isYarnPath(execPath)
@@ -131,7 +133,7 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
-  const env = getGypEnv(electronVersion, arch, buildFromSource)
+  const env = getGypEnv(electronVersion, arch, platform, buildFromSource)
   if (isYarn) {
     execArgs.push("run", "install", "--")
     execArgs.push(...additionalArgs)

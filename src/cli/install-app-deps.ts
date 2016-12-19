@@ -10,9 +10,15 @@ import { installOrRebuild } from "../yarn"
 
 async function main() {
   const args: any = yargs
+    .option("platform", {
+      choices: ["linux", "darwin", "win32"],
+      default: process.platform,
+    })
     .option("arch", {
       choices: ["ia32", "x64", "all"],
-    }).argv
+      default: process.arch,
+    })
+    .argv
 
   const projectDir = process.cwd()
   const devPackageFile = path.join(projectDir, "package.json")
@@ -24,7 +30,7 @@ async function main() {
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
-  await installOrRebuild(devMetadata.build, results[0], results[1], args.arch, results[0] !== projectDir)
+  await installOrRebuild(devMetadata.build, results[0], results[1], args.platform, args.arch, results[0] !== projectDir)
 }
 
 main()
