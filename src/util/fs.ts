@@ -39,7 +39,7 @@ export async function exists(file: string): Promise<boolean> {
   }
 }
 
-export async function walk(initialDirPath: string, filter?: Filter, consumer?: (file: string, stat: Stats, parent: string) => any): Promise<Array<string>> {
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string) => any): Promise<Array<string>> {
   const result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
@@ -89,7 +89,7 @@ const _isUseHardLink = process.platform != "win32" && process.env.USE_HARD_LINKS
  * Hard links is used if supported and allowed.
  * File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
  */
-export function copyFile(src: string, dest: string, stats?: Stats, isUseHardLink = _isUseHardLink): Promise<any> {
+export function copyFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink): Promise<any> {
   if (stats != null) {
     const originalModeNumber = stats.mode
     const mode = new Mode(stats)

@@ -1,11 +1,11 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { remove, copy, createWriteStream, unlink, ensureDir } from "fs-extra-p"
+import { remove, copy, createWriteStream, unlink, ensureDir, stat } from "fs-extra-p"
 import { spawn, exec, prepareArgs, execWine, debug } from "../util/util"
 import { WinPackager } from "../winPackager"
 import { log } from "../util/log"
+import { walk, copyFile } from "../util/fs"
 
-const archiverUtil = require("archiver-utils")
 const archiver = require("archiver")
 
 export function convertVersion(version: string): string {
@@ -79,7 +79,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const setupPath = path.join(outputDirectory, setupExe || `${options.name || options.productName}Setup.exe`)
 
   await BluebirdPromise.all<any>([
-    pack(options, appOutDir, appUpdate, nupkgPath, version, options.packageCompressionLevel),
+    pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
     copy(path.join(options.vendorPath, "Setup.exe"), setupPath),
   ])
 
@@ -91,8 +91,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   embeddedArchive.finalize()
   await embeddedArchivePromise
 
-  const writeZipToSetup = path.join(options.vendorPath, "WriteZipToSetup.exe")
-  await execWine(writeZipToSetup, [setupPath, embeddedArchiveFile])
+  await execWine(path.join(options.vendorPath, "WriteZipToSetup.exe"), [setupPath, embeddedArchiveFile])
 
   await packager.signAndEditResources(setupPath)
   if (options.msi && process.platform === "win32") {
@@ -103,8 +102,8 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   }
 }
 
-async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packageCompressionLevel?: number) {
-  const archive = archiver("zip", {zlib: {level: packageCompressionLevel == null ? 9 : packageCompressionLevel}})
+async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packager: WinPackager) {
+  const archive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel}})
   const archiveOut = createWriteStream(outFile)
   const archivePromise = new BluebirdPromise(function (resolve, reject) {
     archive.on("error", reject)
@@ -169,7 +168,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
 </coreProperties>`.replace(/\n/, "\r\n"), {name: "1.psmdcp", prefix: "package/services/metadata/core-properties"})
 
   archive.file(updateFile, {name: "Update.exe", prefix: "lib/net45"})
-  encodedZip(archive, directory, "lib/net45")
+  await encodedZip(archive, directory, "lib/net45", options.vendorPath, packager)
   await archivePromise
 }
 
@@ -219,27 +218,32 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
   ])
 }
 
-function encodedZip(archive: any, dir: string, prefix: string) {
-  archiverUtil.walkdir(dir, function (error: any, files: any) {
-    if (error) {
-      archive.emit("error", error)
+async function encodedZip(archive: any, dir: string, prefix: string, vendorPath: string, packager: WinPackager) {
+  await walk(dir, null, async (file, stats) => {
+    if (stats.isDirectory()) {
       return
     }
 
-    for (const file of files) {
-      if (file.stats.isDirectory()) {
-        continue
-      }
+    // GBK file name encoding (or Non-English file name) caused a problem
+    const relativeSafeFilePath = encodeURI(file.substring(dir.length + 1).replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]")
+    archive._append(file, {
+      name: relativeSafeFilePath,
+      prefix: prefix,
+      stats: stats,
+    })
 
-      // GBK file name encoding (or Non-English file name) caused a problem
-      const entryData = {
-        name: encodeURI(file.relative.replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]"),
+    // createExecutableStubForExe
+    if (file.endsWith(".exe") && !file.includes("squirrel.exe")) {
+      const tempFile = await packager.getTempFile("stub.exe")
+      await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile, null, false)
+      await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])
+
+      archive._append(tempFile, {
+        name: relativeSafeFilePath.substring(0, relativeSafeFilePath.length - 4) + "_ExecutionStub.exe",
         prefix: prefix,
-        stats: file.stats,
-      }
-      archive._append(file.path, entryData)
+        stats: await stat(tempFile),
+      })
     }
-
-    archive.finalize()
   })
+  archive.finalize()
 }

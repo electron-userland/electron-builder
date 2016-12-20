@@ -369,6 +369,12 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
       }
       return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}.exe`
     }
+    else if (it === "lib/net45/TestApp_ExecutionStub.exe") {
+      if (appInfo.productFilename === "Test App ßW") {
+        return `lib/net45/Test%20App%20%C3%9FW_ExecutionStub.exe`
+      }
+      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}_ExecutionStub.exe`
+    }
     else {
       return it
     }

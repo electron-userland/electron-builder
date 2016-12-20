@@ -73,6 +73,7 @@ export const expectedWinContents = [
   "lib/net45/node.dll",
   "lib/net45/snapshot_blob.bin",
   "lib/net45/TestApp.exe",
+  "lib/net45/TestApp_ExecutionStub.exe",
   "lib/net45/ui_resources_200_percent.pak",
   "lib/net45/Update.exe",
   "lib/net45/views_resources_200_percent.pak",

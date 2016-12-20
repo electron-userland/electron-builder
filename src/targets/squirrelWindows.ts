@@ -9,9 +9,9 @@ import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 import { SquirrelWindowsOptions } from "../options/winOptions"
 import { Target } from "./targetFactory"
 
-const SW_VERSION = "1.5.1"
+const SW_VERSION = "1.5.1.3"
 //noinspection SpellCheckingInspection
-const SW_SHA2 = "b9bff7b239d05258170c1c2f096aea0966bea442b61eff71f7333c0096664708"
+const SW_SHA2 = "526701c61fffed97f622b110cfd15c4a1197ce082705437e9ef938c0cb8f4172"
 
 export default class SquirrelWindowsTarget extends Target {
   private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
