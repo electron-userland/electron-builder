@@ -12,7 +12,7 @@ export async function installOrRebuild(options: BuildMetadata, appDir: string, e
     await installDependencies(appDir, electronVersion, platform, arch, args, !options.npmSkipBuildFromSource)
   }
   else {
-    await rebuild(appDir, electronVersion, arch, platform, args, !options.npmSkipBuildFromSource)
+    await rebuild(appDir, electronVersion, platform, arch, args, !options.npmSkipBuildFromSource)
   }
 }
 
@@ -55,7 +55,7 @@ function installDependencies(appDir: string, electronVersion: string, platform: 
   execArgs.push(...additionalArgs)
   return spawn(execPath, execArgs, {
     cwd: appDir,
-    env: getGypEnv(electronVersion, arch, platform, buildFromSource),
+    env: getGypEnv(electronVersion, platform, arch, buildFromSource),
   })
 }
 
@@ -110,7 +110,7 @@ function isYarnPath(execPath: string | null) {
   return execPath != null && path.basename(execPath).startsWith("yarn")
 }
 
-export async function rebuild(appDir: string, electronVersion: string, arch: string = process.arch, platform: string = process.platform, additionalArgs: Array<string>, buildFromSource: boolean) {
+export async function rebuild(appDir: string, electronVersion: string, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean) {
   const deps = new Set<string>()
   await dependencies(appDir, false, deps)
   const nativeDeps = await BluebirdPromise.filter(deps, it => exists(path.join(it, "binding.gyp")), {concurrency: 8})
@@ -133,7 +133,7 @@ export async function rebuild(appDir: string, electronVersion: string, arch: str
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
-  const env = getGypEnv(electronVersion, arch, platform, buildFromSource)
+  const env = getGypEnv(electronVersion, platform, arch, buildFromSource)
   if (isYarn) {
     execArgs.push("run", "install", "--")
     execArgs.push(...additionalArgs)
