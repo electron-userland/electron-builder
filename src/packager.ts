@@ -320,6 +320,11 @@ export async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion = wineVersion.substring(0, spaceIndex)
   }
 
+  const rcIndex = wineVersion.indexOf("-rc")
+  if (rcIndex > 0) {
+    wineVersion = wineVersion.substring(0, rcIndex)
+  }
+
   if (wineVersion.split(".").length === 2) {
     wineVersion += ".0"
   }
