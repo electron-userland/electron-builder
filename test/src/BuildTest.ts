@@ -12,16 +12,21 @@ import { move, outputJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { archFromString, BuildOptions, Platform, Arch, PackagerOptions, DIR_TARGET, createTargets } from "out"
+import { BuildOptions, Platform, PackagerOptions, DIR_TARGET } from "out"
 import { normalizeOptions } from "out/builder"
 import { createYargs } from "out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
 import isCi from "is-ci"
 import { checkWineVersion } from "out/packager"
+import { Arch } from "out/metadata"
 
 test("cli", async () => {
   const yargs = createYargs()
+
+  function parse(input: string): BuildOptions {
+    return normalizeOptions(yargs.parse(input.split(" ")))
+  }
 
   function expected(opt: BuildOptions): any {
     return Object.assign({
@@ -32,39 +37,33 @@ test("cli", async () => {
     }, opt)
   }
 
-  function parse(input: string): BuildOptions {
-    return normalizeOptions(yargs.parse(input.split(" ")))
-  }
+  expect(parse("--platform mac")).toMatchSnapshot()
 
-  assertThat(parse("--platform mac")).isEqualTo(expected({targets: Platform.MAC.createTarget()}))
+  expect(parse("-owl --x64 --ia32"))
+  expect(parse("-mwl --x64 --ia32"))
 
-  const all = expected({targets: new Map([...Platform.MAC.createTarget(null, Arch.x64), ...Platform.WINDOWS.createTarget(null, Arch.x64, Arch.ia32), ...Platform.LINUX.createTarget(null, Arch.x64, Arch.ia32)])})
-  assertThat(parse("-owl --x64 --ia32")).isEqualTo(all)
-  assertThat(parse("-mwl --x64 --ia32")).isEqualTo(all)
+  expect(parse("--dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET)}))
+  expect(parse("--mac --dir")).toMatchSnapshot()
+  expect(parse("--ia32 --dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.ia32)}))
+  expect(parse("--platform linux --dir")).toMatchSnapshot()
 
-  assertThat(parse("--dir")).isEqualTo(expected({targets: Platform.current().createTarget(DIR_TARGET)}))
-  assertThat(parse("--mac --dir")).isEqualTo(expected({targets: Platform.MAC.createTarget(DIR_TARGET)}))
-  assertThat(parse("--ia32 --dir")).isEqualTo(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.ia32)}))
-  assertThat(parse("--platform linux --dir")).isEqualTo(expected({targets: Platform.LINUX.createTarget(DIR_TARGET)}))
-
-  assertThat(parse("--arch x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
-  assertThat(parse("--ia32 --x64")).isEqualTo(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
-  assertThat(parse("--linux")).isEqualTo(expected({targets: Platform.LINUX.createTarget()}))
-  assertThat(parse("--win")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget()}))
-  assertThat(parse("-owl")).isEqualTo(expected({targets: createTargets([Platform.MAC, Platform.WINDOWS, Platform.LINUX])}))
-  assertThat(parse("-l tar.gz:ia32")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.ia32)}))
-  assertThat(parse("-l tar.gz:x64")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", Arch.x64)}))
-  assertThat(parse("-l tar.gz")).isEqualTo(expected({targets: Platform.LINUX.createTarget("tar.gz", archFromString(process.arch))}))
-  assertThat(parse("-w tar.gz:x64")).isEqualTo(expected({targets: Platform.WINDOWS.createTarget("tar.gz", Arch.x64)}))
+  expect(parse("--arch x64")).toMatchObject(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
+  expect(parse("--ia32 --x64")).toMatchObject(expected({targets: Platform.current().createTarget(null, Arch.x64, Arch.ia32)}))
+  expect(parse("--linux")).toMatchSnapshot()
+  expect(parse("--win")).toMatchSnapshot()
+  expect(parse("-owl")).toMatchSnapshot()
+  expect(parse("-l tar.gz:ia32")).toMatchSnapshot()
+  expect(parse("-l tar.gz:x64")).toMatchSnapshot()
+  expect(parse("-l tar.gz")).toMatchSnapshot()
+  expect(parse("-w tar.gz:x64")).toMatchSnapshot()
 
   function parseExtraMetadata(input: string) {
     const result = parse(input)
     delete result.targets
     return result
   }
-  assertThat(parseExtraMetadata("--em.foo=bar")).isEqualTo(expected({extraMetadata: {
-    foo: "bar",
-  }}))
+
+  expect(parseExtraMetadata("--em.foo=bar"))
 })
 
 // only dir - avoid DMG
@@ -203,7 +202,7 @@ test.ifDevOrLinuxCi("smart unpack", () => {
       }
     }),
     packed: context => {
-      assertThat(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).hasProperties({
+      expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).toMatchObject({
         name: "debug"
       })
       return BluebirdPromise.resolve()

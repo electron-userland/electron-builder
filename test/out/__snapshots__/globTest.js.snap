@@ -1,0 +1,5 @@
+exports[`test link 1`] = `
+Object {
+  "link": "index.js",
+}
+`;

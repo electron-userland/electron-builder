@@ -1,0 +1,205 @@
+exports[`test cli 1`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {
+      1 => Array [],
+    },
+  },
+}
+`;
+
+exports[`test cli 2`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {
+      1 => Array [
+        "dir",
+      ],
+    },
+  },
+}
+`;
+
+exports[`test cli 3`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "dir",
+      ],
+    },
+  },
+}
+`;
+
+exports[`test cli 4`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [],
+    },
+  },
+}
+`;
+
+exports[`test cli 5`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [],
+    },
+  },
+}
+`;
+
+exports[`test cli 6`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "mac",
+      "name": "mac",
+      "nodeName": "darwin",
+    } => Map {
+      1 => Array [],
+    },
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [],
+    },
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [],
+    },
+  },
+}
+`;
+
+exports[`test cli 7`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      0 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
+exports[`test cli 8`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
+exports[`test cli 9`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "linux",
+      "name": "linux",
+      "nodeName": "linux",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;
+
+exports[`test cli 10`] = `
+Object {
+  "draft": undefined,
+  "extraMetadata": undefined,
+  "prerelease": undefined,
+  "publish": undefined,
+  "targets": Map {
+    Platform {
+      "buildConfigurationKey": "win",
+      "name": "windows",
+      "nodeName": "win32",
+    } => Map {
+      1 => Array [
+        "tar.gz",
+      ],
+    },
+  },
+}
+`;

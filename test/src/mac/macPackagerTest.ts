@@ -17,6 +17,12 @@ test.ifMac("one-package", app({
           name: "Foo",
           role: "Viewer",
         },
+        {
+          ext: "boo",
+          name: "Boo",
+          role: "Shell",
+          isPackage: true,
+        },
       ]
     }
   }

@@ -278,9 +278,14 @@ export interface FileAssociation {
   readonly icon?: string
 
   /*
-  *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
+  *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`. Corresponds to `CFBundleTypeRole`.
    */
   readonly role?: string
+
+  /*
+  *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
+   */
+  readonly isPackage?: boolean
 }
 
 /*

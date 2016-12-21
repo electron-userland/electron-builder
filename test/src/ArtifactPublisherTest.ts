@@ -1,6 +1,5 @@
 import { GitHubPublisher } from "out/publish/gitHubPublisher"
 import { join } from "path"
-import { assertThat } from "./helpers/fileAssert"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
 import isCi from "is-ci"
@@ -94,7 +93,7 @@ testAndIgnoreApiRate("prerelease", async () => {
   try {
     await publisher.upload(iconPath)
     const r = await publisher.getRelease()
-    assertThat(r).hasProperties({
+    expect(r).toMatchObject({
       prerelease: true,
       draft: false,
     })
@@ -124,7 +123,7 @@ it("create publisher", async () => {
   }
   const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
 
-  assertThat(publisher).hasProperties({
+  expect(publisher).toMatchObject({
     info: {
       provider: "github",
       vPrefixedTagName: false,

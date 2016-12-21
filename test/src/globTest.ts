@@ -55,9 +55,7 @@ test.ifNotWindows("link", app({
     return symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
   },
   packed: async context => {
-    assertThat(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).hasProperties({
-      link: "index.js",
-    })
+    expect(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).toMatchSnapshot()
   },
 }))
 

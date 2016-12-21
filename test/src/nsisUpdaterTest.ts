@@ -65,9 +65,7 @@ test("file url", async () => {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  assertThat(updateCheckResult.fileInfo).hasProperties({
-    url: "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe"
-  })
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   expect(actualEvents).toEqual(expectedEvents)
@@ -92,9 +90,7 @@ test("file url generic", async () => {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  assertThat(updateCheckResult.fileInfo).hasProperties({
-    url: "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe"
-  })
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   expect(actualEvents).toEqual(expectedEvents)
@@ -120,9 +116,7 @@ test("file url github", async () => {
   }
 
   const updateCheckResult = await updater.checkForUpdates()
-  assertThat(updateCheckResult.fileInfo).hasProperties({
-    url: "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe"
-  })
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   expect(actualEvents).toEqual(expectedEvents)

@@ -10,4 +10,8 @@ declare module jest {
     ifWinCi: jest.It
     ifDevOrLinuxCi: jest.It
   }
+
+  interface Matchers {
+    toMatchObject(object: any)
+  }
 }

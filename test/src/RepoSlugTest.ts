@@ -1,4 +1,3 @@
-import { assertThat } from "./helpers/fileAssert"
 import { getRepositoryInfo } from "out/repositoryInfo"
 
 test("repo slug from TRAVIS_REPO_SLUG", async () => {
@@ -6,10 +5,7 @@ test("repo slug from TRAVIS_REPO_SLUG", async () => {
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
     const info = await getRepositoryInfo()
-    assertThat(info).hasProperties({
-      user: "travis-ci",
-      project: "travis-build",
-    })
+    expect(info).toMatchSnapshot()
   }
   finally {
     if (oldValue != null) {
@@ -30,10 +26,7 @@ test("repo slug from APPVEYOR", async () => {
     process.env.APPVEYOR_ACCOUNT_NAME = "travis-ci"
     process.env.APPVEYOR_PROJECT_NAME = "travis-build"
     const info = await getRepositoryInfo()
-    assertThat(info).hasProperties({
-      user: "travis-ci",
-      project: "travis-build",
-    })
+    expect(info).toMatchSnapshot()
   }
   finally {
     restoreEnv("APPVEYOR_ACCOUNT_NAME", oldAppveyorAccountName)

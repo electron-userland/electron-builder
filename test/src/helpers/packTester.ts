@@ -243,7 +243,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toEqual(expectedContents)
   }
 
-  assertThat(parseDebControl(await exec("dpkg", ["--info", packageFile]))).hasProperties({
+  expect(parseDebControl(await exec("dpkg", ["--info", packageFile]))).toMatchObject({
     License: "MIT",
     Homepage: "http://foo.example.com",
     Maintainer: "Foo Bar <foo@example.com>",
@@ -278,7 +278,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   const appInfo = packager.appInfo
   const packedAppDir = path.join(path.dirname(artifacts[0].file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
-  assertThat(info).hasProperties({
+  expect(info).toMatchObject({
     CFBundleDisplayName: appInfo.productName,
     CFBundleIdentifier: "org.electron-builder.testApp",
     LSApplicationCategoryType: "your.app.category.type",

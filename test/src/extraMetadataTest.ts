@@ -25,12 +25,7 @@ test.ifDevOrLinuxCi("extra metadata", app({
   }),
   packed: async context => {
     await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
-    assertThat(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json").toString())).hasProperties({
-      foo: {
-        bar: 12,
-        existingProp: 22,
-      }
-    })
+    expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json").toString())).toMatchSnapshot()
   }
 }))
 

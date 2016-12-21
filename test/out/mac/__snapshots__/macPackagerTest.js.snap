@@ -11,6 +11,15 @@ Object {
       "CFBundleTypeName": "Foo",
       "CFBundleTypeRole": "Viewer",
     },
+    Object {
+      "CFBundleTypeExtensions": Array [
+        "boo",
+      ],
+      "CFBundleTypeIconFile": "Test App ßW.icns",
+      "CFBundleTypeName": "Boo",
+      "CFBundleTypeRole": "Shell",
+      "LSTypeIsPackage": true,
+    },
   ],
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",

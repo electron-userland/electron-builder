@@ -29,11 +29,7 @@ test("one-click", app({
   packed: async (context) => {
     await doTest(context.outDir, true)
 
-    assertThat(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).hasProperties({
-      provider: "bintray",
-      owner: "actperepo",
-      package: "TestApp",
-    })
+    expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).toMatchSnapshot()
   }
 }))
 
@@ -65,16 +61,16 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       )])
   },
   packed: async(context) => {
-    assertThat(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).hasProperties({
-          provider: "generic",
-          url: "https://develar.s3.amazonaws.com/test",
-        })
+    expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).toMatchObject({
+      provider: "generic",
+      url: "https://develar.s3.amazonaws.com/test",
+    })
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    assertThat(updateInfo).hasProperties({
-          version: "1.1.0",
-          path: "TestApp Setup 1.1.0.exe",
-        })
-    assertThat(updateInfo.sha2).isNotEmpty()
+    expect(updateInfo).toMatchObject({
+      version: "1.1.0",
+      path: "TestApp Setup 1.1.0.exe",
+    })
+    expect(updateInfo.sha2).not.toEqual("")
     await doTest(context.outDir, false)
   },
 }))
@@ -103,7 +99,7 @@ async function doTest(outDir: string, perUser: boolean) {
 
   const instDir = perUser ? path.join(wine.userDir, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
   const appAsar = path.join(instDir, "TestApp", "1.1.0", "resources", "app.asar")
-  assertThat(JSON.parse(extractFile(appAsar, "package.json").toString())).hasProperties({
+  expect(JSON.parse(extractFile(appAsar, "package.json").toString())).toMatchObject({
     name: "TestApp"
   })
 

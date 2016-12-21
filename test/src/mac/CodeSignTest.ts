@@ -1,5 +1,4 @@
 import { createKeychain } from "out/codeSign"
-import { assertThat } from "../helpers/fileAssert"
 import { CSC_LINK } from "../helpers/codeSignData"
 import { removePassword } from "out/util/util"
 import { TmpDir } from "out/util/tmp"
@@ -14,12 +13,12 @@ const tmpDir = new TmpDir()
 
 test.ifMac("create keychain", async () => {
   const result = await createKeychain(tmpDir, CSC_LINK, process.env.CSC_KEY_PASSWORD)
-  assertThat(result.keychainName).isNotEmpty()
+  expect(result.keychainName).not.toEqual("")
 })
 
 test.ifMac("create keychain with installers", async () => {
   const result = await createKeychain(tmpDir, CSC_LINK, process.env.CSC_KEY_PASSWORD)
-  assertThat(result.keychainName).isNotEmpty()
+  expect(result.keychainName).not.toEqual("")
 })
 
 test.ifDevOrLinuxCi("remove password from log", async () => {

@@ -1,0 +1,7 @@
+exports[`test one-click 1`] = `
+Object {
+  "owner": "actperepo",
+  "package": "TestApp",
+  "provider": "bintray",
+}
+`;

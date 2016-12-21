@@ -111,13 +111,17 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
         await copyFile(customIcon, path.join(resourcesPath, iconFile))
       }
 
-      // todo rename electron.icns
-      return <any>{
+      const result = <any>{
         CFBundleTypeExtensions: extensions,
         CFBundleTypeName: fileAssociation.name,
         CFBundleTypeRole: fileAssociation.role || "Editor",
         CFBundleTypeIconFile: iconFile
       }
+
+      if (fileAssociation.isPackage) {
+        result.LSTypeIsPackage = true
+      }
+      return result
     })
   }
 

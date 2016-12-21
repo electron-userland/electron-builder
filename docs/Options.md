@@ -147,7 +147,8 @@ macOS and NSIS only. Array of option objects.
 | **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`.
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
 | icon | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
-| role | <a name="FileAssociation-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
+| role | <a name="FileAssociation-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`. Corresponds to `CFBundleTypeRole`.
+| isPackage | <a name="FileAssociation-isPackage"></a>*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
 
 <a name="LinuxBuildOptions"></a>
 ### `.build.linux`
