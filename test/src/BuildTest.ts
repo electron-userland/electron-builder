@@ -213,6 +213,7 @@ test.ifDevOrLinuxCi("smart unpack", () => {
 
 test("wine version", async () => {
   await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))
+  await checkWineVersion(BluebirdPromise.resolve("2.0-rc2"))
 })
 
 function currentPlatform(): PackagerOptions {
