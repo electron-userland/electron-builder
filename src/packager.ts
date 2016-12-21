@@ -320,9 +320,9 @@ export async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion = wineVersion.substring(0, spaceIndex)
   }
 
-  const rcIndex = wineVersion.indexOf("-rc")
-  if (rcIndex > 0) {
-    wineVersion = wineVersion.substring(0, rcIndex)
+  const suffixIndex = wineVersion.indexOf("-")
+  if (suffixIndex > 0) {
+    wineVersion = wineVersion.substring(0, suffixIndex)
   }
 
   if (wineVersion.split(".").length === 2) {
