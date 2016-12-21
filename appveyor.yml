@@ -6,7 +6,7 @@ cache:
   - '%USERPROFILE%\.electron'
 
 environment:
-  TEST_FILES: BuildTest,extraMetadataTest,filesTest,globTest
+  TEST_FILES: BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest,appxTest,winPackagerTest
 
 install:
   - ps: Install-Product node 6 x64
