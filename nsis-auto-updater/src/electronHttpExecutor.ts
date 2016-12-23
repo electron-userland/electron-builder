@@ -117,17 +117,6 @@ export class ElectronHttpExecutor implements HttpExecutor {
           fileOut.on("finish", () => (<any>fileOut.close)(callback))
         })
         .catch(callback)
-
-      let ended = false
-      response.on("end", () => {
-        ended = true
-      })
-
-      response.on("close", () => {
-        if (!ended) {
-          callback(new Error("Request aborted"))
-        }
-      })
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)
