@@ -81,19 +81,34 @@ test("file url generic", async () => {
   g.__test_resourcesPath = testResourcesPath
   const updater: NsisUpdater = new NsisUpdaterClass()
 
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
+  const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  expect(actualEvents).toEqual(expectedEvents)
+  expect(actualEvents).toMatchSnapshot()
+})
+
+test("file url generic - manual download", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
+  updater.autoDownload = false
+
+  const actualEvents = trackEvents(updater)
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(updateCheckResult.downloadPromise).toBeNull()
+  expect(actualEvents).toMatchSnapshot()
+
+  await assertThat(path.join(await updater.downloadUpdate())).isFile()
 })
 
 test("file url github", async () => {
@@ -126,14 +141,18 @@ test("test error", async () => {
   g.__test_resourcesPath = null
   const updater: NsisUpdater = new NsisUpdaterClass()
 
+  const actualEvents = trackEvents(updater)
+
+  await assertThat(updater.checkForUpdates()).throws("Path must be a string. Received undefined")
+  expect(actualEvents).toMatchSnapshot()
+})
+
+function trackEvents(updater: NsisUpdater) {
   const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "error", "error"]
-  for (const eventName of expectedEvents) {
+  for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error"]) {
     updater.addListener(eventName, () => {
       actualEvents.push(eventName)
     })
   }
-
-  await assertThat(updater.checkForUpdates()).throws("Path must be a string. Received undefined")
-  expect(actualEvents).toEqual(expectedEvents)
-})
+  return actualEvents
+}
