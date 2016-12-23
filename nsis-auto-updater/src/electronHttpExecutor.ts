@@ -65,7 +65,7 @@ export class ElectronHttpExecutor implements HttpExecutor {
     // user-agent must be specified, otherwise some host can return 401 unauthorised
 
     //FIXME hack, the electron typings specifies Protocol with capital but the code actually uses with small case
-    const requestOpts  = {
+    const requestOpts = {
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
@@ -100,6 +100,25 @@ export class ElectronHttpExecutor implements HttpExecutor {
         else if (sha2Header !== options.sha2) {
           throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`)
         }
+      }
+
+      if (options.onProgress != null) {
+        const total = parseInt(String(this.safeGetHeader(response, "content-length")), 10)
+        const start = Date.now()
+        let transferred = 0
+
+        response.on("data", (chunk) => {
+          const now = Date.now()
+          transferred += chunk.length
+          if (options.onProgress) {
+            options.onProgress({
+              total: total,
+              transferred: transferred,
+              percent: ((transferred / total) * 100).toFixed(2),
+              bytesPerSecond: Math.round(transferred / ((now - start) / 1000))
+            })
+          }
+        })
       }
 
       ensureDirPromise

@@ -110,7 +110,17 @@ export class NsisUpdater extends EventEmitter {
       versionInfo: versionInfo,
       fileInfo: fileInfo,
       downloadPromise: mkdtemp(`${path.join(tmpdir(), "up")}-`)
-        .then(it => download(fileInfo.url, path.join(it, fileInfo.name), fileInfo.sha2 == null ? null : {sha2: fileInfo.sha2}))
+        .then(it => {
+          const downloadOptions: any = {
+            onProgress: (progress: any) => this.emit("download-progress", {}, progress)
+          }
+
+          if (fileInfo.sha2) {
+            downloadOptions["sha2"] = fileInfo.sha2
+          }
+
+          return download(fileInfo.url, path.join(it, fileInfo.name), downloadOptions)
+        })
         .then(it => {
           this.setupPath = it
           this.addQuitHandler()

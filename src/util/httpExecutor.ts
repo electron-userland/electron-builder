@@ -5,6 +5,7 @@ import { Transform } from "stream"
 export interface DownloadOptions {
   skipDirCreation?: boolean
   sha2?: string
+  onProgress?(progress: any): void
 }
 
 export class HttpExecutorHolder {
