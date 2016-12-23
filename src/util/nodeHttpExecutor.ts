@@ -6,7 +6,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform } from "./httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2 } from "./httpExecutor"
 import { Url } from "url"
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
@@ -91,15 +91,8 @@ export class NodeHttpExecutor implements HttpExecutor {
         return
       }
 
-      const sha2Header = response.headers["X-Checksum-Sha2"]
-      if (sha2Header != null && options.sha2 != null) {
-        // todo why bintray doesn't send this header always
-        if (sha2Header == null) {
-          throw new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header")
-        }
-        else if (sha2Header !== options.sha2) {
-          throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`)
-        }
+      if (!checkSha2(response.headers["X-Checksum-Sha2"], options.sha2, callback)) {
+        return
       }
 
       ensureDirPromise

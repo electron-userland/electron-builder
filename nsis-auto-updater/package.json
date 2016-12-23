@@ -1,6 +1,6 @@
 {
   "name": "electron-auto-updater",
-  "version": "0.7.2",
+  "version": "0.8.2",
   "description": "NSIS Auto Updater",
   "main": "out/nsis-auto-updater/src/main.js",
   "author": "Vladimir Krivosheev",

@@ -3,12 +3,16 @@ import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform } from "../../src/util/httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2 } from "../../src/util/httpExecutor"
 import { Url } from "url"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
 import { parse as parseUrl } from "url"
+
+function safeGetHeader(response: Electron.IncomingMessage, headerKey: string) {
+  return response.headers[headerKey] ? response.headers[headerKey].pop() : null
+}
 
 export class ElectronHttpExecutor implements HttpExecutor {
   private readonly debug: Debugger = _debug("electron-builder")
@@ -80,7 +84,7 @@ export class ElectronHttpExecutor implements HttpExecutor {
         return
       }
 
-      const redirectUrl = this.safeGetHeader(response, "location")
+      const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
           this.doDownload(redirectUrl, destination, redirectCount++, options, callback)
@@ -91,15 +95,8 @@ export class ElectronHttpExecutor implements HttpExecutor {
         return
       }
 
-      const sha2Header = this.safeGetHeader(response, "X-Checksum-Sha2")
-      if (sha2Header != null && options.sha2 != null) {
-        // todo why bintray doesn't send this header always
-        if (sha2Header == null) {
-          throw new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header")
-        }
-        else if (sha2Header !== options.sha2) {
-          throw new Error(`checksum mismatch: expected ${options.sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`)
-        }
+      if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
+        return
       }
 
       ensureDirPromise
@@ -122,11 +119,6 @@ export class ElectronHttpExecutor implements HttpExecutor {
     request.on("error", callback)
     request.end()
   }
-
-  private safeGetHeader(response: Electron.IncomingMessage, headerKey: string) {
-    return response.headers[headerKey] ? response.headers[headerKey].pop() : null
-  }
-
 
   doApiRequest<T>(options: Electron.RequestOptions, token: string | null, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     const requestOptions: any = options
@@ -153,7 +145,7 @@ Please double check that your authentication token is correct. Due to security r
             return
           }
 
-          const redirectUrl = this.safeGetHeader(response, "location")
+          const redirectUrl = safeGetHeader(response, "location")
           if (redirectUrl != null) {
             if (redirectCount > 10) {
               reject(new Error("Too many redirects (> 10)"))
