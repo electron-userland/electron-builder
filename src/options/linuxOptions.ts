@@ -72,9 +72,14 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly executableName?: string | null
 }
 
+/*
+ ### `.build.snap`
+
+ [Snaps](http://snapcraft.io) specific build options.
+ */
 export interface SnapOptions extends LinuxBuildOptions {
   /*
-  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces).
+  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
    */
   confinement?: "devmode" | "strict" | null
 
