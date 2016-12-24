@@ -128,7 +128,7 @@ export default class FpmTarget extends Target {
     let depends = options.depends
     if (depends == null) {
       if (target === "deb") {
-        depends = ["libappindicator1", "libnotify-bin"]
+        depends = ["libnotify4", "libnss3"]
       }
       else {
         depends = []

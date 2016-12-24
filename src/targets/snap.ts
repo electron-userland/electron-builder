@@ -42,6 +42,10 @@ export default class SnapTarget extends Target {
       await copy(this.helper.maxIconPath, path.join(snapDir, "setup", "gui", "icon.png"))
     }
 
+    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
+      "Icon": "${SNAP}/meta/gui/icon.png"
+    })
+
     if (options.assumes != null) {
       if (!Array.isArray(options.assumes)) {
         throw new Error("snap.assumes must be an array of strings")
@@ -53,20 +57,16 @@ export default class SnapTarget extends Target {
       [snap.name]: {
         command: `desktop-launch $SNAP/${packager.executableName}`,
         plugs: [
-          "home", "unity7", "x11", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
+          "home", "x11", "unity7", "unity8", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
         ]
       }
     }
-
-    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
-      "Icon": "${SNAP}/meta/gui/icon.png"
-    })
 
     const isUseDocker = process.platform !== "linux"
     snap.parts = {
       app: {
         plugin: "dump",
-        "stage-packages": ["libappindicator1", "libdbusmenu-glib4", "libnotify4", "libunity9", "libgconf-2-4", "libnss3", "libxss1", "fontconfig-config", "libnotify-bin"],
+        "stage-packages": ["libnotify4", "libnss3", "fontconfig-config"],
         source: isUseDocker ? `/out/${path.basename(snapDir)}` : appOutDir,
         filesets: {
           app: [`${appOutDir}/*`],
@@ -76,7 +76,7 @@ export default class SnapTarget extends Target {
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
-    await writeFile(snapcraft, safeDump(snap))
+    await writeFile(snapcraft, safeDump(snap, {lineWidth: 160}))
 
     // const args = ["snapcraft", path.relative(snapDir)]
     // snap /out/${path.basename(snapDir)} --output /out/${path.basename(resultFile)}
