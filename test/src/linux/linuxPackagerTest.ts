@@ -5,7 +5,17 @@ import { Platform } from "out"
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
-// test.ifNotCi("snap", app({targets: Platform.LINUX.createTarget("snap")}))
+if (process.platform === "linux") {
+  test("snap", app({
+    targets: Platform.LINUX.createTarget("snap"),
+    config: {
+      productName: "Snap Electron Builder Test",
+    },
+    appMetadata: {
+      name: "snap-electron-builder-test",
+    },
+  }))
+}
 
 test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),

@@ -58,7 +58,7 @@ export default class SnapTarget extends Target {
       }
     }
 
-    await this.helper.computeDesktopEntry(this.options, "$snap.$app", path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
+    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
       "Icon": "${SNAP}/meta/gui/icon.png"
     })
 

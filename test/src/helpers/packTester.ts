@@ -208,8 +208,8 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
       if (target === "appimage") {
         result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
-      else if (target === "deb") {
-        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.deb`)
+      else if (target === "deb" || target === "snap") {
+        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.${target}`)
       }
       else {
         result.push(`TestApp-${appInfo.version}.${target}`)
