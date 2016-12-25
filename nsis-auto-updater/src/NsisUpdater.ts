@@ -29,6 +29,7 @@ export class NsisUpdater extends EventEmitter {
   private clientPromise: Promise<Provider<any>>
 
   private readonly untilAppReady: Promise<boolean>
+  private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
 
   private readonly app: any
 
@@ -72,7 +73,22 @@ export class NsisUpdater extends EventEmitter {
     this.clientPromise = BluebirdPromise.resolve(createClient(value))
   }
 
-  async checkForUpdates(): Promise<UpdateCheckResult> {
+  checkForUpdates(): Promise<UpdateCheckResult> {
+    let checkForUpdatesPromise = this.checkForUpdatesPromise
+    if (checkForUpdatesPromise != null) {
+      return checkForUpdatesPromise
+    }
+
+    checkForUpdatesPromise = this._checkForUpdates()
+    this.checkForUpdatesPromise = checkForUpdatesPromise
+    const nullizePromise = () => this.checkForUpdatesPromise = null
+    checkForUpdatesPromise
+      .then(nullizePromise)
+      .catch(nullizePromise)
+    return checkForUpdatesPromise
+  }
+
+  private async _checkForUpdates(): Promise<UpdateCheckResult> {
     await this.untilAppReady
     this.emit("checking-for-update")
     try {

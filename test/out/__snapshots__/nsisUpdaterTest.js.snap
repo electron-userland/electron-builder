@@ -1,3 +1,19 @@
+exports[`test checkForUpdates several times 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`test checkForUpdates several times 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`test file url 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",

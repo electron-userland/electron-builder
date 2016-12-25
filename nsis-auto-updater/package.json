@@ -1,6 +1,6 @@
 {
   "name": "electron-auto-updater",
-  "version": "0.8.2",
+  "version": "0.8.4",
   "description": "NSIS Auto Updater",
   "main": "out/nsis-auto-updater/src/main.js",
   "author": "Vladimir Krivosheev",
@@ -17,7 +17,7 @@
     "fs-extra-p": "^3.0.3",
     "js-yaml": "^3.7.0",
     "semver": "^5.3.0",
-    "source-map-support": "^0.4.6"
+    "source-map-support": "^0.4.8"
   },
   "typings": "./out/electron-auto-updater.d.ts"
 }

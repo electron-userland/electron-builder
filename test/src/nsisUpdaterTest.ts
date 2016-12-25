@@ -111,6 +111,30 @@ test("file url generic - manual download", async () => {
   await assertThat(path.join(await updater.downloadUpdate())).isFile()
 })
 
+// https://github.com/electron-userland/electron-builder/issues/1045
+test("checkForUpdates several times", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
+
+  const actualEvents = trackEvents(updater)
+
+  for (let i = 0; i < 10; i++) {
+    //noinspection JSIgnoredPromiseFromCall
+    updater.checkForUpdates()
+  }
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  expect(actualEvents).toMatchSnapshot()
+})
+
 test("file url github", async () => {
   const tmpDir = new TmpDir()
   const testResourcesPath = await tmpDir.getTempFile("update-config")
