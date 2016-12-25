@@ -60,7 +60,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly compression?: string | null
 
   /*
-   Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
+   Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
    */
   readonly depends?: string[] | null
 
@@ -98,4 +98,16 @@ export interface SnapOptions extends LinuxBuildOptions {
   The list of features that must be supported by the core in order for this snap to install.
    */
   assumes?: Array<string> | null
+
+  /*
+  The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
+  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "fontconfig-config"]`.
+   */
+  stagePackages?: Array<string> | null
+
+  /*
+  Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/).
+  Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
+   */
+  ubuntuAppPlatformContent?: string | null
 }

@@ -106,6 +106,7 @@
       <w>libnss</w>
       <w>libunity</w>
       <w>libxss</w>
+      <w>libxtst</w>
       <w>localappdata</w>
       <w>lockfile</w>
       <w>lzfse</w>

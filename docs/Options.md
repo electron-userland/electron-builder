@@ -83,6 +83,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | squirrelWindows | <a name="BuildMetadata-squirrelWindows"></a>See [.build.squirrelWindows](#SquirrelWindowsOptions).
 | appx | <a name="BuildMetadata-appx"></a>See [.build.appx](#AppXOptions).
 | linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
+| snap | <a name="BuildMetadata-snap"></a>See [.build.snap](#SnapOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
 | npmRebuild | <a name="BuildMetadata-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
@@ -167,7 +168,7 @@ Linux specific build options.
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
 | desktop | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
-| depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
+| depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
 | executableName | <a name="LinuxBuildOptions-executableName"></a><p>The executable name. Defaults to <code>productName</code>.</p> <p>Cannot be specified per target, allowed only in the <code>.build.linux</code>.</p>
 
 <a name="MacOptions"></a>
@@ -281,6 +282,8 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | summary | <a name="SnapOptions-summary"></a>The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
 | grade | <a name="SnapOptions-grade"></a><p>The quality grade of the snap. It can be either <code>devel</code> (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels). Defaults to <code>stable</code>.</p>
 | assumes | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install.
+| stagePackages | <a name="SnapOptions-stagePackages"></a><p>The list of Ubuntu packages to use that are needed to support the <code>app</code> part creation. Like <code>depends</code> for <code>deb</code>. Defaults to <code>[&quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;, &quot;fontconfig-config&quot;]</code>.</p>
+| ubuntuAppPlatformContent | <a name="SnapOptions-ubuntuAppPlatformContent"></a><p>Specify <code>ubuntu-app-platform1</code> to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because “the snaps must be connected before running uitk-gallery for the first time”.</p>
 
 <a name="SquirrelWindowsOptions"></a>
 ### `.build.squirrelWindows`

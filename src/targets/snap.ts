@@ -10,6 +10,7 @@ import { safeDump } from "js-yaml"
 import { spawn } from "../util/util"
 import { homedir } from "os"
 import { Target } from "./targetFactory"
+import BluebirdPromise from "bluebird-lst-c"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
@@ -27,6 +28,13 @@ export default class SnapTarget extends Target {
 
     const snapDir = `${appOutDir}-snap`
     await emptyDir(snapDir)
+
+    const extraSnapSourceDir = path.join(snapDir, ".extra")
+    const isUseUbuntuPlatform = options.ubuntuAppPlatformContent != null
+    if (isUseUbuntuPlatform) {
+      // ubuntu-app-platform requires empty directory
+      await BluebirdPromise.all([this.helper.icons, emptyDir(path.join(extraSnapSourceDir, "ubuntu-app-platform"))])
+    }
 
     const snap: any = {}
     snap.name = packager.executableName
@@ -57,8 +65,19 @@ export default class SnapTarget extends Target {
       [snap.name]: {
         command: `desktop-launch $SNAP/${packager.executableName}`,
         plugs: [
-          "home", "x11", "unity7", "unity8", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
+          "home", "x11", "unity7", "unity8", "browser-support", "network", "gsettings", "pulseaudio", "opengl", "platform",
         ]
+      }
+    }
+
+    if (isUseUbuntuPlatform) {
+      snap.plugs = {
+        platform: {
+          interface: "content",
+          content: "ubuntu-app-platform1",
+          target: "ubuntu-app-platform",
+          "default-provider": "ubuntu-app-platform",
+        }
       }
     }
 
@@ -66,12 +85,16 @@ export default class SnapTarget extends Target {
     snap.parts = {
       app: {
         plugin: "dump",
-        "stage-packages": ["libnotify4", "libnss3", "fontconfig-config"],
+        "stage-packages": options.stagePackages || (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "fontconfig-config"]),
         source: isUseDocker ? `/out/${path.basename(snapDir)}` : appOutDir,
-        filesets: {
-          app: [`${appOutDir}/*`],
-        },
-        after: ["desktop-glib-only"]
+        after: isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
+      }
+    }
+
+    if (isUseUbuntuPlatform) {
+      snap.parts.extra = {
+        plugin: "dump",
+        source: extraSnapSourceDir
       }
     }
 
@@ -95,6 +118,7 @@ export default class SnapTarget extends Target {
     else {
       await spawn("snapcraft", ["snap"], {
         cwd: snapDir,
+        stdio: ["ignore", "inherit", "pipe"]
       })
     }
 

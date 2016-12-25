@@ -125,8 +125,8 @@ const Platform = builder.Platform
 // Promise is returned
 builder.build({
   targets: Platform.MAC.createTarget(),
-  devMetadata: {
-    "//": "build and other properties, see https://goo.gl/5jVxoO"
+  config: {
+   "//": "build options, see https://goo.gl/ZhRfla"
   }
 })
   .then(() => {

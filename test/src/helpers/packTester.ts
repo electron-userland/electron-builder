@@ -250,7 +250,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
     Description: " \n   Test Application (test quite “ #378)",
-    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify-bin" : checkOptions.expectedDepends,
+    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3" : checkOptions.expectedDepends,
     Section: "devel",
   })
 }
