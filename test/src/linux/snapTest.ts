@@ -1,7 +1,7 @@
 import { Platform } from "out"
 import { app } from "../helpers/packTester"
 
-test.ifLinux("platform", app({
+test.ifLinuxOrDevMac("platform", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep P",
@@ -14,7 +14,7 @@ test.ifLinux("platform", app({
   },
 }))
 
-test.ifLinux("snap", app({
+test.ifLinuxOrDevMac("snap", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep",

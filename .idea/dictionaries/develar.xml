@@ -97,6 +97,7 @@
       <w>langs</w>
       <w>lcid</w>
       <w>libappindicator</w>
+      <w>libasound</w>
       <w>libdbusmenu</w>
       <w>libexec</w>
       <w>libgconf</w>
@@ -193,6 +194,7 @@
       <w>xamarin</w>
       <w>xenial</w>
       <w>xorriso</w>
+      <w>xubuntu</w>
       <w>yargs</w>
       <w>zenity</w>
       <w>zisofs</w>

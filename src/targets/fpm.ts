@@ -1,4 +1,4 @@
-import { Arch } from "../metadata"
+import { Arch, toLinuxArchString } from "../metadata"
 import { smarten } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
@@ -95,7 +95,7 @@ export default class FpmTarget extends Target {
     const args = [
       "-s", "dir",
       "-t", target,
-      "--architecture", arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l"),
+      "--architecture", toLinuxArchString(arch),
       "--name", appInfo.name,
       "--force",
       "--after-install", scripts[0],

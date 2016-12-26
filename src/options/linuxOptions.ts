@@ -101,7 +101,7 @@ export interface SnapOptions extends LinuxBuildOptions {
 
   /*
   The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
-  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "fontconfig-config"]`.
+  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2"]`.
    */
   stagePackages?: Array<string> | null
 
