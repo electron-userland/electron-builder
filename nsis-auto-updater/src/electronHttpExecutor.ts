@@ -100,7 +100,7 @@ export class ElectronHttpExecutor implements HttpExecutor {
       }
 
       if (options.onProgress != null) {
-        const total = parseInt(String(this.safeGetHeader(response, "content-length")), 10)
+        const total = parseInt(String(safeGetHeader(response, "content-length")), 10)
         const start = Date.now()
         let transferred = 0
 
