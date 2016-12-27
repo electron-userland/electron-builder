@@ -72,10 +72,7 @@ Please note that everything is packaged into an asar archive [by default](https:
 * `.dmg`: macOS installer, required for the initial installation process on macOS.
 * `-mac.zip`: required for Squirrel.Mac.
 
-To benefit from auto updates, you have to implement and configure Electron's [`autoUpdater`](http://electron.atom.io/docs/latest/api/auto-updater/) module ([example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts)).
-You also need to deploy your releases to a server.
-Consider using [Nuts](https://github.com/GitbookIO/nuts) (uses GitHub as a backend to store the assets), [Electron Release Server](https://github.com/ArekSredzki/electron-release-server) or [Squirrel Updates Server](https://github.com/Aluxian/squirrel-updates-server).
-See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
+See the [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki).
 
 # CLI Usage
 Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
@@ -128,8 +125,8 @@ const Platform = builder.Platform
 // Promise is returned
 builder.build({
   targets: Platform.MAC.createTarget(),
-  devMetadata: {
-    "//": "build and other properties, see https://goo.gl/5jVxoO"
+  config: {
+   "//": "build options, see https://goo.gl/ZhRfla"
   }
 })
   .then(() => {

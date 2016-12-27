@@ -9,6 +9,8 @@ declare module jest {
     ifDevOrWinCi: jest.It
     ifWinCi: jest.It
     ifDevOrLinuxCi: jest.It
+    ifLinux: jest.It
+    ifLinuxOrDevMac: jest.It
   }
 
   interface Matchers {

@@ -57,6 +57,7 @@
       <w>flattennpmmodules</w>
       <w>fontconfig</w>
       <w>fseventsd</w>
+      <w>gconf</w>
       <w>github</w>
       <w>globaldots</w>
       <w>globby</w>
@@ -96,6 +97,7 @@
       <w>langs</w>
       <w>lcid</w>
       <w>libappindicator</w>
+      <w>libasound</w>
       <w>libdbusmenu</w>
       <w>libexec</w>
       <w>libgconf</w>
@@ -105,6 +107,7 @@
       <w>libnss</w>
       <w>libunity</w>
       <w>libxss</w>
+      <w>libxtst</w>
       <w>localappdata</w>
       <w>lockfile</w>
       <w>lzfse</w>
@@ -191,6 +194,7 @@
       <w>xamarin</w>
       <w>xenial</w>
       <w>xorriso</w>
+      <w>xubuntu</w>
       <w>yargs</w>
       <w>zenity</w>
       <w>zisofs</w>

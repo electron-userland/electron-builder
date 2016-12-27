@@ -17,7 +17,8 @@ if (process.env.RUN_IN_BAND !== "true") {
   // test = it
 }
 
-test.ifMac = process.platform === "darwin" ? test : skip
+const isMac = process.platform === "darwin"
+test.ifMac = isMac ? test : skip
 test.ifNotWindows = isWindows ? skip : test
 
 if (isCi) {
@@ -29,12 +30,14 @@ else {
   test.ifNotCi = test
 }
 
-test.ifNotCiMac = isCi && process.platform === "darwin" ? skip : test
+test.ifNotCiMac = isCi && isMac ? skip : test
 test.ifNotCiWin = isCi && isWindows ? skip : test
 
 test.ifDevOrWinCi = !isCi || isWindows ? test : skip
 test.ifDevOrLinuxCi = !isCi || process.platform === "linux" ? test : skip
 test.ifWinCi = isCi && isWindows ? test : skip
+test.ifLinux = process.platform === "linux" ? test : skip
+test.ifLinuxOrDevMac = process.platform === "linux" || (!isCi && isMac) ? test : skip
 
 delete process.env.CSC_NAME
 process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"

@@ -60,7 +60,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly compression?: string | null
 
   /*
-   Package dependencies. Defaults to `["libappindicator1", "libnotify-bin"]`.
+   Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
    */
   readonly depends?: string[] | null
 
@@ -72,9 +72,14 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly executableName?: string | null
 }
 
+/*
+ ### `.build.snap`
+
+ [Snaps](http://snapcraft.io) specific build options.
+ */
 export interface SnapOptions extends LinuxBuildOptions {
   /*
-  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces).
+  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
    */
   confinement?: "devmode" | "strict" | null
 
@@ -93,4 +98,16 @@ export interface SnapOptions extends LinuxBuildOptions {
   The list of features that must be supported by the core in order for this snap to install.
    */
   assumes?: Array<string> | null
+
+  /*
+  The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
+  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2"]`.
+   */
+  stagePackages?: Array<string> | null
+
+  /*
+  Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/).
+  Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
+   */
+  ubuntuAppPlatformContent?: string | null
 }

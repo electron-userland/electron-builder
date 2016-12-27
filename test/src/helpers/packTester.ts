@@ -208,8 +208,8 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
       if (target === "appimage") {
         result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
       }
-      else if (target === "deb") {
-        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.deb`)
+      else if (target === "deb" || target === "snap") {
+        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.${target}`)
       }
       else {
         result.push(`TestApp-${appInfo.version}.${target}`)
@@ -250,7 +250,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     Vendor: "Foo Bar <foo@example.com>",
     Package: "testapp",
     Description: " \n   Test Application (test quite “ #378)",
-    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "libappindicator1, libnotify-bin" : checkOptions.expectedDepends,
+    Depends: checkOptions == null || checkOptions.expectedDepends == null ? "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3" : checkOptions.expectedDepends,
     Section: "devel",
   })
 }

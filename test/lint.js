@@ -59,6 +59,8 @@ const configuration = {
     "jsdoc-format": false,
     "no-for-in-array": true,
     "prefer-const": true,
+    "interface-over-type-literal": true,
+    "no-string-throw": true,
   }
 }
 const options = {

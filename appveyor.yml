@@ -6,13 +6,13 @@ cache:
   - '%USERPROFILE%\.electron'
 
 environment:
-  TEST_FILES: BuildTest,extraMetadataTest,filesTest,globTest
+  TEST_FILES: BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest
 
 install:
   - ps: Install-Product node 6 x64
-  - node ./test/yarn.js
+  - node ./test/vendor/yarn.js
 
 build: off
 
 test_script:
-  - node ./test/yarn.js test
+  - node ./test/vendor/yarn.js test

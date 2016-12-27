@@ -62,3 +62,18 @@ export function githubRequest<T>(path: string, token: string | null, data: {[nam
 export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return executorHolder.httpExecutor.request(url, token, data, method)
 }
+
+export function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
+  if (sha2Header != null && sha2 != null) {
+    // todo why bintray doesn't send this header always
+    if (sha2Header == null) {
+      callback(new Error("checksum is required, but server response doesn't contain X-Checksum-Sha2 header"))
+      return false
+    }
+    else if (sha2Header !== sha2) {
+      callback(new Error(`checksum mismatch: expected ${sha2} but got ${sha2Header} (X-Checksum-Sha2 header)`))
+      return false
+    }
+  }
+  return true
+}
