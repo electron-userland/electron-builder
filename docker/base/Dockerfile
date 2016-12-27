@@ -11,6 +11,7 @@ ENV XZ_VERSION 5.2.2
 
 # we don't use our bundled 7za because it is better to build for specific platform - not generic
 ENV USE_SYSTEM_7ZA true
+ENV USE_SYSTEM_XORRISO true
 
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true

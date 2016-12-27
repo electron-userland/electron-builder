@@ -68,7 +68,7 @@
     "cuint": "^0.2.2",
     "debug": "2.5.2",
     "electron-download-tf": "3.1.0",
-    "electron-macos-sign": "^1.3.4",
+    "electron-macos-sign": "~1.4.0",
     "fs-extra-p": "^3.0.3",
     "hosted-git-info": "^2.1.5",
     "ini": "^1.3.4",
