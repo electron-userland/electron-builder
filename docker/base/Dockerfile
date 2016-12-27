@@ -14,9 +14,10 @@ ENV USE_SYSTEM_7ZA true
 
 ENV DEBUG_COLORS true
 ENV FORCE_COLOR true
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv dist yarn && apt-get update -y && apt-get upgrade -y && \
-  apt-get install --no-install-recommends -y nodejs git snapcraft qtbase5-dev xorriso bsdtar build-essential autoconf libssl-dev icnsutils graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
+  apt-get install --no-install-recommends -y nodejs git snapcraft qtbase5-dev xorriso bsdtar build-essential autoconf libssl-dev icnsutils jasper graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm && \
   apt-get clean && rm -rf /var/lib/apt/lists/* && \
   curl -L http://tukaani.org/xz/xz-$XZ_VERSION.tar.xz | tar -xJ && cd xz-$XZ_VERSION && ./configure && make && make install && cd .. && rm -rf xz-$XZ_VERSION && ldconfig && \
   mkdir -p /tmp/7z && curl -L http://downloads.sourceforge.net/project/p7zip/p7zip/16.02/p7zip_16.02_src_all.tar.bz2 | tar -xj -C /tmp/7z --strip-components 1 && cd /tmp/7z && cp makefile.linux_amd64_asm makefile.machine && make && make install && rm -rf /tmp/7z

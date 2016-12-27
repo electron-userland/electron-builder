@@ -40,7 +40,7 @@ export class LinuxTargetHelper {
           const size = parseInt(file!, 10)
           if (size > 0) {
             const iconPath = `${iconsDir}/${file}`
-            mappings.push([iconPath, `${size}x${size}/apps/${this.packager.appInfo.name}.png`])
+            mappings.push([iconPath, `${size}x${size}/apps/${this.packager.executableName}.png`])
 
             if (size > maxSize) {
               maxSize = size
@@ -80,8 +80,7 @@ export class LinuxTargetHelper {
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}"` : exec,
       Terminal: "false",
       Type: "Application",
-      Icon: appInfo.name,
-      StartupWMClass: `"${productFilename}"`,
+      Icon: this.packager.executableName,
     }, extra, platformSpecificBuildOptions.desktop)
 
     const category = platformSpecificBuildOptions.category
@@ -168,10 +167,10 @@ export class LinuxTargetHelper {
   }
 
   private createMappings(tempDir: string) {
-    const appName = this.packager.appInfo.name
+    const name = this.packager.executableName
 
     function createMapping(size: string) {
-      return [process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`, `${size}x${size}/apps/${appName}.png`]
+      return [process.platform === "darwin" ? `${tempDir}/icon_${size}x${size}.png` : `${tempDir}/icon_${size}x${size}x32.png`, `${size}x${size}/apps/${name}.png`]
     }
 
     return [
