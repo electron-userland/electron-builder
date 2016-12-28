@@ -36,6 +36,49 @@ Name                | Default                 | Description
 --------------------|-------------------------|------------
 autoDownload        | true                    | Automatically download an update when it is found.
 
+## Events
+
+The `autoUpdater` object emits the following events:
+
+### Event: `error`
+
+Returns:
+
+* `error` Error
+
+Emitted when there is an error while updating.
+
+### Event: `checking-for-update`
+
+Emitted when checking if an update has started.
+
+### Event: `update-available`
+
+Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is not set to `false`.
+
+### Event: `update-not-available`
+
+Emitted when there is no available update.
+
+### Event: `download-progress`
+
+Returns:
+
+* `bytesPerSecond`
+* `percent`
+* `total`
+* `transferred`
+
+Emitted on progress.
+
+### Event: `update-downloaded`
+
+Returns:
+
+* `event` Event
+
+Emitted when an update has been downloaded.
+
 ## Methods
 
 The `autoUpdater` object has the following methods:

@@ -1,6 +1,6 @@
 {
   "name": "electron-auto-updater",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "NSIS Auto Updater",
   "main": "out/nsis-auto-updater/src/main.js",
   "author": "Vladimir Krivosheev",
@@ -13,7 +13,7 @@
   ],
   "dependencies": {
     "bluebird-lst-c": "^1.0.5",
-    "debug": "^2.5.1",
+    "debug": "^2.5.2",
     "fs-extra-p": "^3.0.3",
     "js-yaml": "^3.7.0",
     "semver": "^5.3.0",
