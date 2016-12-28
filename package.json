@@ -14,19 +14,19 @@
     "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },
   "scripts": {
-    "compile": "ts-babel . nsis-auto-updater test",
+    "compile": "ts-babel packages/electron-builder-http . packages/nsis-auto-updater test",
     "lint": "node ./test/lint.js",
     "pretest": "node ./test/vendor/yarn.js run compile && node ./test/vendor/yarn.js run lint",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
     "test": "node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
-    "pack-updater": "cd nsis-auto-updater && node ./test/vendor/yarn.js --production && cd ..",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh",
-    "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11"
+    "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
+    "postinstall": "lerna bootstrap"
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
@@ -94,7 +94,8 @@
     "tunnel-agent": "^0.4.3",
     "update-notifier": "^1.0.3",
     "uuid-1345": "^0.99.6",
-    "yargs": "^6.5.0"
+    "yargs": "^6.5.0",
+    "electron-builder-http": "1.0.0"
   },
   "devDependencies": {
     "@develar/semantic-release": "^6.3.26",
@@ -113,6 +114,7 @@
     "depcheck": "^0.6.7",
     "jest-cli": "^18.0.0",
     "jest-environment-node-debug": "^0.0.2",
+    "lerna": "2.0.0-beta.31",
     "path-sort": "^0.1.0",
     "ts-babel": "^1.2.2",
     "tslint": "^4.2.0",
@@ -129,7 +131,8 @@
     ],
     "testRegex": "\\.js$",
     "modulePaths": [
-      "<rootDir>"
+      "<rootDir>",
+      "<rootDir>/packages"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
   },

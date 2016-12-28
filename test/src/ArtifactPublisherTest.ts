@@ -3,7 +3,7 @@ import { join } from "path"
 import { BintrayPublisher } from "out/publish/BintrayPublisher"
 import { createPublisher } from "out/builder"
 import isCi from "is-ci"
-import { HttpError } from "out/util/httpExecutor"
+import { HttpError } from "electron-builder-http/out/httpExecutor"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {

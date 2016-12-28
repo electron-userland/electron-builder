@@ -2,11 +2,11 @@ import { Publisher, PublishOptions } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
 import { log } from "../util/log"
 import { debug, isEmptyOrSpaces } from "../util/util"
-import { BintrayClient, Version } from "./bintray"
-import { BintrayOptions } from "../options/publishOptions"
+import { BintrayClient, Version } from "electron-builder-http/out/bintray"
+import { BintrayOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
 import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
-import { HttpError } from "../util/httpExecutor"
+import { HttpError } from "electron-builder-http/out/httpExecutor"
 
 export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>

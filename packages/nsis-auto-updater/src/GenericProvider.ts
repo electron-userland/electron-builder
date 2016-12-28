@@ -1,8 +1,8 @@
 import { Provider, FileInfo } from "./api"
-import { GenericServerOptions, UpdateInfo } from "../../src/options/publishOptions"
+import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import * as url from "url"
 import * as path from "path"
-import { HttpError, request } from "../../src/util/httpExecutor"
+import { HttpError, request } from "electron-builder-http/out/httpExecutor"
 
 export class GenericProvider implements Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)

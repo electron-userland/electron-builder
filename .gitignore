@@ -24,7 +24,7 @@ dist/
 /test/typings/electron-builder.d.ts
 /test/typings/electron-auto-updater.d.ts
 
-/nsis-auto-updater/out/
+/packages/*/out/
 /out/
 # to not exclude .js.snap (jest snapshots)
 /test/out/**/*.js

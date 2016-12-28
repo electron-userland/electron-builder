@@ -1,6 +1,6 @@
 import { Provider, FileInfo } from "./api"
-import { BintrayClient, HttpError } from "../../src/publish/bintray"
-import { BintrayOptions, VersionInfo } from "../../src/options/publishOptions"
+import { BintrayClient, HttpError } from "electron-builder-http/out/bintray"
+import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 
 export class BintrayProvider implements Provider<VersionInfo> {
   private client: BintrayClient

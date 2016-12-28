@@ -1,4 +1,4 @@
-import { VersionInfo } from "../../src/options/publishOptions"
+import { VersionInfo } from "electron-builder-http/out/publishOptions"
 
 export interface FileInfo {
   name: string

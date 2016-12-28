@@ -1,0 +1,16 @@
+{
+  "name": "electron-builder-http",
+  "version": "1.0.0",
+  "main": "out/main.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": "electron-userland/electron-builder",
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "out"
+  ],
+  "dependencies": {
+  },
+  "typings": "./out/electron-builder-http.d.ts"
+}

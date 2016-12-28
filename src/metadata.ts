@@ -1,7 +1,7 @@
 import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
 import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
-import { Publish } from "./options/publishOptions"
+import { Publish } from "electron-builder-http/out/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 

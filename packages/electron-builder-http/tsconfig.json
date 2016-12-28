@@ -16,16 +16,8 @@
     "skipLibCheck": true
   },
   "declaration": {
-    "electron-auto-updater": "out/electron-auto-updater.d.ts",
-    "": "../test/typings/electron-auto-updater.d.ts"
+    "electron-builder-http": "out/electron-builder-http.d.ts"
   },
-  "files": [
-    "../typings/semver.d.ts",
-    "../typings/debug.d.ts",
-    "../node_modules/@types/node/index.d.ts",
-    "../node_modules/fs-extra-p/index.d.ts",
-    "../node_modules/bluebird-lst-c/index.d.ts"
-  ],
   "include": [
     "src/**/*.ts"
   ]

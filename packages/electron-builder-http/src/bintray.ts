@@ -1,6 +1,6 @@
-import { BintrayOptions } from "../options/publishOptions"
-import { request } from "../util/httpExecutor"
-export { HttpError, request } from "../util/httpExecutor"
+import { BintrayOptions } from "./publishOptions"
+import { request } from "./httpExecutor"
+export { HttpError, request } from "./httpExecutor"
 
 export function bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
   return request<T>({hostname: "api.bintray.com", path: path}, auth, data, method)

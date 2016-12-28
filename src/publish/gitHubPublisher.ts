@@ -5,9 +5,9 @@ import { parse as parseUrl } from "url"
 import mime from "mime"
 import BluebirdPromise from "bluebird-lst-c"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
-import { GithubOptions } from "../options/publishOptions"
+import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
-import { HttpError, githubRequest } from "../util/httpExecutor"
+import { HttpError, githubRequest } from "electron-builder-http/out/httpExecutor"
 import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
 
 export interface Release {

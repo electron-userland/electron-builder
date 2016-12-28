@@ -1,6 +1,6 @@
 import { exec, getTempName, isEmptyOrSpaces, getCacheDirectory } from "./util/util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
-import { download } from "./util/httpRequest"
+import { download } from "electron-builder-http/out/httpRequest"
 import * as path from "path"
 import { executeFinally, all } from "./util/promise"
 import BluebirdPromise from "bluebird-lst-c"

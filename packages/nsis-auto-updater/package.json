@@ -17,7 +17,8 @@
     "fs-extra-p": "^3.0.3",
     "js-yaml": "^3.7.0",
     "semver": "^5.3.0",
-    "source-map-support": "^0.4.8"
+    "source-map-support": "^0.4.8",
+    "electron-builder-http": "1.0.0"
   },
   "typings": "./out/electron-auto-updater.d.ts"
 }

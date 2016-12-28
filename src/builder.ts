@@ -9,7 +9,7 @@ import { log } from "./util/log"
 import { Platform, Arch, archFromString } from "./metadata"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
-import { PublishConfiguration, GithubOptions, BintrayOptions } from "./options/publishOptions"
+import { PublishConfiguration, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
 import isCi from "is-ci"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {

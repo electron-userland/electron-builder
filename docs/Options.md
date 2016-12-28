@@ -36,10 +36,6 @@ Don't customize paths to background and icon, — just follow conventions.
       * [.build.mas](#MasBuildOptions)
       * [.build.nsis](#NsisOptions)
       * [.build.protocols](#Protocol)
-      * [.build.publish](#PublishConfiguration)
-      * [.build.publish Bintray](#BintrayOptions)
-      * [.build.publish Generic (any https server)](#GenericServerOptions)
-      * [.build.publish GitHub](#GithubOptions)
       * [.build.snap](#SnapOptions)
       * [.build.squirrelWindows](#SquirrelWindowsOptions)
       * [.build.win](#WinBuildOptions)
@@ -230,46 +226,6 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | **name** | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`.
 | role | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 | **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
-
-<a name="PublishConfiguration"></a>
-### `.build.publish`
-
-Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
-Please see [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
-
-If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-
-Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
-
-Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
-
-| Name | Description
-| --- | ---
-| **provider** | <a name="PublishConfiguration-provider"></a>The provider, one of `github`, `bintray`, `generic`.
-| owner | <a name="PublishConfiguration-owner"></a>The owner.
-
-<a name="BintrayOptions"></a>
-### `.build.publish` Bintray
-| Name | Description
-| --- | ---
-| package | <a name="BintrayOptions-package"></a>The Bintray package name.
-| repo | <a name="BintrayOptions-repo"></a>The Bintray repository name. Defaults to `generic`.
-| user | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization.
-
-<a name="GenericServerOptions"></a>
-### `.build.publish` Generic (any https server)
-| Name | Description
-| --- | ---
-| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`
-| channel | <a name="GenericServerOptions-channel"></a>The channel. Defaults to `latest`.
-
-<a name="GithubOptions"></a>
-### `.build.publish` GitHub
-| Name | Description
-| --- | ---
-| repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
-| vPrefixedTagName | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. Defaults to `true`.
 
 <a name="SnapOptions"></a>
 ### `.build.snap`
