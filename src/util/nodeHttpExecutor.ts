@@ -6,7 +6,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2 } from "./httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress} from "./httpExecutor"
 import { Url } from "url"
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
@@ -93,6 +93,18 @@ export class NodeHttpExecutor implements HttpExecutor {
 
       if (!checkSha2(response.headers["X-Checksum-Sha2"], options.sha2, callback)) {
         return
+      }
+
+      if (options.onProgress != null) {
+        const total = parseInt(response.headers["content-length"], 10)
+        const start = Date.now()
+        let transferred = 0
+
+        response.on("data", (chunk: any) => {
+          transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
+        })
+
+        response.pause()
       }
 
       ensureDirPromise

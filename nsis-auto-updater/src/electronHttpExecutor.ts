@@ -3,7 +3,7 @@ import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2 } from "../../src/util/httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress } from "../../src/util/httpExecutor"
 import { Url } from "url"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
@@ -104,17 +104,8 @@ export class ElectronHttpExecutor implements HttpExecutor {
         const start = Date.now()
         let transferred = 0
 
-        response.on("data", (chunk) => {
-          const now = Date.now()
-          transferred += chunk.length
-          if (options.onProgress) {
-            options.onProgress({
-              total: total,
-              transferred: transferred,
-              percent: ((transferred / total) * 100).toFixed(2),
-              bytesPerSecond: Math.round(transferred / ((now - start) / 1000))
-            })
-          }
+        response.on("data", (chunk: any) => {
+          transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
         })
       }
 
