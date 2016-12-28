@@ -67,8 +67,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
 "@types/node@*":
-  version "6.0.53"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.53.tgz#8c300ca8ba51f80f98f3525b932ff47c6efd6be1"
+  version "6.0.54"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.54.tgz#65859962ba988052cbdd5c48881395acfdd46931"
 
 "@types/source-map-support@^0.2.28":
   version "0.2.28"
@@ -1257,8 +1257,8 @@ extsprintf@1.0.2:
   resolved "https://registry.yarnpkg.com/extsprintf/-/extsprintf-1.0.2.tgz#e1080e0658e300b06294990cc70e1502235fd550"
 
 fast-levenshtein@~2.0.4:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.5.tgz#bd33145744519ab1c36c3ee9f31f08e9079b67f2"
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
 
 fb-watchman@^1.8.0, fb-watchman@^1.9.0:
   version "1.9.0"
@@ -3381,8 +3381,8 @@ through@2, "through@>=2.2.7 <3", through@~2.3, through@~2.3.1:
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
 
 timed-out@^3.0.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/timed-out/-/timed-out-3.1.0.tgz#43b98b14bb712c9161c28f4dc1f3068d67a04ec2"
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/timed-out/-/timed-out-3.1.1.tgz#2eaaa1021888e4ce3b6ce3511fa7a8556114752b"
 
 tmpl@1.0.x:
   version "1.0.4"
