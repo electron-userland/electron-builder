@@ -3,7 +3,7 @@ import { smarten } from "../platformPackager"
 import { use, exec } from "../util/util"
 import * as path from "path"
 import { getBin } from "../util/binDownload"
-import { readFile, outputFile } from "fs-extra-p"
+import { readFile, outputFile, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
@@ -11,6 +11,7 @@ import { TmpDir } from "../util/tmp"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "../util/log"
 import { Target } from "./targetFactory"
+import { unlinkIfExists } from "../util/fs"
 
 const template = require("lodash.template")
 
@@ -71,6 +72,10 @@ export default class FpmTarget extends Target {
     log(`Building ${target}`)
 
     const destination = path.join(this.outDir, this.packager.generateName(target, arch, true /* on Linux we use safe name — without space */))
+    await unlinkIfExists(destination)
+    if (this.packager.info.options.prepackaged != null) {
+      await ensureDir(this.outDir)
+    }
 
     const scripts = await this.scriptFiles
     const packager = this.packager
@@ -157,7 +162,7 @@ export default class FpmTarget extends Target {
       args.push(mapping.join("=/usr/share/icons/hicolor/"))
     }
 
-    args.push(`${await this.desktopEntry}=/usr/share/applications/${appInfo.productFilename}.desktop`)
+    args.push(`${await this.desktopEntry}=/usr/share/applications/${this.packager.executableName}.desktop`)
 
     await exec(await fpmPath, args)
 

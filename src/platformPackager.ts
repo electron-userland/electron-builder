@@ -56,6 +56,8 @@ export interface PackagerOptions {
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
   readonly extraMetadata?: any
+
+  readonly prepackaged?: string
 }
 
 export interface BuildInfo {
@@ -161,7 +163,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.computeAppOutDir(outDir, arch)
+    const appOutDir = this.options.prepackaged || this.computeAppOutDir(outDir, arch)
     await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
     this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
   }
@@ -177,6 +179,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
+    if (this.info.options.prepackaged != null) {
+      return
+    }
+
     const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
     const fileMatchOptions: FileMatchOptions = {
       arch: Arch[arch],

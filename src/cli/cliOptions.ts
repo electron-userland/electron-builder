@@ -81,7 +81,16 @@ export function createYargs(): any {
     .option("extraMetadata", {
       alias: ["em"],
       group: buildGroup,
-      describe: "Inject properties to application package.json (asar only)",
+      describe: "Inject properties to package.json (asar only)",
+    })
+    .option("prepackaged", {
+      alias: ["pd"],
+      group: buildGroup,
+      describe: "The path to prepackaged app (to pack into distributable format). Also requires `project`",
+    })
+    .option("project", {
+      group: buildGroup,
+      describe: "The path to project directory (required only for `prepackaged`)",
     })
     .strict()
     .group(["help", "version"], "Other:")

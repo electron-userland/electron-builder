@@ -10,7 +10,6 @@ import { safeDump } from "js-yaml"
 import { spawn } from "../util/util"
 import { homedir } from "os"
 import { Target } from "./targetFactory"
-import BluebirdPromise from "bluebird-lst-c"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
@@ -33,7 +32,7 @@ export default class SnapTarget extends Target {
     const isUseUbuntuPlatform = options.ubuntuAppPlatformContent != null
     if (isUseUbuntuPlatform) {
       // ubuntu-app-platform requires empty directory
-      await BluebirdPromise.all([this.helper.icons, emptyDir(path.join(extraSnapSourceDir, "ubuntu-app-platform"))])
+      await emptyDir(path.join(extraSnapSourceDir, "ubuntu-app-platform"))
     }
 
     const snap: any = {}
@@ -95,7 +94,7 @@ export default class SnapTarget extends Target {
     if (isUseUbuntuPlatform) {
       snap.parts.extra = {
         plugin: "dump",
-        source: extraSnapSourceDir
+        source: isUseDocker ? `/out/${path.basename(snapDir)}/${path.basename(extraSnapSourceDir)}` : extraSnapSourceDir
       }
     }
 
@@ -108,14 +107,13 @@ export default class SnapTarget extends Target {
     if (isUseDocker) {
       await spawn("docker", ["run", "--rm",
         "-v", `${packager.info.projectDir}:/project`,
-        "-v", `/tmp/apt-cache:/var/cache/apt/archives`,
         "-v", `${homedir()}/.electron:/root/.electron`,
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
         "electronuserland/electron-builder:latest",
         "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(snapDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapName}`], {
         cwd: packager.info.projectDir,
-        stdio: ["ignore", "inherit", "pipe"],
+        stdio: ["ignore", "inherit", "inherit"],
       })
     }
     else {

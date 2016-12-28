@@ -2,6 +2,7 @@ exports[`test cli 1`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -20,6 +21,7 @@ exports[`test cli 2`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -40,6 +42,7 @@ exports[`test cli 3`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -60,6 +63,7 @@ exports[`test cli 4`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -78,6 +82,7 @@ exports[`test cli 5`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -96,6 +101,7 @@ exports[`test cli 6`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -128,6 +134,7 @@ exports[`test cli 7`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -148,6 +155,7 @@ exports[`test cli 8`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -168,6 +176,7 @@ exports[`test cli 9`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {
@@ -188,6 +197,7 @@ exports[`test cli 10`] = `
 Object {
   "draft": undefined,
   "extraMetadata": undefined,
+  "prepackaged": undefined,
   "prerelease": undefined,
   "publish": undefined,
   "targets": Map {

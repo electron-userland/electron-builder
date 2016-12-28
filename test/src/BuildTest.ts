@@ -12,14 +12,13 @@ import { move, outputJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { BuildOptions, Platform, PackagerOptions, DIR_TARGET } from "out"
-import { normalizeOptions } from "out/builder"
+import { BuildOptions, Platform, PackagerOptions, DIR_TARGET, Arch } from "out"
+import { normalizeOptions, build } from "out/builder"
 import { createYargs } from "out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
 import isCi from "is-ci"
 import { checkWineVersion } from "out/packager"
-import { Arch } from "out/metadata"
 
 test("cli", async () => {
   const yargs = createYargs()
@@ -220,3 +219,16 @@ function currentPlatform(): PackagerOptions {
     targets: Platform.fromString(process.platform).createTarget(DIR_TARGET),
   }
 }
+
+test.ifDevOrLinuxCi("prepackaged", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+}, {
+  packed: async (context) => {
+    await build(normalizeOptions({
+      prepackaged: path.join(context.outDir, "linux-unpacked"),
+      project: context.projectDir,
+      linux: ["deb"]
+    }))
+    await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_amd64.deb")).isFile()
+  }
+}))

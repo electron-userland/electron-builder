@@ -101,7 +101,7 @@ Use one of the shared run configurations as a template and:
   
 ## Run Test using CLI
 ```sh
-TEST_APP_TMP_DIR=/tmp/electron-builder-test NODE_PATH=. ./node_modules/.bin/ava --match="boring" test/out/nsisTest.js
+TEST_APP_TMP_DIR=/tmp/electron-builder-test NODE_PATH=. ./node_modules/.bin/jest --env jest-environment-node-debug '/TestFileName\.\w+$'
 ```
 
 where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `boring` is the test name and `test/out/nsisTest.js` is the path to test file.

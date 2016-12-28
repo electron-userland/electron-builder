@@ -229,9 +229,6 @@ async function checkLinuxResult(outDir: string, packager: Packager, checkOptions
     if (it === "/opt/TestApp/TestApp") {
       return `/opt/${productFilename}/TestApp`
     }
-    else if (it === "/usr/share/applications/TestApp.desktop") {
-      return `/usr/share/applications/${productFilename}.desktop`
-    }
     else {
       return it.replace(new RegExp("/opt/TestApp/", "g"), `/opt/${productFilename}/`)
     }

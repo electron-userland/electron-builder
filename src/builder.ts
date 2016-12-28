@@ -29,6 +29,8 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   dir?: boolean
 
   platform?: string
+
+  project?: string
 }
 
 function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
@@ -158,6 +160,11 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.ia32
   delete result.x64
   delete result.armv7l
+
+  if (result.project != null) {
+    result.projectDir = result.project
+  }
+  delete result.project
   return result
 }
 
@@ -231,6 +238,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     }
   }
 
+  //noinspection JSMismatchedCollectionQueryUpdate
   const artifactPaths: Array<string> = []
   packager.artifactCreated(event => {
     if (event.file != null) {

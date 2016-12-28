@@ -120,7 +120,7 @@ export class Packager implements BuildInfo {
 
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
     // custom packager - don't check wine
-    let checkWine = this.options.platformPackagerFactory == null
+    let checkWine = this.options.prepackaged == null && this.options.platformPackagerFactory == null
     for (const [platform, archToType] of this.options.targets!) {
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
@@ -241,6 +241,10 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
+    if (this.options.prepackaged != null) {
+      return
+    }
+
     const options = this.config
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)

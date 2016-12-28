@@ -3,6 +3,7 @@ import { CompressionLevel } from "../metadata"
 import * as path from "path"
 import { unlink } from "fs-extra-p"
 import { path7za } from "7zip-bin"
+import { exists } from "../util/fs"
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
@@ -72,9 +73,19 @@ export async function archive(compression: CompressionLevel | n, format: string,
 
   args.push(outFile, withoutDir ? "." : path.basename(dirToArchive))
 
-  await spawn(path7za, args, {
-    cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
-  })
+  try {
+    await spawn(path7za, args, {
+      cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
+    })
+  }
+  catch (e) {
+    if (e.code === "ENOENT" && !(await exists(dirToArchive))) {
+      throw new Error(`Cannot create archive: "${dirToArchive}" doesn't exist`)
+    }
+    else {
+      throw e
+    }
+  }
 
   return outFile
 }
