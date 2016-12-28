@@ -5,6 +5,7 @@ import { Transform } from "stream"
 export interface DownloadOptions {
   skipDirCreation?: boolean
   sha2?: string
+  onProgress?(progress: any): void
 }
 
 export class HttpExecutorHolder {
@@ -75,4 +76,15 @@ export function checkSha2(sha2Header: string | null | undefined, sha2: string | 
     }
   }
   return true
+}
+
+export function calculateDownloadProgress(total: number, start: number, transferred: number, chunk: any, callback: any): number {
+    transferred += chunk.length
+    callback({
+      total: total,
+      transferred: transferred,
+      percent: ((transferred / total) * 100).toFixed(2),
+      bytesPerSecond: Math.round(transferred / ((Date.now() - start) / 1000))
+    })
+    return transferred
 }

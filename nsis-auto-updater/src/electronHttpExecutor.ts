@@ -3,7 +3,7 @@ import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2 } from "../../src/util/httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress } from "../../src/util/httpExecutor"
 import { Url } from "url"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
@@ -69,7 +69,7 @@ export class ElectronHttpExecutor implements HttpExecutor {
     // user-agent must be specified, otherwise some host can return 401 unauthorised
 
     //FIXME hack, the electron typings specifies Protocol with capital but the code actually uses with small case
-    const requestOpts  = {
+    const requestOpts = {
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
@@ -97,6 +97,16 @@ export class ElectronHttpExecutor implements HttpExecutor {
 
       if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
         return
+      }
+
+      if (options.onProgress != null) {
+        const total = parseInt(String(safeGetHeader(response, "content-length")), 10)
+        const start = Date.now()
+        let transferred = 0
+
+        response.on("data", (chunk: any) => {
+          transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
+        })
       }
 
       ensureDirPromise

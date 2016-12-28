@@ -171,6 +171,35 @@ test("test error", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
+test("test download progress", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater: NsisUpdater = new NsisUpdaterClass()
+  updater.autoDownload = false
+
+  const progressEvents: Array<any> = []
+
+  updater.addListener("download-progress", (e: any, progress: any) => {
+    progressEvents.push(progress)
+  })
+
+  await updater.checkForUpdates()
+  await updater.downloadUpdate()
+
+  expect(progressEvents.length).toBeGreaterThanOrEqual(1)
+
+  const lastEvent = progressEvents.pop()
+
+  expect(parseInt(lastEvent.percent, 10)).toBe(100)
+  expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
+  expect(lastEvent.transferred).toBe(lastEvent.total)
+})
+
 function trackEvents(updater: NsisUpdater) {
   const actualEvents: Array<string> = []
   for (const eventName of ["checking-for-update", "update-available", "update-downloaded", "error"]) {

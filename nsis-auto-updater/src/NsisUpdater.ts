@@ -148,6 +148,13 @@ export class NsisUpdater extends EventEmitter {
   async downloadUpdate() {
     const versionInfo = this.versionInfo
     const fileInfo = this.fileInfo
+    const downloadOptions: any = {
+      onProgress: (progress: any) => this.emit("download-progress", {}, progress)
+    }
+
+    if (fileInfo && fileInfo.sha2) {
+      downloadOptions["sha2"] = fileInfo.sha2
+    }
 
     if (versionInfo == null || fileInfo == null) {
       const message = "Please check update first"
@@ -157,7 +164,7 @@ export class NsisUpdater extends EventEmitter {
     }
 
     return mkdtemp(`${path.join(tmpdir(), "up")}-`)
-      .then(it => download(fileInfo.url, path.join(it, fileInfo.name), fileInfo.sha2 == null ? null : {sha2: fileInfo.sha2}))
+      .then(it => download(fileInfo.url, path.join(it, fileInfo.name), downloadOptions))
       .then(it => {
         this.setupPath = it
         this.addQuitHandler()
