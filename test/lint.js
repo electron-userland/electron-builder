@@ -68,7 +68,7 @@ const options = {
 }
 
 let hasErrors = false
-for (const projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "nsis-auto-updater"), __dirname]) {
+for (const projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "packages", "electron-auto-updater"), __dirname]) {
   const program = Linter.createProgram("tsconfig.json", projectDir)
   for (const file of Linter.getFileNames(program)) {
     const fileContents = program.getSourceFile(file).getFullText()

@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   const result = await new BluebirdPromise<DepCheckResult>(function (resolve) {
     depCheck(projectDir, {
       ignoreDirs: [
-        "out", "test", "docs", "typings", "docker", "certs", "templates", "nsis-auto-updater", ".idea", ".github",
+        "out", "test", "docs", "typings", "docker", "certs", "templates", ".idea", ".github",
       ],
     }, resolve)
   })

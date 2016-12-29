@@ -2,7 +2,7 @@
   "name": "electron-auto-updater",
   "version": "0.8.5",
   "description": "NSIS Auto Updater",
-  "main": "out/nsis-auto-updater/src/main.js",
+  "main": "out/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",

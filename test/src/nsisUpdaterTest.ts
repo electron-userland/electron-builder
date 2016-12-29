@@ -12,7 +12,7 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
-const NsisUpdaterClass = require("../../nsis-auto-updater/out/nsis-auto-updater/src/NsisUpdater").NsisUpdater
+const NsisUpdaterClass = require("../../packages/electron-auto-updater/out/NsisUpdater").NsisUpdater
 
 const g = (<any>global)
 g.__test_app = {

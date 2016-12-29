@@ -14,7 +14,7 @@
     "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },
   "scripts": {
-    "compile": "ts-babel packages/electron-builder-http . packages/nsis-auto-updater test",
+    "compile": "ts-babel packages/electron-builder-http . packages/electron-auto-updater test",
     "lint": "node ./test/lint.js",
     "pretest": "node ./test/vendor/yarn.js run compile && node ./test/vendor/yarn.js run lint",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
