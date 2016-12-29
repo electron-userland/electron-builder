@@ -43,6 +43,7 @@ Don't customize paths to background and icon, — just follow conventions.
       * [.build.snap](#SnapOptions)
       * [.build.squirrelWindows](#SquirrelWindowsOptions)
       * [.build.win](#WinBuildOptions)
+      * [.build.download](#ElectronDownloadOptions)
     * [.directories](#MetadataDirectories)
 
 <a name="AppMetadata"></a>
@@ -312,6 +313,13 @@ Windows specific build options.
 | certificateSubjectName | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 | timeStampServer | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
+
+<a name="ElectronDownloadOptions"></a>
+### `.build.download`
+
+electron-download options.
+
+See the [doc](https://github.com/electron-userland/electron-download)
 
 <a name="MetadataDirectories"></a>
 ## `.directories`
