@@ -137,14 +137,13 @@ export class ElectronHttpExecutor implements HttpExecutor {
     if (token != null) {
       (<any>requestOptions.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
     }
-
-    requestOptions.protocol = "https:"
+    
     return new BluebirdPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, (response: Electron.IncomingMessage) => {
         try {
           if (response.statusCode === 404) {
             // error is clear, we don't need to read detailed error description
-            reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
+            reject(new HttpError(response, `method: ${options.method} url: ${options.protocol}//${options.hostname}${options.path}
 
 Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
 `))

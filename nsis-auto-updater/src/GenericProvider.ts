@@ -15,7 +15,15 @@ export class GenericProvider implements Provider<UpdateInfo> {
     let result: UpdateInfo | null = null
     try {
       const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${this.channel}.yml`)
-      result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`})
+      if(!this.baseUrl.port){        
+         this.baseUrl.port = this.baseUrl.protocol === "http:"?"80":"443";
+      }
+      result = await request<UpdateInfo>({
+          hostname: this.baseUrl.hostname,
+          port: this.baseUrl.port, 
+          path: `${pathname}${this.baseUrl.search || ""}`,
+          protocol: this.baseUrl.protocol?this.baseUrl.protocol:"https"       
+      })
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
