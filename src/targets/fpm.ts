@@ -50,6 +50,7 @@ export default class FpmTarget extends Target {
     const templateOptions = Object.assign({
       // old API compatibility
       executable: this.packager.executableName,
+      productName: this.packager.info.metadata.productName
     }, packager.platformSpecificBuildOptions)
 
     function getResource(value: string | n, defaultFile: string) {
