@@ -42,6 +42,7 @@
     !define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
   !endif
 
+  !insertmacro MUI_PAGE_DIRECTORY
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 !else
