@@ -11,7 +11,7 @@ export class GitHubProvider implements Provider<VersionInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     // do not use API to avoid limit
     const basePath = this.getBasePath()
-    let version = (await request<Redirect>({hostname: "github.com", path: `${basePath}/latest`})).location
+    let version = (await request<ReleaseInfo>({hostname: "api.github.com", path: `repos${basePath}/latest`})).html_url
     const versionPosition = version.lastIndexOf("/") + 1
     try {
       version = version.substring(version[versionPosition] === "v" ? versionPosition + 1 : versionPosition)
@@ -51,6 +51,6 @@ export class GitHubProvider implements Provider<VersionInfo> {
   }
 }
 
-interface Redirect {
-  readonly location: string
+interface ReleaseInfo {
+  readonly html_url: string
 }
