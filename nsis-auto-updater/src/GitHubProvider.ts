@@ -11,10 +11,16 @@ export class GitHubProvider implements Provider<VersionInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     // do not use API to avoid limit
     const basePath = this.getBasePath()
-    let version = (await request<Redirect>({hostname: "github.com", path: `${basePath}/latest`})).location
-    const versionPosition = version.lastIndexOf("/") + 1
+    let version = (await request<ReleaseInfo>(
+      {hostname: "github.com", path: `${basePath}/latest`},
+      null,
+      null,
+      "GET",
+      {"Accept": "application/json"}
+    )).tag_name
+
     try {
-      version = version.substring(version[versionPosition] === "v" ? versionPosition + 1 : versionPosition)
+      version = (version.startsWith("v")) ? version.substring(1) : version
     }
     catch (e) {
       throw new Error(`Cannot parse extract version from location "${version}": ${e.stack || e.message}`)
@@ -22,7 +28,10 @@ export class GitHubProvider implements Provider<VersionInfo> {
 
     let result: UpdateInfo | null = null
     try {
-      result = await request<UpdateInfo>({hostname: "github.com", path: `https://github.com${basePath}/download/v${version}/latest.yml`})
+      result = await request<UpdateInfo>({
+        hostname: "github.com",
+        path: `https://github.com${basePath}/download/v${version}/latest.yml`
+      })
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -51,6 +60,6 @@ export class GitHubProvider implements Provider<VersionInfo> {
   }
 }
 
-interface Redirect {
-  readonly location: string
+interface ReleaseInfo {
+  readonly tag_name: string
 }

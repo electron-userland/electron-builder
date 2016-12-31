@@ -24,7 +24,7 @@ export class HttpExecutorHolder {
 }
 
 export interface HttpExecutor {
-  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, method?: string): Promise<T>
+  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, method?: string, headers?: any): Promise<T>
 
   download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
 }
@@ -59,8 +59,8 @@ export function githubRequest<T>(path: string, token: string | null, data: {[nam
   return request<T>({hostname: "api.github.com", path: path}, token, data, method)
 }
 
-export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  return executorHolder.httpExecutor.request(url, token, data, method)
+export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET", headers: any = {}): Promise<T> {
+  return executorHolder.httpExecutor.request(url, token, data, method, headers)
 }
 
 export function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {

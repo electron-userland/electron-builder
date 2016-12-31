@@ -18,15 +18,16 @@ export class NodeHttpExecutor implements HttpExecutor {
 
   private httpsAgent: Promise<Agent> | null = null
 
-  request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
+  request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET", headers: any = {}): Promise<T> {
+
+    headers = Object.assign({"User-Agent": "electron-builder"}, headers)
+
     const options: any = Object.assign({
       method: method,
-      headers: {
-        "User-Agent": "electron-builder"
-      }
+      headers: headers
     }, url)
 
-    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml")) {
+    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml") && !headers.Accept) {
       options.headers.Accept = "application/vnd.github.v3+json"
     }
 
