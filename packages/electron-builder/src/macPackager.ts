@@ -112,7 +112,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
 
       if (name == null) {
-        const message = `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+        const message = process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false" ?
+          `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false` :
+          `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
         if (isMas || this.platformSpecificBuildOptions.forceCodeSigning) {
           throw new Error(message)
         }

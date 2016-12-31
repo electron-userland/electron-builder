@@ -45,8 +45,7 @@ if (defined($ENV{'volumeIcon'})) {
         icvo => pack('A4 n A4 A4 n*', "icv4", $ENV{'iconSize'}, "none", "botm", 0, 0, 0, 0, 0, 1, 0, 100, 1),
         icvt => $ENV{'iconTextSize'}
     ),
-    &makeEntries(Encode::decode("UTF-8", $ENV{'appFileName'}), Iloc_xy => [ $ENV{'appFileX'}, $ENV{'appFileY'} ]),
-    &makeEntries("Applications", Iloc_xy => [ $ENV{'APPLICATIONS_LINK_X'}, $ENV{'APPLICATIONS_LINK_Y'} ]),
+    $ENTRIES
 );
 
 sub syscall_setfinderinfo {

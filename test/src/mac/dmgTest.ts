@@ -11,10 +11,18 @@ test.ifMac("no build directory", app({
   config: {
     // dmg can mount only one volume name, so, to test in parallel, we set different product name
     productName: "NoBuildDirectory",
-  }
+  },
+  effectiveOptionComputed: async it => {
+    const volumePath = it[0]
+    const specification = it[1]
+    await assertThat(path.join(volumePath, ".background", "background.tiff")).isFile()
+    await assertThat(path.join(volumePath, "Applications")).isSymbolicLink()
+    expect(specification.contents).toMatchSnapshot()
+    return false
+  },
 }, {
   expectedContents: ["NoBuildDirectory-1.1.0.dmg"],
-  projectDirCreated: projectDir => remove(path.join(projectDir, "build"))
+  projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
 test.ifMac("custom background - new way", () => {
@@ -41,6 +49,41 @@ test.ifMac("custom background - new way", () => {
       expect(platformPackager.effectiveDistOptions.background).toEqual(customBackground)
       expect(platformPackager.effectiveDistOptions.icon).toEqual("foo.icns")
       expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.icns"))
+    },
+  })
+})
+
+test.ifMac("no Applications link", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.MAC.createTarget(),
+    config: {
+      productName: "NoApplicationsLink",
+      dmg: {
+        "contents": [
+          {
+            "x": 110,
+            "y": 150
+          },
+          {
+            "x": 410,
+            "y": 440,
+            "type": "link",
+            "path": "/Applications/TextEdit.app"
+          }
+        ],
+      },
+    },
+    effectiveOptionComputed: async it => {
+      const volumePath = it[0]
+      const specification = it[1]
+      await BluebirdPromise.all([
+        assertThat(path.join(volumePath, ".background", "background.tiff")).isFile(),
+        assertThat(path.join(volumePath, "Applications")).doesNotExist(),
+        assertThat(path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
+        assertThat(path.join(volumePath, "TextEdit.app")).isDirectory(),
+      ])
+      expect(specification.contents).toMatchSnapshot()
+      return false
     },
   })
 })

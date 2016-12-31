@@ -143,6 +143,10 @@ export interface DmgContent {
   x: number
   y: number
   type?: "link" | "file"
+  /*
+  The name of the file within the DMG. Defaults to basename of `path`.
+   */
+  name?: string
   path?: string
 }
 

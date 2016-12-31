@@ -81,10 +81,12 @@
       <w>icnv</w>
       <w>iconset</w>
       <w>iconutil</w>
+      <w>icvo</w>
       <w>idms</w>
       <w>ifdef</w>
       <w>ifmacrodef</w>
       <w>ifndef</w>
+      <w>iloc</w>
       <w>inno</w>
       <w>insertmacro</w>
       <w>installmode</w>
@@ -143,6 +145,7 @@
       <w>packagejson</w>
       <w>pacman</w>
       <w>passin</w>
+      <w>perllib</w>
       <w>pkcs</w>
       <w>postinstall</w>
       <w>powerrequired</w>
@@ -162,6 +165,7 @@
       <w>rimraf</w>
       <w>scripthost</w>
       <w>semver</w>
+      <w>setfinderinfo</w>
       <w>shorthash</w>
       <w>signcode</w>
       <w>signtool</w>

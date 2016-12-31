@@ -1,0 +1,16 @@
+exports[`test no Applications link 1`] = `
+Array [
+  Object {
+    "x": 110,
+    "y": 150,
+  },
+  Object {
+    "path": "/Applications/TextEdit.app",
+    "type": "link",
+    "x": 410,
+    "y": 440,
+  },
+]
+`;
+
+exports[`test no build directory 1`] = `undefined`;

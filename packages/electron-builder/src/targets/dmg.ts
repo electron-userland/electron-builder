@@ -2,10 +2,10 @@ import { deepAssign } from "../util/deepAssign"
 import * as path from "path"
 import { log, warn } from "../util/log"
 import { PlatformPackager } from "../platformPackager"
-import { MacOptions, DmgOptions, DmgContent } from "../options/macOptions"
+import { MacOptions, DmgOptions } from "../options/macOptions"
 import BluebirdPromise from "bluebird-lst-c"
 import { debug, use, exec, isEmptyOrSpaces, spawn } from "../util/util"
-import { copy, unlink, outputFile, remove } from "fs-extra-p"
+import { copy, unlink, outputFile, remove, readFile } from "fs-extra-p"
 import { executeFinally } from "../util/promise"
 import sanitizeFileName from "sanitize-filename"
 import { Arch } from "../metadata"
@@ -64,7 +64,6 @@ export class DmgTarget extends Target {
     await attachAndExecute(tempDmg, true, async () => {
       const promises = [
         specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`),
-        exec("ln", ["-s", "/Applications", `${volumePath}/Applications`]),
       ]
 
       let contents = specification.contents
@@ -79,27 +78,10 @@ export class DmgTarget extends Target {
         ]
       }
 
-      let location = contents.find(it => it.path == null && it.type !== "link")
-      if (location == null) {
-        location = contents.find(it => {
-          if (it.path != null && it.path.endsWith(".app") && it.type !== "link") {
-            warn(`Do not specify path for application: "${it.path}". Actual path to app will be used instead.`)
-            return true
-          }
-          return false
-        })!
-      }
-
-      const applicationsLocation: DmgContent = contents.find(it => it.type === "link" && (it.path === "/Applications" || it.path === "Applications"))!
-
       const window = specification.window!
       const env = Object.assign({}, process.env, {
         volumePath: volumePath,
         appFileName: `${packager.appInfo.productFilename}.app`,
-        appFileX: location.x,
-        appFileY: location.y,
-        APPLICATIONS_LINK_X: applicationsLocation.x,
-        APPLICATIONS_LINK_Y: applicationsLocation.y,
         iconSize: specification.iconSize || 80,
         iconTextSize: specification.iconTextSize || 12,
 
@@ -118,8 +100,6 @@ export class DmgTarget extends Target {
         promises.push(copy(path.resolve(packager.projectDir, specification.icon), volumeIcon))
         env.volumeIcon = volumeIcon
       }
-
-      await BluebirdPromise.all<any>(promises)
 
       if (specification.backgroundColor != null || specification.background == null) {
         env.backgroundColor = specification.backgroundColor || "#ffffff"
@@ -145,12 +125,41 @@ export class DmgTarget extends Target {
         env.backgroundFilename = backgroundFilename
       }
 
-      await exec("/usr/bin/perl", [path.join(this.helperDir, "dmgProperties.pl")], {
+      let entries = ""
+      for (const c of contents) {
+        if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
+          warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
+        }
+
+        let entryPath = c.path || `${packager.appInfo.productFilename}.app`
+        if (entryPath.startsWith("/")) {
+          entryPath = entryPath.substring(1)
+        }
+
+        const entryName = c.name || path.basename(entryPath)
+        entries += `&makeEntries("${entryName}", Iloc_xy => [ ${c.x}, ${c.y} ]),\n`
+
+        if (c.type === "link") {
+          promises.push(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
+        }
+      }
+      debug(entries)
+
+      const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
+
+      promises.push(outputFile(dmgPropertiesFile, (await readFile(path.join(this.helperDir, "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
+      await BluebirdPromise.all<any>(promises)
+
+      await exec("/usr/bin/perl", [dmgPropertiesFile], {
         cwd: this.helperDir,
         env: env
       })
 
       await exec("sync")
+
+      if (packager.options.effectiveOptionComputed != null && await packager.options.effectiveOptionComputed([volumePath, specification])) {
+        return
+      }
     })
 
     const artifactPath = path.join(appOutDir, `${appInfo.productFilename}-${appInfo.version}.dmg`)
