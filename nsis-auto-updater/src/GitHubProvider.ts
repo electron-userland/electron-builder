@@ -23,7 +23,7 @@ export class GitHubProvider implements Provider<VersionInfo> {
       version = (version.startsWith("v")) ? version.substring(1) : version
     }
     catch (e) {
-      throw new Error(`Cannot parse extract version from location "${version}": ${e.stack || e.message}`)
+      throw new Error(`Cannot parse determine latest version from github "${version}": ${e.stack || e.message}`)
     }
 
     let result: UpdateInfo | null = null
