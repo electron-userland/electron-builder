@@ -15,3 +15,5 @@ If you don't need to build Windows, use image `electronuserland/electron-builder
 You can use `/test.sh` to install npm dependencies and run tests.
 
 **NOTICE**: _Do not use Docker Toolbox on macOS._ Only [Docker for Mac](https://docs.docker.com/engine/installation/mac/#/docker-for-mac) works.
+
+`google-chrome-stable` and `xvfb` are available — you can use electron-builder Docker image for headless testing.
