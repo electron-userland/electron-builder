@@ -71,7 +71,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   embeddedArchive.pipe(embeddedArchiveOut)
 
   embeddedArchive.file(appUpdate, {name: "Update.exe"})
-  embeddedArchive.file(options.loadingGif ? path.resolve(options.loadingGif) : path.join(__dirname, "..", "..", "templates", "install-spinner.gif"), {name: "background.gif"})
+  embeddedArchive.file(options.loadingGif ? path.resolve(options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), {name: "background.gif"})
 
   const version = convertVersion(options.version)
   const packageName = `${options.name}-${version}-full.nupkg`

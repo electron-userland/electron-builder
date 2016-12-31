@@ -43,6 +43,8 @@ export default class AppXTarget extends Target {
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
+    const vendorPath = await getSignVendorPath()
+
     const templatePath = path.join(__dirname, "..", "..", "templates", "appx")
     const safeName = sanitizeFileName(appInfo.name)
     const resourceList = await packager.resourceList
@@ -52,7 +54,7 @@ export default class AppXTarget extends Target {
         if (resourceList.includes(`${size}.png`)) {
           return copy(path.join(packager.buildResourcesDir, `${size}.png`), target)
         }
-        return copy(path.join(templatePath, "assets", `SampleAppx.${size}.png`), target)
+        return copy(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
       }),
       copyDir(appOutDir, path.join(preAppx, "app")),
       this.writeManifest(templatePath, preAppx, safeName, arch)
@@ -63,7 +65,7 @@ export default class AppXTarget extends Target {
     use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
     // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await spawn(path.join(await getSignVendorPath(), "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
+    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
 
     await packager.sign(destination)
     packager.dispatchArtifactCreated(destination, packager.generateName("appx", arch, true))

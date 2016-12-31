@@ -28,6 +28,34 @@
   dependencies:
     conventional-changelog "0.0.17"
 
+"@types/electron@^1.4.30":
+  version "1.4.30"
+  resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.30.tgz#d79b1bc117b6cfa770220d6aeb5a475659cd7961"
+  dependencies:
+    "@types/node" "*"
+
+"@types/ini@^1.3.29":
+  version "1.3.29"
+  resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
+
+"@types/jest@^16.0.3":
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-16.0.3.tgz#28a465586cd37d2638043ebcca91010ed89fc284"
+
+"@types/js-yaml@^3.5.29":
+  version "3.5.29"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
+
+"@types/node@*":
+  version "6.0.55"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.55.tgz#e5cb679a43561f42afd1bd6d58d3992ec8f31720"
+
+"@types/source-map-support@^0.2.28":
+  version "0.2.28"
+  resolved "https://registry.yarnpkg.com/@types/source-map-support/-/source-map-support-0.2.28.tgz#ce6497dfa9c9fbd21a753955b4a51d8993d759dd"
+  dependencies:
+    "@types/node" "*"
+
 JSONStream@^1.0.4:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/JSONStream/-/JSONStream-1.3.0.tgz#680ab9ac6572a8a1a207e0b38721db1c77b215e5"

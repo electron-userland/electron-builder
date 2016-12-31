@@ -10,3 +10,7 @@ git remote add wiki git@github.com:electron-userland/electron-builder.wiki.git
 ```
 
 To sync: `yarn update-wiki`
+
+# Typings
+
+All typings are added into root `package.json` to avoid duplication errors in the IDE compiler (several `node.d.ts` files).

@@ -461,7 +461,7 @@ export class CheckingWinPackager extends WinPackager {
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = require("out/targets/squirrelWindows").default
+    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder/out/targets/squirrelWindows").default
     this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))

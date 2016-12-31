@@ -1,6 +1,6 @@
 {
   "name": "electron-builder-http",
-  "version": "1.0.0",
+  "version": "0.0.0-semantic-release",
   "main": "out/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -10,10 +10,5 @@
   "files": [
     "out"
   ],
-  "dependencies": {
-  },
-  "devDependencies": {
-    "@types/node": "^6.0.55"
-  },
   "typings": "./out/electron-builder-http.d.ts"
 }

@@ -6,11 +6,11 @@ import { getBinFromBintray } from "./util/binDownload"
 import isCi from "is-ci"
 import { WinBuildOptions } from "./options/winOptions"
 
-const TOOLS_VERSION = "1.5.0"
+const TOOLS_VERSION = "1.6.0"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "5febefb4494f0f62f0f5c0cd6408f0930caf5943ccfeea2bbf90d2eeb34c571d")
+  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "5a5e7de5087df96734a9bd96226aa40dbfaa87d44bb95e0fb4eee472e5efa583")
 }
 
 export interface SignOptions {

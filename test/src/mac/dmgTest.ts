@@ -25,7 +25,7 @@ test.ifMac("custom background - new way", () => {
     platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
-      copy(path.join(__dirname, "..", "..", "..", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
+      copy(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
       modifyPackageJson(projectDir, data => {
         data.build.mac = {
           icon: "customIcon"

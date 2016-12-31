@@ -13,7 +13,7 @@ export class HttpExecutorHolder {
 
   get httpExecutor(): HttpExecutor {
     if (this._httpExecutor == null) {
-      this._httpExecutor = new (require((<any>global).__test_app == null ? "./nodeHttpExecutor" : "electron-builder/out/util/nodeHttpExecutor").NodeHttpExecutor)()
+      this._httpExecutor = new (require("electron-builder/out/util/nodeHttpExecutor").NodeHttpExecutor)()
     }
     return this._httpExecutor
   }

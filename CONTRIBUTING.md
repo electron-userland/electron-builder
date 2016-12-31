@@ -84,24 +84,23 @@ Don't edit wiki directly. Instead, edit files in the `/docs`.
 
 # Debug Tests
 
-Only IntelliJ Platform IDEs (IntelliJ IDEA, WebStorm) support debug. [Forked version of AVA](https://github.com/avajs/ava/pull/874) is used. Please see [AVA debug in the WebStorm](https://www.youtube.com/watch?v=C75UwuZXI98&feature=youtu.be).
+Only IntelliJ Platform IDEs ([IntelliJ IDEA](https://confluence.jetbrains.com/display/IDEADEV/IDEA+2017.1+EAP), [WebStorm](https://confluence.jetbrains.com/display/WI/WebStorm+EAP)) support debug. Please prefer to use 2017.1.
 
-Use one of the shared run configurations as a template and:
+If you use IntelliJ IDEA or WebStorm 2017.1 — [ij-rc-producer](https://github.com/develar/ij-rc-producer) is used and you can run tests from an editor.
 
-* Ensure that `Before launch` contains `Compile TypeScript` (note – currently do not add, please do`npm run compile` before run).
+Or you can create Node.js run configuration manually:
+* Ensure that `Before launch` contains `Compile TypeScript`.
 * Set `Node interpreter` to NodeJS 7. NodeJS 7 is required to debug.
-* Set `Node parameters` to `--inspect`.
-* Set `Application Parameters` to `--match="test name" relative-test-file-name` if you want to debug particular test. E.g.
+* Set `Application Parameters` to `-t "test name" relative-test-file-name` if you want to debug particular test. E.g.
   ```
-  --match="extraResources - one-package" test/out/globTest.js
+  -t "extraResources - one-package" globTest.js
   ```
 * Set `Environment Variables`:
-  * `NODE_PATH` to `.`.
   * Optionally, `TEST_APP_TMP_DIR` to some directory (e.g. `/tmp/electron-builder-test`) to inspect output if test uses temporary directory (only if `--match` is used). Specified directory will be used instead of random temporary directory and *cleared* on each run.
   
 ## Run Test using CLI
 ```sh
-TEST_APP_TMP_DIR=/tmp/electron-builder-test NODE_PATH=. ./node_modules/.bin/jest --env jest-environment-node-debug '/TestFileName\.\w+$'
+TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'boring' '/TestFileName\.\w+$'
 ```
 
 where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `boring` is the test name and `test/out/nsisTest.js` is the path to test file.
