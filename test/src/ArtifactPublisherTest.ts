@@ -1,7 +1,7 @@
-import { GitHubPublisher } from "out/publish/gitHubPublisher"
+import { GitHubPublisher } from "electron-builder/out/publish/gitHubPublisher"
 import { join } from "path"
-import { BintrayPublisher } from "out/publish/BintrayPublisher"
-import { createPublisher } from "out/builder"
+import { BintrayPublisher } from "electron-builder/out/publish/BintrayPublisher"
+import { createPublisher } from "electron-builder/out/builder"
 import isCi from "is-ci"
 import { HttpError } from "electron-builder-http/out/httpExecutor"
 

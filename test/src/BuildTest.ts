@@ -12,13 +12,13 @@ import { move, outputJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { BuildOptions, Platform, PackagerOptions, DIR_TARGET, Arch } from "out"
-import { normalizeOptions, build } from "out/builder"
-import { createYargs } from "out/cli/cliOptions"
+import { BuildOptions, Platform, PackagerOptions, DIR_TARGET, Arch } from "electron-builder"
+import { normalizeOptions, build } from "electron-builder/out/builder"
+import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
 import { ELECTRON_VERSION } from "./helpers/config"
 import isCi from "is-ci"
-import { checkWineVersion } from "out/packager"
+import { checkWineVersion } from "electron-builder/out/packager"
 
 test("cli", async () => {
   const yargs = createYargs()

@@ -1,4 +1,4 @@
-import { Platform, Arch } from "out"
+import { Platform, Arch } from "electron-builder"
 import { assertPack, app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 

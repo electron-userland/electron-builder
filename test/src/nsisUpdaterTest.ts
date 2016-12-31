@@ -1,7 +1,7 @@
 import { assertThat } from "./helpers/fileAssert"
 import { NsisUpdater } from "electron-auto-updater/out/NsisUpdater"
 import * as path from "path"
-import { TmpDir } from "out/util/tmp"
+import { TmpDir } from "electron-builder/out/util/tmp"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"

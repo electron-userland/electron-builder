@@ -4,12 +4,12 @@ import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./help
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, DIR_TARGET } from "out"
+import { Platform, DIR_TARGET } from "electron-builder"
 import pathSorter from "path-sort"
 import Mode from "stat-mode"
 import { Permissions } from "stat-mode"
-import { TmpDir } from "out/util/tmp"
-import { copyDir } from "out/util/fs"
+import { TmpDir } from "electron-builder/out/util/tmp"
+import { copyDir } from "electron-builder/out/util/fs"
 
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),

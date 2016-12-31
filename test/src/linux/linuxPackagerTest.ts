@@ -1,7 +1,7 @@
 import { modifyPackageJson, app, appThrows } from "../helpers/packTester"
 import { remove, readFile } from "fs-extra-p"
 import * as path from "path"
-import { Platform } from "out"
+import { Platform } from "electron-builder"
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 

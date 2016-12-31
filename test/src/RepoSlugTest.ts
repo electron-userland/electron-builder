@@ -1,4 +1,4 @@
-import { getRepositoryInfo } from "out/repositoryInfo"
+import { getRepositoryInfo } from "electron-builder/out/repositoryInfo"
 
 test("repo slug from TRAVIS_REPO_SLUG", async () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG

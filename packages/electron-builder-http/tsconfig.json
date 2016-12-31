@@ -19,6 +19,7 @@
     "electron-builder-http": "out/electron-builder-http.d.ts"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "node_modules/@types/*/*.d.ts"
   ]
 }

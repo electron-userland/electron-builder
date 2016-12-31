@@ -1,4 +1,4 @@
-import { Platform } from "out"
+import { Platform } from "electron-builder"
 import { assertPack, platform, modifyPackageJson, app, appThrows, CheckingWinPackager } from "../helpers/packTester"
 import { writeFile, rename, unlink } from "fs-extra-p"
 import * as path from "path"

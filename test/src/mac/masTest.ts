@@ -2,7 +2,7 @@ import { assertPack, signed, CheckingMacPackager, createMacTargetTest } from "..
 import { writeFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { Platform } from "out"
+import { Platform } from "electron-builder"
 
 if (process.platform !== "darwin") {
   fit("Skip mas tests because platform is not macOS", () => {

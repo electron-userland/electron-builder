@@ -1,4 +1,4 @@
-import { Platform, Arch } from "out"
+import { Platform, Arch } from "electron-builder"
 import { app } from "../helpers/packTester"
 
 test.ifNotWindows("deb", app({targets: Platform.LINUX.createTarget("deb")}))

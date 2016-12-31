@@ -1,4 +1,4 @@
-import { Platform } from "out"
+import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
 test.ifLinuxOrDevMac("platform", app({

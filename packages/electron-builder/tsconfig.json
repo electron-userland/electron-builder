@@ -16,10 +16,9 @@
     "skipLibCheck": true
   },
   "declaration": {
-    "electron-builder": "out/electron-builder.d.ts",
-    "": "test/typings/electron-builder.d.ts"
+    "electron-builder": "out/electron-builder.d.ts"
   },
-  "docs": "docs/Options.md",
+  "docs": "../../docs/Options.md",
   "paths": {
     "fs-extra-p": [
       "node_modules/fs-extra-p/index.d.ts"
@@ -30,15 +29,12 @@
     "node_modules/bluebird-lst-c/index.d.ts",
     "node_modules/7zip-bin/index.d.ts",
     "node_modules/electron-macos-sign/index.d.ts",
-    "packages/electron-builder-http/out/electron-builder-http.d.ts"
+    "../electron-builder-http/out/electron-builder-http.d.ts"
   ],
   "include": [
     "src/**/*.ts",
-    "typings/*.d.ts",
-    "node_modules/@types/ini/*.d.ts",
-    "node_modules/@types/js-yaml/*.d.ts",
-    "node_modules/@types/node/*.d.ts",
-    "node_modules/@types/source-map-support/*.d.ts"
+    "../../typings/*.d.ts",
+    "node_modules/@types/*/*.d.ts"
   ],
   "exclude": [
   ]

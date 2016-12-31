@@ -1,5 +1,5 @@
 import { modifyPackageJson, appTwoThrows, app, appTwo } from "./helpers/packTester"
-import { Platform, DIR_TARGET } from "out"
+import { Platform, DIR_TARGET } from "electron-builder"
 import { assertThat } from "./helpers/fileAssert"
 import * as path from "path"
 import { extractFile } from "asar-electron-builder"

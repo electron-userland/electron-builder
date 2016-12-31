@@ -3,8 +3,8 @@ import { remove, copy } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "../helpers/fileAssert"
-import { Platform } from "out"
-import { attachAndExecute } from "out/targets/dmg"
+import { Platform } from "electron-builder"
+import { attachAndExecute } from "electron-builder/out/targets/dmg"
 
 test.ifMac("no build directory", app({
   targets: Platform.MAC.createTarget("dmg"),

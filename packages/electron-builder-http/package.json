@@ -12,5 +12,8 @@
   ],
   "dependencies": {
   },
+  "devDependencies": {
+    "@types/node": "^6.0.55"
+  },
   "typings": "./out/electron-builder-http.d.ts"
 }

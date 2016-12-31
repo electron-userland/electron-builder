@@ -20,5 +20,9 @@
     "source-map-support": "^0.4.8",
     "electron-builder-http": "1.0.0"
   },
+  "devDependencies": {
+    "@types/electron": "^1.4.30",
+    "@types/js-yaml": "^3.5.29"
+  },
   "typings": "./out/electron-auto-updater.d.ts"
 }

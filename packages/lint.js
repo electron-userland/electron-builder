@@ -1,6 +1,7 @@
 "use strict"
 
 const Linter = require("tslint").Linter
+const fs = require("fs")
 const path = require("path")
 
 const configuration = {
@@ -68,7 +69,9 @@ const options = {
 }
 
 let hasErrors = false
-for (const projectDir of [path.join(__dirname, ".."), path.join(__dirname, "..", "packages", "electron-auto-updater"), __dirname]) {
+const packages = fs.readdirSync(__dirname).filter(it => !it.includes(".")).sort().map(it => path.join(__dirname, it))
+for (const projectDir of packages) {
+  console.log(`Linting ${path.basename(projectDir)}`)
   const program = Linter.createProgram("tsconfig.json", projectDir)
   for (const file of Linter.getFileNames(program)) {
     const fileContents = program.getSourceFile(file).getFullText()

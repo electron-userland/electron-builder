@@ -1,4 +1,4 @@
-import { Platform, Arch } from "out"
+import { Platform, Arch } from "electron-builder"
 import { app, modifyPackageJson, appThrows, assertPack, CheckingWinPackager, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"

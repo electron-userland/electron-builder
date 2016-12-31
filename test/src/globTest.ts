@@ -3,7 +3,7 @@ import { assertPack, modifyPackageJson, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, DIR_TARGET } from "out"
+import { Platform, DIR_TARGET } from "electron-builder"
 import { statFile } from "asar-electron-builder"
 
 test.ifDevOrLinuxCi("unpackDir one", app({
