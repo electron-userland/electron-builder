@@ -107,6 +107,7 @@ export class DmgTarget extends Target {
         windowY: window.y,
 
         VERSIONER_PERL_PREFER_32_BIT: "true",
+        PERLLIB: path.join(__dirname, "..", "..", "vendor") + (process.env.PERLLIB == null ? "" : (`:${process.env.PERLLIB}`))
       })
 
       if (specification.icon == null) {

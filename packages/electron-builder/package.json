@@ -6,6 +6,7 @@
   "files": [
     "out",
     "templates",
+    "vendor",
     "certs/root_certs.keychain"
   ],
   "bin": {

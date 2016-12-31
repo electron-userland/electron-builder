@@ -8,11 +8,10 @@ This includes:
 
 - description of what you're trying to do
 - package.json
-- config.json
 - log of the terminal output
 - node version
 - npm version
-- on which system do you want to create installers (macOS, Windows or Linux)
+- on which system do you want to create installers (macOS, Linux or Windows).
 
 # Pull Requests
 To check that your contributions match the project coding style make sure `npm test` passes.
