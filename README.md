@@ -10,16 +10,17 @@ A complete solution to package and build a ready for distribution Electron app f
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
   * [macOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
-  * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+  * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, AppX (Windows Store), Squirrel.Windows.
 * [Two package.json Structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases and Bintray.
+* Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 
 _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
-# Configuration
+## Configuration
 
 See [options](https://github.com/electron-userland/electron-builder/wiki/Options) for a full reference but consider following the simple guide outlined below first.
 
@@ -66,7 +67,7 @@ For an app that will be shipped to production, you should sign your application.
 
 Please note that everything is packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-asar).
 
-# Auto Update
+## Auto Update
 `electron-builder` produces all required artifacts, for example, for macOS:
 
 * `.dmg`: macOS installer, required for the initial installation process on macOS.
@@ -74,20 +75,25 @@ Please note that everything is packaged into an asar archive [by default](https:
 
 See the [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki).
 
-# CLI Usage
+## CLI Usage
 Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
 ```
 Building:
-  --mac, -m, -o, --osx, --macos  Build for MacOS, accepts target list (see
-                                 https://goo.gl/HAnnq8).                 [array]
-  --linux, -l                    Build for Linux, accepts target list (see
-                                 https://goo.gl/O80IL2)                  [array]
-  --win, -w, --windows           Build for Windows, accepts target list (see
-                                 https://goo.gl/dL4i8i)                  [array]
-  --x64                          Build for x64                         [boolean]
-  --ia32                         Build for ia32                        [boolean]
-  --dir                          Build unpacked dir. Useful to test.   [boolean]
-  --extraMetadata, --em          Inject properties to application package.json
+  --mac, -m, -o, --macos  Build for macOS, accepts target list (see
+                          https://goo.gl/HAnnq8).                        [array]
+  --linux, -l             Build for Linux, accepts target list (see
+                          https://goo.gl/O80IL2)                         [array]
+  --win, -w, --windows    Build for Windows, accepts target list (see
+                          https://goo.gl/dL4i8i)                         [array]
+  --x64                   Build for x64                                [boolean]
+  --ia32                  Build for ia32                               [boolean]
+  --armv7l                Build for armv7l                             [boolean]
+  --dir                   Build unpacked dir. Useful to test.          [boolean]
+  --extraMetadata, --em   Inject properties to package.json (asar only)
+  --prepackaged, --pd     The path to prepackaged app (to pack in a
+                          distributable format)
+  --project               The path to project directory. Defaults to current 
+                          working directory.
 
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
@@ -98,7 +104,7 @@ Publishing:
 
 Deprecated:
   --platform  The target platform (preferred to use --mac, --win or --linux)
-               [choices: "mac", "osx", "win", "linux", "darwin", "win32", "all"]
+                      [choices: "mac", "win", "linux", "darwin", "win32", "all"]
   --arch      The target arch (preferred to use --x64 or --ia32)
                                                  [choices: "ia32", "x64", "all"]
 
@@ -107,13 +113,13 @@ Other:
   --version  Show version number                                       [boolean]
 
 Examples:
-  build -mwl                build for MacOS, Windows and Linux
+  build -mwl                build for macOS, Windows and Linux
   build --linux deb tar.xz  build deb and tar.xz for Linux
   build --win --ia32        build for Windows ia32
-  build --em.foo=bar        set application package.json property `foo` to `bar`
+  build --em.foo=bar        set package.json property `foo` to `bar`
 ```
 
-# Programmatic Usage
+## Programmatic Usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
 
 ```js
@@ -137,11 +143,22 @@ builder.build({
   })
 ```
 
-# Donations
+## Pack Only in a Distributable Format
+
+You can use electron-builder only to pack your electron app in a AppImage, Snaps, Debian package, NSIS, macOS installer component package (`pkg`) 
+and other distributable formats.
+
+```
+./node_modules/.bin/build --prepackaged <packed dir>
+```
+
+`--project` (the path to project directory) option also can be useful.
+
+## Donations
 
 [Donate with PayPal.](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
 
-# Further Reading
+## Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
 
 

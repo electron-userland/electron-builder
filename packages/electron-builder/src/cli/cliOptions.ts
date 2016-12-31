@@ -11,7 +11,7 @@ export function createYargs(): any {
     .example("build -mwl", "build for macOS, Windows and Linux")
     .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("build --win --ia32", "build for Windows ia32")
-    .example("build --em.foo=bar", "set application package.json property `foo` to `bar`")
+    .example("build --em.foo=bar", "set package.json property `foo` to `bar`")
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
@@ -86,11 +86,11 @@ export function createYargs(): any {
     .option("prepackaged", {
       alias: ["pd"],
       group: buildGroup,
-      describe: "The path to prepackaged app (to pack into distributable format). Also requires `project`",
+      describe: "The path to prepackaged app (to pack in a distributable format)",
     })
     .option("project", {
       group: buildGroup,
-      describe: "The path to project directory (required only for `prepackaged`)",
+      describe: "The path to project directory. Defaults to current working directory.",
     })
     .strict()
     .group(["help", "version"], "Other:")
