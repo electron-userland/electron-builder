@@ -3,8 +3,7 @@ import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress } from "electron-builder-http/out/httpExecutor"
-import { Url } from "url"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress, maxRedirects } from "electron-builder-http/out/httpExecutor"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
@@ -14,31 +13,8 @@ function safeGetHeader(response: Electron.IncomingMessage, headerKey: string) {
   return response.headers[headerKey] ? response.headers[headerKey].pop() : null
 }
 
-export class ElectronHttpExecutor implements HttpExecutor {
+export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
   private readonly debug: Debugger = _debug("electron-builder")
-
-  private readonly maxRedirects = 10
-
-  request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-    const options: any = Object.assign({
-      method: method,
-      headers: {
-        "User-Agent": "electron-builder"
-      }
-    }, url)
-
-    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml")) {
-      options.headers.Accept = "application/vnd.github.v3+json"
-    }
-
-    const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
-    if (encodedData != null) {
-      options.method = "post"
-      options.headers["Content-Type"] = "application/json"
-      options.headers["Content-Length"] = encodedData.length
-    }
-    return this.doApiRequest<T>(options, token, it => it.end(encodedData))
-  }
 
   download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
       return new BluebirdPromise( (resolve, reject) => {
@@ -86,11 +62,11 @@ export class ElectronHttpExecutor implements HttpExecutor {
 
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
-        if (redirectCount < this.maxRedirects) {
+        if (redirectCount < maxRedirects) {
           this.doDownload(redirectUrl, destination, redirectCount++, options, callback)
         }
         else {
-          callback(new Error("Too many redirects (> " + this.maxRedirects + ")"))
+          callback(new Error(`Too many redirects (> ${maxRedirects})`))
         }
         return
       }
@@ -162,14 +138,10 @@ Please double check that your authentication token is correct. Due to security r
               return
             }
 
-            if (options.path!.endsWith("/latest")) {
-              resolve(<any>{location: redirectUrl})
-            }
-            else {
-              this.doApiRequest(Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor)
-                .then(<any>resolve)
-                .catch(reject)
-            }
+            this.doApiRequest(Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor)
+              .then(<any>resolve)
+              .catch(reject)
+
             return
           }
 
@@ -182,7 +154,8 @@ Please double check that your authentication token is correct. Due to security r
           response.on("end", () => {
             try {
               const contentType = response.headers["content-type"]
-              const isJson = contentType != null && contentType.includes("json")
+              const isJson = contentType != null && contentType.find((i) => i.indexOf("json") !== -1)
+              const isYaml = options.path!.includes(".yml")
               if (response.statusCode >= 400) {
                 if (isJson) {
                   reject(new HttpError(response, JSON.parse(data)))
@@ -192,7 +165,7 @@ Please double check that your authentication token is correct. Due to security r
                 }
               }
               else {
-                resolve(data.length === 0 ? null : (isJson || !options.path!.includes(".yml")) ? JSON.parse(data) : safeLoad(data))
+                resolve(data.length === 0 ? null : (isJson ? JSON.parse(data) : isYaml ? safeLoad(data) : data))
               }
             }
             catch (e) {

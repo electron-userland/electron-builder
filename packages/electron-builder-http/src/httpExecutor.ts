@@ -9,24 +9,47 @@ export interface DownloadOptions {
 }
 
 export class HttpExecutorHolder {
-  private _httpExecutor: HttpExecutor
+  private _httpExecutor: HttpExecutor<any, any>
 
-  get httpExecutor(): HttpExecutor {
+  get httpExecutor(): HttpExecutor<any, any> {
     if (this._httpExecutor == null) {
       this._httpExecutor = new (require("electron-builder/out/util/nodeHttpExecutor").NodeHttpExecutor)()
     }
     return this._httpExecutor
   }
 
-  set httpExecutor(value: HttpExecutor) {
+  set httpExecutor(value: HttpExecutor<any, any>) {
     this._httpExecutor = value
   }
 }
 
-export interface HttpExecutor {
-  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, method?: string): Promise<T>
+export const maxRedirects = 10
 
-  download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
+export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
+  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, method?: string, headers?: any): Promise<T> {
+    const defaultHeaders = {"User-Agent": "electron-builder"}
+    const options = Object.assign({
+      method: method,
+      headers: headers == null ? defaultHeaders : Object.assign(defaultHeaders, headers)
+    }, url)
+
+
+    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml") && !options.headers.Accept) {
+      options.headers["Accept"] = "application/vnd.github.v3+json"
+    }
+
+    const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
+    if (encodedData != null) {
+      options.method = "post"
+      options.headers["Content-Type"] = "application/json"
+      options.headers["Content-Length"] = encodedData.length
+    }
+    return this.doApiRequest<T>(<any>options, token || null, it => (<any>it).end(encodedData), 0)
+  }
+
+  protected abstract doApiRequest<T>(options: REQUEST_OPTS, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
+
+  abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
 }
 
 export class HttpError extends Error {
@@ -59,8 +82,8 @@ export function githubRequest<T>(path: string, token: string | null, data: {[nam
   return request<T>({hostname: "api.github.com", path: path}, token, data, method)
 }
 
-export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  return executorHolder.httpExecutor.request(url, token, data, method)
+export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET", headers?: any): Promise<T> {
+  return executorHolder.httpExecutor.request(url, token, data, method, headers)
 }
 
 export function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
