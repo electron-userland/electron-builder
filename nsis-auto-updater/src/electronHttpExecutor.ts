@@ -19,16 +19,17 @@ export class ElectronHttpExecutor implements HttpExecutor {
 
   private readonly maxRedirects = 10
 
-  request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
+  request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET", headers: any = {}): Promise<T> {
+
+    headers = Object.assign({"User-Agent": "electron-builder"}, headers)
+
     const options: any = Object.assign({
       method: method,
-      headers: {
-        "User-Agent": "electron-builder"
-      }
+      headers: headers
     }, url)
 
-    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml")) {
-      options.headers.Accept = "application/vnd.github.v3+json"
+    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml") && !headers.Accept) {
+      options.headers["Accept"] = "application/vnd.github.v3+json"
     }
 
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
@@ -162,14 +163,10 @@ Please double check that your authentication token is correct. Due to security r
               return
             }
 
-            if (options.path!.endsWith("/latest")) {
-              resolve(<any>{location: redirectUrl})
-            }
-            else {
-              this.doApiRequest(Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor)
-                .then(<any>resolve)
-                .catch(reject)
-            }
+            this.doApiRequest(Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor)
+              .then(<any>resolve)
+              .catch(reject)
+
             return
           }
 
@@ -182,7 +179,8 @@ Please double check that your authentication token is correct. Due to security r
           response.on("end", () => {
             try {
               const contentType = response.headers["content-type"]
-              const isJson = contentType != null && contentType.includes("json")
+              const isJson = contentType != null && contentType.find((i) => i.indexOf("json") !== -1)
+              const isYaml = options.path!.includes(".yml")
               if (response.statusCode >= 400) {
                 if (isJson) {
                   reject(new HttpError(response, JSON.parse(data)))
@@ -192,7 +190,7 @@ Please double check that your authentication token is correct. Due to security r
                 }
               }
               else {
-                resolve(data.length === 0 ? null : (isJson || !options.path!.includes(".yml")) ? JSON.parse(data) : safeLoad(data))
+                resolve(data.length === 0 ? null : (isJson ? JSON.parse(data) : isYaml ? safeLoad(data) : data))
               }
             }
             catch (e) {
