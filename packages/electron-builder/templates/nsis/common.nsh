@@ -96,3 +96,12 @@ Function GetFileParent
     Exch $R0
 FunctionEnd
 !endif
+
+!macro setLinkVars
+  StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
+  !ifdef MENU_FILENAME
+    StrCpy $startMenuLink "$SMPROGRAMS\${MENU_FILENAME}\${PRODUCT_FILENAME}.lnk"
+  !else
+    StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+  !endif
+!macroend

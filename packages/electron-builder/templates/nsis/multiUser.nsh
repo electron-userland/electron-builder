@@ -49,13 +49,26 @@ Var installMode
     StrCpy $installMode all
     SetShellVarContext all
 
-    StrCpy $INSTDIR "$PROGRAMFILES\${APP_FILENAME}"
-
+    StrCpy $0 "$PROGRAMFILES"
     !ifdef APP_64
       ${if} ${RunningX64}
-        StrCpy $INSTDIR "$PROGRAMFILES64\${APP_FILENAME}"
+        StrCpy $0 "$PROGRAMFILES64"
       ${endif}
     !endif
+
+    !ifdef MENU_FILENAME
+      StrCpy $0 "$0\${MENU_FILENAME}"
+    !endif
+
+    StrCpy $INSTDIR "$0\${APP_FILENAME}"
+
+    ${if} $installMode == "all"
+    		StrCpy $0 "/allusers"
+    		StrCpy $1 ""
+    	${else}
+    		StrCpy $0 "/currentuser"
+    		StrCpy $1 " (only current user)"
+    	${endif}
 
     # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
     ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation

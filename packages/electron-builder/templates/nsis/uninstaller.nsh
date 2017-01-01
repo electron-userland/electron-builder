@@ -25,8 +25,7 @@ Section "un.install"
     !insertmacro CHECK_APP_RUNNING "uninstall"
   !endif
 
-  StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-  StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
+  !insertmacro setLinkVars
 
   WinShell::UninstAppUserModelId "${APP_ID}"
   WinShell::UninstShortcut "$startMenuLink"

@@ -213,6 +213,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | license | <a name="NsisOptions-license"></a>The path to EULA license file. Defaults to `build/license.rtf` or `build/license.txt`.
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
 | warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a><p>Defaults to <code>false</code>.</p> <p>If <code>warningsAsErrors</code> is <code>true</code> (default): NSIS will treat warnings as errors.</p> <p>If <code>warningsAsErrors</code> is <code>false</code>: NSIS will allow warnings.</p>
+| menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 
 <a name="Protocol"></a>
 ### `.build.protocols`

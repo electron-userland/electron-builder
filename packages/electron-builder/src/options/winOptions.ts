@@ -136,6 +136,11 @@ export interface NsisOptions {
    If `warningsAsErrors` is `false`: NSIS will allow warnings.
    */
   readonly warningsAsErrors?: boolean
+
+  /*
+  Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
+   */
+  readonly menuCategory?: boolean | string
 }
 
 /*

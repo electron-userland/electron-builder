@@ -1,12 +1,11 @@
 import { Platform, Arch } from "electron-builder"
-import { assertPack, app, copyTestAsset } from "../helpers/packTester"
+import { assertPack, app, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 import { outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "../helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
 import { walk } from "electron-builder/out/util/fs"
-import { nsisPerMachineInstall } from "../helpers/expectedContents"
 import { WineManager, diff } from "../helpers/wine"
 import { safeLoad } from "js-yaml"
 
@@ -75,7 +74,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   },
 }))
 
-async function doTest(outDir: string, perUser: boolean) {
+async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null) {
   if (process.env.DO_WINE !== "true") {
     return BluebirdPromise.resolve()
   }
@@ -95,25 +94,37 @@ async function doTest(outDir: string, perUser: boolean) {
 
   let fsBefore = await listFiles()
 
-  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S")
+  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
 
-  const instDir = perUser ? path.join(wine.userDir, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
-  const appAsar = path.join(instDir, "TestApp", "1.1.0", "resources", "app.asar")
+  let instDir = perUser ? path.join(wine.userDir, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
+  if (menuCategory != null) {
+    instDir = path.join(instDir, menuCategory)
+  }
+
+  const appAsar = path.join(instDir, name, "resources", "app.asar")
   expect(JSON.parse(extractFile(appAsar, "package.json").toString())).toMatchObject({
-    name: "TestApp"
+    name: name,
   })
+
+  if (!perUser) {
+    let startMenuDir = path.join(driveC, "users", "Public", "Start Menu", "Programs")
+    if (menuCategory != null) {
+      startMenuDir = path.join(startMenuDir, menuCategory)
+    }
+    await assertThat(path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+  }
 
   let fsAfter = await listFiles()
 
   let fsChanges = diff(fsBefore, fsAfter, driveC)
-  expect(fsChanges.added).toEqual(nsisPerMachineInstall)
+  expect(fsChanges.added).toMatchSnapshot()
   expect(fsChanges.deleted).toEqual([])
 
   // run installer again to test uninstall
-  const appDataFile = path.join(wine.userDir, "Application Data", "TestApp", "doNotDeleteMe")
+  const appDataFile = path.join(wine.userDir, "Application Data", name, "doNotDeleteMe")
   await outputFile(appDataFile, "app data must be not removed")
   fsBefore = await listFiles()
-  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S")
+  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
   fsAfter = await listFiles()
 
   fsChanges = diff(fsBefore, fsAfter, driveC)
@@ -122,7 +133,7 @@ async function doTest(outDir: string, perUser: boolean) {
 
   await assertThat(appDataFile).isFile()
 
-  await wine.exec(path.join(outDir, "TestApp Setup 1.1.0.exe"), "/S", "--delete-app-data")
+  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S", "--delete-app-data")
   await assertThat(appDataFile).doesNotExist()
 }
 
@@ -156,4 +167,25 @@ test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets:
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   projectDirCreated: projectDir => copyTestAsset("installer.nsi", path.join(projectDir, "build", "installer.nsi")),
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
+}))
+
+test("menuCategory", app({
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  appMetadata: {
+    name: "test-menu-category",
+    productName: "Test Menu Category"
+  },
+  config: {
+    nsis: {
+      perMachine: true,
+      menuCategory: true,
+    },
+  }
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.name = "test-menu-category"
+  }),
+  packed: async(context) => {
+    await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+  }
 }))

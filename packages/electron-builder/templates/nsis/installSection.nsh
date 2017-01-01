@@ -124,11 +124,15 @@ SetCompress "${COMPRESS}"
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
-StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
+!insertmacro registryAddInstallInfo
+
 StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
-!insertmacro registryAddInstallInfo
+!insertmacro setLinkVars
+
+!ifdef MENU_FILENAME
+  CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
+!endif
 
 # create shortcuts in the start menu and on the desktop
 # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it

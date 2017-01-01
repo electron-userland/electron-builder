@@ -1,6 +1,6 @@
 import { WinPackager } from "../winPackager"
 import { Arch } from "../metadata"
-import { exec, debug, doSpawn, handleProcess, use, asArray } from "../util/util"
+import { exec, debug, doSpawn, handleProcess, use, asArray, isEmptyOrSpaces } from "../util/util"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "../util/binDownload"
@@ -14,6 +14,7 @@ import { PublishConfiguration, GenericServerOptions, UpdateInfo } from "electron
 import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 import { Target } from "./targetFactory"
+import sanitizeFileName from "sanitize-filename"
 
 const NSIS_VERSION = "3.0.4"
 //noinspection SpellCheckingInspection
@@ -85,10 +86,11 @@ export default class NsisTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
-    const iconPath = await packager.getResource(this.options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
+    const options = this.options
+    const iconPath = await packager.getResource(options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
 
     const installerPath = path.join(this.outDir, installerFilename)
-    const guid = this.options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
+    const guid = options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
@@ -113,40 +115,40 @@ export default class NsisTarget extends Target {
       defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
     }
 
-    const oneClick = this.options.oneClick !== false
+    const oneClick = options.oneClick !== false
 
-    const installerHeader = oneClick ? null : await packager.getResource(this.options.installerHeader, "installerHeader.bmp")
+    const installerHeader = oneClick ? null : await packager.getResource(options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {
       defines.MUI_HEADERIMAGE = null
       defines.MUI_HEADERIMAGE_RIGHT = null
       defines.MUI_HEADERIMAGE_BITMAP = installerHeader
     }
 
-    const installerHeaderIcon = oneClick ? await packager.getResource(this.options.installerHeaderIcon, "installerHeaderIcon.ico") : null
+    const installerHeaderIcon = oneClick ? await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico") : null
     if (installerHeaderIcon != null) {
       defines.HEADER_ICO = installerHeaderIcon
     }
 
-    if (this.options.perMachine === true) {
+    if (options.perMachine === true) {
       defines.INSTALL_MODE_PER_ALL_USERS = null
     }
 
-    if (!oneClick || this.options.perMachine === true) {
+    if (!oneClick || options.perMachine === true) {
       defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
     }
 
     if (oneClick) {
-      if (this.options.runAfterFinish !== false) {
+      if (options.runAfterFinish !== false) {
         defines.RUN_AFTER_FINISH = null
       }
     }
-    else if (this.options.allowElevation !== false) {
+    else if (options.allowElevation !== false) {
       defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
     }
 
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
-    const localeId = this.options.language || "1033"
+    const localeId = options.language || "1033"
     const versionKey = [
       `/LANG=${localeId} ProductName "${appInfo.productName}"`,
       `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
@@ -180,6 +182,13 @@ export default class NsisTarget extends Target {
       defines.ONE_CLICK = null
     }
 
+    if (options.menuCategory != null) {
+      const menu = sanitizeFileName(options.menuCategory === true ? appInfo.companyName : <string>options.menuCategory)
+      if (!isEmptyOrSpaces(menu)) {
+        defines.MENU_FILENAME = menu
+      }
+    }
+
     debug(defines)
     debug(commands)
 
@@ -187,12 +196,12 @@ export default class NsisTarget extends Target {
       return
     }
 
-    const licenseFile = await packager.getResource(this.options.license, "license.rtf", "license.txt")
+    const licenseFile = await packager.getResource(options.license, "license.rtf", "license.txt")
     if (licenseFile != null) {
       defines.LICENSE_FILE = licenseFile
     }
 
-    const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
+    const customScriptPath = await packager.getResource(options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath == null) {
