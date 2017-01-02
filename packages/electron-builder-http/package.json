@@ -1,7 +1,7 @@
 {
   "name": "electron-builder-http",
   "version": "0.0.0-semantic-release",
-  "main": "out/main.js",
+  "main": "out/httpExecutor.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",

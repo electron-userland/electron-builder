@@ -7,7 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
-import { HttpError, githubRequest } from "electron-builder-http/out/httpExecutor"
+import { HttpError, githubRequest } from "electron-builder-http"
 import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
 
 export interface Release {

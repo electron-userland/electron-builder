@@ -8,6 +8,10 @@ export interface DownloadOptions {
   onProgress?(progress: any): void
 }
 
+export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+  return executorHolder.httpExecutor.download(url, destination, options)
+}
+
 export class HttpExecutorHolder {
   private _httpExecutor: HttpExecutor<any, any>
 
@@ -55,6 +59,8 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
 export class HttpError extends Error {
   constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: string[]; } | undefined}, public description: any | null = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
+
+    this.name = "HttpError"
   }
 }
 

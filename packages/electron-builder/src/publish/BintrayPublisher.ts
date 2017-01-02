@@ -6,7 +6,7 @@ import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
 import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
-import { HttpError } from "electron-builder-http/out/httpExecutor"
+import { HttpError } from "electron-builder-http"
 
 export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>

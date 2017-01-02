@@ -35,7 +35,6 @@ Object {
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
   "NSHighResolutionCapable": true,
-  "NSHumanReadableCopyright": "Copyright © 2016 Foo Bar",
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",
   "NSSupportsAutomaticGraphicsSwitching": true,

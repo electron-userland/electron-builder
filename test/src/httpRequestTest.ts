@@ -1,4 +1,4 @@
-import { download } from "electron-builder-http/out/httpRequest"
+import { download } from "electron-builder-http"
 import { tmpdir } from "os"
 import { randomBytes } from "crypto"
 import { assertThat } from "./helpers/fileAssert"

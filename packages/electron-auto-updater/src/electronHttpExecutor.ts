@@ -3,7 +3,7 @@ import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress, maxRedirects } from "electron-builder-http/out/httpExecutor"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress, maxRedirects } from "electron-builder-http"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger

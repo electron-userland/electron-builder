@@ -1,6 +1,6 @@
 import { spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
 import { rename, unlink, emptyDir } from "fs-extra-p"
-import { download } from "electron-builder-http/out/httpRequest"
+import { download } from "electron-builder-http"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"

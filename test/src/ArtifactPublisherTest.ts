@@ -3,7 +3,7 @@ import { join } from "path"
 import { BintrayPublisher } from "electron-builder/out/publish/BintrayPublisher"
 import { createPublisher } from "electron-builder/out/builder"
 import isCi from "is-ci"
-import { HttpError } from "electron-builder-http/out/httpExecutor"
+import { HttpError } from "electron-builder-http"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -35,8 +35,9 @@ const iconPath = join(__dirname, "..", "fixtures", "test-app", "build", "icon.ic
 //})
 
 function isApiRateError(e: Error): boolean {
-  if (e instanceof HttpError) {
-    return e.description != null && e instanceof HttpError && e.description.message != null && e.description.message.includes("API rate limit exceeded")
+  if (e.name === "HttpError") {
+    const description = (<HttpError>e).description
+    return description.message != null && description.message.includes("API rate limit exceeded")
   }
   else {
     return false

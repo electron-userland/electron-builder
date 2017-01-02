@@ -1,7 +1,14 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
+import isCi from "is-ci"
 
-test.ifLinuxOrDevMac("platform", app({
+if (!((isCi && process.platform === "linux") || process.env.SNAP_TEST === "true")) {
+  fit("Skip snapTest suite — not Linux CI or env SNAP_TEST not set to true", () => {
+    console.warn("[SKIP] Skip snapTest suite — not Linux CI or env SNAP_TEST not set to true")
+  })
+}
+
+test("platform", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep P",
@@ -14,7 +21,7 @@ test.ifLinuxOrDevMac("platform", app({
   },
 }))
 
-test.ifLinuxOrDevMac("snap", app({
+test("snap", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep",

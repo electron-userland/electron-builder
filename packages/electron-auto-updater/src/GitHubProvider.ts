@@ -2,7 +2,7 @@ import { Provider, FileInfo } from "./api"
 import { VersionInfo, GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
-import { HttpError, request } from "electron-builder-http/out/httpExecutor"
+import { HttpError, request } from "electron-builder-http"
 
 export class GitHubProvider implements Provider<VersionInfo> {
   constructor(private readonly options: GithubOptions) {
