@@ -1,19 +1,7 @@
 {
+  "extends": "../tsconfig-base.json",
   "compilerOptions": {
-    "module": "es2015",
-    "target": "es2017",
-    "noImplicitAny": true,
-    "outDir": "out",
-    "newLine": "LF",
-    "noEmitOnError": true,
-    "inlineSources": true,
-    "sourceMap": true,
-    "noImplicitReturns": true,
-    "strictNullChecks": true,
-    "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "skipLibCheck": true
+    "outDir": "out"
   },
   "declaration": {
     "electron-auto-updater": "out/electron-auto-updater.d.ts"

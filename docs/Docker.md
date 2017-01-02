@@ -1,9 +1,11 @@
 To build Linux or Windows (only if you don't have native dependencies) on any platform:
 
 1. Run docker container:
+
    ```sh
    docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine
    ```
+   
 2. Type in `npm install && npm prune && npm run dist`
    
    If you don't have `dist` npm script in your `package.json`, call `./node_modules/.bin/build` directly.

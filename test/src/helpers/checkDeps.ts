@@ -3,7 +3,7 @@ import { readJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import depCheck, { DepCheckResult } from "depcheck"
 
-const printErrorAndExit = require("../../../out/util/promise").printErrorAndExit
+const printErrorAndExit = require("../../../packages/electron-builder/out/util/promise").printErrorAndExit
 
 const knownUnusedDevDependencies = new Set([
   "@develar/types",
@@ -17,14 +17,15 @@ const knownUnusedDevDependencies = new Set([
 ])
 
 async function main(): Promise<void> {
-  const projectDir = path.join(__dirname, "..", "..", "..")
+  const rootDir = path.join(__dirname, "../../..")
+  const projectDir = path.join(rootDir, "packages/electron-builder")
 
   console.log(`Checking ${projectDir}`)
 
   const result = await new BluebirdPromise<DepCheckResult>(function (resolve) {
     depCheck(projectDir, {
       ignoreDirs: [
-        "out", "test", "docs", "typings", "docker", "certs", "templates", ".idea", ".github",
+        "out", "test", "docs", "typings", "docker", "certs", "templates", "vendor",
       ],
     }, resolve)
   })
@@ -43,7 +44,12 @@ async function main(): Promise<void> {
   }
 
   const packageData = await readJson(path.join(projectDir, "package.json"))
-  for (const name of Object.keys(packageData.devDependencies)) {
+  const devPackageData = await readJson(path.join(rootDir, "package.json"))
+  for (const name of Object.keys(devPackageData.devDependencies)) {
+    if (packageData.dependencies[name] != null) {
+      continue
+    }
+
     const usages = result.using[name]
     if (usages == null || usages.length === 0) {
       continue

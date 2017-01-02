@@ -9,11 +9,9 @@ import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
 import { TmpDir } from "../util/tmp"
 import { LinuxPackager } from "../linuxPackager"
-import { log } from "../util/log"
+import { log, warn } from "../util/log"
 import { Target } from "./targetFactory"
 import { unlinkIfExists } from "../util/fs"
-
-const template = require("lodash.template")
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
   BluebirdPromise.resolve("fpm") : downloadFpm()
@@ -172,11 +170,21 @@ export default class FpmTarget extends Target {
 }
 
 async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: any): Promise<string> {
-  const config = template(await readFile(templatePath, "utf8"),
-    {
-      // set interpolate explicitly to avoid troubles with templating of installer.nsi.tpl
-      interpolate: /<%=([\s\S]+?)%>/g
-    })(options)
+  //noinspection JSUnusedLocalSymbols
+  function replacer(match: string, p1: string) {
+    if (p1 in options) {
+      return options[p1]
+    }
+    else {
+      throw new Error(`Macro ${p1} is not defined`)
+    }
+  }
+  const config = (await readFile(templatePath, "utf8"))
+    .replace(/\$\{([a-zA-Z]+)\}/g, replacer)
+    .replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
+      warn("<%= varName %> is deprecated, please use ${varName} instead")
+      return replacer(match, p1.trim())
+    })
 
   const outputPath = await tmpDir.getTempFile(path.basename(templatePath, ".tpl"))
   await outputFile(outputPath, config)
