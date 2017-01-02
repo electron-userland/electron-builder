@@ -42,7 +42,7 @@ interface AssertPackOptions {
   readonly npmInstallBefore?: boolean
 }
 
-interface PackedContext {
+export interface PackedContext {
   readonly projectDir: string,
   readonly outDir: string
 
