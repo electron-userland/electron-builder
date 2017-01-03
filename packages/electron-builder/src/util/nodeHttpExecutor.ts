@@ -1,13 +1,12 @@
 import { Socket } from "net"
 import { IncomingMessage, ClientRequest, Agent } from "http"
 import * as https from "https"
-import { createWriteStream, ensureDir, readFile } from "fs-extra-p"
+import { ensureDir, readFile } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
-import { PassThrough } from "stream"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, ProgressCallbackTransform,  maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, configurePipes, checkSha2,  maxRedirects } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
 import { parse as parseUrl } from "url"
@@ -72,30 +71,9 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
         return
       }
 
-      var transferProgressNotifier = new PassThrough()
-
-      if (options.onProgress != null) {
-        const total = parseInt(response.headers["content-length"], 10)
-
-        transferProgressNotifier = new ProgressCallbackTransform(options.onProgress, total)
-
-      }
       ensureDirPromise
-        .then(() => {
-          const fileOut = createWriteStream(destination)
-          if (options.sha2 == null) {
-            response.pipe(transferProgressNotifier)
-              .pipe(fileOut)
-          }
-          else {
-            response.pipe(transferProgressNotifier)
-              .pipe(new DigestTransform(options.sha2))
-              .pipe(fileOut)
-          }
-
-          fileOut.on("finish", () => (<any>fileOut.close)(callback))
-        })
-        .catch(callback)
+              .then(() => configurePipes(options, response, destination, callback))
+              .catch(callback)
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)

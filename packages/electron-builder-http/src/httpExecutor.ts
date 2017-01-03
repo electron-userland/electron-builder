@@ -1,6 +1,7 @@
 import { Url } from "url"
 import { createHash } from "crypto"
 import { Transform } from "stream"
+import { createWriteStream } from "fs-extra-p"
 
 export interface DownloadOptions {
   skipDirCreation?: boolean
@@ -64,8 +65,7 @@ export class HttpError extends Error {
   }
 }
 
-export class ProgressCallbackTransform extends Transform {
-
+class ProgressCallbackTransform extends Transform {
   private start = Date.now()
   private transferred = 0
 
@@ -77,10 +77,9 @@ export class ProgressCallbackTransform extends Transform {
     this.transferred = calculateDownloadProgress(this.total, this.start, this.transferred, chunk, this.onProgress)
     callback(null, chunk)
   }
-
 }
 
-export class DigestTransform extends Transform {
+class DigestTransform extends Transform {
   private readonly digester = createHash("sha256")
 
   constructor(private expected: string) {
@@ -132,4 +131,42 @@ export function calculateDownloadProgress(total: number, start: number, transfer
       bytesPerSecond: Math.round(transferred / ((Date.now() - start) / 1000))
     })
     return transferred
+}
+
+export function safeGetHeader(response: any, headerKey: string) {
+  const value = response.headers[headerKey]
+  if (value == null) {
+    return null
+  }
+  else if (Array.isArray(value)) {
+    // electron API
+    return value.length === 0 ? null : value[value.length - 1]
+  }
+  else {
+    return value
+  }
+}
+
+export function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void) {
+  const streams: Array<any> = []
+  if (options.onProgress != null) {
+    const contentLength = safeGetHeader(response, "content-length")
+    if (contentLength != null) {
+      streams.push(new ProgressCallbackTransform(options.onProgress, parseInt(contentLength, 10)))
+    }
+  }
+
+  if (options.sha2 != null) {
+    streams.push(new DigestTransform(options.sha2))
+  }
+
+  const fileOut = createWriteStream(destination)
+  streams.push(fileOut)
+
+  let lastStream = response
+  for (const stream of streams) {
+    lastStream = lastStream.pipe(stream)
+  }
+
+  fileOut.on("finish", () => (<any>fileOut.close)(callback))
 }

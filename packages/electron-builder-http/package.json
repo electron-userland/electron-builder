@@ -10,5 +10,8 @@
   "files": [
     "out"
   ],
+  "dependencies": {
+    "fs-extra-p": "^3.0.3"
+  },
   "typings": "./out/electron-builder-http.d.ts"
 }

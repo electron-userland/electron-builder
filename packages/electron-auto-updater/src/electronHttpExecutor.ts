@@ -1,18 +1,13 @@
 import { Socket } from "net"
 import { net } from "electron"
-import { createWriteStream, ensureDir } from "fs-extra-p"
-import { PassThrough } from "stream"
+import { ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, ProgressCallbackTransform, maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, checkSha2, maxRedirects, safeGetHeader, configurePipes } from "electron-builder-http"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
 import { parse as parseUrl } from "url"
-
-function safeGetHeader(response: Electron.IncomingMessage, headerKey: string) {
-  return response.headers[headerKey] ? response.headers[headerKey].pop() : null
-}
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
   private readonly debug: Debugger = _debug("electron-builder")
@@ -76,30 +71,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
         return
       }
 
-
-      var transferProgressNotifier = new PassThrough()
-
-      if (options.onProgress != null) {
-        const total = parseInt(String(safeGetHeader(response, "content-length")), 10)
-
-        transferProgressNotifier = new ProgressCallbackTransform(options.onProgress, total)
-
-      }
       ensureDirPromise
-        .then(() => {
-          const fileOut = createWriteStream(destination)
-          if (options.sha2 == null) {
-            response.pipe(transferProgressNotifier)
-              .pipe(fileOut)
-          }
-          else {
-            response.pipe(transferProgressNotifier)
-              .pipe(new DigestTransform(options.sha2))
-              .pipe(fileOut)
-          }
-
-          fileOut.on("finish", () => (<any>fileOut.close)(callback))
-        })
+        .then(() => configurePipes(options, response, destination, callback))
         .catch(callback)
     })
     this.addTimeOutHandler(request, callback)
