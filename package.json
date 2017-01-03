@@ -15,7 +15,8 @@
     "docker-images": "docker/build.sh",
     "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "postinstall": "lerna bootstrap",
-    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http'"
+    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http'",
+    "lerna-publish": "lerna publish --skip-npm --skip-git"
   },
   "devDependencies": {
     "@develar/semantic-release": "^6.3.26",
