@@ -1,4 +1,4 @@
-import { outputFile, symlink, writeFile } from "fs-extra-p"
+import { outputFile, symlink, writeFile, mkdirs } from "fs-extra-p"
 import { assertPack, modifyPackageJson, app, PackedContext } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
@@ -6,13 +6,17 @@ import { assertThat } from "./helpers/fileAssert"
 import { Platform, DIR_TARGET } from "electron-builder"
 import { statFile } from "asar-electron-builder"
 
-function createFiles(appDir: string) {
-  return BluebirdPromise.all([
+async function createFiles(appDir: string) {
+  await BluebirdPromise.all([
     outputFile(path.join(appDir, "assets", "file"), "data"),
     outputFile(path.join(appDir, "b2", "file"), "data"),
     outputFile(path.join(appDir, "do-not-unpack-dir", "file.json"), "{}")
-      .then(() => writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}")),
+      .then(() => writeFile(path.join(appDir, "do-not-unpack-dir", "must-be-not-unpacked"), "{}"))
   ])
+
+  const dir = path.join(appDir, "do-not-unpack-dir", "dir-2", "dir-3", "dir-3")
+  await mkdirs(dir)
+  await writeFile(path.join(dir, "file-in-asar"), "{}")
 }
 
 test.ifDevOrLinuxCi("unpackDir one", app({
@@ -31,6 +35,7 @@ function assertDirs(context: PackedContext) {
     assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "b2")).isDirectory(),
     assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "file.json")).isFile(),
     assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "must-be-not-unpacked")).doesNotExist(),
+    assertThat(path.join(context.getResources(Platform.LINUX), "app.asar.unpacked", "do-not-unpack-dir", "dir-2")).doesNotExist(),
   ])
 }
 test.ifDevOrLinuxCi("unpackDir", () => {

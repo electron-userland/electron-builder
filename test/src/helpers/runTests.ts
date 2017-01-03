@@ -120,7 +120,7 @@ async function runTests() {
 
   require("jest-cli").runCLI({
     verbose: true,
-    updateSnapshot: true,
+    updateSnapshot: false,
     config: config,
     bail: process.env.TEST_BAIL === "true",
     runInBand: process.env.RUN_IN_BAND === "true",

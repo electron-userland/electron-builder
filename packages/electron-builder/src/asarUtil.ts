@@ -162,6 +162,8 @@ class AsarPackager {
       await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest, fileIndexToModulePackageData)
     }
 
+    const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
+
     const filesToUnpack: Array<UnpackedFileTask> = []
     const mainPackageJson = path.join(this.src, "package.json")
     const fileCopier = new FileCopier()
@@ -189,8 +191,8 @@ class AsarPackager {
         if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))) {
           node.unpacked = true
 
-          if (!dirNode.unpacked && !unpackedDirs.has(fileParent)) {
-            unpackedDirs.add(fileParent)
+          if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
+            dirToCreateForUnpackedFiles.add(fileParent)
             await ensureDir(fileParent.replace(this.src, unpackedDest))
           }
 
