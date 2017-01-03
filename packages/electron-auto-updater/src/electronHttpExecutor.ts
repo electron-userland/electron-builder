@@ -83,6 +83,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
         response.on("data", (chunk: any) => {
           transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
         })
+
+        response.pause()
       }
 
       ensureDirPromise
