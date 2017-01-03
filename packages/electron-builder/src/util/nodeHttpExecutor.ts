@@ -3,10 +3,11 @@ import { IncomingMessage, ClientRequest, Agent } from "http"
 import * as https from "https"
 import { createWriteStream, ensureDir, readFile } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
+import { PassThrough } from "stream"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress, maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, ProgressCallbackTransform,  maxRedirects } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
 import { parse as parseUrl } from "url"
@@ -17,7 +18,7 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
 
   download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
     return <BluebirdPromise<string>>(this.httpsAgent || (this.httpsAgent = createAgent()))
-      .then(it => new BluebirdPromise( (resolve, reject) => {
+      .then(it => new BluebirdPromise((resolve, reject) => {
         this.doDownload(url, destination, 0, options || {}, it, (error: Error) => {
           if (error == null) {
             resolve(destination)
@@ -71,26 +72,23 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
         return
       }
 
+      var transferProgressNotifier = new PassThrough()
+
       if (options.onProgress != null) {
         const total = parseInt(response.headers["content-length"], 10)
-        const start = Date.now()
-        let transferred = 0
 
-        response.on("data", (chunk: any) => {
-          transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
-        })
+        transferProgressNotifier = new ProgressCallbackTransform(options.onProgress, total)
 
-        response.pause()
       }
-
       ensureDirPromise
         .then(() => {
           const fileOut = createWriteStream(destination)
           if (options.sha2 == null) {
-            response.pipe(fileOut)
+            response.pipe(transferProgressNotifier)
+              .pipe(fileOut)
           }
           else {
-            response
+            response.pipe(transferProgressNotifier)
               .pipe(new DigestTransform(options.sha2))
               .pipe(fileOut)
           }

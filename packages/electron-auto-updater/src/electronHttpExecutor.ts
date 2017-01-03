@@ -1,9 +1,10 @@
 import { Socket } from "net"
 import { net } from "electron"
 import { createWriteStream, ensureDir } from "fs-extra-p"
+import { PassThrough } from "stream"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, calculateDownloadProgress, maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, DigestTransform, checkSha2, ProgressCallbackTransform, maxRedirects } from "electron-builder-http"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
@@ -75,26 +76,24 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
         return
       }
 
+
+      var transferProgressNotifier = new PassThrough()
+
       if (options.onProgress != null) {
         const total = parseInt(String(safeGetHeader(response, "content-length")), 10)
-        const start = Date.now()
-        let transferred = 0
 
-        response.on("data", (chunk: any) => {
-          transferred = calculateDownloadProgress(total, start, transferred, chunk, options.onProgress)
-        })
+        transferProgressNotifier = new ProgressCallbackTransform(options.onProgress, total)
 
-        response.pause()
       }
-
       ensureDirPromise
         .then(() => {
           const fileOut = createWriteStream(destination)
           if (options.sha2 == null) {
-            response.pipe(fileOut)
+            response.pipe(transferProgressNotifier)
+              .pipe(fileOut)
           }
           else {
-            response
+            response.pipe(transferProgressNotifier)
               .pipe(new DigestTransform(options.sha2))
               .pipe(fileOut)
           }
