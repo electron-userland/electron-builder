@@ -13,7 +13,7 @@ import { parse as parseUrl } from "url"
 import { debug } from "./util"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
-  private httpsAgent: Promise<Agent> | null = null
+  private httpsAgent: Promise<Agent> | null
 
   download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
     return <BluebirdPromise<string>>(this.httpsAgent || (this.httpsAgent = createAgent()))
