@@ -64,6 +64,22 @@ export class HttpError extends Error {
   }
 }
 
+export class ProgressCallbackTransform extends Transform {
+
+  private start = Date.now()
+  private transferred = 0
+
+  constructor(private onProgress: any, private total: number) {
+    super()
+  }
+
+  _transform(chunk: any, encoding: string, callback: Function) {
+    this.transferred = calculateDownloadProgress(this.total, this.start, this.transferred, chunk, this.onProgress)
+    callback(null, chunk)
+  }
+
+}
+
 export class DigestTransform extends Transform {
   private readonly digester = createHash("sha256")
 
