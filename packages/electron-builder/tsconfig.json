@@ -6,6 +6,7 @@
   "declaration": {
     "electron-builder": "out/electron-builder.d.ts"
   },
+  "docs": "../../docs/Options.md",
   "files": [
     "node_modules/fs-extra-p/index.d.ts",
     "node_modules/bluebird-lst-c/index.d.ts",

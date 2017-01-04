@@ -6,7 +6,6 @@ export type Publish = string | Array<string> | PublishConfiguration | GithubOpti
 ### `.build.publish`
 
 Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
-Please see [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts).
 
 If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.

@@ -6,6 +6,7 @@
   "declaration": {
     "electron-builder-http": "out/electron-builder-http.d.ts"
   },
+  "docs": "../../docs/Publishing Artifacts.md",
   "include": [
     "src/**/*.ts"
   ],

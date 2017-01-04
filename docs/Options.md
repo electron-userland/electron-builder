@@ -24,22 +24,22 @@ As you can see, you need to customize MacOS options only if you want to provide 
 Don't customize paths to background and icon, — just follow conventions.
 
 <!-- do not edit. start of generated block -->
-  * [Application package.json](#AppMetadata)
-  * [Development package.json](#DevMetadata)
-    * [.build](#BuildMetadata)
-      * [.build.appx](#AppXOptions)
-      * [.build.dmg](#DmgOptions)
-      * [.build.dmg.window](#DmgWindow)
-      * [.build.fileAssociations](#FileAssociation)
-      * [.build.linux](#LinuxBuildOptions)
-      * [.build.mac](#MacOptions)
-      * [.build.mas](#MasBuildOptions)
-      * [.build.nsis](#NsisOptions)
-      * [.build.protocols](#Protocol)
-      * [.build.snap](#SnapOptions)
-      * [.build.squirrelWindows](#SquirrelWindowsOptions)
-      * [.build.win](#WinBuildOptions)
-    * [.directories](#MetadataDirectories)
+* [Application package.json](#AppMetadata)
+* [Development package.json](#DevMetadata)
+  * [.build](#BuildMetadata)
+    * [.build.appx](#AppXOptions)
+    * [.build.dmg](#DmgOptions)
+    * [.build.dmg.window](#DmgWindow)
+    * [.build.fileAssociations](#FileAssociation)
+    * [.build.linux](#LinuxBuildOptions)
+    * [.build.mac](#MacOptions)
+    * [.build.mas](#MasBuildOptions)
+    * [.build.nsis](#NsisOptions)
+    * [.build.protocols](#Protocol)
+    * [.build.snap](#SnapOptions)
+    * [.build.squirrelWindows](#SquirrelWindowsOptions)
+    * [.build.win](#WinBuildOptions)
+  * [.directories](#MetadataDirectories)
 
 <a name="AppMetadata"></a>
 # Application `package.json`
@@ -88,7 +88,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
 | electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
 | electronDownload | <a name="BuildMetadata-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
-| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](#PublishConfiguration).
+| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 | forceCodeSigning | <a name="BuildMetadata-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | directories | <a name="BuildMetadata-directories"></a>See [.directories](#MetadataDirectories)
 

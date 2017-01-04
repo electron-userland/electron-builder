@@ -232,7 +232,7 @@ export interface BuildMetadata {
   readonly "app-bundle-id"?: string | null
 
   /*
-  See [.build.publish](#PublishConfiguration).
+  See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
    */
   readonly publish?: Publish
 

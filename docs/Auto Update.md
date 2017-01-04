@@ -9,7 +9,7 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 
 1. Install `electron-auto-updater` as app dependency.
 
-2. [Configure publish](https://github.com/electron-userland/electron-builder/wiki/Options#buildpublish).
+2. [Configure publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 
 3. Use `autoUpdater` from `electron-auto-updater` instead of `electron`, e.g. (ES 6):
 
