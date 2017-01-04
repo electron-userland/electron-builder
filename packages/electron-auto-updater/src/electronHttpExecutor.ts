@@ -3,7 +3,7 @@ import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, HttpError, checkSha2, maxRedirects, safeGetHeader, configurePipes } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, maxRedirects, safeGetHeader, configurePipes } from "electron-builder-http"
 import { safeLoad } from "js-yaml"
 import _debug from "debug"
 import Debugger = debug.Debugger
@@ -12,17 +12,21 @@ import { parse as parseUrl } from "url"
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
   private readonly debug: Debugger = _debug("electron-builder")
 
-  download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-      return new BluebirdPromise( (resolve, reject) => {
-        this.doDownload(url, destination, 0, options || {}, (error: Error) => {
-          if (error == null) {
-            resolve(destination)
-          }
-          else {
-            reject(error)
-          }
-        })
+  async download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+    if (options == null || !options.skipDirCreation) {
+      await ensureDir(path.dirname(destination))
+    }
+
+    return await new BluebirdPromise<string>((resolve, reject) => {
+      this.doDownload(url, destination, 0, options || {}, (error: Error) => {
+        if (error == null) {
+          resolve(destination)
+        }
+        else {
+          reject(error)
+        }
       })
+    })
   }
 
   private addTimeOutHandler(request: Electron.ClientRequest, callback: (error: Error) => void) {
@@ -35,12 +39,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
   }
 
   private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
-    const ensureDirPromise = options.skipDirCreation ? BluebirdPromise.resolve() : ensureDir(path.dirname(destination))
-
     const parsedUrl = parseUrl(url)
     // user-agent must be specified, otherwise some host can return 401 unauthorised
 
-    //FIXME hack, the electron typings specifies Protocol with capital but the code actually uses with small case
     const requestOpts = {
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
@@ -67,13 +68,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
         return
       }
 
-      if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
-        return
-      }
-
-      ensureDirPromise
-        .then(() => configurePipes(options, response, destination, callback))
-        .catch(callback)
+      configurePipes(options, response, destination, callback)
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)

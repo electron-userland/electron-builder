@@ -6,27 +6,35 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, HttpError, configurePipes, checkSha2,  maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, HttpError, configurePipes,  maxRedirects } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
 import { parse as parseUrl } from "url"
 import { debug } from "./util"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
-  private httpsAgent: Promise<Agent> | null
+  private httpsAgentPromise: Promise<Agent> | null
 
-  download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-    return <BluebirdPromise<string>>(this.httpsAgent || (this.httpsAgent = createAgent()))
-      .then(it => new BluebirdPromise((resolve, reject) => {
-        this.doDownload(url, destination, 0, options || {}, it, (error: Error) => {
-          if (error == null) {
-            resolve(destination)
-          }
-          else {
-            reject(error)
-          }
-        })
-      }))
+  async download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+    if (options == null || !options.skipDirCreation) {
+      await ensureDir(path.dirname(destination))
+    }
+
+    if (this.httpsAgentPromise == null) {
+      this.httpsAgentPromise = createAgent()
+    }
+
+    const agent = await this.httpsAgentPromise
+    return await new BluebirdPromise<string>((resolve, reject) => {
+      this.doDownload(url, destination, 0, options || {}, agent, (error: Error) => {
+        if (error == null) {
+          resolve(destination)
+        }
+        else {
+          reject(error)
+        }
+      })
+    })
   }
 
   private addTimeOutHandler(request: ClientRequest, callback: (error: Error) => void) {
@@ -39,8 +47,6 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
   }
 
   private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, agent: Agent, callback: (error: Error | null) => void) {
-    const ensureDirPromise = options.skipDirCreation ? BluebirdPromise.resolve() : ensureDir(path.dirname(destination))
-
     const parsedUrl = parseUrl(url)
     // user-agent must be specified, otherwise some host can return 401 unauthorised
     const request = https.request({
@@ -67,13 +73,7 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
         return
       }
 
-      if (!checkSha2(response.headers["X-Checksum-Sha2"], options.sha2, callback)) {
-        return
-      }
-
-      ensureDirPromise
-              .then(() => configurePipes(options, response, destination, callback))
-              .catch(callback)
+      configurePipes(options, response, destination, callback)
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)

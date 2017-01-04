@@ -1,7 +1,7 @@
 - &defaults
   files: ["test/src/**/*", "!**/helpers/**/*"]
   script: "node_modules/jest-cli/bin/jest.js"
-  scriptArgs: ["-i", "--env", "jest-environment-node-debug", &filePattern '/${fileNameWithoutExt}\.\w+$']
+  scriptArgs: ["-i", "--env", "jest-environment-node-debug", &filePattern '--testPathPattern=[/\\]{1}${fileNameWithoutExt}\.\w+$']
   rcName: "${fileNameWithoutExt}"
   beforeRun: typescript
 

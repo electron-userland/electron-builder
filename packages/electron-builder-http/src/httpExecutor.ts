@@ -107,7 +107,7 @@ export function request<T>(url: Url, token: string | null = null, data: {[name: 
   return executorHolder.httpExecutor.request(url, token, data, method, headers)
 }
 
-export function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
+function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
   if (sha2Header != null && sha2 != null) {
     // todo why bintray doesn't send this header always
     if (sha2Header == null) {
@@ -148,6 +148,10 @@ export function safeGetHeader(response: any, headerKey: string) {
 }
 
 export function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void) {
+  if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
+    return
+  }
+
   const streams: Array<any> = []
   if (options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
