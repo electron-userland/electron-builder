@@ -1,5 +1,5 @@
 import { toDebArch } from "../platformPackager"
-import { Arch, toLinuxArchString } from "../metadata"
+import { toLinuxArchString } from "../metadata"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "electron-builder-util/out/log"
@@ -9,7 +9,7 @@ import * as path from "path"
 import { safeDump } from "js-yaml"
 import { spawn } from "electron-builder-util"
 import { homedir } from "os"
-import { Target } from "./targetFactory"
+import { Target, Arch } from "electron-builder-core"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])

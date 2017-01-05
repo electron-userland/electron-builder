@@ -8,8 +8,7 @@ import { debug, use, exec, isEmptyOrSpaces, spawn } from "electron-builder-util"
 import { copy, unlink, outputFile, remove, readFile } from "fs-extra-p"
 import { executeFinally } from "electron-builder-util/out/promise"
 import sanitizeFileName from "sanitize-filename"
-import { Arch } from "../metadata"
-import { Target } from "./targetFactory"
+import { Target, Arch } from "electron-builder-core"
 import { exists, statOrNull } from "electron-builder-util/out/fs"
 
 export class DmgTarget extends Target {

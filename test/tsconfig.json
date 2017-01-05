@@ -24,9 +24,6 @@
     "../packages/electron-builder/node_modules/fs-extra-p/index.d.ts",
     "../packages/electron-builder/node_modules/bluebird-lst-c/index.d.ts",
     "../packages/electron-builder/node_modules/electron-macos-sign/index.d.ts",
-    "../packages/electron-builder-http/out/electron-builder-http.d.ts",
-    "../packages/electron-auto-updater/out/electron-auto-updater.d.ts",
-    "../packages/electron-builder-util/out/electron-builder-util.d.ts",
-    "../packages/electron-builder/out/electron-builder.d.ts"
+    "../packages/*/out/*.d.ts"
   ]
 }

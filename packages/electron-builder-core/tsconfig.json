@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out"
+  },
+  "declaration": {
+    "electron-builder-core": "out/electron-builder-core.d.ts"
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "electron-builder-core",
+  "version": "0.0.0-semantic-release",
+  "main": "out/core.js",
+  "author": "Vladimir Krivosheev",
+  "license": "MIT",
+  "repository": "electron-userland/electron-builder",
+  "bugs": "https://github.com/electron-userland/electron-builder/issues",
+  "homepage": "https://github.com/electron-userland/electron-builder",
+  "files": [
+    "out"
+  ],
+  "typings": "./out/electron-builder-core.d.ts"
+}

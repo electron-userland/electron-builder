@@ -1,16 +1,15 @@
 import { downloadCertificate } from "./codeSign"
 import BluebirdPromise from "bluebird-lst-c"
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform } from "./metadata"
+import { Platform, Target } from "electron-builder-core"
 import * as path from "path"
 import { log } from "electron-builder-util/out/log"
 import { exec, use } from "electron-builder-util"
 import { open, close, read, rename } from "fs-extra-p"
 import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
-import SquirrelWindowsTarget from "./targets/squirrelWindows"
 import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
-import { createCommonTarget, DIR_TARGET, Target } from "./targets/targetFactory"
+import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 import { WinBuildOptions } from "./options/winOptions"
 
 export interface FileCodeSigningInfo {
@@ -75,12 +74,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         continue
       }
 
-      const targetClass: typeof NsisTarget | typeof AppXTarget | typeof SquirrelWindowsTarget | null = (() => {
+      const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
         switch (name) {
           case "nsis":
             return require("./targets/nsis").default
           case "squirrel":
-            return require("./targets/squirrelWindows").default
+            return require("electron-builder-squirrel-windows").default
           case "appx":
             return require("./targets/appx").default
           default:

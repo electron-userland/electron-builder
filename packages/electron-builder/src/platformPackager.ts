@@ -1,4 +1,4 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
+import { AppMetadata, DevMetadata, PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
@@ -16,10 +16,10 @@ import { BuildOptions } from "./builder"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
-import { Target } from "./targets/targetFactory"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import EventEmitter = NodeJS.EventEmitter
+import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -525,10 +525,17 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return null
   }
+
+  getRepositoryInfo(): Promise<RepositoryInfo> {
+    return getRepositoryInfo(this.appInfo.metadata, this.info.devMetadata)
+  }
 }
 
-export function getArchSuffix(arch: Arch): string {
-  return arch === Arch.x64 ? "" : `-${Arch[arch]}`
+export interface RepositoryInfo {
+  type: string
+  domain: string
+  user: string
+  project: string
 }
 
 export interface ArtifactCreated {

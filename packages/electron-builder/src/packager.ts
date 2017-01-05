@@ -3,7 +3,7 @@ import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpa
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
-import { AppMetadata, DevMetadata, Platform, Arch, BuildMetadata, getDirectoriesConfig } from "./metadata"
+import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import { PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -13,11 +13,12 @@ import { lt as isVersionLessThan } from "semver"
 import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import MacPackager from "./macPackager"
-import { createTargets, Target } from "./targets/targetFactory"
+import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { BuildOptions } from "./builder"
 import { getGypEnv, installOrRebuild } from "./yarn"
+import { Platform, Arch, Target } from "electron-builder-core"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)

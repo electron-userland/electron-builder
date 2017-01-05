@@ -1,4 +1,3 @@
-import { Arch } from "../metadata"
 import * as path from "path"
 import { exec } from "electron-builder-util"
 import { open, write, createReadStream, createWriteStream, close, chmod } from "fs-extra-p"
@@ -8,7 +7,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import { v1 as uuid1 } from "uuid-1345"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "electron-builder-util/out/log"
-import { Target } from "./targetFactory"
+import { Target, Arch } from "electron-builder-core"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"

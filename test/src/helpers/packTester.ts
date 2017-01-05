@@ -9,12 +9,12 @@ import { exec, spawn, getTempName } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import pathSorter from "path-sort"
 import DecompressZip from "decompress-zip"
-import { convertVersion } from "electron-builder/out/targets/squirrelPack"
+import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { TEST_DIR } from "./config"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
-import SquirrelWindowsTarget from "electron-builder/out/targets/squirrelWindows"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
 import OsXPackager from "electron-builder/out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
@@ -462,7 +462,7 @@ export class CheckingWinPackager extends WinPackager {
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder/out/targets/squirrelWindows").default
+    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
     this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))

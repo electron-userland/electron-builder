@@ -69,7 +69,8 @@ const options = {
 }
 
 let hasErrors = false
-const packages = fs.readdirSync(__dirname).filter(it => !it.includes(".")).sort().map(it => path.join(__dirname, it))
+const args = process.argv.slice(2)
+const packages = args.length == 0 ? fs.readdirSync(__dirname).filter(it => !it.includes(".")).sort().map(it => path.join(__dirname, it)) : [args[0]]
 for (const projectDir of packages) {
   console.log(`Linting ${path.basename(projectDir)}`)
   const program = Linter.createProgram("tsconfig.json", projectDir)

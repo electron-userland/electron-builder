@@ -1,4 +1,4 @@
-import { Arch, toLinuxArchString } from "../metadata"
+import { toLinuxArchString } from "../metadata"
 import { smarten } from "../platformPackager"
 import { use, exec } from "electron-builder-util"
 import * as path from "path"
@@ -10,7 +10,7 @@ import * as errorMessages from "../errorMessages"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { LinuxPackager } from "../linuxPackager"
 import { log, warn } from "electron-builder-util/out/log"
-import { Target } from "./targetFactory"
+import { Target, Arch } from "electron-builder-core"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?

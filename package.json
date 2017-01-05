@@ -2,8 +2,8 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-util packages/electron-builder packages/electron-auto-updater test",
-    "lint": "node ./packages/lint.js",
+    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-auto-updater test",
+    "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js check-deps",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
     "test": "node ./test/out/helpers/runTests.js",
@@ -56,7 +56,8 @@
     "testRegex": "\\.js$",
     "modulePaths": [
       "<rootDir>/packages",
-      "<rootDir>/packages/electron-builder/node_modules"
+      "<rootDir>/packages/electron-builder/node_modules",
+      "<rootDir>/packages/electron-builder-util/node_modules"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
   },

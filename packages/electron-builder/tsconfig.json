@@ -14,6 +14,7 @@
     "node_modules/electron-macos-sign/index.d.ts",
     "../electron-builder-http/out/electron-builder-http.d.ts",
     "../electron-builder-util/out/electron-builder-util.d.ts",
+    "../electron-builder-core/out/electron-builder-core.d.ts",
     "../../node_modules/@types/node/index.d.ts",
     "../../node_modules/@types/js-yaml/index.d.ts",
     "../../node_modules/@types/ini/index.d.ts"
