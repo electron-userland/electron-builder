@@ -63,7 +63,6 @@
     "parse-color": "^1.0.0",
     "plist": "^2.0.1",
     "progress": "^1.1.8",
-    "progress-stream": "^1.2.0",
     "read-installed": "^4.0.3",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.3.0",

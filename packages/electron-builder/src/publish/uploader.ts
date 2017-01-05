@@ -1,8 +1,8 @@
-import progressStream from "progress-stream"
 import ProgressBar from "progress"
 import { createReadStream, Stats } from "fs-extra-p"
 import { ReadStream } from "tty"
 import { ClientRequest } from "http"
+import { ProgressCallbackTransform } from "electron-builder-http"
 
 export function uploadFile(file: string, fileStat: Stats, fileName: string, request: ClientRequest, reject: (error: Error) => void) {
   const progressBar = (<ReadStream>process.stdin).isTTY ? new ProgressBar(`Uploading ${fileName} [:bar] :percent :etas`, {
@@ -14,14 +14,11 @@ export function uploadFile(file: string, fileStat: Stats, fileName: string, requ
 
   const fileInputStream = createReadStream(file)
   fileInputStream.on("error", reject)
-  fileInputStream
-    .pipe(progressStream({
-      length: fileStat.size,
-      time: 1000
-    }, progress => {
-      if (progressBar != null) {
-        progressBar.tick(progress.delta)
-      }
-    }))
-    .pipe(request)
+
+  let stream: any = fileInputStream
+  if (progressBar != null) {
+    stream = stream.pipe(new ProgressCallbackTransform(fileStat.size, it => progressBar.tick(it.delta)))
+  }
+
+  stream.pipe(request)
 }
