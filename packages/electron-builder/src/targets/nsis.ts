@@ -157,6 +157,13 @@ export default class NsisTarget extends Target {
       defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
     }
 
+    if (options.allowToChangeInstallationDirectory) {
+      if (oneClick) {
+        throw new Error("allowToChangeInstallationDirectory makes sense only for boring installer (please set oneClick to false)")
+      }
+      defines.allowToChangeInstallationDirectory = null
+    }
+
     // Error: invalid VIProductVersion format, should be X.X.X.X
     // so, we must strip beta
     const localeId = options.language || "1033"

@@ -6,6 +6,7 @@
     "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js check-deps",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
+    "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /test.sh",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
@@ -16,12 +17,10 @@
     "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "postinstall": "lerna bootstrap",
     "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util' -a",
-    "lerna-publish": "lerna publish --skip-npm --skip-git",
-    "set-versions": "node test/out/helpers/setVersions.js p",
-    "set-dep-versions": "node test/out/helpers/setVersions.js"
+    "lerna-publish": "node test/out/helpers/setVersions.js p && lerna publish --skip-npm --skip-git && node test/out/helpers/setVersions.js && conventional-changelog -p angular -i CHANGELOG.md -s",
+    "npm-publish": "./packages/npm-publish.sh"
   },
   "devDependencies": {
-    "@develar/semantic-release": "^6.3.26",
     "@types/electron": "^1.4.30",
     "@types/ini": "^1.3.29",
     "@types/jest": "^16.0.3",

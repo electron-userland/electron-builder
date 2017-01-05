@@ -22,7 +22,21 @@ async function main(): Promise<void> {
 }
 
 async function setPackageVersions(packages: Array<string>, packageData: Array<any>) {
-  const versions = await BluebirdPromise.map(packages, it => exec("node", [path.join(rootDir, "test", "vendor", "yarn.js"), "info", "--json", it, "dist-tags"]).then((it: string) => JSON.parse(it).data))
+  const versions = await BluebirdPromise.map(packages, it => exec("node", [path.join(rootDir, "test", "vendor", "yarn.js"), "info", "--json", it, "dist-tags"])
+    .then((it: string) => {
+      if (it === "") {
+        // {"type":"error","data":"Received invalid response from npm."}
+        // not yet published to npm
+        return "0.0.1"
+      }
+
+      try {
+        return JSON.parse(it).data
+      }
+      catch (e) {
+        throw new Error(`Cannot parse ${it}: ${e.stack || e}`)
+      }
+    }))
   for (let i = 0; i < packages.length; i++) {
     const packageName = packages[i]
     const packageJson = packageData[i]
@@ -52,12 +66,12 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
     let changed = false
     for (let depIndex = 0; depIndex < packages.length; depIndex++) {
       const depPackageName = packages[depIndex]
-      const oldVersion = packageJson.dependencies[depPackageName]
-      const newVersion = versions[depIndex]
+      const oldVersion = packageJson.dependencies == null ? null : packageJson.dependencies[depPackageName]
       if (oldVersion == null) {
         continue
       }
 
+      const newVersion = versions[depIndex]
       if (oldVersion == newVersion) {
         console.log(`Skip ${depPackageName} for ${packageName} — version ${newVersion} is actual`)
         continue

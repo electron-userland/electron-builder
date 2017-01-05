@@ -20,7 +20,6 @@
   !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
   !ifdef LICENSE_FILE
-
     Function licensePre
         ${GetParameters} $R0
         ${GetOptions} $R0 "--update" $R1
@@ -42,6 +41,9 @@
     !define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
   !endif
 
+  !ifdef allowToChangeInstallationDirectory
+    !insertmacro MUI_PAGE_DIRECTORY
+  !endif
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
 !else

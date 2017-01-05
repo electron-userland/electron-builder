@@ -169,6 +169,20 @@ test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))
 
+test.ifDevOrLinuxCi("allowToChangeInstallationDirectory", app({
+  targets: nsisTarget,
+  appMetadata: {
+    name: "test-custom-inst-dir",
+    productName: "Test Custom Installation Dir"
+  },
+  config: {
+    nsis: {
+      allowToChangeInstallationDirectory: true,
+      oneClick: false,
+    }
+  }
+}))
+
 test("menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   appMetadata: {

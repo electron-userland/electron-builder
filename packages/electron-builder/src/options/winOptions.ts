@@ -86,6 +86,11 @@ export interface NsisOptions {
   readonly allowElevation?: boolean
 
   /*
+   *boring installer only.* Whether to allow user to change installation directory. Defaults to `false`.
+   */
+  readonly allowToChangeInstallationDirectory?: boolean
+
+  /*
    *one-click installer only.* Run application after finish. Defaults to `true`.
    */
   readonly runAfterFinish?: boolean

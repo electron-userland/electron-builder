@@ -204,6 +204,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | oneClick | <a name="NsisOptions-oneClick"></a>One-click installation. Defaults to `true`.
 | perMachine | <a name="NsisOptions-perMachine"></a><p>Defaults to <code>false</code>.</p> <p>If <code>oneClick</code> is <code>true</code> (default): Install per all users (per-machine).</p> <p>If <code>oneClick</code> is <code>false</code>: no install mode installer page (choice per-machine or per-user), always install per-machine.</p>
 | allowElevation | <a name="NsisOptions-allowElevation"></a>*boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. Defaults to `true`.
+| allowToChangeInstallationDirectory | <a name="NsisOptions-allowToChangeInstallationDirectory"></a>*boring installer only.* Whether to allow user to change installation directory. Defaults to `false`.
 | runAfterFinish | <a name="NsisOptions-runAfterFinish"></a>*one-click installer only.* Run application after finish. Defaults to `true`.
 | guid | <a name="NsisOptions-guid"></a>See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
 | installerIcon | <a name="NsisOptions-installerIcon"></a>The path to installer icon. Defaults to `build/installerIcon.ico` or application icon.

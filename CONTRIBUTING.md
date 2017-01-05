@@ -103,3 +103,5 @@ TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-
 ```
 
 where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `boring` is the test name and `test/out/nsisTest.js` is the path to test file.
+
+Do not forget to execute `yarn compile` before run.
