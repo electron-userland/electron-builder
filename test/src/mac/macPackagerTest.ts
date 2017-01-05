@@ -1,7 +1,7 @@
 import { assertPack, platform, modifyPackageJson, app, appThrows } from "../helpers/packTester"
 import { Platform, createTargets } from "electron-builder"
 import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
-import { copyFile } from "electron-builder/out/util/fs"
+import { copyFile } from "electron-builder-util/out/fs"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 

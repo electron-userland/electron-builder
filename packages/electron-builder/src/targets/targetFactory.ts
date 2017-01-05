@@ -2,7 +2,7 @@ import { PlatformPackager } from "../platformPackager"
 import { Arch, Platform } from "../metadata"
 import { tar, archive } from "./archive"
 import * as path from "path"
-import { log } from "../util/log"
+import { log } from "electron-builder-util/out/log"
 import BluebirdPromise from "bluebird-lst-c"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])

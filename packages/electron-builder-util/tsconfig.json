@@ -1,0 +1,27 @@
+{
+  "extends": "../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out"
+  },
+  "declaration": {
+    "electron-builder-util": "out/electron-builder-util.d.ts"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "files": [
+    "../../node_modules/@types/node/index.d.ts",
+    "node_modules/fs-extra-p/index.d.ts",
+    "node_modules/bluebird-lst-c/index.d.ts",
+    "../../typings/is-ci.d.ts",
+    "../../typings/stat-mode.d.ts",
+    "../../typings/chalk.d.ts",
+    "../../typings/debug.d.ts",
+    "../../typings/node-emoji.d.ts",
+    "../../typings/pretty-ms.d.ts",
+    "../../typings/ansi-escapes.d.ts",
+    "node_modules/fs-extra-p/index.d.ts",
+    "../electron-builder-http/out/electron-builder-http.d.ts",
+    "node_modules/7zip-bin/index.d.ts"
+  ]
+}

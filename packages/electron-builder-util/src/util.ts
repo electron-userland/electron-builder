@@ -9,7 +9,6 @@ import { warn, log } from "./log"
 import { createHash } from "crypto"
 import "source-map-support/register"
 import { statOrNull } from "./fs"
-import { DevMetadata } from "../metadata"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -229,15 +228,15 @@ export let tmpDirCounter = 0
 // add date to avoid use stale temp dir
 const tempDirPrefix = `${process.pid.toString(16)}-${Date.now().toString(16)}`
 
-export function getTempName(prefix?: string | n): string {
+export function getTempName(prefix?: string | null | undefined): string {
   return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(16)}`
 }
 
-export function isEmptyOrSpaces(s: string | n) {
+export function isEmptyOrSpaces(s: string | null | undefined) {
   return s == null || s.trim().length === 0
 }
 
-export function asArray<T>(v: n | T | Array<T>): Array<T> {
+export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   if (v == null) {
     return []
   }
@@ -258,8 +257,4 @@ export function getCacheDirectory(): string {
   else {
     return path.join(homedir(), ".cache", "electron-builder")
   }
-}
-
-export function getDirectoriesConfig(m: DevMetadata) {
-  return m.build.directories || (<any>m).directories
 }

@@ -1,17 +1,17 @@
 import { Arch, toLinuxArchString } from "../metadata"
 import { smarten } from "../platformPackager"
-import { use, exec } from "../util/util"
+import { use, exec } from "electron-builder-util"
 import * as path from "path"
-import { getBin } from "../util/binDownload"
+import { getBin } from "electron-builder-util/out/binDownload"
 import { readFile, outputFile, ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import { LinuxTargetHelper, installPrefix } from "./LinuxTargetHelper"
 import * as errorMessages from "../errorMessages"
-import { TmpDir } from "../util/tmp"
+import { TmpDir } from "electron-builder-util/out/tmp"
 import { LinuxPackager } from "../linuxPackager"
-import { log, warn } from "../util/log"
+import { log, warn } from "electron-builder-util/out/log"
 import { Target } from "./targetFactory"
-import { unlinkIfExists } from "../util/fs"
+import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
   BluebirdPromise.resolve("fpm") : downloadFpm()

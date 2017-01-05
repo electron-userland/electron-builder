@@ -1,9 +1,9 @@
-import { spawn, debug7zArgs } from "../util/util"
+import { spawn, debug7zArgs } from "electron-builder-util"
 import { CompressionLevel } from "../metadata"
 import * as path from "path"
 import { unlink } from "fs-extra-p"
 import { path7za } from "7zip-bin"
-import { exists } from "../util/fs"
+import { exists } from "electron-builder-util/out/fs"
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {

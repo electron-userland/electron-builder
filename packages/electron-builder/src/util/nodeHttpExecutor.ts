@@ -10,7 +10,7 @@ import { HttpExecutor, DownloadOptions, HttpError, configurePipes,  maxRedirects
 import { RequestOptions } from "https"
 import { safeLoad } from "js-yaml"
 import { parse as parseUrl } from "url"
-import { debug } from "./util"
+import { debug } from "electron-builder-util"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null

@@ -6,6 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-http/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-util/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder/out" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/app/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/dist" />

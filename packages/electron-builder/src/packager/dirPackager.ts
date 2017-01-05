@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst-c"
 import { emptyDir, chmod } from "fs-extra-p"
-import { warn } from "../util/log"
+import { warn } from "electron-builder-util/out/log"
 import { PlatformPackager } from "../platformPackager"
-import { debug7zArgs, spawn } from "../util/util"
+import { debug7zArgs, spawn } from "electron-builder-util"
 import { path7za } from "7zip-bin"
 import * as path from "path"
-import { copyDir } from "../util/fs"
+import { copyDir } from "electron-builder-util/out/fs"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 

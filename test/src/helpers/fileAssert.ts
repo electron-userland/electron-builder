@@ -1,6 +1,6 @@
 import { stat, lstat, Stats } from "fs-extra-p"
 import * as path from "path"
-import { exists } from "electron-builder/out/util/fs"
+import { exists } from "electron-builder-util/out/fs"
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(actual: any): Assertions {

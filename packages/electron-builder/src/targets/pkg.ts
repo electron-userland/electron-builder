@@ -1,4 +1,4 @@
-import { exec } from "../util/util"
+import { exec } from "electron-builder-util"
 import { Arch } from "../metadata"
 import MacPackager from "../macPackager"
 import * as path from "path"

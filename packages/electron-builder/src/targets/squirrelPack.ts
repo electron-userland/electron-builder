@@ -1,10 +1,10 @@
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { remove, copy, createWriteStream, unlink, ensureDir, stat } from "fs-extra-p"
-import { spawn, exec, prepareArgs, execWine, debug } from "../util/util"
+import { spawn, exec, prepareArgs, execWine, debug } from "electron-builder-util"
 import { WinPackager } from "../winPackager"
-import { log } from "../util/log"
-import { walk, copyFile } from "../util/fs"
+import { log } from "electron-builder-util/out/log"
+import { walk, copyFile } from "electron-builder-util/out/fs"
 
 const archiver = require("archiver")
 

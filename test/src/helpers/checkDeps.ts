@@ -3,7 +3,7 @@ import { readJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import depCheck, { DepCheckResult } from "depcheck"
 
-const printErrorAndExit = require("../../../packages/electron-builder/out/util/promise").printErrorAndExit
+const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
 
 const knownUnusedDevDependencies = new Set([
   "@develar/types",

@@ -2,8 +2,8 @@ import * as path from "path"
 import { readdir, readJson, writeJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 
-const printErrorAndExit = require("../../../packages/electron-builder/out/util/promise").printErrorAndExit
-const exec = require("../../../packages/electron-builder/out/util/util").exec
+const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
+const exec = require("../../../packages/electron-builder-util/out/util").exec
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")

@@ -1,7 +1,7 @@
 import { createKeychain } from "electron-builder/out/codeSign"
 import { CSC_LINK } from "../helpers/codeSignData"
-import { removePassword } from "electron-builder/out/util/util"
-import { TmpDir } from "electron-builder/out/util/tmp"
+import { removePassword } from "electron-builder-util"
+import { TmpDir } from "electron-builder-util/out/tmp"
 
 if (process.env.CSC_KEY_PASSWORD == null) {
   fit("Skip keychain-specific tests because CSC_KEY_PASSWORD is not defined", () => {

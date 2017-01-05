@@ -431,3 +431,7 @@ export function archFromString(name: string): Arch {
 
   throw new Error(`Unsupported arch ${name}`)
 }
+
+export function getDirectoriesConfig(m: DevMetadata) {
+  return m.build.directories || (<any>m).directories
+}

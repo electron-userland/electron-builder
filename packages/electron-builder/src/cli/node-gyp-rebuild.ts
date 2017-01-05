@@ -1,10 +1,11 @@
 #! /usr/bin/env node
-import { getElectronVersion, exec } from "../util/util"
-import { printErrorAndExit } from "../util/promise"
+
+import { getElectronVersion, exec } from "electron-builder-util"
+import { printErrorAndExit } from "electron-builder-util/out/promise"
 import * as path from "path"
 import yargs from "yargs"
 import { readPackageJson } from "../util/readPackageJson"
-import { log } from "../util/log"
+import { log } from "electron-builder-util/out/log"
 import { getGypEnv } from "../yarn"
 
 const args: any = yargs

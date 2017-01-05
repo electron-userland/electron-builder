@@ -6,7 +6,7 @@ import { TEST_DIR, ELECTRON_VERSION } from "./config"
 import isCi from "is-ci"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
-const util = require("../../../packages/electron-builder/out/util/util")
+const util = require("../../../packages/electron-builder-util/out/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
