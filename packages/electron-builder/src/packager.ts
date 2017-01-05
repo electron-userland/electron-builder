@@ -259,6 +259,17 @@ export class Packager implements BuildInfo {
       return
     }
 
+    const beforeBuild = options.beforeBuild
+    if (beforeBuild != null) {
+      const performDependenciesInstallOrRebuild = await beforeBuild({
+        appDir: this.appDir,
+        electronVersion: this.electronVersion,
+        platform,
+        arch: Arch[arch]
+      })
+      if (!performDependenciesInstallOrRebuild) return
+    }
+
     if (options.npmSkipBuildFromSource !== true && platform.nodeName !== process.platform) {
       log("Skip app dependencies rebuild because platform is different")
     }

@@ -1,7 +1,7 @@
 import { AppMetadata, DevMetadata, PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { readdir, remove, rename } from "fs-extra-p"
+import { readdir, remove, rename, Stats } from "fs-extra-p"
 import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
@@ -322,8 +322,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const platformSpecific = customBuildOptions.asar
     const result = platformSpecific == null ? this.config.asar : platformSpecific
     if (result === false) {
-      warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
-        "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+      statOrNull(path.join(this.info.appDir, "app.asar"))
+        .then((appAsarStat: Stats | null) => {
+          if (!appAsarStat || !appAsarStat.isFile()) {
+            warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
+              "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+          }
+        })
       return null
     }
 
