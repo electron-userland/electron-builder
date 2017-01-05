@@ -1,16 +1,15 @@
-import { getArchSuffix } from "../platformPackager"
-import { Arch } from "../metadata"
 import { WinPackager } from "../winPackager"
-import { use, spawn } from "../util/util"
+import { getArchSuffix, Arch } from "electron-builder-core"
+import { use, spawn } from "electron-builder-util"
 import { emptyDir, copy, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AppXOptions } from "../options/winOptions"
 import BluebirdPromise from "bluebird-lst-c"
-import { Target } from "./targetFactory"
+import { Target } from "electron-builder-core"
 import { getSignVendorPath } from "../windowsCodeSign"
 import sanitizeFileName from "sanitize-filename"
 import { release } from "os"
-import { copyDir } from "../util/fs"
+import { copyDir } from "electron-builder-util/out/fs"
 
 export default class AppXTarget extends Target {
   private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)

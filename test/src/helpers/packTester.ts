@@ -5,20 +5,20 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
 import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo, SquirrelWindowsOptions } from "electron-builder"
-import { exec, spawn, getTempName } from "electron-builder/out/util/util"
-import { log, warn } from "electron-builder/out/util/log"
+import { exec, spawn, getTempName } from "electron-builder-util"
+import { log, warn } from "electron-builder-util/out/log"
 import pathSorter from "path-sort"
 import DecompressZip from "decompress-zip"
-import { convertVersion } from "electron-builder/out/targets/squirrelPack"
+import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { TEST_DIR } from "./config"
-import { deepAssign } from "electron-builder/out/util/deepAssign"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
-import SquirrelWindowsTarget from "electron-builder/out/targets/squirrelWindows"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
 import OsXPackager from "electron-builder/out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
-import { copyDir, FileCopier } from "electron-builder/out/util/fs"
+import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import isCi from "is-ci"
 
 if (process.env.TRAVIS !== "true") {
@@ -344,7 +344,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     }
   }
 
-  assertThat(getFileNames(artifacts)).containsAll(expectedFileNames)
+  // we test latest.yml separately, don't want to complicate general assert
+  assertThat(getFileNames(artifacts).filter(it => it !== "latest.yml")).containsAll(expectedFileNames)
 
   if (!squirrel) {
     return
@@ -356,7 +357,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
-  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp")))
+  // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
+  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml")))
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
@@ -462,7 +464,7 @@ export class CheckingWinPackager extends WinPackager {
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder/out/targets/squirrelWindows").default
+    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
     this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
 
     await this.sign(this.computeAppOutDir(outDir, arch))

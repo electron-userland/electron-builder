@@ -1,6 +1,6 @@
 import { readdir, outputFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { exec, debug, isEmptyOrSpaces } from "../util/util"
+import { exec, debug, isEmptyOrSpaces } from "electron-builder-util"
 import BluebirdPromise from "bluebird-lst-c"
 import { LinuxBuildOptions } from "../options/linuxOptions"
 import { LinuxPackager } from "../linuxPackager"

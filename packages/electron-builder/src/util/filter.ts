@@ -1,7 +1,7 @@
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Filter } from "./fs"
+import { Filter } from "electron-builder-util/out/fs"
 
 export function hasMagic(pattern: Minimatch) {
   const set = pattern.set

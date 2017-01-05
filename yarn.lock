@@ -29,8 +29,8 @@
     conventional-changelog "0.0.17"
 
 "@types/electron@^1.4.30":
-  version "1.4.30"
-  resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.30.tgz#d79b1bc117b6cfa770220d6aeb5a475659cd7961"
+  version "1.4.31"
+  resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.31.tgz#6ef658e97152a4d3c9cda44f56bd3f917149bb33"
   dependencies:
     "@types/node" "*"
 
@@ -47,8 +47,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
 "@types/node@*":
-  version "6.0.56"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.56.tgz#12bc7fff825e72807f55dcbce17e9db6177713dd"
+  version "6.0.57"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.57.tgz#100f9d4390331297bc3b6160ac4805b46de6e752"
 
 "@types/source-map-support@^0.2.28":
   version "0.2.28"
@@ -1361,8 +1361,8 @@ github-url-from-username-repo@^1.0.0:
   resolved "https://registry.yarnpkg.com/github-url-from-username-repo/-/github-url-from-username-repo-1.0.2.tgz#7dd79330d2abe69c10c2cef79714c97215791dfa"
 
 github@^7.0.1:
-  version "7.2.0"
-  resolved "https://registry.yarnpkg.com/github/-/github-7.2.0.tgz#6d9133479ce67ed1af4997a6b51faeee81bf6059"
+  version "7.2.1"
+  resolved "https://registry.yarnpkg.com/github/-/github-7.2.1.tgz#5162ac7159a7f0754ca5f5e1001c0c6b7bf39f4a"
   dependencies:
     follow-redirects "0.0.7"
     https-proxy-agent "^1.0.0"

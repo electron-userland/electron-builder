@@ -2,10 +2,10 @@ import { rename, readFile, writeFile, unlink, utimes, copy } from "fs-extra-p"
 import * as path from "path"
 import { parse as parsePlist, build as buildPlist } from "plist"
 import BluebirdPromise from "bluebird-lst-c"
-import { use, asArray } from "../util/util"
+import { use, asArray } from "electron-builder-util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
-import { warn } from "../util/log"
-import { unlinkIfExists, copyFile } from "../util/fs"
+import { warn } from "electron-builder-util/out/log"
+import { unlinkIfExists, copyFile } from "electron-builder-util/out/fs"
 
 function doRename (basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))

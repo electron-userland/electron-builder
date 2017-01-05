@@ -1,10 +1,10 @@
-import { exec } from "electron-builder/out/util/util"
+import { exec } from "electron-builder-util"
 import { homedir } from "os"
 import { emptyDir, readFile, writeFile, ensureDir } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import pathSorter from "path-sort"
-import { unlinkIfExists } from "electron-builder/out/util/fs"
+import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 export class WineManager {
   wineDir: string

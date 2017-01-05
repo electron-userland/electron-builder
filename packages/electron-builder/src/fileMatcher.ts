@@ -1,8 +1,8 @@
 import * as path from "path"
 import { createFilter, hasMagic } from "./util/filter"
 import { Minimatch } from "minimatch"
-import { asArray } from "./util/util"
-import { Filter } from "./util/fs"
+import { asArray } from "electron-builder-util"
+import { Filter } from "electron-builder-util/out/fs"
 
 export interface FilePattern {
   from?: string

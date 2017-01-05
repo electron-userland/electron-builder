@@ -245,6 +245,9 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="SquirrelWindowsOptions"></a>
 ### `.build.squirrelWindows`
+
+To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+
 | Name | Description
 | --- | ---
 | iconUrl | <a name="SquirrelWindowsOptions-iconUrl"></a><p>A URL to an ICO file to use as the application icon (displayed in Control Panel &gt; Programs and Features). Defaults to the Electron icon.</p> <p>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.</p> <ul> <li>If you don’t plan to build windows installer, you can omit it.</li> <li>If your project repository is public on GitHub, it will be <code>https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true</code> by default.</li> </ul>
@@ -261,7 +264,7 @@ Windows specific build options.
 
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p>
+| target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p> <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a><p>Array of signing algorithms used. Defaults to <code>['sha1', 'sha256']</code></p> <p>For AppX <code>sha256</code> is always used.</p>
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.

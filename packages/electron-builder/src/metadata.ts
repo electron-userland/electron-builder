@@ -4,6 +4,7 @@ import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
+import { Arch } from "electron-builder-core"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -369,77 +370,10 @@ export interface PlatformSpecificBuildOptions {
   readonly forceCodeSigning?: boolean
 }
 
-export class Platform {
-  static MAC = new Platform("mac", "mac", "darwin")
-  static LINUX = new Platform("linux", "linux", "linux")
-  static WINDOWS = new Platform("windows", "win", "win32")
-
-  // deprecated
-  //noinspection JSUnusedGlobalSymbols
-  static OSX = Platform.MAC
-
-  constructor(public name: string, public buildConfigurationKey: string, public nodeName: string) {
-  }
-
-  toString() {
-    return this.name
-  }
-
-  createTarget(type?: string | Array<string> | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
-    const archToType = new Map()
-    if (this === Platform.MAC) {
-      archs = [Arch.x64]
-    }
-
-    for (const arch of (archs == null || archs.length === 0 ? [archFromString(process.arch)] : archs)) {
-      archToType.set(arch, type == null ? [] : (Array.isArray(type) ? type : [type]))
-    }
-    return new Map([[this, archToType]])
-  }
-
-  static current(): Platform {
-    return Platform.fromString(process.platform)
-  }
-
-  static fromString(name: string): Platform {
-    name = name.toLowerCase()
-    switch (name) {
-      case Platform.MAC.nodeName:
-      case Platform.MAC.name:
-        return Platform.MAC
-
-      case Platform.WINDOWS.nodeName:
-      case Platform.WINDOWS.name:
-      case Platform.WINDOWS.buildConfigurationKey:
-        return Platform.WINDOWS
-
-      case Platform.LINUX.nodeName:
-        return Platform.LINUX
-
-      default:
-        throw new Error(`Unknown platform: ${name}`)
-    }
-  }
-}
-
-export enum Arch {
-  ia32, x64, armv7l
-}
-
 export function toLinuxArchString(arch: Arch) {
   return arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l")
 }
 
-export function archFromString(name: string): Arch {
-  if (name === "x64") {
-    return Arch.x64
-  }
-  if (name === "ia32") {
-    return Arch.ia32
-  }
-  if (name === "armv7l") {
-    return Arch.armv7l
-  }
-
-  throw new Error(`Unsupported arch ${name}`)
+export function getDirectoriesConfig(m: DevMetadata) {
+  return m.build.directories || (<any>m).directories
 }

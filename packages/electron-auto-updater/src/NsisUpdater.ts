@@ -13,6 +13,7 @@ import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
+import "source-map-support/register"
 
 export class NsisUpdater extends EventEmitter {
   /**

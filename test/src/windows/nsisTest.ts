@@ -5,7 +5,7 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { assertThat } from "../helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
-import { walk } from "electron-builder/out/util/fs"
+import { walk } from "electron-builder-util/out/fs"
 import { WineManager, diff } from "../helpers/wine"
 import { safeLoad } from "js-yaml"
 

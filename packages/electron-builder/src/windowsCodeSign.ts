@@ -1,8 +1,8 @@
-import { exec } from "./util/util"
+import { exec } from "electron-builder-util"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import { release } from "os"
-import { getBinFromBintray } from "./util/binDownload"
+import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import isCi from "is-ci"
 import { WinBuildOptions } from "./options/winOptions"
 

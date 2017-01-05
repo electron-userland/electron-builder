@@ -2,11 +2,11 @@ import { Packager, normalizePlatforms } from "./packager"
 import { PackagerOptions, getPublishConfigs, getResolvedPublishConfig } from "./platformPackager"
 import { PublishOptions, Publisher } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
-import { executeFinally } from "./util/promise"
+import { executeFinally } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"
-import { isEmptyOrSpaces, debug } from "./util/util"
-import { log } from "./util/log"
-import { Platform, Arch, archFromString } from "./metadata"
+import { isEmptyOrSpaces, debug } from "electron-builder-util"
+import { log } from "electron-builder-util/out/log"
+import { Platform, Arch, archFromString } from "electron-builder-core"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
@@ -291,13 +291,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
             if (it == null) {
               return null
             }
-
-            if (event.file == null) {
-              return publishTasks.push(<BluebirdPromise<any>>it.uploadData(event.data!, event.artifactName!))
-            }
-            else {
-              return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file!, event.artifactName))
-            }
+            return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName))
           })
       }
     }

@@ -8,8 +8,8 @@ import { Platform, DIR_TARGET } from "electron-builder"
 import pathSorter from "path-sort"
 import Mode from "stat-mode"
 import { Permissions } from "stat-mode"
-import { TmpDir } from "electron-builder/out/util/tmp"
-import { copyDir } from "electron-builder/out/util/fs"
+import { TmpDir } from "electron-builder-util/out/tmp"
+import { copyDir } from "electron-builder-util/out/fs"
 
 test.ifDevOrLinuxCi("files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),

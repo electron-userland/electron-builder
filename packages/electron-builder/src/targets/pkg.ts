@@ -1,8 +1,7 @@
-import { exec } from "../util/util"
-import { Arch } from "../metadata"
+import { exec } from "electron-builder-util"
 import MacPackager from "../macPackager"
 import * as path from "path"
-import { Target } from "./targetFactory"
+import { Target, Arch } from "electron-builder-core"
 
 export class PkgTarget extends Target {
   constructor(private packager: MacPackager) {

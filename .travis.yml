@@ -14,6 +14,8 @@ language: c
 cache:
   directories:
     - node_modules
+    - packages/electron-builder/node_modules
+    - packages/electron-builder-util/node_modules
     - $HOME/.electron
     - /tmp/jest-electron-builder-tests
 

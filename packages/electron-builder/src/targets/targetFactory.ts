@@ -1,24 +1,12 @@
 import { PlatformPackager } from "../platformPackager"
-import { Arch, Platform } from "../metadata"
+import { Arch, Platform, Target } from "electron-builder-core"
 import { tar, archive } from "./archive"
 import * as path from "path"
-import { log } from "../util/log"
-import BluebirdPromise from "bluebird-lst-c"
+import { log } from "electron-builder-util/out/log"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 export const DEFAULT_TARGET = "default"
 export const DIR_TARGET = "dir"
-
-export abstract class Target {
-  constructor(public readonly name: string, public readonly isAsyncSupported: boolean = true) {
-  }
-
-  abstract build(appOutDir: string, arch: Arch): Promise<any>
-
-  finishBuild(): Promise<any> {
-    return BluebirdPromise.resolve()
-  }
-}
 
 export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string> | n, outDir: string, packager: PlatformPackager<any>, cleanupTasks: Array<() => Promise<any>>): Array<Target> {
   const result: Array<Target> = []

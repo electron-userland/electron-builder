@@ -1,12 +1,12 @@
 import yargs from "yargs"
-import { printErrorAndExit } from "../util/promise"
-import { exec, spawn } from "../util/util"
+import { printErrorAndExit } from "electron-builder-util/out/promise"
+import { exec, spawn } from "electron-builder-util"
 import { getSignVendorPath } from "../windowsCodeSign"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { log } from "../util/log"
-import { TmpDir } from "../util/tmp"
-import { unlinkIfExists } from "../util/fs"
+import { log } from "electron-builder-util/out/log"
+import { TmpDir } from "electron-builder-util/out/tmp"
+import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 async function main() {
   const args: any = yargs

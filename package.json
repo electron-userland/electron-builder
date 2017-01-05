@@ -2,8 +2,8 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/electron-builder-http packages/electron-builder packages/electron-auto-updater test",
-    "lint": "node ./packages/lint.js",
+    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-auto-updater test",
+    "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js check-deps",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
     "test": "node ./test/out/helpers/runTests.js",
@@ -15,7 +15,7 @@
     "docker-images": "docker/build.sh",
     "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "postinstall": "lerna bootstrap",
-    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http'",
+    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util' -a",
     "lerna-publish": "lerna publish --skip-npm --skip-git",
     "set-versions": "node test/out/helpers/setVersions.js p",
     "set-dep-versions": "node test/out/helpers/setVersions.js"
@@ -56,7 +56,8 @@
     "testRegex": "\\.js$",
     "modulePaths": [
       "<rootDir>/packages",
-      "<rootDir>/packages/electron-builder/node_modules"
+      "<rootDir>/packages/electron-builder/node_modules",
+      "<rootDir>/packages/electron-builder-util/node_modules"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
   },

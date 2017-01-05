@@ -1,13 +1,10 @@
-import { WinPackager } from "../winPackager"
-import { getArchSuffix } from "../platformPackager"
-import { Arch } from "../metadata"
+import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
-import { warn, log } from "../util/log"
-import { getRepositoryInfo } from "../repositoryInfo"
-import { getBinFromBintray } from "../util/binDownload"
+import { warn, log } from "electron-builder-util/out/log"
+import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
-import { SquirrelWindowsOptions } from "../options/winOptions"
-import { Target } from "./targetFactory"
+import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
+import { Target, Arch, getArchSuffix } from "electron-builder-core"
 
 const SW_VERSION = "1.5.1.4"
 //noinspection SpellCheckingInspection
@@ -53,7 +50,7 @@ export default class SquirrelWindowsTarget extends Target {
     const packager = this.packager
     let iconUrl = this.options.iconUrl || packager.config.iconUrl
     if (iconUrl == null) {
-      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.info.devMetadata)
+      const info = await packager.getRepositoryInfo()
       if (info != null) {
         iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
@@ -93,7 +90,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (options.remoteReleases === true) {
-      const info = await getRepositoryInfo(packager.appInfo.metadata, packager.info.devMetadata)
+      const info = await packager.getRepositoryInfo()
       if (info == null) {
         warn("remoteReleases set to true, but cannot get repository info")
       }

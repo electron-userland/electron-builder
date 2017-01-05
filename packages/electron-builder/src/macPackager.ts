@@ -1,17 +1,17 @@
 import { PlatformPackager, BuildInfo } from "./platformPackager"
-import { Platform, Arch } from "./metadata"
 import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { warn, task } from "./util/log"
+import { warn, task } from "electron-builder-util/out/log"
 import { createKeychain, CodeSigningInfo, findIdentity, appleCertificatePrefixes } from "./codeSign"
-import { deepAssign } from "./util/deepAssign"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { signAsync, SignOptions } from "electron-macos-sign"
 import { DmgTarget } from "./targets/dmg"
-import { createCommonTarget, DIR_TARGET, NoOpTarget, Target } from "./targets/targetFactory"
+import { createCommonTarget, DIR_TARGET, NoOpTarget } from "./targets/targetFactory"
 import { AppInfo } from "./appInfo"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
-import { exec } from "./util/util"
+import { exec } from "electron-builder-util"
+import { Target, Platform, Arch } from "electron-builder-core"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>

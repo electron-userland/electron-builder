@@ -1,26 +1,25 @@
-import { AppMetadata, DevMetadata, Platform, PlatformSpecificBuildOptions, Arch, FileAssociation, BuildMetadata } from "./metadata"
+import { AppMetadata, DevMetadata, PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { readdir, remove, rename } from "fs-extra-p"
-import { use, isEmptyOrSpaces, asArray, debug, getDirectoriesConfig } from "./util/util"
+import { readdir, remove, rename, Stats } from "fs-extra-p"
+import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
-import { warn, log } from "./util/log"
+import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import { unpackElectron } from "./packager/dirPackager"
-import { TmpDir } from "./util/tmp"
+import { TmpDir } from "electron-builder-util/out/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
-import { Target } from "./targets/targetFactory"
-import { deepAssign } from "./util/deepAssign"
-import { statOrNull, unlinkIfExists, copyDir } from "./util/fs"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import EventEmitter = NodeJS.EventEmitter
-import { Stats } from "fs"
+import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -531,17 +530,23 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return null
   }
+
+  getRepositoryInfo(): Promise<RepositoryInfo> {
+    return getRepositoryInfo(this.appInfo.metadata, this.info.devMetadata)
+  }
 }
 
-export function getArchSuffix(arch: Arch): string {
-  return arch === Arch.x64 ? "" : `-${Arch[arch]}`
+export interface RepositoryInfo {
+  type: string
+  domain: string
+  user: string
+  project: string
 }
 
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
 
-  readonly file?: string
-  readonly data?: Buffer
+  readonly file: string
 
   readonly artifactName?: string
 
@@ -585,6 +590,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
 
   if (publishers == null) {
     publishers = packager.config.publish
+    // triple equals - if explicitly set to null
     if (publishers === null) {
       return null
     }

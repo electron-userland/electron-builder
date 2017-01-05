@@ -1,13 +1,13 @@
-import { exec, getTempName, isEmptyOrSpaces, getCacheDirectory } from "./util/util"
+import { exec, getTempName, isEmptyOrSpaces, getCacheDirectory } from "electron-builder-util"
 import { deleteFile, outputFile, copy, rename } from "fs-extra-p"
 import { download } from "electron-builder-http"
 import * as path from "path"
-import { executeFinally, all } from "./util/promise"
+import { executeFinally, all } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"
 import { randomBytes } from "crypto"
-import { TmpDir } from "./util/tmp"
+import { TmpDir } from "electron-builder-util/out/tmp"
 import { homedir } from "os"
-import { statOrNull } from "./util/fs"
+import { statOrNull } from "electron-builder-util/out/fs"
 import isCi from "is-ci"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]

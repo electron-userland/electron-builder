@@ -65,18 +65,58 @@ export class HttpError extends Error {
   }
 }
 
-class ProgressCallbackTransform extends Transform {
+export class ProgressCallbackTransform extends Transform {
   private start = Date.now()
   private transferred = 0
+  private delta = 0
 
-  constructor(private onProgress: any, private total: number) {
+  private nextUpdate = this.start + 1000
+
+  constructor(private total: number, private onProgress: (info: ProgressInfo) => any) {
     super()
   }
 
   _transform(chunk: any, encoding: string, callback: Function) {
-    this.transferred = calculateDownloadProgress(this.total, this.start, this.transferred, chunk, this.onProgress)
+    this.transferred += chunk.length
+    this.delta += chunk.length
+
+    const now = Date.now()
+    if (now >= this.nextUpdate && this.transferred != this.total /* will be emitted on _flush */) {
+      this.nextUpdate = now + 1000
+
+      this.onProgress(<ProgressInfo>{
+        total: this.total,
+        delta: this.delta,
+        transferred: this.transferred,
+        percent: (this.transferred / this.total) * 100,
+        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000))
+      })
+      this.delta = 0
+    }
+
     callback(null, chunk)
   }
+
+  _flush(callback: Function): void {
+    this.onProgress(<ProgressInfo>{
+      total: this.total,
+      delta: this.delta,
+      transferred: this.total,
+      percent: 100,
+      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000))
+    })
+    this.delta = 0
+
+    callback(null)
+  }
+}
+
+export interface ProgressInfo {
+  total: number
+  delta: number
+  transferred: number
+  percent: number
+  bytesPerSecond: number
 }
 
 class DigestTransform extends Transform {
@@ -122,17 +162,6 @@ function checkSha2(sha2Header: string | null | undefined, sha2: string | null | 
   return true
 }
 
-export function calculateDownloadProgress(total: number, start: number, transferred: number, chunk: any, callback: any): number {
-    transferred += chunk.length
-    callback({
-      total: total,
-      transferred: transferred,
-      percent: ((transferred / total) * 100).toFixed(2),
-      bytesPerSecond: Math.round(transferred / ((Date.now() - start) / 1000))
-    })
-    return transferred
-}
-
 export function safeGetHeader(response: any, headerKey: string) {
   const value = response.headers[headerKey]
   if (value == null) {
@@ -156,7 +185,7 @@ export function configurePipes(options: DownloadOptions, response: any, destinat
   if (options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {
-      streams.push(new ProgressCallbackTransform(options.onProgress, parseInt(contentLength, 10)))
+      streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), options.onProgress))
     }
   }
 

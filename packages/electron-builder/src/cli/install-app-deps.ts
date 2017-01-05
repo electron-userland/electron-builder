@@ -1,9 +1,10 @@
 #! /usr/bin/env node
-import { computeDefaultAppDirectory, getElectronVersion, use, getDirectoriesConfig } from "../util/util"
-import { printErrorAndExit } from "../util/promise"
+
+import { computeDefaultAppDirectory, getElectronVersion, use } from "electron-builder-util"
+import { printErrorAndExit } from "electron-builder-util/out/promise"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
-import { DevMetadata } from "../metadata"
+import { DevMetadata, getDirectoriesConfig } from "../metadata"
 import yargs from "yargs"
 import { readPackageJson } from "../util/readPackageJson"
 import { installOrRebuild } from "../yarn"

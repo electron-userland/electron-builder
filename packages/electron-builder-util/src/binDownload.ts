@@ -34,6 +34,7 @@ async function doGetBin(name: string, dirName: string, url: string, sha2: string
   const dirPath = path.join(cachePath, dirName)
 
   const dirStat = await statOrNull(dirPath)
+  //noinspection ES6MissingAwait
   if (dirStat != null && dirStat.isDirectory()) {
     debug(`Found existing ${name} ${dirPath}`)
     return dirPath

@@ -10,6 +10,8 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    Target package type: list of `nsis`, `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
 
    AppX package can be built only on Windows 10.
+
+   To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
   */
   readonly target?: Array<string> | null
 
@@ -145,6 +147,8 @@ export interface NsisOptions {
 
 /*
  ### `.build.squirrelWindows`
+
+ To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
  */
 export interface SquirrelWindowsOptions extends WinBuildOptions {
   /*
