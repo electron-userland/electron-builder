@@ -541,8 +541,7 @@ export interface RepositoryInfo {
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
 
-  readonly file?: string
-  readonly data?: Buffer
+  readonly file: string
 
   readonly artifactName?: string
 
@@ -586,6 +585,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
 
   if (publishers == null) {
     publishers = packager.config.publish
+    // triple equals - if explicitly set to null
     if (publishers === null) {
       return null
     }

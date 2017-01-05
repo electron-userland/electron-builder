@@ -14,6 +14,7 @@ import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 import { Target, Arch } from "electron-builder-core"
 import sanitizeFileName from "sanitize-filename"
+import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 const NSIS_VERSION = "3.0.4"
 //noinspection SpellCheckingInspection
@@ -42,14 +43,25 @@ export default class NsisTarget extends Target {
     }
   }
 
-  private computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
-    const publishConfigs = getPublishConfigs(this.packager, this.options)
-    if (publishConfigs != null && publishConfigs.length > 0) {
-      return BluebirdPromise.map(publishConfigs, it => getResolvedPublishConfig(this.packager.info, it, true))
+  private async computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
+    let publishConfigs = getPublishConfigs(this.packager, this.options)
+    if (publishConfigs == null) {
+      return null
     }
-    else {
-      return BluebirdPromise.resolve(null)
+
+    if (publishConfigs.length === 0) {
+      // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
+      // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
+      const repositoryInfo = await this.packager.getRepositoryInfo()
+      if (repositoryInfo != null && repositoryInfo.type === "github") {
+        publishConfigs = [{provider: "github"}]
+      }
+      else {
+        return null
+      }
     }
+
+    return await BluebirdPromise.map(publishConfigs, it => <Promise<PublishConfiguration>>getResolvedPublishConfig(this.packager.info, it, true))
   }
 
   build(appOutDir: string, arch: Arch) {
@@ -226,35 +238,35 @@ export default class NsisTarget extends Target {
     const publishConfigs = await this.publishConfigs
     const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
     if (publishConfigs != null) {
-      let sha2: string | null = null
       for (const publishConfig of publishConfigs) {
-        if (publishConfig.provider === "generic" || publishConfig.provider === "github") {
-          if (sha2 == null) {
-            sha2 = await sha256(installerPath)
-          }
-
-          const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-          if (publishConfig.provider === "generic") {
-            await writeFile(path.join(this.outDir, `${channel}.yml`), safeDump(<UpdateInfo>{
-              version: version,
-              path: installerFilename,
-              sha2: sha2,
-            }))
-          }
-          else {
-            packager.info.eventEmitter.emit("artifactCreated", <ArtifactCreated>{
-              data: new Buffer(safeDump(<UpdateInfo>{
-                version: version,
-                path: githubArtifactName,
-                sha2: sha2,
-              })),
-              artifactName: `${channel}.yml`,
-              packager: packager,
-              publishConfig: publishConfig,
-            })
-          }
+        if (!(publishConfig.provider === "generic" || publishConfig.provider === "github")) {
+          continue
         }
+
+        const sha2 = await sha256(installerPath)
+        const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+        const updateInfoFile = path.join(this.outDir, `${channel}.yml`)
+        await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
+          version: version,
+          githubArtifactName: githubArtifactName,
+          path: installerFilename,
+          sha2: sha2,
+        }))
+
+        const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
+        if (githubPublishConfig != null) {
+          packager.info.eventEmitter.emit("artifactCreated", <ArtifactCreated>{
+            file: updateInfoFile,
+            packager: packager,
+            publishConfig: githubPublishConfig,
+          })
+        }
+
+        break
       }
+    }
+    else {
+      await unlinkIfExists(path.join(this.outDir, `latest.yml`))
     }
 
     packager.dispatchArtifactCreated(installerPath, githubArtifactName)

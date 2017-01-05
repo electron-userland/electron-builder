@@ -51,7 +51,7 @@ export class GitHubProvider implements Provider<VersionInfo> {
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
     const basePath = this.getBasePath()
     // space is not supported on GitHub
-    const name = path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
     return {
       name: name,
       url: `https://github.com${basePath}/download/v${versionInfo.version}/${name}`,

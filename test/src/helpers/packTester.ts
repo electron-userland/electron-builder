@@ -344,7 +344,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     }
   }
 
-  assertThat(getFileNames(artifacts)).containsAll(expectedFileNames)
+  // we test latest.yml separately, don't want to complicate general assert
+  assertThat(getFileNames(artifacts).filter(it => it !== "latest.yml")).containsAll(expectedFileNames)
 
   if (!squirrel) {
     return
@@ -356,7 +357,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   const unZipper = new DecompressZip(packageFile)
   const fileDescriptors = await unZipper.getFiles()
 
-  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp")))
+  // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
+  const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml")))
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents

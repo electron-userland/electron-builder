@@ -78,10 +78,18 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         switch (name) {
           case "nsis":
             return require("./targets/nsis").default
+
           case "squirrel":
-            return require("electron-builder-squirrel-windows").default
+            try {
+              return require("electron-builder-squirrel-windows").default
+            }
+            catch (e) {
+              throw new Error(`Since electron-builder 11, module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
+            }
+
           case "appx":
             return require("./targets/appx").default
+
           default:
             return null
         }

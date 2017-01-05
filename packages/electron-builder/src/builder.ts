@@ -291,13 +291,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
             if (it == null) {
               return null
             }
-
-            if (event.file == null) {
-              return publishTasks.push(<BluebirdPromise<any>>it.uploadData(event.data!, event.artifactName!))
-            }
-            else {
-              return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file!, event.artifactName))
-            }
+            return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file, event.artifactName))
           })
       }
     }
