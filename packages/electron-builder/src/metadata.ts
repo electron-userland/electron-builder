@@ -4,7 +4,7 @@ import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
-import { Arch } from "electron-builder-core"
+import { Arch, Platform } from "electron-builder-core"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -198,7 +198,7 @@ export interface BuildMetadata {
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
 
   /*
-   *programmatic API only* The function to be run before dependencies from package.json are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to false will skip dependencies install or rebuild.
+   *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
    */
   readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
 

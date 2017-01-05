@@ -82,7 +82,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | snap | <a name="BuildMetadata-snap"></a>See [.build.snap](#SnapOptions).
 | compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
 | afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-| beforeBuild | <a name="BuildMetadata-beforeBuild"></a>*programmatic API only* The function to be run before dependencies from package.json are installed or rebuilt. Promise must be returned. Resolving to false will skip dependencies install or rebuild.
+| beforeBuild | <a name="BuildMetadata-beforeBuild"></a>*programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
 | npmRebuild | <a name="BuildMetadata-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
 | npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
 | npmArgs | <a name="BuildMetadata-npmArgs"></a>Additional command line arguments to use when installing app native deps. Defaults to `null`.

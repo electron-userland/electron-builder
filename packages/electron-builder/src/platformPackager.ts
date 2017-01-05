@@ -1,7 +1,7 @@
 import { AppMetadata, DevMetadata, PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { readdir, remove, rename, Stats } from "fs-extra-p"
+import { readdir, remove, rename } from "fs-extra-p"
 import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
 import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
@@ -183,7 +183,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    const asarOptions = this.computeAsarOptions(platformSpecificBuildOptions)
+    const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const fileMatchOptions: FileMatchOptions = {
       arch: Arch[arch],
       os: this.platform.buildConfigurationKey
@@ -306,7 +306,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  private computeAsarOptions(customBuildOptions: DC): AsarOptions | null {
+  private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
     function errorMessage(name: string) {
       return `${name} is deprecated is deprecated and not supported — please use build.asarUnpack`
     }
@@ -322,13 +322,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const platformSpecific = customBuildOptions.asar
     const result = platformSpecific == null ? this.config.asar : platformSpecific
     if (result === false) {
-      statOrNull(path.join(this.info.appDir, "app.asar"))
-        .then((appAsarStat: Stats | null) => {
-          if (!appAsarStat || !appAsarStat.isFile()) {
-            warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
-              "Please enable asar and use asarUnpack to unpack files that must be externally available.")
-          }
-        })
+      const appAsarStat = await statOrNull(path.join(this.info.appDir, "app.asar"))
+      //noinspection ES6MissingAwait
+      if (appAsarStat == null || !appAsarStat.isFile()) {
+        warn("Packaging using asar archive is disabled — it is strongly not recommended.\n" +
+          "Please enable asar and use asarUnpack to unpack files that must be externally available.")
+      }
       return null
     }
 
@@ -444,8 +443,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       if (outStat == null) {
         throw new Error(`${messagePrefix} "${relativeFile}" does not exist. Seems like a wrong configuration.`)
       }
-      else if (!outStat.isFile()) {
-        throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+      else {
+        //noinspection ES6MissingAwait
+        if (!outStat.isFile()) {
+          throw new Error(`${messagePrefix} "${relativeFile}" is not a file. Seems like a wrong configuration.`)
+        }
       }
     }
   }
@@ -455,8 +457,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (outStat == null) {
       throw new Error(`Output directory "${appOutDir}" does not exist. Seems like a wrong configuration.`)
     }
-    else if (!outStat.isDirectory()) {
-      throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
+    else {
+      //noinspection ES6MissingAwait
+      if (!outStat.isDirectory()) {
+        throw new Error(`Output directory "${appOutDir}" is not a directory. Seems like a wrong configuration.`)
+      }
     }
 
     const resourcesDir = this.getResourcesDir(appOutDir)

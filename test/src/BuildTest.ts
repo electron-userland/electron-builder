@@ -192,22 +192,6 @@ test("beforeBuild", () => {
   })
 })
 
-// ifMac("app-executable-deps", () => {
-//   return assertPack("app-executable-deps", {
-//     targets: Platform.current().createTarget(DIR_TARGET),
-//   }, {
-//     useTempDir: false,
-//     packed: async context => {
-//       const data = await readJson(path.join(context.outDir, "mac/app-executable-deps.app/Contents/Resources/app.asar.unpacked", "node_modules", "node-notifier", "package.json"))
-//       for (const name of Object.getOwnPropertyNames(data)) {
-//         if (name[0] === "_") {
-//           throw new Error("Property name starts with _")
-//         }
-//       }
-//     }
-//   })
-// })
-
 test.ifDevOrLinuxCi("smart unpack", () => {
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
