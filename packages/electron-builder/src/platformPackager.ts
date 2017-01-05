@@ -551,7 +551,8 @@ export interface RepositoryInfo {
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
 
-  readonly file: string
+  readonly file?: string
+  readonly data?: Buffer
 
   readonly artifactName?: string
 

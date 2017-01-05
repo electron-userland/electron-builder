@@ -162,6 +162,10 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
+    if (event.file == null) {
+      return
+    }
+
     assertThat(event.file).isAbsolute()
     let list = artifacts.get(event.packager.platform)
     if (list == null) {

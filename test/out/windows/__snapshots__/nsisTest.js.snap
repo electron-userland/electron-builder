@@ -1,7 +1,38 @@
+exports[`test allowToChangeInstallationDirectory 1`] = `
+Object {
+  "owner": "foo",
+  "provider": "github",
+  "repo": "bar",
+}
+`;
+
+exports[`test allowToChangeInstallationDirectory 2`] = `
+Object {
+  "githubArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
+  "path": "Test Custom Installation Dir Setup 1.1.0.exe",
+  "version": "1.1.0",
+}
+`;
+
 exports[`test one-click 1`] = `
 Object {
   "owner": "actperepo",
   "package": "TestApp",
   "provider": "bintray",
+}
+`;
+
+exports[`test perMachine, no run after finish 1`] = `
+Object {
+  "provider": "generic",
+  "url": "https://develar.s3.amazonaws.com/test",
+}
+`;
+
+exports[`test perMachine, no run after finish 2`] = `
+Object {
+  "githubArtifactName": "TestApp-Setup-1.1.0.exe",
+  "path": "TestApp Setup 1.1.0.exe",
+  "version": "1.1.0",
 }
 `;

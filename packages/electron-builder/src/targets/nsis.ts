@@ -262,8 +262,14 @@ export default class NsisTarget extends Target {
 
         const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
         if (githubPublishConfig != null) {
+          // to preserve compatibility with old electron-auto-updater (< 0.10.0), we upload file with path specific for GitHub
           packager.info.eventEmitter.emit("artifactCreated", <ArtifactCreated>{
-            file: updateInfoFile,
+            data: new Buffer(safeDump(<UpdateInfo>{
+              version: version,
+              path: githubArtifactName,
+              sha2: sha2,
+            })),
+            artifactName: `${channel}.yml`,
             packager: packager,
             publishConfig: githubPublishConfig,
           })
