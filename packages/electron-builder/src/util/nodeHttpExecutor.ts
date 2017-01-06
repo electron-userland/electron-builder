@@ -80,9 +80,10 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
     request.end()
   }
 
-
   doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
+    if (debug.enabled) {
+      debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
+    }
 
     if (token != null) {
       (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`

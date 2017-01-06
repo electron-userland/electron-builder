@@ -12,8 +12,6 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
-const NsisUpdaterClass = require("../../packages/electron-auto-updater/out/NsisUpdater").NsisUpdater
-
 const g = (<any>global)
 g.__test_app = {
   getVersion: function () {
@@ -26,17 +24,17 @@ g.__test_app = {
 }
 
 test("check updates - no versions at all", async () => {
-  const updater: NsisUpdater = new NsisUpdaterClass({
-      provider: "bintray",
-      owner: "actperepo",
-      package: "no-versions",
-    })
+  const updater = new NsisUpdater({
+    provider: "bintray",
+    owner: "actperepo",
+    package: "no-versions",
+  })
 
   await assertThat(updater.checkForUpdates()).throws(/No latest version, please ensure that/)
 })
 
 test("cannot find suitable file for version", async () => {
-  const updater: NsisUpdater = new NsisUpdaterClass({
+  const updater = new NsisUpdater({
     provider: "bintray",
     owner: "actperepo",
     package: "incorrect-file-version",
@@ -54,7 +52,7 @@ test("file url", async () => {
     package: "TestApp",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater = new NsisUpdater()
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -79,13 +77,33 @@ test("file url generic", async () => {
     url: "https://develar.s3.amazonaws.com/test",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  expect(actualEvents).toMatchSnapshot()
+})
+
+test("sha2 mismatch error event", async () => {
+  const tmpDir = new TmpDir()
+  const testResourcesPath = await tmpDir.getTempFile("update-config")
+  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+    channel: "beta",
+  }))
+  g.__test_resourcesPath = testResourcesPath
+  const updater = new NsisUpdater()
+
+  const actualEvents = trackEvents(updater)
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  await assertThat(updateCheckResult.downloadPromise).throws(/SHA2 checksum mismatch,/)
 
   expect(actualEvents).toMatchSnapshot()
 })
@@ -98,7 +116,7 @@ test("file url generic - manual download", async () => {
     url: "https://develar.s3.amazonaws.com/test",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater = new NsisUpdater()
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -120,7 +138,7 @@ test("checkForUpdates several times", async () => {
     url: "https://develar.s3.amazonaws.com/test",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater: NsisUpdater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
 
@@ -144,7 +162,7 @@ test("file url github", async () => {
     repo: "__test_nsis_release",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater: NsisUpdater = new NsisUpdater()
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -163,7 +181,7 @@ test("file url github", async () => {
 
 test("test error", async () => {
   g.__test_resourcesPath = null
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater: NsisUpdater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
 
@@ -179,14 +197,12 @@ test("test download progress", async () => {
     url: "https://develar.s3.amazonaws.com/test",
   }))
   g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdaterClass()
+  const updater = new NsisUpdater()
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
 
-  updater.addListener("download-progress", (e: any, progress: any) => {
-    progressEvents.push(progress)
-  })
+  updater.signals.progress(it => progressEvents.push(it))
 
   await updater.checkForUpdates()
   await updater.downloadUpdate()
@@ -195,7 +211,7 @@ test("test download progress", async () => {
 
   const lastEvent = progressEvents.pop()
 
-  expect(parseInt(lastEvent.percent, 10)).toBe(100)
+  expect(lastEvent.percent).toBe(100)
   expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })

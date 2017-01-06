@@ -198,6 +198,7 @@ export function configurePipes(options: DownloadOptions, response: any, destinat
 
   let lastStream = response
   for (const stream of streams) {
+    stream.on("error", callback)
     lastStream = lastStream.pipe(stream)
   }
 

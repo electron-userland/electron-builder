@@ -77,7 +77,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
   doApiRequest<T>(options: Electron.RequestOptions, token: string | null, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     const requestOptions: any = options
-    this.debug(`HTTPS request: ${JSON.stringify(requestOptions, null, 2)}`)
+    if (this.debug.enabled) {
+      this.debug(`HTTPS request: ${JSON.stringify(requestOptions, null, 2)}`)
+    }
 
     if (token != null) {
       (<any>requestOptions.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`

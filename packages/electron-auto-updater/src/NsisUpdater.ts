@@ -3,8 +3,8 @@ import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
 import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
-import { download, executorHolder } from "electron-builder-http"
-import { Provider, UpdateCheckResult, FileInfo } from "./api"
+import { download, executorHolder, DownloadOptions } from "electron-builder-http"
+import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal, DOWNLOAD_PROGRESS } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
 import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
@@ -37,6 +37,8 @@ export class NsisUpdater extends EventEmitter {
 
   private versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
+
+  public signals = new UpdaterSignal(this)
 
   constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
     super()
@@ -148,12 +150,16 @@ export class NsisUpdater extends EventEmitter {
   async downloadUpdate() {
     const versionInfo = this.versionInfo
     const fileInfo = this.fileInfo
-    const downloadOptions: any = {
-      onProgress: (progress: any) => this.emit("download-progress", {}, progress)
+    const downloadOptions: DownloadOptions = {
+      skipDirCreation: true,
     }
 
-    if (fileInfo && fileInfo.sha2) {
-      downloadOptions["sha2"] = fileInfo.sha2
+    if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+      downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
+    }
+
+    if (fileInfo != null && fileInfo.sha2 != null) {
+      downloadOptions.sha2 = fileInfo.sha2
     }
 
     if (versionInfo == null || fileInfo == null) {
