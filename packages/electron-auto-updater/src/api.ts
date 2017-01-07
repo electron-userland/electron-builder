@@ -16,6 +16,19 @@ export interface Provider<T extends VersionInfo> {
   getUpdateFile(versionInfo: T): Promise<FileInfo>
 }
 
+// due to historical reasons for windows we use channel name without platform specifier
+export function getDefaultChannelName() {
+  let channel = "latest"
+  if (process.platform === "darwin") {
+    channel += "-macos"
+  }
+  return channel
+}
+
+export function getChannelFilename(channel: string) {
+  return `${channel}.${process.platform === "darwin" ? "json" : "yml"}`
+}
+
 export interface UpdateCheckResult {
   readonly versionInfo: VersionInfo
   readonly fileInfo?: FileInfo
@@ -29,8 +42,12 @@ export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {
   }
 
-  progress(handler: (event: ProgressInfo) => void) {
+  progress(handler: (info: ProgressInfo) => void) {
     addHandler(this.emitter, DOWNLOAD_PROGRESS, handler)
+  }
+
+  updateDownloaded(handler: (info: VersionInfo) => void) {
+    addHandler(this.emitter, "update-downloaded", handler)
   }
 }
 

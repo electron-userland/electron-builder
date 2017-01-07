@@ -12,6 +12,8 @@ import { AppInfo } from "./appInfo"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "electron-builder-util"
 import { Target, Platform, Arch } from "electron-builder-core"
+import { safeDump } from "js-yaml"
+import { writeFile } from "fs-extra-p"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -76,6 +78,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (!hasMas || targets.length > 1) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
+        .then(async() => {
+          const publishConfigs = await this.publishConfigs
+          if (publishConfigs != null) {
+            await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
+          }
+        })
         .then(() => this.sign(appOutDir, null))
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }

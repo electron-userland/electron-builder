@@ -6,6 +6,10 @@ export function getArchSuffix(arch: Arch): string {
   return arch === Arch.x64 ? "" : `-${Arch[arch]}`
 }
 
+export function toLinuxArchString(arch: Arch) {
+  return arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l")
+}
+
 export function archFromString(name: string): Arch {
   if (name === "x64") {
     return Arch.x64
@@ -72,7 +76,6 @@ export class Platform {
     }
   }
 }
-
 
 export abstract class Target {
   constructor(public readonly name: string, public readonly isAsyncSupported: boolean = true) {

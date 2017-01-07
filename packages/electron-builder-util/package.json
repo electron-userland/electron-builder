@@ -21,7 +21,7 @@
     "pretty-ms": "^2.1.0",
     "cli-cursor": "^1.0.2",
     "ansi-escapes": "^1.4.0",
-    "electron-builder-http": "0.0.0-semantic-release",
+    "electron-builder-http": "~0.0.0-semantic-release",
     "source-map-support": "^0.4.8",
     "7zip-bin": "^2.0.4"
   },

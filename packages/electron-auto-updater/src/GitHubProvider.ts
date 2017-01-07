@@ -1,4 +1,4 @@
-import { Provider, FileInfo } from "./api"
+import { Provider, FileInfo, getDefaultChannelName, getChannelFilename } from "./api"
 import { VersionInfo, GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
@@ -27,15 +27,17 @@ export class GitHubProvider implements Provider<VersionInfo> {
     }
 
     let result: UpdateInfo | null = null
+    const channel = getDefaultChannelName()
+    const channelFile = getChannelFilename(channel)
     try {
       result = await request<UpdateInfo>({
         hostname: "github.com",
-        path: `https://github.com${basePath}/download/v${version}/latest.yml`
+        path: `https://github.com${basePath}/download/v${version}/${channelFile}`
       })
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find latest.yml in the latest release artifacts: ${e.stack || e.message}`)
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts: ${e.stack || e.message}`)
       }
       throw e
     }
@@ -49,6 +51,10 @@ export class GitHubProvider implements Provider<VersionInfo> {
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
+    if (process.platform === "darwin") {
+      return <any>versionInfo
+    }
+
     const basePath = this.getBasePath()
     // space is not supported on GitHub
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")

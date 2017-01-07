@@ -13,13 +13,14 @@ import { unpackElectron } from "./packager/dirPackager"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
-import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
+import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { dependencies } from "./yarn"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import EventEmitter = NodeJS.EventEmitter
 import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
+import { getResolvedPublishConfig } from "./publish/publisher"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -79,7 +80,6 @@ export interface BuildInfo {
 
   isTwoPackageJsonProjectLayoutUsed: boolean
 
-  // computed final effective appId
   appInfo: AppInfo
 
   readonly tempDirManager: TmpDir
@@ -539,6 +539,36 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getRepositoryInfo(): Promise<RepositoryInfo> {
     return getRepositoryInfo(this.appInfo.metadata, this.info.devMetadata)
   }
+
+  private _publishConfigs: Promise<Array<PublishConfiguration> | null>
+
+  get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
+    if (this._publishConfigs == null) {
+      this._publishConfigs = this.computePublishConfigs()
+    }
+    return this._publishConfigs
+  }
+
+  private async computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
+    let publishConfigs = getPublishConfigs(this, this.options)
+    if (publishConfigs == null) {
+      return null
+    }
+
+    if (publishConfigs.length === 0) {
+      // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
+      // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
+      const repositoryInfo = await this.getRepositoryInfo()
+      if (repositoryInfo != null && repositoryInfo.type === "github") {
+        publishConfigs = [{provider: "github"}]
+      }
+      else {
+        return null
+      }
+    }
+
+    return await BluebirdPromise.map(publishConfigs, it => <Promise<PublishConfiguration>>getResolvedPublishConfig(this.info, it, true))
+  }
 }
 
 export interface RepositoryInfo {
@@ -612,70 +642,4 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
 
   return asArray<PublishConfiguration | string>(publishers)
     .map(it => typeof it === "string" ? {provider: <any>it} : it)
-}
-
-export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions | GenericServerOptions, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
-  if (publishConfig.provider === "generic") {
-    if ((<GenericServerOptions>publishConfig).url == null) {
-      throw new Error(`Please specify "url" for "generic" update server`)
-    }
-    return publishConfig
-  }
-
-  async function getInfo() {
-    const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
-    if (info != null) {
-      return info
-    }
-
-    if (!errorIfCannot) {
-      return null
-    }
-
-    warn("Cannot detect repository by .git/config")
-    throw new Error(`Please specify "repository" in the dev package.json ('${packager.devPackageFile}').\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
-  }
-
-  let owner = publishConfig.owner
-  let project = publishConfig.provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
-  if (!owner || !project) {
-    const info = await getInfo()
-    if (info == null) {
-      return null
-    }
-
-    if (!owner) {
-      owner = info.user
-    }
-    if (!project) {
-      project = info.project
-    }
-  }
-
-  const copy: PublishConfiguration = Object.assign({}, publishConfig)
-  if (copy.owner == null) {
-    copy.owner = owner
-  }
-
-  if (publishConfig.provider === "github") {
-    const options = <GithubOptions>copy
-    if (options.repo == null) {
-      options.repo = project
-    }
-    return options
-  }
-  else if (publishConfig.provider === "bintray") {
-    const options = <BintrayOptions>copy
-    if (options.package == null) {
-      options.package = project
-    }
-    return options
-  }
-  else {
-    return null
-  }
-}
-
-export function toDebArch(arch: Arch) {
-  return arch === Arch.ia32 ? "i386" : "amd64"
 }

@@ -1,4 +1,4 @@
-import { Provider, FileInfo } from "./api"
+import { Provider, FileInfo, getDefaultChannelName, getChannelFilename } from "./api"
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import * as url from "url"
 import * as path from "path"
@@ -6,20 +6,21 @@ import { HttpError, request } from "electron-builder-http"
 
 export class GenericProvider implements Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
-  private readonly channel = this.configuration.channel || "latest"
+  private readonly channel = this.configuration.channel || getDefaultChannelName()
 
   constructor(private readonly configuration: GenericServerOptions) {
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
     let result: UpdateInfo | null = null
+    const channelFile = getChannelFilename(this.channel)
     try {
-      const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${this.channel}.yml`)
+      const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
       result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`})
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find channel "${this.channel}" update info: ${e.stack || e.message}`)
+        throw new Error(`Cannot find channel "${channelFile}" update info: ${e.stack || e.message}`)
       }
       throw e
     }
@@ -29,6 +30,10 @@ export class GenericProvider implements Provider<UpdateInfo> {
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
+    if (process.platform === "darwin") {
+      return <any>versionInfo
+    }
+
     return {
       name: path.posix.basename(versionInfo.path),
       url: url.format(Object.assign({}, this.baseUrl, {pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)})),
@@ -38,7 +43,8 @@ export class GenericProvider implements Provider<UpdateInfo> {
 }
 
 export function validateUpdateInfo(info: UpdateInfo) {
-  if (info.sha2 == null) {
+  // sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
+  if (info.sha2 == null && process.platform === "win32") {
     throw new Error("Update info doesn't contain sha2 checksum")
   }
   if (info.path == null) {

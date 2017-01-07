@@ -1,6 +1,6 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { PackagerOptions, getPublishConfigs, getResolvedPublishConfig } from "./platformPackager"
-import { PublishOptions, Publisher } from "./publish/publisher"
+import { PackagerOptions, getPublishConfigs } from "./platformPackager"
+import { PublishOptions, Publisher, getResolvedPublishConfig } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"

@@ -254,7 +254,7 @@ class AsarPackager {
     const realFile = await realpath(file)
     const link = path.relative(await this.getSrcRealPath(), realFile)
     if (link.startsWith("..")) {
-      throw new Error(realFile + ": file links out of the package")
+      throw new Error(`${realFile}: file links out of the package`)
     }
     else {
       this.fs.searchNodeFromPath(file).link = link

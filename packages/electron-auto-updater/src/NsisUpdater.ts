@@ -1,155 +1,27 @@
-import { EventEmitter } from "events"
 import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
-import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
-import { download, executorHolder, DownloadOptions } from "electron-builder-http"
-import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal, DOWNLOAD_PROGRESS } from "./api"
-import { BintrayProvider } from "./BintrayProvider"
-import BluebirdPromise from "bluebird-lst-c"
-import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { readFile, mkdtemp } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
-import { GenericProvider } from "./GenericProvider"
-import { GitHubProvider } from "./GitHubProvider"
-import { ElectronHttpExecutor } from "./electronHttpExecutor"
+import { download, DownloadOptions } from "electron-builder-http"
+import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
+import { BintrayOptions, PublishConfiguration, GithubOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { mkdtemp } from "fs-extra-p"
 import "source-map-support/register"
+import { AppUpdater } from "./AppUpdater"
 
-export class NsisUpdater extends EventEmitter {
-  /**
-   * Automatically download an update when it is found.
-   */
-  public autoDownload = true
-
+export class NsisUpdater extends AppUpdater {
   private setupPath: string | null
-
-  private updateAvailable = false
   private quitAndInstallCalled = false
-
-  private clientPromise: Promise<Provider<any>>
-
-  private readonly untilAppReady: Promise<boolean>
-  private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
-
-  private readonly app: any
-
   private quitHandlerAdded = false
 
-  private versionInfo: VersionInfo | null
-  private fileInfo: FileInfo | null
-
-  public signals = new UpdaterSignal(this)
-
   constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
-    super()
-
-    if ((<any>global).__test_app) {
-      this.app = (<any>global).__test_app
-      this.untilAppReady = BluebirdPromise.resolve()
-    }
-    else {
-      this.app = require("electron").app
-      executorHolder.httpExecutor = new ElectronHttpExecutor()
-      this.untilAppReady = new BluebirdPromise(resolve => {
-        if (this.app.isReady()) {
-          resolve()
-        }
-        else {
-          this.app.on("ready", resolve)
-        }
-      })
-    }
-
-
-    if (options != null) {
-      this.setFeedURL(options)
-    }
-  }
-
-  //noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
-  getFeedURL(): string | null | undefined {
-    return "Deprecated. Do not use it."
-  }
-
-  setFeedURL(value: PublishConfiguration | BintrayOptions | GithubOptions | GenericServerOptions) {
-    this.clientPromise = BluebirdPromise.resolve(createClient(value))
-  }
-
-  checkForUpdates(): Promise<UpdateCheckResult> {
-    let checkForUpdatesPromise = this.checkForUpdatesPromise
-    if (checkForUpdatesPromise != null) {
-      return checkForUpdatesPromise
-    }
-
-    checkForUpdatesPromise = this._checkForUpdates()
-    this.checkForUpdatesPromise = checkForUpdatesPromise
-    const nullizePromise = () => this.checkForUpdatesPromise = null
-    checkForUpdatesPromise
-      .then(nullizePromise)
-      .catch(nullizePromise)
-    return checkForUpdatesPromise
-  }
-
-  private async _checkForUpdates(): Promise<UpdateCheckResult> {
-    await this.untilAppReady
-    this.emit("checking-for-update")
-    try {
-      if (this.clientPromise == null) {
-        this.clientPromise = NsisUpdater.loadUpdateConfig()
-      }
-      return await this.doCheckForUpdates()
-    }
-    catch (e) {
-      this.emit("error", e, (e.stack || e).toString())
-      throw e
-    }
-  }
-
-  private async doCheckForUpdates(): Promise<UpdateCheckResult> {
-    const client = await this.clientPromise
-    const versionInfo = await client.getLatestVersion()
-
-    const latestVersion = parseVersion(versionInfo.version)
-    if (latestVersion == null) {
-      throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
-    }
-
-    const currentVersion = parseVersion(this.app.getVersion())
-    if (currentVersion == null) {
-      throw new Error(`App version is not valid semver version: "${currentVersion}`)
-    }
-
-    if (!isVersionGreaterThan(latestVersion, currentVersion)) {
-      this.updateAvailable = false
-      this.emit("update-not-available")
-      return {
-        versionInfo: versionInfo,
-      }
-    }
-
-    const fileInfo = await client.getUpdateFile(versionInfo)
-
-    this.updateAvailable = true
-    this.versionInfo = versionInfo
-    this.fileInfo = fileInfo
-
-    this.emit("update-available")
-
-    //noinspection ES6MissingAwait
-    return {
-      versionInfo: versionInfo,
-      fileInfo: fileInfo,
-      downloadPromise: this.autoDownload ? this.downloadUpdate() : null,
-    }
+    super(options)
   }
 
   /**
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
    * @returns {Promise<string>} Path to downloaded file.
    */
-  async downloadUpdate() {
-    const versionInfo = this.versionInfo
-    const fileInfo = this.fileInfo
+  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
     }
@@ -162,19 +34,16 @@ export class NsisUpdater extends EventEmitter {
       downloadOptions.sha2 = fileInfo.sha2
     }
 
-    if (versionInfo == null || fileInfo == null) {
-      const message = "Please check update first"
-      const error = new Error(message)
-      this.emit("error", error, message)
-      throw error
-    }
-
     return mkdtemp(`${path.join(tmpdir(), "up")}-`)
       .then(it => download(fileInfo.url, path.join(it, fileInfo.name), downloadOptions))
       .then(it => {
         this.setupPath = it
         this.addQuitHandler()
-        this.emit("update-downloaded", {}, null, versionInfo.version, null, null, () => {
+        const version = this.versionInfo!.version
+        if (this.logger != null) {
+          this.logger.info(`New version ${version} has been downloaded`)
+        }
+        this.emit("update-downloaded", this.versionInfo, null, version, null, null, () => {
           this.quitAndInstall()
         })
         return it
@@ -228,27 +97,5 @@ export class NsisUpdater extends EventEmitter {
     }).unref()
 
     return true
-  }
-
-  private static async loadUpdateConfig() {
-    return createClient(safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8")))
-  }
-}
-
-function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {
-  if (typeof data === "string") {
-    throw new Error("Please pass PublishConfiguration object")
-  }
-
-  const provider = (<PublishConfiguration>data).provider
-  switch (provider) {
-    case "github":
-      return new GitHubProvider(<GithubOptions>data)
-    case "generic":
-      return new GenericProvider(<GenericServerOptions>data)
-    case "bintray":
-      return new BintrayProvider(<BintrayOptions>data)
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
   }
 }

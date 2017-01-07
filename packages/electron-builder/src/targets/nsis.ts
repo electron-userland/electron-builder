@@ -4,12 +4,12 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, getPublishConfigs, getResolvedPublishConfig, ArtifactCreated } from "../platformPackager"
+import { normalizeExt, ArtifactCreated } from "../platformPackager"
 import { archive } from "./archive"
 import { subTask, log, warn } from "electron-builder-util/out/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
 import { NsisOptions } from "../options/winOptions"
-import { PublishConfiguration, GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { safeDump } from "js-yaml"
 import { createHash } from "crypto"
 import { Target, Arch } from "electron-builder-core"
@@ -32,8 +32,6 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  private readonly publishConfigs = this.computePublishConfigs()
-
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
@@ -41,27 +39,6 @@ export default class NsisTarget extends Target {
     if (deps != null && deps["electron-squirrel-startup"] != null) {
       warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
-  }
-
-  private async computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
-    let publishConfigs = getPublishConfigs(this.packager, this.options)
-    if (publishConfigs == null) {
-      return null
-    }
-
-    if (publishConfigs.length === 0) {
-      // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
-      // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
-      const repositoryInfo = await this.packager.getRepositoryInfo()
-      if (repositoryInfo != null && repositoryInfo.type === "github") {
-        publishConfigs = [{provider: "github"}]
-      }
-      else {
-        return null
-      }
-    }
-
-    return await BluebirdPromise.map(publishConfigs, it => <Promise<PublishConfiguration>>getResolvedPublishConfig(this.packager.info, it, true))
   }
 
   build(appOutDir: string, arch: Arch) {
@@ -72,7 +49,7 @@ export default class NsisTarget extends Target {
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
 
-    const publishConfigs = await this.publishConfigs
+    const publishConfigs = await this.packager.publishConfigs
     if (publishConfigs != null) {
       await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
     }
@@ -242,7 +219,7 @@ export default class NsisTarget extends Target {
     await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
     await packager.sign(installerPath)
 
-    const publishConfigs = await this.publishConfigs
+    const publishConfigs = await this.packager.publishConfigs
     const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
     if (publishConfigs != null) {
       for (const publishConfig of publishConfigs) {

@@ -1,4 +1,4 @@
-import { toLinuxArchString } from "../metadata"
+import { toLinuxArchString } from "electron-builder-core"
 import { smarten } from "../platformPackager"
 import { use, exec } from "electron-builder-util"
 import * as path from "path"

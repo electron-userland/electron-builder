@@ -28,6 +28,7 @@ Don't customize paths to background and icon, — just follow conventions.
 * [Development package.json](#DevMetadata)
   * [.build](#BuildMetadata)
     * [.build.appx](#AppXOptions)
+    * [.build.directories](#MetadataDirectories)
     * [.build.dmg](#DmgOptions)
     * [.build.dmg.window](#DmgWindow)
     * [.build.fileAssociations](#FileAssociation)
@@ -39,7 +40,6 @@ Don't customize paths to background and icon, — just follow conventions.
     * [.build.snap](#SnapOptions)
     * [.build.squirrelWindows](#SquirrelWindowsOptions)
     * [.build.win](#WinBuildOptions)
-  * [.directories](#MetadataDirectories)
 
 <a name="AppMetadata"></a>
 # Application `package.json`
@@ -105,6 +105,14 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | displayName | <a name="AppXOptions-displayName"></a>A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
 | publisherDisplayName | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
 | identityName | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+
+<a name="MetadataDirectories"></a>
+### `.build.directories`
+| Name | Description
+| --- | ---
+| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
+| output | <a name="MetadataDirectories-output"></a>The output directory, defaults to `dist`.
+| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 <a name="DmgOptions"></a>
 ### `.build.dmg`
@@ -274,14 +282,6 @@ Windows specific build options.
 | certificateSubjectName | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 | timeStampServer | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
-
-<a name="MetadataDirectories"></a>
-## `.directories`
-| Name | Description
-| --- | ---
-| buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
-| output | <a name="MetadataDirectories-output"></a>The output directory, defaults to `dist`.
-| app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 <!-- end of generated block -->
 

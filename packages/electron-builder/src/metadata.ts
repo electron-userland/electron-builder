@@ -4,7 +4,7 @@ import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
-import { Arch, Platform } from "electron-builder-core"
+import { Platform } from "electron-builder-core"
 
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
@@ -331,7 +331,7 @@ export interface Protocol {
 }
 
 /*
- ## `.directories`
+ ### `.build.directories`
  */
 export interface MetadataDirectories {
   /*
@@ -368,10 +368,6 @@ export interface PlatformSpecificBuildOptions {
   readonly publish?: Publish
 
   readonly forceCodeSigning?: boolean
-}
-
-export function toLinuxArchString(arch: Arch) {
-  return arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l")
 }
 
 export function getDirectoriesConfig(m: DevMetadata) {
