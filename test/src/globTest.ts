@@ -1,5 +1,5 @@
 import { outputFile, symlink, writeFile, mkdirs } from "fs-extra-p"
-import { assertPack, modifyPackageJson, app, PackedContext } from "./helpers/packTester"
+import { assertPack, modifyPackageJson, app, PackedContext, getTempFile } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -58,6 +58,19 @@ test.ifNotWindows("link", app({
   },
   packed: async context => {
     expect(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).toMatchSnapshot()
+  },
+}))
+
+test.ifNotWindows("outside link", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+}, {
+  projectDirCreated: async (projectDir) => {
+    const tempDir = getTempFile()
+    await outputFile(path.join(tempDir, "foo"), "data")
+    await symlink(tempDir, path.join(projectDir, "o-dir"))
+  },
+  packed: async context => {
+    expect(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo", false)).toMatchSnapshot()
   },
 }))
 

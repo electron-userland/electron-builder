@@ -81,7 +81,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         .then(async() => {
           const publishConfigs = await this.publishConfigs
           if (publishConfigs != null) {
-            await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
+            await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
           }
         })
         .then(() => this.sign(appOutDir, null))

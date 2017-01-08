@@ -66,9 +66,15 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
     let changed = false
     for (let depIndex = 0; depIndex < packages.length; depIndex++) {
       const depPackageName = packages[depIndex]
-      const oldVersion = packageJson.dependencies == null ? null : packageJson.dependencies[depPackageName]
+      let oldVersion = packageJson.dependencies == null ? null : packageJson.dependencies[depPackageName]
       if (oldVersion == null) {
         continue
+      }
+
+      let range = ""
+      if (oldVersion.startsWith("~") || oldVersion.startsWith("^")) {
+        oldVersion = oldVersion.substring(1)
+        range = oldVersion[0]
       }
 
       const newVersion = versions[depIndex]
@@ -78,7 +84,7 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
       }
 
       changed = true
-      packageJson.dependencies[depPackageName] = newVersion
+      packageJson.dependencies[depPackageName] = range + newVersion
       console.log(`Set ${depPackageName} to ${newVersion} from ${oldVersion} for ${packageName}`)
     }
 

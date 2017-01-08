@@ -3,3 +3,10 @@ Object {
   "link": "index.js",
 }
 `;
+
+exports[`test outside link 1`] = `
+Object {
+  "offset": "5290",
+  "size": 4,
+}
+`;

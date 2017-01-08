@@ -1,6 +1,6 @@
 import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
 import { debug } from "electron-builder-util"
-import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, realpath } from "fs-extra-p"
+import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, readlink, stat } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { log } from "electron-builder-util/out/log"
@@ -12,7 +12,7 @@ const pickle = require ("chromium-pickle-js")
 const Filesystem = require("asar-electron-builder/lib/filesystem")
 const UINT64 = require("cuint").UINT64
 
-const NODE_MODULES_PATTERN = path.sep + "node_modules" + path.sep
+const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
 export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter, unpackPattern: Filter | null): Promise<any> {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
@@ -54,24 +54,38 @@ class AsarPackager {
   private readonly changedFiles = new Map<string, string>()
   private readonly outFile: string
 
-  private srcRealPath: Promise<string>
-
   constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
   }
 
   async pack(filter: Filter) {
     const metadata = new Map<string, Stats>()
-    const files = await walk(this.src, filter, (it, stat) => metadata.set(it, stat))
+    const files = await walk(this.src, filter, (file, fileStat) => {
+      metadata.set(file, fileStat)
+      if (fileStat.isSymbolicLink()) {
+        return readlink(file)
+          .then((linkTarget): any => {
+            // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
+            const resolved = path.resolve(path.dirname(file), linkTarget)
+            const link = path.relative(this.src, linkTarget)
+            if (link.startsWith("..")) {
+              // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
+              return stat(resolved)
+                .then(targetFileStat => {
+                  metadata.set(file, targetFileStat)
+                  return targetFileStat
+                })
+            }
+            else {
+              (<any>fileStat).relativeLink = link
+            }
+            return null
+          })
+      }
+      return null
+    })
     await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files), metadata)
     await this.writeAsarFile()
-  }
-
-  getSrcRealPath(): Promise<string> {
-    if (this.srcRealPath == null) {
-      this.srcRealPath = realpath(this.src)
-    }
-    return this.srcRealPath
   }
 
   async detectUnpackedDirs(files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, unpackedDest: string, fileIndexToModulePackageData: Map<number, BluebirdPromise<string>>) {
@@ -241,23 +255,12 @@ class AsarPackager {
         this.fs.insertDirectory(file, unpacked)
       }
       else if (stat.isSymbolicLink()) {
-        await this.addLink(file)
+        this.fs.searchNodeFromPath(file).link = (<any>stat).relativeLink
       }
     }
 
     if (filesToUnpack.length > 0) {
       await writeUnpackedFiles(filesToUnpack, fileCopier)
-    }
-  }
-
-  private async addLink(file: string) {
-    const realFile = await realpath(file)
-    const link = path.relative(await this.getSrcRealPath(), realFile)
-    if (link.startsWith("..")) {
-      throw new Error(`${realFile}: file links out of the package`)
-    }
-    else {
-      this.fs.searchNodeFromPath(file).link = link
     }
   }
 

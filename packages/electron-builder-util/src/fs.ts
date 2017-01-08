@@ -56,27 +56,50 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
     childNames.sort()
 
     const dirs: Array<string> = []
-    await BluebirdPromise.map(childNames, name => {
+    // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
+    const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
       const filePath = dirPath + path.sep + name
       return lstat(filePath)
         .then(stat => {
           if (filter != null && !filter(filePath, stat)) {
-            return
+            return null
           }
 
-          if (stat.isDirectory()) {
-            dirs.push(filePath)
+          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath)
+          if (consumerResult == null || !("then" in consumerResult)) {
+            if (stat.isDirectory()) {
+              dirs.push(name)
+              return null
+            }
+            else {
+              return filePath
+            }
           }
           else {
-            result.push(filePath)
+            return (<Promise<any>>consumerResult)
+              .then(it => {
+                // asarUtil can return modified stat (symlink handling)
+                if ((it != null && "isDirectory" in it ? (<Stats>it) : stat).isDirectory()) {
+                  dirs.push(name)
+                  return null
+                }
+                else {
+                  return filePath
+                }
+              })
           }
-
-          return consumer == null ? null : consumer(filePath, stat, dirPath)
         })
     }, CONCURRENCY)
 
-    for (let i = dirs.length - 1; i > -1; i--) {
-      queue.push(dirs[i])
+    for (const child of sortedFilePaths) {
+      if (child != null) {
+        result.push(child)
+      }
+    }
+
+    dirs.sort()
+    for (const child of dirs) {
+      queue.push(dirPath + path.sep + child)
     }
   }
 

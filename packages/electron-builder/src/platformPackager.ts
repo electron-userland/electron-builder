@@ -101,6 +101,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
+  private _publishConfigs: Promise<Array<PublishConfiguration> | null>
+
   constructor(readonly info: BuildInfo) {
     this.config = info.config
     this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
@@ -410,7 +412,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.platform === Platform.MAC ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
 
-  private getOSXResourcesDir(appOutDir: string): string {
+  protected getOSXResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
@@ -539,8 +541,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   getRepositoryInfo(): Promise<RepositoryInfo> {
     return getRepositoryInfo(this.appInfo.metadata, this.info.devMetadata)
   }
-
-  private _publishConfigs: Promise<Array<PublishConfiguration> | null>
 
   get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
     if (this._publishConfigs == null) {

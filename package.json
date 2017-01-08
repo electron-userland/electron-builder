@@ -51,6 +51,11 @@
     "testPathDirs": [
       "test/out"
     ],
+    "transform": {
+      "node_modules[\\/]{1}electron-builder-[a-z]+[\\/]{1}.+\\.js$": "<rootDir>/test/babel-jest.js",
+      "^(?!.+[\\/]{1}node_modules[\\/]{1}.+).+\\.js$": "<rootDir>/test/babel-jest.js"
+    },
+    "transformIgnorePatterns": [],
     "testPathIgnorePatterns": [
       "/helpers/"
     ],

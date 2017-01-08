@@ -71,6 +71,10 @@ export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPac
   return () => assertPack("test-app", packagerOptions, checkOptions)
 }
 
+export function getTempFile() {
+  return path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
+}
+
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   if (checkOptions.signed) {
     packagerOptions = signed(packagerOptions)
@@ -85,7 +89,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   let dirToDelete: string | null = null
   if (useTempDir) {
     // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? path.join(testDir, `${(tmpDirCounter++).toString(16)}`) : path.resolve(customTmpDir)
+    const dir = customTmpDir == null ? getTempFile() : path.resolve(customTmpDir)
     if (customTmpDir == null) {
       dirToDelete = dir
     }
