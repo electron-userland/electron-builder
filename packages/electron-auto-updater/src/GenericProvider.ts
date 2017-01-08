@@ -1,4 +1,4 @@
-import { Provider, FileInfo, getDefaultChannelName, getChannelFilename } from "./api"
+import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurrentPlatform } from "./api"
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import * as url from "url"
 import * as path from "path"
@@ -30,7 +30,7 @@ export class GenericProvider implements Provider<UpdateInfo> {
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
-    if (process.platform === "darwin") {
+    if (getCurrentPlatform() === "darwin") {
       return <any>versionInfo
     }
 
@@ -44,7 +44,7 @@ export class GenericProvider implements Provider<UpdateInfo> {
 
 export function validateUpdateInfo(info: UpdateInfo) {
   // sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
-  if (info.sha2 == null && process.platform === "win32") {
+  if (info.sha2 == null && getCurrentPlatform() === "win32") {
     throw new Error("Update info doesn't contain sha2 checksum")
   }
   if (info.path == null) {

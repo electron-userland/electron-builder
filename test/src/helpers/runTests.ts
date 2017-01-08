@@ -117,12 +117,12 @@ async function runTests() {
   config.cacheDirectory = process.env.JEST_CACHE_DIR || "/tmp/jest-electron-builder-tests"
   // no need to transform — compiled before
   config.transformIgnorePatterns = [".*"]
+  config.bail = process.env.TEST_BAIL === "true"
 
   require("jest-cli").runCLI({
     verbose: true,
     updateSnapshot: false,
     config: config,
-    bail: process.env.TEST_BAIL === "true",
     runInBand: process.env.RUN_IN_BAND === "true",
     testPathPattern: args.length > 0 ? args.join("|") : null,
   }, rootDir, (result: any) => {

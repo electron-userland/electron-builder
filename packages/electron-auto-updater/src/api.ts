@@ -19,14 +19,18 @@ export interface Provider<T extends VersionInfo> {
 // due to historical reasons for windows we use channel name without platform specifier
 export function getDefaultChannelName() {
   let channel = "latest"
-  if (process.platform === "darwin") {
+  if (getCurrentPlatform() === "darwin") {
     channel += "-macos"
   }
   return channel
 }
 
+export function getCurrentPlatform () {
+  return process.env.TEST_UPDATER_PLATFORM || process.platform
+}
+
 export function getChannelFilename(channel: string) {
-  return `${channel}.${process.platform === "darwin" ? "json" : "yml"}`
+  return `${channel}.${(getCurrentPlatform()) === "darwin" ? "json" : "yml"}`
 }
 
 export interface UpdateCheckResult {

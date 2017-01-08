@@ -78,12 +78,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (!hasMas || targets.length > 1) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-        .then(async() => {
-          const publishConfigs = await this.publishConfigs
-          if (publishConfigs != null) {
-            await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
-          }
-        })
+        .then(() => this.writeUpdateInfo(appOutDir))
         .then(() => this.sign(appOutDir, null))
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
@@ -97,6 +92,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     if (nonMasPromise != null) {
       await nonMasPromise
+    }
+  }
+
+  protected async writeUpdateInfo(appOutDir: string) {
+    const publishConfigs = await this.publishConfigs
+    if (publishConfigs != null) {
+      await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
     }
   }
 

@@ -23,6 +23,8 @@ g.__test_app = {
   },
 }
 
+process.env.TEST_UPDATER_PLATFORM = "win32"
+
 test("check updates - no versions at all", async () => {
   const updater = new NsisUpdater({
     provider: "bintray",

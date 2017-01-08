@@ -1,4 +1,4 @@
-import { Provider, FileInfo, getDefaultChannelName, getChannelFilename } from "./api"
+import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurrentPlatform } from "./api"
 import { VersionInfo, GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
@@ -51,7 +51,7 @@ export class GitHubProvider implements Provider<VersionInfo> {
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
-    if (process.platform === "darwin") {
+    if (getCurrentPlatform() === "darwin") {
       return <any>versionInfo
     }
 

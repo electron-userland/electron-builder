@@ -522,6 +522,10 @@ export class CheckingMacPackager extends OsXPackager {
   packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
     // skip
   }
+
+  protected async writeUpdateInfo(appOutDir: string) {
+    // ignored
+  }
 }
 
 export function createMacTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
