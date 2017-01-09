@@ -222,7 +222,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | script | <a name="NsisOptions-script"></a>The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
 | license | <a name="NsisOptions-license"></a>The path to EULA license file. Defaults to `build/license.rtf` or `build/license.txt`.
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
-| warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a><p>Defaults to <code>false</code>.</p> <p>If <code>warningsAsErrors</code> is <code>true</code> (default): NSIS will treat warnings as errors.</p> <p>If <code>warningsAsErrors</code> is <code>false</code>: NSIS will allow warnings.</p>
+| warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a>Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 
 <a name="Protocol"></a>
@@ -303,7 +303,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
- `package.json` is added to your custom in any case.
+ `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
 May be specified in the platform options (e.g. in the `build.mac`).
 

@@ -73,8 +73,8 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
 
       let range = ""
       if (oldVersion.startsWith("~") || oldVersion.startsWith("^")) {
-        oldVersion = oldVersion.substring(1)
         range = oldVersion[0]
+        oldVersion = oldVersion.substring(1)
       }
 
       const newVersion = versions[depIndex]

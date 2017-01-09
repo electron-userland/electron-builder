@@ -136,11 +136,7 @@ export interface NsisOptions {
   readonly language?: string | null
 
   /*
-   Defaults to `false`.
-
-   If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors.
-
-   If `warningsAsErrors` is `false`: NSIS will allow warnings.
+   Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
    */
   readonly warningsAsErrors?: boolean
 
