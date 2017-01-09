@@ -23,7 +23,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName> | null
 
   /*
-   The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
    MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).
    */
   readonly identity?: string | null
