@@ -1,8 +1,7 @@
 import { DevMetadata, AppMetadata, BuildMetadata } from "./metadata"
 import { warn } from "electron-builder-util/out/log"
-import { smarten } from "./platformPackager"
+import { smarten, BuildInfo } from "./platformPackager"
 import { isEmptyOrSpaces } from "electron-builder-util"
-import { getRepositoryInfo } from "./repositoryInfo"
 import sanitizeFileName from "sanitize-filename"
 import { SemVer } from "semver"
 
@@ -19,7 +18,7 @@ export class AppInfo {
     return this.devMetadata.build
   }
 
-  constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, buildVersion?: string | null) {
+  constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, private info: BuildInfo, buildVersion?: string | null) {
     this.version = metadata.version!
 
     this.buildNumber = (<any>this.config)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
@@ -89,7 +88,7 @@ export class AppInfo {
       return url
     }
 
-    const info = await getRepositoryInfo(this.metadata, this.devMetadata)
+    const info = await this.info.repositoryInfo
     return info == null ? null : `https://github.com/${info.user}/${info.project}`
   }
 }

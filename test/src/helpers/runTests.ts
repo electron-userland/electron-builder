@@ -11,23 +11,7 @@ const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
-async function main() {
-  const testDir = TEST_DIR
-  await BluebirdPromise.all([
-    deleteOldElectronVersion(),
-    downloadAllRequiredElectronVersions(),
-    emptyDir(testDir),
-  ])
-
-  const exitHandler = () => {
-    removeSync(testDir)
-  }
-  process.on("SIGINT", exitHandler)
-  process.on("exit", exitHandler)
-  await runTests()
-}
-
-main()
+runTests()
   .catch(error => {
     console.error(error.stack || error)
     process.exit(1)
@@ -80,6 +64,12 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
 }
 
 async function runTests() {
+  await BluebirdPromise.all([
+    deleteOldElectronVersion(),
+    downloadAllRequiredElectronVersions(),
+    emptyDir(TEST_DIR),
+  ])
+
   const testFiles: string | null = process.env.TEST_FILES
 
   const args = []
@@ -119,14 +109,31 @@ async function runTests() {
   config.transformIgnorePatterns = [".*"]
   config.bail = process.env.TEST_BAIL === "true"
 
+  let runInBand = false
+  const scriptArgs = process.argv.slice(2)
+  if (scriptArgs.length > 0) {
+    for (const scriptArg of scriptArgs) {
+      console.log(`custom opt: ${scriptArg}`)
+      if ("runInBand" === scriptArg) {
+        runInBand = true
+      }
+      else {
+        config[scriptArg] = true
+      }
+    }
+  }
+
   require("jest-cli").runCLI({
     verbose: true,
     updateSnapshot: false,
     config: config,
-    runInBand: process.env.RUN_IN_BAND === "true",
+    runInBand: runInBand,
     testPathPattern: args.length > 0 ? args.join("|") : null,
   }, rootDir, (result: any) => {
     const code = !result || result.success ? 0 : 1
-    process.on("exit", () => process.exit(code))
+    removeSync(TEST_DIR)
+    process.on("exit", () => {
+      return process.exit(code)
+    })
   })
 }

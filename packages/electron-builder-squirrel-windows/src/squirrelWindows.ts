@@ -50,7 +50,7 @@ export default class SquirrelWindowsTarget extends Target {
     const packager = this.packager
     let iconUrl = this.options.iconUrl || packager.config.iconUrl
     if (iconUrl == null) {
-      const info = await packager.getRepositoryInfo()
+      const info = await packager.info.repositoryInfo
       if (info != null) {
         iconUrl = `https://github.com/${info.user}/${info.project}/blob/master/${packager.relativeBuildResourcesDirname}/icon.ico?raw=true`
       }
@@ -90,7 +90,7 @@ export default class SquirrelWindowsTarget extends Target {
     }
 
     if (options.remoteReleases === true) {
-      const info = await packager.getRepositoryInfo()
+      const info = await packager.info.repositoryInfo
       if (info == null) {
         warn("remoteReleases set to true, but cannot get repository info")
       }

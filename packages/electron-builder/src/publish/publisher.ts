@@ -4,7 +4,6 @@ import { stat } from "fs-extra-p"
 import { basename } from "path"
 import { BuildInfo } from "../platformPackager"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
-import { getRepositoryInfo } from "../repositoryInfo"
 import { warn } from "electron-builder-util/out/log"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
@@ -42,7 +41,7 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
   }
 
   async function getInfo() {
-    const info = await getRepositoryInfo(packager.metadata, packager.devMetadata)
+    const info = await packager.repositoryInfo
     if (info != null) {
       return info
     }

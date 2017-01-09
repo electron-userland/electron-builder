@@ -14,7 +14,6 @@ import { TmpDir } from "electron-builder-util/out/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { BuildOptions } from "./builder"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { getRepositoryInfo } from "./repositoryInfo"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import EventEmitter = NodeJS.EventEmitter
@@ -83,6 +82,15 @@ export interface BuildInfo {
   appInfo: AppInfo
 
   readonly tempDirManager: TmpDir
+
+  repositoryInfo: Promise<SourceRepositoryInfo | null>
+}
+
+export interface SourceRepositoryInfo {
+  type: string
+  domain: string
+  user: string
+  project: string
 }
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -538,10 +546,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  getRepositoryInfo(): Promise<RepositoryInfo> {
-    return getRepositoryInfo(this.appInfo.metadata, this.info.devMetadata)
-  }
-
   get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
     if (this._publishConfigs == null) {
       this._publishConfigs = this.computePublishConfigs()
@@ -558,7 +562,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (publishConfigs.length === 0) {
       // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
       // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
-      const repositoryInfo = await this.getRepositoryInfo()
+      const repositoryInfo = await this.info.repositoryInfo
       if (repositoryInfo != null && repositoryInfo.type === "github") {
         publishConfigs = [{provider: "github"}]
       }
@@ -569,13 +573,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     return await BluebirdPromise.map(publishConfigs, it => <Promise<PublishConfiguration>>getResolvedPublishConfig(this.info, it, true))
   }
-}
-
-export interface RepositoryInfo {
-  type: string
-  domain: string
-  user: string
-  project: string
 }
 
 export interface ArtifactCreated {

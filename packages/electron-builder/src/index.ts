@@ -1,5 +1,5 @@
 export { Packager } from "./packager"
-export { PackagerOptions, ArtifactCreated, BuildInfo } from "./platformPackager"
+export { PackagerOptions, ArtifactCreated, BuildInfo, SourceRepositoryInfo } from "./platformPackager"
 export { getArchSuffix, Platform, Arch, archFromString, Target } from "electron-builder-core"
 export { BuildOptions, build, CliOptions, createTargets } from "./builder"
 export { PublishOptions, Publisher } from "./publish/publisher"

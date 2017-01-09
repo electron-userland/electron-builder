@@ -29,6 +29,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
       return options
     }
     else {
+      // this.appInfo maybe not yet initialized at this moment
       return Object.assign({
         description: this.info.appInfo.description,
       }, options)

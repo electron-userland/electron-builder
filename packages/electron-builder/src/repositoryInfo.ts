@@ -8,13 +8,8 @@ export interface RepositorySlug {
   project: string
 }
 
-let info: Promise<Info> | null
-
 export function getRepositoryInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<Info | null> {
-  if (info == null) {
-    info = _getInfo(<RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
-  }
-  return info
+  return _getInfo(<RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 
 async function getGitUrlFromGitConfig(): Promise<string | null> {
@@ -46,27 +41,23 @@ async function getGitUrlFromGitConfig(): Promise<string | null> {
 }
 
 async function _getInfo(repo?: RepositoryInfo | null): Promise<RepositorySlug | null> {
-  if (repo == null) {
-    let url = process.env.TRAVIS_REPO_SLUG
-    if (url == null) {
-      const user: string | null = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
-      const project: string | null = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
-      if (user != null && project != null) {
-        return {
-          user: user,
-          project: project,
-        }
-      }
-
-      url = await getGitUrlFromGitConfig()
-    }
-
-    if (url != null) {
-      return parseRepositoryUrl(url)
-    }
-  }
-  else {
+  if (repo != null) {
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }
-  return null
+
+  let url = process.env.TRAVIS_REPO_SLUG
+  if (url == null) {
+    const user: string | null = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
+    const project: string | null = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
+    if (user != null && project != null) {
+      return {
+        user: user,
+        project: project,
+      }
+    }
+
+    url = await getGitUrlFromGitConfig()
+  }
+
+  return url == null ? null : parseRepositoryUrl(url)
 }

@@ -34,7 +34,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    return new AppInfo(appInfo.metadata, this.info.devMetadata, this.platformSpecificBuildOptions.bundleVersion)
+    return new AppInfo(appInfo.metadata, this.info.devMetadata, this.info, this.platformSpecificBuildOptions.bundleVersion)
   }
 
   async getIconPath(): Promise<string | null> {

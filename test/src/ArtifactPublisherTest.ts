@@ -4,6 +4,8 @@ import { BintrayPublisher } from "electron-builder/out/publish/BintrayPublisher"
 import { createPublisher } from "electron-builder/out/builder"
 import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
+import BluebirdPromise from "bluebird-lst-c"
+import { SourceRepositoryInfo } from "electron-builder"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -121,6 +123,7 @@ it("create publisher", async () => {
       version: "2.0.0",
       repository: "develar/test"
     },
+    repositoryInfo: BluebirdPromise.resolve(<SourceRepositoryInfo>{type: "github", domain: "github.com", user: "develar", project: "test",})
   }
   const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
 

@@ -4,7 +4,7 @@ import { all, executeFinally } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
 import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig } from "./metadata"
-import { PlatformPackager, BuildInfo, ArtifactCreated } from "./platformPackager"
+import { PlatformPackager, BuildInfo, ArtifactCreated, SourceRepositoryInfo } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
@@ -19,6 +19,7 @@ import { TmpDir } from "electron-builder-util/out/tmp"
 import { BuildOptions } from "./builder"
 import { getGypEnv, installOrRebuild } from "./yarn"
 import { Platform, Arch, Target } from "electron-builder-core"
+import { getRepositoryInfo } from "./repositoryInfo"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -45,6 +46,15 @@ export class Packager implements BuildInfo {
   appInfo: AppInfo
 
   readonly tempDirManager = new TmpDir()
+
+  private _repositoryInfo: Promise<SourceRepositoryInfo> | null
+
+  get repositoryInfo(): Promise<SourceRepositoryInfo> {
+    if (this._repositoryInfo == null) {
+      this._repositoryInfo = getRepositoryInfo(this.appInfo.metadata, this.devMetadata)
+    }
+    return this._repositoryInfo
+  }
 
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: BuildOptions) {
@@ -110,7 +120,7 @@ export class Packager implements BuildInfo {
 
     this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
 
-    this.appInfo = new AppInfo(this.metadata, this.devMetadata)
+    this.appInfo = new AppInfo(this.metadata, this.devMetadata, this)
     const cleanupTasks: Array<() => Promise<any>> = []
     return await executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
   }
