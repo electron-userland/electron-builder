@@ -1,10 +1,11 @@
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { log } from "electron-builder-util/out/log"
+import { log, warn} from "electron-builder-util/out/log"
 import { homedir } from "os"
 import { spawn, asArray } from "electron-builder-util"
 import { BuildMetadata } from "./metadata"
 import { exists } from "electron-builder-util/out/fs"
+import { readInstalled } from "./readInstalled"
 
 export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, platform: string, arch: string, forceInstall: boolean = false) {
   const args = asArray(options.npmArgs)
@@ -59,44 +60,6 @@ function installDependencies(appDir: string, electronVersion: string, platform: 
   })
 }
 
-let readInstalled: any = null
-export function dependencies(dir: string, extraneousOnly: boolean, result: Set<string>): Promise<Array<string>> {
-  if (readInstalled == null) {
-    readInstalled = BluebirdPromise.promisify(require("read-installed"))
-  }
-  return readInstalled(dir)
-    .then((it: any) => flatDependencies(it, result, new Set(), extraneousOnly))
-}
-
-function flatDependencies(data: any, result: Set<string>, seen: Set<string>, extraneousOnly: boolean): void {
-  if (data.dependencies == null) {
-    return
-  }
-
-  const queue: Array<any> = [data.dependencies]
-  while (queue.length > 0) {
-    const deps = queue.pop()
-    for (const name of Object.keys(deps)) {
-      const dep = deps[name]
-      if (typeof dep !== "object" || (!extraneousOnly && dep.extraneous) || seen.has(dep)) {
-        continue
-      }
-
-      seen.add(dep)
-
-      if (extraneousOnly === dep.extraneous) {
-        result.add(dep.path)
-      }
-      else {
-        const childDeps = dep.dependencies
-        if (childDeps != null) {
-          queue.push(childDeps)
-        }
-      }
-    }
-  }
-}
-
 function getPackageToolPath() {
   if (process.env.FORCE_YARN === "true") {
     return process.platform === "win32" ? "yarn.cmd" : "yarn"
@@ -107,14 +70,12 @@ function getPackageToolPath() {
 }
 
 function isYarnPath(execPath: string | null) {
-  return execPath != null && path.basename(execPath).startsWith("yarn")
+  return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn"))
 }
 
 export async function rebuild(appDir: string, electronVersion: string, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean) {
-  const deps = new Set<string>()
-  await dependencies(appDir, false, deps)
-  const nativeDeps = await BluebirdPromise.filter(deps, it => exists(path.join(it, "binding.gyp")), {concurrency: 8})
-
+  const pathToDep = await readInstalled(appDir)
+  const nativeDeps = await BluebirdPromise.filter(pathToDep.values(), it => it.extraneous ? false : exists(path.join(it.path, "binding.gyp")), {concurrency: 8})
   if (nativeDeps.length === 0) {
     log(`No native production dependencies`)
     return
@@ -137,12 +98,23 @@ export async function rebuild(appDir: string, electronVersion: string, platform:
   if (isYarn) {
     execArgs.push("run", "install", "--")
     execArgs.push(...additionalArgs)
-    await BluebirdPromise.each(nativeDeps, it => spawn(execPath, execArgs, {cwd: it, env: env}))
+    await BluebirdPromise.each(nativeDeps, dep => {
+      log(`Rebuilding native dependency ${dep.name}`)
+      return spawn(execPath, execArgs, {cwd: dep.path, env: env})
+        .catch(error => {
+          if (dep.optional) {
+            warn(`Cannot build optional native dep ${dep.name}`)
+          }
+          else {
+            throw error
+          }
+        })
+    })
   }
   else {
     execArgs.push("rebuild")
     execArgs.push(...additionalArgs)
-    execArgs.push(...nativeDeps.map(it => path.basename(it)))
+    execArgs.push(...nativeDeps.map(it => it.name))
     await spawn(execPath, execArgs, {cwd: appDir, env: env})
   }
 }

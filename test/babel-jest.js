@@ -63,8 +63,9 @@ function createTransformer(options) {
 
       let plugins = options.plugins || []
 
-      // inputSourceMap: JSON.parse(fs.readFileSync(filename + ".map", "utf-8"))
-      const finalOptions = Object.assign({}, options, {filename, plugins})
+      const finalOptions = Object.assign({
+        inputSourceMap: JSON.parse(fs.readFileSync(filename + ".map", "utf-8")),
+      }, options, {filename, plugins})
       if (transformOptions && transformOptions.instrument) {
         finalOptions.auxiliaryCommentBefore = ' istanbul ignore next '
         plugins = plugins.concat(require('babel-plugin-istanbul').default);

@@ -16,7 +16,7 @@
     "docker-images": "docker/build.sh",
     "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "postinstall": "lerna bootstrap",
-    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util' -a",
+    "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util,electron-builder-core' -a",
     "lerna-publish": "node test/out/helpers/setVersions.js p && lerna publish --skip-npm --skip-git && node test/out/helpers/setVersions.js",
     "npm-publish": "yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s"
   },
@@ -52,7 +52,7 @@
       "test/out"
     ],
     "transform": {
-      "node_modules[\\/]{1}electron-builder-[a-z]+[\\/]{1}.+\\.js$": "<rootDir>/test/babel-jest.js",
+      "node_modules[\\/]{1}electron-builder-[a-z]+[\\/]{1}(?!.+[\\/]{1}node_modules[\\/]{1}.+).+\\.js$": "<rootDir>/test/babel-jest.js",
       "^(?!.+[\\/]{1}node_modules[\\/]{1}.+).+\\.js$": "<rootDir>/test/babel-jest.js"
     },
     "transformIgnorePatterns": [],

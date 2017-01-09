@@ -15,12 +15,12 @@ import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter 
 import { BuildOptions } from "./builder"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { getRepositoryInfo } from "./repositoryInfo"
-import { dependencies } from "./yarn"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import EventEmitter = NodeJS.EventEmitter
 import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
 import { getResolvedPublishConfig } from "./publish/publisher"
+import { readInstalled } from "./readInstalled"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -202,7 +202,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const ignoreFiles = new Set([path.resolve(appDir, outDir), path.resolve(appDir, this.buildResourcesDir)])
     // prune dev or not listed dependencies
     await BluebirdPromise.all([
-      dependencies(appDir, true, ignoreFiles),
+      dependencies(appDir, ignoreFiles),
       unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion),
     ])
 
@@ -642,4 +642,13 @@ export function getPublishConfigs(packager: PlatformPackager<any>, platformSpeci
 
   return asArray<PublishConfiguration | string>(publishers)
     .map(it => typeof it === "string" ? {provider: <any>it} : it)
+}
+
+async function dependencies(dir: string, result: Set<string>): Promise<void> {
+  const pathToDep = await readInstalled(dir)
+  for (const dep of pathToDep.values()) {
+    if (dep.extraneous) {
+      result.add(dep.path)
+    }
+  }
 }

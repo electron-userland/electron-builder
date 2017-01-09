@@ -2,7 +2,7 @@
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
-  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation.
+  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
   * Development dependencies are never included. You don't need to ignore them explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
 * [Auto Update](#auto-update) ready application packaging.
@@ -19,6 +19,8 @@ A complete solution to package and build a ready for distribution Electron app f
 _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
+
+[Yarn](http://yarnpkg.com/) is recommended instead of npm.
 
 ## Configuration
 
