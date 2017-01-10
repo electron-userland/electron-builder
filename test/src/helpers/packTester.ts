@@ -523,7 +523,7 @@ export class CheckingMacPackager extends OsXPackager {
     // skip
   }
 
-  protected async writeUpdateInfo(appOutDir: string) {
+  protected async writeUpdateInfo(appOutDir: string, outDir: string) {
     // ignored
   }
 }

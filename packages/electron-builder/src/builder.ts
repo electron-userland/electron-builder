@@ -1,5 +1,5 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { PackagerOptions, getPublishConfigs, BuildInfo } from "./platformPackager"
+import { PackagerOptions, getPublishConfigs } from "./platformPackager"
 import { PublishOptions, Publisher, getResolvedPublishConfig } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "electron-builder-util/out/promise"
@@ -305,7 +305,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
 
 // visible only for tests
 // call only from this file or from tests
-export async function createPublisher(packager: BuildInfo, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
   if (config == null) {
     return null

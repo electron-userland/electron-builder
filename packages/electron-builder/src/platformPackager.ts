@@ -12,7 +12,6 @@ import { AppInfo } from "./appInfo"
 import { unpackElectron } from "./packager/dirPackager"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
-import { BuildOptions } from "./builder"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
@@ -61,7 +60,7 @@ export interface PackagerOptions {
 }
 
 export interface BuildInfo {
-  options: BuildOptions
+  options: PackagerOptions
 
   metadata: AppMetadata
 
@@ -84,6 +83,8 @@ export interface BuildInfo {
   readonly tempDirManager: TmpDir
 
   repositoryInfo: Promise<SourceRepositoryInfo | null>
+
+  fireArtifactCreated(event: ArtifactCreated): void
 }
 
 export interface SourceRepositoryInfo {

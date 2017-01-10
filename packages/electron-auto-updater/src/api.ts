@@ -20,7 +20,7 @@ export interface Provider<T extends VersionInfo> {
 export function getDefaultChannelName() {
   let channel = "latest"
   if (getCurrentPlatform() === "darwin") {
-    channel += "-macos"
+    channel += "-mac"
   }
   return channel
 }

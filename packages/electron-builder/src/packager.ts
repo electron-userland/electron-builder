@@ -66,6 +66,10 @@ export class Packager implements BuildInfo {
     return this
   }
 
+  fireArtifactCreated(event: ArtifactCreated) {
+    this.eventEmitter.emit("artifactCreated", event)
+  }
+
   get devPackageFile(): string {
     return path.join(this.projectDir, "package.json")
   }

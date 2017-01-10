@@ -4,7 +4,7 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { v5 as uuid5 } from "uuid-1345"
-import { normalizeExt, ArtifactCreated } from "../platformPackager"
+import { normalizeExt } from "../platformPackager"
 import { archive } from "./archive"
 import { subTask, log, warn } from "electron-builder-util/out/log"
 import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
@@ -240,7 +240,7 @@ export default class NsisTarget extends Target {
         const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
         if (githubPublishConfig != null) {
           // to preserve compatibility with old electron-auto-updater (< 0.10.0), we upload file with path specific for GitHub
-          packager.info.eventEmitter.emit("artifactCreated", <ArtifactCreated>{
+          packager.info.fireArtifactCreated({
             data: new Buffer(safeDump(<UpdateInfo>{
               version: version,
               path: githubArtifactName,

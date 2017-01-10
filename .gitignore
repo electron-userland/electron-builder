@@ -29,3 +29,5 @@ dist/
 # to not exclude .js.snap (jest snapshots)
 /test/out/**/*.js
 /test/out/**/*.map
+
+/packages/electron-builder/README.md

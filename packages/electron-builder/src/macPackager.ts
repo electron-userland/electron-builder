@@ -13,7 +13,9 @@ import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "electron-builder-util"
 import { Target, Platform, Arch } from "electron-builder-core"
 import { safeDump } from "js-yaml"
-import { writeFile } from "fs-extra-p"
+import { writeFile, writeJson } from "fs-extra-p"
+import { GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { computeDownloadUrl } from "./publish/publisher"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -78,7 +80,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (!hasMas || targets.length > 1) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-        .then(() => this.writeUpdateInfo(appOutDir))
+        .then(() => this.writeUpdateInfo(appOutDir, outDir))
         .then(() => this.sign(appOutDir, null))
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
@@ -95,10 +97,33 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  protected async writeUpdateInfo(appOutDir: string) {
+  protected async writeUpdateInfo(appOutDir: string, outDir: string) {
     const publishConfigs = await this.publishConfigs
-    if (publishConfigs != null) {
-      await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
+    if (publishConfigs == null) {
+      return
+    }
+
+    await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
+
+    for (const publishConfig of publishConfigs) {
+      if (!(publishConfig.provider === "generic" || publishConfig.provider === "github")) {
+        continue
+      }
+
+      const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+      const updateInfoFile = path.join(outDir, `${channel}-mac.json`)
+
+      await writeJson(updateInfoFile, <VersionInfo>{
+        version: this.appInfo.version,
+        url: computeDownloadUrl(publishConfig, this.generateName2("zip", "mac", true), this.appInfo.version)
+      }, {spaces: 2})
+
+      this.info.fireArtifactCreated({
+        file: updateInfoFile,
+        packager: this,
+      })
+
+      break
     }
   }
 
