@@ -4,7 +4,7 @@ import { all, executeFinally } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
 import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig } from "./metadata"
-import { PlatformPackager, BuildInfo, ArtifactCreated, SourceRepositoryInfo } from "./platformPackager"
+import { PlatformPackager } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
 import * as util from "util"
@@ -16,10 +16,10 @@ import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
 import { readPackageJson } from "./util/readPackageJson"
 import { TmpDir } from "electron-builder-util/out/tmp"
-import { BuildOptions } from "./builder"
 import { getGypEnv, installOrRebuild } from "./yarn"
 import { Platform, Arch, Target } from "electron-builder-core"
 import { getRepositoryInfo } from "./repositoryInfo"
+import { SourceRepositoryInfo, ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -57,7 +57,7 @@ export class Packager implements BuildInfo {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(public options: BuildOptions) {
+  constructor(public options: PackagerOptions) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
   }
 
@@ -66,7 +66,7 @@ export class Packager implements BuildInfo {
     return this
   }
 
-  fireArtifactCreated(event: ArtifactCreated) {
+  dispatchArtifactCreated(event: ArtifactCreated) {
     this.eventEmitter.emit("artifactCreated", event)
   }
 

@@ -75,7 +75,7 @@ export type CompressionLevel = "store" | "normal" | "maximum"
 /*
  ## `.build`
  */
-export interface BuildMetadata {
+export interface BuildMetadata extends PlatformSpecificBuildOptions {
   /*
   The application id. Used as
   [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
@@ -120,8 +120,6 @@ export interface BuildMetadata {
   /*
   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#BuildMetadata-asarUnpack) - please file issue if this doesn't work.
-
-  Or you can pass object of asar options.
   */
   readonly asar?: AsarOptions | boolean | null
 
@@ -351,15 +349,15 @@ export interface MetadataDirectories {
 }
 
 export interface PlatformSpecificBuildOptions {
-  readonly files?: Array<string> | null
-  readonly extraFiles?: Array<string> | null
-  readonly extraResources?: Array<string> | null
+  readonly files?: Array<string> | string | null
+  readonly extraFiles?: Array<string> | string | null
+  readonly extraResources?: Array<string> | string | null
 
-  readonly asarUnpack?: Array<string> | null
+  readonly asarUnpack?: Array<string> | string | null
 
-  readonly asar?: AsarOptions | boolean
+  readonly asar?: AsarOptions | boolean | null
 
-  readonly target?: Array<string> | null
+  readonly target?: Array<string> | string | null
 
   readonly icon?: string | null
 

@@ -1,5 +1,5 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { PackagerOptions, getPublishConfigs } from "./platformPackager"
+import { getPublishConfigs } from "./platformPackager"
 import { PublishOptions, Publisher, getResolvedPublishConfig } from "./publish/publisher"
 import { GitHubPublisher } from "./publish/gitHubPublisher"
 import { executeFinally } from "electron-builder-util/out/promise"
@@ -11,6 +11,7 @@ import { DIR_TARGET } from "./targets/targetFactory"
 import { BintrayPublisher } from "./publish/BintrayPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
 import isCi from "is-ci"
+import { PackagerOptions } from "./packagerApi"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -263,7 +264,7 @@ function isAuthTokenSet() {
   return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
 }
 
-function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: BuildOptions, isPublishOptionGuessed: boolean) {
+function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: PublishOptions, isPublishOptionGuessed: boolean) {
   const nameToPublisher = new Map<string, Promise<Publisher>>()
 
   function getOrCreatePublisher(publishConfig: PublishConfiguration): Promise<Publisher | null> {
@@ -305,7 +306,7 @@ function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<
 
 // visible only for tests
 // call only from this file or from tests
-export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration | GithubOptions | BintrayOptions, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
+export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
   const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
   if (config == null) {
     return null

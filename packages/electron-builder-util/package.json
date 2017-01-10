@@ -18,9 +18,6 @@
     "chalk": "^1.1.3",
     "debug": "2.6.0",
     "node-emoji": "^1.5.0",
-    "pretty-ms": "^2.1.0",
-    "cli-cursor": "^1.0.2",
-    "ansi-escapes": "^1.4.0",
     "electron-builder-http": "~0.0.0-semantic-release",
     "source-map-support": "^0.4.8",
     "7zip-bin": "^2.0.4"

@@ -1,5 +1,5 @@
 import * as path from "path"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager } from "./platformPackager"
 import { Platform, Target } from "electron-builder-core"
 import FpmTarget from "./targets/fpm"
 import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
@@ -9,6 +9,7 @@ import { rename } from "fs-extra-p"
 import { LinuxBuildOptions } from "./options/linuxOptions"
 import sanitizeFileName from "sanitize-filename"
 import SnapTarget from "./targets/snap"
+import { BuildInfo } from "./packagerApi"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   readonly executableName: string

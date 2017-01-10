@@ -1,6 +1,6 @@
 import { downloadCertificate } from "./codeSign"
 import BluebirdPromise from "bluebird-lst-c"
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager } from "./platformPackager"
 import { Platform, Target } from "electron-builder-core"
 import * as path from "path"
 import { log } from "electron-builder-util/out/log"
@@ -11,6 +11,7 @@ import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
 import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 import { WinBuildOptions } from "./options/winOptions"
+import { BuildInfo } from "./packagerApi"
 
 export interface FileCodeSigningInfo {
   readonly file?: string | null

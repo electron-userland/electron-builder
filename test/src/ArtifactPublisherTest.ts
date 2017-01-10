@@ -6,6 +6,7 @@ import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
 import BluebirdPromise from "bluebird-lst-c"
 import { SourceRepositoryInfo } from "electron-builder"
+import { GithubOptions } from "electron-builder-http/out/publishOptions"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -125,7 +126,7 @@ it("create publisher", async () => {
     },
     repositoryInfo: BluebirdPromise.resolve(<SourceRepositoryInfo>{type: "github", domain: "github.com", user: "develar", project: "test",})
   }
-  const publisher = await createPublisher(packager, {provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
+  const publisher = await createPublisher(packager, <GithubOptions>{provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
 
   expect(publisher).toMatchObject({
     info: {

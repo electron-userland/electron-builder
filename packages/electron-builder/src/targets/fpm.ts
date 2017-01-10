@@ -1,6 +1,5 @@
 import { toLinuxArchString } from "electron-builder-core"
-import { smarten } from "../platformPackager"
-import { use, exec } from "electron-builder-util"
+import { use, exec, smarten } from "electron-builder-util"
 import * as path from "path"
 import { getBin } from "electron-builder-util/out/binDownload"
 import { readFile, outputFile, ensureDir } from "fs-extra-p"

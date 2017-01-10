@@ -1,98 +1,22 @@
-import { AppMetadata, DevMetadata, PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
+import { PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
 import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
-import { Packager } from "./packager"
 import { AsarOptions } from "asar-electron-builder"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import { unpackElectron } from "./packager/dirPackager"
-import { TmpDir } from "electron-builder-util/out/tmp"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
-import EventEmitter = NodeJS.EventEmitter
 import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
 import { getResolvedPublishConfig } from "./publish/publisher"
 import { readInstalled } from "./readInstalled"
-
-export interface PackagerOptions {
-  targets?: Map<Platform, Map<Arch, string[]>>
-
-  projectDir?: string | null
-
-  cscLink?: string | null
-  cscKeyPassword?: string | null
-
-  cscInstallerLink?: string | null
-  cscInstallerKeyPassword?: string | null
-
-  platformPackagerFactory?: ((packager: Packager, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | null
-
-  /**
-   * The same as [development package.json](https://github.com/electron-userland/electron-builder/wiki/Options#development-packagejson).
-   *
-   * Development `package.json` will be still read, but options specified in this object will override.
-   */
-  readonly devMetadata?: DevMetadata
-
-  /*
-   See [.build](#BuildMetadata).
-   */
-  readonly config?: BuildMetadata
-
-  /**
-   * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).
-   *
-   * Application `package.json` will be still read, but options specified in this object will override.
-   */
-  readonly appMetadata?: AppMetadata
-
-  readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
-
-  readonly extraMetadata?: any
-
-  readonly prepackaged?: string
-}
-
-export interface BuildInfo {
-  options: PackagerOptions
-
-  metadata: AppMetadata
-
-  devMetadata: DevMetadata
-
-  config: BuildMetadata
-
-  projectDir: string
-  appDir: string
-  devPackageFile: string
-
-  electronVersion: string
-
-  eventEmitter: EventEmitter
-
-  isTwoPackageJsonProjectLayoutUsed: boolean
-
-  appInfo: AppInfo
-
-  readonly tempDirManager: TmpDir
-
-  repositoryInfo: Promise<SourceRepositoryInfo | null>
-
-  fireArtifactCreated(event: ArtifactCreated): void
-}
-
-export interface SourceRepositoryInfo {
-  type: string
-  domain: string
-  user: string
-  project: string
-}
+import { PackagerOptions, BuildInfo } from "./packagerApi"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly options: PackagerOptions
@@ -166,7 +90,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   dispatchArtifactCreated(file: string, artifactName?: string) {
-    this.info.eventEmitter.emit("artifactCreated", {
+    this.info.dispatchArtifactCreated({
       file: file,
       artifactName: artifactName,
       packager: this,
@@ -576,46 +500,21 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 }
 
-export interface ArtifactCreated {
-  readonly packager: PlatformPackager<any>
-
-  readonly file?: string
-  readonly data?: Buffer
-
-  readonly artifactName?: string
-
-  readonly publishConfig?: PublishConfiguration
-}
-
-// fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
-// http://leancrew.com/all-this/2010/11/smart-quotes-in-javascript/
-export function smarten(s: string): string {
-  // opening singles
-  s = s.replace(/(^|[-\u2014\s(\["])'/g, "$1\u2018")
-  // closing singles & apostrophes
-  s = s.replace(/'/g, "\u2019")
-  // opening doubles
-  s = s.replace(/(^|[-\u2014/\[(\u2018\s])"/g, "$1\u201c")
-  // closing doubles
-  s = s.replace(/"/g, "\u201d")
-  return s
-}
-
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function getPublishConfigs(packager: PlatformPackager<any>, platformSpecificBuildOptions: PlatformSpecificBuildOptions): Array<PublishConfiguration> | null {
+export function getPublishConfigs(packager: PlatformPackager<any>, options: PlatformSpecificBuildOptions): Array<PublishConfiguration> | null {
   // check build.nsis (target)
-  let publishers = platformSpecificBuildOptions.publish
+  let publishers = options.publish
   // if explicitly set to null - do not publish
   if (publishers === null) {
     return null
   }
 
   // check build.win (platform)
-  if (packager.platformSpecificBuildOptions !== platformSpecificBuildOptions) {
+  if (packager.platformSpecificBuildOptions !== options) {
     publishers = packager.platformSpecificBuildOptions.publish
     if (publishers === null) {
       return null

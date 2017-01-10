@@ -1,4 +1,4 @@
-import { PlatformPackager, BuildInfo } from "./platformPackager"
+import { PlatformPackager } from "./platformPackager"
 import { MasBuildOptions, MacOptions } from "./options/macOptions"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
@@ -16,6 +16,7 @@ import { safeDump } from "js-yaml"
 import { writeFile, writeJson } from "fs-extra-p"
 import { GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { computeDownloadUrl } from "./publish/publisher"
+import { BuildInfo } from "./packagerApi"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -118,7 +119,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         url: computeDownloadUrl(publishConfig, this.generateName2("zip", "mac", true), this.appInfo.version)
       }, {spaces: 2})
 
-      this.info.fireArtifactCreated({
+      this.info.dispatchArtifactCreated({
         file: updateInfoFile,
         packager: this,
       })

@@ -1,9 +1,9 @@
 import { DevMetadata, AppMetadata, BuildMetadata } from "./metadata"
 import { warn } from "electron-builder-util/out/log"
-import { smarten, BuildInfo } from "./platformPackager"
-import { isEmptyOrSpaces } from "electron-builder-util"
+import { isEmptyOrSpaces, smarten } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { SemVer } from "semver"
+import { BuildInfo } from "./packagerApi"
 
 export class AppInfo {
   readonly description = smarten(this.metadata.description!)
