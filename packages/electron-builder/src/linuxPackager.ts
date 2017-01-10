@@ -25,18 +25,6 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return ["appimage"]
   }
 
-  normalizePlatformSpecificBuildOptions(options: LinuxBuildOptions | n): LinuxBuildOptions {
-    if (options != null && options.description != null) {
-      return options
-    }
-    else {
-      // this.appInfo maybe not yet initialized at this moment
-      return Object.assign({
-        description: this.info.appInfo.description,
-      }, options)
-    }
-  }
-
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
     let helper: LinuxTargetHelper | null
     const getHelper = () => {

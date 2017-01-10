@@ -12,4 +12,3 @@
   rcName: "${fileNameWithoutExt}.${0}"
   env:
     TEST_APP_TMP_DIR: /tmp/electron-builder-test
-    DEBUG: electron-builder

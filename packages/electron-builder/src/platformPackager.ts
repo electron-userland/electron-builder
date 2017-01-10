@@ -19,7 +19,7 @@ import { readInstalled } from "./readInstalled"
 import { PackagerOptions, BuildInfo } from "./packagerApi"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
-  readonly options: PackagerOptions
+  readonly packagerOptions: PackagerOptions
 
   readonly projectDir: string
   readonly buildResourcesDir: string
@@ -38,9 +38,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   constructor(readonly info: BuildInfo) {
     this.config = info.config
-    this.platformSpecificBuildOptions = this.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
+    this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
-    this.options = info.options
+    this.packagerOptions = info.options
     this.projectDir = info.projectDir
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
@@ -60,7 +60,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return appInfo
   }
 
-  normalizePlatformSpecificBuildOptions(options: DC | n): DC {
+  private static normalizePlatformSpecificBuildOptions(options: any | n): any {
     return options == null ? Object.create(null) : options
   }
 
@@ -78,7 +78,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected doGetCscPassword() {
-    return this.options.cscKeyPassword || process.env.CSC_KEY_PASSWORD
+    return this.packagerOptions.cscKeyPassword || process.env.CSC_KEY_PASSWORD
   }
 
   get relativeBuildResourcesDirname() {
@@ -98,7 +98,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.options.prepackaged || this.computeAppOutDir(outDir, arch)
+    const appOutDir = this.packagerOptions.prepackaged || this.computeAppOutDir(outDir, arch)
     await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
     this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
   }
@@ -267,7 +267,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const defaultOptions = {
-      extraMetadata: this.options.extraMetadata,
+      extraMetadata: this.packagerOptions.extraMetadata,
     }
 
     if (result == null || result === true) {
@@ -471,15 +471,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
+  protected get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
     if (this._publishConfigs == null) {
-      this._publishConfigs = this.computePublishConfigs()
+      this._publishConfigs = this.computePublishConfigs(null)
     }
     return this._publishConfigs
   }
 
-  private async computePublishConfigs(): Promise<Array<PublishConfiguration> | null> {
-    let publishConfigs = getPublishConfigs(this, this.options)
+  async computePublishConfigs(targetSpecificOptions: PlatformSpecificBuildOptions | null): Promise<Array<PublishConfiguration> | null> {
+    let publishConfigs = getPublishConfigs(this, targetSpecificOptions)
     if (publishConfigs == null) {
       return null
     }
@@ -505,16 +505,20 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function getPublishConfigs(packager: PlatformPackager<any>, options: PlatformSpecificBuildOptions): Array<PublishConfiguration> | null {
+export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null): Array<PublishConfiguration> | null {
+  let publishers
+
   // check build.nsis (target)
-  let publishers = options.publish
-  // if explicitly set to null - do not publish
-  if (publishers === null) {
-    return null
+  if (targetSpecificOptions != null) {
+    publishers = targetSpecificOptions.publish
+    // if explicitly set to null - do not publish
+    if (publishers === null) {
+      return null
+    }
   }
 
   // check build.win (platform)
-  if (packager.platformSpecificBuildOptions !== options) {
+  if (publishers == null) {
     publishers = packager.platformSpecificBuildOptions.publish
     if (publishers === null) {
       return null

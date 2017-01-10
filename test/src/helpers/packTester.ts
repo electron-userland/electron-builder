@@ -281,7 +281,7 @@ function parseDebControl(info: string): any {
 
 async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
   const appInfo = packager.appInfo
-  const packedAppDir = path.join(path.dirname(artifacts[0].file), `${appInfo.productFilename}.app`)
+  const packedAppDir = path.join(path.dirname(artifacts.find(it => it.file != null && !it.file.endsWith("json")).file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   expect(info).toMatchObject({
     CFBundleDisplayName: appInfo.productName,
@@ -302,21 +302,15 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     expect(result).not.toMatch(/is not signed at all/)
   }
 
-  const actualFiles = artifacts.map(it => path.basename(it.file)).sort()
-  if (checkOptions != null && checkOptions.expectedContents != null) {
-    expect(actualFiles).toEqual(checkOptions.expectedContents)
-  }
-  else {
-    expect(actualFiles).toEqual([
-      `${appInfo.productFilename}-${appInfo.version}-mac.zip`,
-      `${appInfo.productFilename}-${appInfo.version}.dmg`,
-    ].sort())
-
-    expect(artifacts.map(it => it.artifactName).sort()).toEqual([
-      `TestApp-${appInfo.version}-mac.zip`,
-      `TestApp-${appInfo.version}.dmg`,
-    ].sort())
-  }
+  expect(artifacts.map(it => {
+    const result: any = Object.assign({}, it)
+    if (result.file != null) {
+      result.file = path.basename(result.file)
+    }
+    delete result.packager
+    delete result.publishConfig
+    return result
+  })).toMatchSnapshot()
 }
 
 function getFileNames(list: Array<ArtifactCreated>): Array<string> {
@@ -528,7 +522,7 @@ export class CheckingMacPackager extends OsXPackager {
   }
 }
 
-export function createMacTargetTest(target: Array<MacOsTargetName>, expectedContents: Array<string>) {
+export function createMacTargetTest(target: Array<MacOsTargetName>) {
   return app({
     targets: Platform.MAC.createTarget(),
     config: {
@@ -538,7 +532,6 @@ export function createMacTargetTest(target: Array<MacOsTargetName>, expectedCont
     }
   }, {
     useTempDir: true,
-    expectedContents: expectedContents,
     signed: target.includes("mas") || target.includes("pkg"),
     packed: async (context) => {
       if (!target.includes("tar.gz")) {

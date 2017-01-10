@@ -155,7 +155,7 @@ export class DmgTarget extends Target {
 
       await exec("sync")
 
-      if (packager.options.effectiveOptionComputed != null && await packager.options.effectiveOptionComputed([volumePath, specification])) {
+      if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([volumePath, specification])) {
         return
       }
     })

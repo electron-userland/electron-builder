@@ -6,72 +6,75 @@ const fs = require('fs')
 const jestPreset = require('babel-preset-jest')
 const path = require('path')
 
-const BABELRC_FILENAME = '.babelrc';
+const convert = require("convert-source-map")
 
-const cache = Object.create(null);
+let babelRc;
 
-function getBabelRC(filename, _ref) {
-  let useCache = _ref.useCache;
-  const paths = [];
-  let directory = filename;
-  while (directory !== (directory = path.dirname(directory))) {
-    if (useCache && cache[directory]) {
-      break;
-    }
-
-    paths.push(directory);
-    const configFilePath = path.join(directory, BABELRC_FILENAME);
-    if (fs.existsSync(configFilePath)) {
-      cache[directory] = fs.readFileSync(configFilePath, 'utf8');
-      break;
-    }
+function getBabelRcDigest() {
+  if (babelRc == null) {
+    babelRc = crypto
+      .createHash("md5")
+      .update(fs.readFileSync(path.join(__dirname, "..", ".babelrc"), "utf8"))
+      .digest("hex")
   }
-  paths.forEach(directoryPath => {
-    cache[directoryPath] = cache[directory];
-  });
+  return babelRc;
+}
 
-  return cache[directory] || '';
+// compiled by ts-babel - do not transform
+function isFullyCompiled(fileData) {
+  return fileData.startsWith(`"use strict";`) && fileData.includes("var _")
 }
 
 function createTransformer(options) {
   options = Object.assign({}, options, {
     presets: (options && options.presets || []).concat([jestPreset]),
-  });
+  })
 
-  delete options.cacheDirectory;
+  delete options.cacheDirectory
 
   return {
     canInstrument: true,
     getCacheKey(fileData, filename, configString, _ref2) {
-      let instrument = _ref2.instrument, watch = _ref2.watch;
-      return crypto.createHash('md5')
-        .update(fileData).update(configString)
-        // Don't use the in-memory cache in watch mode because the .babelrc
-        // file may be modified.
-        .update(getBabelRC(filename, {useCache: !watch}))
-        .update(instrument ? 'instrument' : '')
-        .digest('hex');
+      return crypto.createHash("md5")
+        .update(fileData)
+        .update(isFullyCompiled(fileData) ? "f": "p")
+        .update(configString)
+        .update(getBabelRcDigest())
+        .update(_ref2.instrument ? "instrument" : "")
+        .digest("hex")
     },
     process(src, filename, config, transformOptions) {
       if (babel == null) {
         babel = require('babel-core')
       }
 
-      if (!babel.util.canCompile(filename)) {
+      if (!babel.util.canCompile(filename) || isFullyCompiled(src)) {
         return src
       }
 
       let plugins = options.plugins || []
 
-      const finalOptions = Object.assign({
-        inputSourceMap: JSON.parse(fs.readFileSync(filename + ".map", "utf-8")),
-      }, options, {filename, plugins})
-      if (transformOptions && transformOptions.instrument) {
-        finalOptions.auxiliaryCommentBefore = ' istanbul ignore next '
-        plugins = plugins.concat(require('babel-plugin-istanbul').default);
+      const lastLine = src.lastIndexOf("\n") + 1
+      if (lastLine > 0 && lastLine < src.length) {
+        if (src.substring(lastLine).startsWith("//#")) {
+          src = src.substring(0, lastLine - 1)
+        }
       }
 
-      return babel.transform(src, finalOptions).code
+      const finalOptions = Object.assign({}, options, {
+        filename,
+        plugins,
+        inputSourceMap: JSON.parse(fs.readFileSync(filename + ".map", "utf-8")),
+        sourceMaps: "inline",
+      })
+      if (transformOptions && transformOptions.instrument) {
+        finalOptions.auxiliaryCommentBefore = ' istanbul ignore next '
+        finalOptions.plugins = plugins.concat(require('babel-plugin-istanbul').default);
+      }
+
+      const result = babel.transform(src, finalOptions)
+      const codeWithSourceMapUrl = result.code + "\n//# sourceMappingURL=data:application/json;base64," + convert.fromObject(result.map).toBase64()
+      return codeWithSourceMapUrl
     }
   }
 }

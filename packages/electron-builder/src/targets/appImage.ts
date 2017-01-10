@@ -66,7 +66,7 @@ export default class AppImageTarget extends Target {
     args.push("-zisofs", `level=${packager.config.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
 
-    if (this.packager.options.effectiveOptionComputed != null && await this.packager.options.effectiveOptionComputed([args, desktopFile])) {
+    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFile])) {
       return
     }
 

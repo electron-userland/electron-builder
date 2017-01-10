@@ -10,13 +10,6 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 10) * 1000 * 60
 
 const skip = test.skip
 
-if (process.env.RUN_IN_BAND !== "true") {
-  //noinspection JSUnresolvedVariable
-  // it = it.concurrent
-  //noinspection JSUnresolvedVariable
-  // test = it
-}
-
 const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 test.ifNotWindows = isWindows ? skip : test

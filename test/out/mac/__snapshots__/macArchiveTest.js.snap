@@ -1,0 +1,29 @@
+exports[`test only zip 1`] = `
+Array [
+  Object {
+    "file": "latest-mac.json",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.zip",
+    "file": "Test App ßW-1.1.0-mac.zip",
+  },
+]
+`;
+
+exports[`test pkg 1`] = `
+Array [
+  Object {
+    "artifactName": "TestApp-1.1.0.pkg",
+    "file": "Test App ßW-1.1.0.pkg",
+  },
+]
+`;
+
+exports[`test tar.gz 1`] = `
+Array [
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.tar.gz",
+    "file": "Test App ßW-1.1.0-mac.tar.gz",
+  },
+]
+`;

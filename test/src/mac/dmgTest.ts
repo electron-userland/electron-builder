@@ -21,7 +21,6 @@ test.ifMac("no build directory", app({
     return false
   },
 }, {
-  expectedContents: ["NoBuildDirectory-1.1.0.dmg"],
   projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
@@ -98,7 +97,6 @@ test.ifMac("unset dmg icon", app({
     }
   }
 }, {
-  expectedContents: ["Test ß No Volume Icon-1.1.0.dmg"],
   packed: (context) => {
     return attachAndExecute(path.join(context.outDir, "mac/Test ß No Volume Icon-1.1.0.dmg"), false, () => {
       return BluebirdPromise.all([
@@ -121,7 +119,6 @@ test.ifMac("no background", app({
     }
   }
 }, {
-  expectedContents: ["NoBackground-1.1.0.dmg"],
   packed: (context) => {
     return attachAndExecute(path.join(context.outDir, "mac/NoBackground-1.1.0.dmg"), false, () => {
       return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()

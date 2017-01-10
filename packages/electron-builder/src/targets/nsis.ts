@@ -32,6 +32,8 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
+  private readonly publishConfigs = this.packager.computePublishConfigs(this.options)
+
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
@@ -49,7 +51,7 @@ export default class NsisTarget extends Target {
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
 
-    const publishConfigs = await this.packager.publishConfigs
+    const publishConfigs = await this.publishConfigs
     if (publishConfigs != null) {
       await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
     }
@@ -187,7 +189,7 @@ export default class NsisTarget extends Target {
     debug(defines)
     debug(commands)
 
-    if (packager.options.effectiveOptionComputed != null && await packager.options.effectiveOptionComputed([defines, commands])) {
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([defines, commands])) {
       return
     }
 
@@ -219,7 +221,7 @@ export default class NsisTarget extends Target {
     await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
     await packager.sign(installerPath)
 
-    const publishConfigs = await this.packager.publishConfigs
+    const publishConfigs = await this.publishConfigs
     const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
     if (publishConfigs != null) {
       for (const publishConfig of publishConfigs) {

@@ -111,11 +111,40 @@ async function runTests() {
 
   let runInBand = false
   const scriptArgs = process.argv.slice(2)
+
+  const testPathIgnorePatterns = config.testPathIgnorePatterns
   if (scriptArgs.length > 0) {
     for (const scriptArg of scriptArgs) {
       console.log(`custom opt: ${scriptArg}`)
       if ("runInBand" === scriptArg) {
         runInBand = true
+      }
+      else if (scriptArg.startsWith("skip")) {
+        if (!isCi) {
+          const suffix = scriptArg.substring("skip".length)
+          switch (scriptArg) {
+            case "skipFpm": {
+              testPathIgnorePatterns.push("[\\/]{1}fpmTest.js$")
+              config.cacheDirectory += `-${suffix}`
+            }
+            break
+
+            case "skipSw": {
+              testPathIgnorePatterns.push("[\\/]{1}squirrelWindowsTest.js$")
+              config.cacheDirectory += `-${suffix}`
+            }
+            break
+
+            case "skipArtifactPublisher": {
+              testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
+              config.cacheDirectory += `-${suffix}`
+            }
+            break
+
+            default:
+              throw new Error(`Unknown opt ${scriptArg}`)
+          }
+        }
       }
       else {
         config[scriptArg] = true
@@ -125,7 +154,7 @@ async function runTests() {
 
   require("jest-cli").runCLI({
     verbose: true,
-    updateSnapshot: false,
+    updateSnapshot: process.env.UPDATE_SNAPSHOT === "true",
     config: config,
     runInBand: runInBand,
     testPathPattern: args.length > 0 ? args.join("|") : null,

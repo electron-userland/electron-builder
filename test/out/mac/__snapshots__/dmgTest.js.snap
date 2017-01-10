@@ -13,4 +13,22 @@ Array [
 ]
 `;
 
+exports[`test no background 1`] = `
+Array [
+  Object {
+    "artifactName": "TestApp-1.1.0.dmg",
+    "file": "NoBackground-1.1.0.dmg",
+  },
+]
+`;
+
 exports[`test no build directory 1`] = `undefined`;
+
+exports[`test unset dmg icon 1`] = `
+Array [
+  Object {
+    "artifactName": "TestApp-1.1.0.dmg",
+    "file": "Test ß No Volume Icon-1.1.0.dmg",
+  },
+]
+`;

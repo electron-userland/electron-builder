@@ -40,3 +40,35 @@ Object {
   "NSSupportsAutomaticGraphicsSwitching": true,
 }
 `;
+
+exports[`test one-package 2`] = `
+Array [
+  Object {
+    "file": "latest-mac.json",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.zip",
+    "file": "Test App ßW-1.1.0-mac.zip",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0.dmg",
+    "file": "Test App ßW-1.1.0.dmg",
+  },
+]
+`;
+
+exports[`test two-package 1`] = `
+Array [
+  Object {
+    "file": "latest-mac.json",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.zip",
+    "file": "TestApp-1.1.0-mac.zip",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0.dmg",
+    "file": "TestApp-1.1.0.dmg",
+  },
+]
+`;

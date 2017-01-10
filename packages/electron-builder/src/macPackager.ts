@@ -24,11 +24,11 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   constructor(info: BuildInfo) {
     super(info)
 
-    if (this.options.cscLink == null || process.platform !== "darwin") {
+    if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
       this.codeSigningInfo = BluebirdPromise.resolve({})
     }
     else {
-      this.codeSigningInfo = createKeychain(info.tempDirManager, this.options.cscLink!, this.getCscPassword(), this.options.cscInstallerLink, this.options.cscInstallerKeyPassword)
+      this.codeSigningInfo = createKeychain(info.tempDirManager, this.packagerOptions.cscLink!, this.getCscPassword(), this.packagerOptions.cscInstallerLink, this.packagerOptions.cscInstallerKeyPassword)
     }
   }
 
@@ -77,19 +77,22 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas")
+    const prepackaged = this.packagerOptions.prepackaged
 
-    if (!hasMas || targets.length > 1) {
+    if (prepackaged == null && (!hasMas || targets.length > 1)) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-        .then(() => this.writeUpdateInfo(appOutDir, outDir))
+        .then(() => this.writeUpdateInfo(appOutDir, outDir, targets))
         .then(() => this.sign(appOutDir, null))
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
 
     if (hasMas) {
-      const appOutDir = path.join(outDir, "mas")
+      const appOutDir = prepackaged || path.join(outDir, "mas")
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
-      await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
+      if (prepackaged == null) {
+        await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
+      }
       await this.sign(appOutDir, masBuildOptions)
     }
 
@@ -98,7 +101,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  protected async writeUpdateInfo(appOutDir: string, outDir: string) {
+  protected async writeUpdateInfo(appOutDir: string, outDir: string, targets: Array<Target>) {
+    // only if there is zip target
+    if (!targets.some(it => it.name === "zip")) {
+      return
+    }
+
     const publishConfigs = await this.publishConfigs
     if (publishConfigs == null) {
       return
