@@ -10,7 +10,7 @@ import { homedir } from "os"
 import { statOrNull } from "electron-builder-util/out/fs"
 import isCi from "is-ci"
 
-export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
+export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:", "Mac Developer:"]
 
 export type CertType = "Developer ID Application" | "Developer ID Installer" | "3rd Party Mac Developer Application" | "3rd Party Mac Developer Installer" | "Mac Developer"
 
@@ -221,11 +221,7 @@ export async function findIdentity(certType: CertType, qualifier?: string | null
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }
-    const result = await _findIdentity(certType, identity, keychain)
-    if (result == null) {
-      throw new Error(`Identity name "${identity}" is specified, but no valid identity with this name in the keychain`)
-    }
-    return result
+    return await _findIdentity(certType, identity, keychain)
   }
 }
 
