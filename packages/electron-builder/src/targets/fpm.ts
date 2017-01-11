@@ -164,7 +164,7 @@ export default class FpmTarget extends Target {
 
     await exec(await fpmPath, args)
 
-    this.packager.dispatchArtifactCreated(destination)
+    this.packager.dispatchArtifactCreated(destination, this)
   }
 }
 

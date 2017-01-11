@@ -5,7 +5,7 @@ import * as path from "path"
 import { tar, archive } from "./archive"
 
 export class ArchiveTarget extends Target {
-  constructor(name: string, private outDir: string, private readonly packager: PlatformPackager<any>) {
+  constructor(name: string, public readonly outDir: string, private readonly packager: PlatformPackager<any>) {
     super(name)
   }
 
@@ -39,6 +39,6 @@ export class ArchiveTarget extends Target {
       await archive(packager.config.compression, format, outFile, dirToArchive)
     }
 
-    packager.dispatchArtifactCreated(outFile, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))
+    packager.dispatchArtifactCreated(outFile, this, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))
   }
 }

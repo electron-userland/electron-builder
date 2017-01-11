@@ -7,6 +7,7 @@ const path = require("path")
 const configuration = {
   "extends": "tslint:recommended",
   "rules": {
+    "no-invalid-this": [true],
     "member-ordering": [
       "static-before-instance",
       "variables-before-functions"

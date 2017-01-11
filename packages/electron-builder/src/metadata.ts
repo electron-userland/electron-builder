@@ -253,11 +253,8 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
 
 export interface AfterPackContext {
   readonly appOutDir: string
-
-  // deprecated
-  readonly options: any
-
   readonly packager: PlatformPackager<any>
+  readonly electronPlatformName: string
 }
 
 export interface BeforeBuildContext {

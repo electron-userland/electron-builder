@@ -1,17 +1,14 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { getPublishConfigs } from "./platformPackager"
-import { PublishOptions, Publisher, getResolvedPublishConfig } from "./publish/publisher"
-import { GitHubPublisher } from "./publish/gitHubPublisher"
+import { PublishOptions } from "./publish/publisher"
 import { executeFinally } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"
-import { isEmptyOrSpaces, debug } from "electron-builder-util"
+import { isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { Platform, Arch, archFromString } from "electron-builder-core"
 import { DIR_TARGET } from "./targets/targetFactory"
-import { BintrayPublisher } from "./publish/BintrayPublisher"
-import { PublishConfiguration, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
 import isCi from "is-ci"
 import { PackagerOptions } from "./packagerApi"
+import { PublishManager } from "./publish/PublishManager"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -227,12 +224,11 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   }
 
   const packager = new Packager(options)
-  const publishTasks: Array<BluebirdPromise<any>> = []
-
+  let publishManager: PublishManager | null = null
   if (options.publish != null && options.publish !== "never") {
     // todo if token set as option
     if (isAuthTokenSet()) {
-      publishManager(packager, publishTasks, options, isPublishOptionGuessed)
+      publishManager = new PublishManager(packager, options, isPublishOptionGuessed)
     }
     else if (isCi) {
       log(`CI detected, publish is set to ${options.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
@@ -248,80 +244,20 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   })
 
   return await executeFinally(packager.build().then(() => artifactPaths), errorOccurred => {
+    if (publishManager == null) {
+      return BluebirdPromise.resolve(null)
+    }
+
     if (errorOccurred) {
-      for (const task of publishTasks) {
-        task!.cancel()
-      }
+      publishManager.cancelTasks()
       return BluebirdPromise.resolve(null)
     }
     else {
-      return BluebirdPromise.all(publishTasks)
+      return publishManager.awaitTasks()
     }
   })
 }
 
 function isAuthTokenSet() {
   return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
-}
-
-function publishManager(packager: Packager, publishTasks: Array<BluebirdPromise<any>>, options: PublishOptions, isPublishOptionGuessed: boolean) {
-  const nameToPublisher = new Map<string, Promise<Publisher>>()
-
-  function getOrCreatePublisher(publishConfig: PublishConfiguration): Promise<Publisher | null> {
-    let publisher = nameToPublisher.get(publishConfig.provider)
-    if (publisher == null) {
-      publisher = createPublisher(packager, publishConfig, options, isPublishOptionGuessed)
-      nameToPublisher.set(publishConfig.provider, publisher)
-    }
-    return publisher
-  }
-
-  packager.artifactCreated(event => {
-    const publishers = event.publishConfig == null ? getPublishConfigs(event.packager, event.packager.platformSpecificBuildOptions) : [event.publishConfig]
-    // if explicitly set to null - do not publish
-    if (publishers === null) {
-      debug(`${event.file} is not published: publish is set to null`)
-      return
-    }
-
-    for (const publishConfig of publishers) {
-      const publisher = getOrCreatePublisher(publishConfig)
-      if (publisher != null) {
-        publisher
-          .then(it => {
-            if (it == null) {
-              return null
-            }
-            if (event.file == null) {
-              return publishTasks.push(<BluebirdPromise<any>>it.uploadData(event.data!, event.artifactName!))
-            }
-            else {
-              return publishTasks.push(<BluebirdPromise<any>>it.upload(event.file!, event.artifactName))
-            }
-          })
-      }
-    }
-  })
-}
-
-// visible only for tests
-// call only from this file or from tests
-export async function createPublisher(packager: Packager, publishConfig: PublishConfiguration, options: PublishOptions, isPublishOptionGuessed: boolean = false): Promise<Publisher | null> {
-  const config = await getResolvedPublishConfig(packager, publishConfig, isPublishOptionGuessed)
-  if (config == null) {
-    return null
-  }
-
-  const version = packager.metadata.version!
-  if (publishConfig.provider === "github") {
-    const githubInfo: GithubOptions = config
-    log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
-    return new GitHubPublisher(githubInfo, version, options, isPublishOptionGuessed)
-  }
-  if (publishConfig.provider === "bintray") {
-    const bintrayInfo: BintrayOptions = config
-    log(`Creating Bintray Publisher — user: ${bintrayInfo.user || bintrayInfo.owner}, owner: ${bintrayInfo.owner},  package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
-    return new BintrayPublisher(bintrayInfo, version, options)
-  }
-  return null
 }

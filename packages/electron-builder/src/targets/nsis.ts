@@ -250,6 +250,7 @@ export default class NsisTarget extends Target {
             })),
             artifactName: `${channel}.yml`,
             packager: packager,
+            target: this,
             publishConfig: githubPublishConfig,
           })
         }
@@ -261,7 +262,7 @@ export default class NsisTarget extends Target {
       await unlinkIfExists(path.join(this.outDir, `latest.yml`))
     }
 
-    packager.dispatchArtifactCreated(installerPath, githubArtifactName)
+    packager.dispatchArtifactCreated(installerPath, this, githubArtifactName)
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {

@@ -20,6 +20,7 @@ import OsXPackager from "electron-builder/out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import isCi from "is-ci"
+import { PublishManager } from "electron-builder/out/publish/PublishManager"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -163,6 +164,7 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 
 async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
   const packager = new Packager(packagerOptions)
+  const publishManager = new PublishManager(packager, {publish: "never"}, true)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {
@@ -180,6 +182,7 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
   })
 
   const platformToTarget = await packager.build()
+  await publishManager.awaitTasks()
 
   if (packagerOptions.platformPackagerFactory != null || packagerOptions.effectiveOptionComputed != null) {
     return packager
@@ -302,12 +305,14 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     expect(result).not.toMatch(/is not signed at all/)
   }
 
-  expect(artifacts.map(it => {
+  const emptyTarget = {name: ""}
+  expect(artifacts.sort((a, b) => (a.target || emptyTarget).name.localeCompare((b.target || emptyTarget).name)).map(it => {
     const result: any = Object.assign({}, it)
     if (result.file != null) {
       result.file = path.basename(result.file)
     }
     delete result.packager
+    delete result.target
     delete result.publishConfig
     return result
   })).toMatchSnapshot()
@@ -525,6 +530,9 @@ export class CheckingMacPackager extends OsXPackager {
 export function createMacTargetTest(target: Array<MacOsTargetName>) {
   return app({
     targets: Platform.MAC.createTarget(),
+    appMetadata: <any>{
+      repository: "foo/bar",
+    },
     config: {
       mac: {
         target: target,

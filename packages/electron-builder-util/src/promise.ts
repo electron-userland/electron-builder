@@ -47,12 +47,14 @@ export class NestedError extends Error {
 export function all(promises: Array<Promise<any>>): BluebirdPromise<any> {
   const errors: Array<Error> = []
   return BluebirdPromise.all(promises.map(it => it.catch(it => errors.push(it))))
-    .then(() => {
-      if (errors.length === 1) {
-        throw errors[0]
-      }
-      else if (errors.length > 1) {
-        throw new NestedError(errors, "Cannot cleanup: ")
-      }
-    })
+    .then(() => throwError(errors))
+}
+
+export function throwError(errors: Array<Error>) {
+  if (errors.length === 1) {
+    throw errors[0]
+  }
+  else if (errors.length > 1) {
+    throw new NestedError(errors, "Cannot cleanup: ")
+  }
 }

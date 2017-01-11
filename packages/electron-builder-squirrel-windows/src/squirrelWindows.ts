@@ -24,7 +24,8 @@ export default class SquirrelWindowsTarget extends Target {
       warn("For windows consider only distributing 64-bit or use nsis target, see https://github.com/electron-userland/electron-builder/issues/359#issuecomment-214851130")
     }
 
-    const appInfo = this.packager.appInfo
+    const packager = this.packager
+    const appInfo = packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
     const setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
@@ -33,17 +34,17 @@ export default class SquirrelWindowsTarget extends Target {
 
     const distOptions = await this.computeEffectiveDistOptions()
 
-    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, this.packager, appOutDir)
+    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir)
 
-    this.packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 
     const packagePrefix = `${appInfo.name}-${convertVersion(version)}-`
-    this.packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`))
+    packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this)
     if (distOptions.remoteReleases != null) {
-      this.packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`))
+      packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`), this)
     }
 
-    this.packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"))
+    packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"), this)
   }
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {

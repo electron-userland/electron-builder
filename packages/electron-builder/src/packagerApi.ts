@@ -1,6 +1,6 @@
-import { Platform, Arch } from "electron-builder-core"
+import { Platform, Arch, Target } from "electron-builder-core"
 import { PlatformPackager } from "./platformPackager"
-import { DevMetadata, BuildMetadata, AppMetadata } from "./metadata"
+import { DevMetadata, BuildMetadata, AppMetadata, AfterPackContext } from "./metadata"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"
@@ -68,10 +68,13 @@ export interface BuildInfo {
   repositoryInfo: Promise<SourceRepositoryInfo | null>
 
   dispatchArtifactCreated(event: ArtifactCreated): void
+
+  afterPack(context: AfterPackContext): Promise<void>
 }
 
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
+  readonly target: Target | null
 
   readonly file?: string
   readonly data?: Buffer

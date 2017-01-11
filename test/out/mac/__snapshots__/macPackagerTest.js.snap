@@ -47,12 +47,12 @@ Array [
     "file": "latest-mac.json",
   },
   Object {
-    "artifactName": "TestApp-1.1.0-mac.zip",
-    "file": "Test App ßW-1.1.0-mac.zip",
-  },
-  Object {
     "artifactName": "TestApp-1.1.0.dmg",
     "file": "Test App ßW-1.1.0.dmg",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.zip",
+    "file": "Test App ßW-1.1.0-mac.zip",
   },
 ]
 `;
@@ -63,12 +63,12 @@ Array [
     "file": "latest-mac.json",
   },
   Object {
-    "artifactName": "TestApp-1.1.0-mac.zip",
-    "file": "TestApp-1.1.0-mac.zip",
-  },
-  Object {
     "artifactName": "TestApp-1.1.0.dmg",
     "file": "TestApp-1.1.0.dmg",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.zip",
+    "file": "TestApp-1.1.0-mac.zip",
   },
 ]
 `;

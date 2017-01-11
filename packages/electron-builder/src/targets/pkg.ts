@@ -17,7 +17,7 @@ export class PkgTarget extends Target {
     args.push("--version", appInfo.buildVersion)
     args.push(outFile)
     await exec("productbuild", args)
-    packager.dispatchArtifactCreated(outFile, `${appInfo.name}-${appInfo.version}.pkg`)
+    packager.dispatchArtifactCreated(outFile, this, `${appInfo.name}-${appInfo.version}.pkg`)
   }
 }
 

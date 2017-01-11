@@ -12,10 +12,6 @@ import { AppInfo } from "./appInfo"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "electron-builder-util"
 import { Target, Platform, Arch } from "electron-builder-core"
-import { safeDump } from "js-yaml"
-import { writeFile, writeJson } from "fs-extra-p"
-import { GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { computeDownloadUrl } from "./publish/publisher"
 import { BuildInfo } from "./packagerApi"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
@@ -82,7 +78,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (prepackaged == null && (!hasMas || targets.length > 1)) {
       const appOutDir = this.computeAppOutDir(outDir, arch)
       nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-        .then(() => this.writeUpdateInfo(appOutDir, outDir, targets))
         .then(() => this.sign(appOutDir, null))
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
@@ -98,41 +93,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     if (nonMasPromise != null) {
       await nonMasPromise
-    }
-  }
-
-  protected async writeUpdateInfo(appOutDir: string, outDir: string, targets: Array<Target>) {
-    // only if there is zip target
-    if (!targets.some(it => it.name === "zip")) {
-      return
-    }
-
-    const publishConfigs = await this.publishConfigs
-    if (publishConfigs == null) {
-      return
-    }
-
-    await writeFile(path.join(this.getOSXResourcesDir(appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
-
-    for (const publishConfig of publishConfigs) {
-      if (!(publishConfig.provider === "generic" || publishConfig.provider === "github")) {
-        continue
-      }
-
-      const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-      const updateInfoFile = path.join(outDir, `${channel}-mac.json`)
-
-      await writeJson(updateInfoFile, <VersionInfo>{
-        version: this.appInfo.version,
-        url: computeDownloadUrl(publishConfig, this.generateName2("zip", "mac", true), this.appInfo.version)
-      }, {spaces: 2})
-
-      this.info.dispatchArtifactCreated({
-        file: updateInfoFile,
-        packager: this,
-      })
-
-      break
     }
   }
 
@@ -213,7 +173,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (masOptions != null) {
       const pkg = path.join(appOutDir, `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
       await this.doFlat(appPath, pkg, await this.findInstallerIdentity(true, keychainName), keychainName)
-      this.dispatchArtifactCreated(pkg, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
+      this.dispatchArtifactCreated(pkg, null, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
     }
   }
 

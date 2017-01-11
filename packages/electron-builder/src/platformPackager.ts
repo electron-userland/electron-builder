@@ -34,8 +34,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  private _publishConfigs: Promise<Array<PublishConfiguration> | null>
-
   constructor(readonly info: BuildInfo) {
     this.config = info.config
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
@@ -86,19 +84,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
-  dispatchArtifactCreated(file: string, artifactName?: string) {
+  dispatchArtifactCreated(file: string, target: Target | null, artifactName?: string) {
     this.info.dispatchArtifactCreated({
       file: file,
       artifactName: artifactName,
       packager: this,
+      target: target,
     })
   }
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    const appOutDir = this.packagerOptions.prepackaged || this.computeAppOutDir(outDir, arch)
+    const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
     this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
   }
@@ -222,15 +221,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.doCopyExtraFiles(extraResourceMatchers)
     await this.doCopyExtraFiles(extraFileMatchers)
 
-    const afterPack = this.config.afterPack
-    if (afterPack != null) {
-      await afterPack({
-        appOutDir: appOutDir,
-        options: this.config,
-        packager: this,
-      })
-    }
-
+    await this.info.afterPack({
+      appOutDir: appOutDir,
+      packager: this,
+      electronPlatformName: platformName,
+    })
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
@@ -342,10 +337,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   private getResourcesDir(appOutDir: string): string {
-    return this.platform === Platform.MAC ? this.getOSXResourcesDir(appOutDir) : path.join(appOutDir, "resources")
+    return this.platform === Platform.MAC ? this.getMacOsResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
 
-  protected getOSXResourcesDir(appOutDir: string): string {
+  public getMacOsResourcesDir(appOutDir: string): string {
     return path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents", "Resources")
   }
 
@@ -471,13 +466,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return null
   }
 
-  protected get publishConfigs(): Promise<Array<PublishConfiguration> | null> {
-    if (this._publishConfigs == null) {
-      this._publishConfigs = this.computePublishConfigs(null)
-    }
-    return this._publishConfigs
-  }
-
   async computePublishConfigs(targetSpecificOptions: PlatformSpecificBuildOptions | null): Promise<Array<PublishConfiguration> | null> {
     let publishConfigs = getPublishConfigs(this, targetSpecificOptions)
     if (publishConfigs == null) {
@@ -505,7 +493,7 @@ export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
 }
 
-export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null): Array<PublishConfiguration> | null {
+export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined): Array<PublishConfiguration> | null {
   let publishers
 
   // check build.nsis (target)

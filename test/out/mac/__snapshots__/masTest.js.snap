@@ -10,12 +10,12 @@ Array [
 exports[`test mas and 7z 1`] = `
 Array [
   Object {
-    "artifactName": "TestApp-1.1.0-mac.7z",
-    "file": "Test App ßW-1.1.0-mac.7z",
-  },
-  Object {
     "artifactName": "TestApp-1.1.0.pkg",
     "file": "Test App ßW-1.1.0.pkg",
+  },
+  Object {
+    "artifactName": "TestApp-1.1.0-mac.7z",
+    "file": "Test App ßW-1.1.0-mac.7z",
   },
 ]
 `;

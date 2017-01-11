@@ -3,7 +3,7 @@ import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpa
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
-import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig } from "./metadata"
+import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig, AfterPackContext } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -49,6 +49,8 @@ export class Packager implements BuildInfo {
 
   private _repositoryInfo: Promise<SourceRepositoryInfo> | null
 
+  private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
+
   get repositoryInfo(): Promise<SourceRepositoryInfo> {
     if (this._repositoryInfo == null) {
       this._repositoryInfo = getRepositoryInfo(this.appInfo.metadata, this.devMetadata)
@@ -59,6 +61,10 @@ export class Packager implements BuildInfo {
   //noinspection JSUnusedGlobalSymbols
   constructor(public options: PackagerOptions) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+  }
+
+  addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
+    this.afterPackHandlers.push(handler)
   }
 
   artifactCreated(handler: (event: ArtifactCreated) => void): Packager {
@@ -290,6 +296,16 @@ export class Packager implements BuildInfo {
     else {
       await installOrRebuild(options, this.appDir, this.electronVersion, platform.nodeName, Arch[arch])
     }
+  }
+
+  afterPack(context: AfterPackContext): Promise<void> {
+    const afterPack = this.config.afterPack
+    const handlers = this.afterPackHandlers.slice()
+    if (afterPack != null) {
+      // user handler should be last
+      handlers.push(afterPack)
+    }
+    return BluebirdPromise.each(handlers, it => it(context))
   }
 }
 

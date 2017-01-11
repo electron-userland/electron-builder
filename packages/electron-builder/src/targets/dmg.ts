@@ -165,7 +165,7 @@ export class DmgTarget extends Target {
     await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-format", packager.config.compression === "store" ? "UDRO" : "UDBZ", "-imagekey", "zlib-level=9", "-o", artifactPath]))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
 
-    this.packager.dispatchArtifactCreated(artifactPath, `${appInfo.name}-${appInfo.version}.dmg`)
+    this.packager.dispatchArtifactCreated(artifactPath, this, `${appInfo.name}-${appInfo.version}.dmg`)
   }
 
   computeVolumeName(custom?: string | null): string {

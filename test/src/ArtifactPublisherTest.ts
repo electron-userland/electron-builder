@@ -1,7 +1,7 @@
 import { GitHubPublisher } from "electron-builder/out/publish/gitHubPublisher"
 import { join } from "path"
 import { BintrayPublisher } from "electron-builder/out/publish/BintrayPublisher"
-import { createPublisher } from "electron-builder/out/builder"
+import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
 import BluebirdPromise from "bluebird-lst-c"
@@ -127,7 +127,6 @@ it("create publisher", async () => {
     repositoryInfo: BluebirdPromise.resolve(<SourceRepositoryInfo>{type: "github", domain: "github.com", user: "develar", project: "test",})
   }
   const publisher = await createPublisher(packager, <GithubOptions>{provider: "github", vPrefixedTagName: false, token: "__test__"}, {})
-
   expect(publisher).toMatchObject({
     info: {
       provider: "github",

@@ -120,6 +120,6 @@ export default class SnapTarget extends Target {
         stdio: ["ignore", "inherit", "pipe"],
       })
     }
-    packager.dispatchArtifactCreated(resultFile)
+    packager.dispatchArtifactCreated(resultFile, this)
   }
 }

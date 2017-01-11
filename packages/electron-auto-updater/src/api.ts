@@ -61,7 +61,7 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   if (isLogEvent) {
     emitter.on(event, function (...args: any[]) {
       console.log("%s %s", event, args)
-      handler.apply(this, args)
+      handler.apply(null, args)
     })
   }
   else {
