@@ -206,14 +206,14 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
   return null
 }
 
-export async function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
+export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
   let identity = process.env.CSC_NAME || qualifier
   if (isEmptyOrSpaces(identity)) {
     if (keychain == null && !isCi && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
-      return null
+      return BluebirdPromise.resolve(null)
     }
     else {
-      return await _findIdentity(certType, null, keychain)
+      return _findIdentity(certType, null, keychain)
     }
   }
   else {
@@ -221,11 +221,7 @@ export async function findIdentity(certType: CertType, qualifier?: string | null
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }
-    const result = await _findIdentity(certType, identity, keychain)
-    if (result == null) {
-      throw new Error(`Identity name "${identity}" is specified, but no valid identity with this name in the keychain`)
-    }
-    return result
+    return _findIdentity(certType, identity, keychain)
   }
 }
 

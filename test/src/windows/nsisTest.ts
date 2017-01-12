@@ -165,8 +165,7 @@ test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))
 
-// todo why failed on CI?
-test.ifNotCi("allowToChangeInstallationDirectory", app({
+test("allowToChangeInstallationDirectory", app({
   targets: nsisTarget,
   appMetadata: {
     name: "test-custom-inst-dir",

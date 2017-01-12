@@ -104,14 +104,18 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const keychainName = (await this.codeSigningInfo).keychainName
     const isMas = masOptions != null
-    const masQualifier = isMas ? (masOptions!!.identity || this.platformSpecificBuildOptions.identity) : null
+    const qualifier = this.platformSpecificBuildOptions.identity
+    const masQualifier = isMas ? (masOptions!!.identity || qualifier) : null
 
-    let name = await findIdentity(isMas ? "3rd Party Mac Developer Application" : "Developer ID Application", isMas ? masQualifier : this.platformSpecificBuildOptions.identity, keychainName)
+    let name = await findIdentity(isMas ? "3rd Party Mac Developer Application" : "Developer ID Application", isMas ? masQualifier : qualifier, keychainName)
     if (name == null) {
       if (!isMas) {
-        name = await findIdentity("Mac Developer", this.platformSpecificBuildOptions.identity, keychainName)
+        name = await findIdentity("Mac Developer", qualifier, keychainName)
         if (name != null) {
           warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
+        }
+        else if (qualifier != null) {
+          throw new Error(`Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`)
         }
       }
 
