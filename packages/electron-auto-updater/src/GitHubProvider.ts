@@ -9,21 +9,23 @@ export class GitHubProvider implements Provider<VersionInfo> {
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
-    // do not use API to avoid limit
     const basePath = this.getBasePath()
-    let version = (await request<GithubReleaseInfo>(
-      {hostname: "github.com", path: `${basePath}/latest`},
-      null,
-      null,
-      "GET",
-      {"Accept": "application/json"}
-    )).tag_name
+    let version = null
 
     try {
-      version = (version.startsWith("v")) ? version.substring(1) : version
+      // do not use API to avoid limit
+      const releaseInfo = (await request<GithubReleaseInfo>(
+        {hostname: "github.com", path: `${basePath}/latest`},
+        null,
+        null,
+        "GET",
+        {"Accept": "application/json"}
+      ))
+
+      version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Cannot parse determine latest version from github "${version}": ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on github, please ensure a production release exists. \n ${e.stack || e.message}`)
     }
 
     let result: UpdateInfo | null = null
