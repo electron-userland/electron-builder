@@ -10,32 +10,22 @@ export class GitHubProvider implements Provider<VersionInfo> {
 
   async getLatestVersion(): Promise<UpdateInfo> {
     const basePath = this.getBasePath()
-    let version = null
+    let version
 
     try {
       // do not use API to avoid limit
-      const releaseInfo = (await request<GithubReleaseInfo>(
-        {hostname: "github.com", path: `${basePath}/latest`},
-        null,
-        null,
-        "GET",
-        {"Accept": "application/json"}
-      ))
-
+      const releaseInfo = (await request<GithubReleaseInfo>({hostname: "github.com", path: `${basePath}/latest`}, null, null, {Accept: "application/json"}))
       version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on github, please ensure a production release exists. \n ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on github, please ensure a production release exists: ${e.stack || e.message}`)
     }
 
-    let result: UpdateInfo | null = null
-    const channel = getDefaultChannelName()
-    const channelFile = getChannelFilename(channel)
+    let result: any
+    const channelFile = getChannelFilename(getDefaultChannelName())
+    const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
     try {
-      result = await request<UpdateInfo>({
-        hostname: "github.com",
-        path: `https://github.com${basePath}/download/v${version}/${channelFile}`
-      })
+      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath})
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -45,6 +35,9 @@ export class GitHubProvider implements Provider<VersionInfo> {
     }
 
     validateUpdateInfo(result)
+    if (getCurrentPlatform() === "darwin") {
+      result.releaseJsonUrl = `https://github.com${channelFileUrlPath}`
+    }
     return result
   }
 

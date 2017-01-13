@@ -1,6 +1,6 @@
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
-import { ProgressInfo } from "electron-builder-http"
+import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 
 export interface FileInfo {
   name: string

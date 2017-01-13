@@ -17,6 +17,8 @@ export interface Logger {
   info(message?: any): void
 
   warn(message?: any): void
+
+  error(message?: any): void
 }
 
 export abstract class AppUpdater extends EventEmitter {
@@ -40,7 +42,7 @@ export abstract class AppUpdater extends EventEmitter {
   public readonly signals = new UpdaterSignal(this)
 
   /**
-   * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn() }`.
+   * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
    * Set it to `null` if you would like to disable a logging feature.
    */
   public logger: Logger | null = console
@@ -48,7 +50,13 @@ export abstract class AppUpdater extends EventEmitter {
   constructor(options: PublishConfiguration | BintrayOptions | GithubOptions | null | undefined) {
     super()
 
-    if ((<any>global).__test_app) {
+    this.on("error", (error: Error) => {
+      if (this.logger != null) {
+        this.logger.error(`Error: ${error.stack || error.message}`)
+      }
+    })
+
+    if ((<any>global).__test_app != null) {
       this.app = (<any>global).__test_app
       this.untilAppReady = BluebirdPromise.resolve()
     }
@@ -57,14 +65,19 @@ export abstract class AppUpdater extends EventEmitter {
       executorHolder.httpExecutor = new ElectronHttpExecutor()
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
+          if (this.logger != null) {
+            this.logger.info("Wait for app ready")
+          }
           resolve()
         }
         else {
+          if (this.logger != null) {
+            this.logger.info("App is ready")
+          }
           this.app.on("ready", resolve)
         }
       })
     }
-
 
     if (options != null) {
       this.setFeedURL(options)
@@ -110,6 +123,9 @@ export abstract class AppUpdater extends EventEmitter {
       return await this.doCheckForUpdates()
     }
     catch (e) {
+      if (this.logger != null) {
+        this.logger.info("Cannot check for updates:")
+      }
       this.emit("error", e, (e.stack || e).toString())
       throw e
     }

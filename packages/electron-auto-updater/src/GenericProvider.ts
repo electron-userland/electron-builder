@@ -42,12 +42,19 @@ export class GenericProvider implements Provider<UpdateInfo> {
   }
 }
 
+// sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
 export function validateUpdateInfo(info: UpdateInfo) {
-  // sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
-  if (info.sha2 == null && getCurrentPlatform() === "win32") {
-    throw new Error("Update info doesn't contain sha2 checksum")
+  if (getCurrentPlatform() === "darwin") {
+    if ((<any>info).url == null) {
+      throw new Error("Update info doesn't contain url")
+    }
+    return
+  }
+
+  if (info.sha2 == null ) {
+    throw new Error(`Update info doesn't contain sha2 checksum: ${JSON.stringify(info, null, 2)}`)
   }
   if (info.path == null) {
-    throw new Error("Update info doesn't contain file path")
+    throw new Error(`Update info doesn't contain file path: ${JSON.stringify(info, null, 2)}`)
   }
 }

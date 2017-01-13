@@ -2,15 +2,20 @@ import { Url } from "url"
 import { createHash } from "crypto"
 import { Transform } from "stream"
 import { createWriteStream } from "fs-extra-p"
+import { RequestOptions } from "http"
+import { parse as parseUrl } from "url"
+import _debug from "debug"
+import { ProgressCallbackTransform } from "./ProgressCallbackTransform"
+import { safeLoad } from "js-yaml"
+import { EventEmitter } from "events"
+
+export const debug = _debug("electron-builder")
+export const maxRedirects = 10
 
 export interface DownloadOptions {
   skipDirCreation?: boolean
   sha2?: string
   onProgress?(progress: any): void
-}
-
-export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-  return executorHolder.httpExecutor.download(url, destination, options)
 }
 
 export class HttpExecutorHolder {
@@ -28,20 +33,19 @@ export class HttpExecutorHolder {
   }
 }
 
-export const maxRedirects = 10
+export const executorHolder = new HttpExecutorHolder()
+
+export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+  return executorHolder.httpExecutor.download(url, destination, options)
+}
 
 export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
-  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, method?: string, headers?: any): Promise<T> {
-    const defaultHeaders = {"User-Agent": "electron-builder"}
+  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
+    const defaultHeaders: any = {"User-Agent": "electron-builder"}
     const options = Object.assign({
-      method: method,
+      method: method || "GET",
       headers: headers == null ? defaultHeaders : Object.assign(defaultHeaders, headers)
     }, url)
-
-
-    if (url.hostname!!.includes("github") && !url.path!.endsWith(".yml") && !options.headers.Accept) {
-      options.headers["Accept"] = "application/vnd.github.v3+json"
-    }
 
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
@@ -55,6 +59,76 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected abstract doApiRequest<T>(options: REQUEST_OPTS, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
   abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
+
+  protected handleResponse(response: Response, options: RequestOptions, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+    if (debug.enabled) {
+      const safe: any = Object.assign({}, options)
+      if (safe.headers != null && safe.headers.authorization != null) {
+        safe.headers.authorization = "<skipped>"
+      }
+      debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${JSON.stringify(safe, null, 2)}`)
+    }
+
+    // we handle any other >= 400 error on request end (read detailed message in the response body)
+    if (response.statusCode === 404) {
+      // error is clear, we don't need to read detailed error description
+      reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
+    
+    Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
+    `))
+      return
+    }
+    else if (response.statusCode === 204) {
+      // on DELETE request
+      resolve()
+      return
+    }
+
+    const redirectUrl = safeGetHeader(response, "location")
+    if (redirectUrl != null) {
+      if (redirectCount > 10) {
+        reject(new Error("Too many redirects (> 10)"))
+        return
+      }
+
+      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor, redirectCount)
+        .then(resolve)
+        .catch(reject)
+
+      return
+    }
+
+    let data = ""
+    response.setEncoding("utf8")
+    response.on("data", (chunk: string) => {
+      data += chunk
+    })
+
+    response.on("end", () => {
+      try {
+        const contentType = response.headers["content-type"]
+        const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
+        if (response.statusCode >= 400) {
+          reject(new HttpError(response, isJson ? JSON.parse(data) : data))
+        }
+        else {
+          const pathname = (<any>options).pathname || options.path
+          if (data.length === 0) {
+            resolve()
+          }
+          else if (pathname != null && pathname.endsWith(".yml")) {
+            resolve(safeLoad(data))
+          }
+          else {
+            resolve(isJson || (pathname != null && pathname.endsWith(".json")) ? JSON.parse(data) : data)
+          }
+        }
+      }
+      catch (e) {
+        reject(e)
+      }
+    })
+  }
 }
 
 export class HttpError extends Error {
@@ -65,58 +139,13 @@ export class HttpError extends Error {
   }
 }
 
-export class ProgressCallbackTransform extends Transform {
-  private start = Date.now()
-  private transferred = 0
-  private delta = 0
+export interface Response extends EventEmitter {
+  statusCode?: number
+  statusMessage?: string
 
-  private nextUpdate = this.start + 1000
+  headers: any
 
-  constructor(private total: number, private onProgress: (info: ProgressInfo) => any) {
-    super()
-  }
-
-  _transform(chunk: any, encoding: string, callback: Function) {
-    this.transferred += chunk.length
-    this.delta += chunk.length
-
-    const now = Date.now()
-    if (now >= this.nextUpdate && this.transferred != this.total /* will be emitted on _flush */) {
-      this.nextUpdate = now + 1000
-
-      this.onProgress(<ProgressInfo>{
-        total: this.total,
-        delta: this.delta,
-        transferred: this.transferred,
-        percent: (this.transferred / this.total) * 100,
-        bytesPerSecond: Math.round(this.transferred / ((now - this.start) / 1000))
-      })
-      this.delta = 0
-    }
-
-    callback(null, chunk)
-  }
-
-  _flush(callback: Function): void {
-    this.onProgress(<ProgressInfo>{
-      total: this.total,
-      delta: this.delta,
-      transferred: this.total,
-      percent: 100,
-      bytesPerSecond: Math.round(this.transferred / ((Date.now() - this.start) / 1000))
-    })
-    this.delta = 0
-
-    callback(null)
-  }
-}
-
-export interface ProgressInfo {
-  total: number
-  delta: number
-  transferred: number
-  percent: number
-  bytesPerSecond: number
+  setEncoding(encoding: string): void
 }
 
 class DigestTransform extends Transform {
@@ -137,14 +166,12 @@ class DigestTransform extends Transform {
   }
 }
 
-export const executorHolder = new HttpExecutorHolder()
-
-export function githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method: string = "GET"): Promise<T> {
-  return request<T>({hostname: "api.github.com", path: path}, token, data, method)
+export function githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: string): Promise<T> {
+  return executorHolder.httpExecutor.request<T>({hostname: "api.github.com", path: path}, token, data, {Accept: "application/vnd.github.v3+json"}, method)
 }
 
-export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, method: string = "GET", headers?: any): Promise<T> {
-  return executorHolder.httpExecutor.request(url, token, data, method, headers)
+export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
+  return executorHolder.httpExecutor.request(url, token, data, headers, method)
 }
 
 function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
