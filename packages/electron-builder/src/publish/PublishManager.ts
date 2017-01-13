@@ -1,6 +1,6 @@
 import { Packager } from "../packager"
 import { getPublishConfigs, PlatformPackager } from "../platformPackager"
-import { debug } from "electron-builder-util"
+import { debug, isEmptyOrSpaces } from "electron-builder-util"
 import { Publisher, PublishOptions, getResolvedPublishConfig } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
 import { GitHubPublisher } from "./gitHubPublisher"
@@ -9,12 +9,13 @@ import { log } from "electron-builder-util/out/log"
 import { BintrayPublisher } from "./BintrayPublisher"
 import { BuildInfo, ArtifactCreated } from "../packagerApi"
 import { Platform } from "electron-builder-core"
-import { computeDownloadUrl } from "./publisher"
 import { safeDump } from "js-yaml"
 import { writeFile, writeJson } from "fs-extra-p"
 import * as path from "path"
 import { ArchiveTarget } from "../targets/ArchiveTarget"
 import { throwError } from "electron-builder-util/out/promise"
+import isCi from "is-ci"
+import * as url from "url"
 
 export class PublishManager {
   private readonly nameToPublisher = new Map<string, Promise<Publisher>>()
@@ -22,7 +23,39 @@ export class PublishManager {
   readonly publishTasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
 
-  constructor(packager: Packager, private readonly publishOptions: PublishOptions, private readonly isPublishOptionGuessed: boolean) {
+  private isPublishOptionGuessed = false
+
+  constructor(packager: Packager, private readonly publishOptions: PublishOptions) {
+    if (publishOptions.publish === undefined) {
+      if (process.env.npm_lifecycle_event === "release") {
+        publishOptions.publish = "always"
+      }
+      else if (isAuthTokenSet() ) {
+        const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
+        if (!isEmptyOrSpaces(tag)) {
+          log(`Tag ${tag} is defined, so artifacts will be published`)
+          publishOptions.publish = "onTag"
+          this.isPublishOptionGuessed = true
+        }
+        else if (isCi) {
+          log("CI detected, so artifacts will be published if draft release exists")
+          publishOptions.publish = "onTagOrDraft"
+          this.isPublishOptionGuessed = true
+        }
+      }
+    }
+
+    let isPublish = false
+    if (publishOptions.publish != null && publishOptions.publish !== "never") {
+      // todo if token set as option
+      if (isAuthTokenSet()) {
+        isPublish = true
+      }
+      else if (isCi) {
+        log(`CI detected, publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
+      }
+    }
+
     packager.addAfterPackHandler(async event => {
       if (event.electronPlatformName != "darwin") {
         return
@@ -42,7 +75,7 @@ export class PublishManager {
       const target = event.target
       const publishConfigs = event.publishConfig == null ? getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name]) : [event.publishConfig]
 
-      if (publishOptions.publish !== "never") {
+      if (isPublish) {
         if (publishConfigs == null) {
           debug(`${event.file} is not published: no publish configs`)
           return
@@ -129,7 +162,10 @@ async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, p
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      return [{provider: "github"}]
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager.info, {provider: repositoryInfo.type}, false)
+      if (resolvedPublishConfig != null) {
+        return [resolvedPublishConfig]
+      }
     }
   }
   return publishConfigs
@@ -190,4 +226,19 @@ export async function createPublisher(buildInfo: BuildInfo, publishConfig: Publi
     return new BintrayPublisher(bintrayInfo, version, options)
   }
   return null
+}
+
+function isAuthTokenSet() {
+  return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
+}
+
+function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string) {
+  if (publishConfig.provider === "generic") {
+    const baseUrl = url.parse((<GenericServerOptions>publishConfig).url)
+    return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", fileName)}))
+  }
+  else {
+    const gh = <GithubOptions>publishConfig
+    return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${fileName}`
+  }
 }

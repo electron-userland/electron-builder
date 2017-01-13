@@ -48,7 +48,7 @@ export class AppInfo {
   }
 
   get id(): string {
-    let appId = this.config["app-bundle-id"]
+    let appId = (<any>this.config)["app-bundle-id"]
     if (appId != null) {
       warn("app-bundle-id is deprecated, please use appId")
     }

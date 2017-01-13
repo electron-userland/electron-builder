@@ -3,10 +3,8 @@ import { PublishOptions } from "./publish/publisher"
 import { executeFinally } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"
 import { isEmptyOrSpaces } from "electron-builder-util"
-import { log } from "electron-builder-util/out/log"
 import { Platform, Arch, archFromString } from "electron-builder-core"
 import { DIR_TARGET } from "./targets/targetFactory"
-import isCi from "is-ci"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
 
@@ -203,38 +201,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     options.prerelease = process.env.EP_PRELEASE.toLowerCase() === "true"
   }
 
-  let isPublishOptionGuessed = false
-  if (options.publish === undefined) {
-    if (process.env.npm_lifecycle_event === "release") {
-      options.publish = "always"
-    }
-    else if (isAuthTokenSet() ) {
-      const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
-      if (!isEmptyOrSpaces(tag)) {
-        log(`Tag ${tag} is defined, so artifacts will be published`)
-        options.publish = "onTag"
-        isPublishOptionGuessed = true
-      }
-      else if (isCi) {
-        log("CI detected, so artifacts will be published if draft release exists")
-        options.publish = "onTagOrDraft"
-        isPublishOptionGuessed = true
-      }
-    }
-  }
-
   const packager = new Packager(options)
-  let publishManager: PublishManager | null = null
-  if (options.publish != null && options.publish !== "never") {
-    // todo if token set as option
-    if (isAuthTokenSet()) {
-      publishManager = new PublishManager(packager, options, isPublishOptionGuessed)
-    }
-    else if (isCi) {
-      log(`CI detected, publish is set to ${options.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
-    }
-  }
-
   //noinspection JSMismatchedCollectionQueryUpdate
   const artifactPaths: Array<string> = []
   packager.artifactCreated(event => {
@@ -243,6 +210,7 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     }
   })
 
+  const publishManager = new PublishManager(packager, options)
   return await executeFinally(packager.build().then(() => artifactPaths), errorOccurred => {
     if (publishManager == null) {
       return BluebirdPromise.resolve(null)
@@ -256,8 +224,4 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
       return publishManager.awaitTasks()
     }
   })
-}
-
-function isAuthTokenSet() {
-  return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
 }

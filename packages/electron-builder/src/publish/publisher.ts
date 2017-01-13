@@ -5,8 +5,6 @@ import { basename } from "path"
 import { BuildInfo } from "../packagerApi"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
 import { warn } from "electron-builder-util/out/log"
-import * as url from "url"
-import * as path from "path"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
@@ -93,16 +91,5 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
   }
   else {
     return null
-  }
-}
-
-export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string) {
-  if (publishConfig.provider === "generic") {
-    const baseUrl = url.parse((<GenericServerOptions>publishConfig).url)
-    return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", fileName)}))
-  }
-  else {
-    const gh = <GithubOptions>publishConfig
-    return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${fileName}`
   }
 }

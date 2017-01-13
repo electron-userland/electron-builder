@@ -232,9 +232,6 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
 
   readonly icon?: string | null
 
-  // deprecated
-  readonly "app-bundle-id"?: string | null
-
   /*
   See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
    */
@@ -249,6 +246,11 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
    See [.directories](#MetadataDirectories)
    */
   readonly directories?: MetadataDirectories | null
+
+  /*
+  The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
+   */
+  readonly electronVersion?: string | null
 }
 
 export interface AfterPackContext {

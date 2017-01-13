@@ -92,6 +92,7 @@ Don't customize paths to background and icon, — just follow conventions.
 | publish | <a name="BuildMetadata-publish"></a>See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 | forceCodeSigning | <a name="BuildMetadata-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | directories | <a name="BuildMetadata-directories"></a>See [.directories](#MetadataDirectories)
+| electronVersion | <a name="BuildMetadata-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
 
 <a name="AppXOptions"></a>
 ### `.build.appx`

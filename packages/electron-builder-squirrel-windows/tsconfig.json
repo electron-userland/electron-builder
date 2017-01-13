@@ -15,8 +15,8 @@
     "../electron-builder/out/electron-builder.d.ts",
     "../electron-builder-core/out/electron-builder-core.d.ts",
     "../electron-builder-util/out/electron-builder-util.d.ts",
-    "node_modules/fs-extra-p/index.d.ts",
-    "node_modules/bluebird-lst-c/index.d.ts",
-    "node_modules/fs-extra-p/index.d.ts"
+    "../../node_modules/fs-extra-p/index.d.ts",
+    "../../node_modules/bluebird-lst-c/index.d.ts",
+    "../../node_modules/fs-extra-p/index.d.ts"
   ]
 }

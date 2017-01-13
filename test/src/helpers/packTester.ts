@@ -164,7 +164,7 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 
 async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
   const packager = new Packager(packagerOptions)
-  const publishManager = new PublishManager(packager, {publish: "never"}, true)
+  const publishManager = new PublishManager(packager, {publish: "never"})
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {

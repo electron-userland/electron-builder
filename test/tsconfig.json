@@ -15,15 +15,15 @@
     "skipLibCheck": true
   },
   "files": [
-    "../node_modules/@types/jest/index.d.ts"
+    "../node_modules/@types/jest/index.d.ts",
+    "../node_modules/fs-extra-p/index.d.ts",
+    "../node_modules/bluebird-lst-c/index.d.ts",
+    "../node_modules/electron-macos-sign/index.d.ts"
   ],
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
     "src/**/*.ts",
-    "../packages/electron-builder/node_modules/fs-extra-p/index.d.ts",
-    "../packages/electron-builder/node_modules/bluebird-lst-c/index.d.ts",
-    "../packages/electron-builder/node_modules/electron-macos-sign/index.d.ts",
     "../packages/*/out/*.d.ts"
   ]
 }
