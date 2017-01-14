@@ -1,13 +1,10 @@
-To benefit from auto updates, you have to implement and configure Electron's [`autoUpdater`](http://electron.atom.io/docs/latest/api/auto-updater/) module ([example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts)).
-
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
 
-
-**NOTICE**: [macOS auto-update](https://github.com/electron/electron/blob/master/docs/api/auto-updater.md#macos) is not yet simplified. Update providers supported only on Windows.
+Real project [example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts).
 
 ## Quick Setup Guide
 
-1. Install `electron-auto-updater` as app dependency.
+1. Install `electron-auto-updater` as an app dependency.
 
 2. [Configure publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 
@@ -15,26 +12,40 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 
     ```js
     import {autoUpdater} from "electron-auto-updater"
-    ```
-    
-    `electron-auto-updater` works in the same way as electron bundled, it allows you to avoid conditional statements and use the same API across platforms.
+    ```    
 
-4. Do not call `setFeedURL` on Windows. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). But if need, you can — for example, to explicitly set `BintrayOptions`: 
+4. Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
+   
+   But if need, you can — for example, to explicitly configure Bintray provider: 
     ```js
     {
       provider: "bintray",
       owner: "actperepo",
-      package: "no-versions",
+      package: "no-versions"
     }
     ```
 
-Currently, `generic` (any HTTPS web server), `github` and `bintray` are supported. `latest.yml` will be generated in addition to installer for `generic` and `github` and must be uploaded also (in short: only `bintray` doesn't use `latest.yml` and this file must be not uploaded on Bintray).
+Currently, [generic](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GenericServerOptions) (any HTTPS web server), [github](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GithubOptions) and [bintray](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#BintrayOptions) are supported.
+`latest.yml` (or `latest-mac.json` for macOS) will be generated in addition to installer for `generic` and `github` and must be uploaded also (in short: only `bintray` doesn't use `latest.yml` and this file must be not uploaded on Bintray).
+
+**NOTICE**: Bintray provider doesn't support [macOS auto-update](https://github.com/electron/electron/blob/master/docs/api/auto-updater.md#macos) currently. If need, please file issue.
+
+## Debugging
+
+You don't need to listen all events to understand what's wrong. Just set `logger`.
+[electron-log](https://github.com/megahertz/electron-log) is recommended (it is an additional dependency that you can install if needed).
+
+```js
+autoUpdater.logger = require("electron-log")
+autoUpdater.logger.transports.file.level = "info"
+```
 
 ## Options
 
 Name                | Default                 | Description
 --------------------|-------------------------|------------
-autoDownload        | true                    | Automatically download an update when it is found.
+autoDownload        | `true`                  | Automatically download an update when it is found.
+logger              | `console`               | The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
 
 ## Events
 

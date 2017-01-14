@@ -14,8 +14,8 @@ export class GenericProvider implements Provider<UpdateInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     let result: UpdateInfo | null = null
     const channelFile = getChannelFilename(this.channel)
+    const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
     try {
-      const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
       result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`})
     }
     catch (e) {
@@ -26,6 +26,9 @@ export class GenericProvider implements Provider<UpdateInfo> {
     }
 
     validateUpdateInfo(result)
+    if (getCurrentPlatform() === "darwin") {
+      (<any>result).releaseJsonUrl = url.format(Object.assign({}, this.baseUrl, {pathname: pathname}))
+    }
     return result
   }
 
