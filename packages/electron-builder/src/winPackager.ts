@@ -168,7 +168,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       "--set-version-string", "LegalCopyright", appInfo.copyright,
       "--set-version-string", "OriginalFilename", "",
       "--set-file-version", appInfo.buildVersion,
-      "--set-product-version", appInfo.version,
+      "--set-product-version", appInfo.versionInWeirdWindowsForm,
     ]
 
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
