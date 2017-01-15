@@ -1,8 +1,7 @@
 import { Platform } from "electron-builder"
-import { assertPack, platform, modifyPackageJson, app, appThrows, CheckingWinPackager } from "../helpers/packTester"
+import { assertPack, platform, app, appThrows, CheckingWinPackager } from "../helpers/packTester"
 import { writeFile, rename, unlink } from "fs-extra-p"
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
 
 test.ifDevOrWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
@@ -28,16 +27,14 @@ test.ifMac("custom icon", () => {
   let platformPackager: CheckingWinPackager = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager)
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
+    config: {
+      win: {
+        icon: "customIcon"
+      },
+    }
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
-      rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
-      modifyPackageJson(projectDir, data => {
-        data.build.win = {
-          icon: "customIcon"
-        }
-      })
-    ]),
+    projectDirCreated: projectDir => rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
     packed: async context => {
       expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },

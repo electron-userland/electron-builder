@@ -47,7 +47,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 ## Publish Options
 
-[build.publish](#PublishConfiguration) can be specified in [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
+[publish](#PublishConfiguration) can be specified in the [configuration options](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
 
 ```json
 "win": {
@@ -56,13 +56,13 @@ But please consider using automatic rules instead of explicitly specifying `publ
 ```
 
 <!-- do not edit. start of generated block -->
-* [.build.publish](#PublishConfiguration)
-* [.build.publish Bintray](#BintrayOptions)
-* [.build.publish Generic (any https server)](#GenericServerOptions)
-* [.build.publish GitHub](#GithubOptions)
+* [publish](#PublishConfiguration)
+* [publish Bintray](#BintrayOptions)
+* [publish Generic (any https server)](#GenericServerOptions)
+* [publish GitHub](#GithubOptions)
 
 <a name="PublishConfiguration"></a>
-### `.build.publish`
+### `publish`
 
 Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
 
@@ -79,7 +79,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | owner | <a name="PublishConfiguration-owner"></a>The owner.
 
 <a name="BintrayOptions"></a>
-### `.build.publish` Bintray
+### `publish` Bintray
 | Name | Description
 | --- | ---
 | package | <a name="BintrayOptions-package"></a>The Bintray package name.
@@ -87,14 +87,14 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | user | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization.
 
 <a name="GenericServerOptions"></a>
-### `.build.publish` Generic (any https server)
+### `publish` Generic (any https server)
 | Name | Description
 | --- | ---
 | **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`
 | channel | <a name="GenericServerOptions-channel"></a>The channel. Defaults to `latest`.
 
 <a name="GithubOptions"></a>
-### `.build.publish` GitHub
+### `publish` GitHub
 | Name | Description
 | --- | ---
 | repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).

@@ -1,9 +1,7 @@
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 /*
- ### `.build.linux`
-
- Linux specific build options.
+ ### `linux` Linux Specific Options
  */
 export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   /*
@@ -67,15 +65,13 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   /*
    The executable name. Defaults to `productName`.
 
-   Cannot be specified per target, allowed only in the `.build.linux`.
+   Cannot be specified per target, allowed only in the `linux`.
    */
   readonly executableName?: string | null
 }
 
 /*
- ### `.build.snap`
-
- [Snaps](http://snapcraft.io) specific build options.
+ ### `snap` [Snap](http://snapcraft.io) Specific Options
  */
 export interface SnapOptions extends LinuxBuildOptions {
   /*

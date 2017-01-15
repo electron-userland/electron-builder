@@ -4,7 +4,6 @@ import { stat } from "fs-extra-p"
 import { basename } from "path"
 import { BuildInfo } from "../packagerApi"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
-import { warn } from "electron-builder-util/out/log"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
@@ -50,8 +49,7 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
       return null
     }
 
-    warn("Cannot detect repository by .git/config")
-    throw new Error(`Please specify "repository" in the dev package.json ('${packager.devPackageFile}').\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
+    throw new Error(`Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
   }
 
   let owner = publishConfig.owner

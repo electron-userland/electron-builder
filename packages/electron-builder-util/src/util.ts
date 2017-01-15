@@ -2,7 +2,6 @@ import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_pro
 import BluebirdPromise from "bluebird-lst-c"
 import { homedir } from "os"
 import * as path from "path"
-import { readJson } from "fs-extra-p"
 import { yellow, red } from "chalk"
 import _debug from "debug"
 import { warn, log } from "./log"
@@ -138,48 +137,6 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
       resolve()
     }
   })
-}
-
-export async function getElectronVersion(packageData: any, packageJsonPath: string): Promise<string> {
-  const build = packageData.build
-  // build is required, but this check is performed later, so, we should check for null
-  if (build != null && build.electronVersion != null) {
-    return build.electronVersion
-  }
-
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
-    try {
-      return (await readJson(path.join(path.dirname(packageJsonPath), "node_modules", name, "package.json"))).version
-    }
-    catch (e) {
-      if (e.code !== "ENOENT") {
-        warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
-      }
-    }
-  }
-
-  const electronPrebuiltDep = findFromElectronPrebuilt(packageData)
-  if (electronPrebuiltDep == null) {
-    throw new Error("Cannot find electron dependency to get electron version in the '" + packageJsonPath + "'")
-  }
-
-  const firstChar = electronPrebuiltDep[0]
-  return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
-}
-
-function findFromElectronPrebuilt(packageData: any): any {
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
-    const devDependencies = packageData.devDependencies
-    let dep = devDependencies == null ? null : devDependencies[name]
-    if (dep == null) {
-      const dependencies = packageData.dependencies
-      dep = dependencies == null ? null : dependencies[name]
-    }
-    if (dep != null) {
-      return dep
-    }
-  }
-  return null
 }
 
 export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {

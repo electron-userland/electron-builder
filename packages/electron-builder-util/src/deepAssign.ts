@@ -1,4 +1,8 @@
 function isObject(x: any) {
+  if (Array.isArray(x)) {
+    return false
+  }
+
   const type = typeof x
   return type === "object" || type === "function"
 }
@@ -11,7 +15,7 @@ function assignKey(to: any, from: any, key: string) {
   }
 
   const prevValue = to[key]
-  if (prevValue == null || value === null || typeof prevValue !== "object" || !isObject(value)) {
+  if (prevValue == null || value === null || !isObject(prevValue) || !isObject(value)) {
     to[key] = value
   }
   else {

@@ -1,4 +1,4 @@
-import { PlatformSpecificBuildOptions, FileAssociation, BuildMetadata, getDirectoriesConfig } from "./metadata"
+import { PlatformSpecificBuildOptions, FileAssociation, Config } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
@@ -24,7 +24,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly projectDir: string
   readonly buildResourcesDir: string
 
-  readonly config: BuildMetadata
+  readonly config: Config
 
   readonly platformSpecificBuildOptions: DC
 
@@ -80,7 +80,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   get relativeBuildResourcesDirname() {
-    return use(getDirectoriesConfig(this.info.devMetadata), it => it!.buildResources) || "build"
+    return use(this.config.directories, it => it!.buildResources) || "build"
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
@@ -169,10 +169,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const deprecatedIgnore = (<any>this.config).ignore
     if (deprecatedIgnore != null) {
       if (typeof deprecatedIgnore === "function") {
-        warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#Config-files`)
       }
       else {
-        warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-files`)
+        warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#Config-files`)
       }
       rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
     }

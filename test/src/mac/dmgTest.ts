@@ -1,4 +1,4 @@
-import { assertPack, modifyPackageJson, app, CheckingMacPackager } from "../helpers/packTester"
+import { assertPack, app, CheckingMacPackager } from "../helpers/packTester"
 import { remove, copy } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
@@ -29,21 +29,18 @@ test.ifMac("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager)
+    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
+    config: {
+      mac: {
+        icon: "customIcon"
+      },
+      dmg: {
+        background: customBackground,
+        icon: "foo.icns",
+      },
+    }
   }, {
-    projectDirCreated: projectDir => BluebirdPromise.all([
-      copy(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
-      modifyPackageJson(projectDir, data => {
-        data.build.mac = {
-          icon: "customIcon"
-        }
-
-        data.build.dmg = {
-          background: customBackground,
-          icon: "foo.icns",
-        }
-      })
-    ]),
+    projectDirCreated: projectDir => copy(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
     packed: async context => {
       expect(platformPackager.effectiveDistOptions.background).toEqual(customBackground)
       expect(platformPackager.effectiveDistOptions.icon).toEqual("foo.icns")

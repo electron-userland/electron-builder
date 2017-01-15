@@ -6,22 +6,23 @@ import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } fro
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { Platform } from "electron-builder-core"
 
+/*
+## Fields in the package.json
+
+Some standard fields should be defined in the `package.json`.
+ */
 export interface Metadata {
   readonly repository?: string | RepositoryInfo | null
 
-  dependencies?: { [key: string]: string }
-}
+  readonly dependencies?: { [key: string]: string }
 
-/*
- # Application `package.json`
- */
-export interface AppMetadata extends Metadata {
   readonly version?: string
 
   /*
    The application name.
+   @required
    */
-  readonly name: string
+  readonly name?: string
 
   /*
    As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
@@ -49,16 +50,8 @@ export interface AppMetadata extends Metadata {
    *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
    */
   readonly license?: string | null
-}
 
-/*
- # Development `package.json`
- */
-export interface DevMetadata extends Metadata {
-  /*
-   See [.build](#BuildMetadata).
-   */
-  readonly build: BuildMetadata
+  readonly build?: Config
 }
 
 export interface RepositoryInfo {
@@ -73,9 +66,9 @@ export interface AuthorMetadata {
 export type CompressionLevel = "store" | "normal" | "maximum"
 
 /*
- ## `.build`
+ ## Configuration Options
  */
-export interface BuildMetadata extends PlatformSpecificBuildOptions {
+export interface Config extends PlatformSpecificBuildOptions {
   /*
   The application id. Used as
   [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
@@ -113,13 +106,13 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
   readonly extraResources?: Array<string> | string | null
 
   /*
-   The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+   The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<string> | string | null
 
   /*
   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
-  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#BuildMetadata-asarUnpack) - please file issue if this doesn't work.
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.
   */
   readonly asar?: AsarOptions | boolean | null
 
@@ -128,61 +121,21 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
    */
   readonly asarUnpack?: Array<string> | string | null
 
-  /*
-  The file associations. See [.build.fileAssociations](#FileAssociation).
-   */
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
-  /*
-  The URL protocol scheme(s) to associate the app with. See [.build.protocol](#Protocol).
-  */
   readonly protocols?: Array<Protocol> | Protocol
 
-  /*
-   See [.build.mac](#MacOptions).
-   */
   readonly mac?: MacOptions | null
-
-  /*
-   See [.build.dmg](#DmgOptions).
-   */
   readonly dmg?: DmgOptions | null
-
-  /*
-   See [.build.mas](#MasBuildOptions).
-   */
   readonly mas?: MasBuildOptions | null
 
-  /*
-   See [.build.win](#WinBuildOptions).
-   */
   readonly win?: WinBuildOptions  | null
-
-  /*
-   See [.build.nsis](#NsisOptions).
-   */
   readonly nsis?: NsisOptions  | null
-
-  /*
-   See [.build.squirrelWindows](#SquirrelWindowsOptions).
-   */
   readonly squirrelWindows?: SquirrelWindowsOptions  | null
-
-  /*
-   See [.build.appx](#AppXOptions).
-   */
   readonly appx?: AppXOptions  | null
 
-  /*
-   See [.build.linux](#LinuxBuildOptions).
-   */
   readonly linux?: LinuxBuildOptions | null
-
   readonly deb?: LinuxBuildOptions | null
-
-  /*
-   See [.build.snap](#SnapOptions).
-   */
   readonly snap?: SnapOptions | null
 
   /*
@@ -233,7 +186,7 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
   readonly icon?: string | null
 
   /*
-  See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
+  See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
    */
   readonly publish?: Publish
 
@@ -242,9 +195,6 @@ export interface BuildMetadata extends PlatformSpecificBuildOptions {
    */
   readonly forceCodeSigning?: boolean
 
-  /*
-   See [.directories](#MetadataDirectories)
-   */
   readonly directories?: MetadataDirectories | null
 
   /*
@@ -267,9 +217,9 @@ export interface BeforeBuildContext {
 }
 
 /*
- ### `.build.fileAssociations`
+ ### `fileAssociations`  File Associations
 
- macOS and NSIS only. Array of option objects.
+ macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only. Array of option objects.
  */
 export interface FileAssociation {
   /*
@@ -304,9 +254,9 @@ export interface FileAssociation {
 }
 
 /*
- ### `.build.protocols`
+ ### `protocols` URL Protocol Schemes
 
- macOS only.
+ Protocols to associate the app with. macOS only.
 
  Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
  */
@@ -328,7 +278,7 @@ export interface Protocol {
 }
 
 /*
- ### `.build.directories`
+ ### `directories`
  */
 export interface MetadataDirectories {
   /*
@@ -365,8 +315,4 @@ export interface PlatformSpecificBuildOptions {
   readonly publish?: Publish
 
   readonly forceCodeSigning?: boolean
-}
-
-export function getDirectoriesConfig(m: DevMetadata) {
-  return m.build.directories || (<any>m).directories
 }

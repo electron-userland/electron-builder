@@ -1,6 +1,7 @@
-# Options
+electron-builder configuration can be defined in the `package.json` file of your project or through the `--config <path/to/yml>` option (defaults to `electron-builder.yml`).
+If you'd like to use your package.json to store config, the `build` key should be used on the top level.
 
-In the development `package.json` custom `build` field can be specified to customize format. For example, to change icon locations for DMG:
+For example, to change icon location for DMG:
 ```json
 "build": {
   "dmg": {
@@ -24,78 +25,49 @@ As you can see, you need to customize MacOS options only if you want to provide 
 Don't customize paths to background and icon, — just follow conventions.
 
 <!-- do not edit. start of generated block -->
-* [Application package.json](#AppMetadata)
-* [Development package.json](#DevMetadata)
-  * [.build](#BuildMetadata)
-    * [.build.appx](#AppXOptions)
-    * [.build.directories](#MetadataDirectories)
-    * [.build.dmg](#DmgOptions)
-    * [.build.dmg.window](#DmgWindow)
-    * [.build.fileAssociations](#FileAssociation)
-    * [.build.linux](#LinuxBuildOptions)
-    * [.build.mac](#MacOptions)
-    * [.build.mas](#MasBuildOptions)
-    * [.build.nsis](#NsisOptions)
-    * [.build.protocols](#Protocol)
-    * [.build.snap](#SnapOptions)
-    * [.build.squirrelWindows](#SquirrelWindowsOptions)
-    * [.build.win](#WinBuildOptions)
+* [Configuration Options](#Config)
+  * [appx](#AppXOptions)
+  * [directories](#MetadataDirectories)
+  * [dmg macOS DMG Options](#DmgOptions)
+  * [fileAssociations  File Associations](#FileAssociation)
+  * [linux Linux Specific Options](#LinuxBuildOptions)
+  * [mac macOS Specific Options](#MacOptions)
+  * [mas MAS (Mac Application Store) Specific Options](#MasBuildOptions)
+  * [nsis](#NsisOptions)
+  * [protocols URL Protocol Schemes](#Protocol)
+  * [squirrelWindows](#SquirrelWindowsOptions)
+  * [win Windows Specific Options](#WinBuildOptions)
+  * [dmg.window DMG Windows Position and Size](#DmgWindow)
+  * [snap [Snap](http://snapcraft.io) Specific Options](#SnapOptions)
+* [Fields in the package.json](#Metadata)
 
-<a name="AppMetadata"></a>
-# Application `package.json`
+<a name="Config"></a>
+## Configuration Options
 | Name | Description
 | --- | ---
-| **name** | <a name="AppMetadata-name"></a>The application name.
-| productName | <a name="AppMetadata-productName"></a><p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
-| description | <a name="AppMetadata-description"></a>The application description.
-| homepage | <a name="AppMetadata-homepage"></a><p>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package <code>projectUrl</code> (optional) or Linux Package URL (required)).</p> <p>If not specified and your project repository is public on GitHub, it will be <code>https://github.com/${user}/${project}</code> by default.</p>
-| license | <a name="AppMetadata-license"></a>*linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
-
-<a name="DevMetadata"></a>
-# Development `package.json`
-| Name | Description
-| --- | ---
-| **build** | <a name="DevMetadata-build"></a>See [.build](#BuildMetadata).
-
-<a name="BuildMetadata"></a>
-## `.build`
-| Name | Description
-| --- | ---
-| appId | <a name="BuildMetadata-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
-| copyright | <a name="BuildMetadata-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`.
-| productName | <a name="BuildMetadata-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
-| files | <a name="BuildMetadata-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.</p> <p>See [File Patterns](#multiple-glob-patterns).</p>
-| extraResources | <a name="BuildMetadata-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#multiple-glob-patterns).</p>
-| extraFiles | <a name="BuildMetadata-extraFiles"></a>The same as [extraResources](#BuildMetadata-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
-| asar | <a name="BuildMetadata-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to <code>true</code>. Node modules, that must be unpacked, will be detected automatically, you don’t need to explicitly set [asarUnpack](#BuildMetadata-asarUnpack) - please file issue if this doesn’t work.</p>
-| asarUnpack | <a name="BuildMetadata-asarUnpack"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
-| fileAssociations | <a name="BuildMetadata-fileAssociations"></a>The file associations. See [.build.fileAssociations](#FileAssociation).
-| protocols | <a name="BuildMetadata-protocols"></a>The URL protocol scheme(s) to associate the app with. See [.build.protocol](#Protocol).
-| mac | <a name="BuildMetadata-mac"></a>See [.build.mac](#MacOptions).
-| dmg | <a name="BuildMetadata-dmg"></a>See [.build.dmg](#DmgOptions).
-| mas | <a name="BuildMetadata-mas"></a>See [.build.mas](#MasBuildOptions).
-| win | <a name="BuildMetadata-win"></a>See [.build.win](#WinBuildOptions).
-| nsis | <a name="BuildMetadata-nsis"></a>See [.build.nsis](#NsisOptions).
-| squirrelWindows | <a name="BuildMetadata-squirrelWindows"></a>See [.build.squirrelWindows](#SquirrelWindowsOptions).
-| appx | <a name="BuildMetadata-appx"></a>See [.build.appx](#AppXOptions).
-| linux | <a name="BuildMetadata-linux"></a>See [.build.linux](#LinuxBuildOptions).
-| snap | <a name="BuildMetadata-snap"></a>See [.build.snap](#SnapOptions).
-| compression | <a name="BuildMetadata-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
-| afterPack | <a name="BuildMetadata-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-| beforeBuild | <a name="BuildMetadata-beforeBuild"></a>*programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
-| npmRebuild | <a name="BuildMetadata-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
-| npmSkipBuildFromSource | <a name="BuildMetadata-npmSkipBuildFromSource"></a>Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
-| npmArgs | <a name="BuildMetadata-npmArgs"></a>Additional command line arguments to use when installing app native deps. Defaults to `null`.
-| nodeGypRebuild | <a name="BuildMetadata-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
-| electronDist | <a name="BuildMetadata-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
-| electronDownload | <a name="BuildMetadata-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
-| publish | <a name="BuildMetadata-publish"></a>See [.build.publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
-| forceCodeSigning | <a name="BuildMetadata-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
-| directories | <a name="BuildMetadata-directories"></a>See [.directories](#MetadataDirectories)
-| electronVersion | <a name="BuildMetadata-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
+| appId | <a name="Config-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
+| copyright | <a name="Config-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`.
+| productName | <a name="Config-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
+| files | <a name="Config-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.</p> <p>See [File Patterns](#multiple-glob-patterns).</p>
+| extraResources | <a name="Config-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#multiple-glob-patterns).</p>
+| extraFiles | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+| asar | <a name="Config-asar"></a><p>Whether to package the application’s source code into an archive, using [Electron’s archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to <code>true</code>. Node modules, that must be unpacked, will be detected automatically, you don’t need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn’t work.</p>
+| asarUnpack | <a name="Config-asarUnpack"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+| compression | <a name="Config-compression"></a>The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
+| afterPack | <a name="Config-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+| beforeBuild | <a name="Config-beforeBuild"></a>*programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
+| npmRebuild | <a name="Config-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. Defaults to `true`.
+| npmSkipBuildFromSource | <a name="Config-npmSkipBuildFromSource"></a>Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. Defaults to `false`.
+| npmArgs | <a name="Config-npmArgs"></a>Additional command line arguments to use when installing app native deps. Defaults to `null`.
+| nodeGypRebuild | <a name="Config-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. Defaults to `false`.
+| electronDist | <a name="Config-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
+| electronDownload | <a name="Config-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+| publish | <a name="Config-publish"></a>See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
+| forceCodeSigning | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+| electronVersion | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
 
 <a name="AppXOptions"></a>
-### `.build.appx`
+### `appx`
 
 Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
 
@@ -108,7 +80,7 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | identityName | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
 
 <a name="MetadataDirectories"></a>
-### `.build.directories`
+### `directories`
 | Name | Description
 | --- | ---
 | buildResources | <a name="MetadataDirectories-buildResources"></a>The path to build resources, defaults to `build`.
@@ -116,10 +88,7 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | app | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 
 <a name="DmgOptions"></a>
-### `.build.dmg`
-
-macOS DMG specific options.
-
+### `dmg` macOS DMG Options
 | Name | Description
 | --- | ---
 | background | <a name="DmgOptions-background"></a><p>The path to background image (default: <code>build/background.tiff</code> or <code>build/background.png</code> if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use <code>window.size</code>. Default locations expected background size to be 540x380.</p> <p>See [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).</p>
@@ -130,24 +99,12 @@ macOS DMG specific options.
 | title | <a name="DmgOptions-title"></a><p>The title of the produced DMG, which will be shown when mounted (volume name). Defaults to <code>${productName} ${version}</code></p> <p>Macro <code>${productName}</code>, <code>${version}</code> and <code>${name}</code> are supported.</p>
 | contents | <a name="DmgOptions-contents"></a>The content — to customize icon locations.
 | format | <a name="DmgOptions-format"></a>The disk image format, one of `UDRW`, `UDRO`, `UDCO`, `UDZO`, `UDBZ`, `ULFO` (lzfse-compressed image (OS X 10.11+ only)). Defaults to `UDBZ` (bzip2-compressed image).
-| window | <a name="DmgOptions-window"></a>The DMG windows position and size. See [.build.dmg.window](#DmgWindow).
-
-<a name="DmgWindow"></a>
-### `.build.dmg.window`
-
-The DMG windows position and size.
-
-| Name | Description
-| --- | ---
-| x | <a name="DmgWindow-x"></a>The X position relative to left of the screen. Defaults to 400.
-| y | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. Defaults to 100.
-| width | <a name="DmgWindow-width"></a>* The width. Defaults to background image width or 540.
-| height | <a name="DmgWindow-height"></a>* The height. Defaults to background image height or 380.
+| window | <a name="DmgOptions-window"></a>The DMG windows position and size. See [dmg.window](#DmgWindow).
 
 <a name="FileAssociation"></a>
-### `.build.fileAssociations`
+### `fileAssociations`  File Associations
 
-macOS and NSIS only. Array of option objects.
+macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only. Array of option objects.
 
 | Name | Description
 | --- | ---
@@ -159,10 +116,7 @@ macOS and NSIS only. Array of option objects.
 | isPackage | <a name="FileAssociation-isPackage"></a>*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
 
 <a name="LinuxBuildOptions"></a>
-### `.build.linux`
-
-Linux specific build options.
-
+### `linux` Linux Specific Options
 | Name | Description
 | --- | ---
 | category | <a name="LinuxBuildOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
@@ -175,36 +129,30 @@ Linux specific build options.
 | desktop | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
-| executableName | <a name="LinuxBuildOptions-executableName"></a><p>The executable name. Defaults to <code>productName</code>.</p> <p>Cannot be specified per target, allowed only in the <code>.build.linux</code>.</p>
+| executableName | <a name="LinuxBuildOptions-executableName"></a><p>The executable name. Defaults to <code>productName</code>.</p> <p>Cannot be specified per target, allowed only in the <code>linux</code>.</p>
 
 <a name="MacOptions"></a>
-### `.build.mac`
-
-MacOS specific build options.
-
+### `mac` macOS Specific Options
 | Name | Description
 | --- | ---
 | category | <a name="MacOptions-category"></a><p>The application category type, as shown in the Finder via *View -&gt; Arrange by Application Category* when viewing the Applications directory.</p> <p>For example, <code>&quot;category&quot;: &quot;public.app-category.developer-tools&quot;</code> will set the application category to *Developer Tools*.</p> <p>Valid values are listed in [Apple’s documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).</p>
 | target | <a name="MacOptions-target"></a>The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
-| identity | <a name="MacOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).</p>
+| identity | <a name="MacOptions-identity"></a><p>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [mas](#MasBuildOptions-identity).</p>
 | icon | <a name="MacOptions-icon"></a>The path to application icon. Defaults to `build/icon.icns` (consider using this convention instead of complicating your configuration).
-| entitlements | <a name="MacOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.mac.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).</p>
+| entitlements | <a name="MacOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.mac.plist</code> will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements).</p>
 | entitlementsInherit | <a name="MacOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.mac.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
 | bundleVersion | <a name="MacOptions-bundleVersion"></a>The `CFBundleVersion`. Do not use it unless [you need to](see (https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643)).
 | helperBundleId | <a name="MacOptions-helperBundleId"></a>The bundle identifier to use in the application helper's plist. Defaults to `${appBundleIdentifier}.helper`.
 
 <a name="MasBuildOptions"></a>
-### `.build.mas`
-
-MAS (Mac Application Store) specific options (in addition to `build.mac`).
-
+### `mas` MAS (Mac Application Store) Specific Options
 | Name | Description
 | --- | ---
 | entitlements | <a name="MasBuildOptions-entitlements"></a><p>The path to entitlements file for signing the app. <code>build/entitlements.mas.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).</p>
 | entitlementsInherit | <a name="MasBuildOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.mas.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).</p>
 
 <a name="NsisOptions"></a>
-### `.build.nsis`
+### `nsis`
 
 See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
 
@@ -227,9 +175,9 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 
 <a name="Protocol"></a>
-### `.build.protocols`
+### `protocols` URL Protocol Schemes
 
-macOS only.
+Protocols to associate the app with. macOS only.
 
 Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
 
@@ -239,22 +187,8 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | role | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`.
 | **schemes** | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`.
 
-<a name="SnapOptions"></a>
-### `.build.snap`
-
-[Snaps](http://snapcraft.io) specific build options.
-
-| Name | Description
-| --- | ---
-| confinement | <a name="SnapOptions-confinement"></a>The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
-| summary | <a name="SnapOptions-summary"></a>The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
-| grade | <a name="SnapOptions-grade"></a><p>The quality grade of the snap. It can be either <code>devel</code> (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels). Defaults to <code>stable</code>.</p>
-| assumes | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install.
-| stagePackages | <a name="SnapOptions-stagePackages"></a><p>The list of Ubuntu packages to use that are needed to support the <code>app</code> part creation. Like <code>depends</code> for <code>deb</code>. Defaults to <code>[&quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;, &quot;libxss1&quot;, &quot;fontconfig-config&quot;, &quot;gconf2&quot;, &quot;libasound2&quot;]</code>.</p>
-| ubuntuAppPlatformContent | <a name="SnapOptions-ubuntuAppPlatformContent"></a><p>Specify <code>ubuntu-app-platform1</code> to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because “the snaps must be connected before running uitk-gallery for the first time”.</p>
-
 <a name="SquirrelWindowsOptions"></a>
-### `.build.squirrelWindows`
+### `squirrelWindows`
 
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
 
@@ -268,10 +202,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | useAppIdAsId | <a name="SquirrelWindowsOptions-useAppIdAsId"></a>Use `appId` to identify package instead of `name`.
 
 <a name="WinBuildOptions"></a>
-### `.build.win`
-
-Windows specific build options.
-
+### `win` Windows Specific Options
 | Name | Description
 | --- | ---
 | target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p> <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
@@ -284,11 +215,44 @@ Windows specific build options.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 | timeStampServer | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
 
+<a name="DmgWindow"></a>
+### `dmg.window` DMG Windows Position and Size
+| Name | Description
+| --- | ---
+| x | <a name="DmgWindow-x"></a>The X position relative to left of the screen. Defaults to 400.
+| y | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. Defaults to 100.
+| width | <a name="DmgWindow-width"></a>* The width. Defaults to background image width or 540.
+| height | <a name="DmgWindow-height"></a>* The height. Defaults to background image height or 380.
+
+<a name="SnapOptions"></a>
+### `snap` [Snap](http://snapcraft.io) Specific Options
+| Name | Description
+| --- | ---
+| confinement | <a name="SnapOptions-confinement"></a>The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
+| summary | <a name="SnapOptions-summary"></a>The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
+| grade | <a name="SnapOptions-grade"></a><p>The quality grade of the snap. It can be either <code>devel</code> (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels). Defaults to <code>stable</code>.</p>
+| assumes | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install.
+| stagePackages | <a name="SnapOptions-stagePackages"></a><p>The list of Ubuntu packages to use that are needed to support the <code>app</code> part creation. Like <code>depends</code> for <code>deb</code>. Defaults to <code>[&quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;, &quot;libxss1&quot;, &quot;fontconfig-config&quot;, &quot;gconf2&quot;, &quot;libasound2&quot;]</code>.</p>
+| ubuntuAppPlatformContent | <a name="SnapOptions-ubuntuAppPlatformContent"></a><p>Specify <code>ubuntu-app-platform1</code> to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because “the snaps must be connected before running uitk-gallery for the first time”.</p>
+
+<a name="Metadata"></a>
+## Fields in the package.json
+
+Some standard fields should be defined in the `package.json`.
+
+| Name | Description
+| --- | ---
+| **name** | <a name="Metadata-name"></a>The application name.
+| productName | <a name="Metadata-productName"></a><p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
+| description | <a name="Metadata-description"></a>The application description.
+| homepage | <a name="Metadata-homepage"></a><p>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package <code>projectUrl</code> (optional) or Linux Package URL (required)).</p> <p>If not specified and your project repository is public on GitHub, it will be <code>https://github.com/${user}/${project}</code> by default.</p>
+| license | <a name="Metadata-license"></a>*linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
+
 <!-- end of generated block -->
 
-# File Patterns
+## File Patterns
 
-[build.files](#BuildMetadata-files) defaults to:
+[files](#Config-files) defaults to:
 * `**/*`
 * `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
 * `!**/node_modules/.bin`
@@ -306,7 +270,7 @@ If directory matched, all contents are copied. So, you can just specify `foo` to
 Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
  `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the `build.mac`).
+May be specified in the platform options (e.g. in the [mac](#MacOptions)).
 
 ## Multiple Glob Patterns
  ```js
@@ -322,7 +286,7 @@ May be specified in the platform options (e.g. in the `build.mac`).
  ]
  ```
 
-## Excluding directories
+### Excluding directories
 
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
@@ -344,5 +308,5 @@ If `to` is given as a relative path, it is relative to the app's content directo
 
 You can you `${os}` and `${arch}` in the `from` and `to` fields as well.
 
-# Build Version Management
+## Build Version Management
 `CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

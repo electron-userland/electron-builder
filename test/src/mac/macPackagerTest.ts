@@ -1,4 +1,4 @@
-import { assertPack, platform, modifyPackageJson, app, appThrows } from "../helpers/packTester"
+import { assertPack, platform, app, appThrows } from "../helpers/packTester"
 import { Platform, createTargets } from "electron-builder"
 import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
 import { copyFile } from "electron-builder-util/out/fs"
@@ -37,10 +37,9 @@ test.ifMac("one-package", app({
 
 test.ifMac("electronDist", appThrows(/ENOENT: no such file or directory/, {
   targets: Platform.MAC.createTarget(DIR_TARGET),
-}, {
-  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
-    data.build.electronDist = "foo"
-  })
+  config: {
+    electronDist: "foo",
+  }
 }))
 
 test.ifWinCi("Build macOS on Windows is not supported", appThrows(/Build for macOS is supported only on macOS.+/, platform(Platform.MAC)))

@@ -1,6 +1,6 @@
 import { expectedWinContents } from "./helpers/expectedContents"
 import { outputFile, stat, symlink, readFile } from "fs-extra-p"
-import { assertPack, modifyPackageJson, getPossiblePlatforms, app } from "./helpers/packTester"
+import { assertPack, getPossiblePlatforms, app } from "./helpers/packTester"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -40,26 +40,25 @@ test.ifNotCiWin("extraResources", async () => {
     await assertPack("test-app-one", {
       // to check NuGet package
       targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
+      config: {
+        extraResources: [
+          "foo",
+          "bar/hello.txt",
+          "bar/${arch}.txt",
+          "${os}/${arch}.txt",
+        ],
+        [osName]: {
+          extraResources: [
+            "platformSpecificR"
+          ],
+          extraFiles: [
+            "platformSpecificF"
+          ],
+        }
+      },
     }, {
       projectDirCreated: projectDir => {
         return BluebirdPromise.all([
-          modifyPackageJson(projectDir, data => {
-            data.build.extraResources = [
-              "foo",
-              "bar/hello.txt",
-              "bar/${arch}.txt",
-              "${os}/${arch}.txt",
-            ]
-
-            data.build[osName] = {
-              extraResources: [
-                "platformSpecificR"
-              ],
-              extraFiles: [
-                "platformSpecificF"
-              ],
-            }
-          }),
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
@@ -108,28 +107,25 @@ test.ifNotCiWin("extraResources - one-package", () => {
     targets: platform.createTarget(platform === Platform.WINDOWS ? "squirrel" : DIR_TARGET),
     config: {
       asar: true,
+      extraResources: [
+        "foo",
+        "bar/hello.txt",
+        "bar/${arch}.txt",
+        "${os}/${arch}.txt",
+        "executable*",
+      ],
+      [osName]: {
+        extraResources: [
+          "platformSpecificR"
+        ],
+        extraFiles: [
+          "platformSpecificF"
+        ],
+      },
     },
   }, {
     projectDirCreated: projectDir => {
       return BluebirdPromise.all([
-        modifyPackageJson(projectDir, data => {
-          data.build.extraResources = [
-            "foo",
-            "bar/hello.txt",
-            "bar/${arch}.txt",
-            "${os}/${arch}.txt",
-            "executable*",
-          ]
-
-          data.build[osName] = {
-            extraResources: [
-              "platformSpecificR"
-            ],
-            extraFiles: [
-              "platformSpecificF"
-            ],
-          }
-        }),
         outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
         outputFile(path.join(projectDir, "bar/hello.txt"), "data", {mode: "400"}),
         outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),

@@ -3,17 +3,17 @@ import * as path from "path"
 import { log, warn} from "electron-builder-util/out/log"
 import { homedir } from "os"
 import { spawn, asArray } from "electron-builder-util"
-import { BuildMetadata } from "./metadata"
+import { Config } from "./metadata"
 import { exists } from "electron-builder-util/out/fs"
 import { readInstalled } from "./readInstalled"
 
-export async function installOrRebuild(options: BuildMetadata, appDir: string, electronVersion: string, platform: string, arch: string, forceInstall: boolean = false) {
-  const args = asArray(options.npmArgs)
+export async function installOrRebuild(config: Config, appDir: string, electronVersion: string, platform: string, arch: string, forceInstall: boolean = false) {
+  const args = asArray(config.npmArgs)
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
-    await installDependencies(appDir, electronVersion, platform, arch, args, !options.npmSkipBuildFromSource)
+    await installDependencies(appDir, electronVersion, platform, arch, args, !config.npmSkipBuildFromSource)
   }
   else {
-    await rebuild(appDir, electronVersion, platform, arch, args, !options.npmSkipBuildFromSource)
+    await rebuild(appDir, electronVersion, platform, arch, args, !config.npmSkipBuildFromSource)
   }
 }
 

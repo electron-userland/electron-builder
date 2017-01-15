@@ -1,9 +1,7 @@
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 /*
- ### `.build.win`
-
- Windows specific build options.
+ ### `win` Windows Specific Options
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
@@ -61,7 +59,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 }
 
 /*
- ### `.build.nsis`
+ ### `nsis`
 
  See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
  */
@@ -147,7 +145,7 @@ export interface NsisOptions {
 }
 
 /*
- ### `.build.squirrelWindows`
+ ### `squirrelWindows`
 
  To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
  */
@@ -190,7 +188,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 }
 
 /*
- ### `.build.appx`
+ ### `appx`
 
  Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */

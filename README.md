@@ -67,7 +67,7 @@ For an app that will be shipped to production, you should sign your application.
    
 6. Installing the [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
-Please note that everything is packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#BuildMetadata-asar).
+Please note that everything is packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#Config-asar).
 
 ## Auto Update
 `electron-builder` produces all required artifacts, for example, for macOS:

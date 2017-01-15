@@ -1,9 +1,9 @@
 import * as path from "path"
-import { computeDefaultAppDirectory, getElectronVersion, use, exec, isEmptyOrSpaces } from "electron-builder-util"
+import { computeDefaultAppDirectory, use, exec, isEmptyOrSpaces } from "electron-builder-util"
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
-import { AppMetadata, DevMetadata, BuildMetadata, getDirectoriesConfig, AfterPackContext } from "./metadata"
+import { Metadata, Config, AfterPackContext } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { WinPackager } from "./winPackager"
 import * as errorMessages from "./errorMessages"
@@ -14,7 +14,7 @@ import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import MacPackager from "./macPackager"
 import { createTargets } from "./targets/targetFactory"
-import { readPackageJson } from "./util/readPackageJson"
+import { readPackageJson, getElectronVersion, loadConfig } from "./util/readPackageJson"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { getGypEnv, installOrRebuild } from "./yarn"
 import { Platform, Arch, Target } from "electron-builder-core"
@@ -29,12 +29,14 @@ export class Packager implements BuildInfo {
   readonly projectDir: string
   appDir: string
 
-  metadata: AppMetadata
+  metadata: Metadata
 
-  devMetadata: DevMetadata
+  private devMetadata: Metadata
 
-  get config(): BuildMetadata {
-    return this.devMetadata.build
+  private _config: Config
+
+  get config(): Config {
+    return this._config
   }
 
   isTwoPackageJsonProjectLayoutUsed = true
@@ -76,68 +78,74 @@ export class Packager implements BuildInfo {
     this.eventEmitter.emit("artifactCreated", event)
   }
 
-  get devPackageFile(): string {
-    return path.join(this.projectDir, "package.json")
-  }
-
   async build(): Promise<Map<Platform, Map<String, Target>>> {
-    const extraMetadata = this.options.extraMetadata
-    const extraBuildMetadata = extraMetadata == null ? null : extraMetadata.build
-
-    let devMetadataFromOptions = this.options.devMetadata
-    const buildConfigFromOptions = this.options.config
-    if (buildConfigFromOptions != null) {
-      if (devMetadataFromOptions != null) {
-        throw new Error("devMetadata and config cannot be used in conjunction")
-      }
-      devMetadataFromOptions = {build: buildConfigFromOptions}
+    //noinspection JSDeprecatedSymbols
+    const devMetadataFromOptions = this.options.devMetadata
+    if (devMetadataFromOptions != null) {
+      warn("devMetadata is deprecated, please use config instead")
     }
 
-    const devPackageFile = this.devPackageFile
-    this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
+    let configFromOptions = this.options.config
+    if (devMetadataFromOptions != null) {
+      if (configFromOptions != null) {
+        throw new Error("devMetadata and config cannot be used in conjunction")
+      }
+      configFromOptions = devMetadataFromOptions.build
+    }
 
+    const config = deepAssign(await loadConfig(this.projectDir), configFromOptions)
+
+    const extraMetadata = this.options.extraMetadata
     if (extraMetadata != null) {
+      const extraBuildMetadata = extraMetadata.build
       if (extraBuildMetadata != null) {
-        deepAssign(this.devMetadata, {build: extraBuildMetadata})
+        deepAssign(config, extraBuildMetadata)
         delete extraMetadata.build
       }
       if (extraMetadata.directories != null) {
-        deepAssign(this.devMetadata, {directories: extraMetadata.directories})
+        warn(`--em.directories is deprecated, please specify as --em.build.directories"`)
+        deepAssign(config, {directories: extraMetadata.directories})
         delete extraMetadata.directories
       }
     }
 
-    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(getDirectoriesConfig(this.devMetadata), it => it!.app))
+    this._config = config
+    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(config.directories, it => it!.app))
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
-
-    const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
+
+    }
+
+    const devPackageFile = path.join(this.projectDir, "package.json")
+    const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
+    this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
+    if (this.isTwoPackageJsonProjectLayoutUsed) {
+      this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
     }
     else {
+      this.devMetadata = this.metadata
       if (this.options.appMetadata != null) {
         deepAssign(this.devMetadata, this.options.appMetadata)
       }
       if (extraMetadata != null) {
         deepAssign(this.devMetadata, extraMetadata)
       }
-      this.metadata = <any>this.devMetadata
     }
 
     this.checkMetadata(appPackageFile, devPackageFile)
     checkConflictingOptions(this.config)
 
-    this.electronVersion = await getElectronVersion(this.devMetadata, devPackageFile)
+    this.electronVersion = await getElectronVersion(this.config, this.projectDir)
 
-    this.appInfo = new AppInfo(this.metadata, this.devMetadata, this)
+    this.appInfo = new AppInfo(this.metadata, this)
     const cleanupTasks: Array<() => Promise<any>> = []
     return await executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
   }
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
     const distTasks: Array<Promise<any>> = []
-    const outDir = path.resolve(this.projectDir, use(getDirectoriesConfig(this.devMetadata), it => it!.output) || "dist")
+    const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
 
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
     // custom packager - don't check wine

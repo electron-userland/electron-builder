@@ -1,6 +1,6 @@
 import { Platform, Arch, Target } from "electron-builder-core"
 import { PlatformPackager } from "./platformPackager"
-import { DevMetadata, BuildMetadata, AppMetadata, AfterPackContext } from "./metadata"
+import { Metadata, Config, AfterPackContext } from "./metadata"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"
@@ -19,23 +19,18 @@ export interface PackagerOptions {
   platformPackagerFactory?: ((info: BuildInfo, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | null
 
   /**
-   * The same as [development package.json](https://github.com/electron-userland/electron-builder/wiki/Options#development-packagejson).
-   *
-   * Development `package.json` will be still read, but options specified in this object will override.
+   * @deprecated Use {@link PackagerOptions#config} instead.
    */
-  readonly devMetadata?: DevMetadata
+  readonly devMetadata?: Metadata
 
-  /*
-   See [.build](#BuildMetadata).
-   */
-  readonly config?: BuildMetadata
+  readonly config?: Config
 
   /**
    * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).
    *
    * Application `package.json` will be still read, but options specified in this object will override.
    */
-  readonly appMetadata?: AppMetadata
+  readonly appMetadata?: Metadata
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
@@ -47,15 +42,12 @@ export interface PackagerOptions {
 export interface BuildInfo {
   options: PackagerOptions
 
-  metadata: AppMetadata
+  metadata: Metadata
 
-  devMetadata: DevMetadata
-
-  config: BuildMetadata
+  config: Config
 
   projectDir: string
   appDir: string
-  devPackageFile: string
 
   electronVersion: string
 

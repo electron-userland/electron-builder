@@ -3,7 +3,7 @@ export type PublishProvider = "github" | "bintray" | "generic"
 export type Publish = string | Array<string> | PublishConfiguration | GithubOptions | BintrayOptions | GenericServerOptions | Array<PublishConfiguration> | Array<GithubOptions> | Array<GenericServerOptions> | Array<BintrayOptions> | null
 
 /*
-### `.build.publish`
+### `publish`
 
 Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
 
@@ -29,7 +29,7 @@ export interface PublishConfiguration {
 }
 
 /*
-### `.build.publish` Generic (any https server)
+### `publish` Generic (any https server)
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /*
@@ -54,7 +54,7 @@ export interface UpdateInfo extends VersionInfo {
 }
 
 /*
-### `.build.publish` GitHub
+### `publish` GitHub
  */
 export interface GithubOptions extends PublishConfiguration {
   /*
@@ -69,7 +69,7 @@ export interface GithubOptions extends PublishConfiguration {
 }
 
 /*
-### `.build.publish` Bintray
+### `publish` Bintray
  */
 export interface BintrayOptions extends PublishConfiguration {
   /*

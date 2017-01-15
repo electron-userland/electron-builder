@@ -1,5 +1,5 @@
 import { Platform, Arch } from "electron-builder"
-import { app, modifyPackageJson, appThrows, assertPack, CheckingWinPackager, copyTestAsset } from "../helpers/packTester"
+import { app, modifyPackageJson, assertPack, CheckingWinPackager, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 
@@ -14,14 +14,6 @@ test.skip("delta and msi", app({
       msi: true,
     }
   },
-}))
-
-test.ifNotCiMac("msi as string", appThrows(/msi expected to be boolean value, but string '"false"' was specified/, {targets: Platform.WINDOWS.createTarget("squirrel")}, {
-  projectDirCreated: it => modifyPackageJson(it, data => {
-    data.build.win = {
-      msi: "false",
-    }
-  })
 }))
 
 test("detect install-spinner, certificateFile/password", () => {

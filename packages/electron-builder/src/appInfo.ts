@@ -1,4 +1,4 @@
-import { DevMetadata, AppMetadata, BuildMetadata } from "./metadata"
+import { Config, Metadata } from "./metadata"
 import { warn } from "electron-builder-util/out/log"
 import { isEmptyOrSpaces, smarten } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
@@ -14,11 +14,11 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
-  private get config(): BuildMetadata {
-    return this.devMetadata.build
+  private get config(): Config {
+    return this.info.config
   }
 
-  constructor(public metadata: AppMetadata, private devMetadata: DevMetadata, private info: BuildInfo, buildVersion?: string | null) {
+  constructor(public metadata: Metadata, private info: BuildInfo, buildVersion?: string | null) {
     this.version = metadata.version!
 
     this.buildNumber = (<any>this.config)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
@@ -34,7 +34,7 @@ export class AppInfo {
       this.buildVersion = buildVersion!
     }
 
-    this.productName = this.config.productName || metadata.productName || metadata.name
+    this.productName = this.config.productName || metadata.productName || metadata.name!
     this.productFilename = sanitizeFileName(this.productName)
   }
 
@@ -58,7 +58,7 @@ export class AppInfo {
     }
 
     const generateDefaultAppId = () => {
-      return `com.electron.${this.metadata.name.toLowerCase()}`
+      return `com.electron.${this.metadata.name!.toLowerCase()}`
     }
 
     if (appId === "your.id" || isEmptyOrSpaces(appId)) {
@@ -71,7 +71,7 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.metadata.name
+    return this.metadata.name!
   }
 
   get copyright(): string {

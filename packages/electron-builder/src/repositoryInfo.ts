@@ -1,6 +1,6 @@
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import { readFile } from "fs-extra-p"
-import { AppMetadata, Metadata, RepositoryInfo } from "./metadata"
+import { Metadata, RepositoryInfo } from "./metadata"
 import * as path from "path"
 
 export interface RepositorySlug {
@@ -8,7 +8,7 @@ export interface RepositorySlug {
   project: string
 }
 
-export function getRepositoryInfo(metadata?: AppMetadata, devMetadata?: Metadata): Promise<Info | null> {
+export function getRepositoryInfo(metadata?: Metadata, devMetadata?: Metadata): Promise<Info | null> {
   return _getInfo(<RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 

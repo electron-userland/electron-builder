@@ -1,10 +1,9 @@
 #! /usr/bin/env node
 
-import { getElectronVersion, exec } from "electron-builder-util"
+import { exec } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
-import * as path from "path"
 import yargs from "yargs"
-import { readPackageJson } from "../util/readPackageJson"
+import { getElectronVersion, loadConfig } from "../util/readPackageJson"
 import { log } from "electron-builder-util/out/log"
 import { getGypEnv } from "../yarn"
 
@@ -18,13 +17,12 @@ const args: any = yargs
     default: process.arch,
   }).argv
 
-const projectDir = process.cwd()
-const devPackageFile = path.join(projectDir, "package.json")
-
 async function main() {
+  const projectDir = process.cwd()
+  const config = await loadConfig(projectDir)
   log(`Execute node-gyp rebuild for ${args.platform}:${args.arch}`)
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-    env: getGypEnv(await getElectronVersion(await readPackageJson(devPackageFile), devPackageFile), args.platform, args.arch, true),
+    env: getGypEnv(await getElectronVersion(config, projectDir), args.platform, args.arch, true),
   })
 }
 

@@ -3,9 +3,7 @@ import { PlatformSpecificBuildOptions } from "../metadata"
 export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
 /*
- ### `.build.mac`
-
- MacOS specific build options.
+ ### `mac` macOS Specific Options
  */
 export interface MacOptions extends PlatformSpecificBuildOptions {
   /*
@@ -24,7 +22,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 
   /*
    The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
-   MAS installer identity is specified in the [.build.mas](#MasBuildOptions-identity).
+   MAS installer identity is specified in the [mas](#MasBuildOptions-identity).
    */
   readonly identity?: string | null
 
@@ -35,7 +33,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 
   /*
    The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   MAS entitlements is specified in the [.build.mas](#MasBuildOptions-entitlements).
+   MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements).
    */
   readonly entitlements?: string | null
 
@@ -59,9 +57,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 }
 
 /*
- ### `.build.dmg`
-
- macOS DMG specific options.
+ ### `dmg` macOS DMG Options
  */
 export interface DmgOptions {
   /*
@@ -110,15 +106,13 @@ export interface DmgOptions {
   readonly format?: string
 
   /*
-  The DMG windows position and size. See [.build.dmg.window](#DmgWindow).
+  The DMG windows position and size. See [dmg.window](#DmgWindow).
    */
   window?: DmgWindow
 }
 
 /*
- ### `.build.dmg.window`
-
- The DMG windows position and size.
+ ### `dmg.window` DMG Windows Position and Size
  */
 export interface DmgWindow {
   /*
@@ -151,9 +145,7 @@ export interface DmgContent {
 }
 
 /*
- ### `.build.mas`
-
- MAS (Mac Application Store) specific options (in addition to `build.mac`).
+ ### `mas` MAS (Mac Application Store) Specific Options
  */
 export interface MasBuildOptions extends MacOptions {
   /*
