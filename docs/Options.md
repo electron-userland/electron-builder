@@ -39,6 +39,7 @@ Don't customize paths to background and icon, — just follow conventions.
   * [win Windows Specific Options](#WinBuildOptions)
   * [dmg.window DMG Windows Position and Size](#DmgWindow)
   * [snap [Snap](http://snapcraft.io) Specific Options](#SnapOptions)
+  * [appImage [AppImage](http://appimage.org) Specific Options](#AppImageOptions)
 * [Fields in the package.json](#Metadata)
 
 <a name="Config"></a>
@@ -234,6 +235,12 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | assumes | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install.
 | stagePackages | <a name="SnapOptions-stagePackages"></a><p>The list of Ubuntu packages to use that are needed to support the <code>app</code> part creation. Like <code>depends</code> for <code>deb</code>. Defaults to <code>[&quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;, &quot;libxss1&quot;, &quot;fontconfig-config&quot;, &quot;gconf2&quot;, &quot;libasound2&quot;]</code>.</p>
 | ubuntuAppPlatformContent | <a name="SnapOptions-ubuntuAppPlatformContent"></a><p>Specify <code>ubuntu-app-platform1</code> to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because “the snaps must be connected before running uitk-gallery for the first time”.</p>
+
+<a name="AppImageOptions"></a>
+### `appImage` [AppImage](http://appimage.org) Specific Options
+| Name | Description
+| --- | ---
+| includeRequiredLib | <a name="AppImageOptions-includeRequiredLib"></a>Whether to include required system libraries (`gconf2`, `libappindicator1`). Defaults to `false`.
 
 <a name="Metadata"></a>
 ## Fields in the package.json

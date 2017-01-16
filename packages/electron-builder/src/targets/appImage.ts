@@ -9,6 +9,7 @@ import { LinuxPackager } from "../linuxPackager"
 import { log } from "electron-builder-util/out/log"
 import { Target, Arch } from "electron-builder-core"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { AppImageOptions } from "../options/linuxOptions"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
@@ -17,7 +18,7 @@ const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef
 const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
 
 export default class AppImageTarget extends Target {
-  private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  private readonly options: AppImageOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
   private readonly desktopEntry: Promise<string>
 
   constructor(ignored: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
@@ -61,6 +62,11 @@ export default class AppImageTarget extends Target {
       throw new Error("Icon is not provided")
     }
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
+
+    if (this.options.includeRequiredLib === true && arch === Arch.x64) {
+      const libDir = await getBin("AppImage-packages", "16.01.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-16.01.17-x64.7z", "4a2da2d718bc1f5c6ca2f3a58e0655f39e23450b43e20424679dedf9b9b1ecae")
+      args.push("-map", libDir, "/usr/lib")
+    }
 
     args.push("-chown_r", "0", "/", "--")
     args.push("-zisofs", `level=${packager.config.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
