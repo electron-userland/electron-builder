@@ -62,12 +62,13 @@ export default class SnapTarget extends Target {
       [snap.name]: {
         command: `desktop-launch $SNAP/${packager.executableName}`,
         plugs: [
-          "home", "x11", "unity7", "unity8", "browser-support", "network", "gsettings", "pulseaudio", "opengl", "platform",
+          "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
         ]
       }
     }
 
     if (isUseUbuntuPlatform) {
+      snap.apps[snap.name].plugs.push("platform")
       snap.plugs = {
         platform: {
           interface: "content",
