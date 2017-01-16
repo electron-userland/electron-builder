@@ -3,9 +3,9 @@ import { assertPack, platform, app, appThrows, CheckingWinPackager } from "../he
 import { writeFile, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 
-test.ifDevOrWinCi("beta version", app({
+test.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
-  appMetadata: <any>{
+  appMetadata: {
     version: "3.0.0-beta.2",
   }
 }))

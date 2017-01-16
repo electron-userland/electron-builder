@@ -10,7 +10,6 @@
     "test": "node ./test/out/helpers/runTests.js skipFpm skipSw skipArtifactPublisher",
     "test-all": "node ./test/vendor/yarn.js pretest && node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /bin/bash -c \"node ./test/vendor/yarn.js && node ./test/vendor/yarn.js test\"",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",

@@ -4,16 +4,6 @@ declare module "asar-electron-builder" {
     size: number
   }
 
-  interface AsarOptions {
-    dot?: boolean
-
-    smartUnpack?: boolean
-
-    ordering?: string | null
-
-    extraMetadata?: any | null
-  }
-
   export function listPackage(archive: string): Array<string>
 
   // followLinks defaults to true

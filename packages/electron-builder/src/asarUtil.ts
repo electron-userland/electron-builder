@@ -1,4 +1,4 @@
-import { AsarFileInfo, listPackage, statFile, AsarOptions } from "asar-electron-builder"
+import { AsarFileInfo, listPackage, statFile } from "asar-electron-builder"
 import { debug } from "electron-builder-util"
 import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, readlink, stat } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
@@ -6,6 +6,7 @@ import * as path from "path"
 import { log } from "electron-builder-util/out/log"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { walk, statOrNull, CONCURRENCY, MAX_FILE_REQUESTS, Filter, FileCopier } from "electron-builder-util/out/fs"
+import { AsarOptions } from "./metadata"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")

@@ -1,10 +1,19 @@
-import { AsarOptions } from "asar-electron-builder"
 import { PlatformPackager } from "./platformPackager"
 import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { Platform } from "electron-builder-core"
+
+export interface AsarOptions {
+  dot?: boolean
+
+  smartUnpack?: boolean
+
+  ordering?: string | null
+
+  extraMetadata?: any | null
+}
 
 /*
 ## Fields in the package.json

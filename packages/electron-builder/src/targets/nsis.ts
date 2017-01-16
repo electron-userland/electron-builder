@@ -7,14 +7,10 @@ import { v5 as uuid5 } from "uuid-1345"
 import { normalizeExt } from "../platformPackager"
 import { archive } from "./archive"
 import { subTask, log, warn } from "electron-builder-util/out/log"
-import { unlink, readFile, writeFile, createReadStream } from "fs-extra-p"
+import { unlink, readFile } from "fs-extra-p"
 import { NsisOptions } from "../options/winOptions"
-import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
-import { safeDump } from "js-yaml"
-import { createHash } from "crypto"
 import { Target, Arch } from "electron-builder-core"
 import sanitizeFileName from "sanitize-filename"
-import { unlinkIfExists } from "electron-builder-util/out/fs"
 
 const NSIS_VERSION = "3.0.4"
 //noinspection SpellCheckingInspection
@@ -32,8 +28,6 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  private readonly publishConfigs = this.packager.computePublishConfigs(this.options)
-
   constructor(private packager: WinPackager, private outDir: string) {
     super("nsis")
 
@@ -50,11 +44,6 @@ export default class NsisTarget extends Target {
 
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
-
-    const publishConfigs = await this.publishConfigs
-    if (publishConfigs != null) {
-      await writeFile(path.join(appOutDir, "resources", "app-update.yml"), safeDump(publishConfigs[0]))
-    }
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
@@ -221,48 +210,7 @@ export default class NsisTarget extends Target {
     await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
     await packager.sign(installerPath)
 
-    const publishConfigs = await this.publishConfigs
-    const githubArtifactName = `${appInfo.name}-Setup-${version}.exe`
-    if (publishConfigs != null) {
-      for (const publishConfig of publishConfigs) {
-        if (!(publishConfig.provider === "generic" || publishConfig.provider === "github")) {
-          continue
-        }
-
-        const sha2 = await sha256(installerPath)
-        const channel = (<GenericServerOptions>publishConfig).channel || "latest"
-        const updateInfoFile = path.join(this.outDir, `${channel}.yml`)
-        await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
-          version: version,
-          githubArtifactName: githubArtifactName,
-          path: installerFilename,
-          sha2: sha2,
-        }))
-
-        const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
-        if (githubPublishConfig != null) {
-          // to preserve compatibility with old electron-auto-updater (< 0.10.0), we upload file with path specific for GitHub
-          packager.info.dispatchArtifactCreated({
-            data: new Buffer(safeDump(<UpdateInfo>{
-              version: version,
-              path: githubArtifactName,
-              sha2: sha2,
-            })),
-            artifactName: `${channel}.yml`,
-            packager: packager,
-            target: this,
-            publishConfig: githubPublishConfig,
-          })
-        }
-
-        break
-      }
-    }
-    else {
-      await unlinkIfExists(path.join(this.outDir, `latest.yml`))
-    }
-
-    packager.dispatchArtifactCreated(installerPath, this, githubArtifactName)
+    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-Setup-${version}.exe`)
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
@@ -352,21 +300,4 @@ export default class NsisTarget extends Target {
       childProcess.stdin.end(script)
     })
   }
-}
-
-function sha256(file: string) {
-  return new BluebirdPromise<string>((resolve, reject) => {
-    const hash = createHash("sha256")
-    hash
-      .on("error", reject)
-      .setEncoding("hex")
-
-    createReadStream(file)
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(<string>hash.read())
-      })
-      .pipe(hash, {end: false})
-  })
 }

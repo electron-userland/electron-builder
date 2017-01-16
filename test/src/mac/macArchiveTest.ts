@@ -3,11 +3,9 @@ import { assertThat } from "../helpers/fileAssert"
 
 test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"])()).throws("Unknown target: ttt"))
 
-test("only zip", createMacTargetTest(["zip"]))
+test("only zip", createMacTargetTest(["zip"]));
 
-if (process.env.CSC_KEY_PASSWORD != null) {
-  test.ifMac("pkg", createMacTargetTest(["pkg"]))
-}
+(process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac)("pkg", createMacTargetTest(["pkg"]))
 
 test("tar.gz", createMacTargetTest(["tar.gz"]))
 

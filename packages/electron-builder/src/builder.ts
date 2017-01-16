@@ -202,20 +202,16 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   }
 
   const packager = new Packager(options)
-  //noinspection JSMismatchedCollectionQueryUpdate
-  const artifactPaths: Array<string> = []
+  // because artifact event maybe dispatched several times for different publish providers
+  const artifactPaths = new Set<string>()
   packager.artifactCreated(event => {
     if (event.file != null) {
-      artifactPaths.push(event.file)
+      artifactPaths.add(event.file)
     }
   })
 
   const publishManager = new PublishManager(packager, options)
-  return await executeFinally(packager.build().then(() => artifactPaths), errorOccurred => {
-    if (publishManager == null) {
-      return BluebirdPromise.resolve(null)
-    }
-
+  return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
     if (errorOccurred) {
       publishManager.cancelTasks()
       return BluebirdPromise.resolve(null)

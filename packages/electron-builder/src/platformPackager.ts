@@ -1,20 +1,17 @@
-import { PlatformSpecificBuildOptions, FileAssociation, Config } from "./metadata"
+import { PlatformSpecificBuildOptions, FileAssociation, Config, AsarOptions } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
 import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
-import { AsarOptions } from "asar-electron-builder"
 import { Minimatch } from "minimatch"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import { unpackElectron } from "./packager/dirPackager"
 import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
-import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
-import { getResolvedPublishConfig } from "./publish/publisher"
 import { readInstalled } from "./readInstalled"
 import { PackagerOptions, BuildInfo } from "./packagerApi"
 
@@ -336,7 +333,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return fileMatchers.length === 0 ? null : fileMatchers
   }
 
-  private getResourcesDir(appOutDir: string): string {
+  public getResourcesDir(appOutDir: string): string {
     return this.platform === Platform.MAC ? this.getMacOsResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
 
@@ -465,72 +462,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return null
   }
-
-  async computePublishConfigs(targetSpecificOptions: PlatformSpecificBuildOptions | null): Promise<Array<PublishConfiguration> | null> {
-    let publishConfigs = getPublishConfigs(this, targetSpecificOptions)
-    if (publishConfigs == null) {
-      return null
-    }
-
-    if (publishConfigs.length === 0) {
-      // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
-      // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
-      const repositoryInfo = await this.info.repositoryInfo
-      if (repositoryInfo != null && repositoryInfo.type === "github") {
-        publishConfigs = [{provider: "github"}]
-      }
-      else {
-        return null
-      }
-    }
-
-    return await BluebirdPromise.map(publishConfigs, it => <Promise<PublishConfiguration>>getResolvedPublishConfig(this.info, it, true))
-  }
 }
 
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
-}
-
-export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined): Array<PublishConfiguration> | null {
-  let publishers
-
-  // check build.nsis (target)
-  if (targetSpecificOptions != null) {
-    publishers = targetSpecificOptions.publish
-    // if explicitly set to null - do not publish
-    if (publishers === null) {
-      return null
-    }
-  }
-
-  // check build.win (platform)
-  if (publishers == null) {
-    publishers = packager.platformSpecificBuildOptions.publish
-    if (publishers === null) {
-      return null
-    }
-  }
-
-  if (publishers == null) {
-    publishers = packager.config.publish
-    // triple equals - if explicitly set to null
-    if (publishers === null) {
-      return null
-    }
-
-    if (publishers == null && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
-      publishers = [{provider: "github"}]
-    }
-    // if both tokens are set — still publish to github (because default publisher is github)
-    if (publishers == null && !isEmptyOrSpaces(process.env.BT_TOKEN)) {
-      publishers = [{provider: "bintray"}]
-    }
-  }
-
-  return asArray<PublishConfiguration | string>(publishers)
-    .map(it => typeof it === "string" ? {provider: <any>it} : it)
 }
 
 async function dependencies(dir: string, result: Set<string>): Promise<void> {

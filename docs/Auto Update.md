@@ -2,6 +2,8 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 
 Real project [example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts).
 
+Simplified auto-update is not supported for Squirrel.Windows.
+
 ## Quick Setup Guide
 
 1. Install `electron-auto-updater` as an app dependency.
