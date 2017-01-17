@@ -237,14 +237,14 @@ export interface FileAssociation {
   readonly ext: string | Array<string>
 
   /*
-   The name. e.g. `PNG`.
+   The name. e.g. `PNG`. Defaults to `ext`.
    */
-  readonly name: string
+  readonly name?: string | null
 
   /*
    *windows-only.* The description.
    */
-  readonly description?: string
+  readonly description?: string | null
 
   /*
    The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.

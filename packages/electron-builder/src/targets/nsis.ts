@@ -268,7 +268,7 @@ export default class NsisTarget extends Target {
             const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${packager.appInfo.productName}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
+            registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
           }
         }
         script = `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n${script}`
@@ -277,7 +277,7 @@ export default class NsisTarget extends Target {
         let unregisterFileAssociationsScript = ""
         for (const item of fileAssociations) {
           for (const ext of asArray(item.ext)) {
-            unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name}"\n`
+            unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name || ext}"\n`
           }
         }
         script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`

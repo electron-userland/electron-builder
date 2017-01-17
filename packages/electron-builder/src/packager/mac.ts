@@ -113,7 +113,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
       const result = <any>{
         CFBundleTypeExtensions: extensions,
-        CFBundleTypeName: fileAssociation.name,
+        CFBundleTypeName: fileAssociation.name || extensions[0],
         CFBundleTypeRole: fileAssociation.role || "Editor",
         CFBundleTypeIconFile: iconFile
       }

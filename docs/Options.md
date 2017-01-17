@@ -110,7 +110,7 @@ macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/librar
 | Name | Description
 | --- | ---
 | **ext** | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`.
-| **name** | <a name="FileAssociation-name"></a>The name. e.g. `PNG`.
+| name | <a name="FileAssociation-name"></a>The name. e.g. `PNG`. Defaults to `ext`.
 | description | <a name="FileAssociation-description"></a>*windows-only.* The description.
 | icon | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
 | role | <a name="FileAssociation-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Defaults to `Editor`. Corresponds to `CFBundleTypeRole`.
