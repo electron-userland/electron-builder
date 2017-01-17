@@ -64,7 +64,7 @@ export class PublishManager {
       }
 
       const packager = event.packager
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null))
+      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, false))
       if (publishConfigs == null || publishConfigs.length === 0) {
         return
       }
@@ -78,7 +78,7 @@ export class PublishManager {
   private async artifactCreated(event: ArtifactCreated) {
     const packager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name]) : [event.publishConfig]
+    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name], !this.isPublishOptionGuessed) : [event.publishConfig]
 
     if (publishConfigs == null) {
       if (this.isPublish) {
@@ -170,7 +170,6 @@ async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, p
     }
   }
   return publishConfigs
-
 }
 
 async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>) {
@@ -274,7 +273,7 @@ function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: strin
   }
 }
 
-export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined): Promise<Array<PublishConfiguration>> | null {
+export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean): Promise<Array<PublishConfiguration>> | null {
   let publishers
 
   // check build.nsis (target)
@@ -296,7 +295,6 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
 
   if (publishers == null) {
     publishers = packager.config.publish
-    // triple equals - if explicitly set to null
     if (publishers === null) {
       return null
     }
@@ -310,8 +308,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
     }
   }
 
-  //await getResolvedPublishConfig(packager.info, {provider: repositoryInfo.type}, false)
-  return BluebirdPromise.map(asArray(publishers), it => typeof it === "string" ? getResolvedPublishConfig(packager.info, {provider: <any>it}, true) : it)
+  return BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it, errorIfCannot))
 }
 
 function sha256(file: string) {
