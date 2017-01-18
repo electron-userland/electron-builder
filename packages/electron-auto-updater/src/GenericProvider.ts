@@ -16,7 +16,7 @@ export class GenericProvider implements Provider<UpdateInfo> {
     const channelFile = getChannelFilename(this.channel)
     const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
     try {
-      result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`})
+      result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`, protocol: this.baseUrl.protocol})
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
