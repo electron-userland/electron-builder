@@ -41,6 +41,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
+      port: parsedUrl.port ? +parsedUrl.port : undefined,
       headers: {
         "User-Agent": "electron-builder"
       },
@@ -80,7 +81,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       (<any>requestOptions.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
     }
 
-    requestOptions.protocol = "https:"
+    requestOptions.protocol = options.Protocol || "https:"
     return new BluebirdPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, response => {
         try {
