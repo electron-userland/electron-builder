@@ -398,6 +398,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {
     let c: string | null = null
+    let e: string | null = null
     if (arch === Arch.x64) {
       if (ext === "AppImage") {
         c = "x86_64"
@@ -409,6 +410,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     else if (arch === Arch.ia32 && ext === "deb") {
       c = "i386"
     }
+    else if (ext === "pacman") {
+      if (arch === Arch.ia32) {
+        c = "i686"
+      }
+      e = "pkg.tar.xz"
+    }
     else {
       c = Arch[arch]
     }
@@ -419,7 +426,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     else if (classifier != null) {
       c += `-${classifier}`
     }
-    return this.generateName2(ext, c, deployment)
+    if (e == null) {
+      e = ext
+    }
+    return this.generateName2(e, c, deployment)
   }
 
   generateName2(ext: string | null, classifier: string | n, deployment: boolean): string {
