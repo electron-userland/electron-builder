@@ -6,10 +6,9 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, configurePipes,  maxRedirects } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, configurePipes,  maxRedirects, debug } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { parse as parseUrl } from "url"
-import { debug } from "electron-builder-util"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null

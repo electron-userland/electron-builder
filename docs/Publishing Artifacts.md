@@ -4,6 +4,13 @@ Travis and AppVeyor support publishing artifacts. But it requires additional con
 
 Currently, [GitHub Releases](https://help.github.com/articles/about-releases/) and [Bintray](https://bintray.com) are supported.
 
+## CLI Flags
+```
+Publishing:
+  --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
+  --draft        Create a draft (unpublished) releas         [boolean]
+  --prerelease   Identify the release as a prerelease        [boolean]
+```
 CLI `--publish` option values:
 
 | Value          |  Description
@@ -28,7 +35,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 * If CI server reports that tag was pushed, — `onTag`.
 
- Release will be drafted (if doesn't already exist) and artifacts published only if tag was pushed.
+  Release will be drafted (if doesn't already exist) and artifacts published only if tag was pushed.
 
 * If [npm script](https://docs.npmjs.com/misc/scripts) named `release`, — `always`.
 

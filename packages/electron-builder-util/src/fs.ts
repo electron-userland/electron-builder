@@ -155,7 +155,7 @@ export function copyFile(src: string, dest: string, stats?: Stats | null, isUseH
       readStream.pipe(writeStream)
     })
 
-    writeStream.once("finish", resolve)
+    writeStream.once("close", resolve)
   })
 }
 

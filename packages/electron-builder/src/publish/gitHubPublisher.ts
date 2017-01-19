@@ -4,7 +4,7 @@ import { debug } from "electron-builder-util"
 import { parse as parseUrl } from "url"
 import mime from "mime"
 import BluebirdPromise from "bluebird-lst-c"
-import { PublishPolicy, PublishOptions, Publisher } from "./publisher"
+import { PublishOptions, Publisher } from "./publisher"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
 import { HttpError, githubRequest } from "electron-builder-http"
@@ -15,6 +15,9 @@ export interface Release {
   tag_name: string
 
   draft: boolean
+  prerelease: boolean
+
+  published_at: string
 
   upload_url: string
 }
@@ -30,7 +33,6 @@ export class GitHubPublisher extends Publisher {
   private readonly httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
 
   private readonly token: string
-  private readonly policy: PublishPolicy
 
   get releasePromise(): Promise<Release | null> {
     return this._releasePromise
@@ -48,8 +50,6 @@ export class GitHubPublisher extends Publisher {
     }
 
     this.token = token!
-    this.options = options || {}
-    this.policy = this.options.publish || "always"
 
     if (version.startsWith("v")) {
       throw new Error(`Version must not starts with "v": ${version}`)
@@ -60,39 +60,33 @@ export class GitHubPublisher extends Publisher {
   }
 
   private async init(): Promise<Release | null> {
-    const createReleaseIfNotExists = this.policy !== "onTagOrDraft"
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
-
     const releases = await githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
-        if (release.draft) {
+        if (release.draft || release.prerelease) {
           return release
         }
 
-        if (!this.isPublishOptionGuessed && this.policy === "onTag") {
-          throw new Error(`Release with tag ${this.tag} must be a draft`)
+        // https://github.com/electron-userland/electron-builder/issues/1133
+        // if release created < 2 hours — allow to upload
+        const publishedAt = release.published_at == null ? null : new Date(release.published_at)
+        if (publishedAt != null && (Date.now() - publishedAt.getMilliseconds()) > (2 * 3600 * 1000)) {
+          const message = `Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`
+          if (this.isPublishOptionGuessed) {
+            warn(message)
+            return null
+          }
+          else {
+            throw new Error(message)
+          }
         }
-
-        const message = `Release with tag ${this.tag} is not a draft, artifacts will be not published`
-        if (this.isPublishOptionGuessed || this.policy === "onTagOrDraft") {
-          log(message)
-        }
-        else {
-          warn(message)
-        }
-        return null
+        return release
       }
     }
 
-    if (createReleaseIfNotExists) {
-      log(`Release with tag ${this.tag} doesn't exist, creating one`)
-      return this.createRelease()
-    }
-    else {
-      log(`Release with tag ${this.tag} doesn't exist, artifacts will be not published`)
-      return null
-    }
+    log(`Release with tag ${this.tag} doesn't exist, creating one`)
+    return this.createRelease()
   }
 
   protected async doUpload(fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<void> {

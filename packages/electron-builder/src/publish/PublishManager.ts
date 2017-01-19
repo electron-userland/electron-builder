@@ -1,7 +1,7 @@
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { debug, isEmptyOrSpaces, asArray} from "electron-builder-util"
-import { Publisher, PublishOptions, getResolvedPublishConfig } from "./publisher"
+import { Publisher, PublishOptions, getResolvedPublishConfig, getCiTag } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
 import { GitHubPublisher } from "./gitHubPublisher"
 import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions, VersionInfo, UpdateInfo } from "electron-builder-http/out/publishOptions"
@@ -34,8 +34,8 @@ export class PublishManager {
         publishOptions.publish = "always"
       }
       else if (isAuthTokenSet() ) {
-        const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG
-        if (!isEmptyOrSpaces(tag)) {
+        const tag = getCiTag()
+        if (tag != null) {
           log(`Tag ${tag} is defined, so artifacts will be published`)
           publishOptions.publish = "onTag"
           this.isPublishOptionGuessed = true
@@ -49,12 +49,9 @@ export class PublishManager {
     }
 
     if (publishOptions.publish != null && publishOptions.publish !== "never") {
-      // todo if token set as option
-      if (isAuthTokenSet()) {
-        this.isPublish = true
-      }
-      else if (isCi) {
-        log(`CI detected, publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set, so artifacts will be not published`)
+      this.isPublish = publishOptions.publish !== "onTag" || getCiTag() != null
+      if (this.isPublish && !isAuthTokenSet()) {
+        throw new Error(`Publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set`)
       }
     }
 
