@@ -4,7 +4,7 @@
     "outDir": "out"
   },
   "declaration": {
-    "electron-auto-updater": "out/electron-auto-updater.d.ts"
+    "electron-updater": "out/electron-updater.d.ts"
   },
   "files": [
     "../../typings/semver.d.ts",

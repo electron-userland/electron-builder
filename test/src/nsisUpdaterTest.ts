@@ -1,5 +1,5 @@
 import { assertThat } from "./helpers/fileAssert"
-import { NsisUpdater } from "electron-auto-updater/out/NsisUpdater"
+import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import * as path from "path"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { outputFile } from "fs-extra-p"

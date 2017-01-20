@@ -22,7 +22,7 @@ dist/
 .DS_Store
 
 /test/typings/electron-builder.d.ts
-/test/typings/electron-auto-updater.d.ts
+/test/typings/electron-updater.d.ts
 
 /packages/*/out/
 /out/

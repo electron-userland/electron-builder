@@ -212,7 +212,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
       const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
       if (githubPublishConfig != null) {
-        // to preserve compatibility with old electron-auto-updater (< 0.10.0), we upload file with path specific for GitHub
+        // to preserve compatibility with old electron-updater (< 0.10.0), we upload file with path specific for GitHub
         packager.info.dispatchArtifactCreated({
           data: new Buffer(safeDump(<UpdateInfo>{
             version: version,

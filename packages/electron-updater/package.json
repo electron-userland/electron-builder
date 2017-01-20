@@ -1,5 +1,5 @@
 {
-  "name": "electron-auto-updater",
+  "name": "electron-updater",
   "version": "0.0.0-semantic-release",
   "description": "NSIS Auto Updater",
   "main": "out/main.js",
@@ -19,5 +19,5 @@
     "source-map-support": "^0.4.10",
     "electron-builder-http": "0.0.0-semantic-release"
   },
-  "typings": "./out/electron-auto-updater.d.ts"
+  "typings": "./out/electron-updater.d.ts"
 }

@@ -8,4 +8,4 @@ npm publish packages/electron-builder-core || true
 npm publish packages/electron-builder-util || true
 npm publish packages/electron-builder || true
 npm publish packages/electron-builder-squirrel-windows || true
-npm publish packages/electron-auto-updater || true
+npm publish packages/electron-updater || true
