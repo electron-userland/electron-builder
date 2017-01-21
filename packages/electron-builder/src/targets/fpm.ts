@@ -98,7 +98,7 @@ export default class FpmTarget extends Target {
     const args = [
       "-s", "dir",
       "-t", target,
-      "--architecture", toLinuxArchString(arch),
+      "--architecture", (target === "pacman" && arch === Arch.ia32) ? "i686" : toLinuxArchString(arch),
       "--name", appInfo.name,
       "--force",
       "--after-install", scripts[0],
@@ -132,6 +132,9 @@ export default class FpmTarget extends Target {
     if (depends == null) {
       if (target === "deb") {
         depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+      }
+      else if (target === "pacman") {
+        depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy"]
       }
       else {
         depends = []
