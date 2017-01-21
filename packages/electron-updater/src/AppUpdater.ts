@@ -89,8 +89,16 @@ export abstract class AppUpdater extends EventEmitter {
     return "Deprecated. Do not use it."
   }
 
-  setFeedURL(value: PublishConfiguration | BintrayOptions | GithubOptions | GenericServerOptions) {
-    this.clientPromise = BluebirdPromise.resolve(createClient(value))
+  setFeedURL(value: PublishConfiguration | BintrayOptions | GithubOptions | GenericServerOptions | string) {
+    // https://github.com/electron-userland/electron-builder/issues/1105
+    let client: Provider<any>
+    if (typeof value === "string") {
+      client = new GenericProvider({provider: "generic", url: value})
+    }
+    else {
+      client = createClient(value)
+    }
+    this.clientPromise = BluebirdPromise.resolve(client)
   }
 
   checkForUpdates(): Promise<UpdateCheckResult> {
@@ -118,7 +126,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("checking-for-update")
     try {
       if (this.clientPromise == null) {
-        this.clientPromise = loadUpdateConfig()
+        this.clientPromise = loadUpdateConfig().then(it => createClient(it))
       }
       return await this.doCheckForUpdates()
     }
@@ -205,7 +213,7 @@ export abstract class AppUpdater extends EventEmitter {
 }
 
 async function loadUpdateConfig() {
-  return createClient(safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8")))
+  return safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8"))
 }
 
 function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {

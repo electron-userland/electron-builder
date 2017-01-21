@@ -98,13 +98,13 @@ The `autoUpdater` object has the following methods:
 
 ### `autoUpdater.setFeedURL(options)`
 
-* `options` GenericServerOptions | BintrayOptions | GithubOptions — if you want to override configuration in the `app-update.yml`.
+* `options` GenericServerOptions | BintrayOptions | GithubOptions | string — if you want to override configuration in the `app-update.yml`.
 
-Sets the `options`. Windows-only for now. On macOS please refer [electron setFeedURL reference](https://github.com/electron/electron/blob/master/docs/api/auto-updater.md#autoupdatersetfeedurlurl-requestheaders).
+Sets the `options`. If value is `string`, `GenericServerOptions` will be set with value as `url`.
 
 ### `autoUpdater.checkForUpdates(): Promise<UpdateCheckResult>`
 
-Asks the server whether there is an update. On macOS you must call `setFeedURL` before using this API.
+Asks the server whether there is an update.
 
 ### `autoUpdater.quitAndInstall()`
 
