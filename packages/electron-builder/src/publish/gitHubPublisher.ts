@@ -30,11 +30,14 @@ interface Asset {
 export class GitHubPublisher extends Publisher {
   private tag: string
   private _releasePromise: Promise<Release>
-  private readonly httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
+  private readonly httpExecutor = new NodeHttpExecutor()
 
   private readonly token: string
 
   get releasePromise(): Promise<Release | null> {
+    if (this._releasePromise == null) {
+      this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : this.getOrCreateRelease()
+    }
     return this._releasePromise
   }
 
@@ -56,10 +59,9 @@ export class GitHubPublisher extends Publisher {
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
-    this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : this.init()
   }
 
-  private async init(): Promise<Release | null> {
+  private async getOrCreateRelease(): Promise<Release | null> {
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
