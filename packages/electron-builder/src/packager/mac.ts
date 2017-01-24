@@ -100,7 +100,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   const resourcesPath = path.join(contentsPath, "Resources")
 
-  const fileAssociations = packager.getFileAssociations()
+  const fileAssociations = packager.fileAssociations
   if (fileAssociations.length > 0) {
     appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)

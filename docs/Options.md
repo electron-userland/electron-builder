@@ -29,7 +29,7 @@ Don't customize paths to background and icon, — just follow conventions.
   * [appx](#AppXOptions)
   * [directories](#MetadataDirectories)
   * [dmg macOS DMG Options](#DmgOptions)
-  * [fileAssociations  File Associations](#FileAssociation)
+  * [fileAssociations File Associations](#FileAssociation)
   * [linux Linux Specific Options](#LinuxBuildOptions)
   * [mac macOS Specific Options](#MacOptions)
   * [mas MAS (Mac Application Store) Specific Options](#MasBuildOptions)
@@ -103,9 +103,11 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | window | <a name="DmgOptions-window"></a>The DMG windows position and size. See [dmg.window](#DmgWindow).
 
 <a name="FileAssociation"></a>
-### `fileAssociations`  File Associations
+### `fileAssociations` File Associations
 
 macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only. Array of option objects.
+
+On Windows works only if [nsis.perMachine](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-perMachine) is set to `true`.
 
 | Name | Description
 | --- | ---

@@ -454,7 +454,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.info.tempDirManager.getTempFile(suffix)
   }
 
-  getFileAssociations(): Array<FileAssociation> {
+  get fileAssociations(): Array<FileAssociation> {
     return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 

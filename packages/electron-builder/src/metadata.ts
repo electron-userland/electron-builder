@@ -226,9 +226,11 @@ export interface BeforeBuildContext {
 }
 
 /*
- ### `fileAssociations`  File Associations
+ ### `fileAssociations` File Associations
 
  macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only. Array of option objects.
+
+ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-perMachine) is set to `true`.
  */
 export interface FileAssociation {
   /*

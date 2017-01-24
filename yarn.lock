@@ -41,8 +41,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
 "@types/node@*":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.0.tgz#c081147b109da5f9c57af70571771be97ce9c0ba"
+  version "7.0.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.3.tgz#6bc1d23929bd426eabd409b5898537076bbbdeff"
 
 "@types/source-map-support@^0.2.28":
   version "0.2.28"

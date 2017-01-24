@@ -1,5 +1,5 @@
 import { Platform, Arch } from "electron-builder"
-import { assertPack, app, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { assertPack, app, copyTestAsset, modifyPackageJson, appThrows } from "../helpers/packTester"
 import { outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
@@ -208,4 +208,16 @@ test("menuCategory", app({
   packed: async(context) => {
     await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
   }
+}))
+
+test.ifDevOrLinuxCi("file associations only perMachine", appThrows(/Please set perMachine to true/, {
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  config: {
+    fileAssociations: [
+      {
+        ext: "foo",
+        name: "Test Foo",
+      }
+    ],
+  },
 }))

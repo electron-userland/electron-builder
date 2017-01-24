@@ -249,8 +249,13 @@ export default class NsisTarget extends Target {
       script = `!include "${customInclude}"\n!addincludedir "${packager.buildResourcesDir}"\n${script}`
     }
 
-    const fileAssociations = packager.getFileAssociations()
+    const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
+      if (this.options.perMachine !== true) {
+        // https://github.com/electron-userland/electron-builder/issues/772
+        throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
+      }
+
       script = "!include FileAssociation.nsh\n" + script
       if (isInstaller) {
         let registerFileAssociationsScript = ""
