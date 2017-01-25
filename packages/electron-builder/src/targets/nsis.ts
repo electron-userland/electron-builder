@@ -46,7 +46,7 @@ export default class NsisTarget extends Target {
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
 
-    await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"))
+    await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false)
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)

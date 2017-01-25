@@ -1,6 +1,6 @@
 import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
 import BluebirdPromise from "bluebird-lst-c"
-import { homedir } from "os"
+import { homedir, tmpdir } from "os"
 import * as path from "path"
 import { yellow, red } from "chalk"
 import _debug from "debug"
@@ -208,12 +208,17 @@ export function getCacheDirectory(): string {
   if (process.platform === "darwin") {
     return path.join(homedir(), "Library", "Caches", "electron-builder")
   }
-  else if (process.platform === "win32" && process.env.LOCALAPPDATA != null) {
-    return path.join(process.env.LOCALAPPDATA, "electron-builder", "cache")
+
+  const localappdata = process.env.LOCALAPPDATA
+  if (process.platform === "win32" && localappdata != null) {
+    // https://github.com/electron-userland/electron-builder/issues/1164
+    if (localappdata.includes("\\Windows\\System32\\") || process.env.USERNAME === "SYSTEM") {
+      return path.join(tmpdir(), "electron-builder-cache")
+    }
+    return path.join(localappdata, "electron-builder", "cache")
   }
-  else {
-    return path.join(homedir(), ".cache", "electron-builder")
-  }
+
+  return path.join(homedir(), ".cache", "electron-builder")
 }
 
 // fpm bug - rpm build --description is not escaped, well... decided to replace quite to smart quote
