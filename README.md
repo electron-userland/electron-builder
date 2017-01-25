@@ -160,6 +160,10 @@ and other distributable formats.
 
 [Donate with PayPal.](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
 
+## Community
+
+[electron-builder](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) on Slack. Please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads).
+
 ## Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
 

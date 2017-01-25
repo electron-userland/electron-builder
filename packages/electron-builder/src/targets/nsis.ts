@@ -11,10 +11,11 @@ import { unlink, readFile } from "fs-extra-p"
 import { NsisOptions } from "../options/winOptions"
 import { Target, Arch } from "electron-builder-core"
 import sanitizeFileName from "sanitize-filename"
+import { copyFile } from "electron-builder-util/out/fs"
 
-const NSIS_VERSION = "3.0.4"
+const NSIS_VERSION = "3.0.1.5"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "c29883cb9a04733489590420b910ea7a91ba0f9b776fe4c647d9801f23175225"
+const NSIS_SHA2 = "cf996b4209f302c1f6b379a6b2090ad0d51a360daf24d1828eeceafd1617a976"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -44,6 +45,8 @@ export default class NsisTarget extends Target {
 
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
+
+    await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"))
 
     const packager = this.packager
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)

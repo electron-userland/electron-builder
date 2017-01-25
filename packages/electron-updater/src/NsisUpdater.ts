@@ -4,7 +4,7 @@ import { tmpdir } from "os"
 import { download, DownloadOptions } from "electron-builder-http"
 import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
 import { BintrayOptions, PublishConfiguration, GithubOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { mkdtemp } from "fs-extra-p"
+import { mkdtemp, remove } from "fs-extra-p"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
 
@@ -34,24 +34,32 @@ export class NsisUpdater extends AppUpdater {
       downloadOptions.sha2 = fileInfo.sha2
     }
 
-    return mkdtemp(`${path.join(tmpdir(), "up")}-`)
-      .then(it => download(fileInfo.url, path.join(it, fileInfo.name), downloadOptions))
-      .then(it => {
-        this.setupPath = it
-        this.addQuitHandler()
-        const version = this.versionInfo!.version
-        if (this.logger != null) {
-          this.logger.info(`New version ${version} has been downloaded`)
-        }
-        this.emit("update-downloaded", this.versionInfo, null, version, null, null, () => {
-          this.quitAndInstall()
-        })
-        return it
-      })
-      .catch(e => {
-        this.emit("error", e, (e.stack || e).toString())
-        throw e
-      })
+    const logger = this.logger
+    const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
+    const tempFile = path.join(tempDir, fileInfo.name)
+    try {
+      await download(fileInfo.url, tempFile, downloadOptions)
+    }
+    catch (e) {
+      try {
+        await remove(tempDir)
+      }
+      catch (ignored) {
+        // ignored
+      }
+
+      throw e
+    }
+
+    const version = this.versionInfo!.version
+    if (logger != null) {
+      logger.info(`New version ${version} has been downloaded to ${tempFile}`)
+    }
+
+    this.setupPath = tempFile
+    this.addQuitHandler()
+    this.emit("update-downloaded", this.versionInfo, null, version)
+    return tempFile
   }
 
   private addQuitHandler() {
@@ -62,6 +70,9 @@ export class NsisUpdater extends AppUpdater {
     this.quitHandlerAdded = true
 
     this.app.on("quit", () => {
+      if (this.logger != null) {
+        this.logger.info("Auto install update on quit")
+      }
       this.install(true)
     })
   }
@@ -91,10 +102,35 @@ export class NsisUpdater extends AppUpdater {
     if (isSilent) {
       args.push("/S")
     }
-    spawn(setupPath, args, {
+    const spawnOptions = {
       detached: true,
       stdio: "ignore",
-    }).unref()
+    }
+
+    try {
+      spawn(setupPath, args, spawnOptions)
+        .unref()
+    }
+    catch (e) {
+      // yes, such errors dispatched not as error event
+      // https://github.com/electron-userland/electron-builder/issues/1129
+      if ((<any>e).code === "UNKNOWN") {
+        if (this.logger != null) {
+          this.logger.info("UNKNOWN error code on spawn, will be executed again using elevate")
+        }
+
+        try {
+          spawn(path.join(process.resourcesPath, "elevate.exe"), [setupPath].concat(args), spawnOptions)
+            .unref()
+        }
+        catch (e) {
+          this.dispatchError(e)
+        }
+      }
+      else {
+        this.dispatchError(e)
+      }
+    }
 
     return true
   }

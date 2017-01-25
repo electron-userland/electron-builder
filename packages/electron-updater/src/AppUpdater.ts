@@ -204,7 +204,18 @@ export abstract class AppUpdater extends EventEmitter {
     if (this.logger != null) {
       this.logger.info(`Downloading update from ${fileInfo.url}`)
     }
-    return await this.doDownloadUpdate(versionInfo, fileInfo)
+
+    try {
+      return await this.doDownloadUpdate(versionInfo, fileInfo)
+    }
+    catch (e) {
+      this.dispatchError(e)
+      throw e
+    }
+  }
+
+  protected dispatchError(e: Error) {
+    this.emit("error", e, (e.stack || e).toString())
   }
 
   protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo): Promise<any>
