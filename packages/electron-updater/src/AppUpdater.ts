@@ -66,13 +66,13 @@ export abstract class AppUpdater extends EventEmitter {
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
           if (this.logger != null) {
-            this.logger.info("Wait for app ready")
+            this.logger.info("App is ready")
           }
           resolve()
         }
         else {
           if (this.logger != null) {
-            this.logger.info("App is ready")
+            this.logger.info("Wait for app ready")
           }
           this.app.on("ready", resolve)
         }
