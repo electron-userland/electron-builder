@@ -2,10 +2,10 @@ Function un.onInit
   !insertmacro check64BitAndSetRegView
 
   ${IfNot} ${Silent}
-    MessageBox MB_OKCANCEL "Are you sure you want to uninstall ${PRODUCT_NAME}?" IDOK +2
-    Quit
-
     !ifdef ONE_CLICK
+      MessageBox MB_OKCANCEL "Are you sure you want to uninstall ${PRODUCT_NAME}?" IDOK +2
+      Quit
+
       # one-click installer executes uninstall section in the silent mode, but we must show message dialog if silent mode was not explicitly set by user (using /S flag)
       !insertmacro CHECK_APP_RUNNING "uninstall"
       SetSilent silent
@@ -62,5 +62,7 @@ Section "un.install"
     !insertmacro customUnInstall
   !endif
 
-  !insertmacro quitSuccess
+  !ifdef ONE_CLICK
+    !insertmacro quitSuccess
+  !endif
 SectionEnd
