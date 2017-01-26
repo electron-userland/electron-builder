@@ -2,7 +2,7 @@ import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurre
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import * as url from "url"
 import * as path from "path"
-import { HttpError, request } from "electron-builder-http"
+import { HttpError, RequestHeaders, request } from "electron-builder-http"
 
 export class GenericProvider implements Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
@@ -11,12 +11,18 @@ export class GenericProvider implements Provider<UpdateInfo> {
   constructor(private readonly configuration: GenericServerOptions) {
   }
 
-  async getLatestVersion(): Promise<UpdateInfo> {
+  async getLatestVersion(headers: RequestHeaders = {}): Promise<UpdateInfo> {
     let result: UpdateInfo | null = null
     const channelFile = getChannelFilename(this.channel)
     const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
     try {
-      result = await request<UpdateInfo>({hostname: this.baseUrl.hostname, port: this.baseUrl.port || "443", path: `${pathname}${this.baseUrl.search || ""}`, protocol: this.baseUrl.protocol})
+      const url = {
+        hostname: this.baseUrl.hostname,
+        port: this.baseUrl.port || "443",
+        path: `${pathname}${this.baseUrl.search || ""}`,
+        protocol: this.baseUrl.protocol
+      }
+      result = await request<UpdateInfo>(url, null, null, headers)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

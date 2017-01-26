@@ -1,5 +1,6 @@
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
+import { RequestHeaders } from "electron-builder-http"
 import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 
 export interface FileInfo {
@@ -11,7 +12,7 @@ export interface FileInfo {
 }
 
 export interface Provider<T extends VersionInfo> {
-  getLatestVersion(): Promise<T>
+  getLatestVersion(requestHeaders: RequestHeaders): Promise<T>
 
   getUpdateFile(versionInfo: T): Promise<FileInfo>
 }

@@ -1,7 +1,7 @@
 import { EventEmitter } from "events"
 import * as path from "path"
 import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
-import { executorHolder } from "electron-builder-http"
+import { RequestHeaders, executorHolder } from "electron-builder-http"
 import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
@@ -40,6 +40,8 @@ export abstract class AppUpdater extends EventEmitter {
   private fileInfo: FileInfo | null
 
   public readonly signals = new UpdaterSignal(this)
+
+  public requestHeaders: RequestHeaders = { }
 
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
@@ -141,7 +143,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     const client = await this.clientPromise
-    const versionInfo = await client.getLatestVersion()
+    const versionInfo = await client.getLatestVersion(this.requestHeaders)
 
     const latestVersion = parseVersion(versionInfo.version)
     if (latestVersion == null) {
@@ -206,7 +208,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     try {
-      return await this.doDownloadUpdate(versionInfo, fileInfo)
+      return await this.doDownloadUpdate(versionInfo, fileInfo, this.requestHeaders)
     }
     catch (e) {
       this.dispatchError(e)
@@ -218,7 +220,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo): Promise<any>
+  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, requestHeaders?: RequestHeaders): Promise<any>
 
   abstract quitAndInstall(): void
 }

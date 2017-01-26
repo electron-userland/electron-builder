@@ -1,7 +1,7 @@
 import { spawn } from "child_process"
 import * as path from "path"
 import { tmpdir } from "os"
-import { download, DownloadOptions } from "electron-builder-http"
+import { download, DownloadOptions, RequestHeaders } from "electron-builder-http"
 import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
 import { BintrayOptions, PublishConfiguration, GithubOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { mkdtemp, remove } from "fs-extra-p"
@@ -21,7 +21,7 @@ export class NsisUpdater extends AppUpdater {
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
    * @returns {Promise<string>} Path to downloaded file.
    */
-  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo) {
+  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, requestHeaders?: RequestHeaders) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
     }
@@ -37,8 +37,9 @@ export class NsisUpdater extends AppUpdater {
     const logger = this.logger
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
+    const headers = requestHeaders ? requestHeaders : { }
     try {
-      await download(fileInfo.url, tempFile, downloadOptions)
+      await download(fileInfo.url, tempFile, downloadOptions, headers)
     }
     catch (e) {
       try {
