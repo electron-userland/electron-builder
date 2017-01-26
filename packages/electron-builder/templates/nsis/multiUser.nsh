@@ -1,4 +1,5 @@
 !include FileFunc.nsh
+!include UAC.nsh
 
 !define FOLDERID_UserProgramFiles {5CD7AEE2-2219-4A67-B85D-6C9CE15660CB}
 !define KF_FLAG_CREATE 0x00008000
@@ -20,7 +21,12 @@ Var installMode
   !macro setInstallModePerUser
     StrCpy $installMode CurrentUser
     SetShellVarContext current
-    !ifndef BUILD_UNINSTALLER
+
+    # сhecks registry for previous installation path
+    ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $perUserInstallationFolder != ""
+      StrCpy $INSTDIR $perUserInstallationFolder
+    ${else}
       StrCpy $0 "$LocalAppData\Programs"
       # Win7 has a per-user programfiles known folder and this can be a non-default location
       System::Call 'Shell32::SHGetKnownFolderPath(g "${FOLDERID_UserProgramFiles}",i ${KF_FLAG_CREATE},i0,*i.r2)i.r1'
@@ -30,15 +36,7 @@ Var installMode
         System::Call 'Ole32::CoTaskMemFree(ir2)'
       ${endif}
       StrCpy $INSTDIR "$0\${APP_FILENAME}"
-    !endif
-
-    # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
-    ReadRegStr $perUserInstallationFolder HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
-    !ifdef BUILD_UNINSTALLER
-      ${if} $perUserInstallationFolder != ""
-        StrCpy $INSTDIR $perUserInstallationFolder
-      ${endif}
-    !endif
+    ${endif}
   !macroend
 !endif
 
@@ -49,33 +47,31 @@ Var installMode
     StrCpy $installMode all
     SetShellVarContext all
 
-    StrCpy $0 "$PROGRAMFILES"
-    !ifdef APP_64
-      ${if} ${RunningX64}
-        StrCpy $0 "$PROGRAMFILES64"
-      ${endif}
-    !endif
-
-    !ifdef MENU_FILENAME
-      StrCpy $0 "$0\${MENU_FILENAME}"
-    !endif
-
-    StrCpy $INSTDIR "$0\${APP_FILENAME}"
-
-    ${if} $installMode == "all"
-    		StrCpy $0 "/allusers"
-    		StrCpy $1 ""
-    	${else}
-    		StrCpy $0 "/currentuser"
-    		StrCpy $1 " (only current user)"
-    	${endif}
-
-    # сhecks registry for previous installation path — for uninstall only, currently, installation path is not customizable
-    ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
     !ifdef BUILD_UNINSTALLER
-      ${if} $perMachineInstallationFolder != ""
-        StrCpy $INSTDIR $perMachineInstallationFolder
+      ${IfNot} ${UAC_IsAdmin}
+        ShowWindow $HWNDPARENT ${SW_HIDE}
+        !insertmacro UAC_RunElevated
+        Quit
       ${endif}
     !endif
+
+    # сheck registry for previous installation path
+    ReadRegStr $perMachineInstallationFolder HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${if} $perMachineInstallationFolder != ""
+      StrCpy $INSTDIR $perMachineInstallationFolder
+    ${else}
+      StrCpy $0 "$PROGRAMFILES"
+      !ifdef APP_64
+        ${if} ${RunningX64}
+          StrCpy $0 "$PROGRAMFILES64"
+        ${endif}
+      !endif
+
+      !ifdef MENU_FILENAME
+        StrCpy $0 "$0\${MENU_FILENAME}"
+      !endif
+
+      StrCpy $INSTDIR "$0\${APP_FILENAME}"
+    ${endif}
   !macroend
 !endif

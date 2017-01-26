@@ -162,7 +162,8 @@ and other distributable formats.
 
 ## Community
 
-[electron-builder](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) on Slack. Please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads).
+[electron-builder](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
+Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.

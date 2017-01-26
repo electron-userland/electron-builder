@@ -37,12 +37,22 @@ Var RadioButtonLabel1
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
     ${IfNot} ${Errors}
+      StrCpy $hasPerMachineInstallation "1"
+      StrCpy $hasPerUserInstallation "0"
+      ${IfNot} ${UAC_IsAdmin}
+        ShowWindow $HWNDPARENT ${SW_HIDE}
+        !insertmacro UAC_RunElevated
+        Quit
+      ${endif}
+
       !insertmacro setInstallModePerAllUsers
       Abort
     ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${IfNot} ${Errors}
+      StrCpy $hasPerMachineInstallation "0"
+      StrCpy $hasPerUserInstallation "1"
       !insertmacro setInstallModePerUser
       Abort
     ${EndIf}
@@ -52,11 +62,17 @@ Var RadioButtonLabel1
 		# so (for uninstallation) just checking UAC_IsAdmin would probably be enought to determine if it's a per-user or per-machine. However, user can run the uninstall.exe from the folder itself
 		!ifdef BUILD_UNINSTALLER
 			${if} $hasPerUserInstallation == "1"
-				${andif} $hasPerMachineInstallation == "0"
+      ${andif} $hasPerMachineInstallation == "0"
 				!insertmacro setInstallModePerUser
 				Abort
 			${elseif} $hasPerUserInstallation == "0"
-				${andif} $hasPerMachineInstallation == "1"
+      ${andif} $hasPerMachineInstallation == "1"
+				${IfNot} ${UAC_IsAdmin}
+          ShowWindow $HWNDPARENT ${SW_HIDE}
+          !insertmacro UAC_RunElevated
+          Quit
+        ${endif}
+
 				!insertmacro setInstallModePerAllUsers
 				Abort
 			${endif}
@@ -66,6 +82,7 @@ Var RadioButtonLabel1
       !insertmacro MUI_HEADER_TEXT "Choose Installation Options" "Who should this application be installed for?"
 		!endif
 
+    !insertmacro MUI_PAGE_FUNCTION_CUSTOM PRE
 		nsDialogs::Create 1018
 		Pop $MultiUser.InstallModePage
 
@@ -126,32 +143,38 @@ Var RadioButtonLabel1
 		SendMessage $MultiUser.InstallModePage.AllUsers ${BM_GETCHECK} 0 0 $MultiUser.InstallModePage.ReturnValue
 
 		${if} $MultiUser.InstallModePage.ReturnValue = ${BST_CHECKED}
-		  !insertmacro setInstallModePerAllUsers
 			${IfNot} ${UAC_IsAdmin}
-				!ifdef MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
-					GetDlgItem $9 $HWNDParent 1
-					System::Call user32::GetFocus()i.s
-          EnableWindow $9 0 ;disable next button
-          !insertmacro UAC_PageElevation_RunElevated
-          EnableWindow $9 1
-          System::Call user32::SetFocus(is) ;Do we need WM_NEXTDLGCTL or can we get away with this hack?
-          ${If} $2 = 0x666666 ;our special return, the new process was not admin after all
-            MessageBox mb_iconExclamation "You need to login with an account that is a member of the admin group to continue..."
-            Abort
-          ${ElseIf} $0 = 1223 ;cancel
-            Abort
-          ${Else}
-            ${If} $0 <> 0
-              ${If} $0 = 1062
-                MessageBox mb_iconstop "Unable to elevate, Secondary Logon service not running!"
-              ${Else}
-                MessageBox mb_iconstop "Unable to elevate, error $0"
-              ${EndIf}
-              Abort
+        ShowWindow $HWNDPARENT ${SW_HIDE}
+        !insertmacro UAC_RunElevated
+        ${Switch} $0
+          ${Case} 0
+            ${If} $1 = 1
+              Quit ;we are the outer process, the inner process has done its work (ExitCode is $2), we are done
             ${EndIf}
-          ${EndIf}
-          Quit
-				!endif
+            ${If} $1 = 3 ;RunAs completed successfully, but with a non-admin user
+            ${OrIf} $2 = 0x666666 ;our special return, the new process was not admin after all
+              MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "You need to login with an account that is a member of the admin group to continue..."
+            ${EndIf}
+            ${Break}
+          ${Case} 1223 ;user aborted
+            ;MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "This option requires admin privileges, aborting!"
+            ;Quit ; instead of quit just abort going to the next page, and stay in the radiobuttons
+            ${Break}
+          ${Case} 1062
+            MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Logon service not running, aborting!" ; "Unable to elevate, Secondary Logon service not running!"
+            ;Quit ; instead of quit just abort going to the next page, and stay in the radiobuttons
+            ${Break}
+          ${Default}
+            MessageBox mb_IconStop|mb_TopMost|mb_SetForeground "Unable to elevate, error $0"
+            ;Quit ; instead of quit just abort going to the next page, and stay in the radiobuttons
+            ${Break}
+        ${EndSwitch}
+
+        ShowWindow $HWNDPARENT ${SW_SHOW}
+        BringToFront
+        Abort
+      ${else}
+        !insertmacro setInstallModePerAllUsers
 			${endif}
 		${else}
 			!insertmacro setInstallModePerUser

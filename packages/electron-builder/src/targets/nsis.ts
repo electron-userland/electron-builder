@@ -70,6 +70,7 @@ export default class NsisTarget extends Target {
     const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
     const options = this.options
     const iconPath = await packager.getResource(options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
+    const oneClick = options.oneClick !== false
 
     const installerPath = path.join(this.outDir, installerFilename)
     const guid = options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
@@ -78,7 +79,7 @@ export default class NsisTarget extends Target {
       APP_GUID: guid,
       PRODUCT_NAME: appInfo.productName,
       PRODUCT_FILENAME: appInfo.productFilename,
-      APP_FILENAME: appInfo.name,
+      APP_FILENAME: (!oneClick || options.perMachine === true) && /^[-_0-9a-zA-Z ]+$/.test(appInfo.productFilename) ? appInfo.productFilename : appInfo.name,
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 
@@ -96,8 +97,6 @@ export default class NsisTarget extends Target {
     for (const [arch, file] of this.archs) {
       defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
     }
-
-    const oneClick = options.oneClick !== false
 
     const installerHeader = oneClick ? null : await packager.getResource(options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {

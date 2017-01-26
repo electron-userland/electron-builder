@@ -21,11 +21,11 @@
 
   !ifdef LICENSE_FILE
     Function licensePre
-        ${GetParameters} $R0
-        ${GetOptions} $R0 "--update" $R1
-        ${IfNot} ${Errors}
-          Abort
-        ${endif}
+      ${GetParameters} $R0
+      ${GetOptions} $R0 "--update" $R1
+      ${IfNot} ${Errors}
+        Abort
+      ${endif}
     FunctionEnd
 
     !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
@@ -34,11 +34,6 @@
 
   !ifndef INSTALL_MODE_PER_ALL_USERS
     !insertmacro PAGE_INSTALL_MODE
-    Function GuiInit
-      !insertmacro UAC_PageElevation_OnGuiInit
-    FunctionEnd
-
-    !define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
   !endif
 
   !ifdef allowToChangeInstallationDirectory
@@ -59,17 +54,11 @@
   !ifdef INSTALL_MODE_PER_ALL_USERS
     !insertmacro setInstallModePerAllUsers
   !else
-    !insertmacro UAC_PageElevation_OnInit
-
     ${If} ${UAC_IsInnerInstance}
-      ${If} ${UAC_IsAdmin}
-       !insertmacro setInstallModePerAllUsers
-       Goto functionEnd
-      ${else}
-        # special return value for outer instance so it knows we did not have admin rights
-        SetErrorLevel 0x666666
-        Quit
-      ${EndIf}
+    ${AndIfNot} ${UAC_IsAdmin}
+      # special return value for outer instance so it knows we did not have admin rights
+      SetErrorLevel 0x666666
+      Quit
     ${EndIf}
 
     !ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED
@@ -102,18 +91,18 @@
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
     ${IfNot} ${Errors}
-      !insertmacro setInstallModePerAllUsers
-      Goto functionEnd
+      StrCpy $hasPerMachineInstallation "1"
+      StrCpy $hasPerUserInstallation "0"
     ${EndIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
     ${IfNot} ${Errors}
-      !insertmacro setInstallModePerUser
-      Goto functionEnd
+      StrCpy $hasPerMachineInstallation "0"
+      StrCpy $hasPerUserInstallation "1"
     ${EndIf}
 
     ${if} $hasPerUserInstallation == "1"
-     ${andif} $hasPerMachineInstallation == "0"
+    ${andif} $hasPerMachineInstallation == "0"
       !insertmacro setInstallModePerUser
     ${elseif} $hasPerUserInstallation == "0"
       ${andif} $hasPerMachineInstallation == "1"
@@ -126,8 +115,6 @@
         !insertmacro setInstallModePerUser
       !endif
     ${endif}
-
-    functionEnd:
   !endif
 !macroend
 
