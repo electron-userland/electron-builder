@@ -12,6 +12,10 @@ import { EventEmitter } from "events"
 export const debug = _debug("electron-builder")
 export const maxRedirects = 10
 
+export interface RequestHeaders {
+  [key: string]: any
+}
+
 export interface DownloadOptions {
   skipDirCreation?: boolean
   sha2?: string
@@ -35,16 +39,16 @@ export class HttpExecutorHolder {
 
 export const executorHolder = new HttpExecutorHolder()
 
-export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-  return executorHolder.httpExecutor.download(url, destination, options)
+export function download(url: string, destination: string, options?: DownloadOptions | null, headers?: RequestHeaders): Promise<string> {
+  return executorHolder.httpExecutor.download(url, destination, options, headers)
 }
 
 export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
-  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
+  request<T>(url: Url, token?: string | null, data?: { [name: string]: any; } | null, headers?: RequestHeaders | null, method?: string): Promise<T> {
     const defaultHeaders: any = {"User-Agent": "electron-builder"}
     const options = Object.assign({
       method: method || "GET",
-      headers: headers == null ? defaultHeaders : Object.assign(defaultHeaders, headers)
+      headers: headers ? Object.assign(defaultHeaders, headers) : defaultHeaders
     }, url)
 
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
@@ -58,7 +62,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
 
   protected abstract doApiRequest<T>(options: REQUEST_OPTS, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
-  abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
+  abstract download(url: string, destination: string, options?: DownloadOptions | null, headers?: { [key: string]: any } | null): Promise<string>
 
   protected handleResponse(response: Response, options: RequestOptions, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
@@ -73,7 +77,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
       reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
-    
+
     Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
     `))
       return
@@ -170,7 +174,7 @@ export function githubRequest<T>(path: string, token: string | null, data: {[nam
   return executorHolder.httpExecutor.request<T>({hostname: "api.github.com", path: path}, token, data, {Accept: "application/vnd.github.v3+json"}, method)
 }
 
-export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
+export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, headers?: RequestHeaders | null, method?: string): Promise<T> {
   return executorHolder.httpExecutor.request(url, token, data, headers, method)
 }
 

@@ -3,17 +3,17 @@ import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, maxRedirects, safeGetHeader, configurePipes, debug } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, RequestHeaders, maxRedirects, safeGetHeader, configurePipes, debug } from "electron-builder-http"
 import { parse as parseUrl } from "url"
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
-  async download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+  async download(url: string, destination: string, options?: DownloadOptions | null, headers?: RequestHeaders): Promise<string> {
     if (options == null || !options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
     }
 
     return await new BluebirdPromise<string>((resolve, reject) => {
-      this.doDownload(url, destination, 0, options || {}, (error: Error) => {
+      this.doDownload(url, destination, 0, options || {}, headers || {}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -33,18 +33,18 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     })
   }
 
-  private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
+  private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, headers: { [key: string]: any }, callback: (error: Error | null) => void) {
     const parsedUrl = parseUrl(url)
     // user-agent must be specified, otherwise some host can return 401 unauthorised
+    headers = headers ? headers : {}
+    headers["User-Agent"] = headers["User-Agent"] ? headers["User-Agent"] : "electron-builder"
 
     const requestOpts = {
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
       port: parsedUrl.port ? +parsedUrl.port : undefined,
-      headers: {
-        "User-Agent": "electron-builder"
-      },
+      headers,
     }
 
     const request = net.request(requestOpts, (response: Electron.IncomingMessage) => {
@@ -56,7 +56,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < maxRedirects) {
-          this.doDownload(redirectUrl, destination, redirectCount++, options, callback)
+          this.doDownload(redirectUrl, destination, redirectCount++, options, headers, callback)
         }
         else {
           callback(new Error(`Too many redirects (> ${maxRedirects})`))
