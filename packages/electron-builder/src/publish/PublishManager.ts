@@ -29,29 +29,31 @@ export class PublishManager {
   private isPublish = false
 
   constructor(packager: Packager, private readonly publishOptions: PublishOptions) {
-    if (publishOptions.publish === undefined) {
-      if (process.env.npm_lifecycle_event === "release") {
-        publishOptions.publish = "always"
-      }
-      else if (isAuthTokenSet() ) {
-        const tag = getCiTag()
-        if (tag != null) {
-          log(`Tag ${tag} is defined, so artifacts will be published`)
-          publishOptions.publish = "onTag"
-          this.isPublishOptionGuessed = true
+    if (!isPullRequest()) {
+      if (publishOptions.publish === undefined) {
+        if (process.env.npm_lifecycle_event === "release") {
+          publishOptions.publish = "always"
         }
-        else if (isCi) {
-          log("CI detected, so artifacts will be published if draft release exists")
-          publishOptions.publish = "onTagOrDraft"
-          this.isPublishOptionGuessed = true
+        else if (isAuthTokenSet()) {
+          const tag = getCiTag()
+          if (tag != null) {
+            log(`Tag ${tag} is defined, so artifacts will be published`)
+            publishOptions.publish = "onTag"
+            this.isPublishOptionGuessed = true
+          }
+          else if (isCi) {
+            log("CI detected, so artifacts will be published if draft release exists")
+            publishOptions.publish = "onTagOrDraft"
+            this.isPublishOptionGuessed = true
+          }
         }
       }
-    }
 
-    if (publishOptions.publish != null && publishOptions.publish !== "never") {
-      this.isPublish = publishOptions.publish !== "onTag" || getCiTag() != null
-      if (this.isPublish && !isAuthTokenSet()) {
-        throw new Error(`Publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set`)
+      if (publishOptions.publish != null && publishOptions.publish !== "never") {
+        this.isPublish = publishOptions.publish !== "onTag" || getCiTag() != null
+        if (this.isPublish && !isAuthTokenSet()) {
+          throw new Error(`Publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set`)
+        }
       }
     }
 
@@ -323,4 +325,13 @@ function sha256(file: string) {
       })
       .pipe(hash, {end: false})
   })
+}
+
+function isPullRequest() {
+  // TRAVIS_PULL_REQUEST is set to the pull request number if the current job is a pull request build, or false if it’s not.
+  function isSet(value: string) {
+    return value != null && value !== "false"
+  }
+
+  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS)
 }
