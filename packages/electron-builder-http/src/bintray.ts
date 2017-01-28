@@ -1,8 +1,8 @@
 import { BintrayOptions } from "./publishOptions"
-import { request } from "./httpExecutor"
+import { request, configureRequestOptions } from "./httpExecutor"
 
 export function bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, method?: string): Promise<T> {
-  return request<T>({hostname: "api.bintray.com", path: path}, auth, data, null, method)
+  return request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path}, auth, method), data)
 }
 
 export interface Version {

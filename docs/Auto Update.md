@@ -44,10 +44,11 @@ autoUpdater.logger.transports.file.level = "info"
 
 ## Options
 
-Name                | Default                 | Description
---------------------|-------------------------|------------
-autoDownload        | `true`                  | Automatically download an update when it is found.
-logger              | `console`               | The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
+Name                | Default           | Description
+--------------------|-------------------|------------
+`autoDownload`      | `true`            | Automatically download an update when it is found.
+`logger`            | `console`         | The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
+`requestHeaders`    | `null`            | The request headers.
 
 ## Events
 

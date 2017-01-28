@@ -1,9 +1,8 @@
-import { Socket } from "net"
 import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, maxRedirects, safeGetHeader, configurePipes, debug } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, dumpRequestOptions } from "electron-builder-http"
 import { parse as parseUrl } from "url"
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
@@ -13,7 +12,17 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     }
 
     return await new BluebirdPromise<string>((resolve, reject) => {
-      this.doDownload(url, destination, 0, options || {}, (error: Error) => {
+      const parsedUrl = parseUrl(url)
+
+      this.doDownload({
+        protocol: parsedUrl.protocol,
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.path,
+        port: parsedUrl.port ? parsedUrl.port : undefined,
+        headers: Object.assign({
+          "User-Agent": "electron-builder"
+        }, options == null ? null : options.headers),
+      }, destination, 0, options || {}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -24,68 +33,20 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     })
   }
 
-  private addTimeOutHandler(request: Electron.ClientRequest, callback: (error: Error) => void) {
-    request.on("socket", function (socket: Socket) {
-      socket.setTimeout(60 * 1000, () => {
-        callback(new Error("Request timed out"))
-        request.abort()
-      })
-    })
-  }
-
-  private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
-    const parsedUrl = parseUrl(url)
-    // user-agent must be specified, otherwise some host can return 401 unauthorised
-
-    const requestOpts = {
-      protocol: parsedUrl.protocol,
-      hostname: parsedUrl.hostname,
-      path: parsedUrl.path,
-      port: parsedUrl.port ? +parsedUrl.port : undefined,
-      headers: {
-        "User-Agent": "electron-builder"
-      },
+  doApiRequest<T>(options: Electron.RequestOptions, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+    if (<any>options.Protocol != null) {
+      // electron typings defines it as incorrect Protocol (uppercase P)
+      (<any>options).protocol = options.Protocol
     }
 
-    const request = net.request(requestOpts, (response: Electron.IncomingMessage) => {
-      if (response.statusCode >= 400) {
-        callback(new Error(`Cannot download "${url}", status ${response.statusCode}: ${response.statusMessage}`))
-        return
-      }
-
-      const redirectUrl = safeGetHeader(response, "location")
-      if (redirectUrl != null) {
-        if (redirectCount < maxRedirects) {
-          this.doDownload(redirectUrl, destination, redirectCount++, options, callback)
-        }
-        else {
-          callback(new Error(`Too many redirects (> ${maxRedirects})`))
-        }
-        return
-      }
-
-      configurePipes(options, response, destination, callback)
-    })
-    this.addTimeOutHandler(request, callback)
-    request.on("error", callback)
-    request.end()
-  }
-
-  doApiRequest<T>(options: Electron.RequestOptions, token: string | null, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    const requestOptions: any = options
-    if (debug.enabled) {
-      debug(`request: ${JSON.stringify(requestOptions, null, 2)}`)
+    if (this.debug.enabled) {
+      this.debug(`request: ${dumpRequestOptions(options)}`)
     }
 
-    if (token != null) {
-      (<any>requestOptions.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
-    }
-
-    requestOptions.protocol = options.Protocol || "https:"
     return new BluebirdPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, response => {
         try {
-          this.handleResponse(response, options, resolve, reject, redirectCount, token, requestProcessor)
+          this.handleResponse(response, options, resolve, reject, redirectCount, requestProcessor)
         }
         catch (e) {
           reject(e)
@@ -96,5 +57,10 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       requestProcessor(request, reject)
       onCancel!(() => request.abort())
     })
+  }
+
+
+  protected doRequest(options: any, callback: (response: any) => void): any {
+    return net.request(options, callback)
   }
 }

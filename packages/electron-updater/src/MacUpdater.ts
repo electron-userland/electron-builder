@@ -26,7 +26,7 @@ export class MacUpdater extends AppUpdater {
   }
 
   protected onUpdateAvailable(versionInfo: VersionInfo, fileInfo: FileInfo) {
-    this.nativeUpdater.setFeedURL((<any>versionInfo).releaseJsonUrl)
+    this.nativeUpdater.setFeedURL((<any>versionInfo).releaseJsonUrl, this.requestHeaders || undefined)
     super.onUpdateAvailable(versionInfo, fileInfo)
   }
 

@@ -1,7 +1,7 @@
 import { EventEmitter } from "events"
 import * as path from "path"
 import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
-import { executorHolder } from "electron-builder-http"
+import { RequestHeaders, executorHolder } from "electron-builder-http"
 import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
@@ -27,6 +27,16 @@ export abstract class AppUpdater extends EventEmitter {
    */
   public autoDownload = true
 
+  public requestHeaders: RequestHeaders | null
+
+  /**
+   * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
+   * Set it to `null` if you would like to disable a logging feature.
+   */
+  public logger: Logger | null = (<any>global).__test_app ? null : console
+
+  public readonly signals = new UpdaterSignal(this)
+
   protected updateAvailable = false
 
   private clientPromise: Promise<Provider<any>>
@@ -38,14 +48,6 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
-
-  public readonly signals = new UpdaterSignal(this)
-
-  /**
-   * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
-   * Set it to `null` if you would like to disable a logging feature.
-   */
-  public logger: Logger | null = console
 
   constructor(options: PublishConfiguration | BintrayOptions | GithubOptions | null | undefined) {
     super()
@@ -66,13 +68,13 @@ export abstract class AppUpdater extends EventEmitter {
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
           if (this.logger != null) {
-            this.logger.info("Wait for app ready")
+            this.logger.info("App is ready")
           }
           resolve()
         }
         else {
           if (this.logger != null) {
-            this.logger.info("App is ready")
+            this.logger.info("Wait for app ready")
           }
           this.app.on("ready", resolve)
         }
@@ -141,6 +143,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     const client = await this.clientPromise
+    client.setRequestHeaders(this.requestHeaders)
     const versionInfo = await client.getLatestVersion()
 
     const latestVersion = parseVersion(versionInfo.version)

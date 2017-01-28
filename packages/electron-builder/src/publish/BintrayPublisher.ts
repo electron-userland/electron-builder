@@ -6,7 +6,7 @@ import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
 import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
-import { HttpError } from "electron-builder-http"
+import { HttpError, configureRequestOptions } from "electron-builder-http"
 
 export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>
@@ -58,7 +58,7 @@ export class BintrayPublisher extends Publisher {
     let badGatewayCount = 0
     for (let i = 0; i < 3; i++) {
       try {
-        return await this.httpExecutor.doApiRequest<any>({
+        return await this.httpExecutor.doApiRequest<any>(configureRequestOptions({
           hostname: "api.bintray.com",
           path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",
@@ -68,7 +68,7 @@ export class BintrayPublisher extends Publisher {
             "X-Bintray-Override": "1",
             "X-Bintray-Publish": "1",
           }
-        }, this.client.auth, requestProcessor)
+        }, this.client.auth), requestProcessor)
       }
       catch (e) {
         if (e instanceof HttpError && e.response.statusCode === 502 && badGatewayCount++ < 3) {

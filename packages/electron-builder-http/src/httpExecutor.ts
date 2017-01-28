@@ -1,4 +1,3 @@
-import { Url } from "url"
 import { createHash } from "crypto"
 import { Transform } from "stream"
 import { createWriteStream } from "fs-extra-p"
@@ -8,11 +7,23 @@ import _debug from "debug"
 import { ProgressCallbackTransform } from "./ProgressCallbackTransform"
 import { safeLoad } from "js-yaml"
 import { EventEmitter } from "events"
+import { Socket } from "net"
 
-export const debug = _debug("electron-builder")
-export const maxRedirects = 10
+export interface RequestHeaders {
+  [key: string]: any
+}
+
+export interface Response extends EventEmitter {
+  statusCode?: number
+  statusMessage?: string
+
+  headers: any
+
+  setEncoding(encoding: string): void
+}
 
 export interface DownloadOptions {
+  headers?: RequestHeaders | null
   skipDirCreation?: boolean
   sha2?: string
   onProgress?(progress: any): void
@@ -39,41 +50,48 @@ export function download(url: string, destination: string, options?: DownloadOpt
   return executorHolder.httpExecutor.download(url, destination, options)
 }
 
+export class HttpError extends Error {
+  constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: string[]; } | undefined}, public description: any | null = null) {
+    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
+
+    this.name = "HttpError"
+  }
+}
+
 export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
-  request<T>(url: Url, token?: string | null, data?: {[name: string]: any; } | null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
-    const defaultHeaders: any = {"User-Agent": "electron-builder"}
-    const options = Object.assign({
-      method: method || "GET",
-      headers: headers == null ? defaultHeaders : Object.assign(defaultHeaders, headers)
-    }, url)
+  protected readonly maxRedirects = 10
+  protected readonly debug = _debug("electron-builder")
+
+  request<T>(options: RequestOptions, data?: { [name: string]: any; } | null): Promise<T> {
+    options = Object.assign({headers: {"User-Agent": "electron-builder"}}, options)
 
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
       options.method = "post"
+      if (options.headers == null) {
+        options.headers = {}
+      }
+
       options.headers["Content-Type"] = "application/json"
       options.headers["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(<any>options, token || null, it => (<any>it).end(encodedData), 0)
+    return this.doApiRequest<T>(<any>options, it => (<any>it).end(encodedData), 0)
   }
 
-  protected abstract doApiRequest<T>(options: REQUEST_OPTS, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
+  protected abstract doApiRequest<T>(options: REQUEST_OPTS, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
   abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
 
-  protected handleResponse(response: Response, options: RequestOptions, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, token: string | null, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
-    if (debug.enabled) {
-      const safe: any = Object.assign({}, options)
-      if (safe.headers != null && safe.headers.authorization != null) {
-        safe.headers.authorization = "<skipped>"
-      }
-      debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${JSON.stringify(safe, null, 2)}`)
+  protected handleResponse(response: Response, options: RequestOptions, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+    if (this.debug.enabled) {
+      this.debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
     }
 
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
       reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
-    
+
     Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
     `))
       return
@@ -91,7 +109,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
         return
       }
 
-      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), token, requestProcessor, redirectCount)
+      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
 
@@ -129,23 +147,47 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       }
     })
   }
-}
 
-export class HttpError extends Error {
-  constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: string[]; } | undefined}, public description: any | null = null) {
-    super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
+  protected abstract doRequest(options: any, callback: (response: any) => void): any
 
-    this.name = "HttpError"
+  protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
+    const request = this.doRequest(requestOptions, (response: Electron.IncomingMessage) => {
+      if (response.statusCode >= 400) {
+        callback(new Error(`Cannot download "${requestOptions.protocol || "https"}://${requestOptions.hostname}/${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
+        return
+      }
+
+      const redirectUrl = safeGetHeader(response, "location")
+      if (redirectUrl != null) {
+        if (redirectCount < this.maxRedirects) {
+          const parsedUrl = parseUrl(redirectUrl)
+          this.doDownload(Object.assign({}, requestOptions, {
+            hostname: parsedUrl.hostname,
+            path: parsedUrl.path,
+            port: parsedUrl.port == null ? undefined : parsedUrl.port
+          }), destination, redirectCount++, options, callback)
+        }
+        else {
+          callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
+        }
+        return
+      }
+
+      configurePipes(options, response, destination, callback)
+    })
+    this.addTimeOutHandler(request, callback)
+    request.on("error", callback)
+    request.end()
   }
-}
 
-export interface Response extends EventEmitter {
-  statusCode?: number
-  statusMessage?: string
-
-  headers: any
-
-  setEncoding(encoding: string): void
+  protected addTimeOutHandler(request: any, callback: (error: Error) => void) {
+    request.on("socket", function (socket: Socket) {
+      socket.setTimeout(60 * 1000, () => {
+        callback(new Error("Request timed out"))
+        request.abort()
+      })
+    })
+  }
 }
 
 class DigestTransform extends Transform {
@@ -166,12 +208,8 @@ class DigestTransform extends Transform {
   }
 }
 
-export function githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: string): Promise<T> {
-  return executorHolder.httpExecutor.request<T>({hostname: "api.github.com", path: path}, token, data, {Accept: "application/vnd.github.v3+json"}, method)
-}
-
-export function request<T>(url: Url, token: string | null = null, data: {[name: string]: any; } | null = null, headers?: { [key: string]: any } | null, method?: string): Promise<T> {
-  return executorHolder.httpExecutor.request(url, token, data, headers, method)
+export function request<T>(options: RequestOptions, data?: {[name: string]: any; } | null): Promise<T> {
+  return executorHolder.httpExecutor.request(options, data)
 }
 
 function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
@@ -189,7 +227,7 @@ function checkSha2(sha2Header: string | null | undefined, sha2: string | null | 
   return true
 }
 
-export function safeGetHeader(response: any, headerKey: string) {
+function safeGetHeader(response: any, headerKey: string) {
   const value = response.headers[headerKey]
   if (value == null) {
     return null
@@ -203,7 +241,7 @@ export function safeGetHeader(response: any, headerKey: string) {
   }
 }
 
-export function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void) {
+function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
     return
   }
@@ -230,4 +268,31 @@ export function configurePipes(options: DownloadOptions, response: any, destinat
   }
 
   fileOut.on("finish", () => (<any>fileOut.close)(callback))
+}
+
+export function configureRequestOptions(options: RequestOptions, token: string | null, method?: string): RequestOptions {
+  if (method != null) {
+    options.method = method
+  }
+
+  let headers = options.headers
+  if (headers == null) {
+    headers = {}
+    options.headers = headers
+  }
+  if (token != null) {
+    (<any>headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
+  }
+  if (headers["User-Agent"] == null) {
+    headers["User-Agent"] = "electron-builder"
+  }
+  return options
+}
+
+export function dumpRequestOptions(options: RequestOptions): string {
+  const safe: any = Object.assign({}, options)
+  if (safe.headers != null && safe.headers.authorization != null) {
+    safe.headers.authorization = "<skipped>"
+  }
+  return JSON.stringify(safe, null, 2)
 }

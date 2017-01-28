@@ -4,8 +4,9 @@ import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
 
-export class GitHubProvider implements Provider<VersionInfo> {
+export class GitHubProvider extends Provider<VersionInfo> {
   constructor(private readonly options: GithubOptions) {
+    super()
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
@@ -14,7 +15,11 @@ export class GitHubProvider implements Provider<VersionInfo> {
 
     try {
       // do not use API to avoid limit
-      const releaseInfo = (await request<GithubReleaseInfo>({hostname: "github.com", path: `${basePath}/latest`}, null, null, {Accept: "application/json"}))
+      const releaseInfo = (await request<GithubReleaseInfo>({
+        hostname: "github.com",
+        path: `${basePath}/latest`,
+        headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
+      }))
       version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
@@ -25,7 +30,7 @@ export class GitHubProvider implements Provider<VersionInfo> {
     const channelFile = getChannelFilename(getDefaultChannelName())
     const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
     try {
-      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath})
+      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath, headers: this.requestHeaders || undefined})
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

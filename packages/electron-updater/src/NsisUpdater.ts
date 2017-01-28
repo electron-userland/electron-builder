@@ -33,6 +33,9 @@ export class NsisUpdater extends AppUpdater {
     if (fileInfo != null && fileInfo.sha2 != null) {
       downloadOptions.sha2 = fileInfo.sha2
     }
+    if (this.requestHeaders != null) {
+      downloadOptions.headers = this.requestHeaders
+    }
 
     const logger = this.logger
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)

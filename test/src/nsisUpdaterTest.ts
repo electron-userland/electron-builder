@@ -100,6 +100,7 @@ test("sha2 mismatch error event", async () => {
   }))
   g.__test_resourcesPath = testResourcesPath
   const updater = new NsisUpdater()
+  updater.logger = console
 
   const actualEvents = trackEvents(updater)
 

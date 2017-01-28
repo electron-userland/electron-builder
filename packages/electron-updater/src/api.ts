@@ -1,5 +1,6 @@
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
+import { RequestHeaders } from "electron-builder-http"
 import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 
 export interface FileInfo {
@@ -10,10 +11,16 @@ export interface FileInfo {
   sha2?: string
 }
 
-export interface Provider<T extends VersionInfo> {
-  getLatestVersion(): Promise<T>
+export abstract class Provider<T extends VersionInfo> {
+  protected requestHeaders: RequestHeaders | null
 
-  getUpdateFile(versionInfo: T): Promise<FileInfo>
+  setRequestHeaders(value: RequestHeaders | null) {
+    this.requestHeaders = value
+  }
+
+  abstract getLatestVersion(): Promise<T>
+
+  abstract getUpdateFile(versionInfo: T): Promise<FileInfo>
 }
 
 // due to historical reasons for windows we use channel name without platform specifier

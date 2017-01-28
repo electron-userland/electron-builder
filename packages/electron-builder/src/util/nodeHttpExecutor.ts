@@ -1,4 +1,3 @@
-import { Socket } from "net"
 import { IncomingMessage, ClientRequest, Agent } from "http"
 import * as https from "https"
 import { ensureDir, readFile } from "fs-extra-p"
@@ -6,7 +5,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, configurePipes,  maxRedirects, debug } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { parse as parseUrl } from "url"
 
@@ -24,7 +23,15 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
 
     const agent = await this.httpsAgentPromise
     return await new BluebirdPromise<string>((resolve, reject) => {
-      this.doDownload(url, destination, 0, options || {}, agent, (error: Error) => {
+      const parsedUrl = parseUrl(url)
+      this.doDownload({
+        hostname: parsedUrl.hostname,
+        path: parsedUrl.path,
+        headers: Object.assign({
+          "User-Agent": "electron-builder"
+        }, options == null ? null : options.headers),
+        agent: agent,
+      }, destination, 0, options || {}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -35,62 +42,15 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
     })
   }
 
-  private addTimeOutHandler(request: ClientRequest, callback: (error: Error) => void) {
-    request.on("socket", function (socket: Socket) {
-      socket.setTimeout(60 * 1000, () => {
-        callback(new Error("Request timed out"))
-        request.abort()
-      })
-    })
-  }
-
-  private doDownload(url: string, destination: string, redirectCount: number, options: DownloadOptions, agent: Agent, callback: (error: Error | null) => void) {
-    const parsedUrl = parseUrl(url)
-    // user-agent must be specified, otherwise some host can return 401 unauthorised
-    const request = https.request({
-      hostname: parsedUrl.hostname,
-      path: parsedUrl.path,
-      headers: {
-        "User-Agent": "electron-builder"
-      },
-      agent: agent,
-    }, (response: IncomingMessage) => {
-      if (response.statusCode >= 400) {
-        callback(new Error(`Cannot download "${url}", status ${response.statusCode}: ${response.statusMessage}`))
-        return
-      }
-
-      const redirectUrl = response.headers.location
-      if (redirectUrl != null) {
-        if (redirectCount < maxRedirects) {
-          this.doDownload(redirectUrl, destination, redirectCount++, options, agent, callback)
-        }
-        else {
-          callback(new Error(`Too many redirects (> ${maxRedirects})`))
-        }
-        return
-      }
-
-      configurePipes(options, response, destination, callback)
-    })
-    this.addTimeOutHandler(request, callback)
-    request.on("error", callback)
-    request.end()
-  }
-
-  doApiRequest<T>(options: RequestOptions, token: string | null, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    if (debug.enabled) {
-      debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
-    }
-
-    if (token != null) {
-      (<any>options.headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
+  doApiRequest<T>(options: RequestOptions, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+    if (this.debug.enabled) {
+      this.debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
     }
 
     return new BluebirdPromise<T>((resolve, reject, onCancel) => {
       const request = https.request(options, (response: IncomingMessage) => {
         try {
-          this.handleResponse(response, options, resolve, reject, redirectCount, token, requestProcessor)
+          this.handleResponse(response, options, resolve, reject, redirectCount, requestProcessor)
         }
         catch (e) {
           reject(e)
@@ -101,6 +61,11 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
       requestProcessor(request, reject)
       onCancel!(() => request.abort())
     })
+  }
+
+
+  protected doRequest(options: any, callback: (response: any) => void): any {
+    return https.request(options, callback)
   }
 }
 

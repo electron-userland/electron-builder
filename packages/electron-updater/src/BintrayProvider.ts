@@ -3,10 +3,12 @@ import { BintrayClient } from "electron-builder-http/out/bintray"
 import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { HttpError } from "electron-builder-http"
 
-export class BintrayProvider implements Provider<VersionInfo> {
+export class BintrayProvider extends Provider<VersionInfo> {
   private client: BintrayClient
 
   constructor(configuration: BintrayOptions) {
+    super()
+
     this.client = new BintrayClient(configuration)
   }
 
