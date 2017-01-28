@@ -41,7 +41,7 @@ export class GitHubPublisher extends Publisher {
     return this._releasePromise
   }
 
-  constructor(private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}, private readonly isPublishOptionGuessed: boolean = false) {
+  constructor(private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
     super()
 
     let token = info.token
@@ -74,14 +74,9 @@ export class GitHubPublisher extends Publisher {
         // if release created < 2 hours — allow to upload
         const publishedAt = release.published_at == null ? null : new Date(release.published_at)
         if (publishedAt != null && (Date.now() - publishedAt.getMilliseconds()) > (2 * 3600 * 1000)) {
-          const message = `Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`
-          if (this.isPublishOptionGuessed) {
-            warn(message)
-            return null
-          }
-          else {
-            throw new Error(message)
-          }
+          // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
+          warn(`Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`)
+          return null
         }
         return release
       }

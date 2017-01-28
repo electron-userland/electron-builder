@@ -115,7 +115,7 @@ export class PublishManager {
   getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
     let publisher = this.nameToPublisher.get(publishConfig.provider)
     if (publisher == null) {
-      publisher = createPublisher(buildInfo, publishConfig, this.publishOptions, this.isPublishOptionGuessed)
+      publisher = createPublisher(buildInfo, publishConfig, this.publishOptions)
       this.nameToPublisher.set(publishConfig.provider, publisher)
     }
     return publisher
@@ -242,12 +242,12 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 }
 
-function createPublisher(buildInfo: BuildInfo, publishConfig: PublishConfiguration, options: PublishOptions, isPublishOptionGuessed: boolean = false): Publisher | null {
+function createPublisher(buildInfo: BuildInfo, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
   const version = buildInfo.metadata.version!
   if (publishConfig.provider === "github") {
     const githubInfo: GithubOptions = publishConfig
     log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
-    return new GitHubPublisher(githubInfo, version, options, isPublishOptionGuessed)
+    return new GitHubPublisher(githubInfo, version, options)
   }
   if (publishConfig.provider === "bintray") {
     const bintrayInfo: BintrayOptions = publishConfig
