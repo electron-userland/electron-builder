@@ -44,6 +44,7 @@ test.ifNotCiWin("extraResources", async () => {
         extraResources: [
           "foo",
           "bar/hello.txt",
+          "./dir-relative/f.txt",
           "bar/${arch}.txt",
           "${os}/${arch}.txt",
         ],
@@ -61,6 +62,7 @@ test.ifNotCiWin("extraResources", async () => {
         return BluebirdPromise.all([
           outputFile(path.join(projectDir, "foo/nameWithoutDot"), "nameWithoutDot"),
           outputFile(path.join(projectDir, "bar/hello.txt"), "data"),
+          outputFile(path.join(projectDir, "dir-relative/f.txt"), "data"),
           outputFile(path.join(projectDir, `bar/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, `${osName}/${process.arch}.txt`), "data"),
           outputFile(path.join(projectDir, "platformSpecificR"), "platformSpecificR"),
@@ -78,6 +80,7 @@ test.ifNotCiWin("extraResources", async () => {
           assertThat(path.join(resourcesDir, "foo")).isDirectory(),
           assertThat(path.join(resourcesDir, "foo", "nameWithoutDot")).isFile(),
           assertThat(path.join(resourcesDir, "bar", "hello.txt")).isFile(),
+          assertThat(path.join(resourcesDir, "dir-relative", "f.txt")).isFile(),
           assertThat(path.join(resourcesDir, "bar", `${process.arch}.txt`)).isFile(),
           assertThat(path.join(resourcesDir, osName, `${process.arch}.txt`)).isFile(),
           assertThat(path.join(resourcesDir, "platformSpecificR")).isFile(),
@@ -86,6 +89,7 @@ test.ifNotCiWin("extraResources", async () => {
       },
       expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
         winDirPrefix + "bar/hello.txt",
+        winDirPrefix + "dir-relative/f.txt",
         winDirPrefix + "bar/x64.txt",
         winDirPrefix + "foo/nameWithoutDot",
         winDirPrefix + "platformSpecificR",

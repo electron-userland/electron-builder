@@ -31,7 +31,7 @@ const OUT_DIR_NAME = "dist"
 interface AssertPackOptions {
   readonly projectDirCreated?: (projectDir: string) => Promise<any>
   readonly packed?: (context: PackedContext) => Promise<any>
-  readonly expectedContents?: Array<string>
+  readonly expectedContents?: Array<string> | boolean
   readonly expectedArtifacts?: Array<string>
 
   readonly expectedDepends?: string
@@ -369,23 +369,28 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
   // console.log(JSON.stringify(files, null, 2))
   const expectedContents = checkOptions == null || checkOptions.expectedContents == null ? expectedWinContents : checkOptions.expectedContents
-  expect(files).toEqual(pathSorter(expectedContents.map(it => {
-    if (it === "lib/net45/TestApp.exe") {
-      if (appInfo.productFilename === "Test App ßW") {
-        return `lib/net45/Test%20App%20%C3%9FW.exe`
+  if (expectedContents === true) {
+    expect(files).toMatchSnapshot()
+  }
+  else {
+    expect(files).toEqual(pathSorter((<Array<string>>expectedContents).map(it => {
+      if (it === "lib/net45/TestApp.exe") {
+        if (appInfo.productFilename === "Test App ßW") {
+          return `lib/net45/Test%20App%20%C3%9FW.exe`
+        }
+        return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}.exe`
       }
-      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}.exe`
-    }
-    else if (it === "lib/net45/TestApp_ExecutionStub.exe") {
-      if (appInfo.productFilename === "Test App ßW") {
-        return `lib/net45/Test%20App%20%C3%9FW_ExecutionStub.exe`
+      else if (it === "lib/net45/TestApp_ExecutionStub.exe") {
+        if (appInfo.productFilename === "Test App ßW") {
+          return `lib/net45/Test%20App%20%C3%9FW_ExecutionStub.exe`
+        }
+        return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}_ExecutionStub.exe`
       }
-      return `lib/net45/${encodeURI(appInfo.productFilename).replace(/%5B/g, "[").replace(/%5D/g, "]")}_ExecutionStub.exe`
-    }
-    else {
-      return it
-    }
-  })))
+      else {
+        return it
+      }
+    })))
+  }
 
   if (checkOptions == null || checkOptions.expectedContents == null) {
     await unZipper.extractFile(fileDescriptors.filter(it => it.path === "TestApp.nuspec")[0], {

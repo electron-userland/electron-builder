@@ -306,9 +306,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         patterns = [patterns]
       }
 
-      for (let i = 0; i < patterns.length; i++) {
-        const pattern = patterns[i]
+      for (const pattern of patterns) {
         if (typeof pattern === "string") {
+          // use normalize to transform ./foo to foo
           defaultMatcher.addPattern(pattern)
         }
         else if (allowAdvancedMatching) {
@@ -326,7 +326,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     addPatterns(platformSpecificPatterns)
 
     if (!defaultMatcher.isEmpty()) {
-      // Default matcher should be first in the array
+      // default matcher should be first in the array
       fileMatchers.unshift(defaultMatcher)
     }
 

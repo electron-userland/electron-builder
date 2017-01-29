@@ -24,11 +24,11 @@ export class FileMatcher {
   constructor(from: string, to: string, private options: FileMatchOptions, patterns?: Array<string> | string | n) {
     this.from = this.expandPattern(from)
     this.to = this.expandPattern(to)
-    this.patterns = asArray(patterns)
+    this.patterns = asArray(patterns).map(it => path.posix.normalize(it))
   }
 
   addPattern(pattern: string) {
-    this.patterns.push(pattern)
+    this.patterns.push(path.posix.normalize((pattern)))
   }
 
   addAllPattern() {
