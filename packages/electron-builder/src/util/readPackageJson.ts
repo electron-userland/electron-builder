@@ -31,7 +31,7 @@ async function authors(file: string, data: any) {
     .map(it => it.replace(/^\s*#.*$/, "").trim())
 }
 
-export async function loadConfig(projectDir: string): Promise<Config> {
+export async function loadConfig(projectDir: string): Promise<Config | null> {
   try {
     const configPath = path.join(projectDir, "electron-builder.yml")
     const result = safeLoad(await readFile(configPath, "utf8"))

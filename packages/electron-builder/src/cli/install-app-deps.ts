@@ -20,7 +20,7 @@ async function main() {
     .argv
 
   const projectDir = process.cwd()
-  const config = await loadConfig(projectDir)
+  const config = (await loadConfig(projectDir)) || {}
   const results: Array<string> = await BluebirdPromise.all([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
     getElectronVersion(config, projectDir)

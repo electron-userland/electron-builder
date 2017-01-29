@@ -125,6 +125,7 @@ async function runTests() {
           switch (scriptArg) {
             case "skipFpm": {
               testPathIgnorePatterns.push("[\\/]{1}fpmTest.js$")
+              testPathIgnorePatterns.push("[\\/]{1}linuxArchiveTest.js$")
               config.cacheDirectory += `-${suffix}`
             }
             break
