@@ -198,7 +198,7 @@ Var RadioButtonLabel1
 					StrCpy $7 "There is a per-user installation. ($perUserInstallationFolder)$\r$\nWill uninstall."
 				!endif
 			${else}
-				StrCpy $7 "Fresh install for current user only"
+				StrCpy $7 "Fresh install for current user only."
 			${endif}
 			SendMessage $0 ${BCM_SETSHIELD} 0 0 ; hide SHIELD
 		${else} ; all users

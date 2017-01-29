@@ -19,7 +19,7 @@
     "debug": "2.6.0",
     "node-emoji": "^1.5.1",
     "electron-builder-http": "~0.0.0-semantic-release",
-    "source-map-support": "^0.4.10",
+    "source-map-support": "^0.4.11",
     "7zip-bin": "^2.0.4"
   },
   "typings": "./out/electron-builder-util.d.ts"

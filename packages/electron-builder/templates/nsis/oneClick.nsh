@@ -7,9 +7,9 @@
       !else
         ${GetParameters} $R0
         ${GetOptions} $R0 "--update" $R1
-        ${IfNot} ${Errors}
+        ${ifNot} ${Errors}
           ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "--updated"
-        ${Else}
+        ${else}
           ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
         ${endif}
       !endif

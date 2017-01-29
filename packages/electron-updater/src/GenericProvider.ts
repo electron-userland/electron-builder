@@ -22,12 +22,10 @@ export class GenericProvider extends Provider<UpdateInfo> {
         hostname: this.baseUrl.hostname,
         path: `${pathname}${this.baseUrl.search || ""}`,
         protocol: this.baseUrl.protocol,
+        headers: Object.assign({"Cache-Control": "no-cache, no-store, must-revalidate"}, this.requestHeaders)
       }
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
-      }
-      if (this.requestHeaders != null) {
-        options.headers = this.requestHeaders
       }
       result = await request<UpdateInfo>(options)
     }

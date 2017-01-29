@@ -151,7 +151,8 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
-    const currentVersion = parseVersion(this.app.getVersion())
+    const currentVersionString = this.app.getVersion()
+    const currentVersion = parseVersion(currentVersionString)
     if (currentVersion == null) {
       throw new Error(`App version is not valid semver version: "${currentVersion}`)
     }
@@ -159,7 +160,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (!isVersionGreaterThan(latestVersion, currentVersion)) {
       this.updateAvailable = false
       if (this.logger != null) {
-        this.logger.info(`Update for version ${versionInfo.version} is not available`)
+        this.logger.info(`Update for version ${currentVersionString} is not available (latest version: ${versionInfo.version})`)
       }
       this.emit("update-not-available")
       return {
