@@ -4,13 +4,15 @@ import * as path from "path"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
-import { GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
     console.warn("[SKIP] Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined")
   })
 }
+
+const tmpDir = new TmpDir()
 
 const g = (<any>global)
 g.__test_app = {
@@ -46,15 +48,12 @@ test("cannot find suitable file for version", async () => {
 })
 
 test("file url", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump({
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater = new NsisUpdater()
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -72,14 +71,11 @@ test("file url", async () => {
 })
 
 test("file url generic", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
 
@@ -91,15 +87,12 @@ test("file url generic", async () => {
 })
 
 test("sha2 mismatch error event", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater = new NsisUpdater()
   updater.logger = console
 
   const actualEvents = trackEvents(updater)
@@ -112,14 +105,11 @@ test("sha2 mismatch error event", async () => {
 })
 
 test("file url generic - manual download", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater = new NsisUpdater()
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -134,14 +124,11 @@ test("file url generic - manual download", async () => {
 
 // https://github.com/electron-userland/electron-builder/issues/1045
 test("checkForUpdates several times", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
 
@@ -157,15 +144,12 @@ test("checkForUpdates several times", async () => {
 })
 
 test("file url github", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GithubOptions>{
-    provider: "github",
-    owner: "develar",
-    repo: "__test_nsis_release",
-  }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater: NsisUpdater = new NsisUpdater()
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig(<GithubOptions>{
+      provider: "github",
+      owner: "develar",
+      repo: "__test_nsis_release",
+    }))
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -183,7 +167,6 @@ test("file url github", async () => {
 })
 
 test("test error", async () => {
-  g.__test_resourcesPath = null
   const updater: NsisUpdater = new NsisUpdater()
 
   const actualEvents = trackEvents(updater)
@@ -193,14 +176,11 @@ test("test error", async () => {
 })
 
 test("test download progress", async () => {
-  const tmpDir = new TmpDir()
-  const testResourcesPath = await tmpDir.getTempFile("update-config")
-  await outputFile(path.join(testResourcesPath, "app-update.yml"), safeDump(<GenericServerOptions>{
+  const updater = new NsisUpdater()
+  updater.setUpdateConfigPath(await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   }))
-  g.__test_resourcesPath = testResourcesPath
-  const updater = new NsisUpdater()
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -218,6 +198,13 @@ test("test download progress", async () => {
   expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
+
+
+async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions): Promise<string> {
+  const updateConfigPath = path.join(await tmpDir.getTempFile("update-config"), "app-update.yml")
+  await outputFile(updateConfigPath, safeDump(data))
+  return updateConfigPath
+}
 
 function trackEvents(updater: NsisUpdater) {
   const actualEvents: Array<string> = []

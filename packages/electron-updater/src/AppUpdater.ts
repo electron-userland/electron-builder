@@ -37,9 +37,16 @@ export abstract class AppUpdater extends EventEmitter {
 
   public readonly signals = new UpdaterSignal(this)
 
+  private appUpdateConfigPath: string | null
+
+  setUpdateConfigPath(value: string | null) {
+    this.clientPromise = null
+    this.appUpdateConfigPath =  value
+  }
+
   protected updateAvailable = false
 
-  private clientPromise: Promise<Provider<any>>
+  private clientPromise: Promise<Provider<any>> | null
 
   private readonly untilAppReady: Promise<boolean>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
@@ -127,21 +134,19 @@ export abstract class AppUpdater extends EventEmitter {
 
     this.emit("checking-for-update")
     try {
-      if (this.clientPromise == null) {
-        this.clientPromise = loadUpdateConfig().then(it => createClient(it))
-      }
       return await this.doCheckForUpdates()
     }
     catch (e) {
-      if (this.logger != null) {
-        this.logger.info("Cannot check for updates:")
-      }
-      this.emit("error", e, (e.stack || e).toString())
+      this.emit("error", e, `Cannot check for updates: ${(e.stack || e).toString()}`)
       throw e
     }
   }
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
+    if (this.clientPromise == null) {
+      this.clientPromise = this.loadUpdateConfig().then(it => createClient(it))
+    }
+
     const client = await this.clientPromise
     client.setRequestHeaders(this.requestHeaders)
     const versionInfo = await client.getLatestVersion()
@@ -225,10 +230,13 @@ export abstract class AppUpdater extends EventEmitter {
   protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo): Promise<any>
 
   abstract quitAndInstall(): void
-}
 
-async function loadUpdateConfig() {
-  return safeLoad(await readFile(path.join((<any>global).__test_resourcesPath || (<any>process).resourcesPath, "app-update.yml"), "utf-8"))
+  async loadUpdateConfig() {
+    if (this.appUpdateConfigPath == null) {
+      this.appUpdateConfigPath = path.join(process.resourcesPath, "app-update.yml")
+    }
+    return safeLoad(await readFile(this.appUpdateConfigPath, "utf-8"))
+  }
 }
 
 function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {
