@@ -63,19 +63,14 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected readonly debug = _debug("electron-builder")
 
   request<T>(options: RequestOptions, data?: { [name: string]: any; } | null): Promise<T> {
-    options = Object.assign({headers: {"User-Agent": "electron-builder"}}, options)
-
+    configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
       options.method = "post"
-      if (options.headers == null) {
-        options.headers = {}
-      }
-
-      options.headers["Content-Type"] = "application/json"
-      options.headers["Content-Length"] = encodedData.length
+      options.headers!["Content-Type"] = "application/json"
+      options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(<any>options, it => (<any>it).end(encodedData), 0)
+    return this.doApiRequest<T>(<REQUEST_OPTS>options, it => (<any>it).end(encodedData), 0)
   }
 
   protected abstract doApiRequest<T>(options: REQUEST_OPTS, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
@@ -270,7 +265,7 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
   fileOut.on("finish", () => (<any>fileOut.close)(callback))
 }
 
-export function configureRequestOptions(options: RequestOptions, token: string | null, method?: string): RequestOptions {
+export function configureRequestOptions(options: RequestOptions, token?: string | null, method?: "GET" | "DELETE" | "PUT"): RequestOptions {
   if (method != null) {
     options.method = method
   }
@@ -285,6 +280,10 @@ export function configureRequestOptions(options: RequestOptions, token: string |
   }
   if (headers["User-Agent"] == null) {
     headers["User-Agent"] = "electron-builder"
+  }
+
+  if ((method == null || method === "GET") || headers["Cache-Control"] == null) {
+    headers["Cache-Control"] = "no-cache"
   }
   return options
 }

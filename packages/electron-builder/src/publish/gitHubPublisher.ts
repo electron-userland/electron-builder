@@ -103,7 +103,6 @@ export class GitHubPublisher extends Publisher {
           method: "POST",
           headers: {
             Accept: "application/vnd.github.v3+json",
-            "User-Agent": "electron-builder",
             "Content-Type": mime.lookup(fileName),
             "Content-Length": dataLength
           }
@@ -180,7 +179,7 @@ export class GitHubPublisher extends Publisher {
     warn(`Cannot delete release ${release.id}`)
   }
 
-  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: string): Promise<T> {
+  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
     return this.httpExecutor.request<T>(configureRequestOptions({
       hostname: "api.github.com",
       path: path,

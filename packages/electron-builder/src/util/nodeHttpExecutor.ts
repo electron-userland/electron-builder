@@ -5,7 +5,7 @@ import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { homedir } from "os"
 import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, configureRequestOptions } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { parse as parseUrl } from "url"
 
@@ -24,14 +24,12 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
     const agent = await this.httpsAgentPromise
     return await new BluebirdPromise<string>((resolve, reject) => {
       const parsedUrl = parseUrl(url)
-      this.doDownload({
+      this.doDownload(configureRequestOptions({
         hostname: parsedUrl.hostname,
         path: parsedUrl.path,
-        headers: Object.assign({
-          "User-Agent": "electron-builder"
-        }, options == null ? null : options.headers),
+        headers: (options == null ? null : options.headers) || undefined,
         agent: agent,
-      }, destination, 0, options || {}, (error: Error) => {
+      }), destination, 0, options || {}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }

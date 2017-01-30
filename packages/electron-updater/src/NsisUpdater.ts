@@ -24,6 +24,7 @@ export class NsisUpdater extends AppUpdater {
   protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
+      headers: this.requestHeaders || undefined,
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
@@ -32,9 +33,6 @@ export class NsisUpdater extends AppUpdater {
 
     if (fileInfo != null && fileInfo.sha2 != null) {
       downloadOptions.sha2 = fileInfo.sha2
-    }
-    if (this.requestHeaders != null) {
-      downloadOptions.headers = this.requestHeaders
     }
 
     const logger = this.logger

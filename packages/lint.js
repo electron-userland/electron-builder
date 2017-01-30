@@ -5,7 +5,7 @@ const fs = require("fs")
 const path = require("path")
 
 const configuration = {
-  "extends": "tslint:recommended",
+  "extends": "tslint:latest",
   "rules": {
     "no-invalid-this": [true],
     "member-ordering": [
@@ -60,9 +60,6 @@ const configuration = {
     "no-bitwise": false,
     "jsdoc-format": false,
     "no-for-in-array": true,
-    "prefer-const": true,
-    "interface-over-type-literal": true,
-    "no-string-throw": true,
   }
 }
 const options = {

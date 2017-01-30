@@ -37,11 +37,11 @@ export abstract class AppUpdater extends EventEmitter {
 
   public readonly signals = new UpdaterSignal(this)
 
-  private appUpdateConfigPath: string | null
+  private _appUpdateConfigPath: string | null
 
-  setUpdateConfigPath(value: string | null) {
+  set updateConfigPath(value: string | null) {
     this.clientPromise = null
-    this.appUpdateConfigPath =  value
+    this._appUpdateConfigPath =  value
   }
 
   protected updateAvailable = false
@@ -232,10 +232,10 @@ export abstract class AppUpdater extends EventEmitter {
   abstract quitAndInstall(): void
 
   async loadUpdateConfig() {
-    if (this.appUpdateConfigPath == null) {
-      this.appUpdateConfigPath = path.join(process.resourcesPath, "app-update.yml")
+    if (this._appUpdateConfigPath == null) {
+      this._appUpdateConfigPath = path.join(process.resourcesPath, "app-update.yml")
     }
-    return safeLoad(await readFile(this.appUpdateConfigPath, "utf-8"))
+    return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
 }
 

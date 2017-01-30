@@ -49,11 +49,11 @@ test("cannot find suitable file for version", async () => {
 
 test("file url", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<BintrayOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
-  }))
+  })
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -72,10 +72,10 @@ test("file url", async () => {
 
 test("file url generic", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  }))
+  })
 
   const actualEvents = trackEvents(updater)
 
@@ -88,11 +88,11 @@ test("file url generic", async () => {
 
 test("sha2 mismatch error event", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
-  }))
+  })
   updater.logger = console
 
   const actualEvents = trackEvents(updater)
@@ -106,10 +106,10 @@ test("sha2 mismatch error event", async () => {
 
 test("file url generic - manual download", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  }))
+  })
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -125,10 +125,10 @@ test("file url generic - manual download", async () => {
 // https://github.com/electron-userland/electron-builder/issues/1045
 test("checkForUpdates several times", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  }))
+  })
 
   const actualEvents = trackEvents(updater)
 
@@ -145,11 +145,11 @@ test("checkForUpdates several times", async () => {
 
 test("file url github", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig(<GithubOptions>{
+  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
       owner: "develar",
       repo: "__test_nsis_release",
-    }))
+    })
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -177,10 +177,10 @@ test("test error", async () => {
 
 test("test download progress", async () => {
   const updater = new NsisUpdater()
-  updater.setUpdateConfigPath(await writeUpdateConfig({
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  }))
+  })
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []

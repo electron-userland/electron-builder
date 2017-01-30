@@ -2,7 +2,7 @@ import { net } from "electron"
 import { ensureDir } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
-import { HttpExecutor, DownloadOptions, dumpRequestOptions } from "electron-builder-http"
+import { HttpExecutor, DownloadOptions, dumpRequestOptions, configureRequestOptions } from "electron-builder-http"
 import { parse as parseUrl } from "url"
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
@@ -14,15 +14,13 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     return await new BluebirdPromise<string>((resolve, reject) => {
       const parsedUrl = parseUrl(url)
 
-      this.doDownload({
+      this.doDownload(configureRequestOptions({
         protocol: parsedUrl.protocol,
         hostname: parsedUrl.hostname,
         path: parsedUrl.path,
-        port: parsedUrl.port ? parsedUrl.port : undefined,
-        headers: Object.assign({
-          "User-Agent": "electron-builder"
-        }, options == null ? null : options.headers),
-      }, destination, 0, options || {}, (error: Error) => {
+        port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : undefined,
+        headers: (options == null ? null : options.headers) || undefined,
+      }), destination, 0, options || {}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }

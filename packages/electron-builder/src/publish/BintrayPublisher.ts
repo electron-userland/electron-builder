@@ -63,7 +63,6 @@ export class BintrayPublisher extends Publisher {
           path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",
           headers: {
-            "User-Agent": "electron-builder",
             "Content-Length": dataLength,
             "X-Bintray-Override": "1",
             "X-Bintray-Publish": "1",
