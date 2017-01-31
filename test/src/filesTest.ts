@@ -31,6 +31,28 @@ test.ifDevOrLinuxCi("files", app({
   },
 }))
 
+test.ifDevOrLinuxCi("map resources", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  config: {
+    asar: false,
+    extraResources: {
+      from: "foo/old",
+      to: "foo/new",
+    },
+  }
+}, {
+  projectDirCreated: projectDir => BluebirdPromise.all([
+    outputFile(path.join(projectDir, "foo", "old"), "data"),
+  ]),
+  packed: context => {
+    const resources = path.join(context.getResources(Platform.LINUX))
+    return BluebirdPromise.all([
+      assertThat(path.join(resources, "app", "foo", "old")).doesNotExist(),
+      assertThat(path.join(resources, "foo", "new")).isFile(),
+    ])
+  },
+}))
+
 test.ifNotCiWin("extraResources", async () => {
   for (const platform of getPossiblePlatforms().keys()) {
     const osName = platform.buildConfigurationKey

@@ -74,6 +74,12 @@ export interface AuthorMetadata {
 
 export type CompressionLevel = "store" | "normal" | "maximum"
 
+export interface FilePattern {
+  from?: string
+  to?: string
+  filter?: Array<string> | string
+}
+
 /*
  ## Configuration Options
  */
@@ -112,12 +118,12 @@ export interface Config extends PlatformSpecificBuildOptions {
 
    Glob rules the same as for [files](#multiple-glob-patterns).
    */
-  readonly extraResources?: Array<string> | string | null
+  readonly extraResources?: Array<FilePattern> | FilePattern | Array<string> | string | null
 
   /*
    The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
-  readonly extraFiles?: Array<string> | string | null
+  readonly extraFiles?: Array<FilePattern> | FilePattern | Array<string> | string | null
 
   /*
   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
@@ -310,8 +316,8 @@ export interface MetadataDirectories {
 
 export interface PlatformSpecificBuildOptions {
   readonly files?: Array<string> | string | null
-  readonly extraFiles?: Array<string> | string | null
-  readonly extraResources?: Array<string> | string | null
+  readonly extraFiles?: Array<FilePattern> | FilePattern | Array<string> | string | null
+  readonly extraResources?: Array<FilePattern> | FilePattern | Array<string> | string | null
 
   readonly asarUnpack?: Array<string> | string | null
 

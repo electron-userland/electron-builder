@@ -1,4 +1,4 @@
-import { PlatformSpecificBuildOptions, FileAssociation, Config, AsarOptions } from "./metadata"
+import { PlatformSpecificBuildOptions, FileAssociation, Config, AsarOptions, FilePattern } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { readdir, remove, rename } from "fs-extra-p"
@@ -8,7 +8,7 @@ import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { warn, log } from "electron-builder-util/out/log"
 import { AppInfo } from "./appInfo"
 import { unpackElectron } from "./packager/dirPackager"
-import { FileMatchOptions, FileMatcher, FilePattern, deprecatedUserIgnoreFilter } from "./fileMatcher"
+import { FileMatchOptions, FileMatcher, deprecatedUserIgnoreFilter, copyFiles } from "./fileMatcher"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
 import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
@@ -174,21 +174,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
     }
 
-    let excludePatterns: Array<Minimatch> = []
+    const excludePatterns: Array<Minimatch> = []
     if (extraResourceMatchers != null) {
-      for (let i = 0; i < extraResourceMatchers.length; i++) {
-        const patterns = extraResourceMatchers[i].getParsedPatterns(this.info.projectDir)
-        excludePatterns = excludePatterns.concat(patterns)
+      for (const matcher of extraResourceMatchers) {
+        matcher.computeParsedPatterns(excludePatterns, this.info.projectDir)
       }
     }
     if (extraFileMatchers != null) {
-      for (let i = 0; i < extraFileMatchers.length; i++) {
-        const patterns = extraFileMatchers[i].getParsedPatterns(this.info.projectDir)
-        excludePatterns = excludePatterns.concat(patterns)
+      for (const matcher of extraFileMatchers) {
+        matcher.computeParsedPatterns(excludePatterns, this.info.projectDir)
       }
     }
 
-    const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length ? excludePatterns : null)
+    const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
     let promise
     if (asarOptions == null) {
       promise = copyDir(appDir, path.join(resourcesPath, "app"), filter)
@@ -215,8 +213,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await (<any>require("./packager/mac")).createApp(this, appOutDir)
     }
 
-    await this.doCopyExtraFiles(extraResourceMatchers)
-    await this.doCopyExtraFiles(extraFileMatchers)
+    await copyFiles(extraResourceMatchers)
+    await copyFiles(extraFileMatchers)
 
     await this.info.afterPack({
       appOutDir: appOutDir,
@@ -274,19 +272,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return deepAssign({}, result, defaultOptions)
   }
 
-  private doCopyExtraFiles(patterns: Array<FileMatcher> | null): Promise<any> {
-    if (patterns == null || patterns.length === 0) {
-      return BluebirdPromise.resolve()
-    }
-
-    return BluebirdPromise.map(patterns, pattern => {
-      if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
-        pattern.addAllPattern()
-      }
-      return copyDir(pattern.from, pattern.to, pattern.createFilter())
-    })
-  }
-
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
     const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
     const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
@@ -312,8 +297,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           defaultMatcher.addPattern(pattern)
         }
         else if (allowAdvancedMatching) {
-          const from = pattern.from ? (path.isAbsolute(pattern.from) ? pattern.from : path.join(defaultSrc, pattern.from)) : defaultSrc
-          const to = pattern.to ? (path.isAbsolute(pattern.to) ? pattern.to : path.join(defaultDest, pattern.to)) : defaultDest
+          const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
+          const to = pattern.to == null ? defaultDest : path.resolve(defaultDest, pattern.to)
           fileMatchers.push(new FileMatcher(from, to, fileMatchOptions, pattern.filter))
         }
         else {

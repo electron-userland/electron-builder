@@ -32,9 +32,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^16.0.5":
-  version "16.0.5"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-16.0.5.tgz#bad01154df405180ba6e195eb80454c70666b1a7"
+"@types/jest@^18.1.0":
+  version "18.1.0"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-18.1.0.tgz#ed18f4c75b3d76de966f543fb6e3bad77d3caa17"
 
 "@types/js-yaml@^3.5.29":
   version "3.5.29"
@@ -342,7 +342,7 @@ babel-plugin-syntax-async-functions@^6.8.0:
   version "6.13.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-async-functions/-/babel-plugin-syntax-async-functions-6.13.0.tgz#cad9cad1191b5ad634bf30ae0872391e0647be95"
 
-babel-plugin-transform-async-to-module-method@^6.16.0:
+babel-plugin-transform-async-to-module-method@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-async-to-module-method/-/babel-plugin-transform-async-to-module-method-6.22.0.tgz#19c51f18407a74cc5d83098a297e57ab5cfdd008"
   dependencies:
@@ -351,13 +351,13 @@ babel-plugin-transform-async-to-module-method@^6.16.0:
     babel-runtime "^6.22.0"
     babel-types "^6.22.0"
 
-babel-plugin-transform-es2015-destructuring@^6.19.0:
+babel-plugin-transform-es2015-destructuring@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-destructuring/-/babel-plugin-transform-es2015-destructuring-6.22.0.tgz#8e0af2f885a0b2cf999d47c4c1dd23ce88cfa4c6"
   dependencies:
     babel-runtime "^6.22.0"
 
-babel-plugin-transform-es2015-parameters@^6.21.0:
+babel-plugin-transform-es2015-parameters@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-parameters/-/babel-plugin-transform-es2015-parameters-6.22.0.tgz#57076069232019094f27da8c68bb7162fe208dbb"
   dependencies:
@@ -368,7 +368,7 @@ babel-plugin-transform-es2015-parameters@^6.21.0:
     babel-traverse "^6.22.0"
     babel-types "^6.22.0"
 
-babel-plugin-transform-es2015-spread@^6.8.0:
+babel-plugin-transform-es2015-spread@^6.22.0:
   version "6.22.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-spread/-/babel-plugin-transform-es2015-spread-6.22.0.tgz#d6d68a99f89aedc4536c81a542e8dd9f1746f8d1"
   dependencies:
@@ -1675,8 +1675,8 @@ jodid25519@^1.0.0:
     jsbn "~0.1.0"
 
 js-tokens@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.0.tgz#a2f2a969caae142fb3cd56228358c89366957bd1"
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-3.0.1.tgz#08e9f132484a2c45a30907e9dc4d5567b7f114d7"
 
 js-yaml@^3.4.2, js-yaml@^3.7.0:
   version "3.7.0"
@@ -2554,7 +2554,7 @@ sntp@1.x.x:
   dependencies:
     hoek "2.x.x"
 
-source-map-support@^0.4.10, source-map-support@^0.4.2:
+source-map-support@^0.4.10, source-map-support@^0.4.11, source-map-support@^0.4.2:
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.11.tgz#647f939978b38535909530885303daf23279f322"
   dependencies:

@@ -1,4 +1,4 @@
-import { stat, lstat, Stats } from "fs-extra-p"
+import { stat, lstat } from "fs-extra-p"
 import * as path from "path"
 import { exists } from "electron-builder-util/out/fs"
 
@@ -22,21 +22,21 @@ class Assertions {
   }
 
   async isFile() {
-    const info: Stats = await stat(this.actual)
+    const info = await stat(this.actual)
     if (!info.isFile()) {
       throw new Error(`Path ${this.actual} is not a file`)
     }
   }
 
   async isSymbolicLink() {
-    const info: Stats = await lstat(this.actual)
+    const info = await lstat(this.actual)
     if (!info.isSymbolicLink()) {
       throw new Error(`Path ${this.actual} is not a symlink`)
     }
   }
 
   async isDirectory() {
-    const info: Stats = await stat(this.actual)
+    const info = await stat(this.actual)
     if (!info.isDirectory()) {
       throw new Error(`Path ${this.actual} is not a directory`)
     }

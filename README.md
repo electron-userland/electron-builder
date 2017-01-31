@@ -5,28 +5,29 @@ A complete solution to package and build a ready for distribution Electron app f
   * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
   * Development dependencies are never included. You don't need to ignore them explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
-* [Auto Update](#auto-update) ready application packaging.
+* [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) ready application packaging.
 * [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
   * [macOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, AppX (Windows Store), Squirrel.Windows.
-* [Two package.json Structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
+* [Two package.json structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 
-_Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
+| Question | Answer |
+|--------|-------|
+| “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
+| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) |
+| “I found a bug” | [Open an issue](https://github.com/cyclejs/cyclejs/issues/new) |
+| “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
-[Yarn](http://yarnpkg.com/) is recommended instead of npm.
+[Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
-## Configuration
-
-See [options](https://github.com/electron-userland/electron-builder/wiki/Options) for a full reference but consider following the simple guide outlined below first.
-
-For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
+_Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
 
 ## Quick Setup Guide
 
@@ -68,6 +69,8 @@ For an app that will be shipped to production, you should sign your application.
 6. Installing the [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
 
 Please note that everything is packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#Config-asar).
+
+For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
 
 ## Auto Update
 `electron-builder` produces all required artifacts, for example, for macOS:
@@ -155,10 +158,6 @@ and other distributable formats.
 ```
 
 `--project` (the path to project directory) option also can be useful.
-
-## Donations
-
-[Donate with PayPal.](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
 
 ## Community
 

@@ -315,7 +315,9 @@ Note this only works for `extraFiles` and `extraResources`.
 If `from` is given as a relative path, it is relative to the project directory.
 If `to` is given as a relative path, it is relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
 
-You can you `${os}` and `${arch}` in the `from` and `to` fields as well.
+`from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+
+You can use `${os}` and `${arch}` in the `from` and `to` fields as well.
 
 ## Build Version Management
 `CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

@@ -2,13 +2,10 @@ import * as path from "path"
 import { createFilter, hasMagic } from "./util/filter"
 import { Minimatch } from "minimatch"
 import { asArray } from "electron-builder-util"
-import { Filter } from "electron-builder-util/out/fs"
-
-export interface FilePattern {
-  from?: string
-  to?: string
-  filter?: Array<string> | string
-}
+import BluebirdPromise from "bluebird-lst-c"
+import { statOrNull, copyDir, copyFile, Filter } from "electron-builder-util/out/fs"
+import { warn } from "electron-builder-util/out/log"
+import { mkdirs } from "fs-extra-p"
 
 export interface FileMatchOptions {
   arch: string,
@@ -44,34 +41,39 @@ export class FileMatcher {
     return !this.isEmpty() && this.patterns.find(it => !it.startsWith("!")) == null
   }
 
-  getParsedPatterns(fromDir?: string): Array<Minimatch> {
+  computeParsedPatterns(result: Array<Minimatch>, fromDir?: string): void {
     // https://github.com/electron-userland/electron-builder/issues/733
     const minimatchOptions = {dot: true}
 
-    const parsedPatterns: Array<Minimatch> = []
-    const pathDifference = fromDir ? path.relative(fromDir, this.from) : null
+    const relativeFrom = fromDir == null ? null : path.relative(fromDir, this.from)
+
+    if (this.patterns.length === 0 && relativeFrom != null) {
+      // file mappings, from here is a file
+      result.push(new Minimatch(relativeFrom, minimatchOptions))
+      return
+    }
 
     for (const p of this.patterns) {
       let expandedPattern = this.expandPattern(p)
-      if (pathDifference != null) {
-        expandedPattern = path.join(pathDifference, expandedPattern)
+      if (relativeFrom != null) {
+        expandedPattern = path.join(relativeFrom, expandedPattern)
       }
 
       const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
-      parsedPatterns.push(parsedPattern)
+      result.push(parsedPattern)
 
       if (!hasMagic(parsedPattern)) {
         // https://github.com/electron-userland/electron-builder/issues/545
         // add **/*
-        parsedPatterns.push(new Minimatch(`${expandedPattern}/**/*`, minimatchOptions))
+        result.push(new Minimatch(`${expandedPattern}/**/*`, minimatchOptions))
       }
     }
-
-    return parsedPatterns
   }
 
   createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): Filter {
-    return createFilter(this.from, this.getParsedPatterns(), ignoreFiles, rawFilter, excludePatterns)
+    const parsedPatterns: Array<Minimatch> = []
+    this.computeParsedPatterns(parsedPatterns)
+    return createFilter(this.from, parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
   }
 
   private expandPattern(pattern: string): string {
@@ -81,6 +83,31 @@ export class FileMatcher {
       .replace(/\$\{\/\*}/g, "{,/**/*}")
   }
 }
+
+export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
+  if (patterns == null || patterns.length === 0) {
+    return BluebirdPromise.resolve()
+  }
+
+  return BluebirdPromise.map(patterns, async pattern => {
+    const fromStat = await statOrNull(pattern.from)
+    if (fromStat == null) {
+      warn(`File source ${pattern.from} doesn't exist`)
+      return
+    }
+
+    if (fromStat.isFile()) {
+      await mkdirs(path.dirname(pattern.to))
+      return await copyFile(pattern.from, pattern.to, fromStat)
+    }
+
+    if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
+      pattern.addAllPattern()
+    }
+    return await copyDir(pattern.from, pattern.to, pattern.createFilter())
+  })
+}
+
 
 export function deprecatedUserIgnoreFilter(ignore: Array<RegExp> | ((file: string) => boolean), appDir: string) {
   let ignoreFunc: any

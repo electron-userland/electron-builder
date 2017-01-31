@@ -3,7 +3,7 @@ export { PackagerOptions, ArtifactCreated, BuildInfo, SourceRepositoryInfo } fro
 export { getArchSuffix, Platform, Arch, archFromString, Target } from "electron-builder-core"
 export { BuildOptions, build, CliOptions, createTargets } from "./builder"
 export { PublishOptions, Publisher } from "./publish/publisher"
-export { Metadata, Config, CompressionLevel } from "./metadata"
+export { Metadata, Config, CompressionLevel, FilePattern } from "./metadata"
 export { MacOptions, DmgOptions, MasBuildOptions, MacOsTargetName } from "./options/macOptions"
 export { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 export { LinuxBuildOptions } from "./options/linuxOptions"
