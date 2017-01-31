@@ -133,6 +133,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
 | executableName | <a name="LinuxBuildOptions-executableName"></a><p>The executable name. Defaults to <code>productName</code>.</p> <p>Cannot be specified per target, allowed only in the <code>linux</code>.</p>
+| icon | <a name="LinuxBuildOptions-icon"></a><p>The path to icon set directory, relative to <code>build</code> (build resources directory). The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.</p>
 
 <a name="MacOptions"></a>
 ### `mac` macOS Specific Options

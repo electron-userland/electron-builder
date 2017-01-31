@@ -10,11 +10,13 @@ Simplified auto-update is not supported for Squirrel.Windows.
 
 2. [Configure publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 
-3. Use `autoUpdater` from `electron-updater` instead of `electron`, e.g. (ES 6):
+3. Use `autoUpdater` from `electron-updater` instead of `electron`:
 
     ```js
-    import {autoUpdater} from "electron-updater"
-    ```    
+    import { autoUpdater } from "electron-updater"
+    ```
+    
+    Or if you don't use ES6: `const autoUpdater = require("electron-updater").autoUpdater`
 
 4. Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
    

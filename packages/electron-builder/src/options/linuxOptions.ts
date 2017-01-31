@@ -68,6 +68,12 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    Cannot be specified per target, allowed only in the `linux`.
    */
   readonly executableName?: string | null
+
+  /*
+   The path to icon set directory, relative to `build` (build resources directory). The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   By default will be generated automatically based on the macOS icns file.
+   */
+  readonly icon?: string
 }
 
 /*

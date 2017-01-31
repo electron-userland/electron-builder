@@ -18,6 +18,21 @@ export class LinuxTargetHelper {
 
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<Array<string>>> {
+    if (this.packager.platformSpecificBuildOptions.icon != null) {
+      const iconDir = path.resolve(this.packager.buildResourcesDir, this.packager.platformSpecificBuildOptions.icon)
+      try {
+        return await this.iconsFromDir(iconDir)
+      }
+      catch (e) {
+        if (e.code === "ENOENT") {
+          throw new Error(`Icon set directory ${iconDir} doesn't exist`)
+        }
+        else {
+          throw e
+        }
+      }
+    }
+
     const resourceList = await this.packager.resourceList
     if (resourceList.includes("icons")) {
       return await this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
@@ -29,17 +44,17 @@ export class LinuxTargetHelper {
     }
   }
 
-  private async iconsFromDir(iconsDir: string) {
+  private async iconsFromDir(iconDir: string) {
     const mappings: Array<Array<string>> = []
     let maxSize = 0
-    for (const file of (await readdir(iconsDir))) {
+    for (const file of (await readdir(iconDir))) {
       if (file.endsWith(".png") || file.endsWith(".PNG")) {
         // If parseInt encounters a character that is not a numeral in the specified radix,
         // it returns the integer value parsed up to that point
         try {
           const size = parseInt(file!, 10)
           if (size > 0) {
-            const iconPath = `${iconsDir}/${file}`
+            const iconPath = `${iconDir}/${file}`
             mappings.push([iconPath, `${size}x${size}/apps/${this.packager.executableName}.png`])
 
             if (size > maxSize) {
@@ -53,6 +68,11 @@ export class LinuxTargetHelper {
         }
       }
     }
+
+    if (mappings.length === 0) {
+      throw new Error(`Icon set directory ${iconDir} doesn't contain icons`)
+    }
+
     return mappings
   }
 
