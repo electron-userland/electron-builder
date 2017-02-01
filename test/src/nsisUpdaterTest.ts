@@ -86,7 +86,7 @@ test("file url generic", async () => {
   expect(actualEvents).toMatchSnapshot()
 })
 
-test("sha2 mismatch error event", async () => {
+test.ifNotCiWin("sha2 mismatch error event", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",

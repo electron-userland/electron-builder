@@ -1,5 +1,6 @@
 import { assertPack, platform, app, appThrows } from "../helpers/packTester"
 import { Platform, createTargets } from "electron-builder"
+import { readJson } from "fs-extra-p"
 import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
 import { copyFile } from "electron-builder-util/out/fs"
 import * as path from "path"
@@ -10,6 +11,10 @@ test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([
 test.ifMac("one-package", app({
   targets: Platform.MAC.createTarget(),
   config: {
+    publish: {
+      provider: "generic",
+      url: "https://develar.s3.amazonaws.com/test",
+    },
     mac: {
       fileAssociations: [
         {
@@ -32,6 +37,9 @@ test.ifMac("one-package", app({
   checkMacApp: async (appDir, info) => {
     expect(info).toMatchSnapshot()
     await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
+  },
+  packed: async context => {
+    expect(await readJson(path.join(context.outDir, "latest-mac.json"))).toMatchSnapshot()
   },
 }))
 

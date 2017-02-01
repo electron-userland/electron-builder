@@ -51,10 +51,10 @@ export class PublishManager {
 
       if (publishOptions.publish != null && publishOptions.publish !== "never") {
         this.isPublish = publishOptions.publish !== "onTag" || getCiTag() != null
-        if (this.isPublish && !isAuthTokenSet()) {
-          throw new Error(`Publish is set to ${publishOptions.publish}, but neither GH_TOKEN nor BT_TOKEN is not set`)
-        }
       }
+    }
+    else if (publishOptions.publish !== "never") {
+      log("Current build is a part of pull request, publishing will be skipped")
     }
 
     packager.addAfterPackHandler(async event => {
@@ -264,11 +264,11 @@ function isAuthTokenSet() {
 function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string) {
   if (publishConfig.provider === "generic") {
     const baseUrl = url.parse((<GenericServerOptions>publishConfig).url)
-    return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", fileName)}))
+    return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))}))
   }
   else {
     const gh = <GithubOptions>publishConfig
-    return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${fileName}`
+    return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${encodeURI(fileName)}`
   }
 }
 
