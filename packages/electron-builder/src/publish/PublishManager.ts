@@ -195,7 +195,11 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), version, {os: Platform.MAC.buildConfigurationKey, arch: Arch[Arch.x64]})
+        releaseDate: new Date().toISOString(),
+        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), version, {
+          os: Platform.MAC.buildConfigurationKey,
+          arch: Arch[Arch.x64]
+        }),
       }, {spaces: 2})
 
       packager.info.dispatchArtifactCreated({
@@ -211,6 +215,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const updateInfoFile = path.join(outDir, `${channel}.yml`)
       await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
         version: version,
+        releaseDate: new Date().toISOString(),
         githubArtifactName: githubArtifactName,
         path: path.basename(event.file!),
         sha2: sha2,
@@ -281,7 +286,6 @@ function expandPattern(pattern: string, macros: Macros): string {
     .replace(/\$\{os}/g, macros.os)
     .replace(/\$\{arch}/g, macros.arch)
 }
-
 
 export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean): Promise<Array<PublishConfiguration>> | null {
   let publishers

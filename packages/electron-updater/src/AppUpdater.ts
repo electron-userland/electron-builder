@@ -167,7 +167,7 @@ export abstract class AppUpdater extends EventEmitter {
       if (this.logger != null) {
         this.logger.info(`Update for version ${currentVersionString} is not available (latest version: ${versionInfo.version})`)
       }
-      this.emit("update-not-available")
+      this.emit("update-not-available", versionInfo)
       return {
         versionInfo: versionInfo,
       }
@@ -193,7 +193,7 @@ export abstract class AppUpdater extends EventEmitter {
     if (this.logger != null) {
       this.logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
     }
-    this.emit("update-available")
+    this.emit("update-available", versionInfo)
   }
 
   /**

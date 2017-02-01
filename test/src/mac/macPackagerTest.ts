@@ -1,10 +1,10 @@
-import { assertPack, platform, app, appThrows } from "../helpers/packTester"
-import { Platform, createTargets } from "electron-builder"
-import { readJson } from "fs-extra-p"
-import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
+import { createTargets, Platform } from "electron-builder"
 import { copyFile } from "electron-builder-util/out/fs"
+import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
+import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
+import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../helpers/packTester"
 
 test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 
@@ -39,7 +39,7 @@ test.ifMac("one-package", app({
     await assertThat(path.join(appDir, "Contents", "Resources", "foo.icns")).isFile()
   },
   packed: async context => {
-    expect(await readJson(path.join(context.outDir, "latest-mac.json"))).toMatchSnapshot()
+    expect(convertUpdateInfo(await readJson(path.join(context.outDir, "latest-mac.json")))).toMatchSnapshot()
   },
 }))
 

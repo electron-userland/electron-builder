@@ -44,7 +44,8 @@ autoUpdater.logger = require("electron-log")
 autoUpdater.logger.transports.file.level = "info"
 ```
 
-## Options
+## Class: AppUpdater
+### Properties
 
 Name                | Default           | Description
 --------------------|-------------------|------------
@@ -52,33 +53,33 @@ Name                | Default           | Description
 `logger`            | `console`         | The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
 `requestHeaders`    | `null`            | The request headers.
 
-## Events
+### Events
 
 The `autoUpdater` object emits the following events:
 
-### Event: `error`
-
-Returns:
+#### Event: `error`
 
 * `error` Error
 
 Emitted when there is an error while updating.
 
-### Event: `checking-for-update`
+#### Event: `checking-for-update`
 
 Emitted when checking if an update has started.
 
-### Event: `update-available`
+#### Event: `update-available`
+
+* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
 Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is not set to `false`.
 
-### Event: `update-not-available`
+#### Event: `update-not-available`
 
 Emitted when there is no available update.
 
-### Event: `download-progress`
+* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
-Returns:
+#### Event: `download-progress`
 
 * `bytesPerSecond`
 * `percent`
@@ -87,32 +88,43 @@ Returns:
 
 Emitted on progress.
 
-### Event: `update-downloaded`
+#### Event: `update-downloaded`
 
-Returns:
-
-* `event` Event
+* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
 Emitted when an update has been downloaded.
 
-## Methods
+### Methods
 
 The `autoUpdater` object has the following methods:
 
-### `autoUpdater.setFeedURL(options)`
+#### `autoUpdater.setFeedURL(options)`
 
 * `options` GenericServerOptions | BintrayOptions | GithubOptions | string — if you want to override configuration in the `app-update.yml`.
 
 Sets the `options`. If value is `string`, `GenericServerOptions` will be set with value as `url`.
 
-### `autoUpdater.checkForUpdates(): Promise<UpdateCheckResult>`
+#### `autoUpdater.checkForUpdates(): Promise<UpdateCheckResult>`
 
 Asks the server whether there is an update.
 
-### `autoUpdater.quitAndInstall()`
+#### `autoUpdater.quitAndInstall()`
 
 Restarts the app and installs the update after it has been downloaded. It
 should only be called after `update-downloaded` has been emitted.
 
 **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
 This is different from the normal quit event sequence.
+
+### VersionInfo
+
+* `version` The version.
+
+### UpdateInfo
+
+Extends [VersionInfo](#VersionInfo).
+
+* `releaseDate` The release date.
+* `releaseName?` The release name.
+* `releaseNotes?` The release notes.
+

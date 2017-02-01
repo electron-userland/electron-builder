@@ -1,14 +1,14 @@
-import { Platform, Arch } from "electron-builder"
-import { assertPack, app, copyTestAsset, modifyPackageJson, appThrows } from "../helpers/packTester"
-import { outputFile, readFile } from "fs-extra-p"
-import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "../helpers/fileAssert"
 import { extractFile } from "asar-electron-builder"
-import { walk } from "electron-builder-util/out/fs"
-import { WineManager, diff } from "../helpers/wine"
-import { safeLoad } from "js-yaml"
+import BluebirdPromise from "bluebird-lst-c"
+import { Arch, Platform } from "electron-builder"
 import { archFromString } from "electron-builder-core"
+import { walk } from "electron-builder-util/out/fs"
+import { outputFile, readFile } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
+import * as path from "path"
+import { assertThat } from "../helpers/fileAssert"
+import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { diff, WineManager } from "../helpers/wine"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -64,7 +64,9 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).toMatchSnapshot()
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha2).not.toEqual("")
+    expect(updateInfo.releaseDate).not.toEqual("")
     delete updateInfo.sha2
+    delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
     await doTest(context.outDir, false)
   },
@@ -183,7 +185,9 @@ test("allowToChangeInstallationDirectory", app({
     expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, archFromString(process.arch)), "app-update.yml"), "utf-8"))).toMatchSnapshot()
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha2).not.toEqual("")
+    expect(updateInfo.releaseDate).not.toEqual("")
     delete updateInfo.sha2
+    delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
     await doTest(context.outDir, false)
   }

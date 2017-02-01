@@ -51,6 +51,10 @@ export interface UpdateInfo extends VersionInfo {
   readonly path: string
   readonly githubArtifactName?: string | null
   readonly sha2: string
+
+  readonly releaseName?: string | null
+  readonly releaseNotes?: string | null
+  readonly releaseDate: string
 }
 
 /*

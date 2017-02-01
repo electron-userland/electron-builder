@@ -52,14 +52,13 @@ export class NsisUpdater extends AppUpdater {
       throw e
     }
 
-    const version = this.versionInfo!.version
     if (logger != null) {
-      logger.info(`New version ${version} has been downloaded to ${tempFile}`)
+      logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
     }
 
     this.setupPath = tempFile
     this.addQuitHandler()
-    this.emit("update-downloaded", this.versionInfo, null, version)
+    this.emit("update-downloaded", this.versionInfo)
     return tempFile
   }
 

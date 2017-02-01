@@ -4,11 +4,9 @@ import { RequestHeaders } from "electron-builder-http"
 import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 
 export interface FileInfo {
-  name: string
-
-  url: string
-
-  sha2?: string
+  readonly name: string
+  readonly url: string
+  readonly sha2?: string
 }
 
 export abstract class Provider<T extends VersionInfo> {

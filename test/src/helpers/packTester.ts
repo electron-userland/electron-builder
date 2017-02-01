@@ -564,3 +564,10 @@ export function allPlatforms(dist = true): PackagerOptions {
     targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
   }
 }
+
+export function convertUpdateInfo(info: any) {
+  if (info.releaseDate != null) {
+    info.releaseDate = "1970-01-01T00:00:00.000Z"
+  }
+  return info
+}

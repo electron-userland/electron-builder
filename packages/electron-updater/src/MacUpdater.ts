@@ -17,9 +17,8 @@ export class MacUpdater extends AppUpdater {
       this.emit("error", it)
     })
     this.nativeUpdater.on("update-downloaded", () => {
-      const version = this.versionInfo!.version
       if (this.logger != null) {
-        this.logger.info(`New version ${version} has been downloaded`)
+        this.logger.info(`New version ${this.versionInfo!.version} has been downloaded`)
       }
       this.emit("update-downloaded", this.versionInfo)
     })
