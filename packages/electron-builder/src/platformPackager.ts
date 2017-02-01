@@ -1,19 +1,19 @@
-import { PlatformSpecificBuildOptions, FileAssociation, Config, AsarOptions, FilePattern } from "./metadata"
 import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { readdir, remove, rename } from "fs-extra-p"
-import { use, isEmptyOrSpaces, asArray, debug } from "electron-builder-util"
-import { Minimatch } from "minimatch"
-import { checkFileInArchive, createAsarArchive } from "./asarUtil"
-import { warn, log } from "electron-builder-util/out/log"
-import { AppInfo } from "./appInfo"
-import { unpackElectron } from "./packager/dirPackager"
-import { FileMatchOptions, FileMatcher, deprecatedUserIgnoreFilter, copyFiles } from "./fileMatcher"
+import { Arch, getArchSuffix, Platform, Target } from "electron-builder-core"
+import { asArray, debug, isEmptyOrSpaces, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { statOrNull, unlinkIfExists, copyDir } from "electron-builder-util/out/fs"
-import { Arch, Target, getArchSuffix, Platform } from "electron-builder-core"
+import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
+import { log, warn } from "electron-builder-util/out/log"
+import { readdir, remove, rename } from "fs-extra-p"
+import { Minimatch } from "minimatch"
+import * as path from "path"
+import { AppInfo } from "./appInfo"
+import { checkFileInArchive, createAsarArchive } from "./asarUtil"
+import { copyFiles, deprecatedUserIgnoreFilter, FileMatcher } from "./fileMatcher"
+import { AsarOptions, Config, FileAssociation, FilePattern, Macros, PlatformSpecificBuildOptions } from "./metadata"
+import { unpackElectron } from "./packager/dirPackager"
+import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { readInstalled } from "./readInstalled"
-import { PackagerOptions, BuildInfo } from "./packagerApi"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions
@@ -104,7 +104,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       .then(() => BluebirdPromise.each(targets, it => it.isAsyncSupported ? null : it.build(appOutDir, arch))))
   }
 
-  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
+  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: Macros, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
     return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
@@ -115,7 +115,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const fileMatchOptions: FileMatchOptions = {
+    const fileMatchOptions: Macros = {
       arch: Arch[arch],
       os: this.platform.buildConfigurationKey
     }
@@ -220,6 +220,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       appOutDir: appOutDir,
       packager: this,
       electronPlatformName: platformName,
+      arch: arch,
     })
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
@@ -272,7 +273,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return deepAssign({}, result, defaultOptions)
   }
 
-  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: FileMatchOptions, customBuildOptions: DC): Array<FileMatcher> | null {
+  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: Macros, customBuildOptions: DC): Array<FileMatcher> | null {
     const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
     const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 

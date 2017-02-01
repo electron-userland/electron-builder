@@ -33,7 +33,7 @@ export interface PublishConfiguration {
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /*
-  The base url. e.g. `https://s3.amazonaws.com/bucket_name`
+  The base url. e.g. `https://s3.amazonaws.com/bucket_name`.  You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` macros.
    */
   url: string
 

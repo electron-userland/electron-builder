@@ -13,7 +13,7 @@ test.ifMac("one-package", app({
   config: {
     publish: {
       provider: "generic",
-      url: "https://develar.s3.amazonaws.com/test",
+      url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
     mac: {
       fileAssociations: [

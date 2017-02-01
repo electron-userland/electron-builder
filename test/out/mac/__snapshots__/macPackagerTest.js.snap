@@ -59,7 +59,7 @@ Array [
 
 exports[`test one-package 3`] = `
 Object {
-  "url": "https://develar.s3.amazonaws.com/test/Test%20App%20%C3%9FW-1.1.0-mac.zip",
+  "url": "https://develar.s3.amazonaws.com/test/mac/x64/Test%20App%20%C3%9FW-1.1.0-mac.zip",
   "version": "1.1.0",
 }
 `;

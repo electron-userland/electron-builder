@@ -25,7 +25,7 @@ Object {
 exports[`test perMachine, no run after finish 1`] = `
 Object {
   "provider": "generic",
-  "url": "https://develar.s3.amazonaws.com/test",
+  "url": "https://develar.s3.amazonaws.com/test/win/x64",
 }
 `;
 

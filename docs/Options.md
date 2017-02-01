@@ -37,9 +37,9 @@ Don't customize paths to background and icon, — just follow conventions.
   * [protocols URL Protocol Schemes](#Protocol)
   * [squirrelWindows](#SquirrelWindowsOptions)
   * [win Windows Specific Options](#WinBuildOptions)
-  * [dmg.window DMG Windows Position and Size](#DmgWindow)
   * [snap [Snap](http://snapcraft.io) Specific Options](#SnapOptions)
   * [appImage [AppImage](http://appimage.org) Specific Options](#AppImageOptions)
+  * [dmg.window DMG Windows Position and Size](#DmgWindow)
 * [Fields in the package.json](#Metadata)
 
 <a name="Config"></a>
@@ -219,15 +219,6 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 | timeStampServer | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
 
-<a name="DmgWindow"></a>
-### `dmg.window` DMG Windows Position and Size
-| Name | Description
-| --- | ---
-| x | <a name="DmgWindow-x"></a>The X position relative to left of the screen. Defaults to 400.
-| y | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. Defaults to 100.
-| width | <a name="DmgWindow-width"></a>* The width. Defaults to background image width or 540.
-| height | <a name="DmgWindow-height"></a>* The height. Defaults to background image height or 380.
-
 <a name="SnapOptions"></a>
 ### `snap` [Snap](http://snapcraft.io) Specific Options
 | Name | Description
@@ -244,6 +235,15 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | Name | Description
 | --- | ---
 | includeRequiredLib | <a name="AppImageOptions-includeRequiredLib"></a>Whether to include required system libraries (`gconf2`, `libappindicator1`). Defaults to `false`.
+
+<a name="DmgWindow"></a>
+### `dmg.window` DMG Windows Position and Size
+| Name | Description
+| --- | ---
+| x | <a name="DmgWindow-x"></a>The X position relative to left of the screen. Defaults to 400.
+| y | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. Defaults to 100.
+| width | <a name="DmgWindow-width"></a>* The width. Defaults to background image width or 540.
+| height | <a name="DmgWindow-height"></a>* The height. Defaults to background image height or 380.
 
 <a name="Metadata"></a>
 ## Fields in the package.json
@@ -274,7 +274,7 @@ Some standard fields should be defined in the `package.json`.
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
-[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to mac, linux or win according to current platform) and `${arch}` in the pattern.
+[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` in the pattern.
 If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).

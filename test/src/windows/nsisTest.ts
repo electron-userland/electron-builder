@@ -50,7 +50,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     },
     publish: {
       provider: "generic",
-      url: "https://develar.s3.amazonaws.com/test",
+      url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
   },
 }, {

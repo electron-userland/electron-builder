@@ -1,23 +1,23 @@
-import { Packager } from "../packager"
-import { PlatformPackager } from "../platformPackager"
-import { debug, isEmptyOrSpaces, asArray} from "electron-builder-util"
-import { Publisher, PublishOptions, getResolvedPublishConfig, getCiTag } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
-import { GitHubPublisher } from "./gitHubPublisher"
-import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions, VersionInfo, UpdateInfo } from "electron-builder-http/out/publishOptions"
-import { log } from "electron-builder-util/out/log"
-import { BintrayPublisher } from "./BintrayPublisher"
-import { BuildInfo, ArtifactCreated } from "../packagerApi"
-import { Platform } from "electron-builder-core"
-import { safeDump } from "js-yaml"
-import { writeFile, outputJson, createReadStream } from "fs-extra-p"
-import * as path from "path"
-import { ArchiveTarget } from "../targets/ArchiveTarget"
-import { throwError } from "electron-builder-util/out/promise"
-import isCi from "is-ci"
-import * as url from "url"
-import { PlatformSpecificBuildOptions } from "../metadata"
 import { createHash } from "crypto"
+import { Platform, Arch } from "electron-builder-core"
+import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
+import { log } from "electron-builder-util/out/log"
+import { throwError } from "electron-builder-util/out/promise"
+import { createReadStream, outputJson, writeFile } from "fs-extra-p"
+import isCi from "is-ci"
+import { safeDump } from "js-yaml"
+import * as path from "path"
+import * as url from "url"
+import { Macros, PlatformSpecificBuildOptions } from "../metadata"
+import { Packager } from "../packager"
+import { ArtifactCreated, BuildInfo } from "../packagerApi"
+import { PlatformPackager } from "../platformPackager"
+import { ArchiveTarget } from "../targets/ArchiveTarget"
+import { BintrayPublisher } from "./BintrayPublisher"
+import { GitHubPublisher } from "./gitHubPublisher"
+import { getCiTag, getResolvedPublishConfig, Publisher, PublishOptions } from "./publisher"
 
 export class PublishManager {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
@@ -68,7 +68,11 @@ export class PublishManager {
         return
       }
 
-      await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfigs[0]))
+      let publishConfig = publishConfigs[0]
+      if ((<GenericServerOptions>publishConfig).url != null) {
+        publishConfig = Object.assign({}, publishConfig, {url: expandPattern((<GenericServerOptions>publishConfig).url, {os: packager.platform.buildConfigurationKey, arch: Arch[Arch.x64]})})
+      }
+      await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
     })
 
     packager.artifactCreated(event => this.addTask(this.artifactCreated(event)))
@@ -191,7 +195,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), version)
+        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), version, {os: Platform.MAC.buildConfigurationKey, arch: Arch[Arch.x64]})
       }, {spaces: 2})
 
       packager.info.dispatchArtifactCreated({
@@ -261,9 +265,9 @@ function isAuthTokenSet() {
   return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
 }
 
-function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string) {
+function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string, macros: Macros) {
   if (publishConfig.provider === "generic") {
-    const baseUrl = url.parse((<GenericServerOptions>publishConfig).url)
+    const baseUrl = url.parse(expandPattern((<GenericServerOptions>publishConfig).url, macros))
     return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))}))
   }
   else {
@@ -271,6 +275,13 @@ function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: strin
     return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${encodeURI(fileName)}`
   }
 }
+
+function expandPattern(pattern: string, macros: Macros): string {
+  return pattern
+    .replace(/\$\{os}/g, macros.os)
+    .replace(/\$\{arch}/g, macros.arch)
+}
+
 
 export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean): Promise<Array<PublishConfiguration>> | null {
   let publishers

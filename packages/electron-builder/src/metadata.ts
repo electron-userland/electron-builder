@@ -1,9 +1,9 @@
-import { PlatformPackager } from "./platformPackager"
-import { MacOptions, DmgOptions, MasBuildOptions } from "./options/macOptions"
+import { Arch, Platform } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
-import { Platform } from "electron-builder-core"
+import { DmgOptions, MacOptions, MasBuildOptions } from "./options/macOptions"
+import { AppXOptions, NsisOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
+import { PlatformPackager } from "./platformPackager"
 
 export interface AsarOptions {
   dot?: boolean
@@ -222,6 +222,7 @@ export interface AfterPackContext {
   readonly appOutDir: string
   readonly packager: PlatformPackager<any>
   readonly electronPlatformName: string
+  readonly arch: Arch
 }
 
 export interface BeforeBuildContext {
@@ -332,4 +333,9 @@ export interface PlatformSpecificBuildOptions {
   readonly publish?: Publish
 
   readonly forceCodeSigning?: boolean
+}
+
+export interface Macros {
+  os: string
+  arch: string
 }

@@ -1,16 +1,12 @@
-import * as path from "path"
-import { createFilter, hasMagic } from "./util/filter"
-import { Minimatch } from "minimatch"
-import { asArray } from "electron-builder-util"
 import BluebirdPromise from "bluebird-lst-c"
-import { statOrNull, copyDir, copyFile, Filter } from "electron-builder-util/out/fs"
+import { asArray } from "electron-builder-util"
+import { copyDir, copyFile, Filter, statOrNull } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
-
-export interface FileMatchOptions {
-  arch: string,
-  os: string
-}
+import { Minimatch } from "minimatch"
+import * as path from "path"
+import { Macros } from "./metadata"
+import { createFilter, hasMagic } from "./util/filter"
 
 export class FileMatcher {
   readonly from: string
@@ -18,7 +14,7 @@ export class FileMatcher {
 
   readonly patterns: Array<string>
 
-  constructor(from: string, to: string, private options: FileMatchOptions, patterns?: Array<string> | string | n) {
+  constructor(from: string, to: string, private options: Macros, patterns?: Array<string> | string | n) {
     this.from = this.expandPattern(from)
     this.to = this.expandPattern(to)
     this.patterns = asArray(patterns).map(it => path.posix.normalize(it))
