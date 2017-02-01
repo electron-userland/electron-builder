@@ -20,7 +20,7 @@ A complete solution to package and build a ready for distribution Electron app f
 |--------|-------|
 | “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) |
-| “I found a bug” | [Open an issue](https://github.com/cyclejs/cyclejs/issues/new) |
+| “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
