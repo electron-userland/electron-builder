@@ -66,8 +66,15 @@ export class GitHubPublisher extends Publisher {
     const releases = await this.githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
-        if (release.draft || release.prerelease) {
+        if (release.draft) {
           return release
+        }
+
+        // https://github.com/electron-userland/electron-builder/issues/1197
+        // https://electron-builder.slack.com/archives/general/p1485961449000202
+        if (this.options.draft == null || this.options.draft) {
+          warn(`Release with tag ${this.tag} already exists`)
+          return null
         }
 
         // https://github.com/electron-userland/electron-builder/issues/1133
