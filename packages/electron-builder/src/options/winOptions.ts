@@ -142,6 +142,9 @@ export interface NsisOptions {
   Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
    */
   readonly menuCategory?: boolean | string
+
+  // defaults to false
+  readonly useZip?: boolean
 }
 
 /*

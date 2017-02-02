@@ -102,7 +102,7 @@ export class Packager implements BuildInfo {
 
     const projectDir = this.projectDir
     const fileOrPackageConfig = await loadConfig(projectDir)
-    const config = fileOrPackageConfig == null ? configFromOptions : deepAssign(fileOrPackageConfig, configFromOptions)
+    const config = deepAssign({}, fileOrPackageConfig, configFromOptions)
 
     const extraMetadata = this.options.extraMetadata
     if (extraMetadata != null) {

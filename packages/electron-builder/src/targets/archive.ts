@@ -54,6 +54,9 @@ export async function archive(compression: CompressionLevel | n, format: string,
       //noinspection SpellCheckingInspection
       args.push("-mfb=258", "-mpass=15")
     }
+    else if (!storeOnly) {
+      args.push("-mpass=7")
+    }
   }
   else if (compression === "maximum") {
     args.push("-mx=9")

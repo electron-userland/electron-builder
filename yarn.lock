@@ -776,7 +776,7 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.3.2, debug@^2.6.0:
+debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.0.tgz#bc596bcabe7617f11d9fa15361eded5608b8499b"
   dependencies:
@@ -875,18 +875,18 @@ ecc-jsbn@~0.1.1:
   dependencies:
     jsbn "~0.1.0"
 
-electron-download-tf@3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/electron-download-tf/-/electron-download-tf-3.1.0.tgz#c6d62c0e0a4c63b67295f57b6b66514c13b8ed8d"
+electron-download-tf@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/electron-download-tf/-/electron-download-tf-3.2.0.tgz#690443d2e7d068f000358f86b9d504303711ad10"
   dependencies:
-    debug "^2.3.2"
-    fs-extra "^1.0.0"
+    debug "^2.6.0"
+    fs-extra "^2.0.0"
     minimist "^1.2.0"
     nugget "^2.0.1"
     path-exists "^3.0.0"
     rc "^1.1.6"
     semver "^5.3.0"
-    sumchecker "^1.2.0"
+    sumchecker "^2.0.1"
 
 electron-macos-sign@~1.5.0:
   version "1.5.0"
@@ -919,10 +919,6 @@ error-ex@^1.2.0:
   resolved "https://registry.yarnpkg.com/error-ex/-/error-ex-1.3.0.tgz#e67b43f3e82c96ea3a584ffee0b9fc3325d802d9"
   dependencies:
     is-arrayish "^0.2.1"
-
-es6-promise@^4.0.5:
-  version "4.0.5"
-  resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-4.0.5.tgz#7882f30adde5b240ccfa7f7d78c548330951ae42"
 
 escape-string-regexp@^1.0.2:
   version "1.0.5"
@@ -1064,14 +1060,6 @@ fs-extra-p@^3.1.0:
     bluebird-lst-c "^1.0.6"
     fs-extra "^2.0.0"
 
-fs-extra@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-1.0.0.tgz#cd3ce5f7e7cb6145883fcae3191e9877f8587950"
-  dependencies:
-    graceful-fs "^4.1.2"
-    jsonfile "^2.1.0"
-    klaw "^1.0.0"
-
 fs-extra@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-2.0.0.tgz#337352bded4a0b714f3eb84de8cea765e9d37600"
@@ -1165,7 +1153,7 @@ got@^5.0.0:
     unzip-response "^1.0.2"
     url-parse-lax "^1.0.0"
 
-graceful-fs@^4.1.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.3, graceful-fs@^4.1.6, graceful-fs@^4.1.9:
+graceful-fs@^4.1.0, graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.3, graceful-fs@^4.1.6:
   version "4.1.11"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.1.11.tgz#0e8bdfe4d1ddb8854d64e04ea7c00e2a026e5658"
 
@@ -1763,12 +1751,6 @@ kind-of@^3.0.2:
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-3.1.0.tgz#475d698a5e49ff5e53d14e3e732429dc8bf4cf47"
   dependencies:
     is-buffer "^1.0.2"
-
-klaw@^1.0.0:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/klaw/-/klaw-1.3.1.tgz#4088433b46b3b1ba259d78785d8e96f73ba02439"
-  optionalDependencies:
-    graceful-fs "^4.1.9"
 
 latest-version@^2.0.0:
   version "2.0.0"
@@ -2659,12 +2641,11 @@ strip-json-comments@~1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-1.0.4.tgz#1e15fbcac97d3ee99bf2d73b4c656b082bbafb91"
 
-sumchecker@^1.2.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/sumchecker/-/sumchecker-1.3.0.tgz#6e3004d7bf3b5ad5567abf13a828946d8a19911b"
+sumchecker@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/sumchecker/-/sumchecker-2.0.1.tgz#9ce42ecefc5fce2c602d3623315c52b57a2d69dd"
   dependencies:
     debug "^2.2.0"
-    es6-promise "^4.0.5"
 
 supports-color@^2.0.0:
   version "2.0.0"

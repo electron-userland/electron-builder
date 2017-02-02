@@ -108,23 +108,45 @@ ${endif}
 
 SetOutPath $INSTDIR
 
-SetCompress off
-!ifdef APP_32
-  File /oname=$PLUGINSDIR\app-32.7z "${APP_32}"
-!endif
-!ifdef APP_64
-  File /oname=$PLUGINSDIR\app-64.7z "${APP_64}"
-!endif
-SetCompress "${COMPRESS}"
-
-!ifdef APP_64
-  ${if} ${RunningX64}
-    Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
-  ${else}
-    Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
-  ${endif}
+!ifdef APP_BUILD_DIR
+  File /r "${APP_BUILD_DIR}/*.*"
 !else
-  Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+  !ifdef COMPRESS
+    SetCompress off
+  !endif
+
+  !ifdef APP_32
+    File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
+  !endif
+  !ifdef APP_64
+    File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
+  !endif
+
+  !ifdef COMPRESS
+    SetCompress "${COMPRESS}"
+  !endif
+
+  !ifdef APP_64
+    ${if} ${RunningX64}
+      !ifdef ZIP_COMPRESSION
+        nsisunz::Unzip "$PLUGINSDIR\app-64.zip" "$INSTDIR"
+      !else
+        Nsis7z::Extract "$PLUGINSDIR\app-64.7z"
+      !endif
+    ${else}
+      !ifdef ZIP_COMPRESSION
+        nsisunz::Unzip "$PLUGINSDIR\app-32.zip" "$INSTDIR"
+      !else
+        Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+      !endif
+    ${endif}
+  !else
+    !ifdef ZIP_COMPRESSION
+      nsisunz::Unzip "$PLUGINSDIR\app-32.zip" "$INSTDIR"
+    !else
+      Nsis7z::Extract "$PLUGINSDIR\app-32.7z"
+    !endif
+  !endif
 !endif
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"

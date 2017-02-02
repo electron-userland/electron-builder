@@ -22,10 +22,12 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 
+const USE_NSIS_BUILT_IN_COMPRESSOR = false
+
 export default class NsisTarget extends Target {
   private readonly options: NsisOptions = this.packager.config.nsis || Object.create(null)
 
-  private archs: Map<Arch, Promise<string>> = new Map()
+  private archs: Map<Arch, string> = new Map()
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
@@ -38,9 +40,8 @@ export default class NsisTarget extends Target {
     }
   }
 
-  build(appOutDir: string, arch: Arch) {
-    this.archs.set(arch, this.doBuild(appOutDir, arch))
-    return BluebirdPromise.resolve(null)
+  async build(appOutDir: string, arch: Arch) {
+    this.archs.set(arch, appOutDir)
   }
 
   private async doBuild(appOutDir: string, arch: Arch) {
@@ -49,21 +50,25 @@ export default class NsisTarget extends Target {
     await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false)
 
     const packager = this.packager
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.7z`)
-    return await archive(packager.config.compression, "7z", archiveFile, appOutDir, true)
+    const format = this.options.useZip ? "zip" : "7z"
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    return await archive(packager.config.compression, format, archiveFile, appOutDir, true)
   }
 
   async finishBuild(): Promise<any> {
     log("Building NSIS installer")
+    const filesToDelete: Array<string> = []
     try {
-      await this.buildInstaller()
+      await this.buildInstaller(filesToDelete)
     }
     finally {
-      await BluebirdPromise.map(this.archs.values(), it => unlink(it))
+      if (filesToDelete.length > 0) {
+        await BluebirdPromise.map(filesToDelete, it => unlink(it))
+      }
     }
   }
 
-  private async buildInstaller(): Promise<any> {
+  private async buildInstaller(filesToDelete: Array<string>): Promise<any> {
     const packager = this.packager
     const appInfo = packager.appInfo
     const version = appInfo.version
@@ -94,8 +99,15 @@ export default class NsisTarget extends Target {
       defines.MUI_UNICON = iconPath
     }
 
-    for (const [arch, file] of this.archs) {
-      defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = await file
+    if (this.archs.size === 1 && USE_NSIS_BUILT_IN_COMPRESSOR) {
+      defines.APP_BUILD_DIR = this.archs.get(this.archs.keys().next().value)
+    }
+    else {
+      await BluebirdPromise.map(this.archs.keys(), async arch => {
+        const file = await this.doBuild(this.archs.get(arch)!, arch)
+        defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
+        filesToDelete.push(file)
+      })
     }
 
     const installerHeader = oneClick ? null : await packager.getResource(options.installerHeader, "installerHeader.bmp")
@@ -156,15 +168,17 @@ export default class NsisTarget extends Target {
 
     if (packager.config.compression === "store") {
       commands.SetCompress = "off"
-      defines.COMPRESS = "off"
     }
     else {
       commands.SetCompressor = "lzma"
-      // default is 8: test app installer size 37.2 vs 36 if dict size 64
-      commands.SetCompressorDictSize = "64"
-
       defines.COMPRESS = "auto"
     }
+
+    if (this.options.useZip) {
+      defines.ZIP_COMPRESSION = null
+    }
+
+    defines.COMPRESSION_METHOD = this.options.useZip ? "zip" : "7z"
 
     if (oneClick) {
       defines.ONE_CLICK = null
