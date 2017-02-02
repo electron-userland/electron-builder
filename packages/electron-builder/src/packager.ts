@@ -1,25 +1,26 @@
-import * as path from "path"
-import { computeDefaultAppDirectory, use, exec, isEmptyOrSpaces } from "electron-builder-util"
-import { all, executeFinally } from "electron-builder-util/out/promise"
-import { EventEmitter } from "events"
+import { extractFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst-c"
-import { Metadata, Config, AfterPackContext } from "./metadata"
-import { PlatformPackager } from "./platformPackager"
-import { WinPackager } from "./winPackager"
-import * as errorMessages from "./errorMessages"
-import * as util from "util"
+import { Arch, Platform, Target } from "electron-builder-core"
+import { computeDefaultAppDirectory, exec, isEmptyOrSpaces, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { lt as isVersionLessThan } from "semver"
-import { warn, log } from "electron-builder-util/out/log"
-import { AppInfo } from "./appInfo"
-import MacPackager from "./macPackager"
-import { createTargets } from "./targets/targetFactory"
-import { readPackageJson, getElectronVersion, loadConfig } from "./util/readPackageJson"
+import { log, warn } from "electron-builder-util/out/log"
+import { all, executeFinally } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
-import { getGypEnv, installOrRebuild } from "./yarn"
-import { Platform, Arch, Target } from "electron-builder-core"
+import { EventEmitter } from "events"
+import * as path from "path"
+import { lt as isVersionLessThan } from "semver"
+import * as util from "util"
+import { AppInfo } from "./appInfo"
+import * as errorMessages from "./errorMessages"
+import MacPackager from "./macPackager"
+import { AfterPackContext, Config, Metadata } from "./metadata"
+import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } from "./packagerApi"
+import { PlatformPackager } from "./platformPackager"
 import { getRepositoryInfo } from "./repositoryInfo"
-import { SourceRepositoryInfo, ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
+import { createTargets } from "./targets/targetFactory"
+import { getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
+import { WinPackager } from "./winPackager"
+import { getGypEnv, installOrRebuild } from "./yarn"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -30,6 +31,12 @@ export class Packager implements BuildInfo {
   appDir: string
 
   metadata: Metadata
+
+  private _isPrepackedAppAsar: boolean
+
+  get isPrepackedAppAsar(): boolean {
+    return this._isPrepackedAppAsar
+  }
 
   private devMetadata: Metadata
 
@@ -93,7 +100,8 @@ export class Packager implements BuildInfo {
       configFromOptions = devMetadataFromOptions.build
     }
 
-    const fileOrPackageConfig = await loadConfig(this.projectDir)
+    const projectDir = this.projectDir
+    const fileOrPackageConfig = await loadConfig(projectDir)
     const config = fileOrPackageConfig == null ? configFromOptions : deepAssign(fileOrPackageConfig, configFromOptions)
 
     const extraMetadata = this.options.extraMetadata
@@ -111,16 +119,15 @@ export class Packager implements BuildInfo {
     }
 
     this._config = config
-    this.appDir = await computeDefaultAppDirectory(this.projectDir, use(config.directories, it => it!.app))
+    this.appDir = await computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app))
 
-    this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== this.projectDir
-    if (this.isTwoPackageJsonProjectLayoutUsed) {
+    this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== projectDir
 
-    }
-
-    const devPackageFile = path.join(this.projectDir, "package.json")
+    const devPackageFile = path.join(projectDir, "package.json")
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
-    this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
+
+    await this.readProjectMetadata(appPackageFile, extraMetadata)
+
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
     }
@@ -137,11 +144,38 @@ export class Packager implements BuildInfo {
     this.checkMetadata(appPackageFile, devPackageFile)
     checkConflictingOptions(this.config)
 
-    this.electronVersion = await getElectronVersion(this.config, this.projectDir)
+    this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
 
     this.appInfo = new AppInfo(this.metadata, this)
     const cleanupTasks: Array<() => Promise<any>> = []
     return await executeFinally(this.doBuild(cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
+  }
+
+  private async readProjectMetadata(appPackageFile: string, extraMetadata: any) {
+    try {
+      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
+    }
+    catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e
+      }
+
+      try {
+        const file = extractFile(path.join(this.projectDir, "app.asar"), "package.json")
+        if (file != null) {
+          this.metadata = JSON.parse(file.toString())
+          this._isPrepackedAppAsar = true
+          return
+        }
+      }
+      catch (e) {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
+      }
+
+      throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
+    }
   }
 
   private async doBuild(cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {

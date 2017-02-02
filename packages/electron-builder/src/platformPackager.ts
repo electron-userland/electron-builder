@@ -128,19 +128,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
-    const ignoreFiles = new Set([path.resolve(appDir, outDir), path.resolve(appDir, this.buildResourcesDir)])
-    // prune dev or not listed dependencies
-    await BluebirdPromise.all([
-      dependencies(appDir, ignoreFiles),
-      unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion),
-    ])
+    const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir), path.resolve(this.info.projectDir, this.buildResourcesDir)])
+    if (this.info.isPrepackedAppAsar) {
+      await unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion)
+    }
+    else {
+      // prune dev or not listed dependencies
+      await BluebirdPromise.all([
+        dependencies(appDir, ignoreFiles),
+        unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion),
+      ])
 
-    if (debug.enabled) {
-      const nodeModulesDir = path.join(appDir, "node_modules")
-      debug(`Dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
+      if (debug.enabled) {
+        const nodeModulesDir = path.join(appDir, "node_modules")
+        debug(`Dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
+      }
     }
 
-    const patterns = this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
     const defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
     if (defaultMatcher.isEmpty() || defaultMatcher.containsOnlyIgnore()) {
       defaultMatcher.addAllPattern()
@@ -188,7 +193,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
     let promise
-    if (asarOptions == null) {
+    if (this.info.isPrepackedAppAsar) {
+      promise = copyDir(appDir, path.join(resourcesPath), filter)
+    }
+    else if (asarOptions == null) {
       promise = copyDir(appDir, path.join(resourcesPath, "app"), filter)
     }
     else {

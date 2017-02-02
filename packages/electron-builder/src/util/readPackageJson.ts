@@ -1,8 +1,9 @@
-import * as path from "path"
-import { readJson, readFile } from "fs-extra-p"
-import { Config } from "../metadata"
+import { extractFile } from "asar-electron-builder"
+import { log, warn } from "electron-builder-util/out/log"
+import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
-import { warn, log } from "electron-builder-util/out/log"
+import * as path from "path"
+import { Config } from "../metadata"
 
 const normalizeData = require("normalize-package-data")
 
@@ -31,20 +32,7 @@ async function authors(file: string, data: any) {
     .map(it => it.replace(/^\s*#.*$/, "").trim())
 }
 
-export async function loadConfig(projectDir: string): Promise<Config | null> {
-  try {
-    const configPath = path.join(projectDir, "electron-builder.yml")
-    const result = safeLoad(await readFile(configPath, "utf8"))
-    log(`Using ${path.relative(projectDir, configPath)} configuration file`)
-    return result
-  }
-  catch (e) {
-    if (e.code !== "ENOENT") {
-      throw e
-    }
-  }
-
-  const metadata = await readPackageJson(path.join(projectDir, "package.json"))
+function getConfigFromPackageData(metadata: any) {
   if (metadata.directories != null) {
     warn(`"directories" in the root is deprecated, please specify in the "build"`)
     if (metadata.build == null) {
@@ -58,25 +46,65 @@ export async function loadConfig(projectDir: string): Promise<Config | null> {
   return metadata.build
 }
 
-export async function getElectronVersion(config: Config | null | undefined, projectDir: string): Promise<string> {
+export async function loadConfig(projectDir: string): Promise<Config | null> {
+  try {
+    const configPath = path.join(projectDir, "electron-builder.yml")
+    const result = safeLoad(await readFile(configPath, "utf8"))
+    log(`Using ${path.relative(projectDir, configPath)} configuration file`)
+    return result
+  }
+  catch (e) {
+    if (e.code !== "ENOENT") {
+      throw e
+    }
+  }
+
+  try {
+    return getConfigFromPackageData(await readPackageJson(path.join(projectDir, "package.json")))
+  }
+  catch (e) {
+    if (e.code !== "ENOENT") {
+      throw e
+    }
+
+    try {
+      const file = extractFile(path.join(projectDir, "app.asar"), "package.json")
+      if (file != null) {
+        return getConfigFromPackageData(JSON.parse(file.toString()))
+      }
+    }
+    catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e
+      }
+    }
+
+    throw new Error(`Cannot find package.json in the ${projectDir}`)
+  }
+}
+
+export async function getElectronVersion(config: Config | null | undefined, projectDir: string, projectMetadata?: any | null): Promise<string> {
   // build is required, but this check is performed later, so, we should check for null
   if (config != null && config.electronVersion != null) {
     return config.electronVersion
   }
 
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
-    try {
-      return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
-    }
-    catch (e) {
-      if (e.code !== "ENOENT") {
-        warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
+  // projectMetadata passed only for prepacked app asar and in this case no dev deps in the app.asar
+  if (projectMetadata == null) {
+    for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
+      try {
+        return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
+      }
+      catch (e) {
+        if (e.code !== "ENOENT") {
+          warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
+        }
       }
     }
   }
 
   const packageJsonPath = path.join(projectDir, "package.json")
-  const electronPrebuiltDep = findFromElectronPrebuilt(await readJson(packageJsonPath))
+  const electronPrebuiltDep = findFromElectronPrebuilt(projectMetadata || await readJson(packageJsonPath))
   if (electronPrebuiltDep == null) {
     throw new Error(`Cannot find electron dependency to get electron version in the '${packageJsonPath}'`)
   }

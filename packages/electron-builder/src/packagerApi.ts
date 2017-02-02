@@ -40,24 +40,26 @@ export interface PackagerOptions {
 }
 
 export interface BuildInfo {
-  options: PackagerOptions
+  readonly options: PackagerOptions
 
-  metadata: Metadata
+  readonly metadata: Metadata
 
-  config: Config
+  readonly config: Config
 
-  projectDir: string
-  appDir: string
+  readonly projectDir: string
+  readonly appDir: string
 
-  electronVersion: string
+  readonly electronVersion: string
 
-  isTwoPackageJsonProjectLayoutUsed: boolean
+  readonly isTwoPackageJsonProjectLayoutUsed: boolean
 
-  appInfo: AppInfo
+  readonly appInfo: AppInfo
 
   readonly tempDirManager: TmpDir
 
-  repositoryInfo: Promise<SourceRepositoryInfo | null>
+  readonly repositoryInfo: Promise<SourceRepositoryInfo | null>
+
+  readonly isPrepackedAppAsar: boolean
 
   dispatchArtifactCreated(event: ArtifactCreated): void
 
