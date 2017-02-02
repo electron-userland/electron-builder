@@ -1,4 +1,4 @@
-import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurrentPlatform } from "./api"
+import { Provider, FileInfo, getDefaultChannelName, getCustomChannelName, getChannelFilename, getCurrentPlatform } from "./api"
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import * as url from "url"
 import * as path from "path"
@@ -7,7 +7,7 @@ import { HttpError, request } from "electron-builder-http"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
-  private readonly channel = this.configuration.channel || getDefaultChannelName()
+  private readonly channel = this.configuration.channel ? getCustomChannelName(this.configuration.channel) : getDefaultChannelName()
 
   constructor(private readonly configuration: GenericServerOptions) {
     super()
