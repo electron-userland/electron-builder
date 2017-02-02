@@ -19,7 +19,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | Question | Answer |
 |--------|-------|
 | “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) |
+| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](http://electron-builder-slack.herokuapp.com) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
 
@@ -161,7 +161,7 @@ and other distributable formats.
 
 ## Community
 
-[electron-builder](https://electron-builder.slack.com/shared_invite/MTMzMTc5NTcyNTAzLTE0ODUzNzE4MTctYzBhNGY1NjljYg) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
+[electron-builder](http://electron-builder-slack.herokuapp.com) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
 Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading
