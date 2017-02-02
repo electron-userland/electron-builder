@@ -30,6 +30,10 @@ export function getDefaultChannelName() {
   return channel
 }
 
+export function getCustomChannelName(channel: string) {
+  return `${channel}${(getCurrentPlatform()) === "darwin" ? "-mac" : ""}`
+}
+
 export function getCurrentPlatform () {
   return process.env.TEST_UPDATER_PLATFORM || process.platform
 }
