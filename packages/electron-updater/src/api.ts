@@ -23,15 +23,15 @@ export abstract class Provider<T extends VersionInfo> {
 
 // due to historical reasons for windows we use channel name without platform specifier
 export function getDefaultChannelName() {
-  let channel = "latest"
-  if (getCurrentPlatform() === "darwin") {
-    channel += "-mac"
-  }
-  return channel
+  return `latest${getChannelFilePrefix()}`
+}
+
+function getChannelFilePrefix() {
+  return getCurrentPlatform() === "darwin" ? "-mac" : ""
 }
 
 export function getCustomChannelName(channel: string) {
-  return `${channel}${(getCurrentPlatform()) === "darwin" ? "-mac" : ""}`
+  return `${channel}${getChannelFilePrefix()}`
 }
 
 export function getCurrentPlatform () {
@@ -39,7 +39,7 @@ export function getCurrentPlatform () {
 }
 
 export function getChannelFilename(channel: string) {
-  return `${channel}.${(getCurrentPlatform()) === "darwin" ? "json" : "yml"}`
+  return `${channel}.${getCurrentPlatform() === "darwin" ? "json" : "yml"}`
 }
 
 export interface UpdateCheckResult {
