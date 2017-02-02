@@ -147,6 +147,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | entitlementsInherit | <a name="MacOptions-entitlementsInherit"></a><p>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. <code>build/entitlements.mac.inherit.plist</code> will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).</p> <p>This option only applies when signing with <code>entitlements</code> provided.</p>
 | bundleVersion | <a name="MacOptions-bundleVersion"></a>The `CFBundleVersion`. Do not use it unless [you need to](see (https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643)).
 | helperBundleId | <a name="MacOptions-helperBundleId"></a>The bundle identifier to use in the application helper's plist. Defaults to `${appBundleIdentifier}.helper`.
+| type | <a name="MacOptions-type"></a>Whether to sign app for development or for distribution. One of `development`, `distribution`. Defaults to `distribution`.
 
 <a name="MasBuildOptions"></a>
 ### `mas` MAS (Mac Application Store) Specific Options

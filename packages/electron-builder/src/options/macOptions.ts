@@ -54,6 +54,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   The bundle identifier to use in the application helper's plist. Defaults to `${appBundleIdentifier}.helper`.
    */
   readonly helperBundleId?: string | null
+
+  /*
+   Whether to sign app for development or for distribution. One of `development`, `distribution`. Defaults to `distribution`.
+   */
+  readonly type?: string | null
 }
 
 /*

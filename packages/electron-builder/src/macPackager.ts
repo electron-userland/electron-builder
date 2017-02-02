@@ -59,7 +59,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
           break
 
         default:
-          mapper(name, outDir => name === "mas" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
+          mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
           break
       }
     }
@@ -72,7 +72,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
-    const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas")
+    const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
     const prepackaged = this.packagerOptions.prepackaged
 
     if (prepackaged == null && (!hasMas || targets.length > 1)) {
@@ -82,9 +82,19 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
     }
 
-    if (hasMas) {
-      const appOutDir = prepackaged || path.join(outDir, "mas")
+    for (const target of targets) {
+      const targetName = target.name
+      if (!(targetName === "mas" || targetName === "mas-dev")) {
+        continue
+      }
+
+      const appOutDir = prepackaged || path.join(outDir, targetName)
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
+      if (targetName === "mas-dev") {
+        deepAssign(masBuildOptions, (<any>this.config)[targetName])
+        masBuildOptions.type = "development"
+      }
+
       if (prepackaged == null) {
         await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
       }
@@ -136,6 +146,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const appPath = path.join(appOutDir, `${this.appInfo.productFilename}.app`)
     const signOptions: any = {
       identity: name!,
+      type: masOptions == null ? this.platformSpecificBuildOptions.type : masOptions.type,
       platform: isMas ? "mas" : "darwin",
       version: this.info.electronVersion,
       app: appPath,
