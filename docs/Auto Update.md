@@ -69,7 +69,7 @@ Emitted when checking if an update has started.
 
 #### Event: `update-available`
 
-* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
 
 Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is not set to `false`.
 
@@ -77,7 +77,7 @@ Emitted when there is an available update. The update is downloaded automaticall
 
 Emitted when there is no available update.
 
-* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
 
 #### Event: `download-progress`
 
@@ -90,7 +90,7 @@ Emitted on progress.
 
 #### Event: `update-downloaded`
 
-* `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
 
 Emitted when an update has been downloaded.
 
@@ -122,7 +122,7 @@ This is different from the normal quit event sequence.
 
 ### UpdateInfo
 
-Extends [VersionInfo](#VersionInfo).
+Extends [VersionInfo](#versioninfo).
 
 * `releaseDate` The release date.
 * `releaseName?` The release name.
