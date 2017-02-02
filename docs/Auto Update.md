@@ -71,7 +71,7 @@ Emitted when checking if an update has started.
 
 * `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
-Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is not set to `false`.
+Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is `true`.
 
 #### Event: `update-not-available`
 
@@ -80,11 +80,11 @@ Emitted when there is no available update.
 * `info` [UpdateInfo](#UpdateInfo) for generic and github providers. [VersionInfo](#VersionInfo) for Bintray provider.
 
 #### Event: `download-progress`
-
-* `bytesPerSecond`
-* `percent`
-* `total`
-* `transferred`
+* `progressObj` - it's object with properties:
+  * `bytesPerSecond`
+  * `percent`
+  * `total`
+  * `transferred`
 
 Emitted on progress.
 
