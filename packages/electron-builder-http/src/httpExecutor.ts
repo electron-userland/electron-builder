@@ -121,7 +121,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       try {
         const contentType = response.headers["content-type"]
         const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
-        if (response.statusCode >= 400) {
+        if (response.statusCode != null && response.statusCode >= 400) {
           reject(new HttpError(response, isJson ? JSON.parse(data) : data))
         }
         else {

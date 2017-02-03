@@ -157,7 +157,8 @@ export class LinuxTargetHelper {
       debug(output)
 
       //noinspection UnnecessaryLocalVariableJS
-      const imagePath = path.join(tempDir, "icon_256x256x32.png")
+      const has256 = output.includes("ic08")
+      const imagePath = path.join(tempDir, has256 ? "icon_256x256x32.png" : "icon_128x128x32.png")
 
       this.maxIconPath = imagePath
 
@@ -176,7 +177,7 @@ export class LinuxTargetHelper {
       if (!output.toString().includes("icp6")) {
         promises.push(resize(64))
       }
-      if (!output.includes("it32")) {
+      if (has256 && !output.includes("it32")) {
         promises.push(resize(128))
       }
 
