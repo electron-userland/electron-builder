@@ -1,6 +1,6 @@
-export type PublishProvider = "github" | "bintray" | "generic"
+export type PublishProvider = "github" | "bintray" | "s3" | "generic"
 
-export type Publish = string | Array<string> | PublishConfiguration | GithubOptions | BintrayOptions | GenericServerOptions | Array<PublishConfiguration> | Array<GithubOptions> | Array<GenericServerOptions> | Array<BintrayOptions> | null
+export type Publish = string | Array<string> | PublishConfiguration | GithubOptions | S3Options | BintrayOptions | GenericServerOptions | Array<PublishConfiguration> | Array<GithubOptions> | Array<S3Options> | Array<GenericServerOptions> | Array<BintrayOptions> | null
 
 /*
 ### `publish`
@@ -9,6 +9,7 @@ Can be specified in the [build](https://github.com/electron-userland/electron-bu
 
 If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+If `S3_TOKEN` and `S3_SECRET` is set and neither `GH_TOKEN` and `BT_TOKEN` are set — defaults to `[{provider: "s3"}]`.
 
 Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
 
@@ -16,7 +17,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
  */
 export interface PublishConfiguration {
   /*
-  The provider, one of `github`, `bintray`, `generic`.
+  The provider, one of `github`, `s3`, `bintray`, `generic`.
    */
   provider: PublishProvider
 
@@ -41,6 +42,33 @@ export interface GenericServerOptions extends PublishConfiguration {
   The channel. Defaults to `latest`.
    */
   channel?: string | null
+}
+
+/*
+### `publish` S3
+ */
+export interface S3Options extends PublishConfiguration {
+  /*
+  The bucket name.
+   */
+  bucket?: string
+
+  /**
+  The channel. Defaults to `latest`.
+   */
+  channel?: string | null
+
+  /**
+  The region. Defaults to `us-east-1`.
+   */
+  region?: string
+
+  /**
+  The acl. Defaults to `public-read`.
+   */
+  acl?: string
+
+  secret?: string
 }
 
 export interface VersionInfo {

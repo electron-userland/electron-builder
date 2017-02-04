@@ -1,5 +1,5 @@
 import { AppUpdater } from "./AppUpdater"
-import { BintrayOptions, PublishConfiguration, GithubOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, PublishConfiguration, GithubOptions, S3Options, VersionInfo } from "electron-builder-http/out/publishOptions"
 import BluebirdPromise from "bluebird-lst-c"
 import { FileInfo } from "./api"
 import AutoUpdater = Electron.AutoUpdater
@@ -7,7 +7,7 @@ import AutoUpdater = Electron.AutoUpdater
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
 
-  constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
+  constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions | S3Options) {
     super(options)
 
     this.nativeUpdater.on("error", it => {

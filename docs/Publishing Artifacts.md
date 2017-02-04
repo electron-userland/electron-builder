@@ -2,13 +2,13 @@ Travis and AppVeyor support publishing artifacts. But it requires additional con
 
 `electron-builder` allows you to just add `GH_TOKEN` environment variable and that's all.
 
-Currently, [GitHub Releases](https://help.github.com/articles/about-releases/) and [Bintray](https://bintray.com) are supported.
+Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Bintray](https://bintray.com) and [S3](https://aws.amazon.com/pt/s3/) are supported.
 
 ## CLI Flags
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
-  --draft        Create a draft (unpublished) releas         [boolean]
+  --draft        Create a draft (unpublished) release        [boolean]
   --prerelease   Identify the release as a prerelease        [boolean]
 ```
 CLI `--publish` option values:
@@ -44,9 +44,9 @@ But please consider using automatic rules instead of explicitly specifying `publ
  "release": "build"
  ```
  and if you run `npm run release`, a release will be drafted (if doesn't already exist) and artifacts published.
- 
+
 ## GitHub Repository and Bintray Package
- 
+
  Detected automatically using:
  * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
  * if not set, env `TRAVIS_REPO_SLUG` or `APPVEYOR_ACCOUNT_NAME`/`APPVEYOR_PROJECT_NAME` or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
@@ -67,6 +67,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 * [publish Bintray](#BintrayOptions)
 * [publish Generic (any https server)](#GenericServerOptions)
 * [publish GitHub](#GithubOptions)
+* [publish S3](#S3Options)
 
 <a name="PublishConfiguration"></a>
 ### `publish`
@@ -75,6 +76,7 @@ Can be specified in the [build](https://github.com/electron-userland/electron-bu
 
 If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+If `S3_TOKEN` and `S3_SECRET` is set and neither `GH_TOKEN` and `BT_TOKEN` are set — defaults to `[{provider: "s3"}]`.
 
 Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
 
@@ -82,7 +84,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 
 | Name | Description
 | --- | ---
-| **provider** | <a name="PublishConfiguration-provider"></a>The provider, one of `github`, `bintray`, `generic`.
+| **provider** | <a name="PublishConfiguration-provider"></a>The provider, one of `github`, `s3`, `bintray`, `generic`.
 | owner | <a name="PublishConfiguration-owner"></a>The owner.
 
 <a name="BintrayOptions"></a>
@@ -106,5 +108,14 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | --- | ---
 | repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
 | vPrefixedTagName | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. Defaults to `true`.
+
+<a name="S3Options"></a>
+### `publish` S3
+| Name | Description
+| --- | ---
+| bucket | <a name="S3Options-bucket"></a>The bucket name.
+| channel | <a name="S3Options-channel"></a>The channel. Defaults to `latest`.
+| region | <a name="S3Options-region"></a>The region. Defaults to `us-east-1`.
+| acl | <a name="S3Options-acl"></a>The acl. Defaults to `public-read`.
 
 <!-- end of generated block -->
