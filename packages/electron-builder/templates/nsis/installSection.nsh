@@ -151,9 +151,8 @@ SetOutPath $INSTDIR
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
-!insertmacro registryAddInstallInfo
-
 StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+!insertmacro registryAddInstallInfo
 
 !insertmacro setLinkVars
 
