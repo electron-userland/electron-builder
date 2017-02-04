@@ -117,9 +117,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const qualifier = this.platformSpecificBuildOptions.identity
     const masQualifier = isMas ? (masOptions!!.identity || qualifier) : null
 
-    let name = await findIdentity(isMas ? "3rd Party Mac Developer Application" : "Developer ID Application", isMas ? masQualifier : qualifier, keychainName)
+    const explicitType = masOptions == null ? this.platformSpecificBuildOptions.type : masOptions.type
+    const type = explicitType || "distribution"
+    const isDevelopment = type === "development"
+    let name = await findIdentity(isDevelopment ? "Mac Developer" : (isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"), isMas ? masQualifier : qualifier, keychainName)
     if (name == null) {
-      if (!isMas) {
+      if (!isMas && !isDevelopment && explicitType !== "distribution") {
         name = await findIdentity("Mac Developer", qualifier, keychainName)
         if (name != null) {
           warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
@@ -145,8 +148,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const appPath = path.join(appOutDir, `${this.appInfo.productFilename}.app`)
     const signOptions: any = {
+      skipIdentityValidation: true,
       identity: name!,
-      type: masOptions == null ? this.platformSpecificBuildOptions.type : masOptions.type,
+      type: type,
       platform: isMas ? "mas" : "darwin",
       version: this.info.electronVersion,
       app: appPath,

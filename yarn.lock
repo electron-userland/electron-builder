@@ -41,8 +41,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
 "@types/node@*":
-  version "7.0.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.4.tgz#9aabc135979ded383325749f508894c662948c8b"
+  version "7.0.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.5.tgz#96a0f0a618b7b606f1ec547403c00650210bfbb7"
 
 "@types/source-map-support@^0.2.28":
   version "0.2.28"
@@ -888,9 +888,9 @@ electron-download-tf@3.2.0:
     semver "^5.3.0"
     sumchecker "^2.0.1"
 
-electron-macos-sign@~1.5.0:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/electron-macos-sign/-/electron-macos-sign-1.5.0.tgz#fe3a8acb755b5f568f1fe144e9e66cee44019448"
+electron-macos-sign@~1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/electron-macos-sign/-/electron-macos-sign-1.6.0.tgz#56af59012dda368614222f9a3df2fd2fbe13ef31"
   dependencies:
     bluebird "^3.4.7"
     compare-version "^0.1.2"
