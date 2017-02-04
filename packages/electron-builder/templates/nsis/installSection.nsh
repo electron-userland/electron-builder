@@ -65,7 +65,11 @@
   WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
 
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+
+	# https://github.com/electron-userland/electron-builder/issues/1190
+	StrCpy $appExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExecutable,0"
+
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
