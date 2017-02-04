@@ -1,20 +1,6 @@
 exports[`test extra metadata 1`] = `
 Object {
   "author": "Foo Bar <foo@example.com>",
-  "build": Object {
-    "appId": "org.electron-builder.testApp",
-    "compression": "store",
-    "electronVersion": "1.4.12",
-    "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
-    "linux": Object {
-      "category": "Development",
-      "packageCategory": "devel",
-    },
-    "mac": Object {
-      "category": "your.app.category.type",
-    },
-    "npmRebuild": false,
-  },
   "description": "Test Application (test quite \" #378)",
   "foo": Object {
     "bar": 12,

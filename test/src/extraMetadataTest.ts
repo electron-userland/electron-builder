@@ -18,6 +18,8 @@ test.ifDevOrLinuxCi("extra metadata", app({
   },
 }, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.scripts = {}
+    data.devDependencies = {"foo": "boo"}
     data.foo = {
       bar: 42,
       existingProp: 22,

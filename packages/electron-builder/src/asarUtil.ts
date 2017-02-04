@@ -190,10 +190,22 @@ class AsarPackager {
         const fileParent = path.dirname(file)
         const dirNode = this.fs.searchNodeFromPath(fileParent)
         const packageDataPromise = fileIndexToModulePackageData.get(i)
-        let newData: any | null = null
+        let newData: string | null = null
         if (packageDataPromise == null) {
-          if (this.options.extraMetadata != null && file === mainPackageJson) {
-            newData = JSON.stringify(deepAssign(await readJson(file), this.options.extraMetadata), null, 2)
+          if (file === mainPackageJson) {
+            const mainPackageData = await readJson(file)
+            if (this.options.extraMetadata != null) {
+              deepAssign(mainPackageData, this.options.extraMetadata)
+            }
+
+            // https://github.com/electron-userland/electron-builder/issues/1212
+            const serializedDataIfChanged = cleanupPackageJson(mainPackageData)
+            if (serializedDataIfChanged != null) {
+              newData = serializedDataIfChanged
+            }
+            else if (this.options.extraMetadata != null) {
+              newData = JSON.stringify(mainPackageData, null, 2)
+            }
           }
         }
         else {
@@ -352,7 +364,7 @@ function cleanupPackageJson(data: any): any {
   try {
     let changed = false
     for (const prop of Object.getOwnPropertyNames(data)) {
-      if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords") {
+      if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords" || prop === "build" || prop === "devDependencies" || prop === "scripts") {
         delete data[prop]
         changed = true
       }

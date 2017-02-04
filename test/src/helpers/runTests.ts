@@ -83,12 +83,14 @@ async function runTests() {
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
-    if (circleNodeIndex === 0 || circleNodeIndex === 2) {
+    if (circleNodeIndex === 0) {
       skipWin = true
-      args.push("linux.*", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
-      if (circleNodeIndex === 0) {
-        args.push("nsisUpdaterTest")
-      }
+      args.push("debTest", "fpmTest", "linuxArchiveTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("nsisUpdaterTest")
+    }
+    else if (circleNodeIndex === 2) {
+      skipWin = true
+      args.push("linuxPackagerTest", "snapTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
     }
     else {
       args.push("windows.*", "mac.*")

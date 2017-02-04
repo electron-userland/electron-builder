@@ -128,7 +128,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
-    const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir), path.resolve(this.info.projectDir, this.buildResourcesDir)])
+    const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir),
+      path.resolve(this.info.projectDir, this.buildResourcesDir),
+      path.resolve(this.info.projectDir, "electron-builder.yml"),
+      path.resolve(this.info.projectDir, "electron-builder.json"),
+      path.resolve(this.info.projectDir, "electron-builder.json5")])
     if (this.info.isPrepackedAppAsar) {
       await unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion)
     }

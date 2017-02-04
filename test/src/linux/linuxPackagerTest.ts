@@ -3,6 +3,7 @@ import { remove, readFile, rename } from "fs-extra-p"
 import * as path from "path"
 import { Platform, build } from "electron-builder"
 import { assertThat } from "../helpers/fileAssert"
+import { ELECTRON_VERSION } from "../helpers/config"
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
@@ -38,6 +39,10 @@ test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()
     await build({
       targets: Platform.LINUX.createTarget(),
       projectDir: projectDir,
+      config: {
+        electronVersion: ELECTRON_VERSION,
+        compression: "store",
+      }
     })
 
     await assertThat(path.join(projectDir, "dist")).isDirectory()
