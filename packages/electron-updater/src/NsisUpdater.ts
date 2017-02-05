@@ -3,7 +3,7 @@ import * as path from "path"
 import { tmpdir } from "os"
 import { download, DownloadOptions } from "electron-builder-http"
 import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
-import { BintrayOptions, PublishConfiguration, GithubOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { mkdtemp, remove } from "fs-extra-p"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
@@ -13,7 +13,7 @@ export class NsisUpdater extends AppUpdater {
   private quitAndInstallCalled = false
   private quitHandlerAdded = false
 
-  constructor(options?: PublishConfiguration | BintrayOptions | GithubOptions) {
+  constructor(options?: PublishConfiguration) {
     super(options)
   }
 

@@ -1,14 +1,13 @@
-import { isEmptyOrSpaces } from "electron-builder-util"
-import { log, warn } from "electron-builder-util/out/log"
-import { debug } from "electron-builder-util"
-import { parse as parseUrl } from "url"
-import mime from "mime"
 import BluebirdPromise from "bluebird-lst-c"
-import { PublishOptions, Publisher } from "./publisher"
+import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
+import { debug, isEmptyOrSpaces } from "electron-builder-util"
+import { log, warn } from "electron-builder-util/out/log"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
-import { HttpError, configureRequestOptions } from "electron-builder-http"
-import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
+import mime from "mime"
+import { parse as parseUrl } from "url"
+import { Publisher, PublishOptions } from "./publisher"
 
 export interface Release {
   id: number
@@ -30,7 +29,6 @@ interface Asset {
 export class GitHubPublisher extends Publisher {
   private tag: string
   private _releasePromise: Promise<Release>
-  private readonly httpExecutor = new NodeHttpExecutor()
 
   private readonly token: string
 
@@ -63,7 +61,7 @@ export class GitHubPublisher extends Publisher {
 
   private async getOrCreateRelease(): Promise<Release | null> {
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
-    const releases = await this.githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
+    const releases = await GitHubPublisher.githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
       if (release.tag_name === this.tag || release.tag_name === this.version) {
         if (release.draft) {
@@ -104,7 +102,7 @@ export class GitHubPublisher extends Publisher {
     let badGatewayCount = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       try {
-        return await this.httpExecutor.doApiRequest<any>(configureRequestOptions({
+        return await httpExecutor.doApiRequest<any>(configureRequestOptions({
           hostname: parsedUrl.hostname,
           path: parsedUrl.path,
           method: "POST",
@@ -121,10 +119,10 @@ export class GitHubPublisher extends Publisher {
             // delete old artifact and re-upload
             log(`Artifact ${fileName} already exists, overwrite one`)
 
-            const assets = await this.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
+            const assets = await GitHubPublisher.githubRequest<Array<Asset>>(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}/assets`, this.token, null)
             for (const asset of assets) {
               if (asset!.name === fileName) {
-                await this.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
+                await GitHubPublisher.githubRequest<void>(`/repos/${this.info.owner}/${this.info.repo}/releases/assets/${asset!.id}`, this.token, null, "DELETE")
                 continue uploadAttempt
               }
             }
@@ -143,7 +141,7 @@ export class GitHubPublisher extends Publisher {
   }
 
   private createRelease() {
-    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
+    return GitHubPublisher.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.version,
       draft: this.options.draft == null || this.options.draft,
@@ -154,7 +152,7 @@ export class GitHubPublisher extends Publisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise).id}`, this.token)
+    return GitHubPublisher.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise).id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -166,7 +164,7 @@ export class GitHubPublisher extends Publisher {
 
     for (let i = 0; i < 3; i++) {
       try {
-        return await this.githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
+        return await GitHubPublisher.githubRequest(`/repos/${this.info.owner}/${this.info.repo}/releases/${release.id}`, this.token, null, "DELETE")
       }
       catch (e) {
         if (e instanceof HttpError) {
@@ -186,8 +184,8 @@ export class GitHubPublisher extends Publisher {
     warn(`Cannot delete release ${release.id}`)
   }
 
-  private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-    return this.httpExecutor.request<T>(configureRequestOptions({
+  private static githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
+    return httpExecutor.request<T>(configureRequestOptions({
       hostname: "api.github.com",
       path: path,
       headers: {Accept: "application/vnd.github.v3+json"}

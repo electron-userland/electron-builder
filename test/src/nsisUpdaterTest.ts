@@ -28,7 +28,7 @@ g.__test_app = {
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
 test("check updates - no versions at all", async () => {
-  const updater = new NsisUpdater({
+  const updater = new NsisUpdater(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "no-versions",
@@ -38,7 +38,7 @@ test("check updates - no versions at all", async () => {
 })
 
 test("cannot find suitable file for version", async () => {
-  const updater = new NsisUpdater({
+  const updater = new NsisUpdater(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "incorrect-file-version",

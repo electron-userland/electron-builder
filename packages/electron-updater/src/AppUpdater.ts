@@ -5,7 +5,7 @@ import { RequestHeaders, executorHolder } from "electron-builder-http"
 import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
-import { BintrayOptions, PublishConfiguration, GithubOptions, GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, PublishConfiguration, GithubOptions, S3Options, GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
@@ -56,7 +56,7 @@ export abstract class AppUpdater extends EventEmitter {
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
 
-  constructor(options: PublishConfiguration | BintrayOptions | GithubOptions | null | undefined) {
+  constructor(options: PublishConfiguration | null | undefined) {
     super()
 
     this.on("error", (error: Error) => {
@@ -98,7 +98,7 @@ export abstract class AppUpdater extends EventEmitter {
     return "Deprecated. Do not use it."
   }
 
-  setFeedURL(value: PublishConfiguration | BintrayOptions | GithubOptions | GenericServerOptions | string) {
+  setFeedURL(value: PublishConfiguration | string) {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let client: Provider<any>
     if (typeof value === "string") {
@@ -239,7 +239,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 }
 
-function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions) {
+function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions | S3Options) {
   if (typeof data === "string") {
     throw new Error("Please pass PublishConfiguration object")
   }
@@ -248,6 +248,11 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
   switch (provider) {
     case "github":
       return new GitHubProvider(<GithubOptions>data)
+    case "s3":
+      return new GenericProvider(<GenericServerOptions>{
+        url: `https://s3.amazonaws.com/${(<S3Options>data).bucket || ""}`,
+        channel: (<S3Options>data).channel || ""
+      })
     case "generic":
       return new GenericProvider(<GenericServerOptions>data)
     case "bintray":

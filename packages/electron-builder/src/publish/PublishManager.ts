@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst-c"
 import { createHash } from "crypto"
-import { Platform, Arch } from "electron-builder-core"
-import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { Arch, Platform } from "electron-builder-core"
+import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -15,9 +15,10 @@ import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "../targets/ArchiveTarget"
-import { BintrayPublisher } from "./BintrayPublisher"
-import { GitHubPublisher } from "./gitHubPublisher"
-import { getCiTag, getResolvedPublishConfig, Publisher, PublishOptions } from "./publisher"
+import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
+import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
+import { getCiTag, getResolvedPublishConfig } from "./publisher"
+import { Publisher, PublishOptions } from "electron-builder-publisher"
 
 export class PublishManager {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
@@ -34,7 +35,7 @@ export class PublishManager {
         if (process.env.npm_lifecycle_event === "release") {
           publishOptions.publish = "always"
         }
-        else if (isAuthTokenSet()) {
+        else {
           const tag = getCiTag()
           if (tag != null) {
             log(`Tag ${tag} is defined, so artifacts will be published`)
@@ -119,7 +120,7 @@ export class PublishManager {
   getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
     let publisher = this.nameToPublisher.get(publishConfig.provider)
     if (publisher == null) {
-      publisher = createPublisher(buildInfo, publishConfig, this.publishOptions)
+      publisher = createPublisher(buildInfo.metadata.version!, publishConfig, this.publishOptions)
       this.nameToPublisher.set(publishConfig.provider, publisher)
     }
     return publisher
@@ -185,7 +186,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
   for (const publishConfig of publishConfigs) {
     const isGitHub = publishConfig.provider === "github"
-    if (!(publishConfig.provider === "generic" || isGitHub)) {
+    if (!(publishConfig.provider === "generic" || publishConfig.provider === "s3" || isGitHub)) {
       continue
     }
 
@@ -237,7 +238,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
         })
       }
 
-      const genericPublishConfig = publishConfigs.find(it => it.provider === "generic")
+      const genericPublishConfig = publishConfigs.find(it => it.provider === "generic" ||  it.provider === "s3")
       if (genericPublishConfig != null) {
         packager.info.dispatchArtifactCreated({
           file: updateInfoFile,
@@ -251,8 +252,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 }
 
-function createPublisher(buildInfo: BuildInfo, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
-  const version = buildInfo.metadata.version!
+export function createPublisher(version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
   if (publishConfig.provider === "github") {
     const githubInfo: GithubOptions = publishConfig
     log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
@@ -263,17 +263,21 @@ function createPublisher(buildInfo: BuildInfo, publishConfig: PublishConfigurati
     log(`Creating Bintray Publisher — user: ${bintrayInfo.user || bintrayInfo.owner}, owner: ${bintrayInfo.owner},  package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
     return new BintrayPublisher(bintrayInfo, version, options)
   }
+  if (publishConfig.provider === "s3") {
+    const clazz = require(`electron-publisher-${publishConfig.provider}`).default
+    return new clazz(publishConfig)
+  }
   return null
-}
-
-function isAuthTokenSet() {
-  return !isEmptyOrSpaces(process.env.GH_TOKEN) || !isEmptyOrSpaces(process.env.BT_TOKEN)
 }
 
 function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string, macros: Macros) {
   if (publishConfig.provider === "generic") {
     const baseUrl = url.parse(expandPattern((<GenericServerOptions>publishConfig).url, macros))
     return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))}))
+  }
+  else if (publishConfig.provider === "s3") {
+    const bucket = (<S3Options>publishConfig).bucket
+    return `https://s3.amazonaws.com/${bucket}/${fileName}`
   }
   else {
     const gh = <GithubOptions>publishConfig
@@ -313,12 +317,16 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
       return null
     }
 
-    if (publishers == null && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
-      publishers = [{provider: "github"}]
-    }
-    // if both tokens are set — still publish to github (because default publisher is github)
-    if (publishers == null && !isEmptyOrSpaces(process.env.BT_TOKEN)) {
-      publishers = [{provider: "bintray"}]
+    if (publishers == null) {
+      if (!isEmptyOrSpaces(process.env.GH_TOKEN)) {
+        publishers = [{provider: "github"}]
+      }
+      else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
+        publishers = [{provider: "bintray"}]
+      }
+      else if (!isEmptyOrSpaces(process.env.AWS_ACCESS_KEY_ID) && !isEmptyOrSpaces(process.env.AWS_SECRET_ACCESS_KEY)) {
+        publishers = [{provider: "s3"}]
+      }
     }
   }
 

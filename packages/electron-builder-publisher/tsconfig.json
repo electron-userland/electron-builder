@@ -4,13 +4,14 @@
     "outDir": "out"
   },
   "declaration": {
-    "electron-builder-squirrel-windows": "out/electron-builder-squirrel-windows.d.ts"
+    "electron-builder-publisher": "out/electron-builder-publisher.d.ts"
   },
   "include": [
     "src/**/*.ts"
   ],
   "files": [
+    "../../typings/mime.d.ts",
     "../../typings/debug.d.ts",
-    "../electron-builder/out/electron-builder.d.ts"
+    "../../typings/progress.d.ts"
   ]
 }

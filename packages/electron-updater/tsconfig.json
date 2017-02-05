@@ -8,13 +8,7 @@
   },
   "files": [
     "../../typings/semver.d.ts",
-    "../../typings/debug.d.ts",
-    "../../node_modules/fs-extra-p/index.d.ts",
-    "../../node_modules/bluebird-lst-c/index.d.ts",
-    "../electron-builder-http/out/electron-builder-http.d.ts",
-    "../../node_modules/@types/electron/index.d.ts",
-    "../../node_modules/@types/node/index.d.ts",
-    "../../node_modules/@types/js-yaml/index.d.ts"
+    "../../typings/debug.d.ts"
   ],
   "include": [
     "src/**/*.ts"

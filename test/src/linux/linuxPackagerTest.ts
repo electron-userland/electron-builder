@@ -39,9 +39,11 @@ test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()
     await build({
       targets: Platform.LINUX.createTarget(),
       projectDir: projectDir,
+      publish: "never",
       config: {
         electronVersion: ELECTRON_VERSION,
         compression: "store",
+        npmRebuild: false,
       }
     })
 

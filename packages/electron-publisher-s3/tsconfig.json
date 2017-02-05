@@ -4,13 +4,13 @@
     "outDir": "out"
   },
   "declaration": {
-    "electron-builder-http": "out/electron-builder-http.d.ts"
+    "electron-publisher-s3": "out/electron-publisher-s3.d.ts"
   },
-  "docs": "../../docs/Publishing Artifacts.md",
   "include": [
     "src/**/*.ts"
   ],
   "files": [
+    "../../typings/mime.d.ts",
     "../../typings/debug.d.ts"
   ]
 }

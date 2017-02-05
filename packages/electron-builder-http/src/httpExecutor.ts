@@ -34,7 +34,7 @@ export class HttpExecutorHolder {
 
   get httpExecutor(): HttpExecutor<any, any> {
     if (this._httpExecutor == null) {
-      this._httpExecutor = new (require("electron-builder/out/util/nodeHttpExecutor").NodeHttpExecutor)()
+      this._httpExecutor = new (require("electron-builder-util/out/nodeHttpExecutor").NodeHttpExecutor)()
     }
     return this._httpExecutor
   }

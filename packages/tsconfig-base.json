@@ -12,6 +12,8 @@
     "noEmitHelpers": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "Node",
+    "baseUrl": "."
   }
 }

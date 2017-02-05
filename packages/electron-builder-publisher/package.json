@@ -1,7 +1,7 @@
 {
-  "name": "electron-builder-util",
+  "name": "electron-builder-publisher",
   "version": "0.0.0-semantic-release",
-  "main": "out/util.js",
+  "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
@@ -12,17 +12,11 @@
   ],
   "dependencies": {
     "fs-extra-p": "^3.1.0",
-    "is-ci": "^1.0.10",
-    "stat-mode": "^0.2.2",
+    "progress": "^1.1.8",
+    "mime": "^1.3.4",
     "bluebird-lst-c": "^1.0.6",
-    "chalk": "^1.1.3",
-    "debug": "2.6.0",
-    "node-emoji": "^1.5.1",
     "electron-builder-http": "~0.0.0-semantic-release",
-    "source-map-support": "^0.4.11",
-    "7zip-bin": "^2.0.4",
-    "ini": "^1.3.4",
-    "tunnel-agent": "^0.4.3"
+    "electron-builder-util": "~0.0.0-semantic-release"
   },
-  "typings": "./out/electron-builder-util.d.ts"
+  "typings": "./out/electron-builder-publisher.d.ts"
 }

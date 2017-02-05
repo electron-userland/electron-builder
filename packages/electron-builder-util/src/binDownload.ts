@@ -1,10 +1,10 @@
 import { spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
 import { rename, unlink, emptyDir } from "fs-extra-p"
-import { download } from "electron-builder-http"
 import { path7za } from "7zip-bin"
 import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { statOrNull } from "./fs"
+import { httpExecutor } from "./nodeHttpExecutor"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 
@@ -46,7 +46,7 @@ async function doGetBin(name: string, dirName: string, url: string, sha2: string
   debug(`Download ${name} from ${url} to ${archiveName}`)
   // 7z doesn't create out dir, so, we don't create dir in parallel to download - dir creation will create parent dirs for archive file also
   await emptyDir(tempUnpackDir)
-  await download(url, archiveName, {
+  await httpExecutor.download(url, archiveName, {
     skipDirCreation: true,
     sha2: sha2,
   })

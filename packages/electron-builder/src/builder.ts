@@ -1,5 +1,5 @@
 import { Packager, normalizePlatforms } from "./packager"
-import { PublishOptions } from "./publish/publisher"
+import { PublishOptions } from "electron-builder-publisher"
 import { executeFinally } from "electron-builder-util/out/promise"
 import BluebirdPromise from "bluebird-lst-c"
 import { isEmptyOrSpaces } from "electron-builder-util"

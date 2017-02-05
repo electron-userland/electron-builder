@@ -16,7 +16,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     let result: UpdateInfo | null = null
     const channelFile = getChannelFilename(this.channel)
-    const pathname = path.posix.resolve(this.baseUrl.pathname || "/", `${channelFile}`)
+    const pathname = path.posix.resolve(this.baseUrl.pathname || "/", channelFile)
     try {
       const options: RequestOptions = {
         hostname: this.baseUrl.hostname,

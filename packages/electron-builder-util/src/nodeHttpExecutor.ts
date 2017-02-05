@@ -67,6 +67,8 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
   }
 }
 
+export const httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
+
 // only https proxy
 async function proxyFromNpm() {
   let data = ""

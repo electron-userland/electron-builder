@@ -1,16 +1,15 @@
-import { Publisher, PublishOptions } from "./publisher"
 import BluebirdPromise from "bluebird-lst-c"
-import { log } from "electron-builder-util/out/log"
-import { debug, isEmptyOrSpaces } from "electron-builder-util"
+import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
+import { debug, isEmptyOrSpaces } from "electron-builder-util"
+import { log } from "electron-builder-util/out/log"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
-import { NodeHttpExecutor } from "../util/nodeHttpExecutor"
-import { HttpError, configureRequestOptions } from "electron-builder-http"
+import { Publisher, PublishOptions } from "./publisher"
 
 export class BintrayPublisher extends Publisher {
   private _versionPromise: BluebirdPromise<Version>
-  private readonly httpExecutor: NodeHttpExecutor = new NodeHttpExecutor()
 
   private readonly client: BintrayClient
 
@@ -58,7 +57,7 @@ export class BintrayPublisher extends Publisher {
     let badGatewayCount = 0
     for (let i = 0; i < 3; i++) {
       try {
-        return await this.httpExecutor.doApiRequest<any>(configureRequestOptions({
+        return await httpExecutor.doApiRequest<any>(configureRequestOptions({
           hostname: "api.bintray.com",
           path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
           method: "PUT",

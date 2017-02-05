@@ -9,7 +9,7 @@ FROM buildpack-deps:yakkety-curl
 
 # python for node-gyp
 
-ENV XZ_VERSION 5.2.2
+ENV XZ_VERSION 5.2.3
 
 # we don't use our bundled 7za because it is better to build for specific platform - not generic
 ENV USE_SYSTEM_7ZA true
@@ -19,7 +19,7 @@ ENV DEBUG_COLORS true
 ENV FORCE_COLOR true
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv dist yarn && apt-get update -y && apt-get upgrade -y && \
+RUN curl -L https://yarnpkg.com/latest.tar.gz | tar xvz && mv dist /yarn && apt-get update -y && apt-get upgrade -y && \
   apt-get install --no-install-recommends -y xvfb git snapcraft qtbase5-dev xorriso bsdtar build-essential autoconf libssl-dev icnsutils libopenjp2-7 graphicsmagick gcc-multilib g++-multilib libgnome-keyring-dev lzip rpm yasm python libcurl3 && \
   curl -O http://mirrors.kernel.org/ubuntu/pool/universe/libi/libicns/libicns1_0.8.1-3.1_amd64.deb && dpkg --install libicns1_0.8.1-3.1_amd64.deb && unlink libicns1_0.8.1-3.1_amd64.deb && \
   wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list && \

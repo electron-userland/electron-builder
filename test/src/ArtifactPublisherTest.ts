@@ -1,8 +1,10 @@
-import { GitHubPublisher } from "electron-builder/out/publish/gitHubPublisher"
+import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
 import { join } from "path"
-import { BintrayPublisher } from "electron-builder/out/publish/BintrayPublisher"
+import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
 import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
+import { createPublisher } from "electron-builder/out/publish/PublishManager"
+import { S3Options } from "electron-builder-http/out/publishOptions"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -84,6 +86,20 @@ testAndIgnoreApiRate("GitHub upload", async () => {
     await publisher.deleteRelease()
   }
 })
+
+if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null) {
+  test("S3 upload", async () => {
+    const publisher = createPublisher("0.0.1", <S3Options>{provider: "s3", bucket: "electron-builder-test"}, {})
+    try {
+      await publisher.upload(iconPath)
+      // test overwrite
+      await publisher.upload(iconPath)
+    }
+    finally {
+      // await publisher.deleteRelease()
+    }
+  })
+}
 
 testAndIgnoreApiRate("prerelease", async () => {
   const publisher = new GitHubPublisher({provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber(), {

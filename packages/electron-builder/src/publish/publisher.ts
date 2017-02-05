@@ -1,40 +1,17 @@
-import { ClientRequest } from "http"
-import { uploadFile } from "./uploader"
-import { stat } from "fs-extra-p"
-import { basename } from "path"
 import { BuildInfo } from "../packagerApi"
-import { PublishConfiguration, GithubOptions, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
-
-export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
-
-export interface PublishOptions {
-  publish?: PublishPolicy | null
-
-  draft?: boolean
-  prerelease?: boolean
-}
-
-export abstract class Publisher {
-  async upload(file: string, artifactName?: string): Promise<any> {
-    const fileName = artifactName || basename(file)
-    const fileStat = await stat(file)
-    await this.doUpload(fileName, fileStat.size, uploadFile.bind(this, file, fileStat, fileName))
-  }
-
-  uploadData(data: Buffer, fileName: string): Promise<any> {
-    if (data == null || fileName == null) {
-      throw new Error("data or fileName is null")
-    }
-    return this.doUpload(fileName, data.length, it => it.end(data))
-  }
-
-  protected abstract doUpload(fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any>
-}
+import { PublishConfiguration, GithubOptions, S3Options, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
 
 export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
   if (publishConfig.provider === "generic") {
     if ((<GenericServerOptions>publishConfig).url == null) {
       throw new Error(`Please specify "url" for "generic" update server`)
+    }
+    return publishConfig
+  }
+
+  if (publishConfig.provider === "s3") {
+    if ((<S3Options>publishConfig).bucket == null) {
+      throw new Error(`Please specify "bucket" for "s3" update server`)
     }
     return publishConfig
   }

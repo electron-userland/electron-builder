@@ -2,7 +2,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater test",
+    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-builder-publisher packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test",
     "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js check-deps",
     "check-deps": "node ./test/out/helpers/checkDeps.js",
@@ -25,6 +25,7 @@
     "7zip-bin": "^2.0.4",
     "archiver": "^1.3.0",
     "asar-electron-builder": "^0.13.5",
+    "aws-sdk": "^2.9.0",
     "bluebird-lst-c": "^1.0.6",
     "chalk": "^1.1.3",
     "chromium-pickle-js": "^0.2.0",
@@ -72,7 +73,7 @@
     "jest-environment-node-debug": "^0.0.2",
     "path-sort": "^0.1.0",
     "source-map-support": "^0.4.11",
-    "ts-babel": "^1.3.5",
+    "ts-babel": "^1.3.6",
     "tslint": "^4.4.2",
     "typescript": "^2.2.0",
     "whitespace": "^2.1.0"
