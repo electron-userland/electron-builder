@@ -6,6 +6,7 @@ import { ProgressCallbackTransform } from "electron-builder-http/out/ProgressCal
 import { MultiProgress } from "./multiProgress"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { green } from "chalk"
+import { log } from "electron-builder-util/out/log"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
@@ -34,8 +35,9 @@ export abstract class Publisher {
 
   abstract upload(file: string, artifactName?: string): Promise<any>
 
-  protected createProgressBar(fileName: string, fileStat: Stats) {
+  protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
     if (this.context.progress == null) {
+      log(`Uploading ${fileName} to ${this.providerName}`)
       return null
     }
     else {
@@ -71,8 +73,10 @@ export abstract class HttpPublisher extends Publisher {
 
     const progressBar = this.createProgressBar(fileName, fileStat)
     await this.doUpload(fileName, fileStat.size, (request, reject) => {
-      // reset (because can be called several times (several attempts)
-      progressBar.update(0)
+      if (progressBar != null) {
+        // reset (because can be called several times (several attempts)
+        progressBar.update(0)
+      }
       return this.createReadStreamAndProgressBar(file, fileStat, progressBar, reject).pipe(request)
     }, file)
   }

@@ -80,6 +80,13 @@ For an app that will be shipped to production, you should sign your application.
 
 See the [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki).
 
+## Boilerplates
+
+* [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate)
+* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate)
+* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate)
+* [electron-vue](https://github.com/SimulatedGREG/electron-vue)
+
 ## CLI Usage
 Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
 ```
