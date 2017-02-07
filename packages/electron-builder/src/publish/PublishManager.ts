@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst-c"
 import { createHash } from "crypto"
 import { Arch, Platform } from "electron-builder-core"
-import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -18,9 +18,11 @@ import { ArchiveTarget } from "../targets/ArchiveTarget"
 import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
 import { getCiTag, getResolvedPublishConfig } from "./publisher"
-import { Publisher, PublishOptions } from "electron-builder-publisher"
+import { Publisher, HttpPublisher, PublishOptions, PublishContext } from "electron-builder-publisher"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { MultiProgress } from "electron-builder-publisher/out/multiProgress"
 
-export class PublishManager {
+export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
 
   readonly publishTasks: Array<Promise<any>> = []
@@ -29,7 +31,9 @@ export class PublishManager {
   private isPublishOptionGuessed = false
   private isPublish = false
 
-  constructor(packager: Packager, private readonly publishOptions: PublishOptions) {
+  readonly progress = (<NodeJS.WritableStream>process.stdout).isTTY ? new MultiProgress() : null
+
+  constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
     if (!isPullRequest()) {
       if (publishOptions.publish === undefined) {
         if (process.env.npm_lifecycle_event === "release") {
@@ -59,7 +63,7 @@ export class PublishManager {
     }
 
     packager.addAfterPackHandler(async event => {
-      if (!(event.electronPlatformName == "darwin" || event.packager.platform === Platform.WINDOWS)) {
+      if (this.cancellationToken.cancelled || !(event.electronPlatformName == "darwin" || event.packager.platform === Platform.WINDOWS)) {
         return
       }
 
@@ -93,10 +97,14 @@ export class PublishManager {
 
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
         const publisher = this.getOrCreatePublisher(publishConfig, packager.info)
         if (publisher != null) {
           if (event.file == null) {
-            this.addTask(publisher.uploadData(event.data!, event.artifactName!))
+            this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.artifactName!))
           }
           else {
             this.addTask(publisher.upload(event.file!, event.artifactName))
@@ -105,7 +113,7 @@ export class PublishManager {
       }
     }
 
-    if (target != null && event.file != null) {
+    if (target != null && event.file != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && target.name === "nsis")) {
         this.addTask(writeUpdateInfo(event, publishConfigs))
       }
@@ -113,6 +121,10 @@ export class PublishManager {
   }
 
   private addTask(promise: Promise<any>) {
+    if (this.cancellationToken.cancelled) {
+      return
+    }
+
     this.publishTasks.push(promise
       .catch(it => this.errors.push(it)))
   }
@@ -120,8 +132,9 @@ export class PublishManager {
   getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
     let publisher = this.nameToPublisher.get(publishConfig.provider)
     if (publisher == null) {
-      publisher = createPublisher(buildInfo.metadata.version!, publishConfig, this.publishOptions)
+      publisher = createPublisher(this, buildInfo.metadata.version!, publishConfig, this.publishOptions)
       this.nameToPublisher.set(publishConfig.provider, publisher)
+      log(`Publishing to ${publisher}`)
     }
     return publisher
   }
@@ -132,6 +145,8 @@ export class PublishManager {
         (<any>task).cancel()
       }
     }
+    this.publishTasks.length = 0
+    this.nameToPublisher.clear()
   }
 
   async awaitTasks() {
@@ -252,20 +267,16 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 }
 
-export function createPublisher(version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
+export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
   if (publishConfig.provider === "github") {
-    const githubInfo: GithubOptions = publishConfig
-    log(`Creating Github Publisher — owner: ${githubInfo.owner}, project: ${githubInfo.repo}, version: ${version}`)
-    return new GitHubPublisher(githubInfo, version, options)
+    return new GitHubPublisher(context, publishConfig, version, options)
   }
   if (publishConfig.provider === "bintray") {
-    const bintrayInfo: BintrayOptions = publishConfig
-    log(`Creating Bintray Publisher — user: ${bintrayInfo.user || bintrayInfo.owner}, owner: ${bintrayInfo.owner},  package: ${bintrayInfo.package}, repository: ${bintrayInfo.repo}, version: ${version}`)
-    return new BintrayPublisher(bintrayInfo, version, options)
+    return new BintrayPublisher(context, publishConfig, version, options)
   }
   if (publishConfig.provider === "s3") {
     const clazz = require(`electron-publisher-${publishConfig.provider}`).default
-    return new clazz(publishConfig)
+    return new clazz(context, publishConfig)
   }
   return null
 }

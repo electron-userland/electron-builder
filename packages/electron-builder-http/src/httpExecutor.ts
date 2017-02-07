@@ -8,6 +8,7 @@ import { ProgressCallbackTransform } from "./ProgressCallbackTransform"
 import { safeLoad } from "js-yaml"
 import { EventEmitter } from "events"
 import { Socket } from "net"
+import { CancellationToken } from "./CancellationToken"
 
 export interface RequestHeaders {
   [key: string]: any
@@ -23,9 +24,12 @@ export interface Response extends EventEmitter {
 }
 
 export interface DownloadOptions {
-  headers?: RequestHeaders | null
-  skipDirCreation?: boolean
-  sha2?: string
+  readonly headers?: RequestHeaders | null
+  readonly skipDirCreation?: boolean
+  readonly sha2?: string | null
+
+  readonly cancellationToken: CancellationToken
+
   onProgress?(progress: any): void
 }
 
@@ -62,7 +66,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected readonly maxRedirects = 10
   protected readonly debug = _debug("electron-builder")
 
-  request<T>(options: RequestOptions, data?: { [name: string]: any; } | null): Promise<T> {
+  request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: { [name: string]: any; } | null): Promise<T> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
@@ -70,14 +74,14 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(<REQUEST_OPTS>options, it => (<any>it).end(encodedData), 0)
+    return this.doApiRequest<T>(<REQUEST_OPTS>options, cancellationToken, it => (<any>it).end(encodedData), 0)
   }
 
-  protected abstract doApiRequest<T>(options: REQUEST_OPTS, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
+  protected abstract doApiRequest<T>(options: REQUEST_OPTS, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
   abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
 
-  protected handleResponse(response: Response, options: RequestOptions, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (this.debug.enabled) {
       this.debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
     }
@@ -104,7 +108,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
         return
       }
 
-      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), requestProcessor, redirectCount)
+      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
 
@@ -203,8 +207,8 @@ class DigestTransform extends Transform {
   }
 }
 
-export function request<T>(options: RequestOptions, data?: {[name: string]: any; } | null): Promise<T> {
-  return executorHolder.httpExecutor.request(options, data)
+export function request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: {[name: string]: any; } | null): Promise<T> {
+  return executorHolder.httpExecutor.request(options, cancellationToken, data)
 }
 
 function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
@@ -245,7 +249,7 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
   if (options.onProgress != null) {
     const contentLength = safeGetHeader(response, "content-length")
     if (contentLength != null) {
-      streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), options.onProgress))
+      streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), options.cancellationToken, options.onProgress))
     }
   }
 

@@ -4,6 +4,7 @@ import * as url from "url"
 import * as path from "path"
 import { RequestOptions } from "http"
 import { HttpError, request } from "electron-builder-http"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
@@ -27,7 +28,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
       }
-      result = await request<UpdateInfo>(options)
+      result = await request<UpdateInfo>(options, new CancellationToken())
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

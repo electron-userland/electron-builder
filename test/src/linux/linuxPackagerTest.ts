@@ -28,10 +28,10 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
   projectDirCreated: it => remove(path.join(it, "build")),
 }))
 
+// test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
 test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()}, {
   projectDirCreated: it => remove(path.join(it, "build", "icons")),
   packed: async context => {
-    // test https://github.com/electron-userland/electron-builder/issues/1102
     const projectDir = context.getResources(Platform.LINUX)
 
     await rename(path.join(projectDir, "electron.asar"), path.join(projectDir, "someAsarFile.asar"))

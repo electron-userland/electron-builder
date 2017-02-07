@@ -32,6 +32,7 @@ Object {
   "shortcuttemplate": "{type}:{user}/{project}{#committish}",
   "sshtemplate": "git@{domain}:{user}/{project}.git{#committish}",
   "sshurltemplate": "git+ssh://git@{domain}/{user}/{project}.git{#committish}",
+  "tarballtemplate": "https://{domain}/{user}/{project}/archive/{committish}.tar.gz",
   "treepath": "tree",
   "type": "github",
   "user": "travis-ci",

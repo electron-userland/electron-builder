@@ -21,6 +21,7 @@ import { createTargets } from "./targets/targetFactory"
 import { getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
 import { WinPackager } from "./winPackager"
 import { getGypEnv, installOrRebuild } from "./yarn"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
@@ -68,7 +69,7 @@ export class Packager implements BuildInfo {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(public options: PackagerOptions) {
+  constructor(readonly options: PackagerOptions, private readonly cancellationToken: CancellationToken) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
   }
 
@@ -183,9 +184,14 @@ export class Packager implements BuildInfo {
     const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
 
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
+
     // custom packager - don't check wine
     let checkWine = this.options.prepackaged == null && this.options.platformPackagerFactory == null
     for (const [platform, archToType] of this.options.targets!) {
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
       }
@@ -200,7 +206,15 @@ export class Packager implements BuildInfo {
       platformToTarget.set(platform, nameToTarget)
 
       for (const [arch, targets] of archToType) {
+        if (this.cancellationToken.cancelled) {
+          break
+        }
+
         await this.installAppDependencies(platform, arch)
+
+        if (this.cancellationToken.cancelled) {
+          break
+        }
 
         if (checkWine && wineCheck != null) {
           checkWine = false
@@ -210,12 +224,25 @@ export class Packager implements BuildInfo {
         await helper.pack(outDir, arch, createTargets(nameToTarget, targets, outDir, helper, cleanupTasks), distTasks)
       }
 
+      if (this.cancellationToken.cancelled) {
+        break
+      }
+
       for (const target of nameToTarget.values()) {
         distTasks.push(target.finishBuild())
       }
     }
 
-    await BluebirdPromise.all(distTasks)
+    if (this.cancellationToken.cancelled) {
+      for (const task of distTasks) {
+        if ("cancel" in task) {
+          (<BluebirdPromise<any>>task).cancel()
+        }
+      }
+    }
+    else {
+      await BluebirdPromise.all(distTasks)
+    }
     return platformToTarget
   }
 

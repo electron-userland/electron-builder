@@ -5,6 +5,8 @@ import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
 import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import { S3Options } from "electron-builder-http/out/publishOptions"
+import { PublishContext } from "electron-builder-publisher"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -61,10 +63,15 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
   })
 }
 
+const publishContext: PublishContext = {
+  cancellationToken: new CancellationToken(),
+  progress: null,
+}
+
 test("Bintray upload", async () => {
   const version = versionNumber()
   //noinspection SpellCheckingInspection
-  const publisher = new BintrayPublisher({provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
+  const publisher = new BintrayPublisher(publishContext, {provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
   try {
     const artifactName = `icon-${version}.icns`
     await publisher.upload(iconPath, artifactName)
@@ -76,7 +83,7 @@ test("Bintray upload", async () => {
 })
 
 testAndIgnoreApiRate("GitHub upload", async () => {
-  const publisher = new GitHubPublisher({provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber())
   try {
     await publisher.upload(iconPath)
     // test overwrite
@@ -89,7 +96,7 @@ testAndIgnoreApiRate("GitHub upload", async () => {
 
 if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null) {
   test("S3 upload", async () => {
-    const publisher = createPublisher("0.0.1", <S3Options>{provider: "s3", bucket: "electron-builder-test"}, {})
+    const publisher = createPublisher(publishContext, "0.0.1", <S3Options>{provider: "s3", bucket: "electron-builder-test"}, {})
     try {
       await publisher.upload(iconPath)
       // test overwrite
@@ -102,7 +109,7 @@ if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY !
 }
 
 testAndIgnoreApiRate("prerelease", async () => {
-  const publisher = new GitHubPublisher({provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber(), {
+  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: token}, versionNumber(), {
     draft: false,
     prerelease: true,
   })
@@ -121,7 +128,7 @@ testAndIgnoreApiRate("prerelease", async () => {
 
 testAndIgnoreApiRate("GitHub upload org", async () => {
   //noinspection SpellCheckingInspection
-  const publisher = new GitHubPublisher({provider: "github", owner: "builder-gh-test", repo: "darpa", token: token}, versionNumber())
+  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "builder-gh-test", repo: "darpa", token: token}, versionNumber())
   try {
     await publisher.upload(iconPath)
   }

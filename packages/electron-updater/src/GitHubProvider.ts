@@ -3,6 +3,7 @@ import { VersionInfo, GithubOptions, UpdateInfo } from "electron-builder-http/ou
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class GitHubProvider extends Provider<VersionInfo> {
   constructor(private readonly options: GithubOptions) {
@@ -13,13 +14,15 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const basePath = this.getBasePath()
     let version
 
+    const cancellationToken = new CancellationToken()
+
     try {
       // do not use API to avoid limit
       const releaseInfo = (await request<GithubReleaseInfo>({
         hostname: "github.com",
         path: `${basePath}/latest`,
         headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
-      }))
+      }, cancellationToken))
       version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
@@ -30,7 +33,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const channelFile = getChannelFilename(getDefaultChannelName())
     const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
     try {
-      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath, headers: this.requestHeaders || undefined})
+      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath, headers: this.requestHeaders || undefined}, cancellationToken)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

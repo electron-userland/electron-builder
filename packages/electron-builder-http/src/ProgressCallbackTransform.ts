@@ -1,4 +1,5 @@
 import { Transform } from "stream"
+import { CancellationToken } from "./CancellationToken"
 
 export interface ProgressInfo {
   total: number
@@ -15,11 +16,16 @@ export class ProgressCallbackTransform extends Transform {
 
   private nextUpdate = this.start + 1000
 
-  constructor(private total: number, private onProgress: (info: ProgressInfo) => any) {
+  constructor(private readonly total: number, private readonly cancellationToken: CancellationToken, private readonly onProgress: (info: ProgressInfo) => any) {
     super()
   }
 
   _transform(chunk: any, encoding: string, callback: Function) {
+    if (this.cancellationToken.cancelled) {
+      callback(new Error("Cancelled"), null)
+      return
+    }
+
     this.transferred += chunk.length
     this.delta += chunk.length
 
@@ -41,6 +47,11 @@ export class ProgressCallbackTransform extends Transform {
   }
 
   _flush(callback: Function): void {
+    if (this.cancellationToken.cancelled) {
+      callback(new Error("Cancelled"))
+      return
+    }
+
     this.onProgress(<ProgressInfo>{
       total: this.total,
       delta: this.delta,

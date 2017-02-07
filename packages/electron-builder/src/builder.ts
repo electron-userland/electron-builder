@@ -7,6 +7,8 @@ import { Platform, Arch, archFromString } from "electron-builder-core"
 import { DIR_TARGET } from "./targets/targetFactory"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
+import { warn } from "electron-builder-util/out/log"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -201,7 +203,8 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     options.prerelease = process.env.EP_PRELEASE.toLowerCase() === "true"
   }
 
-  const packager = new Packager(options)
+  const cancellationToken = new CancellationToken()
+  const packager = new Packager(options, cancellationToken)
   // because artifact event maybe dispatched several times for different publish providers
   const artifactPaths = new Set<string>()
   packager.artifactCreated(event => {
@@ -210,8 +213,16 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     }
   })
 
-  const publishManager = new PublishManager(packager, options)
-  return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
+  const publishManager = new PublishManager(packager, options, cancellationToken)
+  const buildPromise = <BluebirdPromise<Array<string>>>packager.build().then(() => Array.from(artifactPaths))
+  process.on("SIGINT", () => {
+    warn("Cancelled by SIGINT")
+    cancellationToken.cancel()
+    buildPromise.cancel()
+    publishManager.cancelTasks()
+  })
+
+  return await executeFinally(buildPromise, errorOccurred => {
     if (errorOccurred) {
       publishManager.cancelTasks()
       return BluebirdPromise.resolve(null)

@@ -6,15 +6,17 @@ import { debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
-import { Publisher, PublishOptions } from "./publisher"
+import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
-export class BintrayPublisher extends Publisher {
+export class BintrayPublisher extends HttpPublisher {
   private _versionPromise: BluebirdPromise<Version>
 
   private readonly client: BintrayClient
 
-  constructor(info: BintrayOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
-    super()
+  readonly providerName = "Bintray"
+
+  constructor(context: PublishContext, info: BintrayOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
+    super(context)
 
     let token = info.token
     if (isEmptyOrSpaces(token)) {
@@ -24,7 +26,7 @@ export class BintrayPublisher extends Publisher {
       }
     }
 
-    this.client = new BintrayClient(info, token)
+    this.client = new BintrayClient(info, this.context.cancellationToken, token)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 
@@ -66,7 +68,7 @@ export class BintrayPublisher extends Publisher {
             "X-Bintray-Override": "1",
             "X-Bintray-Publish": "1",
           }
-        }, this.client.auth), requestProcessor)
+        }, this.client.auth), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
         if (e instanceof HttpError && e.response.statusCode === 502 && badGatewayCount++ < 3) {
@@ -86,5 +88,9 @@ export class BintrayPublisher extends Publisher {
 
     const version = this._versionPromise.value()
     return version == null ? BluebirdPromise.resolve() : this.client.deleteVersion(version.name)
+  }
+
+  toString() {
+    return `Bintray (user: ${this.client.user || this.client.owner}, owner: ${this.client.owner},  package: ${this.client.packageName}, repository: ${this.client.repo}, version: ${this.version})`
   }
 }

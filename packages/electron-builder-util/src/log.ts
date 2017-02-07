@@ -3,6 +3,12 @@ import WritableStream = NodeJS.WritableStream
 import BluebirdPromise from "bluebird-lst-c"
 import { get as getEmoji } from "node-emoji"
 
+let printer: ((message: string) => void) | null = null
+
+export function setPrinter(value: ((message: string) => void) | null) {
+  printer = value
+}
+
 class Logger {
   private readonly isTTY = (<any>process.stdout).isTTY
 
@@ -10,16 +16,16 @@ class Logger {
   }
 
   warn(message: string): void {
-    if (this.isTTY) {
-      this.log(getEmoji("warning") + "  " + yellow(message))
-    }
-    else {
-      this.log(yellow(`Warning: ${message}`))
-    }
+    this.log(this.isTTY ? (getEmoji("warning") + "  " + yellow(message)) : yellow(`Warning: ${message}`))
   }
 
   log(message: string): void {
-    this.stream.write(`${message}\n`)
+    if (printer == null) {
+      this.stream.write(`${message}\n`)
+    }
+    else {
+      printer(message)
+    }
   }
 
   subTask(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
@@ -28,7 +34,7 @@ class Logger {
 
   task(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
     const promise = <BluebirdPromise<any>>_promise
-    this.log(`${title}\n`)
+    this.log(title)
     return promise
   }
 }

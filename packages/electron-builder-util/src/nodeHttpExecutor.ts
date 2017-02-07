@@ -8,6 +8,7 @@ import { parse as parseIni } from "ini"
 import { HttpExecutor, DownloadOptions, configureRequestOptions } from "electron-builder-http"
 import { RequestOptions } from "https"
 import { parse as parseUrl } from "url"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null
@@ -29,7 +30,7 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
         path: parsedUrl.path,
         headers: (options == null ? null : options.headers) || undefined,
         agent: agent,
-      }), destination, 0, options || {}, (error: Error) => {
+      }), destination, 0, options || {cancellationToken: new CancellationToken()}, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -40,27 +41,27 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
     })
   }
 
-  doApiRequest<T>(options: RequestOptions, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+  doApiRequest<T>(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     if (this.debug.enabled) {
       this.debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
     }
 
-    return new BluebirdPromise<T>((resolve, reject, onCancel) => {
+    return cancellationToken.trackPromise(new BluebirdPromise<T>((resolve, reject, onCancel) => {
       const request = https.request(options, (response: IncomingMessage) => {
         try {
-          this.handleResponse(response, options, resolve, reject, redirectCount, requestProcessor)
+          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
         catch (e) {
           reject(e)
         }
       })
+
       this.addTimeOutHandler(request, reject)
       request.on("error", reject)
       requestProcessor(request, reject)
       onCancel!(() => request.abort())
-    })
+    }))
   }
-
 
   protected doRequest(options: any, callback: (response: any) => void): any {
     return https.request(options, callback)

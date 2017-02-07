@@ -5,6 +5,7 @@ import * as path from "path"
 import BluebirdPromise from "bluebird-lst-c"
 import { statOrNull } from "./fs"
 import { httpExecutor } from "./nodeHttpExecutor"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 
@@ -49,6 +50,7 @@ async function doGetBin(name: string, dirName: string, url: string, sha2: string
   await httpExecutor.download(url, archiveName, {
     skipDirCreation: true,
     sha2: sha2,
+    cancellationToken: new CancellationToken(),
   })
 
   await spawn(path7za, debug7zArgs("x").concat(archiveName, `-o${tempUnpackDir}`), {

@@ -1,7 +1,11 @@
 import { ClientRequest } from "http"
-import { uploadFile } from "./uploader"
-import { stat } from "fs-extra-p"
+import { stat, Stats, createReadStream } from "fs-extra-p"
 import { basename } from "path"
+import ProgressBar from "progress-ex"
+import { ProgressCallbackTransform } from "electron-builder-http/out/ProgressCallbackTransform"
+import { MultiProgress } from "./multiProgress"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { green } from "chalk"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 
@@ -12,11 +16,65 @@ export interface PublishOptions {
   prerelease?: boolean
 }
 
+export interface PublishContext {
+  readonly cancellationToken: CancellationToken
+  readonly progress: MultiProgress | null
+}
+
+const progressBarOptions = {
+  incomplete: " ",
+  width: 20,
+}
+
 export abstract class Publisher {
+  constructor(protected readonly context: PublishContext) {
+  }
+
+  abstract get providerName(): string
+
+  abstract upload(file: string, artifactName?: string): Promise<any>
+
+  protected createProgressBar(fileName: string, fileStat: Stats) {
+    if (this.context.progress == null) {
+      return null
+    }
+    else {
+      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, Object.assign({total: fileStat.size}, progressBarOptions))
+    }
+  }
+
+  protected createReadStreamAndProgressBar(file: string, fileStat: Stats, progressBar: ProgressBar | null, reject: (error: Error) => void): NodeJS.ReadableStream {
+    const fileInputStream = createReadStream(file)
+    fileInputStream.on("error", reject)
+
+    if (progressBar == null) {
+      return fileInputStream
+    }
+    else {
+      const progressStream = new ProgressCallbackTransform(fileStat.size, this.context.cancellationToken, it => progressBar.tick(it.delta))
+      progressStream.on("error", reject)
+      return fileInputStream.pipe(progressStream)
+    }
+  }
+
+  abstract toString(): string
+}
+
+export abstract class HttpPublisher extends Publisher {
+  constructor(protected readonly context: PublishContext) {
+    super(context)
+  }
+
   async upload(file: string, artifactName?: string): Promise<any> {
     const fileName = artifactName || basename(file)
     const fileStat = await stat(file)
-    await this.doUpload(fileName, fileStat.size, uploadFile.bind(this, file, fileStat, fileName), file)
+
+    const progressBar = this.createProgressBar(fileName, fileStat)
+    await this.doUpload(fileName, fileStat.size, (request, reject) => {
+      // reset (because can be called several times (several attempts)
+      progressBar.update(0)
+      return this.createReadStreamAndProgressBar(file, fileStat, progressBar, reject).pipe(request)
+    }, file)
   }
 
   uploadData(data: Buffer, fileName: string): Promise<any> {

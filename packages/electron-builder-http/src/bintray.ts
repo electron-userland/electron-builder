@@ -1,8 +1,9 @@
 import { BintrayOptions } from "./publishOptions"
 import { request, configureRequestOptions } from "./httpExecutor"
+import { CancellationToken } from "./CancellationToken"
 
-export function bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-  return request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path}, auth, method), data)
+export function bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
+  return request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path}, auth, method), cancellationToken, data)
 }
 
 export interface Version {
@@ -25,10 +26,10 @@ export class BintrayClient {
   readonly repo: string
 
   readonly owner: string
-  private readonly user: string
+  readonly user: string
   readonly packageName: string
 
-  constructor(options: BintrayOptions, apiKey?: string | null) {
+  constructor(options: BintrayOptions, private readonly cancellationToken: CancellationToken, apiKey?: string | null) {
     if (options.owner == null) {
       throw new Error("owner is not specified")
     }
@@ -45,20 +46,20 @@ export class BintrayClient {
   }
 
   getVersion(version: string): Promise<Version> {
-    return bintrayRequest<Version>(`${this.basePath}/versions/${version}`, this.auth)
+    return bintrayRequest<Version>(`${this.basePath}/versions/${version}`, this.auth, null, this.cancellationToken)
   }
 
   getVersionFiles(version: string): Promise<Array<File>> {
-    return bintrayRequest<Array<File>>(`${this.basePath}/versions/${version}/files`, this.auth)
+    return bintrayRequest<Array<File>>(`${this.basePath}/versions/${version}/files`, this.auth, null, this.cancellationToken)
   }
 
   createVersion(version: string): Promise<any> {
     return bintrayRequest<Version>(`${this.basePath}/versions`, this.auth, {
       name: version,
-    })
+    }, this.cancellationToken)
   }
 
   deleteVersion(version: string): Promise<any> {
-    return bintrayRequest(`${this.basePath}/versions/${version}`, this.auth, null, "DELETE")
+    return bintrayRequest(`${this.basePath}/versions/${version}`, this.auth, null, this.cancellationToken, "DELETE")
   }
 }

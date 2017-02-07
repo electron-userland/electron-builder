@@ -12,6 +12,10 @@ import isCi from "is-ci"
 if (!isCi && process.env.NO_UPDATE_NOTIFIER == null) {
   readJson(path.join(__dirname, "..", "..", "package.json"))
     .then(it => {
+      if (it.version === "0.0.0-semantic-release") {
+        return
+      }
+
       const notifier = updateNotifier({pkg: it})
       if (notifier.update != null) {
         notifier.notify({

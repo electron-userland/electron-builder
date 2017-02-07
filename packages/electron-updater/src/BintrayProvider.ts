@@ -2,6 +2,7 @@ import { Provider, FileInfo } from "./api"
 import { BintrayClient } from "electron-builder-http/out/bintray"
 import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { HttpError } from "electron-builder-http"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class BintrayProvider extends Provider<VersionInfo> {
   private client: BintrayClient
@@ -9,7 +10,7 @@ export class BintrayProvider extends Provider<VersionInfo> {
   constructor(configuration: BintrayOptions) {
     super()
 
-    this.client = new BintrayClient(configuration)
+    this.client = new BintrayClient(configuration, new CancellationToken())
   }
 
   async getLatestVersion(): Promise<VersionInfo> {

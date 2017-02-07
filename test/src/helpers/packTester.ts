@@ -21,6 +21,7 @@ import { SignOptions as MacSignOptions } from "electron-macos-sign"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import isCi from "is-ci"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -163,8 +164,9 @@ export function copyTestAsset(name: string, destination: string): Promise<void> 
 }
 
 async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
-  const packager = new Packager(packagerOptions)
-  const publishManager = new PublishManager(packager, {publish: "never"})
+  const cancellationToken = new CancellationToken()
+  const packager = new Packager(packagerOptions, cancellationToken)
+  const publishManager = new PublishManager(packager, {publish: "never"}, cancellationToken)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {

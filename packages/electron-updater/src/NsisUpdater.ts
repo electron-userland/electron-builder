@@ -7,6 +7,7 @@ import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/pub
 import { mkdtemp, remove } from "fs-extra-p"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class NsisUpdater extends AppUpdater {
   private setupPath: string | null
@@ -25,14 +26,12 @@ export class NsisUpdater extends AppUpdater {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.requestHeaders || undefined,
+      cancellationToken: new CancellationToken(),
+      sha2: fileInfo == null ? null : fileInfo.sha2,
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
-    }
-
-    if (fileInfo != null && fileInfo.sha2 != null) {
-      downloadOptions.sha2 = fileInfo.sha2
     }
 
     const logger = this.logger
