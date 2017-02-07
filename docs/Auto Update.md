@@ -86,7 +86,7 @@ Emitted when there is no available update.
   * `total`
   * `transferred`
 
-Emitted on progress.
+Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` does not provide this data.
 
 #### Event: `update-downloaded`
 
