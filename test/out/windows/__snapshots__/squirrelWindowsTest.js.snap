@@ -1,0 +1,8 @@
+exports[`test Squirrel.Windows 1`] = `
+Array [
+  "RELEASES",
+  "Test App ßW Setup 1.1.0.exe",
+  "Test App ßW-1.1.0-win.zip",
+  "TestApp-1.1.0-full.nupkg",
+]
+`;

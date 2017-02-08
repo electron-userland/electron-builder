@@ -2,7 +2,9 @@ Travis and AppVeyor support publishing artifacts. But it requires additional con
 
 `electron-builder` allows you to just add `GH_TOKEN` environment variable and that's all.
 
-Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Bintray](https://bintray.com) and [S3](https://aws.amazon.com/s3/) are supported.
+Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/) and [Bintray](https://bintray.com) are supported.
+
+To use Amazon S3 please install `electron-publisher-s3` dependency.
 
 ## CLI Flags
 ```
@@ -72,7 +74,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 <a name="PublishConfiguration"></a>
 ### `publish`
 
-Can be specified in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) or any platform- or target- specific options.
+Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#configuration-options) or any platform- or target- specific options.
 
 If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.

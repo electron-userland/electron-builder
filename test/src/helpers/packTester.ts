@@ -4,7 +4,7 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo, SquirrelWindowsOptions } from "electron-builder"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo } from "electron-builder"
 import { exec, spawn, getTempName } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import pathSorter from "path-sort"
@@ -19,7 +19,6 @@ import { DmgTarget } from "electron-builder/out/targets/dmg"
 import OsXPackager from "electron-builder/out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
-import isCi from "is-ci"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
@@ -329,38 +328,27 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   let squirrel = false
 
   const artifactNames: Array<string> = []
-  const expectedFileNames: Array<string> = []
   const archSuffix = getArchSuffix(arch)
-  const buildOptions = packager.config.win
   for (const target of nameToTarget.keys()) {
     if (target === "squirrel") {
       squirrel = true
-      expectedFileNames.push("RELEASES", `${appInfo.productFilename} Setup ${appInfo.version}${archSuffix}.exe`, `${appInfo.name}-${convertVersion(appInfo.version)}-full.nupkg`)
-
-      if (buildOptions != null && (<SquirrelWindowsOptions>buildOptions).remoteReleases != null) {
-        expectedFileNames.push(`${appInfo.name}-${convertVersion(appInfo.version)}-delta.nupkg`)
-      }
-
       artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
     }
     else if (target === "nsis") {
-      expectedFileNames.push(`${appInfo.productFilename} Setup ${appInfo.version}.exe`)
       artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}.exe`)
     }
     else {
-      expectedFileNames.push(`${appInfo.productFilename}-${appInfo.version}${archSuffix}-win.${target}`)
       artifactNames.push(`${appInfo.name}-${appInfo.version}${archSuffix}-win.${target}`)
     }
   }
 
-  // we test latest.yml separately, don't want to complicate general assert
-  assertThat(getFileNames(artifacts).filter(it => it !== "latest.yml")).containsAll(expectedFileNames)
+  expect(getFileNames(artifacts).sort()).toMatchSnapshot()
 
   if (!squirrel) {
     return
   }
 
-  assertThat(artifacts.map(it => it.artifactName).filter(it => it != null)).containsAll(artifactNames)
+  assertThat(artifacts.map(it => it.safeArtifactName).filter(it => it != null)).containsAll(artifactNames)
 
   const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
   const unZipper = new DecompressZip(packageFile)
@@ -458,11 +446,9 @@ export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, str
   const platforms = [Platform.fromString(process.platform)]
   if (process.platform === Platform.MAC.nodeName) {
     platforms.push(Platform.LINUX)
-    if (!isCi) {
-      platforms.push(Platform.WINDOWS)
-    }
+    platforms.push(Platform.WINDOWS)
   }
-  else if (process.platform === Platform.LINUX.nodeName && process.env.SKIP_WIN == null) {
+  else if (process.platform === Platform.LINUX.nodeName) {
     platforms.push(Platform.WINDOWS)
   }
   return createTargets(platforms, type)

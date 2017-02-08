@@ -84,10 +84,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
-  dispatchArtifactCreated(file: string, target: Target | null, artifactName?: string) {
+  dispatchArtifactCreated(file: string, target: Target | null, safeArtifactName?: string) {
     this.info.dispatchArtifactCreated({
       file: file,
-      artifactName: artifactName,
+      safeArtifactName: safeArtifactName,
       packager: this,
       target: target,
     })
@@ -392,6 +392,46 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const resourcesDir = this.getResourcesDir(appOutDir)
     await this.checkFileInPackage(resourcesDir, this.appInfo.metadata.main || "index.js", "Application entry file", isAsar)
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
+  }
+
+  expandArtifactNamePattern(pattern: string, ext: string, arch: Arch | null): string {
+    let p = pattern
+    if (arch == null) {
+      p = p
+        .replace("-${arch}", "")
+        .replace(" ${arch}", "")
+        .replace("_${arch}", "")
+    }
+
+    const appInfo = this.appInfo
+    return p.replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+      switch (p1) {
+        case "name":
+          return appInfo.name
+
+        case "version":
+          return appInfo.version
+
+        case "productName":
+          return appInfo.productFilename
+
+        case "arch":
+          if (arch == null) {
+            // see above, we remove macro if no arch
+            return ""
+          }
+          return Arch[arch]
+
+        case "os":
+          return this.platform.name
+
+        case "ext":
+          return ext
+
+        default:
+          throw new Error(`Macro ${p1} is not defined`)
+      }
+    })
   }
 
   generateName(ext: string | null, arch: Arch, deployment: boolean, classifier: string | null = null): string {

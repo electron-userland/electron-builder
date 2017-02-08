@@ -9,9 +9,7 @@ import { TmpDir } from "electron-builder-util/out/tmp"
 import { EventEmitter } from "events"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
-import * as util from "util"
 import { AppInfo } from "./appInfo"
-import * as errorMessages from "./errorMessages"
 import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } from "./packagerApi"
@@ -273,8 +271,9 @@ export class Packager implements BuildInfo {
   }
 
   private checkMetadata(appPackageFile: string, devAppPackageFile: string): void {
+    const errors: Array<string> = []
     const reportError = (missedFieldName: string) => {
-      throw new Error(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
+      errors.push(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
     }
 
     const checkNotEmpty = (name: string, value: string | n) => {
@@ -289,45 +288,44 @@ export class Packager implements BuildInfo {
     checkNotEmpty("description", appMetadata.description)
     checkNotEmpty("version", appMetadata.version)
 
-    checkDependencies(this.devMetadata.dependencies)
+    checkDependencies(this.devMetadata.dependencies, errors)
     if ((<any>appMetadata) !== this.devMetadata) {
-      checkDependencies(appMetadata.dependencies)
+      checkDependencies(appMetadata.dependencies, errors)
 
       if ((<any>appMetadata).build != null) {
-        throw new Error(util.format(errorMessages.buildInAppSpecified, appPackageFile, devAppPackageFile))
+        errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
       }
     }
 
-    const build = <any>this.config
-    if (build == null) {
-      throw new Error(util.format(errorMessages.buildIsMissed, devAppPackageFile))
+    const config = <any>this.config
+    if (config["osx-sign"] != null) {
+      errors.push("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
     }
-    else {
-      if (build["osx-sign"] != null) {
-        throw new Error("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
-      }
-      if (build["osx"] != null) {
-        throw new Error(`build.osx is deprecated and not supported — please use build.mac instead`)
-      }
-      if (build["app-copyright"] != null) {
-        throw new Error(`build.app-copyright is deprecated and not supported — please use build.copyright instead`)
-      }
-      if (build["app-category-type"] != null) {
-        throw new Error(`build.app-category-type is deprecated and not supported — please use build.mac.category instead`)
-      }
+    if (config["osx"] != null) {
+      errors.push(`osx is deprecated and not supported — please use mac instead`)
+    }
+    if (config["app-copyright"] != null) {
+      errors.push(`app-copyright is deprecated and not supported — please use copyright instead`)
+    }
+    if (config["app-category-type"] != null) {
+      errors.push(`app-category-type is deprecated and not supported — please use mac.category instead`)
+    }
 
-      const author = appMetadata.author
-      if (author == null) {
-        throw new Error(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name.`)
-      }
+    const author = appMetadata.author
+    if (author == null) {
+      errors.push(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name and copyright owner.`)
+    }
 
-      if (build.name != null) {
-        throw new Error(util.format(errorMessages.nameInBuildSpecified, appPackageFile))
-      }
+    if (config.name != null) {
+      errors.push(`'name' in the config is forbidden. Please move 'name' into the package.json (${appPackageFile})`)
+    }
 
-      if (build.prune != null) {
-        warn("prune is deprecated — development dependencies are never copied in any case")
-      }
+    if (config.prune != null) {
+      errors.push("prune is deprecated — development dependencies are never copied in any case")
+    }
+
+    if (errors.length > 0) {
+      throw new Error(errors.join("\n"))
     }
   }
 
@@ -450,14 +448,14 @@ export async function checkWineVersion(checkPromise: Promise<string>) {
   }
 }
 
-function checkDependencies(dependencies?: { [key: string]: string }) {
+function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
   if (dependencies == null) {
     return
   }
 
   for (const name of ["electron", "electron-prebuilt", "electron-builder"]) {
     if (name in dependencies) {
-      throw new Error(`Package "${name}" is only allowed in "devDependencies". `
+      errors.push(`Package "${name}" is only allowed in "devDependencies". `
         + `Please remove it from the "dependencies" section in your package.json.`)
     }
   }

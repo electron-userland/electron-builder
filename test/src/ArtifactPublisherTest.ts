@@ -7,6 +7,8 @@ import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { PublishContext } from "electron-builder-publisher"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { copy } from "fs-extra-p"
+import { TmpDir } from "electron-builder-util/out/tmp"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -70,15 +72,24 @@ const publishContext: PublishContext = {
 
 test("Bintray upload", async () => {
   const version = versionNumber()
+
+  const tmpDir = new TmpDir()
+  const artifactPath = await tmpDir.getTempFile(`icon-${version}.icns`)
+  await copy(iconPath, artifactPath)
+
   //noinspection SpellCheckingInspection
   const publisher = new BintrayPublisher(publishContext, {provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)
   try {
-    const artifactName = `icon-${version}.icns`
-    await publisher.upload(iconPath, artifactName)
-    await publisher.upload(iconPath, artifactName)
+    await publisher.upload(artifactPath)
+    await publisher.upload(artifactPath)
   }
   finally {
-    await publisher.deleteRelease()
+    try {
+      await publisher.deleteRelease()
+    }
+    finally {
+      await tmpDir.cleanup()
+    }
   }
 })
 

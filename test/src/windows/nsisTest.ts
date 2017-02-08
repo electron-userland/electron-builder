@@ -203,6 +203,7 @@ test("menuCategory", app({
     nsis: {
       perMachine: true,
       menuCategory: true,
+      artifactName: "${productName} CustomName ${version}.${ext}"
     },
   }
 }, {

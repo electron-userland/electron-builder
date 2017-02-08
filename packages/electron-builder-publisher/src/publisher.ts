@@ -33,7 +33,7 @@ export abstract class Publisher {
 
   abstract get providerName(): string
 
-  abstract upload(file: string, artifactName?: string): Promise<any>
+  abstract upload(file: string, safeArtifactName?: string): Promise<any>
 
   protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
     if (this.context.progress == null) {
@@ -63,12 +63,12 @@ export abstract class Publisher {
 }
 
 export abstract class HttpPublisher extends Publisher {
-  constructor(protected readonly context: PublishContext) {
+  constructor(protected readonly context: PublishContext, private readonly useSafeArtifactName = false) {
     super(context)
   }
 
-  async upload(file: string, artifactName?: string): Promise<any> {
-    const fileName = artifactName || basename(file)
+  async upload(file: string, safeArtifactName?: string): Promise<any> {
+    const fileName = (this.useSafeArtifactName ? safeArtifactName : null) || basename(file)
     const fileStat = await stat(file)
 
     const progressBar = this.createProgressBar(fileName, fileStat)

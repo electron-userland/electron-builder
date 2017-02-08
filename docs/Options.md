@@ -178,6 +178,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
 | warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a>Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
+| artifactName | <a name="NsisOptions-artifactName"></a><p>The artifact file name pattern. Defaults to <code>${productName} Setup ${version}.${ext}</code>. <code>${name}</code>, <code>${productName}</code>, <code>${version}</code>, <code>${ext}</code>, <code>${arch}</code>, <code>${os}</code> (expanded to <code>mac</code>, <code>linux</code> or <code>win</code> according to current platform) macro are supported.</p> <p>If no <code>arch</code>, macro will be removed from your pattern with leading space, <code>-</code> or <code>_</code> (so, you don’t need to worry and can reuse pattern).</p>
 
 <a name="Protocol"></a>
 ### `protocols` URL Protocol Schemes

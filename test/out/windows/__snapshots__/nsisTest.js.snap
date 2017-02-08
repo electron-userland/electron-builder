@@ -1,4 +1,10 @@
 exports[`test allowToChangeInstallationDirectory 1`] = `
+Array [
+  "Test Custom Installation Dir Setup 1.1.0.exe",
+]
+`;
+
+exports[`test allowToChangeInstallationDirectory 2`] = `
 Object {
   "owner": "foo",
   "provider": "github",
@@ -6,7 +12,7 @@ Object {
 }
 `;
 
-exports[`test allowToChangeInstallationDirectory 2`] = `
+exports[`test allowToChangeInstallationDirectory 3`] = `
 Object {
   "githubArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
   "path": "Test Custom Installation Dir Setup 1.1.0.exe",
@@ -14,7 +20,31 @@ Object {
 }
 `;
 
+exports[`test custom include 1`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`test custom script 1`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`test menuCategory 1`] = `
+Array [
+  "Test Menu Category CustomName 1.1.0.exe",
+]
+`;
+
 exports[`test one-click 1`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`test one-click 2`] = `
 Object {
   "owner": "actperepo",
   "package": "TestApp",
@@ -23,13 +53,20 @@ Object {
 `;
 
 exports[`test perMachine, no run after finish 1`] = `
+Array [
+  "TestApp Setup 1.1.0.exe",
+  "latest.yml",
+]
+`;
+
+exports[`test perMachine, no run after finish 2`] = `
 Object {
   "provider": "generic",
   "url": "https://develar.s3.amazonaws.com/test/win/x64",
 }
 `;
 
-exports[`test perMachine, no run after finish 2`] = `
+exports[`test perMachine, no run after finish 3`] = `
 Object {
   "githubArtifactName": "TestApp-Setup-1.1.0.exe",
   "path": "TestApp Setup 1.1.0.exe",

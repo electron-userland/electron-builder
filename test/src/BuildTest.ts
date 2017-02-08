@@ -98,7 +98,7 @@ test("build in the app package.json", appTwoThrows(/'build' in the application p
   }, true)
 }))
 
-test("name in the build", appThrows(/'name' in the 'build' is forbidden/, currentPlatform(), {projectDirCreated: packageJson(it => it.build = {"name": "Cool App"})}))
+test("name in the build", appThrows(/'name' in the config is forbidden/, currentPlatform(), {projectDirCreated: packageJson(it => it.build = {"name": "Cool App"})}))
 
 // this test also test appMetadata, so, we must use test-app here
 test("empty description", appTwoThrows(/Please specify 'description'/, {

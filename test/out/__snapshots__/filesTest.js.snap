@@ -1,0 +1,7 @@
+exports[`test extraResources 1`] = `
+Array [
+  "RELEASES",
+  "Test App ßW Setup 1.1.0.exe",
+  "TestApp-1.1.0-full.nupkg",
+]
+`;

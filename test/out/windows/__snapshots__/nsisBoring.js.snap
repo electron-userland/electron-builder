@@ -1,0 +1,11 @@
+exports[`test boring 1`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`test boring, only perMachine 1`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;

@@ -72,8 +72,8 @@ export default class NsisTarget extends Target {
     const packager = this.packager
     const appInfo = packager.appInfo
     const version = appInfo.version
-    const installerFilename = `${appInfo.productFilename} Setup ${version}.exe`
     const options = this.options
+    const installerFilename = packager.expandArtifactNamePattern(options.artifactName || "${productName} Setup ${version}.${ext}", "exe", null)
     const iconPath = await packager.getResource(options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
     const oneClick = options.oneClick !== false
 

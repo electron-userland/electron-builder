@@ -26,8 +26,8 @@ export default class S3Publisher extends Publisher {
   }
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
-  async upload(file: string, artifactName?: string): Promise<any> {
-    const fileName = artifactName || basename(file)
+  async upload(file: string, safeArtifactName?: string): Promise<any> {
+    const fileName = basename(file)
     const fileStat = await stat(file)
     return this.context.cancellationToken.trackPromise(new BluebirdPromise((resolve, reject, onCancel) => {
       //noinspection JSUnusedLocalSymbols

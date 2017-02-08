@@ -74,7 +74,6 @@ async function runTests() {
 
   const args = []
   const baseForLinuxTests = ["ArtifactPublisherTest.js", "httpRequestTest.js", "RepoSlugTest.js"]
-  let skipWin = false
   if (!isEmptyOrSpaces(testFiles)) {
     args.push(...testFiles.split(",").map(it => `${it.trim()}.js`))
     if (process.platform === "linux") {
@@ -84,12 +83,10 @@ async function runTests() {
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0) {
-      skipWin = true
       args.push("debTest", "fpmTest", "linuxArchiveTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
       args.push("nsisUpdaterTest")
     }
     else if (circleNodeIndex === 2) {
-      skipWin = true
       args.push("linuxPackagerTest", "snapTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
     }
     else {
@@ -99,7 +96,6 @@ async function runTests() {
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
 
-  process.env.SKIP_WIN = skipWin
   process.env.TEST_DIR = TEST_DIR
 
   const rootDir = path.join(__dirname, "..", "..", "..")

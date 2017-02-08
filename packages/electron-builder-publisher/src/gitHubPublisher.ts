@@ -42,7 +42,7 @@ export class GitHubPublisher extends HttpPublisher {
   }
 
   constructor(context: PublishContext, private readonly info: GithubOptions, private readonly version: string, private readonly options: PublishOptions = {}) {
-    super(context)
+    super(context, true)
 
     let token = info.token
     if (isEmptyOrSpaces(token)) {

@@ -104,10 +104,10 @@ export class PublishManager implements PublishContext {
         const publisher = this.getOrCreatePublisher(publishConfig, packager.info)
         if (publisher != null) {
           if (event.file == null) {
-            this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.artifactName!))
+            this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
           }
           else {
-            this.addTask(publisher.upload(event.file!, event.artifactName))
+            this.addTask(publisher.upload(event.file!, event.safeArtifactName))
           }
         }
       }
@@ -246,7 +246,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
             path: githubArtifactName,
             sha2: sha2,
           })),
-          artifactName: `${channel}.yml`,
+          safeArtifactName: `${channel}.yml`,
           packager: packager,
           target: null,
           publishConfig: githubPublishConfig,
@@ -310,7 +310,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
     publishers = targetSpecificOptions.publish
     // if explicitly set to null - do not publish
     if (publishers === null) {
-      return null
+      return BluebirdPromise.resolve(null)
     }
   }
 
@@ -318,14 +318,14 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
   if (publishers == null) {
     publishers = packager.platformSpecificBuildOptions.publish
     if (publishers === null) {
-      return null
+      return BluebirdPromise.resolve(null)
     }
   }
 
   if (publishers == null) {
     publishers = packager.config.publish
     if (publishers === null) {
-      return null
+      return BluebirdPromise.resolve(null)
     }
 
     if (publishers == null) {

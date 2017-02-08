@@ -145,6 +145,13 @@ export interface NsisOptions {
 
   // defaults to false
   readonly useZip?: boolean
+
+  /*
+  The artifact file name pattern. Defaults to `${productName} Setup ${version}.${ext}`. `${name}`, `${productName}`, `${version}`, `${ext}`, `${arch}`, `${os}` (expanded to `mac`, `linux` or `win` according to current platform) macro are supported.
+
+  If no `arch`, macro will be removed from your pattern with leading space, `-` or `_` (so, you don't need to worry and can reuse pattern).
+   */
+  readonly artifactName?: string | null
 }
 
 /*
