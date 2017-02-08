@@ -24,9 +24,12 @@ For example, to change icon location for DMG:
 As you can see, you need to customize MacOS options only if you want to provide custom `x, y`.
 Don't customize paths to background and icon, — just follow conventions.
 
+Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
+
 <!-- do not edit. start of generated block -->
 * [Configuration Options](#Config)
   * [appx](#AppXOptions)
+  * [deb Debian Package Specific Options](#DebOptions)
   * [directories](#MetadataDirectories)
   * [dmg macOS DMG Options](#DmgOptions)
   * [fileAssociations File Associations](#FileAssociation)
@@ -80,6 +83,14 @@ Please see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/
 | publisherDisplayName | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
 | identityName | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
 
+<a name="DebOptions"></a>
+### `deb` Debian Package Specific Options
+| Name | Description
+| --- | ---
+| synopsis | <a name="DebOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+| compression | <a name="DebOptions-compression"></a>The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
+| priority | <a name="DebOptions-priority"></a>The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
+
 <a name="MetadataDirectories"></a>
 ### `directories`
 | Name | Description
@@ -126,11 +137,9 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | packageCategory | <a name="LinuxBuildOptions-packageCategory"></a>The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
 | description | <a name="LinuxBuildOptions-description"></a>As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
 | target | <a name="LinuxBuildOptions-target"></a><p>Target package type: list of <code>AppImage</code>, <code>snap</code>, <code>deb</code>, <code>rpm</code>, <code>freebsd</code>, <code>pacman</code>, <code>p5p</code>, <code>apk</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>AppImage</code>.</p> <p>The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.</p>
-| synopsis | <a name="LinuxBuildOptions-synopsis"></a>*deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
 | maintainer | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author).
 | vendor | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author).
 | desktop | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
-| compression | <a name="LinuxBuildOptions-compression"></a>*deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
 | depends | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
 | executableName | <a name="LinuxBuildOptions-executableName"></a><p>The executable name. Defaults to <code>productName</code>.</p> <p>Cannot be specified per target, allowed only in the <code>linux</code>.</p>
 | icon | <a name="LinuxBuildOptions-icon"></a><p>The path to icon set directory, relative to <code>build</code> (build resources directory). The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.</p>

@@ -11,6 +11,7 @@ import { LinuxPackager } from "../linuxPackager"
 import { log, warn } from "electron-builder-util/out/log"
 import { Target, Arch } from "electron-builder-core"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { DebOptions } from "../options/linuxOptions"
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
   BluebirdPromise.resolve("fpm") : downloadFpm()
@@ -118,6 +119,7 @@ export default class FpmTarget extends Target {
 
     if (target === "deb") {
       args.push("--deb-compression", options.compression || (packager.config.compression === "store" ? "gz" : "xz"))
+      use((<DebOptions>options).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
       // args.push("--rpm-compression", options.compression || (this.config.compression === "store" ? "none" : "xz"))

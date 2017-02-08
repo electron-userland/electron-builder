@@ -27,11 +27,6 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly target?: Array<string> | null
 
   /*
-   *deb-only.* The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-   */
-  readonly synopsis?: string | null
-
-  /*
    The maintainer. Defaults to [author](#AppMetadata-author).
    */
   readonly maintainer?: string | null
@@ -53,11 +48,6 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly afterRemove?: string | null
 
   /*
-  *deb-only.* The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
-   */
-  readonly compression?: string | null
-
-  /*
    Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
    */
   readonly depends?: string[] | null
@@ -74,6 +64,26 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
+}
+
+/*
+ ### `deb` Debian Package Specific Options
+ */
+export interface DebOptions {
+  /*
+  The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+   */
+  readonly synopsis?: string | null
+
+  /*
+  The compression type, one of `gz`, `bzip2`, `xz`. Defaults to `xz`.
+   */
+  readonly compression?: string | null
+
+  /*
+  The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
+   */
+  readonly priority?: string | null
 }
 
 /*
