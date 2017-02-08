@@ -15,6 +15,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * [Two package.json structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases, Amazon S3 and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
+* Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 
 | Question | Answer |
 |--------|-------|
