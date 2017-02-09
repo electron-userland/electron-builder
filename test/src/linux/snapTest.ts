@@ -46,6 +46,7 @@ test("default stagePackages", async () => {
         name: "sep",
       },
       effectiveOptionComputed: async (snap) => {
+        delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         return true
       }

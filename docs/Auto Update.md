@@ -29,7 +29,7 @@ Simplified auto-update is not supported for Squirrel.Windows.
     }
     ```
 
-Currently, [generic](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GenericServerOptions) (any HTTPS web server), [github](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GithubOptions) and [bintray](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#BintrayOptions) are supported.
+Currently, [generic](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GenericServerOptions) (any HTTP(S) web server), [github](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GithubOptions) and [bintray](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#BintrayOptions) are supported.
 `latest.yml` (or `latest-mac.json` for macOS) will be generated in addition to installer for `generic` and `github` and must be uploaded also (in short: only `bintray` doesn't use `latest.yml` and this file must be not uploaded on Bintray).
 
 **NOTICE**: Bintray provider doesn't support [macOS auto-update](https://github.com/electron/electron/blob/master/docs/api/auto-updater.md#macos) currently. If need, please file issue.

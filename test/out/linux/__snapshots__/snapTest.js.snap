@@ -28,7 +28,6 @@ Object {
         "desktop-glib-only",
       ],
       "plugin": "dump",
-      "source": "/out/linux-unpacked",
       "stage-packages": Array [
         "libnotify4",
         "libappindicator1",
@@ -78,7 +77,6 @@ Object {
         "desktop-glib-only",
       ],
       "plugin": "dump",
-      "source": "/out/linux-unpacked",
       "stage-packages": Array [
         "libnotify4",
         "libappindicator1",
@@ -129,7 +127,6 @@ Object {
         "desktop-glib-only",
       ],
       "plugin": "dump",
-      "source": "/out/linux-unpacked",
       "stage-packages": Array [
         "custom",
         "libnotify4",
@@ -181,7 +178,6 @@ Object {
         "desktop-glib-only",
       ],
       "plugin": "dump",
-      "source": "/out/linux-unpacked",
       "stage-packages": Array [
         "foo1",
         "libnotify4",
