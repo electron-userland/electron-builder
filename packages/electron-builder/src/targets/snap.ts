@@ -61,9 +61,7 @@ export default class SnapTarget extends Target {
     snap.apps = {
       [snap.name]: {
         command: `desktop-launch $SNAP/${packager.executableName}`,
-        plugs: [
-          "home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl",
-        ]
+        plugs: [replaceDefault(options.plugs, ["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"])]
       }
     }
 
@@ -81,10 +79,12 @@ export default class SnapTarget extends Target {
 
     // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
     const isUseDocker = process.platform !== "linux"
+
+    const defaultStagePackages = (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"])
     snap.parts = {
       app: {
         plugin: "dump",
-        "stage-packages": options.stagePackages || (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2"]),
+        "stage-packages": replaceDefault(options.stagePackages, defaultStagePackages),
         source: isUseDocker ? `/out/${path.basename(appOutDir)}` : appOutDir,
         after: isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
       }
@@ -95,6 +95,10 @@ export default class SnapTarget extends Target {
         plugin: "dump",
         source: isUseDocker ? `/out/${path.basename(snapDir)}/${path.basename(extraSnapSourceDir)}` : extraSnapSourceDir
       }
+    }
+
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed(snap)) {
+      return
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
@@ -123,4 +127,21 @@ export default class SnapTarget extends Target {
     }
     packager.dispatchArtifactCreated(resultFile, this)
   }
+}
+
+function replaceDefault(inList: Array<string> | n, defaultList: Array<string>): Array<string> {
+  if (inList == null) {
+    return defaultList
+  }
+
+  const index = inList.indexOf("default")
+  if (index >= 0) {
+    let list = inList.slice(0, index)
+    list.push(...defaultList)
+    if (index != (inList.length - 1)) {
+      list.push(...inList.slice(index + 1))
+    }
+    inList = list
+  }
+  return inList
 }

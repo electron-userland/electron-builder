@@ -1,7 +1,7 @@
 import { Publisher, PublishContext } from "electron-builder-publisher"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { S3 } from "aws-sdk"
-import { createReadStream, stat } from "fs-extra-p"
+import { stat } from "fs-extra-p"
 import mime from "mime"
 import BluebirdPromise from "bluebird-lst-c"
 import { debug, isEmptyOrSpaces } from "electron-builder-util"
@@ -30,13 +30,9 @@ export default class S3Publisher extends Publisher {
     const fileName = basename(file)
     const fileStat = await stat(file)
     return this.context.cancellationToken.trackPromise(new BluebirdPromise((resolve, reject, onCancel) => {
-      //noinspection JSUnusedLocalSymbols
-      const fileStream = createReadStream(file)
-      fileStream.on("error", reject)
-
       const upload = this.s3.upload({
         Bucket: this.info.bucket!,
-        Key: fileName,
+        Key: (this.info.path == null ? "" : `${this.info.path}/`) + fileName,
         ACL: this.info.acl || "public-read",
         Body: this.createReadStreamAndProgressBar(file, fileStat, this.createProgressBar(fileName, fileStat), reject),
         ContentLength: fileStat.size,

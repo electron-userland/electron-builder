@@ -93,35 +93,45 @@ export interface SnapOptions extends LinuxBuildOptions {
   /*
   The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
    */
-  confinement?: "devmode" | "strict" | null
+  readonly confinement?: "devmode" | "strict" | null
 
   /*
   The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
    */
-  summary?: string | null
+  readonly summary?: string | null
 
   /*
   The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).
   Defaults to `stable`.
    */
-  grade?: "devel" | "stable" | null
+  readonly grade?: "devel" | "stable" | null
 
   /*
   The list of features that must be supported by the core in order for this snap to install.
    */
-  assumes?: Array<string> | null
+  readonly assumes?: Array<string> | null
 
   /*
   The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
-  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2"]`.
+  Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]`.
+
+  If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
    */
-  stagePackages?: Array<string> | null
+  readonly stagePackages?: Array<string> | null
+
+  /*
+  The list of [plugs](https://snapcraft.io/docs/reference/interfaces).
+  Defaults to `["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
+
+  If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
+   */
+  readonly plugs?: Array<string> | null
 
   /*
   Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/).
   Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
    */
-  ubuntuAppPlatformContent?: string | null
+  readonly ubuntuAppPlatformContent?: string | null
 }
 
 /*
@@ -131,5 +141,5 @@ export interface AppImageOptions extends LinuxBuildOptions {
   /*
   Whether to include required system libraries (`gconf2`, `libappindicator1`). Defaults to `false`.
    */
-  includeRequiredLib?: boolean | null
+  readonly includeRequiredLib?: boolean | null
 }

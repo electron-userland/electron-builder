@@ -66,10 +66,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
  */
 export interface PkgOptions {
   /*
-  The scripts directory, relative to `build` (build resources directory). Defaults to `build/pkg-scripts`. [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html)
+  The scripts directory, relative to `build` (build resources directory). Defaults to `build/pkg-scripts`.
+  See [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).
   The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter.
 
-  Scripts are required to be executable (`chmod +x file`). It is not checked and corrected by electron-builder.
+  Scripts are required to be executable (`chmod +x file`).
    */
   readonly scripts?: string | null
 
