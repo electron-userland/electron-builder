@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst-c"
 import { createHash } from "crypto"
 import { Arch, Platform } from "electron-builder-core"
-import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo, s3Url } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -172,7 +172,7 @@ export class PublishManager implements PublishContext {
   }
 }
 
-async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null): Promise<Array<PublishConfiguration> | null> {
   if (publishConfigs === null) {
     return null
   }
@@ -281,19 +281,30 @@ export function createPublisher(context: PublishContext, version: string, publis
   return null
 }
 
-function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string, version: string, macros: Macros) {
+export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, version: string, macros: Macros) {
   if (publishConfig.provider === "generic") {
-    const baseUrl = url.parse(expandPattern((<GenericServerOptions>publishConfig).url, macros))
+    const baseUrlString = expandPattern((<GenericServerOptions>publishConfig).url, macros)
+    if (fileName == null) {
+      return baseUrlString
+    }
+
+    const baseUrl = url.parse(baseUrlString)
     return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))}))
   }
-  else if (publishConfig.provider === "s3") {
-    const bucket = (<S3Options>publishConfig).bucket
-    return `https://s3.amazonaws.com/${bucket}/${fileName}`
+
+  let baseUrl
+  if (publishConfig.provider === "s3") {
+    baseUrl = s3Url((<S3Options>publishConfig))
   }
   else {
     const gh = <GithubOptions>publishConfig
-    return `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}/${encodeURI(fileName)}`
+    baseUrl = `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}`
   }
+
+  if (fileName == null) {
+    return baseUrl
+  }
+  return `${baseUrl}/${encodeURI(fileName)}`
 }
 
 function expandPattern(pattern: string, macros: Macros): string {

@@ -226,3 +226,14 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows(/Please set p
     ],
   },
 }))
+
+test.ifNotCiMac("web installer", app({
+  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
+  config: {
+    publish: {
+      provider: "s3",
+      bucket: "develar",
+      path: "test",
+    }
+  }
+}))

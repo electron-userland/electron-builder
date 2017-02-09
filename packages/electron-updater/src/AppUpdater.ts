@@ -5,7 +5,7 @@ import { RequestHeaders, executorHolder } from "electron-builder-http"
 import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import BluebirdPromise from "bluebird-lst-c"
-import { BintrayOptions, PublishConfiguration, GithubOptions, S3Options, GenericServerOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, PublishConfiguration, GithubOptions, S3Options, GenericServerOptions, VersionInfo, s3Url } from "electron-builder-http/out/publishOptions"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import { GenericProvider } from "./GenericProvider"
@@ -239,7 +239,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 }
 
-function createClient(data: string | PublishConfiguration | BintrayOptions | GithubOptions | S3Options) {
+function createClient(data: string | PublishConfiguration) {
   if (typeof data === "string") {
     throw new Error("Please pass PublishConfiguration object")
   }
@@ -248,15 +248,22 @@ function createClient(data: string | PublishConfiguration | BintrayOptions | Git
   switch (provider) {
     case "github":
       return new GitHubProvider(<GithubOptions>data)
-    case "s3":
-      return new GenericProvider(<GenericServerOptions>{
-        url: `https://s3.amazonaws.com/${(<S3Options>data).bucket || ""}`,
-        channel: (<S3Options>data).channel || ""
+
+    case "s3": {
+      const s3 = <S3Options>data
+      return new GenericProvider({
+        provider: "generic",
+        url: s3Url(s3),
+        channel: s3.channel || ""
       })
+    }
+
     case "generic":
       return new GenericProvider(<GenericServerOptions>data)
+
     case "bintray":
       return new BintrayProvider(<BintrayOptions>data)
+
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }

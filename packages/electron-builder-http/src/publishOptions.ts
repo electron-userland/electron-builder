@@ -53,7 +53,12 @@ export interface S3Options extends PublishConfiguration {
   /*
   The bucket name.
    */
-  bucket?: string
+  bucket: string
+
+  /*
+  The directory path. Defaults to `/`.
+   */
+  path?: string | null
 
   /**
   The channel. Defaults to `latest`.
@@ -71,6 +76,14 @@ export interface S3Options extends PublishConfiguration {
   storageClass?: "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | null
 
   secret?: string | null
+}
+
+export function s3Url(options: S3Options) {
+  let url = `https://s3.amazonaws.com/${options.bucket}`
+  if (options.path != null) {
+    url += `/${options.path}`
+  }
+  return url
 }
 
 export interface VersionInfo {

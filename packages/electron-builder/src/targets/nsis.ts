@@ -8,14 +8,15 @@ import { normalizeExt } from "../platformPackager"
 import { archive } from "./archive"
 import { subTask, log, warn } from "electron-builder-util/out/log"
 import { unlink, readFile } from "fs-extra-p"
-import { NsisOptions } from "../options/winOptions"
-import { Target, Arch } from "electron-builder-core"
+import { NsisOptions, NsisWebOptions } from "../options/winOptions"
+import { Target, Arch, Platform } from "electron-builder-core"
 import sanitizeFileName from "sanitize-filename"
 import { copyFile } from "electron-builder-util/out/fs"
+import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 
-const NSIS_VERSION = "3.0.1.5"
+const NSIS_VERSION = "3.0.1.6"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "cf996b4209f302c1f6b379a6b2090ad0d51a360daf24d1828eeceafd1617a976"
+const NSIS_SHA2 = "4bd85f3a54311fd55814ec87fbcb0ab9c64b3dea4179c891e7748df8748f87c8"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -25,14 +26,20 @@ const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
 export default class NsisTarget extends Target {
-  private readonly options: NsisOptions = this.packager.config.nsis || Object.create(null)
+  private readonly options: NsisOptions
 
   private archs: Map<Arch, string> = new Map()
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  constructor(private packager: WinPackager, private outDir: string) {
-    super("nsis")
+  constructor(private packager: WinPackager, private outDir: string, targetName: string) {
+    super(targetName)
+
+    let options = this.packager.config.nsis || Object.create(null)
+    if (targetName !== "nsis") {
+      options = Object.assign(options, (<any>this.packager.config)[targetName])
+    }
+    this.options = options
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
@@ -106,9 +113,117 @@ export default class NsisTarget extends Target {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
         const file = await this.doBuild(this.archs.get(arch)!, arch)
         defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
-        filesToDelete.push(file)
+        defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
+
+        if (this.isWebInstaller) {
+          packager.dispatchArtifactCreated(file, this)
+        }
+        else {
+          filesToDelete.push(file)
+        }
       })
     }
+
+    await this.configureDefines(oneClick, defines)
+
+    if (this.isWebInstaller) {
+      let appPackageUrl = (<NsisWebOptions>options).appPackageUrl
+      if (appPackageUrl == null) {
+        const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, false))
+        if (publishConfigs == null || publishConfigs.length === 0) {
+          throw new Error("Cannot compute app package download URL")
+        }
+
+        computeDownloadUrl(publishConfigs[0], null, packager.appInfo.version, {
+          os: Platform.WINDOWS.buildConfigurationKey,
+          arch: Arch[Arch.x64]
+        })
+
+        defines.APP_PACKAGE_URL_IS_INCOMLETE = null
+      }
+
+      defines.APP_PACKAGE_URL = appPackageUrl
+    }
+
+    const commands: any = {
+      OutFile: `"${installerPath}"`,
+      VIProductVersion: appInfo.versionInWeirdWindowsForm,
+      VIAddVersionKey: this.computeVersionKey(),
+      Unicode: true,
+    }
+
+    if (packager.config.compression === "store") {
+      commands.SetCompress = "off"
+    }
+    else {
+      commands.SetCompressor = "lzma"
+      if (!this.isWebInstaller) {
+        defines.COMPRESS = "auto"
+      }
+    }
+
+    debug(defines)
+    debug(commands)
+
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([defines, commands])) {
+      return
+    }
+
+    await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, await this.computeScript(defines, commands, installerPath)))
+    await packager.sign(installerPath)
+
+    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-Setup-${version}.exe`)
+  }
+
+  private get isWebInstaller(): boolean {
+    return this.name === "nsis-web"
+  }
+
+  private async computeScript(defines: any, commands: any, installerPath: string) {
+    const packager = this.packager
+    const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
+    const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
+
+    if (customScriptPath != null) {
+      log("Custom NSIS script is used - uninstaller is not signed by electron-builder")
+      return script
+    }
+
+    const uninstallerPath = await
+    packager.getTempFile("uninstaller.exe")
+    const isWin = process.platform === "win32"
+    defines.BUILD_UNINSTALLER = null
+    defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
+    await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
+    await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
+    await packager.sign(uninstallerPath)
+
+    delete defines.BUILD_UNINSTALLER
+    // platform-specific path, not wine
+    defines.UNINSTALLER_OUT_FILE = uninstallerPath
+    return script
+  }
+
+  private computeVersionKey() {
+    // Error: invalid VIProductVersion format, should be X.X.X.X
+    // so, we must strip beta
+    const localeId = this.options.language || "1033"
+    const appInfo = this.packager.appInfo
+    const versionKey = [
+      `/LANG=${localeId} ProductName "${appInfo.productName}"`,
+      `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
+      `/LANG=${localeId} CompanyName "${appInfo.companyName}"`,
+      `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
+      `/LANG=${localeId} FileDescription "${appInfo.description}"`,
+      `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
+    ]
+    use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
+    return versionKey
+  }
+
+  private async configureDefines(oneClick: boolean, defines: any) {
+    const packager = this.packager
+    const options = this.options
 
     const installerHeader = oneClick ? null : await packager.getResource(options.installerHeader, "installerHeader.bmp")
     if (installerHeader != null) {
@@ -146,87 +261,26 @@ export default class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
-    // Error: invalid VIProductVersion format, should be X.X.X.X
-    // so, we must strip beta
-    const localeId = options.language || "1033"
-    const versionKey = [
-      `/LANG=${localeId} ProductName "${appInfo.productName}"`,
-      `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
-      `/LANG=${localeId} CompanyName "${appInfo.companyName}"`,
-      `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
-      `/LANG=${localeId} FileDescription "${appInfo.description}"`,
-      `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
-    ]
-    use(packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
+    if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
+      if (options.useZip) {
+        defines.ZIP_COMPRESSION = null
+      }
 
-    const commands: any = {
-      OutFile: `"${installerPath}"`,
-      VIProductVersion: appInfo.versionInWeirdWindowsForm,
-      VIAddVersionKey: versionKey,
-      Unicode: true,
+      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
     }
-
-    if (packager.config.compression === "store") {
-      commands.SetCompress = "off"
-    }
-    else {
-      commands.SetCompressor = "lzma"
-      defines.COMPRESS = "auto"
-    }
-
-    if (this.options.useZip) {
-      defines.ZIP_COMPRESSION = null
-    }
-
-    defines.COMPRESSION_METHOD = this.options.useZip ? "zip" : "7z"
 
     if (oneClick) {
       defines.ONE_CLICK = null
     }
 
     if (options.menuCategory != null) {
-      const menu = sanitizeFileName(options.menuCategory === true ? appInfo.companyName : <string>options.menuCategory)
+      const menu = sanitizeFileName(options.menuCategory === true ? packager.appInfo.companyName : <string>options.menuCategory)
       if (!isEmptyOrSpaces(menu)) {
         defines.MENU_FILENAME = menu
       }
     }
 
-    debug(defines)
-    debug(commands)
-
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([defines, commands])) {
-      return
-    }
-
-    const licenseFile = await packager.getResource(options.license, "license.rtf", "license.txt")
-    if (licenseFile != null) {
-      defines.LICENSE_FILE = licenseFile
-    }
-
-    const customScriptPath = await packager.getResource(options.script, "installer.nsi")
-    const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
-
-    if (customScriptPath == null) {
-      const uninstallerPath = await packager.getTempFile("uninstaller.exe")
-      const isWin = process.platform === "win32"
-      defines.BUILD_UNINSTALLER = null
-      defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
-      await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
-      await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
-      await packager.sign(uninstallerPath)
-
-      delete defines.BUILD_UNINSTALLER
-      // platform-specific path, not wine
-      defines.UNINSTALLER_OUT_FILE = uninstallerPath
-    }
-    else {
-      log("Custom NSIS script is used - uninstaller is not signed by electron-builder")
-    }
-
-    await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, script))
-    await packager.sign(installerPath)
-
-    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-Setup-${version}.exe`)
+    use(await packager.getResource(options.license, "license.rtf", "license.txt"), it => defines.LICENSE_FILE = it)
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {

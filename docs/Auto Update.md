@@ -69,7 +69,7 @@ Emitted when checking if an update has started.
 
 #### Event: `update-available`
 
-* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) (for generic and github providers) | [VersionInfo](#versioninfo) (for Bintray provider)
 
 Emitted when there is an available update. The update is downloaded automatically if `autoDownload` is `true`.
 
@@ -77,10 +77,10 @@ Emitted when there is an available update. The update is downloaded automaticall
 
 Emitted when there is no available update.
 
-* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) (for generic and github providers) | [VersionInfo](#versioninfo) (for Bintray provider)
 
 #### Event: `download-progress`
-* `progressObj` - it's object with properties:
+* `progress` ProgressInfo
   * `bytesPerSecond`
   * `percent`
   * `total`
@@ -90,7 +90,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 #### Event: `update-downloaded`
 
-* `info` [UpdateInfo](#updateinfo) for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
+* `info` [UpdateInfo](#updateinfo) — for generic and github providers. [VersionInfo](#versioninfo) for Bintray provider.
 
 Emitted when an update has been downloaded.
 
@@ -100,7 +100,7 @@ The `autoUpdater` object has the following methods:
 
 #### `autoUpdater.setFeedURL(options)`
 
-* `options` GenericServerOptions | BintrayOptions | GithubOptions | string — if you want to override configuration in the `app-update.yml`.
+* `options` GenericServerOptions | S3Options | BintrayOptions | GithubOptions | string — if you want to override configuration in the `app-update.yml`.
 
 Sets the `options`. If value is `string`, `GenericServerOptions` will be set with value as `url`.
 
@@ -118,13 +118,13 @@ This is different from the normal quit event sequence.
 
 ### VersionInfo
 
-* `version` The version.
+* `version` string — The version.
 
 ### UpdateInfo
 
 Extends [VersionInfo](#versioninfo).
 
-* `releaseDate` The release date.
-* `releaseName?` The release name.
-* `releaseNotes?` The release notes.
+* `releaseDate` string — The release date.
+* `releaseName` string (optional) — The release name.
+* `releaseNotes` string (optional) — The release notes.
 

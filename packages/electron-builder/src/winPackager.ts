@@ -78,6 +78,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
         switch (name) {
           case "nsis":
+          case "nsis-web":
             return require("./targets/nsis").default
 
           case "squirrel":
@@ -85,7 +86,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
               return require("electron-builder-squirrel-windows").default
             }
             catch (e) {
-              throw new Error(`Since electron-builder 11, module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
+              throw new Error(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
             }
 
           case "appx":
@@ -96,7 +97,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         }
       })()
 
-      mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new targetClass(this, outDir))
+      mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (<any>targetClass)(this, outDir, name))
     }
   }
 
@@ -129,8 +130,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   async sign(file: string) {
     const cscInfo = await this.cscInfo
     if (cscInfo == null) {
-      const forceCodeSigningPlatform = this.platformSpecificBuildOptions.forceCodeSigning
-      if (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) {
+      if (this.forceCodeSigning) {
         throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
       }
 

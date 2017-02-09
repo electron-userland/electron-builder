@@ -15,10 +15,9 @@ test("only zip", createMacTargetTest(["zip"]));
 test("tar.gz", createMacTargetTest(["tar.gz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
-
 it("pkg", createMacTargetTest(["pkg"]))
 
-it.ifMac("pkg scripts", app({
+test.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),
 }, {
   useTempDir: true,

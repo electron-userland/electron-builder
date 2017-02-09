@@ -154,6 +154,15 @@ export interface NsisOptions {
   readonly artifactName?: string | null
 }
 
+export interface NsisWebOptions extends NsisOptions {
+  /*
+  The application package download URL. Optional — by default computed using publish configuration.
+
+  URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).
+   */
+  readonly appPackageUrl?: string | null
+}
+
 /*
  ### `squirrelWindows`
 

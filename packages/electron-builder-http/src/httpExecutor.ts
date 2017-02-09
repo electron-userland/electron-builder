@@ -4,7 +4,7 @@ import { createWriteStream } from "fs-extra-p"
 import { RequestOptions } from "http"
 import { parse as parseUrl } from "url"
 import _debug from "debug"
-import { ProgressCallbackTransform } from "./ProgressCallbackTransform"
+import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 import { safeLoad } from "js-yaml"
 import { EventEmitter } from "events"
 import { Socket } from "net"
@@ -30,7 +30,7 @@ export interface DownloadOptions {
 
   readonly cancellationToken: CancellationToken
 
-  onProgress?(progress: any): void
+  onProgress?(progress: ProgressInfo): void
 }
 
 export class HttpExecutorHolder {
