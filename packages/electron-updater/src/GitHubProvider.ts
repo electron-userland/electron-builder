@@ -1,5 +1,5 @@
 import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurrentPlatform } from "./api"
-import { VersionInfo, GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
+import { VersionInfo, GithubOptions, UpdateInfo, githubUrl } from "electron-builder-http/out/publishOptions"
 import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
@@ -15,11 +15,13 @@ export class GitHubProvider extends Provider<VersionInfo> {
     let version
 
     const cancellationToken = new CancellationToken()
-
+    const host = this.options.host || "github.com"
+    const protocol = `${this.options.protocol || "https"}:`
     try {
       // do not use API to avoid limit
       const releaseInfo = (await request<GithubReleaseInfo>({
-        hostname: "github.com",
+        protocol: protocol,
+        host: host,
         path: `${basePath}/latest`,
         headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
       }, cancellationToken))
@@ -33,7 +35,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const channelFile = getChannelFilename(getDefaultChannelName())
     const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
     try {
-      result = await request<UpdateInfo>({hostname: "github.com", path: channelFileUrlPath, headers: this.requestHeaders || undefined}, cancellationToken)
+      result = await request<UpdateInfo>({protocol: protocol, host: host, path: channelFileUrlPath, headers: this.requestHeaders || undefined}, cancellationToken)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -44,7 +46,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
 
     validateUpdateInfo(result)
     if (getCurrentPlatform() === "darwin") {
-      result.releaseJsonUrl = `https://github.com${channelFileUrlPath}`
+      result.releaseJsonUrl = `${githubUrl(this.options)}/${channelFileUrlPath}`
     }
     return result
   }

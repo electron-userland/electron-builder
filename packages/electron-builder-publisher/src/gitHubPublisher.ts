@@ -188,8 +188,8 @@ export class GitHubPublisher extends HttpPublisher {
 
   private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
     return httpExecutor.request<T>(configureRequestOptions({
-      hostname: "api.github.com",
-      path: path,
+      host: this.info.host || "api.github.com",
+      path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3/${path}` : path,
       headers: {Accept: "application/vnd.github.v3+json"}
     }, token, method), this.context.cancellationToken, data)
   }

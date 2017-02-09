@@ -113,6 +113,22 @@ export interface GithubOptions extends PublishConfiguration {
   Whether to use `v`-prefixed tag name. Defaults to `true`.
    */
   vPrefixedTagName?: boolean
+
+  /*
+  The host (including the port if need). Defaults to `github.com`.
+   */
+  host?: string | null
+
+  /*
+  The protocol, one of `https` or `http`. Defaults to `https`.
+
+  GitHub Publisher supports only `https`.
+   */
+  protocol?: string | null
+}
+
+export function githubUrl(options: GithubOptions) {
+  return `${options.protocol || "https"}://${options.host || "github.com"}`
 }
 
 /*

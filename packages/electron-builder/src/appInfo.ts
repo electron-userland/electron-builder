@@ -89,6 +89,6 @@ export class AppInfo {
     }
 
     const info = await this.info.repositoryInfo
-    return info == null ? null : `https://github.com/${info.user}/${info.project}`
+    return info == null || info.type !== "github"  ? null : `https://${info.domain}/${info.user}/${info.project}`
   }
 }

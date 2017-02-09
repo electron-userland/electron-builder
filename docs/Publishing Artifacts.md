@@ -110,6 +110,8 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | --- | ---
 | repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
 | vPrefixedTagName | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. Defaults to `true`.
+| host | <a name="GithubOptions-host"></a>The host (including the port if need). Defaults to `github.com`.
+| protocol | <a name="GithubOptions-protocol"></a><p>The protocol, one of <code>https</code> or <code>http</code>. Defaults to <code>https</code>.</p> <p>GitHub Publisher supports only <code>https</code>.</p>
 
 <a name="S3Options"></a>
 ### `publish` S3

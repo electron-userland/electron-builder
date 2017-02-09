@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst-c"
 import { createHash } from "crypto"
 import { Arch, Platform } from "electron-builder-core"
-import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo, s3Url } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo, s3Url, githubUrl } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -298,7 +298,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   }
   else {
     const gh = <GithubOptions>publishConfig
-    baseUrl = `https://github.com${`/${gh.owner}/${gh.repo}/releases`}/download/v${version}`
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/v${version}`
   }
 
   if (fileName == null) {
