@@ -37,6 +37,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
   * [mac macOS Specific Options](#MacOptions)
   * [mas MAS (Mac Application Store) Specific Options](#MasBuildOptions)
   * [nsis](#NsisOptions)
+  * [pkg macOS Product Archive Options](#PkgOptions)
   * [protocols URL Protocol Schemes](#Protocol)
   * [squirrelWindows](#SquirrelWindowsOptions)
   * [win Windows Specific Options](#WinBuildOptions)
@@ -188,6 +189,13 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a>Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 | artifactName | <a name="NsisOptions-artifactName"></a><p>The artifact file name pattern. Defaults to <code>${productName} Setup ${version}.${ext}</code>. <code>${name}</code>, <code>${productName}</code>, <code>${version}</code>, <code>${ext}</code>, <code>${arch}</code>, <code>${os}</code> (expanded to <code>mac</code>, <code>linux</code> or <code>win</code> according to current platform) macro are supported.</p> <p>If no <code>arch</code>, macro will be removed from your pattern with leading space, <code>-</code> or <code>_</code> (so, you don’t need to worry and can reuse pattern).</p>
+
+<a name="PkgOptions"></a>
+### `pkg` macOS Product Archive Options
+| Name | Description
+| --- | ---
+| scripts | <a name="PkgOptions-scripts"></a><p>The scripts directory, relative to <code>build</code> (build resources directory). Defaults to <code>build/pkg-scripts</code>. [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html) The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter.</p> <p>Scripts are required to be executable (<code>chmod +x file</code>). It is not checked and corrected by electron-builder.</p>
+| installLocation | <a name="PkgOptions-installLocation"></a>The install location. Defaults to `/Applications`.
 
 <a name="Protocol"></a>
 ### `protocols` URL Protocol Schemes

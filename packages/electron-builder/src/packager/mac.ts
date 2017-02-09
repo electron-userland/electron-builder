@@ -7,11 +7,11 @@ import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "electron-builder-util/out/log"
 import { unlinkIfExists, copyFile } from "electron-builder-util/out/fs"
 
-function doRename (basePath: string, oldName: string, newName: string) {
+function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
-function moveHelpers (frameworksPath: string, appName: string) {
+function moveHelpers(frameworksPath: string, appName: string) {
   return BluebirdPromise.map([" Helper", " Helper EH", " Helper NP"], suffix => {
     const executableBasePath = path.join(frameworksPath, `Electron${suffix}.app`, "Contents", "MacOS")
     return doRename(executableBasePath, `Electron${suffix}`, appName + suffix)
@@ -19,7 +19,7 @@ function moveHelpers (frameworksPath: string, appName: string) {
   })
 }
 
-function filterCFBundleIdentifier(identifier: string) {
+export function filterCFBundleIdentifier(identifier: string) {
   // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.)
   // Apple documentation: https://developer.apple.com/library/mac/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")

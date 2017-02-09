@@ -6,3 +6,10 @@ Array [
   "TestApp-1.1.0-full.nupkg",
 ]
 `;
+
+exports[`test Squirrel.Windows 2`] = `
+Array [
+  "TestApp-1.1.0-win.zip",
+  "TestApp-Setup-1.1.0.exe",
+]
+`;

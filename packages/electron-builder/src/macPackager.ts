@@ -21,7 +21,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     super(info)
 
     if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
-      this.codeSigningInfo = BluebirdPromise.resolve({})
+      this.codeSigningInfo = BluebirdPromise.resolve(Object.create(null))
     }
     else {
       this.codeSigningInfo = createKeychain(info.tempDirManager, this.packagerOptions.cscLink!, this.getCscPassword(), this.packagerOptions.cscInstallerLink, this.packagerOptions.cscInstallerKeyPassword)
@@ -136,7 +136,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         const message = process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false" ?
           `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false` :
           `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
-        if (isMas || this.platformSpecificBuildOptions.forceCodeSigning) {
+        if (isMas || this.forceCodeSigning) {
           throw new Error(message)
         }
         else {
@@ -191,24 +191,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     if (masOptions != null) {
       const pkg = path.join(appOutDir, `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
-      await this.doFlat(appPath, pkg, await this.findInstallerIdentity(true, keychainName), keychainName)
+      const certType = "3rd Party Mac Developer Installer"
+      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
+      if (masInstallerIdentity == null) {
+        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+      }
+      await this.doFlat(appPath, pkg, masInstallerIdentity, keychainName)
       this.dispatchArtifactCreated(pkg, null, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
-    }
-  }
-
-  async findInstallerIdentity(isMas: boolean, keychainName: string | n): Promise<string> {
-    const targetSpecificOptions: MacOptions = (<any>this.config)[isMas ? "mas" : "pkg"] || this.platformSpecificBuildOptions
-    const name = isMas ? "3rd Party Mac Developer Installer" : "Developer ID Installer"
-    const installerName = await findIdentity(name, targetSpecificOptions.identity, keychainName)
-    if (installerName != null) {
-      return installerName
-    }
-
-    if (isMas) {
-      throw new Error(`Cannot find valid "${name}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
-    }
-    else {
-      throw new Error(`Cannot find valid "${name}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
   }
 
@@ -219,7 +208,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
   //noinspection JSMethodCanBeStatic
   protected async doFlat(appPath: string, outFile: string, identity: string, keychain: string | n): Promise<any> {
-    const args = prepareProductBuildArgs(appPath, identity, keychain)
+    const args = prepareProductBuildArgs(identity, keychain)
+    args.push("--component", appPath, "/Applications")
     args.push(outFile)
     return exec("productbuild", args)
   }

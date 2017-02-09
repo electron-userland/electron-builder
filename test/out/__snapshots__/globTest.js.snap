@@ -6,7 +6,7 @@ Object {
 
 exports[`test outside link 1`] = `
 Object {
-  "offset": "4877",
+  "offset": "4876",
   "size": 4,
 }
 `;

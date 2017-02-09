@@ -1,7 +1,7 @@
 import { Arch, Platform } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
-import { DmgOptions, MacOptions, MasBuildOptions } from "./options/macOptions"
+import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
+import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
 import { AppXOptions, NsisOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 
@@ -146,11 +146,12 @@ export interface Config extends PlatformSpecificBuildOptions {
 
   readonly win?: WinBuildOptions  | null
   readonly nsis?: NsisOptions  | null
+  readonly pkg?: PkgOptions  | null
   readonly squirrelWindows?: SquirrelWindowsOptions  | null
   readonly appx?: AppXOptions  | null
 
   readonly linux?: LinuxBuildOptions | null
-  readonly deb?: LinuxBuildOptions | null
+  readonly deb?: DebOptions | null
   readonly snap?: SnapOptions | null
 
   /*

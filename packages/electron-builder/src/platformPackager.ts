@@ -510,6 +510,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return null
   }
+
+  get forceCodeSigning(): boolean {
+    const forceCodeSigningPlatform = this.platformSpecificBuildOptions.forceCodeSigning
+    return (forceCodeSigningPlatform == null ? this.config.forceCodeSigning : forceCodeSigningPlatform) || false
+  }
 }
 
 // remove leading dot

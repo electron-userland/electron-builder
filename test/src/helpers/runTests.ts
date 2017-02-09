@@ -83,15 +83,19 @@ async function runTests() {
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
     const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
     if (circleNodeIndex === 0) {
-      args.push("debTest", "fpmTest", "linuxArchiveTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("debTest", "linuxArchiveTest")
       args.push("nsisUpdaterTest")
     }
+    else if (circleNodeIndex === 1) {
+      args.push("BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("mac.*")
+      args.push(...baseForLinuxTests)
+    }
     else if (circleNodeIndex === 2) {
-      args.push("linuxPackagerTest", "snapTest", "BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
+      args.push("snapTest", "fpmTest")
     }
     else {
-      args.push("windows.*", "mac.*")
-      args.push(...baseForLinuxTests)
+      args.push("windows.*")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

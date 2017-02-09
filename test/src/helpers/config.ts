@@ -10,4 +10,4 @@ docker: Error response from daemon: Mounts denied: o Docker.
       You can configure shared paths from Docker -> Preferences... -> File Sharing.
  */
 export const TEST_DIR = path.join(process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir(), `et-${createHash("md5").update(__dirname).digest("hex")}`)
-export const ELECTRON_VERSION = "1.4.12"
+export const ELECTRON_VERSION = "1.6.0"

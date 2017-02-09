@@ -159,7 +159,11 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 const fileCopier = new FileCopier()
 
 export function copyTestAsset(name: string, destination: string): Promise<void> {
-  return fileCopier.copy(path.join(__dirname, "..", "..", "fixtures", name), destination, undefined)
+  return fileCopier.copy(path.join(getFixtureDir(), name), destination, undefined)
+}
+
+export function getFixtureDir() {
+  return path.join(__dirname, "..", "..", "fixtures")
 }
 
 async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
@@ -203,7 +207,7 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
         await checkLinuxResult(outDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), arch, nameToTarget)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), nameToTarget)
       }
     }
   }
@@ -323,32 +327,22 @@ function getFileNames(list: Array<ArtifactCreated>): Array<string> {
   return list.map(it => path.basename(it.file))
 }
 
-async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
+async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
-  let squirrel = false
 
-  const artifactNames: Array<string> = []
-  const archSuffix = getArchSuffix(arch)
+  expect(getFileNames(artifacts).sort()).toMatchSnapshot()
+  expect(artifacts.map(it => it.safeArtifactName).filter(it => it != null).sort()).toMatchSnapshot()
+
+  let squirrel = false
   for (const target of nameToTarget.keys()) {
     if (target === "squirrel") {
       squirrel = true
-      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}${archSuffix}.exe`)
-    }
-    else if (target === "nsis") {
-      artifactNames.push(`${appInfo.name}-Setup-${appInfo.version}.exe`)
-    }
-    else {
-      artifactNames.push(`${appInfo.name}-${appInfo.version}${archSuffix}-win.${target}`)
+      break
     }
   }
-
-  expect(getFileNames(artifacts).sort()).toMatchSnapshot()
-
   if (!squirrel) {
     return
   }
-
-  assertThat(artifacts.map(it => it.safeArtifactName).filter(it => it != null)).containsAll(artifactNames)
 
   const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
   const unZipper = new DecompressZip(packageFile)
@@ -408,11 +402,16 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 
 async function getContents(path: string) {
   const result = await exec("dpkg", ["--contents", path])
-  return pathSorter(result
+  return pathSorter(parseFileList(result, true)
+    .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
+  )
+}
+
+export function parseFileList(data: string, fromDpkg: boolean): Array<string> {
+  return data
     .split("\n")
-    .map(it => it.length === 0 ? null : it.substring(it.indexOf(".") + 1))
-    .filter(it => it != null && !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
-    )
+    .map(it => it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : (it.startsWith("./") ? it.substring(2) : (it == "." ? null : it)))
+    .filter(it => it != null && it.length > 0)
 }
 
 export function packageJson(task: (data: any) => void, isApp = false) {

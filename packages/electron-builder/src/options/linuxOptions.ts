@@ -69,7 +69,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
 /*
  ### `deb` Debian Package Specific Options
  */
-export interface DebOptions {
+export interface DebOptions extends LinuxBuildOptions {
   /*
   The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
    */

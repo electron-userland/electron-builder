@@ -4,8 +4,20 @@ Array [
 ]
 `;
 
+exports[`test boring 2`] = `
+Array [
+  "TestApp-Setup-1.1.0.exe",
+]
+`;
+
 exports[`test boring, only perMachine 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`test boring, only perMachine 2`] = `
+Array [
+  "TestApp-Setup-1.1.0.exe",
 ]
 `;

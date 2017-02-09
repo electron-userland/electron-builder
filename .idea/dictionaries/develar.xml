@@ -149,9 +149,12 @@
       <w>passin</w>
       <w>perllib</w>
       <w>pkcs</w>
+      <w>pkgbuild</w>
+      <w>pkgutil</w>
       <w>postinstall</w>
       <w>powerrequired</w>
       <w>powershell</w>
+      <w>preinstall</w>
       <w>prerelease</w>
       <w>productbuild</w>
       <w>progexe</w>
