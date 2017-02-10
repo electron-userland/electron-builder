@@ -6,11 +6,11 @@ import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import isCi from "is-ci"
 import { WinBuildOptions } from "./options/winOptions"
 
-const TOOLS_VERSION = "1.6.0"
+const TOOLS_VERSION = "1.7.0"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "5a5e7de5087df96734a9bd96226aa40dbfaa87d44bb95e0fb4eee472e5efa583")
+  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "a34a60e74d02b81d0303e498f03c70ce0133f908b671f62ec32896db5cd0a716")
 }
 
 export interface SignOptions {
@@ -141,7 +141,7 @@ function getOutputPath(inputPath: string, hash: string) {
   return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
 }
 
-async function getToolPath(): Promise<string> {
+export async function getToolPath(): Promise<string> {
   if (process.env.USE_SYSTEM_SIGNCODE) {
     return "osslsigncode"
   }

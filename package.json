@@ -4,8 +4,8 @@
   "scripts": {
     "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-builder-publisher packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test",
     "lint": "node test/out/helpers/lint.js",
-    "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js check-deps",
-    "check-deps": "node ./test/out/helpers/checkDeps.js",
+    "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js lint-deps",
+    "lint-deps": "node ./test/out/helpers/checkDeps.js",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipFpm skipSw skipArtifactPublisher",
     "test-all": "node ./test/vendor/yarn.js pretest && node ./test/out/helpers/runTests.js",
@@ -16,7 +16,7 @@
     "docker-images": "docker/build.sh",
     "test-deps-mac": "brew install rpm dpkg mono lzip gnu-tar graphicsmagick xz && brew install wine --without-x11",
     "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util,electron-builder-core,electron-builder-publisher' -a",
-    "lerna-publish": "node test/out/helpers/setVersions.js p && lerna publish --skip-npm --skip-git && node test/out/helpers/setVersions.js",
+    "set-versions": "node test/out/helpers/setVersions.js",
     "npm-publish": "yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",

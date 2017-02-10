@@ -32,9 +32,14 @@ export default class AppXTarget extends Target {
       throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
     }
 
-    // todo grab publisher info from cert
-    if (this.options.publisher == null) {
-      throw new Error("Please specify appx.publisher")
+    let publisher = this.options.publisher
+    if (publisher == null) {
+      if (packager.computedPublisherName != null) {
+        publisher = packager.computedPublisherName[0]
+      }
+      if (publisher == null) {
+        throw new Error("Please specify appx.publisher")
+      }
     }
 
     const appInfo = packager.appInfo
@@ -56,7 +61,7 @@ export default class AppXTarget extends Target {
         return copy(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
       }),
       copyDir(appOutDir, path.join(preAppx, "app")),
-      this.writeManifest(templatePath, preAppx, safeName, arch)
+      this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
     ])
 
     const destination = path.join(this.outDir, packager.generateName("appx", arch, false))
@@ -70,13 +75,13 @@ export default class AppXTarget extends Target {
     packager.dispatchArtifactCreated(destination, this, packager.generateName("appx", arch, true))
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch) {
+  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
       .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
         switch (p1) {
           case "publisher":
-            return this.options.publisher!
+            return publisher
 
           case "publisherDisplayName":
             return this.options.publisherDisplayName || appInfo.companyName

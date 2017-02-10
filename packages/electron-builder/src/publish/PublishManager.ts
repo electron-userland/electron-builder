@@ -21,6 +21,7 @@ import { getCiTag, getResolvedPublishConfig } from "./publisher"
 import { Publisher, HttpPublisher, PublishOptions, PublishContext } from "electron-builder-publisher"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { MultiProgress } from "electron-builder-publisher/out/multiProgress"
+import { WinPackager } from "../winPackager"
 
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
@@ -77,6 +78,15 @@ export class PublishManager implements PublishContext {
       if ((<GenericServerOptions>publishConfig).url != null) {
         publishConfig = Object.assign({}, publishConfig, {url: expandPattern((<GenericServerOptions>publishConfig).url, {os: packager.platform.buildConfigurationKey, arch: Arch[Arch.x64]})})
       }
+
+      if (packager.platform === Platform.WINDOWS) {
+        let publisherName = (<WinPackager>packager).computedPublisherName
+        if (publisherName != null) {
+          // todo #1187
+          // publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+        }
+      }
+
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
     })
 

@@ -56,6 +56,12 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
    */
   readonly timeStampServer?: string
+
+  /*
+  [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.
+  Defaults to common name from your code signing certificate.
+   */
+  readonly publisherName?: string | Array<string> | null
 }
 
 /*

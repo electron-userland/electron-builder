@@ -119,7 +119,7 @@ async function doExtraResourcesTest(platform: Platform) {
   })
 }
 
-test.ifNotCiMac("extraResources on Linux and Windows", async () => {
+test.ifDevOrLinuxCi("extraResources on Linux and Windows", async () => {
   await doExtraResourcesTest(Platform.LINUX)
   await doExtraResourcesTest(Platform.WINDOWS)
 })

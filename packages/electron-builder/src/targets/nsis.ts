@@ -13,6 +13,7 @@ import { Target, Arch, Platform } from "electron-builder-core"
 import sanitizeFileName from "sanitize-filename"
 import { copyFile } from "electron-builder-util/out/fs"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
+import { getSignVendorPath } from "../windowsCodeSign"
 
 const NSIS_VERSION = "3.0.1.7"
 //noinspection SpellCheckingInspection
@@ -54,7 +55,10 @@ export default class NsisTarget extends Target {
   private async doBuild(appOutDir: string, arch: Arch) {
     log(`Packaging NSIS installer for arch ${Arch[arch]}`)
 
-    await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false)
+    await BluebirdPromise.all([
+      copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
+      copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
+    ])
 
     const packager = this.packager
     const format = this.options.useZip ? "zip" : "7z"

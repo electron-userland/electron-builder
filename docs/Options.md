@@ -247,6 +247,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | certificateSubjectName | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
 | rfc3161TimeStampServer | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
 | timeStampServer | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
+| publisherName | <a name="WinBuildOptions-publisherName"></a><p>[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.</p>
 
 <a name="SnapOptions"></a>
 ### `snap` [Snap](http://snapcraft.io) Specific Options
@@ -357,7 +358,7 @@ Supported macros:
 * `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
 * `${version}`
 * `${ext}`
-* `${arch}` — If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
+* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
 * `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
 
  

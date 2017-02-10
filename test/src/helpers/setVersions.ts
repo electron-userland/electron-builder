@@ -17,6 +17,7 @@ async function main(): Promise<void> {
     await setPackageVersions(packages, packageData)
   }
   else {
+    await setPackageVersions(packages, packageData)
     await setDepVersions(packages, packageData)
   }
 }
@@ -54,12 +55,6 @@ async function setPackageVersions(packages: Array<string>, packageData: Array<an
 
 async function setDepVersions(packages: Array<string>, packageData: Array<any>) {
   const versions = packageData.map(it => it.version)
-  for (let version of versions) {
-    if (version == "0.0.0-semantic-release") {
-      throw new Error(`Semantic version 0.0.0-semantic-release is detected, please fix it`)
-    }
-  }
-
   for (let i = 0; i < packages.length; i++) {
     const packageName = packages[i]
     const packageJson = packageData[i]
@@ -78,7 +73,7 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
       }
 
       const newVersion = versions[depIndex]
-      if (oldVersion == newVersion) {
+      if (oldVersion == newVersion || newVersion === "0.0.0-semantic-release") {
         console.log(`Skip ${depPackageName} for ${packageName} — version ${newVersion} is actual`)
         continue
       }

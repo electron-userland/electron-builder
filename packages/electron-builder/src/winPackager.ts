@@ -4,9 +4,9 @@ import { PlatformPackager } from "./platformPackager"
 import { Platform, Target } from "electron-builder-core"
 import * as path from "path"
 import { log } from "electron-builder-util/out/log"
-import { exec, use } from "electron-builder-util"
+import { exec, use, asArray, debug } from "electron-builder-util"
 import { open, close, read, rename } from "fs-extra-p"
-import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
+import { sign, SignOptions, getSignVendorPath, getToolPath } from "./windowsCodeSign"
 import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
 import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
@@ -24,6 +24,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   readonly cscInfo: Promise<FileCodeSigningInfo | null> | null
 
   private iconPath: Promise<string> | null
+
+  computedPublisherName: Array<string> | null
 
   constructor(info: BuildInfo) {
     super(info)
@@ -137,11 +139,18 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       return
     }
 
-    log(`Signing ${path.basename(file)} (certificate file "${cscInfo.file}")`)
+    const certFile = cscInfo.file
+    if (certFile == null) {
+      log(`Signing ${path.basename(file)} (subject name: "${cscInfo.subjectName}")`)
+    }
+    else {
+      log(`Signing ${path.basename(file)} (certificate file: "${certFile}")`)
+    }
+
     await this.doSign({
       path: file,
 
-      cert: cscInfo.file,
+      cert: certFile,
       subjectName: cscInfo.subjectName,
 
       password: cscInfo.password,
@@ -188,6 +197,40 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, "electron.exe"), executable)
     await this.signAndEditResources(executable)
+
+    let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
+    if (publisherName === null) {
+      return
+    }
+
+    const cscInfo = await this.cscInfo
+    if (cscInfo == null) {
+      return
+    }
+
+    if (publisherName == null) {
+      // we don't use node-forge because we don't have p12 file for EV certificate, the only way to get common name it is to get it from signed file
+      // try {
+      //   const p12Asn1 = forge.asn1.fromDer(forge.util.decode64(await readFile(cscInfo.file, "base64")))
+      //   const p12 = (<any>forge).pkcs12.pkcs12FromAsn1(p12Asn1, cscInfo.password)
+      //   p12.getBags({bagType: forge.pki.oids.certBag})[forge.pki.oids.certBag][0].cert.subject.getField("CN")
+      // }
+      // catch (e) {
+      //   throw new Error("Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName")
+      // }
+
+      const tool = await getToolPath()
+      if (tool.includes("osslsigncode")) {
+        const info = await exec(tool, ["verify", executable])
+        debug(info)
+        const match = info.match(/\/CN=([^\/]+)/)!!
+        publisherName = match[1].trim()
+      }
+    }
+
+    if (publisherName != null) {
+      this.computedPublisherName = asArray(publisherName)
+    }
   }
 }
 
