@@ -150,6 +150,11 @@ export interface NsisOptions {
   The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
+
+  /*
+  Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). Defaults to `true`.
+   */
+  readonly unicode?: boolean
 }
 
 /*

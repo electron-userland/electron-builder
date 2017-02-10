@@ -20,6 +20,9 @@ test("one-click", app({
       owner: "actperepo",
       package: "TestApp",
     },
+    nsis: {
+      unicode: false,
+    }
     // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
     // productName: "TestApp",
   }

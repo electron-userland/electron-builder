@@ -14,9 +14,9 @@ import sanitizeFileName from "sanitize-filename"
 import { copyFile } from "electron-builder-util/out/fs"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 
-const NSIS_VERSION = "3.0.1.6"
+const NSIS_VERSION = "3.0.1.7"
 //noinspection SpellCheckingInspection
-const NSIS_SHA2 = "4bd85f3a54311fd55814ec87fbcb0ab9c64b3dea4179c891e7748df8748f87c8"
+const NSIS_SHA2 = "0e797a7099283bf9caf97ee677e1d7986278c27b39916a501480978af039817c"
 
 //noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -149,7 +149,7 @@ export default class NsisTarget extends Target {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.versionInWeirdWindowsForm,
       VIAddVersionKey: this.computeVersionKey(),
-      Unicode: true,
+      Unicode: options.unicode == null ? true : options.unicode,
     }
 
     if (packager.config.compression === "store") {
