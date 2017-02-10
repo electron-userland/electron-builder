@@ -12,18 +12,19 @@ export class GitHubProvider extends Provider<VersionInfo> {
   async getLatestVersion(): Promise<UpdateInfo> {
     const basePath = this.getBasePath()
     let version
+    let fullPath = `${basePath}/latest`
 
     try {
       // do not use API to avoid limit
       const releaseInfo = (await request<GithubReleaseInfo>({
         hostname: "github.com",
-        path: `${basePath}/latest`,
+        path: fullPath,
         headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
       }))
       version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on github, please ensure a production release exists: ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on github (${fullPath}), please ensure a production release exists: ${e.stack || e.message}`)
     }
 
     let result: any
@@ -34,7 +35,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts: ${e.stack || e.message}`)
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrlPath}): ${e.stack || e.message}`)
       }
       throw e
     }
