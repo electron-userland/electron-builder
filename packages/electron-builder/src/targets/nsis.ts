@@ -80,7 +80,7 @@ export default class NsisTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const options = this.options
-    const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, "${productName} Setup ${version}.${ext}")
+    const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, "${productName} " + (this.isWebInstaller ? "Web " : "") + "Setup ${version}.${ext}")
     const iconPath = await packager.getResource(options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
     const oneClick = options.oneClick !== false
 
@@ -134,9 +134,9 @@ export default class NsisTarget extends Target {
           throw new Error("Cannot compute app package download URL")
         }
 
-        computeDownloadUrl(publishConfigs[0], null, packager.appInfo.version, {
+        appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager.appInfo.version, {
           os: Platform.WINDOWS.buildConfigurationKey,
-          arch: Arch[Arch.x64]
+          arch: ""
         })
 
         defines.APP_PACKAGE_URL_IS_INCOMLETE = null
@@ -172,7 +172,7 @@ export default class NsisTarget extends Target {
     await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, await this.computeScript(defines, commands, installerPath)))
     await packager.sign(installerPath)
 
-    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-Setup-${version}.exe`)
+    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-${this.isWebInstaller ? "Web-" : ""}Setup-${version}.exe`)
   }
 
   private get isWebInstaller(): boolean {

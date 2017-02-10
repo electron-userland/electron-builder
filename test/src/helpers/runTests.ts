@@ -92,10 +92,10 @@ async function runTests() {
       args.push(...baseForLinuxTests)
     }
     else if (circleNodeIndex === 2) {
-      args.push("snapTest", "nsisUpdaterTest", "linuxArchiveTest")
+      args.push("snapTest", "nsisUpdaterTest")
     }
     else {
-      args.push("windows.*")
+      args.push("windows.*", "linuxArchiveTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

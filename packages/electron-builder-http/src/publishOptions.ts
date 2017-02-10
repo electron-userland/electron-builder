@@ -30,11 +30,11 @@ export interface PublishConfiguration {
 }
 
 /*
-### `publish` Generic (any https server)
+### `publish` Generic (any HTTP(S) server)
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /*
-  The base url. e.g. `https://s3.amazonaws.com/bucket_name`.  You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+  The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
    */
   url: string
 
@@ -45,7 +45,7 @@ export interface GenericServerOptions extends PublishConfiguration {
 }
 
 /*
-### `publish` S3
+### `publish` Amazon S3
 
 [Getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
  */
@@ -79,7 +79,7 @@ export interface S3Options extends PublishConfiguration {
 }
 
 export function s3Url(options: S3Options) {
-  let url = `https://s3.amazonaws.com/${options.bucket}`
+  let url = `https://${options.bucket}.s3.amazonaws.com`
   if (options.path != null) {
     url += `/${options.path}`
   }

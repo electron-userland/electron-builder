@@ -147,30 +147,41 @@ SetOutPath $INSTDIR
   File /r "${APP_BUILD_DIR}/*.*"
 !else
   !ifdef APP_PACKAGE_URL
-    StrCpy $0 "${APP_PACKAGE_URL}"
+    Var /GLOBAL packageUrl
+    Var /GLOBAL packageArch
+
+    StrCpy $packageUrl "${APP_PACKAGE_URL}"
+    StrCpy $packageArch "${APP_PACKAGE_URL}"
+
     !ifdef APP_PACKAGE_URL_IS_INCOMLETE
       !ifdef APP_64_NAME
         !ifdef APP_32_NAME
           ${if} ${RunningX64}
-            StrCpy $0 "$0/${APP_64_NAME}"
+            StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
           ${else}
-            StrCpy $0 "$0/${APP_32_NAME}"
+            StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
           ${endif}
         !else
-          StrCpy $0 "$0/${APP_64_NAME}"
+          StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
         !endif
       !else
-        StrCpy $0 "$0/${APP_32_NAME}"
+        StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
       !endif
     !endif
 
+    ${if} ${RunningX64}
+      StrCpy $packageArch "64"
+    ${else}
+      StrCpy $packageArch "32"
+    ${endif}
+
     download:
-    inetc::get /RESUME "$0" "$PLUGINSDIR\package.7z"
-    pop $0
+    inetc::get /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+    Pop $0
     ${if} $0 == "Cancelled"
       quit
     ${elseif} $0 != "OK"
-      messagebox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package (status: $0).$\r$\n$\r$\nPlease check you Internet connection and retry." IDRETRY download
+      Messagebox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check you Internet connection and retry." IDRETRY download
       quit
     ${endif}
 

@@ -37,6 +37,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
   * [mac macOS Specific Options](#MacOptions)
   * [mas MAS (Mac Application Store) Specific Options](#MasBuildOptions)
   * [nsis](#NsisOptions)
+  * [nsis Web Installer Specific Options](#NsisWebOptions)
   * [pkg macOS Product Archive Options](#PkgOptions)
   * [protocols URL Protocol Schemes](#Protocol)
   * [squirrelWindows](#SquirrelWindowsOptions)
@@ -191,6 +192,13 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 | artifactName | <a name="NsisOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
 
+<a name="NsisWebOptions"></a>
+### `nsis` Web Installer Specific Options
+| Name | Description
+| --- | ---
+| appPackageUrl | <a name="NsisWebOptions-appPackageUrl"></a><p>The application package download URL. Optional — by default computed using publish configuration.</p> <p>URL like <code>https://example.com/download/latest</code> allows web installer to be version independent (installer will download latest application package).</p> <p>Custom <code>X-Arch</code> http header is set to <code>32</code> or <code>64</code>.</p>
+| artifactName | <a name="NsisWebOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
+
 <a name="PkgOptions"></a>
 ### `pkg` macOS Product Archive Options
 | Name | Description
@@ -214,7 +222,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="SquirrelWindowsOptions"></a>
 ### `squirrelWindows`
 
-To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
 
 | Name | Description
 | --- | ---

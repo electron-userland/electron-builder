@@ -152,19 +152,29 @@ export interface NsisOptions {
   readonly artifactName?: string | null
 }
 
+/*
+ ### `nsis` Web Installer Specific Options
+ */
 export interface NsisWebOptions extends NsisOptions {
   /*
   The application package download URL. Optional — by default computed using publish configuration.
 
   URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).
+
+  Custom `X-Arch` http header is set to `32` or `64`.
    */
   readonly appPackageUrl?: string | null
+
+  /*
+  The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
+   */
+  readonly artifactName?: string | null
 }
 
 /*
  ### `squirrelWindows`
 
- To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+ To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
  */
 export interface SquirrelWindowsOptions extends WinBuildOptions {
   /*

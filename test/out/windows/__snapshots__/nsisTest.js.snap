@@ -112,13 +112,13 @@ Object {
 
 exports[`test web installer 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
+  "Test App ßW Web Setup 1.1.0.exe",
   "TestApp-1.1.0-x64.nsis.7z",
 ]
 `;
 
 exports[`test web installer 2`] = `
 Array [
-  "TestApp-Setup-1.1.0.exe",
+  "TestApp-Web-Setup-1.1.0.exe",
 ]
 `;
