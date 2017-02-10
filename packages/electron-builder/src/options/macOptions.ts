@@ -1,4 +1,5 @@
 import { PlatformSpecificBuildOptions } from "../metadata"
+import { TargetSpecificOptions } from "electron-builder-core"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -64,7 +65,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 /*
  ### `pkg` macOS Product Archive Options
  */
-export interface PkgOptions {
+export interface PkgOptions extends TargetSpecificOptions {
   /*
   The scripts directory, relative to `build` (build resources directory). Defaults to `build/pkg-scripts`.
   See [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).
@@ -88,7 +89,7 @@ export interface PkgOptions {
 /*
  ### `dmg` macOS DMG Options
  */
-export interface DmgOptions {
+export interface DmgOptions extends TargetSpecificOptions {
   /*
    The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
    If background is not specified, use `window.size`. Default locations expected background size to be 540x380.

@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst-c"
-import { Arch, getArchSuffix, Platform, Target } from "electron-builder-core"
+import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
 import { asArray, debug, isEmptyOrSpaces, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
@@ -394,17 +394,24 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
-  expandArtifactNamePattern(pattern: string, ext: string, arch: Arch | null): string {
-    let p = pattern
+  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | n, ext: string, arch?: Arch | null, defaultPattern?: string): string {
+    let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
+    if (pattern == null) {
+      pattern = this.platformSpecificBuildOptions.artifactName
+    }
+    if (pattern == null) {
+      pattern = defaultPattern || "${productName}-${version}.${ext}"
+    }
+
     if (arch == null) {
-      p = p
+      pattern = pattern
         .replace("-${arch}", "")
         .replace(" ${arch}", "")
         .replace("_${arch}", "")
     }
 
     const appInfo = this.appInfo
-    return p.replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+    return pattern.replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
       switch (p1) {
         case "name":
           return appInfo.name

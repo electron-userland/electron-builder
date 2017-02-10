@@ -1,4 +1,4 @@
-import { Arch, Platform } from "electron-builder-core"
+import { Arch, Platform, TargetSpecificOptions } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -83,7 +83,7 @@ export interface FilePattern {
 /*
  ## Configuration Options
  */
-export interface Config extends PlatformSpecificBuildOptions {
+export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOptions {
   /*
   The application id. Used as
   [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
@@ -217,6 +217,13 @@ export interface Config extends PlatformSpecificBuildOptions {
   The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
    */
   readonly electronVersion?: string | null
+
+  /*
+   The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+
+   Currently supported only for `pkg`, `dmg` and `nsis`.
+   */
+  readonly artifactName?: string | null
 }
 
 export interface AfterPackContext {
@@ -316,7 +323,7 @@ export interface MetadataDirectories {
   readonly app?: string | null
 }
 
-export interface PlatformSpecificBuildOptions {
+export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly files?: Array<string> | string | null
   readonly extraFiles?: Array<FilePattern> | FilePattern | Array<string> | string | null
   readonly extraResources?: Array<FilePattern> | FilePattern | Array<string> | string | null
@@ -332,8 +339,6 @@ export interface PlatformSpecificBuildOptions {
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
   readonly publish?: Publish
-
-  readonly forceCodeSigning?: boolean
 }
 
 export interface Macros {

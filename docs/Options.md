@@ -70,6 +70,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 | publish | <a name="Config-publish"></a>See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 | forceCodeSigning | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | electronVersion | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
+| artifactName | <a name="Config-artifactName"></a><p>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to <code>${productName}-${version}.${ext}</code> (some target can have another defaults, see corresponding options).</p> <p>Currently supported only for <code>pkg</code>, <code>dmg</code> and <code>nsis</code>.</p>
 
 <a name="AppXOptions"></a>
 ### `appx`
@@ -188,7 +189,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
 | warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a>Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
-| artifactName | <a name="NsisOptions-artifactName"></a><p>The artifact file name pattern. Defaults to <code>${productName} Setup ${version}.${ext}</code>. <code>${name}</code>, <code>${productName}</code>, <code>${version}</code>, <code>${ext}</code>, <code>${arch}</code>, <code>${os}</code> (expanded to <code>mac</code>, <code>linux</code> or <code>win</code> according to current platform) macro are supported.</p> <p>If no <code>arch</code>, macro will be removed from your pattern with leading space, <code>-</code> or <code>_</code> (so, you don’t need to worry and can reuse pattern).</p>
+| artifactName | <a name="NsisOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
 
 <a name="PkgOptions"></a>
 ### `pkg` macOS Product Archive Options
@@ -339,6 +340,18 @@ If `to` is given as a relative path, it is relative to the app's content directo
 `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
 
 You can use `${os}` and `${arch}` in the `from` and `to` fields as well.
+
+## Artifact File Name Pattern
+
+Supported macros: 
+* `${name}`
+* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
+* `${version}`
+* `${ext}`
+* `${arch}` — If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
+* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+
+ 
 
 ## Build Version Management
 `CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

@@ -43,7 +43,7 @@ export class PkgTarget extends Target {
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)
     await this.buildComponentPackage(appPath, innerPackageFile)
 
-    const outFile = path.join(appOutDir, `${appInfo.productFilename}-${appInfo.version}.pkg`)
+    const outFile = path.join(appOutDir, packager.expandArtifactNamePattern(options, "pkg"))
     const args = prepareProductBuildArgs(identity, keychainName)
     args.push("--distribution", distInfo)
     args.push(outFile)

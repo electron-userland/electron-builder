@@ -101,7 +101,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 ### `publish` Generic (any https server)
 | Name | Description
 | --- | ---
-| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`.  You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` macros.
+| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`.  You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
 | channel | <a name="GenericServerOptions-channel"></a>The channel. Defaults to `latest`.
 
 <a name="GithubOptions"></a>

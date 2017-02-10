@@ -87,3 +87,12 @@ export abstract class Target {
     return Promise.resolve()
   }
 }
+
+export interface TargetSpecificOptions {
+  /*
+   The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+   */
+  readonly artifactName?: string | null
+
+  readonly forceCodeSigning?: boolean
+}
