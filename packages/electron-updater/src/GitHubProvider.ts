@@ -4,10 +4,22 @@ import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import * as url from "url"
+import { RequestOptions } from "http"
 
 export class GitHubProvider extends Provider<VersionInfo> {
+  // so, we don't need to parse port (because node http doesn't support host as url does)
+  private readonly baseUrl: RequestOptions
+
   constructor(private readonly options: GithubOptions) {
     super()
+
+    const baseUrl = url.parse(`${options.protocol || "https:"}//${options.host || "github.com"}`)
+    this.baseUrl = {
+      protocol: baseUrl.protocol,
+      hostname: baseUrl.hostname,
+      port: <any>baseUrl.port,
+    }
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
@@ -15,16 +27,12 @@ export class GitHubProvider extends Provider<VersionInfo> {
     let version
 
     const cancellationToken = new CancellationToken()
-    const host = this.options.host || "github.com"
-    const protocol = `${this.options.protocol || "https"}:`
     try {
       // do not use API to avoid limit
-      const releaseInfo = (await request<GithubReleaseInfo>({
-        protocol: protocol,
-        host: host,
+      const releaseInfo = (await request<GithubReleaseInfo>(Object.assign({
         path: `${basePath}/latest`,
         headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
-      }, cancellationToken))
+      }, this.baseUrl), cancellationToken))
       version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
@@ -35,7 +43,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const channelFile = getChannelFilename(getDefaultChannelName())
     const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
     try {
-      result = await request<UpdateInfo>({protocol: protocol, host: host, path: channelFileUrlPath, headers: this.requestHeaders || undefined}, cancellationToken)
+      result = await request<UpdateInfo>(Object.assign({path: channelFileUrlPath, headers: this.requestHeaders || undefined}, this.baseUrl), cancellationToken)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -65,7 +73,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
     return {
       name: name,
-      url: `https://github.com${basePath}/download/v${versionInfo.version}/${name}`,
+      url: url.format(Object.assign({pathname: `${basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
       sha2: versionInfo.sha2,
     }
   }
