@@ -108,6 +108,10 @@ Sets the `options`. If value is `string`, `GenericServerOptions` will be set wit
 
 Asks the server whether there is an update.
 
+#### `autoUpdater.downloadUpdate(): Promise<any>`
+
+Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
+
 #### `autoUpdater.quitAndInstall()`
 
 Restarts the app and installs the update after it has been downloaded. It
