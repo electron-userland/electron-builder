@@ -33,11 +33,6 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
   }
 
   doApiRequest<T>(options: Electron.RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    if (<any>options.Protocol != null) {
-      // electron typings defines it as incorrect Protocol (uppercase P)
-      (<any>options).protocol = options.Protocol
-    }
-
     if (this.debug.enabled) {
       this.debug(`request: ${dumpRequestOptions(options)}`)
     }

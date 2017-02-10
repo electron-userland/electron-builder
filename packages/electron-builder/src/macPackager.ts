@@ -13,6 +13,7 @@ import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { exec } from "electron-builder-util"
 import { Target, Platform, Arch } from "electron-builder-core"
 import { BuildInfo } from "./packagerApi"
+import { log } from "electron-builder-util/out/log"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -115,6 +116,15 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const keychainName = (await this.codeSigningInfo).keychainName
     const isMas = masOptions != null
     const qualifier = this.platformSpecificBuildOptions.identity
+
+    if (!isMas && qualifier === null) {
+      if (this.forceCodeSigning) {
+        throw new Error("identity explicitly is set to null, but forceCodeSigning is set to true")
+      }
+      log("identity explicitly is set to null, skipping macOS application code signing.")
+      return
+    }
+
     const masQualifier = isMas ? (masOptions!!.identity || qualifier) : null
 
     const explicitType = masOptions == null ? this.platformSpecificBuildOptions.type : masOptions.type
