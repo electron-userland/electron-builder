@@ -68,7 +68,8 @@
     "semver": "^5.3.0",
     "update-notifier": "^1.0.3",
     "uuid-1345": "^0.99.6",
-    "yargs": "^6.6.0"
+    "yargs": "^6.6.0",
+    "node-forge": "^0.7.0"
   },
   "typings": "./out/electron-builder.d.ts",
   "publishConfig": {

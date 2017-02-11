@@ -52,9 +52,7 @@ export default class NsisTarget extends Target {
     this.archs.set(arch, appOutDir)
   }
 
-  private async doBuild(appOutDir: string, arch: Arch) {
-    log(`Packaging NSIS installer for arch ${Arch[arch]}`)
-
+  private async buildAppPackage(appOutDir: string, arch: Arch) {
     await BluebirdPromise.all([
       copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
       copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
@@ -115,7 +113,7 @@ export default class NsisTarget extends Target {
     }
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
-        const file = await this.doBuild(this.archs.get(arch)!, arch)
+        const file = await subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, this.buildAppPackage(this.archs.get(arch)!, arch))
         defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
         defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
 
@@ -173,7 +171,7 @@ export default class NsisTarget extends Target {
       return
     }
 
-    await subTask(`Executing makensis — installer`, this.executeMakensis(defines, commands, true, await this.computeScript(defines, commands, installerPath)))
+    await this.executeMakensis(defines, commands, true, await this.computeScript(defines, commands, installerPath))
     await packager.sign(installerPath)
 
     packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-${this.isWebInstaller ? "Web-" : ""}Setup-${version}.exe`)
@@ -198,9 +196,9 @@ export default class NsisTarget extends Target {
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
-    await subTask(`Executing makensis — uninstaller`, this.executeMakensis(defines, commands, false, script))
+    await this.executeMakensis(defines, commands, false, script)
     await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
-    await packager.sign(uninstallerPath)
+    await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
     // platform-specific path, not wine

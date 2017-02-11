@@ -40,6 +40,10 @@
   version "3.5.29"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
+"@types/node-forge@^0.6.5":
+  version "0.6.5"
+  resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.5.tgz#4ed3ea29b20ccca4e7cd778de0e039b01ddb3239"
+
 "@types/node@*":
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.5.tgz#96a0f0a618b7b606f1ec547403c00650210bfbb7"
@@ -1643,9 +1647,9 @@ jest-environment-jsdom@^18.1.0:
     jest-util "^18.1.0"
     jsdom "^9.9.1"
 
-jest-environment-node-debug@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/jest-environment-node-debug/-/jest-environment-node-debug-0.0.2.tgz#f9d8190cb241c2ed50e670623927adda90bca33d"
+jest-environment-node-debug@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/jest-environment-node-debug/-/jest-environment-node-debug-1.0.0.tgz#a9442d83df4e91259940f67e52fcd52464ab4bef"
 
 jest-environment-node@^18.1.0:
   version "18.1.0"
@@ -2172,6 +2176,10 @@ node-emoji@^1.4.1, node-emoji@^1.5.1:
   resolved "https://registry.yarnpkg.com/node-emoji/-/node-emoji-1.5.1.tgz#fd918e412769bf8c448051238233840b2aff16a1"
   dependencies:
     string.prototype.codepointat "^0.2.0"
+
+node-forge@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/node-forge/-/node-forge-0.7.0.tgz#5e0782a44e5e093fae3676d59f84ecfb38a4baad"
 
 node-int64@^0.4.0:
   version "0.4.0"

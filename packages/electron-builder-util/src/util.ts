@@ -234,3 +234,22 @@ export function smarten(s: string): string {
   s = s.replace(/"/g, "\u201d")
   return s
 }
+
+export class Lazy<T> {
+  private _value: Promise<T>
+  private creator: (() => Promise<T>) | null
+
+  get value(): Promise<T> {
+    if (this.creator == null) {
+      return this._value
+    }
+
+    this._value = this.creator()
+    this.creator = null
+    return this._value
+  }
+
+  constructor(creator: () => Promise<T>) {
+    this.creator = creator
+  }
+}

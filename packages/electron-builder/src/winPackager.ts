@@ -4,14 +4,15 @@ import { PlatformPackager } from "./platformPackager"
 import { Platform, Target } from "electron-builder-core"
 import * as path from "path"
 import { log } from "electron-builder-util/out/log"
-import { exec, use, asArray, debug } from "electron-builder-util"
-import { open, close, read, rename } from "fs-extra-p"
-import { sign, SignOptions, getSignVendorPath, getToolPath } from "./windowsCodeSign"
+import { exec, use, asArray, Lazy } from "electron-builder-util"
+import { open, close, read, rename, readFile } from "fs-extra-p"
+import { sign, SignOptions, getSignVendorPath } from "./windowsCodeSign"
 import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
 import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 import { WinBuildOptions } from "./options/winOptions"
 import { BuildInfo } from "./packagerApi"
+import * as forge from "node-forge"
 
 export interface FileCodeSigningInfo {
   readonly file?: string | null
@@ -21,21 +22,13 @@ export interface FileCodeSigningInfo {
 }
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
-  readonly cscInfo: Promise<FileCodeSigningInfo | null> | null
-
-  private iconPath: Promise<string> | null
-
-  computedPublisherName: Array<string> | null
-
-  constructor(info: BuildInfo) {
-    super(info)
-
+  readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
     const subjectName = this.platformSpecificBuildOptions.certificateSubjectName
     if (subjectName == null) {
       const certificateFile = this.platformSpecificBuildOptions.certificateFile
       if (certificateFile != null) {
         const certificatePassword = this.getCscPassword()
-        this.cscInfo = BluebirdPromise.resolve({
+        return BluebirdPromise.resolve({
           file: certificateFile,
           password: certificatePassword == null ? null : certificatePassword.trim(),
         })
@@ -43,7 +36,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       else {
         const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
         if (cscLink != null) {
-          this.cscInfo = downloadCertificate(cscLink, info.tempDirManager)
+          return downloadCertificate(cscLink, this.info.tempDirManager)
             .then(path => {
               return {
                 file: path,
@@ -52,15 +45,47 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
             })
         }
         else {
-          this.cscInfo = BluebirdPromise.resolve(null)
+          return BluebirdPromise.resolve(null)
         }
       }
     }
     else {
-      this.cscInfo = BluebirdPromise.resolve({
+      return BluebirdPromise.resolve({
         subjectName: subjectName
       })
     }
+  })
+
+  private iconPath: Promise<string> | null
+
+  readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
+    let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
+    if (publisherName === null) {
+      return null
+    }
+
+    const cscInfo = await this.cscInfo.value
+    if (cscInfo == null) {
+      return null
+    }
+
+    if (publisherName == null && cscInfo.file != null) {
+      try {
+        // https://github.com/digitalbazaar/forge/issues/338#issuecomment-164831585
+        const p12Asn1 = forge.asn1.fromDer(await readFile(cscInfo.file, "binary"), false)
+        const p12 = (<any>forge).pkcs12.pkcs12FromAsn1(p12Asn1, false, cscInfo.password)
+        publisherName = p12.getBags({bagType: forge.pki.oids.certBag})[forge.pki.oids.certBag][0].cert.subject.getField("CN").value
+      }
+      catch (e) {
+        throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
+      }
+    }
+
+    return publisherName == null ? null : asArray(publisherName)
+  })
+
+  constructor(info: BuildInfo) {
+    super(info)
   }
 
   get defaultTarget(): Array<string> {
@@ -129,8 +154,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return iconPath
   }
 
-  async sign(file: string) {
-    const cscInfo = await this.cscInfo
+  async sign(file: string, logMessagePrefix?: string) {
+    const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.forceCodeSigning) {
         throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
@@ -140,11 +165,15 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     const certFile = cscInfo.file
+
+    if (logMessagePrefix == null) {
+      logMessagePrefix = `Signing ${path.basename(file)}`
+    }
     if (certFile == null) {
-      log(`Signing ${path.basename(file)} (subject name: "${cscInfo.subjectName}")`)
+      log(`${logMessagePrefix} (subject name: "${cscInfo.subjectName}")`)
     }
     else {
-      log(`Signing ${path.basename(file)} (certificate file: "${certFile}")`)
+      log(`${logMessagePrefix} (certificate file: "${certFile}")`)
     }
 
     await this.doSign({
@@ -197,44 +226,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
     await rename(path.join(appOutDir, "electron.exe"), executable)
     await this.signAndEditResources(executable)
-
-    let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
-    if (publisherName === null) {
-      return
-    }
-
-    const cscInfo = await this.cscInfo
-    if (cscInfo == null) {
-      return
-    }
-
-    if (publisherName == null) {
-      // we don't use node-forge because we don't have p12 file for EV certificate, the only way to get common name it is to get it from signed file
-      // try {
-      //   const p12Asn1 = forge.asn1.fromDer(forge.util.decode64(await readFile(cscInfo.file, "base64")))
-      //   const p12 = (<any>forge).pkcs12.pkcs12FromAsn1(p12Asn1, cscInfo.password)
-      //   p12.getBags({bagType: forge.pki.oids.certBag})[forge.pki.oids.certBag][0].cert.subject.getField("CN")
-      // }
-      // catch (e) {
-      //   throw new Error("Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName")
-      // }
-
-      const tool = await getToolPath()
-      if (tool.includes("osslsigncode")) {
-        const info = await exec(tool, ["verify", executable])
-        debug(info)
-        const match = info.match(/\/CN=([^\/]+)/)!!
-        publisherName = match[1].trim()
-      }
-    }
-
-    if (publisherName != null) {
-      this.computedPublisherName = asArray(publisherName)
-    }
   }
 }
 
-async function checkIcon(file: string): Promise<void> {
+  async function checkIcon(file: string): Promise<void> {
   const fd = await open(file, "r")
   const buffer = new Buffer(512)
   try {

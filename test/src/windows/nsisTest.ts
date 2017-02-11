@@ -7,7 +7,7 @@ import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson, PackedContext } from "../helpers/packTester"
 import { diff, WineManager } from "../helpers/wine"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
@@ -31,10 +31,19 @@ test("one-click", app({
   signed: true,
   packed: async (context) => {
     await doTest(context.outDir, true)
-
-    expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).toMatchSnapshot()
+    await expectUpdateMetadata(context, Arch.ia32, true)
   }
 }))
+
+async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
+  const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))
+  if (requireCodeSign && process.env.CSC_KEY_PASSWORD != null) {
+    expect(data.publisherName).toEqual(["Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)"])
+    delete data.publisherName
+  }
+
+  expect(data).toMatchSnapshot()
+}
 
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
@@ -64,7 +73,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       )])
   },
   packed: async(context) => {
-    expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, Arch.ia32), "app-update.yml"), "utf-8"))).toMatchSnapshot()
+    await expectUpdateMetadata(context)
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha2).not.toEqual("")
     expect(updateInfo.releaseDate).not.toEqual("")
@@ -185,7 +194,7 @@ test("allowToChangeInstallationDirectory", app({
   }
 }, {
   packed: async(context) => {
-    expect(safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, archFromString(process.arch)), "app-update.yml"), "utf-8"))).toMatchSnapshot()
+    await expectUpdateMetadata(context, archFromString(process.arch))
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha2).not.toEqual("")
     expect(updateInfo.releaseDate).not.toEqual("")

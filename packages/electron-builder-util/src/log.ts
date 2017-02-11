@@ -10,13 +10,11 @@ export function setPrinter(value: ((message: string) => void) | null) {
 }
 
 class Logger {
-  private readonly isTTY = (<any>process.stdout).isTTY
-
-  constructor(private stream: WritableStream) {
+  constructor(protected readonly stream: WritableStream) {
   }
 
   warn(message: string): void {
-    this.log(this.isTTY ? (getEmoji("warning") + "  " + yellow(message)) : yellow(`Warning: ${message}`))
+    this.log(yellow(`Warning: ${message}`))
   }
 
   log(message: string): void {
@@ -29,6 +27,7 @@ class Logger {
   }
 
   subTask(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
+    this.log(`  ${title}`)
     return <BluebirdPromise<any>>_promise
   }
 
@@ -39,7 +38,17 @@ class Logger {
   }
 }
 
-const logger = new Logger(process.stdout)
+class TtyLogger extends Logger {
+  constructor(stream: WritableStream) {
+    super(stream)
+  }
+
+  warn(message: string): void {
+    this.log(`${getEmoji("warning")}  ${yellow(message)}`)
+  }
+}
+
+const logger = (<any>process.stdout).isTTY ? new TtyLogger(process.stdout) : new Logger(process.stdout)
 
 export function warn(message: string) {
   logger.warn(message)

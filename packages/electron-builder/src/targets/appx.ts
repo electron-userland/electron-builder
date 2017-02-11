@@ -34,8 +34,9 @@ export default class AppXTarget extends Target {
 
     let publisher = this.options.publisher
     if (publisher == null) {
-      if (packager.computedPublisherName != null) {
-        publisher = packager.computedPublisherName[0]
+      const computed = await packager.computedPublisherName.value
+      if (computed != null) {
+        publisher = `CN=${computed[0]}`
       }
       if (publisher == null) {
         throw new Error("Please specify appx.publisher")

@@ -79,10 +79,9 @@ export class PublishManager implements PublishContext {
       }
 
       if (packager.platform === Platform.WINDOWS) {
-        let publisherName = (<WinPackager>packager).computedPublisherName
+        let publisherName = await (<WinPackager>packager).computedPublisherName.value
         if (publisherName != null) {
-          // todo #1187
-          // publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+          publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
         }
       }
 

@@ -239,7 +239,8 @@ export interface AppXOptions {
   readonly makeappxArgs?: Array<string> | null
 
   /*
-   Describes the publisher information. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. For now, required.
+   Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package.
+   By default will be extracted from code sign certificate.
    */
   readonly publisher?: string | null
 
