@@ -21,7 +21,7 @@ export default class AppImageTarget extends Target {
   private readonly options: AppImageOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
   private readonly desktopEntry: Promise<string>
 
-  constructor(ignored: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
+  constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super("appImage")
 
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed

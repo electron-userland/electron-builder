@@ -13,7 +13,7 @@ const SW_SHA2 = "e96a109d4641ebb85d163eaefe7770b165ebc25d1cc77c5179f021b232fc373
 export default class SquirrelWindowsTarget extends Target {
   private readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
 
-  constructor(private readonly packager: WinPackager, private readonly outDir: string) {
+  constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("squirrel")
   }
 

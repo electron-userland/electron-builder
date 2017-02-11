@@ -5,7 +5,7 @@ import * as path from "path"
 import { tar, archive } from "./archive"
 
 export class ArchiveTarget extends Target {
-  constructor(name: string, public readonly outDir: string, private readonly packager: PlatformPackager<any>) {
+  constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>) {
     super(name)
   }
 

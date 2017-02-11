@@ -12,7 +12,7 @@ import { Target, Arch, toLinuxArchString } from "electron-builder-core"
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
-  constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
+  constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name)
   }
 

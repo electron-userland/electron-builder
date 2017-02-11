@@ -114,6 +114,8 @@ exports[`test web installer 1`] = `
 Array [
   "Test App ßW Web Setup 1.1.0.exe",
   "TestApp-1.1.0-x64.nsis.7z",
+  "latest.yml",
+  "latest.yml",
 ]
 `;
 

@@ -78,7 +78,9 @@ export class Platform {
 }
 
 export abstract class Target {
-  constructor(public readonly name: string, public readonly isAsyncSupported: boolean = true) {
+  abstract readonly outDir: string
+
+  constructor(readonly name: string, readonly isAsyncSupported: boolean = true) {
   }
 
   abstract build(appOutDir: string, arch: Arch): Promise<any>

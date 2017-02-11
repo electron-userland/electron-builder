@@ -5,7 +5,7 @@ import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, U
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
-import { createReadStream, outputJson, writeFile } from "fs-extra-p"
+import { createReadStream, outputJson, writeFile, ensureDir } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
@@ -14,7 +14,6 @@ import { Macros, PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
-import { ArchiveTarget } from "../targets/ArchiveTarget"
 import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
 import { getCiTag, getResolvedPublishConfig } from "./publisher"
@@ -124,7 +123,7 @@ export class PublishManager implements PublishContext {
     }
 
     if (target != null && event.file != null && !this.cancellationToken.cancelled) {
-      if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && target.name === "nsis")) {
+      if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && (target.name === "nsis") || target.name.startsWith("nsis-"))) {
         this.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }
@@ -207,7 +206,13 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   if (publishConfigs == null || publishConfigs.length === 0) {
     return
   }
-  const outDir = (<ArchiveTarget>event.target).outDir
+
+  const target = event.target!
+  let outDir = target.outDir
+  if (target!.name.startsWith("nsis-")) {
+    outDir = path.join(outDir, target.name)
+    await ensureDir(outDir)
+  }
 
   for (const publishConfig of publishConfigs) {
     const isGitHub = publishConfig.provider === "github"

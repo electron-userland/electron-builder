@@ -52,11 +52,11 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
           break
 
         case "dmg":
-          mapper("dmg", () => new DmgTarget(this))
+          mapper("dmg", outDir => new DmgTarget(this, outDir))
           break
 
         case "pkg":
-          mapper("pkg", () => new PkgTarget(this))
+          mapper("pkg", outDir => new PkgTarget(this, outDir))
           break
 
         default:

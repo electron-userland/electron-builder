@@ -2,8 +2,7 @@ import { EventEmitter } from "events"
 import BluebirdPromise from "bluebird-lst-c"
 
 export class CancellationToken extends EventEmitter {
-  private _cancelled = false
-
+  private _cancelled: boolean
   get cancelled(): boolean {
     return this._cancelled || (this._parent != null && this._parent.cancelled)
   }
@@ -11,6 +10,13 @@ export class CancellationToken extends EventEmitter {
   private _parent: CancellationToken | null
   set parent(value: CancellationToken) {
     this._parent = value
+  }
+
+  // babel cannot compile ... correctly for super calls
+  constructor() {
+    super()
+
+    this._cancelled = false
   }
 
   cancel() {

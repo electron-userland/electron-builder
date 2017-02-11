@@ -14,7 +14,7 @@ import { exists, statOrNull } from "electron-builder-util/out/fs"
 export class DmgTarget extends Target {
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
-  constructor(private packager: PlatformPackager<MacOptions>) {
+  constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
     super("dmg")
   }
 

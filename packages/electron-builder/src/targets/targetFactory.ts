@@ -54,6 +54,10 @@ export function createCommonTarget(target: string, outDir: string, packager: Pla
 }
 
 export class NoOpTarget extends Target {
+  get outDir(): string {
+    throw new Error("NoOpTarget")
+  }
+
   async build(appOutDir: string, arch: Arch): Promise<any> {
     // no build
   }

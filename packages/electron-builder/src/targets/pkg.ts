@@ -14,7 +14,7 @@ export class PkgTarget extends Target {
   private readonly options: PkgOptions = this.packager.config.pkg || Object.create(null)
   private readonly installLocation = this.options.installLocation || "/Applications"
 
-  constructor(private packager: MacPackager) {
+  constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("pkg")
   }
 

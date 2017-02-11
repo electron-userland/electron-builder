@@ -33,7 +33,7 @@ export default class NsisTarget extends Target {
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  constructor(private packager: WinPackager, private outDir: string, targetName: string) {
+  constructor(private packager: WinPackager, readonly outDir: string, targetName: string) {
     super(targetName)
 
     let options = this.packager.config.nsis || Object.create(null)

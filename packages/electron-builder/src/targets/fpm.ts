@@ -34,7 +34,7 @@ export default class FpmTarget extends Target {
   private readonly scriptFiles: Promise<Array<string>>
   private readonly desktopEntry: Promise<string>
 
-  constructor(name: string, private packager: LinuxPackager, private helper: LinuxTargetHelper, private outDir: string) {
+  constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name, false)
 
     this.scriptFiles = this.createScripts()
