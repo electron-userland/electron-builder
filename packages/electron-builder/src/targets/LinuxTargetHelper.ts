@@ -27,6 +27,9 @@ export class LinuxTargetHelper {
         if (e.code === "ENOENT") {
           throw new Error(`Icon set directory ${iconDir} doesn't exist`)
         }
+        else if (e.code === "ENOTDIR") {
+          throw new Error(`linux.icon must be set to an icon set directory, but ${iconDir} is not a directory. Please see https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-icon`)
+        }
         else {
           throw e
         }
