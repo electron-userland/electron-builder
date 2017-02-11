@@ -40,10 +40,6 @@
   version "3.5.29"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
-"@types/node-forge@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.5.tgz#4ed3ea29b20ccca4e7cd778de0e039b01ddb3239"
-
 "@types/node@*":
   version "7.0.5"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.5.tgz#96a0f0a618b7b606f1ec547403c00650210bfbb7"
@@ -213,9 +209,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.11.0:
-  version "2.11.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.11.0.tgz#4dfc8c9678e42d1574bb04ebf0408fc9c1f8f302"
+aws-sdk@^2.12.0:
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.12.0.tgz#f9ae9f11d458764604ccb4a80e34e3c07a6d7d1b"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -838,9 +834,9 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.0.tgz#bc596bcabe7617f11d9fa15361eded5608b8499b"
+debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.1.tgz#79855090ba2c4e3115cc7d8769491d58f0491351"
   dependencies:
     ms "0.7.2"
 
@@ -2176,10 +2172,6 @@ node-emoji@^1.4.1, node-emoji@^1.5.1:
   resolved "https://registry.yarnpkg.com/node-emoji/-/node-emoji-1.5.1.tgz#fd918e412769bf8c448051238233840b2aff16a1"
   dependencies:
     string.prototype.codepointat "^0.2.0"
-
-node-forge@^0.7.0:
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/node-forge/-/node-forge-0.7.0.tgz#5e0782a44e5e093fae3676d59f84ecfb38a4baad"
 
 node-int64@^0.4.0:
   version "0.4.0"

@@ -246,7 +246,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private async computeAsarOptions(customBuildOptions: DC): Promise<AsarOptions | null> {
     function errorMessage(name: string) {
-      return `${name} is deprecated is deprecated and not supported — please use build.asarUnpack`
+      return `${name} is deprecated is deprecated and not supported — please use asarUnpack`
     }
 
     const buildMetadata = <any>this.config
