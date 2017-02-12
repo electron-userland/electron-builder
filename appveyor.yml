@@ -10,7 +10,7 @@ environment:
 
 install:
   - ps: Install-Product node 6 x64
-  - node ./test/vendor/yarn.js
+  - node ./test/vendor/yarn.js --pure-lockfile
 
 build: off
 

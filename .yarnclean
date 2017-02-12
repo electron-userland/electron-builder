@@ -42,3 +42,4 @@ Gruntfile.js
 *.md
 
 !tslint/lib/test
+!tslint\lib\test

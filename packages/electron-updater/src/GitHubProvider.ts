@@ -24,39 +24,41 @@ export class GitHubProvider extends Provider<VersionInfo> {
 
   async getLatestVersion(): Promise<UpdateInfo> {
     const basePath = this.getBasePath()
-    let version
-
     const cancellationToken = new CancellationToken()
-    try {
-      // do not use API to avoid limit
-      const releaseInfo = (await request<GithubReleaseInfo>(Object.assign({
-        path: `${basePath}/latest`,
-        headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
-      }, this.baseUrl), cancellationToken))
-      version = (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-    }
-    catch (e) {
-      throw new Error(`Unable to find latest version on github, please ensure a production release exists: ${e.stack || e.message}`)
-    }
-
+    const version = await this.getLatestVersionString(basePath, cancellationToken)
     let result: any
     const channelFile = getChannelFilename(getDefaultChannelName())
-    const channelFileUrlPath = `${basePath}/download/v${version}/${channelFile}`
+    const requestOptions = Object.assign({path: `${basePath}/download/v${version}/${channelFile}`, headers: this.requestHeaders || undefined}, this.baseUrl)
     try {
-      result = await request<UpdateInfo>(Object.assign({path: channelFileUrlPath, headers: this.requestHeaders || undefined}, this.baseUrl), cancellationToken)
+      result = await request<UpdateInfo>(requestOptions, cancellationToken)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts: ${e.stack || e.message}`)
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${url.format(<any>requestOptions)}): ${e.stack || e.message}`)
       }
       throw e
     }
 
     validateUpdateInfo(result)
     if (getCurrentPlatform() === "darwin") {
-      result.releaseJsonUrl = `${githubUrl(this.options)}/${channelFileUrlPath}`
+      result.releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
     }
     return result
+  }
+
+  private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string> {
+    const requestOptions: RequestOptions = Object.assign({
+      path: `${basePath}/latest`,
+      headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
+    }, this.baseUrl)
+    try {
+      // do not use API to avoid limit
+      const releaseInfo = (await request<GithubReleaseInfo>(requestOptions, cancellationToken))
+      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+    }
+    catch (e) {
+      throw new Error(`Unable to find latest version on GitHub (${url.format(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)
+    }
   }
 
   private getBasePath() {
