@@ -1,9 +1,11 @@
 exports[`test cli 1`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -19,10 +21,12 @@ Object {
 
 exports[`test cli 2`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -40,10 +44,12 @@ Object {
 
 exports[`test cli 3`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -61,10 +67,12 @@ Object {
 
 exports[`test cli 4`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -80,10 +88,12 @@ Object {
 
 exports[`test cli 5`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -99,10 +109,12 @@ Object {
 
 exports[`test cli 6`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -132,10 +144,12 @@ Object {
 
 exports[`test cli 7`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -153,10 +167,12 @@ Object {
 
 exports[`test cli 8`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -174,10 +190,12 @@ Object {
 
 exports[`test cli 9`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
@@ -195,10 +213,12 @@ Object {
 
 exports[`test cli 10`] = `
 Object {
+  "config": undefined,
   "draft": undefined,
   "extraMetadata": undefined,
   "prepackaged": undefined,
   "prerelease": undefined,
+  "projectDir": undefined,
   "publish": undefined,
   "targets": Map {
     Platform {
