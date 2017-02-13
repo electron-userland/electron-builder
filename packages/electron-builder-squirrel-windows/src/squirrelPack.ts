@@ -237,6 +237,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
       const tempFile = await packager.getTempFile("stub.exe")
       await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile, null, false)
       await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])
+      await packager.sign(tempFile)
 
       archive._append(tempFile, {
         name: relativeSafeFilePath.substring(0, relativeSafeFilePath.length - 4) + "_ExecutionStub.exe",
