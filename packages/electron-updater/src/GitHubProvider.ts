@@ -4,7 +4,7 @@ import { validateUpdateInfo } from "./GenericProvider"
 import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import * as url from "url"
+import { Url, parse as parseUrl, format as buggyFormat }  from "url"
 import { RequestOptions } from "http"
 
 export class GitHubProvider extends Provider<VersionInfo> {
@@ -14,7 +14,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
   constructor(private readonly options: GithubOptions) {
     super()
 
-    const baseUrl = url.parse(`${options.protocol || "https:"}//${options.host || "github.com"}`)
+    const baseUrl = parseUrl(`${options.protocol || "https"}://${options.host || "github.com"}`)
     this.baseUrl = {
       protocol: baseUrl.protocol,
       hostname: baseUrl.hostname,
@@ -34,7 +34,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${url.format(<any>requestOptions)}): ${e.stack || e.message}`)
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(<any>requestOptions)}): ${e.stack || e.message}`)
       }
       throw e
     }
@@ -57,7 +57,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on GitHub (${url.format(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on GitHub (${formatUrl(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)
     }
   }
 
@@ -75,7 +75,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
     return {
       name: name,
-      url: url.format(Object.assign({pathname: `${basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
+      url: formatUrl(Object.assign({path: `${basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
       sha2: versionInfo.sha2,
     }
   }
@@ -83,4 +83,12 @@ export class GitHubProvider extends Provider<VersionInfo> {
 
 interface GithubReleaseInfo {
   readonly tag_name: string
+}
+
+// url.format doesn't correctly use path and requires explicit pathname
+function formatUrl(url: Url) {
+  if (url.path != null && url.pathname == null) {
+    url.pathname = url.path
+  }
+  return buggyFormat(url)
 }
