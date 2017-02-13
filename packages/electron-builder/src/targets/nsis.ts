@@ -318,7 +318,7 @@ export default class NsisTarget extends Target {
     const packager = this.packager
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
-      script = `!include "${customInclude}"\n!addincludedir "${packager.buildResourcesDir}"\n${script}`
+      script = `!addincludedir "${packager.buildResourcesDir}"\n!addplugindir "${packager.buildResourcesDir}"\n\n!include "${customInclude}"\n\n${script}`
     }
 
     const fileAssociations = packager.fileAssociations

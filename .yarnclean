@@ -1,6 +1,6 @@
 # test directories
 __tests__
-test
+#test
 tests
 powered-test
 
