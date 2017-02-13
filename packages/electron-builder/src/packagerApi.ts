@@ -23,7 +23,7 @@ export interface PackagerOptions {
    */
   readonly devMetadata?: Metadata
 
-  readonly config?: Config
+  readonly config?: Config | string | null
 
   /**
    * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).

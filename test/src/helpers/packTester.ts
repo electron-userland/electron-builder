@@ -4,7 +4,7 @@ import * as path from "path"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo } from "electron-builder"
+import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo, Config } from "electron-builder"
 import { exec, spawn, getTempName } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import pathSorter from "path-sort"
@@ -118,7 +118,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     // never output to test fixture app
     if (!useTempDir) {
       dirToDelete = path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
-      const config = packagerOptions.config
+      const config = <Config>packagerOptions.config
       if (config != null && config.directories != null) {
         throw new Error("unsupported")
       }

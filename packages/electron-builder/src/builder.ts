@@ -159,9 +159,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.x64
   delete result.armv7l
 
-  if (result.project != null) {
-    result.projectDir = result.project
-  }
   delete result.project
   return result
 }

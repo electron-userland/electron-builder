@@ -92,21 +92,24 @@ See the [Auto Update](https://github.com/electron-userland/electron-builder/wiki
 Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
 ```
 Building:
-  --mac, -m, -o, --macos  Build for macOS, accepts target list (see
-                          https://goo.gl/HAnnq8).                        [array]
-  --linux, -l             Build for Linux, accepts target list (see
-                          https://goo.gl/O80IL2)                         [array]
-  --win, -w, --windows    Build for Windows, accepts target list (see
-                          https://goo.gl/dL4i8i)                         [array]
-  --x64                   Build for x64                                [boolean]
-  --ia32                  Build for ia32                               [boolean]
-  --armv7l                Build for armv7l                             [boolean]
-  --dir                   Build unpacked dir. Useful to test.          [boolean]
-  --extraMetadata, --em   Inject properties to package.json (asar only)
-  --prepackaged, --pd     The path to prepackaged app (to pack in a
-                          distributable format)
-  --project               The path to project directory. Defaults to current 
-                          working directory.
+  --mac, -m, -o, --macos   Build for macOS, accepts target list (see
+                           https://goo.gl/HAnnq8).                       [array]
+  --linux, -l              Build for Linux, accepts target list (see
+                           https://goo.gl/O80IL2)                        [array]
+  --win, -w, --windows     Build for Windows, accepts target list (see
+                           https://goo.gl/dL4i8i)                        [array]
+  --x64                    Build for x64                               [boolean]
+  --ia32                   Build for ia32                              [boolean]
+  --armv7l                 Build for armv7l                            [boolean]
+  --dir                    Build unpacked dir. Useful to test.         [boolean]
+  --extraMetadata, --em    Inject properties to package.json (asar only)
+  --prepackaged, --pd      The path to prepackaged app (to pack in a
+                           distributable format)
+  --projectDir, --project  The path to project directory. Defaults to current
+                           working directory.
+  --config, -c             The path to an electron-builder config. Defaults to
+                           `electron-builder.yml` (or `json`, or `json5`), see
+                           https://goo.gl/YFRJOM
 
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
@@ -126,10 +129,11 @@ Other:
   --version  Show version number                                       [boolean]
 
 Examples:
-  build -mwl                build for macOS, Windows and Linux
-  build --linux deb tar.xz  build deb and tar.xz for Linux
-  build --win --ia32        build for Windows ia32
-  build --em.foo=bar        set package.json property `foo` to `bar`
+  build -mwl                    build for macOS, Windows and Linux
+  build --linux deb tar.xz      build deb and tar.xz for Linux
+  build --win --ia32            build for Windows ia32
+  build --em.foo=bar            set package.json property `foo` to `bar`
+  build --config.nsis.unicode=  configure unicode options for NSIS
 ```
 
 ## Programmatic Usage
@@ -165,7 +169,7 @@ and other distributable formats.
 ./node_modules/.bin/build --prepackaged <packed dir>
 ```
 
-`--project` (the path to project directory) option also can be useful.
+`--projectDir` (the path to project directory) option also can be useful.
 
 ## Community
 

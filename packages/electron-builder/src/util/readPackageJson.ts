@@ -46,16 +46,24 @@ function getConfigFromPackageData(metadata: any) {
   return metadata.build
 }
 
+export async function doLoadConfig(configFile: string, projectDir: string) {
+  const configPath = path.join(projectDir, configFile)
+  const result = safeLoad(await readFile(configPath, "utf8"))
+
+  const relativePath = path.relative(projectDir, configPath)
+  log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
+  return result
+}
+
 export async function loadConfig(projectDir: string): Promise<Config | null> {
-  try {
-    const configPath = path.join(projectDir, "electron-builder.yml")
-    const result = safeLoad(await readFile(configPath, "utf8"))
-    log(`Using ${path.relative(projectDir, configPath)} configuration file`)
-    return result
-  }
-  catch (e) {
-    if (e.code !== "ENOENT") {
-      throw e
+  for (const configFile of ["electron-builder.yml", "electron-builder.json", "electron-builder.json5"]) {
+    try {
+      return await doLoadConfig(path.join(projectDir, configFile), projectDir)
+    }
+    catch (e) {
+      if (e.code !== "ENOENT") {
+        throw e
+      }
     }
   }
 

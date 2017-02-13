@@ -12,6 +12,7 @@ export function createYargs(): any {
     .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("build --win --ia32", "build for Windows ia32")
     .example("build --em.foo=bar", "set package.json property `foo` to `bar`")
+    .example("build --config.nsis.unicode=", "configure unicode options for NSIS")
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
@@ -88,9 +89,15 @@ export function createYargs(): any {
       group: buildGroup,
       describe: "The path to prepackaged app (to pack in a distributable format)",
     })
-    .option("project", {
+    .option("projectDir", {
+      alias: ["project"],
       group: buildGroup,
       describe: "The path to project directory. Defaults to current working directory.",
+    })
+    .option("config", {
+      alias: ["c"],
+      group: buildGroup,
+      describe: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + underline("https://goo.gl/YFRJOM"),
     })
     .strict()
     .group(["help", "version"], "Other:")

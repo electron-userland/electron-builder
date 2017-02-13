@@ -16,7 +16,7 @@ import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } fro
 import { PlatformPackager } from "./platformPackager"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { createTargets } from "./targets/targetFactory"
-import { getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
+import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
 import { WinPackager } from "./winPackager"
 import { getGypEnv, installOrRebuild } from "./yarn"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -91,7 +91,14 @@ export class Packager implements BuildInfo {
       warn("devMetadata is deprecated, please use config instead")
     }
 
+    let configPath: string | null = null
     let configFromOptions = this.options.config
+    if (typeof configFromOptions === "string") {
+      // it is a path to config file
+      configPath = configFromOptions
+      configFromOptions = null
+    }
+
     if (devMetadataFromOptions != null) {
       if (configFromOptions != null) {
         throw new Error("devMetadata and config cannot be used in conjunction")
@@ -100,7 +107,7 @@ export class Packager implements BuildInfo {
     }
 
     const projectDir = this.projectDir
-    const fileOrPackageConfig = await loadConfig(projectDir)
+    const fileOrPackageConfig = await (configPath == null ? loadConfig(projectDir) : doLoadConfig(configPath, projectDir))
     const config = deepAssign({}, fileOrPackageConfig, configFromOptions)
 
     const extraMetadata = this.options.extraMetadata

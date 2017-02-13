@@ -1,23 +1,21 @@
-electron-builder configuration can be defined in the `package.json` file of your project or through the `--config <path/to/yml>` option (defaults to `electron-builder.yml`).
+electron-builder configuration can be defined in the `package.json` file of your project or through the `--config <path/to/yml-or-json5>` option (defaults to `electron-builder.yml` (or `json`, or [json5](http://json5.org))).
 If you'd like to use your package.json to store config, the `build` key should be used on the top level.
 
 For example, to change icon location for DMG:
 ```json
-"build": {
-  "dmg": {
-    "contents": [
-      {
-          "x": 130,
-          "y": 220
-      },
-      {
-        "x": 410,
-        "y": 220,
-        "type": "link",
-        "path": "/Applications"
-      }
-    ]
-  }
+"dmg": {
+  "contents": [
+    {
+        "x": 130,
+        "y": 220
+    },
+    {
+      "x": 410,
+      "y": 220,
+      "type": "link",
+      "path": "/Applications"
+    }
+  ]
 }
 ```
 
