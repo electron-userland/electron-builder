@@ -186,10 +186,12 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | script | <a name="NsisOptions-script"></a>The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
 | license | <a name="NsisOptions-license"></a>The path to EULA license file. Defaults to `build/license.rtf` or `build/license.txt`.
 | language | <a name="NsisOptions-language"></a>* [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
+| multiLanguageInstaller | <a name="NsisOptions-multiLanguageInstaller"></a><p>*boring installer only.* Whether to create multi-language installer. Defaults to <code>unicode</code> option value. [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800).</p>
 | warningsAsErrors | <a name="NsisOptions-warningsAsErrors"></a>Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 | menuCategory | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. Defaults to `false`. If `true`, company name will be used. Or string value.
 | artifactName | <a name="NsisOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
 | unicode | <a name="NsisOptions-unicode"></a>Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). Defaults to `true`.
+| deleteAppDataOnUninstall | <a name="NsisOptions-deleteAppDataOnUninstall"></a>*one-click installer only.* Whether to delete app data on uninstall. Defaults to `false`.
 
 <a name="NsisWebOptions"></a>
 ### `nsis` Web Installer Specific Options
@@ -236,7 +238,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 ### `win` Windows Specific Options
 | Name | Description
 | --- | ---
-| target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p> <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
+| target | <a name="WinBuildOptions-target"></a><p>Target package type: list of <code>nsis</code>, <code>nsis-web</code> (Web installer), <code>appx</code>, <code>squirrel</code>, <code>7z</code>, <code>zip</code>, <code>tar.xz</code>, <code>tar.lz</code>, <code>tar.gz</code>, <code>tar.bz2</code>, <code>dir</code>. Defaults to <code>nsis</code>.</p> <p>AppX package can be built only on Windows 10.</p> <p>To use Squirrel.Windows please install <code>electron-builder-squirrel-windows</code> dependency.</p>
 | signingHashAlgorithms | <a name="WinBuildOptions-signingHashAlgorithms"></a><p>Array of signing algorithms used. Defaults to <code>['sha1', 'sha256']</code></p> <p>For AppX <code>sha256</code> is always used.</p>
 | icon | <a name="WinBuildOptions-icon"></a>The path to application icon. Defaults to `build/icon.ico` (consider using this convention instead of complicating your configuration).
 | legalTrademarks | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks.

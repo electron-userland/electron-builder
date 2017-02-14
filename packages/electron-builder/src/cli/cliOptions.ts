@@ -12,7 +12,7 @@ export function createYargs(): any {
     .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
     .example("build --win --ia32", "build for Windows ia32")
     .example("build --em.foo=bar", "set package.json property `foo` to `bar`")
-    .example("build --config.nsis.unicode=", "configure unicode options for NSIS")
+    .example("build --config.nsis.unicode=false", "configure unicode options for NSIS")
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],

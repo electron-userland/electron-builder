@@ -105,3 +105,11 @@ FunctionEnd
     StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
   !endif
 !macroend
+
+!macro _Updated _a _b _t _f
+  ClearErrors
+  ${GetParameters} $R9
+  ${GetOptions} $R9 "--updated" $R8
+  IfErrors `${_f}` `${_t}`
+!macroend
+!define Updated `"" Updated ""`

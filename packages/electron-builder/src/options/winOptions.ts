@@ -5,7 +5,7 @@ import { PlatformSpecificBuildOptions } from "../metadata"
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /*
-   Target package type: list of `nsis`, `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
+   Target package type: list of `nsis`, `nsis-web` (Web installer), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
 
    AppX package can be built only on Windows 10.
 
@@ -140,6 +140,12 @@ export interface NsisOptions {
   readonly language?: string | null
 
   /*
+   *boring installer only.* Whether to create multi-language installer. Defaults to `unicode` option value.
+  [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800).
+   */
+  readonly multiLanguageInstaller?: boolean
+
+  /*
    Defaults to `true`. If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
    */
   readonly warningsAsErrors?: boolean
@@ -161,6 +167,11 @@ export interface NsisOptions {
   Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). Defaults to `true`.
    */
   readonly unicode?: boolean
+
+  /*
+  *one-click installer only.* Whether to delete app data on uninstall. Defaults to `false`.
+   */
+  readonly deleteAppDataOnUninstall?: boolean
 }
 
 /*

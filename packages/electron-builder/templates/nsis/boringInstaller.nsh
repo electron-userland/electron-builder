@@ -7,11 +7,9 @@
 
 !ifndef BUILD_UNINSTALLER
   Function StartApp
-    ${GetParameters} $R0
-    ${GetOptions} $R0 "--update" $R1
-    ${IfNot} ${Errors}
+    ${if} ${Updated}
       ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" "--updated"
-    ${Else}
+    ${else}
       ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
     ${endif}
   FunctionEnd
@@ -21,9 +19,7 @@
 
   !ifdef LICENSE_FILE
     Function licensePre
-      ${GetParameters} $R0
-      ${GetOptions} $R0 "--update" $R1
-      ${IfNot} ${Errors}
+      ${if} ${Updated}
         Abort
       ${endif}
     FunctionEnd
@@ -118,4 +114,8 @@
   !endif
 !macroend
 
-!include "langs.nsh"
+!ifdef MULTI_LANGUAGE_INSTALLER
+  !include "langs.nsh"
+!else
+  !insertmacro MUI_LANGUAGE "English"
+!endif

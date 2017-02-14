@@ -11,7 +11,7 @@ A complete solution to package and build a ready for distribution Electron app f
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
   * [macOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-  * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, AppX (Windows Store), Squirrel.Windows.
+  * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): NSIS, Web installer, AppX (Windows Store), Squirrel.Windows.
 * [Two package.json structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases, Amazon S3 and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
@@ -133,7 +133,7 @@ Examples:
   build --linux deb tar.xz      build deb and tar.xz for Linux
   build --win --ia32            build for Windows ia32
   build --em.foo=bar            set package.json property `foo` to `bar`
-  build --config.nsis.unicode=  configure unicode options for NSIS
+  build --config.nsis.unicode=false  configure unicode options for NSIS
 ```
 
 ## Programmatic Usage

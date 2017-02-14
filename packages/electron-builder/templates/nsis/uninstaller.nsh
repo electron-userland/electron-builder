@@ -41,19 +41,35 @@ Section "un.install"
   # delete the installed files
   RMDir /r /REBOOTOK $INSTDIR
 
+  Var /GLOBAL isDeleteAppData
+  StrCpy $isDeleteAppData "0"
+
   ClearErrors
   ${GetParameters} $R0
   ${GetOptions} $R0 "--delete-app-data" $R1
-  ${IfNot} ${Errors}
+  ${if} ${Errors}
+    !ifdef DELETE_APP_DATA_ON_UNINSTALL
+      ${ifNot} ${Updated}
+        StrCpy $isDeleteAppData "1"
+      ${endif}
+    !endif
+  ${else}
+    StrCpy $isDeleteAppData "1"
+  ${endIf}
+
+  ${if} $isDeleteAppData == "1"
     # electron always uses per user app data
     ${if} $installMode == "all"
       SetShellVarContext current
     ${endif}
     RMDir /r "$APPDATA\${APP_FILENAME}"
+    !ifdef APP_PRODUCT_FILENAME
+      RMDir /r "$APPDATA\${APP_PRODUCT_FILENAME}"
+    !endif
     ${if} $installMode == "all"
       SetShellVarContext all
     ${endif}
-  ${EndIf}
+  ${endif}
 
   DeleteRegKey SHCTX "${UNINSTALL_REGISTRY_KEY}"
   DeleteRegKey SHCTX "${INSTALL_REGISTRY_KEY}"

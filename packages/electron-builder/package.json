@@ -66,7 +66,7 @@
     "plist": "^2.0.1",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.3.0",
-    "update-notifier": "^1.0.3",
+    "update-notifier": "^2.0.0",
     "uuid-1345": "^0.99.6",
     "yargs": "^6.6.0",
     "node-forge": "^0.7.0"

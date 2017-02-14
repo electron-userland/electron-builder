@@ -22,9 +22,8 @@ test("one-click", app({
     },
     nsis: {
       unicode: false,
-    }
-    // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
-    // productName: "TestApp",
+      deleteAppDataOnUninstall: true,
+    },
   }
 }, {
   useTempDir: true,

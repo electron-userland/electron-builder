@@ -103,6 +103,11 @@ export default class NsisTarget extends Target {
       BUILD_RESOURCES_DIR: packager.buildResourcesDir,
     }
 
+    // electron uses product file name as app data, define it as well to remove on uninstall
+    if (defines.APP_FILENAME != appInfo.productFilename) {
+      defines.APP_PRODUCT_FILENAME = appInfo.productFilename
+    }
+
     if (iconPath != null) {
       defines.MUI_ICON = iconPath
       defines.MUI_UNICON = iconPath
@@ -151,7 +156,7 @@ export default class NsisTarget extends Target {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.versionInWeirdWindowsForm,
       VIAddVersionKey: this.computeVersionKey(),
-      Unicode: options.unicode == null ? true : options.unicode,
+      Unicode: this.isUnicodeEnabled(),
     }
 
     if (packager.config.compression === "store") {
@@ -175,6 +180,10 @@ export default class NsisTarget extends Target {
     await packager.sign(installerPath)
 
     packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-${this.isWebInstaller ? "Web-" : ""}Setup-${version}.exe`)
+  }
+
+  private isUnicodeEnabled() {
+    return this.options.unicode == null ? true : this.options.unicode
   }
 
   private get isWebInstaller(): boolean {
@@ -283,6 +292,14 @@ export default class NsisTarget extends Target {
     }
 
     use(await packager.getResource(options.license, "license.rtf", "license.txt"), it => defines.LICENSE_FILE = it)
+
+    if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled() : options.multiLanguageInstaller) {
+      defines.MULTI_LANGUAGE_INSTALLER = null
+    }
+
+    if (options.deleteAppDataOnUninstall) {
+      defines.DELETE_APP_DATA_ON_UNINSTALL = null
+    }
   }
 
   private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {

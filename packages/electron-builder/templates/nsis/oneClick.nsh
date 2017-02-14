@@ -1,13 +1,11 @@
-!ifdef RUN_AFTER_FINISH
-  !ifndef BUILD_UNINSTALLER
+!ifndef BUILD_UNINSTALLER
+  !ifdef RUN_AFTER_FINISH
     !include StdUtils.nsh
     Function StartApp
       !ifdef INSTALL_MODE_PER_ALL_USERS
         ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
       !else
-        ${GetParameters} $R0
-        ${GetOptions} $R0 "--update" $R1
-        ${ifNot} ${Errors}
+        ${if} ${Updated}
           ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "--updated"
         ${else}
           ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
@@ -15,21 +13,17 @@
       !endif
     FunctionEnd
   !endif
-!endif
 
-
-!ifdef LICENSE_FILE
-
-  Function licensePre
-      ${GetParameters} $R0
-      ${GetOptions} $R0 "--update" $R1
-      ${IfNot} ${Errors}
+  !ifdef LICENSE_FILE
+    Function licensePre
+      ${if} ${Updated}
         Abort
       ${endif}
-  FunctionEnd
+    FunctionEnd
 
-  !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
-  !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
+    !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+  !endif
 !endif
 
 !insertmacro MUI_PAGE_INSTFILES
