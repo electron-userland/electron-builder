@@ -1,6 +1,7 @@
 import * as path from "path"
 import { readdir, readJson, writeJson } from "fs-extra-p"
 import BluebirdPromise from "bluebird-lst-c"
+import * as semver from "semver"
 
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
 const exec = require("../../../packages/electron-builder-util/out/util").exec
@@ -43,7 +44,7 @@ async function setPackageVersions(packages: Array<string>, packageData: Array<an
     const packageJson = packageData[i]
     const versionInfo = versions[i]
     const latestVersion = versionInfo.next || versionInfo.latest
-    if (packageJson.version == latestVersion) {
+    if (packageJson.version == latestVersion || semver.lt(latestVersion, packageJson.version)) {
       continue
     }
 
