@@ -33,6 +33,9 @@ Var desktopLink
 !endif
 
 Function .onInit
+  !ifmacrodef preInit
+    !insertmacro preInit
+  !endif
   !ifdef BUILD_UNINSTALLER
     WriteUninstaller "${UNINSTALLER_OUT_FILE}"
     !insertmacro quitSuccess
