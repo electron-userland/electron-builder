@@ -347,7 +347,10 @@ export interface Macros {
 }
 
 export function getPlatformIconFileName(value: string | null | undefined, isMac: boolean) {
-  if (value == null) {
+  if (value === undefined) {
+    return undefined
+  }
+  if (value === null) {
     return null
   }
 

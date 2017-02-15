@@ -20,6 +20,14 @@ Object {
       "CFBundleTypeRole": "Shell",
       "LSTypeIsPackage": true,
     },
+    Object {
+      "CFBundleTypeExtensions": Array [
+        "bar",
+      ],
+      "CFBundleTypeIconFile": "someFoo.icns",
+      "CFBundleTypeName": "Bar",
+      "CFBundleTypeRole": "Shell",
+    },
   ],
   "CFBundleExecutable": "Test App ßW",
   "CFBundleIconFile": "Test App ßW.icns",

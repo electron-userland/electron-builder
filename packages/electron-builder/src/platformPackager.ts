@@ -510,7 +510,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
     else if (!isEmptyOrSpaces(custom)) {
-      return path.resolve(this.projectDir, custom)
+      let p = path.resolve(this.buildResourcesDir, custom)
+      if (await statOrNull(p) == null) {
+        p = path.resolve(this.projectDir, custom)
+        if (await statOrNull(p) == null) {
+          throw new Error(`Cannot find specified resource "${custom}", nor relative to "${this.buildResourcesDir}", neither relative to project dir ("${this.projectDir}")`)
+        }
+      }
+      return p
     }
     return null
   }
