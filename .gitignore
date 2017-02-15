@@ -32,3 +32,4 @@ dist/
 /test/test-report.xml
 
 /packages/electron-builder/README.md
+/packages/electron-builder/scheme.json

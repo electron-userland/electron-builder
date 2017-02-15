@@ -74,7 +74,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         // https://github.com/digitalbazaar/forge/issues/338#issuecomment-164831585
         const p12Asn1 = forge.asn1.fromDer(await readFile(cscInfo.file, "binary"), false)
         const p12 = (<any>forge).pkcs12.pkcs12FromAsn1(p12Asn1, false, cscInfo.password)
-        publisherName = p12.getBags({bagType: forge.pki.oids.certBag})[forge.pki.oids.certBag][0].cert.subject.getField("CN").value
+        const bagType = (<any>forge.pki.oids).certBag
+        publisherName = p12.getBags({bagType: bagType})[bagType][0].cert.subject.getField("CN").value
       }
       catch (e) {
         throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
