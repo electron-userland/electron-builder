@@ -47,10 +47,8 @@ function getConfigFromPackageData(metadata: any) {
 }
 
 export async function doLoadConfig(configFile: string, projectDir: string) {
-  const configPath = path.join(projectDir, configFile)
-  const result = safeLoad(await readFile(configPath, "utf8"))
-
-  const relativePath = path.relative(projectDir, configPath)
+  const result = safeLoad(await readFile(configFile, "utf8"))
+  const relativePath = path.relative(projectDir, configFile)
   log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
   return result
 }
