@@ -155,6 +155,11 @@ async function runTests() {
     }
   }
 
+  if (process.env.CIRCLECI != null) {
+    config.testResultsProcessor = "<rootDir>/node_modules/jest-junit-reporter"
+    process.env.TEST_REPORT_PATH = process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports")
+  }
+
   require("jest-cli").runCLI({
     verbose: true,
     updateSnapshot: process.env.UPDATE_SNAPSHOT === "true",
