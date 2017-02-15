@@ -427,7 +427,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           return Arch[arch]
 
         case "os":
-          return this.platform.name
+          return this.platform.buildConfigurationKey
 
         case "ext":
           return ext
