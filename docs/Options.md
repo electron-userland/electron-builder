@@ -158,6 +158,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | bundleVersion | <a name="MacOptions-bundleVersion"></a>The `CFBundleVersion`. Do not use it unless [you need to](see (https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643)).
 | helperBundleId | <a name="MacOptions-helperBundleId"></a>The bundle identifier to use in the application helper's plist. Defaults to `${appBundleIdentifier}.helper`.
 | type | <a name="MacOptions-type"></a>Whether to sign app for development or for distribution. One of `development`, `distribution`. Defaults to `distribution`.
+| extendInfo | <a name="MacOptions-extendInfo"></a>The extra entries for `Info.plist`.
 
 <a name="MasBuildOptions"></a>
 ### `mas` MAS (Mac Application Store) Specific Options

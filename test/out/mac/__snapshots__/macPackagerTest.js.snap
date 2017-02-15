@@ -34,6 +34,7 @@ Object {
   "DTXcodeBuild": "8C1002",
   "LSApplicationCategoryType": "your.app.category.type",
   "LSMinimumSystemVersion": "10.9.0",
+  "LSUIElement": true,
   "NSHighResolutionCapable": true,
   "NSMainNibFile": "MainMenu",
   "NSPrincipalClass": "AtomApplication",

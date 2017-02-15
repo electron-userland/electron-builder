@@ -16,6 +16,9 @@ test.ifMac("one-package", app({
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
     mac: {
+      extendInfo: {
+        LSUIElement: true,
+      },
       fileAssociations: [
         {
           ext: "foo",

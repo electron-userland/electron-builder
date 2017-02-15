@@ -60,6 +60,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
    Whether to sign app for development or for distribution. One of `development`, `distribution`. Defaults to `distribution`.
    */
   readonly type?: "distribution" | "development" | null
+
+  /**
+   The extra entries for `Info.plist`.
+   */
+  readonly extendInfo?: any
 }
 
 /**

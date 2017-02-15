@@ -49,6 +49,11 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     Object.assign(appPlist, parsePlist(fileContents[4]))
   }
 
+  const macOptions = buildMetadata.mac
+  if (macOptions != null && macOptions.extendInfo != null) {
+    Object.assign(appPlist, macOptions.extendInfo)
+  }
+
   const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
 
   const oldHelperBundleId = (<any>buildMetadata)["helper-bundle-id"]
