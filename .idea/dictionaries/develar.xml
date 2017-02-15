@@ -194,6 +194,7 @@
       <w>unmounting</w>
       <w>unorm</w>
       <w>unpage</w>
+      <w>unwelcomefinishpage</w>
       <w>userland</w>
       <w>userprofile</w>
       <w>valuename</w>
@@ -201,6 +202,7 @@
       <w>veyor</w>
       <w>volid</w>
       <w>volname</w>
+      <w>welcomefinishpage</w>
       <w>winedlloverrides</w>
       <w>winstaller</w>
       <w>writev</w>

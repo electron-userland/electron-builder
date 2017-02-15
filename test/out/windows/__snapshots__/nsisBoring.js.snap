@@ -1,3 +1,31 @@
+exports[`test allowToChangeInstallationDirectory 1`] = `
+Array [
+  "Test Custom Installation Dir Setup 1.1.0.exe",
+]
+`;
+
+exports[`test allowToChangeInstallationDirectory 2`] = `
+Array [
+  "test-custom-inst-dir-Setup-1.1.0.exe",
+]
+`;
+
+exports[`test allowToChangeInstallationDirectory 3`] = `
+Object {
+  "owner": "foo",
+  "provider": "github",
+  "repo": "bar",
+}
+`;
+
+exports[`test allowToChangeInstallationDirectory 4`] = `
+Object {
+  "githubArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
+  "path": "Test Custom Installation Dir Setup 1.1.0.exe",
+  "version": "1.1.0",
+}
+`;
+
 exports[`test boring 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",

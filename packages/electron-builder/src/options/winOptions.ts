@@ -115,6 +115,16 @@ export interface NsisOptions {
   readonly installerHeader?: string | null
 
   /*
+   *boring installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+   */
+  readonly installerSidebar?: string | null
+
+  /*
+   *boring installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+   */
+  readonly uninstallerSidebar?: string | null
+
+  /*
    *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null

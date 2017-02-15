@@ -1,14 +1,11 @@
-import { extractFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst-c"
 import { Arch, Platform } from "electron-builder"
-import { archFromString } from "electron-builder-core"
-import { walk } from "electron-builder-util/out/fs"
-import { outputFile, readFile } from "fs-extra-p"
+import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson, PackedContext } from "../helpers/packTester"
-import { diff, WineManager } from "../helpers/wine"
+import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
+import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -33,16 +30,6 @@ test("one-click", app({
     await expectUpdateMetadata(context, Arch.ia32, true)
   }
 }))
-
-async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
-  const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))
-  if (requireCodeSign && process.env.CSC_KEY_PASSWORD != null) {
-    expect(data.publisherName).toEqual(["Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)"])
-    delete data.publisherName
-  }
-
-  expect(data).toMatchSnapshot()
-}
 
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
@@ -83,69 +70,6 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   },
 }))
 
-async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null) {
-  if (process.env.DO_WINE !== "true") {
-    return BluebirdPromise.resolve()
-  }
-
-  const wine = new WineManager()
-  await wine.prepare()
-  const driveC = path.join(wine.wineDir, "drive_c")
-  const driveCWindows = path.join(wine.wineDir, "drive_c", "windows")
-  const perUserTempDir = path.join(wine.userDir, "Temp")
-  const walkFilter = (it: string) => {
-    return it !== driveCWindows && it !== perUserTempDir
-  }
-
-  function listFiles() {
-    return walk(driveC, null, walkFilter)
-  }
-
-  let fsBefore = await listFiles()
-
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
-
-  let instDir = perUser ? path.join(wine.userDir, "Local Settings", "Application Data", "Programs") : path.join(driveC, "Program Files")
-  if (menuCategory != null) {
-    instDir = path.join(instDir, menuCategory)
-  }
-
-  const appAsar = path.join(instDir, name, "resources", "app.asar")
-  expect(JSON.parse(extractFile(appAsar, "package.json").toString())).toMatchObject({
-    name: name,
-  })
-
-  if (!perUser) {
-    let startMenuDir = path.join(driveC, "users", "Public", "Start Menu", "Programs")
-    if (menuCategory != null) {
-      startMenuDir = path.join(startMenuDir, menuCategory)
-    }
-    await assertThat(path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
-  }
-
-  let fsAfter = await listFiles()
-
-  let fsChanges = diff(fsBefore, fsAfter, driveC)
-  expect(fsChanges.added).toMatchSnapshot()
-  expect(fsChanges.deleted).toEqual([])
-
-  // run installer again to test uninstall
-  const appDataFile = path.join(wine.userDir, "Application Data", name, "doNotDeleteMe")
-  await outputFile(appDataFile, "app data must be not removed")
-  fsBefore = await listFiles()
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S")
-  fsAfter = await listFiles()
-
-  fsChanges = diff(fsBefore, fsAfter, driveC)
-  expect(fsChanges.added).toEqual([])
-  expect(fsChanges.deleted).toEqual([])
-
-  await assertThat(appDataFile).isFile()
-
-  await wine.exec(path.join(outDir, `${productFilename} Setup 1.1.0.exe`), "/S", "--delete-app-data")
-  await assertThat(appDataFile).doesNotExist()
-}
-
 test.ifNotCiMac("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
@@ -176,32 +100,6 @@ test.ifDevOrLinuxCi("custom include", () => assertPack("test-app-one", {targets:
 test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   projectDirCreated: projectDir => copyTestAsset("installer.nsi", path.join(projectDir, "build", "installer.nsi")),
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
-}))
-
-test("allowToChangeInstallationDirectory", app({
-  targets: nsisTarget,
-  appMetadata: {
-    name: "test-custom-inst-dir",
-    productName: "Test Custom Installation Dir",
-    repository: "foo/bar",
-  },
-  config: {
-    nsis: {
-      allowToChangeInstallationDirectory: true,
-      oneClick: false,
-    }
-  }
-}, {
-  packed: async(context) => {
-    await expectUpdateMetadata(context, archFromString(process.arch))
-    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    expect(updateInfo.sha2).not.toEqual("")
-    expect(updateInfo.releaseDate).not.toEqual("")
-    delete updateInfo.sha2
-    delete updateInfo.releaseDate
-    expect(updateInfo).toMatchSnapshot()
-    await doTest(context.outDir, false)
-  }
 }))
 
 test("menuCategory", app({

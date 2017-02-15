@@ -15,14 +15,10 @@ import { copyFile } from "electron-builder-util/out/fs"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 import { getSignVendorPath } from "../windowsCodeSign"
 
-const NSIS_VERSION = "3.0.1.7"
-//noinspection SpellCheckingInspection
-const NSIS_SHA2 = "0e797a7099283bf9caf97ee677e1d7986278c27b39916a501480978af039817c"
-
-//noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-const nsisPathPromise = getBinFromBintray("nsis", NSIS_VERSION, NSIS_SHA2)
+const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.8", "d9429cc33d06198b48b939e51f48fc95b3b7ccd5584dd9fe3f3f4eacce9d8275")
+const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -156,7 +152,7 @@ export default class NsisTarget extends Target {
       OutFile: `"${installerPath}"`,
       VIProductVersion: appInfo.versionInWeirdWindowsForm,
       VIAddVersionKey: this.computeVersionKey(),
-      Unicode: this.isUnicodeEnabled(),
+      Unicode: this.isUnicodeEnabled,
     }
 
     if (packager.config.compression === "store") {
@@ -182,7 +178,7 @@ export default class NsisTarget extends Target {
     packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-${this.isWebInstaller ? "Web-" : ""}Setup-${version}.exe`)
   }
 
-  private isUnicodeEnabled() {
+  private get isUnicodeEnabled() {
     return this.options.unicode == null ? true : this.options.unicode
   }
 
@@ -236,16 +232,34 @@ export default class NsisTarget extends Target {
     const packager = this.packager
     const options = this.options
 
-    const installerHeader = oneClick ? null : await packager.getResource(options.installerHeader, "installerHeader.bmp")
-    if (installerHeader != null) {
-      defines.MUI_HEADERIMAGE = null
-      defines.MUI_HEADERIMAGE_RIGHT = null
-      defines.MUI_HEADERIMAGE_BITMAP = installerHeader
-    }
+    if (oneClick) {
+      defines.ONE_CLICK = null
 
-    const installerHeaderIcon = oneClick ? await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico") : null
-    if (installerHeaderIcon != null) {
-      defines.HEADER_ICO = installerHeaderIcon
+      if (options.runAfterFinish !== false) {
+        defines.RUN_AFTER_FINISH = null
+      }
+
+      const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
+      if (installerHeaderIcon != null) {
+        defines.HEADER_ICO = installerHeaderIcon
+      }
+    }
+    else {
+      const installerHeader = await
+      packager.getResource(options.installerHeader, "installerHeader.bmp")
+      if (installerHeader != null) {
+        defines.MUI_HEADERIMAGE = null
+        defines.MUI_HEADERIMAGE_RIGHT = null
+        defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+      }
+
+      const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+      defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+      defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+
+      if (options.allowElevation !== false) {
+        defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
+      }
     }
 
     if (options.perMachine === true) {
@@ -254,15 +268,6 @@ export default class NsisTarget extends Target {
 
     if (!oneClick || options.perMachine === true) {
       defines.INSTALL_MODE_PER_ALL_USERS_REQUIRED = null
-    }
-
-    if (oneClick) {
-      if (options.runAfterFinish !== false) {
-        defines.RUN_AFTER_FINISH = null
-      }
-    }
-    else if (options.allowElevation !== false) {
-      defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
     }
 
     if (options.allowToChangeInstallationDirectory) {
@@ -280,10 +285,6 @@ export default class NsisTarget extends Target {
       defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
     }
 
-    if (oneClick) {
-      defines.ONE_CLICK = null
-    }
-
     if (options.menuCategory != null) {
       const menu = sanitizeFileName(options.menuCategory === true ? packager.appInfo.companyName : <string>options.menuCategory)
       if (!isEmptyOrSpaces(menu)) {
@@ -293,7 +294,7 @@ export default class NsisTarget extends Target {
 
     use(await packager.getResource(options.license, "license.rtf", "license.txt"), it => defines.LICENSE_FILE = it)
 
-    if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled() : options.multiLanguageInstaller) {
+    if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled : options.multiLanguageInstaller) {
       defines.MULTI_LANGUAGE_INSTALLER = null
     }
 
@@ -331,11 +332,17 @@ export default class NsisTarget extends Target {
     const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
     const nsisPath = await nsisPathPromise
 
+    let scriptHeader = `!addincludedir "${path.win32.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
+    const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+    scriptHeader += `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
+
     let script = originalScript
     const packager = this.packager
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
-      script = `!addincludedir "${packager.buildResourcesDir}"\n!addplugindir "${packager.buildResourcesDir}"\n\n!include "${customInclude}"\n\n${script}`
+      scriptHeader += `!addincludedir "${packager.buildResourcesDir}"\n`
+      scriptHeader += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
+      script = `\n!include "${customInclude}"\n\n${script}`
     }
 
     const fileAssociations = packager.fileAssociations
@@ -377,6 +384,8 @@ export default class NsisTarget extends Target {
         script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`
       }
     }
+
+    script = scriptHeader + script
 
     if (debug.enabled) {
       process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")

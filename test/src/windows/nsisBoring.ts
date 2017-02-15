@@ -1,6 +1,10 @@
 import { Platform, Arch } from "electron-builder"
 import { assertPack, app, copyTestAsset } from "../helpers/packTester"
 import * as path from "path"
+import { archFromString } from "electron-builder-core"
+import { safeLoad } from "js-yaml"
+import { readFile } from "fs-extra-p";
+import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -83,4 +87,30 @@ test.ifNotCiMac("boring", app({
   projectDirCreated: projectDir => {
     return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
   },
+}))
+
+test("allowToChangeInstallationDirectory", app({
+  targets: nsisTarget,
+  appMetadata: {
+    name: "test-custom-inst-dir",
+    productName: "Test Custom Installation Dir",
+    repository: "foo/bar",
+  },
+  config: {
+    nsis: {
+      allowToChangeInstallationDirectory: true,
+      oneClick: false,
+    }
+  }
+}, {
+  packed: async(context) => {
+    await expectUpdateMetadata(context, archFromString(process.arch))
+    const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
+    expect(updateInfo.sha2).not.toEqual("")
+    expect(updateInfo.releaseDate).not.toEqual("")
+    delete updateInfo.sha2
+    delete updateInfo.releaseDate
+    expect(updateInfo).toMatchSnapshot()
+    await doTest(context.outDir, false)
+  }
 }))

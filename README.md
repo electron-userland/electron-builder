@@ -34,15 +34,12 @@ _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which
 
 1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
-2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) configuration in the development `package.json` as follows:
+2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) configuration in the `package.json` as follows:
     ```json
     "build": {
       "appId": "your.id",
       "mac": {
         "category": "your.app.category.type"
-      },
-      "win": {
-        "iconUrl": "(windows-only) https link to icon"
       }
     }
     ```
