@@ -397,10 +397,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | n, ext: string, arch?: Arch | null, defaultPattern?: string): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
-      pattern = this.platformSpecificBuildOptions.artifactName
-    }
-    if (pattern == null) {
-      pattern = defaultPattern || "${productName}-${version}.${ext}"
+      pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}.${ext}"
     }
 
     if (arch == null) {
