@@ -14,6 +14,7 @@ import sanitizeFileName from "sanitize-filename"
 import { copyFile } from "electron-builder-util/out/fs"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 import { getSignVendorPath } from "../windowsCodeSign"
+import { getPlatformIconFileName } from "../metadata"
 
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
@@ -358,7 +359,7 @@ export default class NsisTarget extends Target {
         for (const item of fileAssociations) {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (const ext of extensions) {
-            const customIcon = await packager.getResource(item.icon, `${extensions[0]}.ico`)
+            const customIcon = await packager.getResource(getPlatformIconFileName(item.icon, false), `${extensions[0]}.ico`)
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
               installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`

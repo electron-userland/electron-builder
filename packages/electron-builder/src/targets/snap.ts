@@ -2,7 +2,7 @@ import { LinuxTargetHelper } from "./LinuxTargetHelper"
 import { LinuxPackager } from "../linuxPackager"
 import { log } from "electron-builder-util/out/log"
 import { SnapOptions } from "../options/linuxOptions"
-import { emptyDir, writeFile, copy } from "fs-extra-p"
+import { emptyDir, outputFile, copy } from "fs-extra-p"
 import * as path from "path"
 import { safeDump } from "js-yaml"
 import { spawn } from "electron-builder-util"
@@ -23,10 +23,11 @@ export default class SnapTarget extends Target {
     const appInfo = packager.appInfo
     const options = this.options
 
-    const snapDir = `${appOutDir}-snap`
-    await emptyDir(snapDir)
+    const stageDir = `${appOutDir}-snap`
+    const snapDir = path.join(stageDir, "snap")
+    await emptyDir(stageDir)
 
-    const extraSnapSourceDir = path.join(snapDir, ".extra")
+    const extraSnapSourceDir = path.join(stageDir, "extra")
     const isUseUbuntuPlatform = options.ubuntuAppPlatformContent != null
     if (isUseUbuntuPlatform) {
       // ubuntu-app-platform requires empty directory
@@ -43,11 +44,11 @@ export default class SnapTarget extends Target {
 
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
-      snap.icon = "setup/gui/icon.png"
-      await copy(this.helper.maxIconPath, path.join(snapDir, "setup", "gui", "icon.png"))
+      snap.icon = "snap/gui/icon.png"
+      await copy(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
     }
 
-    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "setup", "gui", `${snap.name}.desktop`), {
+    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {
       "Icon": "${SNAP}/meta/gui/icon.png"
     })
 
@@ -93,7 +94,7 @@ export default class SnapTarget extends Target {
     if (isUseUbuntuPlatform) {
       snap.parts.extra = {
         plugin: "dump",
-        source: isUseDocker ? `/out/${path.basename(snapDir)}/${path.basename(extraSnapSourceDir)}` : extraSnapSourceDir
+        source: isUseDocker ? `/out/${path.basename(stageDir)}/${path.basename(extraSnapSourceDir)}` : extraSnapSourceDir
       }
     }
 
@@ -102,7 +103,7 @@ export default class SnapTarget extends Target {
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
-    await writeFile(snapcraft, safeDump(snap, {lineWidth: 160}))
+    await outputFile(snapcraft, safeDump(snap, {lineWidth: 160}))
 
     const snapName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapName)
@@ -114,14 +115,14 @@ export default class SnapTarget extends Target {
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
         "electronuserland/electron-builder:latest",
-        "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(snapDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapName}`], {
+        "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapName}`], {
         cwd: packager.info.projectDir,
         stdio: ["ignore", "inherit", "inherit"],
       })
     }
     else {
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], {
-        cwd: snapDir,
+        cwd: stageDir,
         stdio: ["ignore", "inherit", "pipe"],
       })
     }

@@ -6,6 +6,7 @@ import { use, asArray } from "electron-builder-util"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 import { warn } from "electron-builder-util/out/log"
 import { unlinkIfExists, copyFile } from "electron-builder-util/out/fs"
+import { getPlatformIconFileName } from "../metadata"
 
 function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
@@ -109,7 +110,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   if (fileAssociations.length > 0) {
     appPlist.CFBundleDocumentTypes = await BluebirdPromise.map(fileAssociations, async fileAssociation => {
       const extensions = asArray(fileAssociation.ext).map(normalizeExt)
-      const customIcon = await packager.getResource(fileAssociation.icon, `${extensions[0]}.icns`)
+      const customIcon = await packager.getResource(getPlatformIconFileName(fileAssociation.icon, true), `${extensions[0]}.icns`)
       let iconFile = appPlist.CFBundleIconFile
       if (customIcon != null) {
         iconFile = path.basename(customIcon)

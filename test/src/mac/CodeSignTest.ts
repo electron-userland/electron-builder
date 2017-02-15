@@ -24,4 +24,5 @@ test.ifMac("create keychain with installers", async () => {
 test.ifDevOrLinuxCi("remove password from log", async () => {
   expect(removePassword("seq -P foo -B")).toEqual("seq -P 2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash) -B")
   expect(removePassword("pass:foo")).toEqual("pass:2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae (sha256 hash)")
+  expect(removePassword("/usr/bin/productbuild -P wefwef")).toEqual("/usr/bin/productbuild -P 56ef615b2e26c3b9a10dc2824238fb8b8a154ec7db4907ec6ee357ed7bb350b7 (sha256 hash)")
 })
