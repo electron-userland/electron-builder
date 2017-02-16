@@ -6,7 +6,7 @@ import { SemVer } from "semver"
 import { BuildInfo } from "./packagerApi"
 
 export class AppInfo {
-  readonly description = smarten(this.metadata.description!)
+  readonly description = smarten(this.metadata.description || "")
   readonly version: string
   readonly buildNumber: string
   readonly buildVersion: string

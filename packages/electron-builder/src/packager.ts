@@ -1,7 +1,7 @@
 import { extractFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst-c"
 import { Arch, Platform, Target } from "electron-builder-core"
-import { computeDefaultAppDirectory, exec, isEmptyOrSpaces, use } from "electron-builder-util"
+import { computeDefaultAppDirectory, exec, isEmptyOrSpaces, use, debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
@@ -136,6 +136,8 @@ export class Packager implements BuildInfo {
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
       this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
+
+      debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
     }
     else {
       this.devMetadata = this.metadata
@@ -280,7 +282,7 @@ export class Packager implements BuildInfo {
   private checkMetadata(appPackageFile: string, devAppPackageFile: string): void {
     const errors: Array<string> = []
     const reportError = (missedFieldName: string) => {
-      errors.push(`Please specify '${missedFieldName}' in the application package.json ('${appPackageFile}')`)
+      errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
     }
 
     const checkNotEmpty = (name: string, value: string | n) => {
@@ -292,7 +294,10 @@ export class Packager implements BuildInfo {
     const appMetadata = this.metadata
 
     checkNotEmpty("name", appMetadata.name)
-    checkNotEmpty("description", appMetadata.description)
+
+    if (isEmptyOrSpaces(appMetadata.description)) {
+      warn(`description is missed in the package.json (${appPackageFile})`)
+    }
     checkNotEmpty("version", appMetadata.version)
 
     checkDependencies(this.devMetadata.dependencies, errors)
@@ -320,7 +325,7 @@ export class Packager implements BuildInfo {
 
     const author = appMetadata.author
     if (author == null) {
-      errors.push(`Please specify "author" in the application package.json ('${appPackageFile}') — it is used as company name and copyright owner.`)
+      errors.push(`Please specify "author" in the application package.json (${appPackageFile}) — it is used as company name and copyright owner.`)
     }
 
     if (config.name != null) {
