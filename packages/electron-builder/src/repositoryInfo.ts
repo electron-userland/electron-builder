@@ -1,7 +1,7 @@
-import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import { readFile } from "fs-extra-p"
-import { Metadata, RepositoryInfo } from "./metadata"
+import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import * as path from "path"
+import { Metadata, RepositoryInfo } from "./metadata"
 
 export interface RepositorySlug {
   user: string
@@ -18,7 +18,7 @@ async function getGitUrlFromGitConfig(): Promise<string | null> {
     data = await readFile(path.join(".git", "config"), "utf8")
   }
   catch (e) {
-    if (e.code === "ENOENT") {
+    if (e.code === "ENOENT" || e.code === "ENOTDIR") {
       return null
     }
 

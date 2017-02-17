@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
+import BluebirdPromise from "bluebird-lst"
 import { computeDefaultAppDirectory, use } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
-import BluebirdPromise from "bluebird-lst-c"
 import yargs from "yargs"
-import { loadConfig, getElectronVersion } from "../util/readPackageJson"
+import { getElectronVersion, loadConfig } from "../util/readPackageJson"
 import { installOrRebuild } from "../yarn"
 
 async function main() {

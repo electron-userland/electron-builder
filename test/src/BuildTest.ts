@@ -1,24 +1,15 @@
-import {
-  assertPack,
-  modifyPackageJson,
-  getPossiblePlatforms,
-  app,
-  appThrows,
-  packageJson,
-  appTwoThrows,
-  allPlatforms
-} from "./helpers/packTester"
-import { move, outputJson } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { assertThat } from "./helpers/fileAssert"
-import { BuildOptions, Platform, PackagerOptions, DIR_TARGET, Arch } from "electron-builder"
-import { normalizeOptions, build } from "electron-builder/out/builder"
-import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { extractFile } from "asar-electron-builder"
-import { ELECTRON_VERSION } from "./helpers/config"
-import isCi from "is-ci"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, BuildOptions, DIR_TARGET, PackagerOptions, Platform } from "electron-builder"
+import { build, normalizeOptions } from "electron-builder/out/builder"
+import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { checkWineVersion } from "electron-builder/out/packager"
+import { move, outputJson } from "fs-extra-p"
+import isCi from "is-ci"
+import * as path from "path"
+import { ELECTRON_VERSION } from "./helpers/config"
+import { assertThat } from "./helpers/fileAssert"
+import { allPlatforms, app, appThrows, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
 
 test("cli", async () => {
   const yargs = createYargs()

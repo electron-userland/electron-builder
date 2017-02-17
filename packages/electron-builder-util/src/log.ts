@@ -1,7 +1,7 @@
+import BluebirdPromise from "bluebird-lst"
 import { yellow } from "chalk"
-import WritableStream = NodeJS.WritableStream
-import BluebirdPromise from "bluebird-lst-c"
 import { get as getEmoji } from "node-emoji"
+import WritableStream = NodeJS.WritableStream
 
 let printer: ((message: string) => void) | null = null
 

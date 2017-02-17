@@ -1,10 +1,10 @@
-import { outputFile, symlink, writeFile, mkdirs } from "fs-extra-p"
-import { assertPack, modifyPackageJson, app, PackedContext, getTempFile } from "./helpers/packTester"
-import BluebirdPromise from "bluebird-lst-c"
+import { statFile } from "asar-electron-builder"
+import BluebirdPromise from "bluebird-lst"
+import { DIR_TARGET, Platform } from "electron-builder"
+import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, DIR_TARGET } from "electron-builder"
-import { statFile } from "asar-electron-builder"
+import { app, assertPack, getTempFile, modifyPackageJson, PackedContext } from "./helpers/packTester"
 
 async function createFiles(appDir: string) {
   await BluebirdPromise.all([

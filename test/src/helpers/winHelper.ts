@@ -1,13 +1,13 @@
-import { Arch, Platform } from "electron-builder-core"
-import { safeLoad } from "js-yaml"
-import { PackedContext } from "./packTester"
-import { readFile, outputFile } from "fs-extra-p"
-import * as path from "path"
-import { diff, WineManager } from "./wine"
-import { walk } from "electron-builder-util/out/fs"
 import { extractFile } from "asar-electron-builder"
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, Platform } from "electron-builder-core"
+import { walk } from "electron-builder-util/out/fs"
+import { outputFile, readFile } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
+import * as path from "path"
 import { assertThat } from "./fileAssert"
+import { PackedContext } from "./packTester"
+import { diff, WineManager } from "./wine"
 
 export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))

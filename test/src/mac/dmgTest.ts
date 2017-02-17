@@ -1,10 +1,10 @@
-import { assertPack, app, CheckingMacPackager } from "../helpers/packTester"
-import { remove, copy } from "fs-extra-p"
-import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
-import { assertThat } from "../helpers/fileAssert"
+import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
 import { attachAndExecute } from "electron-builder/out/targets/dmg"
+import { copy, remove } from "fs-extra-p"
+import * as path from "path"
+import { assertThat } from "../helpers/fileAssert"
+import { app, assertPack, CheckingMacPackager } from "../helpers/packTester"
 
 test.ifMac("no build directory", app({
   targets: Platform.MAC.createTarget("dmg"),

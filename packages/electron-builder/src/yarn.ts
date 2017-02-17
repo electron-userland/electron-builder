@@ -1,10 +1,10 @@
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { log, warn} from "electron-builder-util/out/log"
-import { homedir } from "os"
-import { spawn, asArray } from "electron-builder-util"
-import { Config } from "./metadata"
+import BluebirdPromise from "bluebird-lst"
+import { asArray, spawn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
+import { log, warn } from "electron-builder-util/out/log"
+import { homedir } from "os"
+import * as path from "path"
+import { Config } from "./metadata"
 import { readInstalled } from "./readInstalled"
 
 export async function installOrRebuild(config: Config, appDir: string, electronVersion: string, platform: string, arch: string, forceInstall: boolean = false) {

@@ -1,9 +1,9 @@
-import { unlink, access, stat, Stats, lstat, readdir, createReadStream, createWriteStream, link, mkdirs, readlink, symlink } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { debug } from "./util"
+import BluebirdPromise from "bluebird-lst"
+import { access, createReadStream, createWriteStream, link, lstat, mkdirs, readdir, readlink, stat, Stats, symlink, unlink } from "fs-extra-p"
 import isCi from "is-ci"
+import * as path from "path"
 import Mode from "stat-mode"
+import { debug } from "./util"
 
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}

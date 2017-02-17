@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { asArray } from "electron-builder-util"
 import { copyDir, copyFile, Filter, statOrNull } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"

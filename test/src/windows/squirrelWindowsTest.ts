@@ -1,7 +1,7 @@
-import { Platform, Arch } from "electron-builder"
-import { app, modifyPackageJson, assertPack, CheckingWinPackager, copyTestAsset } from "../helpers/packTester"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, Platform } from "electron-builder"
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
+import { app, assertPack, CheckingWinPackager, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 
 test.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
 

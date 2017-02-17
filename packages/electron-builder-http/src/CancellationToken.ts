@@ -1,7 +1,9 @@
+import BluebirdPromise from "bluebird-lst"
 import { EventEmitter } from "events"
-import BluebirdPromise from "bluebird-lst-c"
 
 export class CancellationToken extends EventEmitter {
+  private parentCancelHandler: any | null = null
+
   private _cancelled: boolean
   get cancelled(): boolean {
     return this._cancelled || (this._parent != null && this._parent.cancelled)
@@ -9,14 +11,21 @@ export class CancellationToken extends EventEmitter {
 
   private _parent: CancellationToken | null
   set parent(value: CancellationToken) {
+    this.removeParentCancelHandler()
+
     this._parent = value
+    this.parentCancelHandler = () => this.cancel()
+    this._parent.onCancel(this.parentCancelHandler)
   }
 
   // babel cannot compile ... correctly for super calls
-  constructor() {
+  constructor(parent?: CancellationToken) {
     super()
 
     this._cancelled = false
+    if (parent != null) {
+      this.parent = parent
+    }
   }
 
   cancel() {
@@ -24,14 +33,76 @@ export class CancellationToken extends EventEmitter {
     this.emit("cancel")
   }
 
-  onCancel(handler: () => any) {
-    this.once("cancel", handler)
+  private onCancel(handler: () => any) {
+    if (this.cancelled) {
+      handler()
+    }
+    else {
+      this.once("cancel", handler)
+    }
   }
 
-  trackPromise(promise: BluebirdPromise<any>): BluebirdPromise<any> {
-    const handler = () => promise.cancel()
-    this.onCancel(handler)
-    // it is important to return promise, otherwise will be unhandled rejection error on reject
-    return promise.finally(() => this.removeListener("cancel", handler))
+  createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error?: any) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
+    if (this.cancelled) {
+      return BluebirdPromise.reject(new CancellationError())
+    }
+
+    let cancelHandler: (() => void) | null = null
+    return new BluebirdPromise((resolve, reject) => {
+      let addedCancelHandler: (() => void) | null = null
+
+      cancelHandler = () => {
+        try {
+          if (addedCancelHandler != null) {
+            addedCancelHandler()
+            addedCancelHandler = null
+          }
+        }
+        finally {
+          reject(new CancellationError())
+        }
+      }
+
+      if (this.cancelled) {
+        cancelHandler()
+        return
+      }
+
+      this.onCancel(cancelHandler)
+
+      callback(resolve, reject, (callback: () => void) => {
+        addedCancelHandler = callback
+      })
+    })
+      .finally(() => {
+        if (cancelHandler != null) {
+          this.removeListener("cancel", cancelHandler)
+          cancelHandler = null
+        }
+      })
+  }
+
+  private removeParentCancelHandler() {
+    const parent = this._parent
+    if (parent != null && this.parentCancelHandler != null) {
+      parent.removeListener("cancel", this.parentCancelHandler)
+      this.parentCancelHandler = null
+    }
+  }
+
+  dispose() {
+    try {
+      this.removeParentCancelHandler()
+    }
+    finally {
+      this.removeAllListeners()
+      this._parent = null
+    }
+  }
+}
+
+export class CancellationError extends Error {
+  constructor() {
+    super("Cancelled")
   }
 }

@@ -1,9 +1,9 @@
-import { readdir, outputFile, ensureDir } from "fs-extra-p"
+import BluebirdPromise from "bluebird-lst"
+import { debug, exec, isEmptyOrSpaces } from "electron-builder-util"
+import { ensureDir, outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
-import { exec, debug, isEmptyOrSpaces } from "electron-builder-util"
-import BluebirdPromise from "bluebird-lst-c"
-import { LinuxBuildOptions } from "../options/linuxOptions"
 import { LinuxPackager } from "../linuxPackager"
+import { LinuxBuildOptions } from "../options/linuxOptions"
 
 export const installPrefix = "/opt"
 

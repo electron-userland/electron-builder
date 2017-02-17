@@ -1,7 +1,8 @@
 import { extractFile } from "asar-electron-builder"
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, Target } from "electron-builder-core"
-import { computeDefaultAppDirectory, exec, isEmptyOrSpaces, use, debug } from "electron-builder-util"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
@@ -19,7 +20,6 @@ import { createTargets } from "./targets/targetFactory"
 import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
 import { WinPackager } from "./winPackager"
 import { getGypEnv, installOrRebuild } from "./yarn"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)

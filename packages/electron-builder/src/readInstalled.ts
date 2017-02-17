@@ -1,6 +1,6 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
+import { lstat, readdir, readJson, realpath } from "fs-extra-p"
 import * as path from "path"
-import { readJson, lstat, realpath, readdir } from "fs-extra-p"
 
 export interface Dependency {
   name: string

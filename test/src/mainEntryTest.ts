@@ -1,7 +1,7 @@
-import { assertPack, modifyPackageJson, appTwoThrows, allPlatforms } from "./helpers/packTester"
+import BluebirdPromise from "bluebird-lst"
 import { move } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
+import { allPlatforms, appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 
 test("invalid main in the app package.json", appTwoThrows(/Application entry file "main.js" in the /, allPlatforms(false), {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {

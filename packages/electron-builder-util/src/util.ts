@@ -1,13 +1,13 @@
-import { execFile, spawn as _spawn, ChildProcess, SpawnOptions } from "child_process"
-import BluebirdPromise from "bluebird-lst-c"
+import "source-map-support/register"
+import BluebirdPromise from "bluebird-lst"
+import { red, yellow } from "chalk"
+import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
+import { createHash } from "crypto"
+import _debug from "debug"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
-import { yellow, red } from "chalk"
-import _debug from "debug"
-import { warn, log } from "./log"
-import { createHash } from "crypto"
-import "source-map-support/register"
 import { statOrNull } from "./fs"
+import { log, warn } from "./log"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")

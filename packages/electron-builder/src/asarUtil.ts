@@ -1,11 +1,11 @@
 import { AsarFileInfo, listPackage, statFile } from "asar-electron-builder"
+import BluebirdPromise from "bluebird-lst"
 import { debug } from "electron-builder-util"
-import { readFile, Stats, createWriteStream, ensureDir, createReadStream, readJson, writeFile, readlink, stat } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { log } from "electron-builder-util/out/log"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { walk, statOrNull, CONCURRENCY, MAX_FILE_REQUESTS, Filter, FileCopier } from "electron-builder-util/out/fs"
+import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
+import { log } from "electron-builder-util/out/log"
+import { createReadStream, createWriteStream, ensureDir, readFile, readJson, readlink, stat, Stats, writeFile } from "fs-extra-p"
+import * as path from "path"
 import { AsarOptions } from "./metadata"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))

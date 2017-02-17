@@ -1,20 +1,19 @@
-import { IncomingMessage, ClientRequest, Agent } from "http"
-import * as https from "https"
-import { ensureDir, readFile } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { homedir } from "os"
-import { parse as parseIni } from "ini"
-import { HttpExecutor, DownloadOptions, configureRequestOptions } from "electron-builder-http"
-import { RequestOptions } from "https"
-import { parse as parseUrl } from "url"
+import { configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { ensureDir, readFile } from "fs-extra-p"
+import { Agent, ClientRequest, IncomingMessage } from "http"
+import * as https from "https"
+import { RequestOptions } from "https"
+import { parse as parseIni } from "ini"
+import { homedir } from "os"
+import * as path from "path"
+import { parse as parseUrl } from "url"
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null
 
-  async download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-    if (options == null || !options.skipDirCreation) {
+  async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
+    if (!options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
     }
 
@@ -23,21 +22,21 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
     }
 
     const agent = await this.httpsAgentPromise
-    return await new BluebirdPromise<string>((resolve, reject) => {
+    return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const parsedUrl = parseUrl(url)
       this.doDownload(configureRequestOptions({
         hostname: parsedUrl.hostname,
         path: parsedUrl.path,
-        headers: (options == null ? null : options.headers) || undefined,
+        headers: options.headers || undefined,
         agent: agent,
-      }), destination, 0, options || {cancellationToken: new CancellationToken()}, (error: Error) => {
+      }), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
         else {
           reject(error)
         }
-      })
+      }, onCancel)
     })
   }
 
@@ -46,7 +45,7 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
       this.debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
     }
 
-    return cancellationToken.trackPromise(new BluebirdPromise<T>((resolve, reject, onCancel) => {
+    return cancellationToken.createPromise((resolve, reject, onCancel) => {
       const request = https.request(options, (response: IncomingMessage) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
@@ -59,8 +58,8 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
       this.addTimeOutHandler(request, reject)
       request.on("error", reject)
       requestProcessor(request, reject)
-      onCancel!(() => request.abort())
-    }))
+      onCancel(() => request.abort())
+    })
   }
 
   protected doRequest(options: any, callback: (response: any) => void): any {

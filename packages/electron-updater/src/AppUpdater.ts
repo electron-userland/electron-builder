@@ -1,17 +1,18 @@
+import "source-map-support/register"
+import BluebirdPromise from "bluebird-lst"
+import { executorHolder, RequestHeaders } from "electron-builder-http"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
-import * as path from "path"
-import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
-import { RequestHeaders, executorHolder } from "electron-builder-http"
-import { Provider, UpdateCheckResult, FileInfo, UpdaterSignal } from "./api"
-import { BintrayProvider } from "./BintrayProvider"
-import BluebirdPromise from "bluebird-lst-c"
-import { BintrayOptions, PublishConfiguration, GithubOptions, S3Options, GenericServerOptions, VersionInfo, s3Url } from "electron-builder-http/out/publishOptions"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
+import * as path from "path"
+import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
+import { FileInfo, Provider, UpdateCheckResult, UpdaterSignal } from "./api"
+import { BintrayProvider } from "./BintrayProvider"
+import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
-import { ElectronHttpExecutor } from "./electronHttpExecutor"
-import "source-map-support/register"
 
 export interface Logger {
   info(message?: any): void
@@ -181,11 +182,13 @@ export abstract class AppUpdater extends EventEmitter {
 
     this.onUpdateAvailable(versionInfo, fileInfo)
 
+    const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
       versionInfo: versionInfo,
       fileInfo: fileInfo,
-      downloadPromise: this.autoDownload ? this.downloadUpdate() : null,
+      cancellationToken: cancellationToken,
+      downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
     }
   }
 
@@ -200,7 +203,7 @@ export abstract class AppUpdater extends EventEmitter {
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
    * @returns {Promise<string>} Path to downloaded file.
    */
-  async downloadUpdate(): Promise<any> {
+  async downloadUpdate(cancellationToken: CancellationToken = new CancellationToken()): Promise<any> {
     const versionInfo = this.versionInfo
     const fileInfo = this.fileInfo
     if (versionInfo == null || fileInfo == null) {
@@ -215,7 +218,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     try {
-      return await this.doDownloadUpdate(versionInfo, fileInfo)
+      return await this.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)
     }
     catch (e) {
       this.dispatchError(e)
@@ -227,7 +230,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo): Promise<any>
+  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<any>
 
   abstract quitAndInstall(): void
 

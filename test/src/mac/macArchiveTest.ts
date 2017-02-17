@@ -1,12 +1,12 @@
-import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
-import { assertThat } from "../helpers/fileAssert"
+import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder-core"
 import { exec } from "electron-builder-util"
+import { readFile, symlink } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
-import { readFile, symlink } from "fs-extra-p"
 import { parseString } from "xml2js"
-import BluebirdPromise from "bluebird-lst-c"
+import { assertThat } from "../helpers/fileAssert"
+import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
 test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"])()).throws("Unknown target: ttt"))
 

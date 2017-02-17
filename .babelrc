@@ -5,7 +5,7 @@
         [
           "transform-async-to-module-method",
           {
-            module: "bluebird-lst-c",
+            module: "bluebird-lst",
             method: "coroutine"
           }
         ],
@@ -27,7 +27,7 @@
         [
           "transform-async-to-module-method",
           {
-            module: "bluebird-lst-c",
+            module: "bluebird-lst",
             method: "coroutine"
           }
         ],

@@ -1,9 +1,9 @@
+import BluebirdPromise from "bluebird-lst"
+import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra-p"
-import { assertPack, modifyPackageJson, app } from "./helpers/packTester"
-import BluebirdPromise from "bluebird-lst-c"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { Platform, DIR_TARGET } from "electron-builder"
+import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),

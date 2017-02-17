@@ -1,14 +1,14 @@
-import { Packager, normalizePlatforms } from "./packager"
+import BluebirdPromise from "bluebird-lst"
+import { Arch, archFromString, Platform } from "electron-builder-core"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishOptions } from "electron-builder-publisher"
-import { executeFinally } from "electron-builder-util/out/promise"
-import BluebirdPromise from "bluebird-lst-c"
 import { isEmptyOrSpaces } from "electron-builder-util"
-import { Platform, Arch, archFromString } from "electron-builder-core"
-import { DIR_TARGET } from "./targets/targetFactory"
+import { warn } from "electron-builder-util/out/log"
+import { executeFinally } from "electron-builder-util/out/promise"
+import { normalizePlatforms, Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
-import { warn } from "electron-builder-util/out/log"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { DIR_TARGET } from "./targets/targetFactory"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -214,11 +214,10 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   })
 
   const publishManager = new PublishManager(packager, options, cancellationToken)
-  const buildPromise = <BluebirdPromise<Array<string>>>packager.build().then(() => Array.from(artifactPaths))
+  const buildPromise = packager.build().then(() => Array.from(artifactPaths))
   process.on("SIGINT", () => {
     warn("Cancelled by SIGINT")
     cancellationToken.cancel()
-    buildPromise.cancel()
     publishManager.cancelTasks()
   })
 

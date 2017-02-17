@@ -1,7 +1,8 @@
+import { RequestHeaders } from "electron-builder-http"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
-import { RequestHeaders } from "electron-builder-http"
-import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 
 export interface FileInfo {
   readonly name: string
@@ -47,6 +48,8 @@ export interface UpdateCheckResult {
   readonly fileInfo?: FileInfo
 
   readonly downloadPromise?: Promise<any> | null
+
+  readonly cancellationToken?: CancellationToken
 }
 
 export const DOWNLOAD_PROGRESS = "download-progress"
@@ -61,6 +64,10 @@ export class UpdaterSignal {
 
   updateDownloaded(handler: (info: VersionInfo) => void) {
     addHandler(this.emitter, "update-downloaded", handler)
+  }
+
+  updateCancelled(handler: (info: VersionInfo) => void) {
+    addHandler(this.emitter, "update-cancelled", handler)
   }
 }
 

@@ -1,10 +1,11 @@
-import { assertThat } from "./helpers/fileAssert"
-import { NsisUpdater } from "electron-updater/out/NsisUpdater"
-import * as path from "path"
+import BluebirdPromise from "bluebird-lst"
+import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
+import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
-import { GenericServerOptions, GithubOptions, BintrayOptions } from "electron-builder-http/out/publishOptions"
+import * as path from "path"
+import { assertThat } from "./helpers/fileAssert"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
@@ -199,6 +200,34 @@ test("test download progress", async () => {
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
 
+test("cancel download with progress", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/full-test",
+  })
+
+  const progressEvents: Array<any> = []
+  updater.signals.progress(it => progressEvents.push(it))
+
+  let cancelled = false
+  updater.signals.updateCancelled(() => cancelled = true)
+
+  const checkResult = await updater.checkForUpdates()
+  checkResult.cancellationToken.cancel()
+
+  if (progressEvents.length > 0) {
+    const lastEvent = progressEvents[progressEvents.length - 1]
+    expect(lastEvent.percent).not.toBe(100)
+    expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
+    expect(lastEvent.transferred).not.toBe(lastEvent.total)
+  }
+
+  const downloadPromise = <BluebirdPromise<any>>checkResult.downloadPromise
+  await assertThat(downloadPromise).throws("Cancelled")
+  expect(downloadPromise.isRejected()).toBe(true)
+  expect(cancelled).toBe(true)
+})
 
 async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempFile("update-config"), "app-update.yml")

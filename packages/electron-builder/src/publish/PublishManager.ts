@@ -1,11 +1,16 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { Arch, Platform } from "electron-builder-core"
-import { GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, UpdateInfo, VersionInfo, s3Url, githubUrl } from "electron-builder-http/out/publishOptions"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-builder-publisher"
+import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
+import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
+import { MultiProgress } from "electron-builder-publisher/out/multiProgress"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
-import { createReadStream, outputJson, writeFile, ensureDir } from "fs-extra-p"
+import { createReadStream, ensureDir, outputJson, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
@@ -14,13 +19,8 @@ import { Macros, PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
-import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
-import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
-import { getCiTag, getResolvedPublishConfig } from "./publisher"
-import { Publisher, HttpPublisher, PublishOptions, PublishContext } from "electron-builder-publisher"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { MultiProgress } from "electron-builder-publisher/out/multiProgress"
 import { WinPackager } from "../winPackager"
+import { getCiTag, getResolvedPublishConfig } from "./publisher"
 
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
@@ -122,7 +122,7 @@ export class PublishManager implements PublishContext {
     }
 
     if (target != null && event.file != null && !this.cancellationToken.cancelled) {
-      if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && (target.name === "nsis") || target.name.startsWith("nsis-"))) {
+      if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && (target.name === "nsis" || target.name.startsWith("nsis-")))) {
         this.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }

@@ -213,9 +213,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.13.0:
-  version "2.13.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.13.0.tgz#bfaf9b8375563f909ea74b200ade2458aa7fde85"
+aws-sdk@^2.15.0:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.15.0.tgz#dca391a793210d4b062b5f1f5d6bb25bc4d4ba5c"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -243,7 +243,7 @@ babel-code-frame@^6.20.0, babel-code-frame@^6.22.0:
     esutils "^2.0.2"
     js-tokens "^3.0.0"
 
-babel-core@^6.0.0, babel-core@^6.22.1, babel-core@^6.23.0:
+babel-core@^6.0.0, babel-core@^6.23.0, babel-core@^6.23.1:
   version "6.23.1"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.23.1.tgz#c143cb621bb2f621710c220c5d579d15b8a442df"
   dependencies:
@@ -503,6 +503,12 @@ bl@^1.0.0:
 bluebird-lst-c@^1.0.6:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/bluebird-lst-c/-/bluebird-lst-c-1.0.6.tgz#81f881d13f9df700f67d577f13480bc32d84bba9"
+  dependencies:
+    bluebird "^3.4.7"
+
+bluebird-lst@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/bluebird-lst/-/bluebird-lst-1.0.1.tgz#2b666b20bb1c1902e6b7b352d9c0fbf56830b5a3"
   dependencies:
     bluebird "^3.4.7"
 
@@ -1191,11 +1197,11 @@ form-data@~2.1.1:
     combined-stream "^1.0.5"
     mime-types "^2.1.12"
 
-fs-extra-p@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-3.1.0.tgz#eddf7bb8d9385d79014decb21f45b1d0c57900d3"
+fs-extra-p@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/fs-extra-p/-/fs-extra-p-4.0.1.tgz#b18398c20a3822ae2b5ef682800f3d2bdedba77b"
   dependencies:
-    bluebird-lst-c "^1.0.6"
+    bluebird-lst "^1.0.1"
     fs-extra "^2.0.0"
 
 fs-extra@^2.0.0:
@@ -1272,8 +1278,8 @@ glob@~5.0.0:
     path-is-absolute "^1.0.0"
 
 globals@^9.0.0:
-  version "9.15.0"
-  resolved "https://registry.yarnpkg.com/globals/-/globals-9.15.0.tgz#7a5d8fd865e69de910b090b15a87772f9423c5de"
+  version "9.16.0"
+  resolved "https://registry.yarnpkg.com/globals/-/globals-9.16.0.tgz#63e903658171ec2d9f51b1d31de5e2b8dc01fb80"
 
 got@^5.0.0:
   version "5.7.1"
@@ -2148,9 +2154,9 @@ map-obj@^1.0.0, map-obj@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/map-obj/-/map-obj-1.0.1.tgz#d933ceb9205d82bdcf4886f6742bdc2b4dea146d"
 
-markdown-it@^8.2.2:
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.2.2.tgz#e39593d976f9c4b7ee7f338a3a1e9e10c3db4e36"
+markdown-it@^8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.3.0.tgz#3d7a727a100cd24e276419c66da20ffbe28c3602"
   dependencies:
     argparse "^1.0.7"
     entities "~1.1.1"
@@ -2598,8 +2604,8 @@ q@^1.1.2:
   resolved "https://registry.yarnpkg.com/q/-/q-1.4.1.tgz#55705bcd93c5f3673530c2c2cbc0c2b3addc286e"
 
 qs@~6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.0.tgz#f403b264f23bc01228c74131b407f18d5ea5d442"
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.1.tgz#918c0b3bcd36679772baf135b1acb4c1651ed79d"
 
 querystring@0.2.0:
   version "0.2.0"
@@ -2613,13 +2619,13 @@ randomatic@^1.1.3:
     kind-of "^3.0.2"
 
 rc@^1.0.1, rc@^1.1.6:
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/rc/-/rc-1.1.6.tgz#43651b76b6ae53b5c802f1151fa3fc3b059969c9"
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/rc/-/rc-1.1.7.tgz#c5ea564bb07aff9fd3a5b32e906c1d3a65940fea"
   dependencies:
     deep-extend "~0.4.0"
     ini "~1.3.0"
     minimist "^1.2.0"
-    strip-json-comments "~1.0.4"
+    strip-json-comments "~2.0.1"
 
 read-all-stream@^3.0.0:
   version "3.1.0"
@@ -2981,9 +2987,9 @@ strip-indent@^1.0.1:
   dependencies:
     get-stdin "^4.0.1"
 
-strip-json-comments@~1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-1.0.4.tgz#1e15fbcac97d3ee99bf2d73b4c656b082bbafb91"
+strip-json-comments@~2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
 sumchecker@^2.0.1:
   version "2.0.1"
@@ -3109,15 +3115,15 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^1.3.6:
-  version "1.3.6"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.3.6.tgz#c98e4e480dc5cf5216798a5a8e62f268ec6adfe2"
+ts-babel@^1.3.7:
+  version "1.3.7"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.3.7.tgz#2e2bf74225461d45ba0ff3e4fd601dd7ee4fe9e2"
   dependencies:
-    babel-core "^6.22.1"
+    babel-core "^6.23.1"
     bluebird-lst-c "^1.0.6"
     chalk "^1.1.3"
-    fs-extra-p "^3.1.0"
-    markdown-it "^8.2.2"
+    fs-extra-p "^4.0.1"
+    markdown-it "^8.3.0"
     source-map-support "^0.4.11"
 
 tslint@^4.4.2:
@@ -3298,8 +3304,8 @@ whatwg-encoding@^1.0.1:
     iconv-lite "0.4.13"
 
 whatwg-url@^4.3.0:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/whatwg-url/-/whatwg-url-4.3.0.tgz#92aaee21f4f2a642074357d70ef8500a7cbb171a"
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/whatwg-url/-/whatwg-url-4.4.0.tgz#594f95781545c13934a62db40897c818cafa2e04"
   dependencies:
     tr46 "~0.0.3"
     webidl-conversions "^3.0.0"

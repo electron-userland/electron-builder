@@ -1,6 +1,6 @@
-import * as path from "path"
+import BluebirdPromise from "bluebird-lst"
 import { readdir, readJson, writeJson } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
+import * as path from "path"
 import * as semver from "semver"
 
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit

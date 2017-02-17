@@ -1,18 +1,17 @@
 import { net } from "electron"
-import { ensureDir } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import * as path from "path"
-import { HttpExecutor, DownloadOptions, dumpRequestOptions, configureRequestOptions } from "electron-builder-http"
-import { parse as parseUrl } from "url"
+import { configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { ensureDir } from "fs-extra-p"
+import * as path from "path"
+import { parse as parseUrl } from "url"
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
-  async download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
+  async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
     if (options == null || !options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
     }
 
-    return await new BluebirdPromise<string>((resolve, reject) => {
+    return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
       const parsedUrl = parseUrl(url)
 
       this.doDownload(configureRequestOptions({
@@ -20,15 +19,15 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
         hostname: parsedUrl.hostname,
         path: parsedUrl.path,
         port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : undefined,
-        headers: (options == null ? null : options.headers) || undefined,
-      }), destination, 0, options || {cancellationToken: new CancellationToken()}, (error: Error) => {
+        headers: options.headers || undefined,
+      }), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
         else {
           reject(error)
         }
-      })
+      }, onCancel)
     })
   }
 
@@ -37,7 +36,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       this.debug(`request: ${dumpRequestOptions(options)}`)
     }
 
-    return cancellationToken.trackPromise(new BluebirdPromise<T>((resolve, reject, onCancel) => {
+    return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, response => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
@@ -49,8 +48,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
       this.addTimeOutHandler(request, reject)
       request.on("error", reject)
       requestProcessor(request, reject)
-      onCancel!(() => request.abort())
-    }))
+      onCancel(() => request.abort())
+    })
   }
 
 

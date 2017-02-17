@@ -1,13 +1,13 @@
+import "source-map-support/register"
 import { spawn } from "child_process"
-import * as path from "path"
-import { tmpdir } from "os"
 import { download, DownloadOptions } from "electron-builder-http"
-import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
+import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { mkdtemp, remove } from "fs-extra-p"
-import "source-map-support/register"
+import { tmpdir } from "os"
+import * as path from "path"
+import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
 import { AppUpdater } from "./AppUpdater"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 
 export class NsisUpdater extends AppUpdater {
   private setupPath: string | null
@@ -22,11 +22,11 @@ export class NsisUpdater extends AppUpdater {
    * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
    * @returns {Promise<string>} Path to downloaded file.
    */
-  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo) {
+  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.requestHeaders || undefined,
-      cancellationToken: new CancellationToken(),
+      cancellationToken: cancellationToken,
       sha2: fileInfo == null ? null : fileInfo.sha2,
     }
 
@@ -48,6 +48,12 @@ export class NsisUpdater extends AppUpdater {
         // ignored
       }
 
+      if (e instanceof CancellationError) {
+        this.emit("update-cancelled", this.versionInfo)
+        if (logger != null) {
+          logger.info("Cancelled")
+        }
+      }
       throw e
     }
 

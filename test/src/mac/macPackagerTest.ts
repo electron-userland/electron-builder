@@ -1,3 +1,4 @@
+import BluebirdPromise from "bluebird-lst"
 import { createTargets, Platform } from "electron-builder"
 import { copyFile } from "electron-builder-util/out/fs"
 import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
@@ -5,7 +6,6 @@ import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../helpers/packTester"
-import BluebirdPromise from "bluebird-lst-c"
 
 test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
 

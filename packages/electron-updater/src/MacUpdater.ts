@@ -1,7 +1,8 @@
-import { AppUpdater } from "./AppUpdater"
+import BluebirdPromise from "bluebird-lst"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
-import BluebirdPromise from "bluebird-lst-c"
 import { FileInfo } from "./api"
+import { AppUpdater } from "./AppUpdater"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
@@ -29,7 +30,7 @@ export class MacUpdater extends AppUpdater {
     super.onUpdateAvailable(versionInfo, fileInfo)
   }
 
-  protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo) {
+  protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
     this.nativeUpdater.checkForUpdates()
     return BluebirdPromise.resolve()
   }

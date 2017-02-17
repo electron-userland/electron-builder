@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { debug, isEmptyOrSpaces } from "electron-builder-util"

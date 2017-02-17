@@ -1,13 +1,13 @@
+import BluebirdPromise from "bluebird-lst"
+import { Arch, Target } from "electron-builder-core"
 import { exec, use } from "electron-builder-util"
-import MacPackager from "../macPackager"
-import * as path from "path"
-import { Target, Arch } from "electron-builder-core"
-import { PkgOptions } from "../options/macOptions"
 import { statOrNull } from "electron-builder-util/out/fs"
-import { findIdentity } from "../codeSign"
-import { filterCFBundleIdentifier } from "../packager/mac"
 import { unlink } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
+import * as path from "path"
+import { findIdentity } from "../codeSign"
+import MacPackager from "../macPackager"
+import { PkgOptions } from "../options/macOptions"
+import { filterCFBundleIdentifier } from "../packager/mac"
 
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
 export class PkgTarget extends Target {

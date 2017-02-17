@@ -1,7 +1,7 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { readdir } from "fs-extra-p"
-import * as path from "path"
 import { cpus } from "os"
+import * as path from "path"
 
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
 const spawn = require("../../../packages/electron-builder-util/out/util").spawn

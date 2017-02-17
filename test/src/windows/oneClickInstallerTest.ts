@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"

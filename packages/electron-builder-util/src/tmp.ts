@@ -1,10 +1,10 @@
+import BluebirdPromise from "bluebird-lst"
+import { mkdirs, mkdtemp, remove, removeSync } from "fs-extra-p"
 import { tmpdir } from "os"
-import { remove, mkdirs, removeSync, mkdtemp } from "fs-extra-p"
 import * as path from "path"
-import { getTempName } from "./util"
-import BluebirdPromise from "bluebird-lst-c"
 import { warn } from "./log"
 import { all } from "./promise"
+import { getTempName } from "./util"
 
 process.setMaxListeners(30)
 

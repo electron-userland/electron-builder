@@ -1,14 +1,14 @@
 import { createHash } from "crypto"
-import { Transform } from "stream"
+import _debug from "debug"
+import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
 import { RequestOptions } from "http"
-import { parse as parseUrl } from "url"
-import _debug from "debug"
-import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 import { safeLoad } from "js-yaml"
-import { EventEmitter } from "events"
 import { Socket } from "net"
+import { Transform } from "stream"
+import { parse as parseUrl } from "url"
 import { CancellationToken } from "./CancellationToken"
+import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
 export interface RequestHeaders {
   [key: string]: any
@@ -149,7 +149,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
 
   protected abstract doRequest(options: any, callback: (response: any) => void): any
 
-  protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void) {
+  protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
     const request = this.doRequest(requestOptions, (response: Electron.IncomingMessage) => {
       if (response.statusCode >= 400) {
         callback(new Error(`Cannot download "${requestOptions.protocol || "https"}://${requestOptions.hostname}/${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
@@ -164,7 +164,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             port: parsedUrl.port == null ? undefined : parsedUrl.port
-          }), destination, redirectCount++, options, callback)
+          }), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -172,10 +172,11 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
         return
       }
 
-      configurePipes(options, response, destination, callback)
+      configurePipes(options, response, destination, callback, options.cancellationToken)
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)
+    onCancel(() => request.abort())
     request.end()
   }
 
@@ -240,7 +241,7 @@ function safeGetHeader(response: any, headerKey: string) {
   }
 }
 
-function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void) {
+function configurePipes(options: DownloadOptions, response: any, destination: string, callback: (error: Error | null) => void, cancellationToken: CancellationToken) {
   if (!checkSha2(safeGetHeader(response, "X-Checksum-Sha2"), options.sha2, callback)) {
     return
   }
@@ -262,11 +263,17 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
 
   let lastStream = response
   for (const stream of streams) {
-    stream.on("error", callback)
+    stream.on("error", (error: Error) => {
+      if (!cancellationToken.cancelled) {
+        callback(error)
+      }
+    })
     lastStream = lastStream.pipe(stream)
   }
 
-  fileOut.on("finish", () => (<any>fileOut.close)(callback))
+  fileOut.on("finish", () => {
+    (<any>fileOut.close)(callback)
+  })
 }
 
 export function configureRequestOptions(options: RequestOptions, token?: string | null, method?: "GET" | "DELETE" | "PUT"): RequestOptions {

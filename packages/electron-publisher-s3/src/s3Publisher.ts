@@ -1,11 +1,10 @@
-import { Publisher, PublishContext } from "electron-builder-publisher"
-import { S3Options } from "electron-builder-http/out/publishOptions"
 import { S3 } from "aws-sdk"
+import { S3Options } from "electron-builder-http/out/publishOptions"
+import { PublishContext, Publisher } from "electron-builder-publisher"
+import { debug, isEmptyOrSpaces } from "electron-builder-util"
 import { stat } from "fs-extra-p"
 import mime from "mime"
-import BluebirdPromise from "bluebird-lst-c"
-import { debug, isEmptyOrSpaces } from "electron-builder-util"
-import { basename} from "path"
+import { basename } from "path"
 
 export default class S3Publisher extends Publisher {
   private readonly s3 = new S3({signatureVersion: "v4"})
@@ -29,7 +28,7 @@ export default class S3Publisher extends Publisher {
   async upload(file: string, safeArtifactName?: string): Promise<any> {
     const fileName = basename(file)
     const fileStat = await stat(file)
-    return this.context.cancellationToken.trackPromise(new BluebirdPromise((resolve, reject, onCancel) => {
+    return this.context.cancellationToken.createPromise((resolve, reject, onCancel) => {
       const upload = this.s3.upload({
         Bucket: this.info.bucket!,
         Key: (this.info.path == null ? "" : `${this.info.path}/`) + fileName,
@@ -48,8 +47,8 @@ export default class S3Publisher extends Publisher {
         resolve()
       })
 
-      onCancel!(() => upload.abort())
-    }))
+      onCancel(() => upload.abort())
+    })
   }
 
   toString() {

@@ -1,11 +1,11 @@
-import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
-import { emptyDir, readdir, unlink, removeSync, readJson } from "fs-extra-p"
-import { homedir } from "os"
-import { TEST_DIR, ELECTRON_VERSION } from "./config"
+import BluebirdPromise from "bluebird-lst"
+import { emptyDir, readdir, readJson, removeSync, unlink } from "fs-extra-p"
 import isCi from "is-ci"
+import { homedir } from "os"
+import * as path from "path"
+import { ELECTRON_VERSION, TEST_DIR } from "./config"
 
-// we set NODE_PATH in this file, so, we cannot use 'out/awaiter' path here
+// we set NODE_PATH in this file, so, we cannot use 'out/util' path here
 const util = require("../../../packages/electron-builder-util/out/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 

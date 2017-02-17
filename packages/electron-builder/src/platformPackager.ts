@@ -1,4 +1,4 @@
-import BluebirdPromise from "bluebird-lst-c"
+import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
 import { asArray, debug, isEmptyOrSpaces, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"

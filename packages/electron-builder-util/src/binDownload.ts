@@ -1,11 +1,11 @@
-import { spawn, debug, debug7zArgs, getTempName, getCacheDirectory } from "./util"
-import { rename, unlink, emptyDir } from "fs-extra-p"
 import { path7za } from "7zip-bin"
+import BluebirdPromise from "bluebird-lst"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
-import BluebirdPromise from "bluebird-lst-c"
 import { statOrNull } from "./fs"
 import { httpExecutor } from "./nodeHttpExecutor"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { debug, debug7zArgs, getCacheDirectory, getTempName, spawn } from "./util"
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

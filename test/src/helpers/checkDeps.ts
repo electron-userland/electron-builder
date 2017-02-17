@@ -1,8 +1,8 @@
-import * as path from "path"
-import { readJson, readdir } from "fs-extra-p"
-import BluebirdPromise from "bluebird-lst-c"
-import depCheck, { DepCheckResult } from "depcheck"
+import BluebirdPromise from "bluebird-lst"
 import { bold } from "chalk"
+import depCheck, { DepCheckResult } from "depcheck"
+import { readdir, readJson } from "fs-extra-p"
+import * as path from "path"
 
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
 
