@@ -1,6 +1,6 @@
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
 
-Real project [example](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts).
+A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 
 Simplified auto-update is not supported for Squirrel.Windows.
 

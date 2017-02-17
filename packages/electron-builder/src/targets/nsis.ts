@@ -18,7 +18,7 @@ import { archive } from "./archive"
 
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.8", "d9429cc33d06198b48b939e51f48fc95b3b7ccd5584dd9fe3f3f4eacce9d8275")
+const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.10", "302a8adebf0b553f74cddd494154a586719ff9d4767e94d8a76547a9bb06200c")
 const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false

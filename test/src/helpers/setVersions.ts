@@ -44,7 +44,7 @@ async function setPackageVersions(packages: Array<string>, packageData: Array<an
     const packageJson = packageData[i]
     const versionInfo = versions[i]
     const latestVersion = versionInfo.next || versionInfo.latest
-    if (packageJson.version == latestVersion || semver.lt(latestVersion, packageJson.version)) {
+    if (latestVersion == null || packageJson.version == latestVersion || semver.lt(latestVersion, packageJson.version)) {
       continue
     }
 
