@@ -213,9 +213,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.15.0:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.15.0.tgz#dca391a793210d4b062b5f1f5d6bb25bc4d4ba5c"
+aws-sdk@^2.16.0:
+  version "2.16.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.16.0.tgz#c3bf4cac031b5af0db2a0f03e75f59a70ace8ff4"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -2690,8 +2690,8 @@ redeyed@~1.0.0:
     esprima "~3.0.0"
 
 regenerator-runtime@^0.10.0:
-  version "0.10.1"
-  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.1.tgz#257f41961ce44558b18f7814af48c17559f9faeb"
+  version "0.10.2"
+  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.2.tgz#d8180f73493b2f216f6b7282ce1d943372c2c56f"
 
 regex-cache@^0.4.2:
   version "0.4.3"

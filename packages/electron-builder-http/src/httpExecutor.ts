@@ -51,7 +51,7 @@ export class HttpExecutorHolder {
 export const executorHolder = new HttpExecutorHolder()
 
 export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-  return executorHolder.httpExecutor.download(url, destination, options)
+  return executorHolder.httpExecutor.download(url, destination, options || {cancellationToken: new CancellationToken()})
 }
 
 export class HttpError extends Error {
@@ -79,7 +79,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
 
   protected abstract doApiRequest<T>(options: REQUEST_OPTS, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
-  abstract download(url: string, destination: string, options?: DownloadOptions | null): Promise<string>
+  abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
 
   protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (this.debug.enabled) {

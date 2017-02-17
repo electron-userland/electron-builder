@@ -7,6 +7,8 @@ Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), 
 To use Amazon S3 please install `electron-publisher-s3` dependency.
 
 ## CLI Flags
+
+Excerpt from [CLI Usage](https://github.com/electron-userland/electron-builder#cli-usage) of `build` command:
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
