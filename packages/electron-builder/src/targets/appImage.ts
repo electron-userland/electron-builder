@@ -76,7 +76,9 @@ export default class AppImageTarget extends Target {
       return
     }
 
-    await exec(process.arch !== "x64" || (process.env.USE_SYSTEM_XORRISO === "true" || process.env.USE_SYSTEM_XORRISO === "") ? "xorriso" : path.join(appImagePath, "xorriso"), args)
+    await exec(process.arch !== "x64" || (process.env.USE_SYSTEM_XORRISO === "true" || process.env.USE_SYSTEM_XORRISO === "") ? "xorriso" : path.join(appImagePath, "xorriso"), args, {
+      maxBuffer: 2 * 1024 * 1024
+    })
 
     await new BluebirdPromise((resolve, reject) => {
       const rd = createReadStream(path.join(appImagePath, arch === Arch.ia32 ? "32" : "64", "runtime"))
