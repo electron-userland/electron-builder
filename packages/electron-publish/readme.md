@@ -1,4 +1,4 @@
-# electron-builder-publisher
+# electron-publish
 
 Part of [electron-builder](https://github.com/electron-userland/electron-builder). 
 

@@ -1,5 +1,5 @@
-import ProgressBar from "progress-ex"
 import { setPrinter } from "electron-builder-util/out/log"
+import ProgressBar from "progress-ex"
 
 export class MultiProgress {
   private readonly stream = <any>process.stdout

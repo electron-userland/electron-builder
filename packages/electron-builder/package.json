@@ -53,7 +53,7 @@
     "electron-builder-core": "0.0.0-semantic-release",
     "electron-builder-http": "0.0.0-semantic-release",
     "electron-builder-util": "0.0.0-semantic-release",
-    "electron-builder-publisher": "0.0.0-semantic-release",
+    "electron-publish": "0.0.0-semantic-release",
     "electron-download-tf": "3.2.0",
     "electron-macos-sign": "~1.6.0",
     "fs-extra-p": "^4.0.1",

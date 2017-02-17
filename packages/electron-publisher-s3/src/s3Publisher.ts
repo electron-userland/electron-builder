@@ -1,7 +1,7 @@
 import { S3 } from "aws-sdk"
 import { S3Options } from "electron-builder-http/out/publishOptions"
-import { PublishContext, Publisher } from "electron-builder-publisher"
 import { debug, isEmptyOrSpaces } from "electron-builder-util"
+import { PublishContext, Publisher } from "electron-publish"
 import { stat } from "fs-extra-p"
 import mime from "mime"
 import { basename } from "path"

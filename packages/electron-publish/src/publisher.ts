@@ -1,12 +1,12 @@
+import { green } from "chalk"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { ProgressCallbackTransform } from "electron-builder-http/out/ProgressCallbackTransform"
+import { log } from "electron-builder-util/out/log"
+import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
-import { stat, Stats, createReadStream } from "fs-extra-p"
 import { basename } from "path"
 import ProgressBar from "progress-ex"
-import { ProgressCallbackTransform } from "electron-builder-http/out/ProgressCallbackTransform"
 import { MultiProgress } from "./multiProgress"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { green } from "chalk"
-import { log } from "electron-builder-util/out/log"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 

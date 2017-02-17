@@ -4,7 +4,7 @@
     "outDir": "out"
   },
   "declaration": {
-    "electron-builder-publisher": "out/electron-builder-publisher.d.ts"
+    "electron-publish": "out/electron-publish.d.ts"
   },
   "include": [
     "src/**/*.ts"

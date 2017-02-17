@@ -1,14 +1,14 @@
-import { GitHubPublisher } from "electron-builder-publisher/out/gitHubPublisher"
-import { join } from "path"
-import { BintrayPublisher } from "electron-builder-publisher/out/BintrayPublisher"
-import isCi from "is-ci"
 import { HttpError } from "electron-builder-http"
-import { createPublisher } from "electron-builder/out/publish/PublishManager"
-import { S3Options } from "electron-builder-http/out/publishOptions"
-import { PublishContext } from "electron-builder-publisher"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { copy } from "fs-extra-p"
+import { S3Options } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
+import { createPublisher } from "electron-builder/out/publish/PublishManager"
+import { PublishContext } from "electron-publish"
+import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
+import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
+import { copy } from "fs-extra-p"
+import isCi from "is-ci"
+import { join } from "path"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {

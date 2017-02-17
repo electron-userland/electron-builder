@@ -1,5 +1,5 @@
 {
-  "name": "electron-builder-publisher",
+  "name": "electron-publish",
   "version": "0.0.0-semantic-release",
   "main": "out/publisher.js",
   "author": "Vladimir Krivosheev",
@@ -19,5 +19,5 @@
     "chalk": "^1.1.3",
     "progress-ex": "^2.0.0"
   },
-  "typings": "./out/electron-builder-publisher.d.ts"
+  "typings": "./out/electron-publish.d.ts"
 }
