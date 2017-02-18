@@ -1,8 +1,11 @@
-# 32 bit + 64 bit
+Unicode enabled by default. Large strings are asupported (maximum string length of 8192 bytes instead of the default of 1024 bytes).
+
+## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch, you in any case get one installer. Appropriate arch will be installed automatically.
+The same applied to web installer (`nsis-web` target).
 
-# Custom NSIS script
+## Custom NSIS script
 
 Two options are available — [include](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-include) and [script](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-script). `script` allows you to provide completely different NSIS script. For most cases it is not required as you need only to customise some aspects, but still use well-tested and maintained default NSIS script. So, `include` is recommended.
 
@@ -34,7 +37,7 @@ Keep in mind — if you customize NSIS script, you should always state about it 
 * File associations macro `registerFileAssociations` and `unregisterFileAssociations` are still defined.
 * All other electron-builder specific flags (e.g. `ONE_CLICK`) are still defined.
 
-# GUID vs Application Name
+## GUID vs Application Name
 
 Windows requires to use registry keys (e.g. INSTALL/UNINSTALL info). Squirrel.Windows simply uses application name as key.
 But it is not robust — Google can use key Google Chrome SxS, because it is a Google.

@@ -6,7 +6,7 @@ Simplified auto-update is not supported for Squirrel.Windows.
 
 ## Quick Setup Guide
 
-1. Install `electron-updater` as an app dependency.
+1. Install [electron-updater](https://www.npmjs.com/package/electron-updater) as an app dependency.
 
 2. [Configure publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 
@@ -18,21 +18,13 @@ Simplified auto-update is not supported for Squirrel.Windows.
     
     Or if you don't use ES6: `const autoUpdater = require("electron-updater").autoUpdater`
 
-4. Do not call `setFeedURL`. electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
-   
-   But if need, you can — for example, to explicitly configure Bintray provider: 
-    ```js
-    {
-      provider: "bintray",
-      owner: "actperepo",
-      package: "no-versions"
-    }
-    ```
+4. Do not call [setFeedURL](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#autoupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
 
-Currently, [generic](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GenericServerOptions) (any HTTP(S) web server), [github](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#GithubOptions) and [bintray](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#BintrayOptions) are supported.
-`latest.yml` (or `latest-mac.json` for macOS) will be generated in addition to installer for `generic` and `github` and must be uploaded also (in short: only `bintray` doesn't use `latest.yml` and this file must be not uploaded on Bintray).
+**NOTICE**: Bintray provider doesn't support [macOS auto-update](https://github.com/electron-userland/electron-builder/issues/1172) currently.
 
-**NOTICE**: Bintray provider doesn't support [macOS auto-update](https://github.com/electron/electron/blob/master/docs/api/auto-updater.md#macos) currently. If need, please file issue.
+## File Generated and Uploaded in Addition
+
+`latest.yml` (or `latest-mac.json` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
 ## Debugging
 
