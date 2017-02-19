@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { debug, exec, isEmptyOrSpaces } from "electron-builder-util"
+import { statOrNull } from "electron-builder-util/out/fs"
 import { ensureDir, outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
 import { LinuxPackager } from "../linuxPackager"
@@ -18,8 +19,15 @@ export class LinuxTargetHelper {
 
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<Array<string>>> {
-    if (this.packager.platformSpecificBuildOptions.icon != null) {
-      const iconDir = path.resolve(this.packager.buildResourcesDir, this.packager.platformSpecificBuildOptions.icon)
+    const packager = this.packager
+    let customIconSetDir = packager.platformSpecificBuildOptions.icon
+    if (customIconSetDir != null) {
+      let iconDir = path.resolve(packager.buildResourcesDir, customIconSetDir)
+      const stat = await statOrNull(iconDir)
+      if (stat == null || !stat.isDirectory()) {
+        iconDir = path.resolve(packager.projectDir, customIconSetDir)
+      }
+
       try {
         return await this.iconsFromDir(iconDir)
       }
@@ -36,12 +44,12 @@ export class LinuxTargetHelper {
       }
     }
 
-    const resourceList = await this.packager.resourceList
+    const resourceList = await packager.resourceList
     if (resourceList.includes("icons")) {
-      return await this.iconsFromDir(path.join(this.packager.buildResourcesDir, "icons"))
+      return await this.iconsFromDir(path.join(packager.buildResourcesDir, "icons"))
     }
     else {
-      const iconDir = await this.packager.getTempFile("linux.iconset")
+      const iconDir = await packager.getTempFile("linux.iconset")
       ensureDir(iconDir)
       return await this.createFromIcns(iconDir)
     }

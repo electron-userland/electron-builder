@@ -105,27 +105,32 @@ export interface NsisOptions {
   readonly guid?: string | null
 
   /**
-   The path to installer icon. Defaults to `build/installerIcon.ico` or application icon.
+   The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to `build/installerIcon.ico` or application icon.
    */
   readonly installerIcon?: string | null
 
   /**
-   *boring installer only.* `MUI_HEADERIMAGE`, relative to the project directory. Defaults to `build/installerHeader.bmp`
+   *boring installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to `build/installerHeader.bmp`
    */
   readonly installerHeader?: string | null
 
   /**
-   *boring installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+   *boring installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly installerSidebar?: string | null
 
   /**
-   *boring installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+   *boring installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly uninstallerSidebar?: string | null
 
   /**
-   *one-click installer only.* The path to header icon (above the progress bar), relative to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
+   *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
 

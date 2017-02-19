@@ -1,5 +1,5 @@
-import { PlatformSpecificBuildOptions } from "../metadata"
 import { TargetSpecificOptions } from "electron-builder-core"
+import { PlatformSpecificBuildOptions } from "../metadata"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
@@ -109,7 +109,8 @@ export interface DmgOptions extends TargetSpecificOptions {
   readonly backgroundColor?: string | null
 
   /**
-   The path to DMG icon (volume icon), which will be shown when mounted. Defaults to application icon (`build/icon.icns`).
+   The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   Defaults to the application icon (`build/icon.icns`).
    */
   readonly icon?: string | null
 

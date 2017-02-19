@@ -95,7 +95,7 @@ export class DmgTarget extends Target {
       }
       else {
         const volumeIcon = `${volumePath}/.VolumeIcon.icns`
-        promises.push(copy(path.resolve(packager.projectDir, specification.icon), volumeIcon))
+        promises.push(copy((await packager.getResource(specification.icon))!, volumeIcon))
         env.volumeIcon = volumeIcon
       }
 
