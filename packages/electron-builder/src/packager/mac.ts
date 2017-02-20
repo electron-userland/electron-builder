@@ -66,25 +66,27 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   const icon = await packager.getIconPath()
   const oldIcon = appPlist.CFBundleIconFile
   if (icon != null) {
-    appPlist.CFBundleIconFile = `${appInfo.productFilename}.icns`
+    appPlist.CFBundleIconFile = `${appFilename}.icns`
   }
 
   appPlist.CFBundleDisplayName = appInfo.productName
   appPlist.CFBundleIdentifier = appBundleIdentifier
   appPlist.CFBundleName = appInfo.productName
-  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
-  helperPlist.CFBundleIdentifier = helperBundleIdentifier
-  appPlist.CFBundleExecutable = appFilename
-  helperPlist.CFBundleName = appInfo.productName
+
+  // https://github.com/electron-userland/electron-builder/issues/1278
+  appPlist.CFBundleExecutable = !appFilename.endsWith(" Helper") ? appFilename : appFilename.substring(0, appFilename.length - " Helper".length)
+
   helperPlist.CFBundleExecutable = `${appFilename} Helper`
-  helperEHPlist.CFBundleDisplayName = `${appFilename} Helper EH`
-  helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
-  helperEHPlist.CFBundleName = `${appInfo.productName} Helper EH`
   helperEHPlist.CFBundleExecutable = `${appFilename} Helper EH`
-  helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
-  helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
-  helperNPPlist.CFBundleName = `${appInfo.productName} Helper NP`
   helperNPPlist.CFBundleExecutable = `${appFilename} Helper NP`
+
+  helperPlist.CFBundleDisplayName = `${appInfo.productName} Helper`
+  helperEHPlist.CFBundleDisplayName = `${appInfo.productName} Helper EH`
+  helperNPPlist.CFBundleDisplayName = `${appInfo.productName} Helper NP`
+
+  helperPlist.CFBundleIdentifier = helperBundleIdentifier
+  helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
+  helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
 
   appPlist.CFBundleShortVersionString = appInfo.version
   appPlist.CFBundleVersion = appInfo.buildVersion
