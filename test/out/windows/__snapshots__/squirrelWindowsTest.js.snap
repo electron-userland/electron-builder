@@ -1,4 +1,6 @@
-exports[`test Squirrel.Windows 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Squirrel.Windows 1`] = `
 Array [
   "RELEASES",
   "Test App ßW Setup 1.1.0.exe",
@@ -7,7 +9,7 @@ Array [
 ]
 `;
 
-exports[`test Squirrel.Windows 2`] = `
+exports[`Squirrel.Windows 2`] = `
 Array [
   "TestApp-1.1.0-win.zip",
   "TestApp-Setup-1.1.0.exe",

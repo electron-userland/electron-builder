@@ -1,16 +1,18 @@
-exports[`test allowToChangeInstallationDirectory 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`allowToChangeInstallationDirectory 1`] = `
 Array [
   "Test Custom Installation Dir Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test allowToChangeInstallationDirectory 2`] = `
+exports[`allowToChangeInstallationDirectory 2`] = `
 Array [
   "test-custom-inst-dir-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test allowToChangeInstallationDirectory 3`] = `
+exports[`allowToChangeInstallationDirectory 3`] = `
 Object {
   "owner": "foo",
   "provider": "github",
@@ -18,7 +20,7 @@ Object {
 }
 `;
 
-exports[`test allowToChangeInstallationDirectory 4`] = `
+exports[`allowToChangeInstallationDirectory 4`] = `
 Object {
   "githubArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
   "path": "Test Custom Installation Dir Setup 1.1.0.exe",
@@ -26,25 +28,25 @@ Object {
 }
 `;
 
-exports[`test boring 1`] = `
+exports[`boring 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test boring 2`] = `
+exports[`boring 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test boring, only perMachine 1`] = `
+exports[`boring, only perMachine 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test boring, only perMachine 2`] = `
+exports[`boring, only perMachine 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]

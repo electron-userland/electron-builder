@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-builder-http": "out/electron-builder-http.d.ts"
-  },
+  "declaration": true,
   "docs": "../../docs/Publishing Artifacts.md",
   "include": [
     "src/**/*.ts"

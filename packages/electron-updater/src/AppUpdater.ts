@@ -99,14 +99,18 @@ export abstract class AppUpdater extends EventEmitter {
     return "Deprecated. Do not use it."
   }
 
-  setFeedURL(value: PublishConfiguration | string) {
+  /**
+   * Configure update provider. If value is `string`, {@link module:electron-builder-http/out/publishOptions.GenericServerOptions} will be set with value as `url`.
+   * @param options If you want to override configuration in the `app-update.yml`.
+   */
+  setFeedURL(options: PublishConfiguration | GenericServerOptions | S3Options | BintrayOptions | GithubOptions | string) {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let client: Provider<any>
-    if (typeof value === "string") {
-      client = new GenericProvider({provider: "generic", url: value})
+    if (typeof options === "string") {
+      client = new GenericProvider({provider: "generic", url: options})
     }
     else {
-      client = createClient(value)
+      client = createClient(options)
     }
     this.clientPromise = BluebirdPromise.resolve(client)
   }

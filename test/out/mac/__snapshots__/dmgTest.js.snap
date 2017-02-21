@@ -1,4 +1,6 @@
-exports[`test no Applications link 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`no Applications link 1`] = `
 Array [
   Object {
     "x": 110,
@@ -13,7 +15,7 @@ Array [
 ]
 `;
 
-exports[`test no background 1`] = `
+exports[`no background 1`] = `
 Array [
   Object {
     "file": "NoBackground-1.1.0.dmg",
@@ -22,9 +24,9 @@ Array [
 ]
 `;
 
-exports[`test no build directory 1`] = `undefined`;
+exports[`no build directory 1`] = `undefined`;
 
-exports[`test unset dmg icon 1`] = `
+exports[`unset dmg icon 1`] = `
 Array [
   Object {
     "file": "Test ß No Volume Icon-1.1.0.dmg",

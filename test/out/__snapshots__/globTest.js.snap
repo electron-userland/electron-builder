@@ -1,10 +1,12 @@
-exports[`test link 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`link 1`] = `
 Object {
   "link": "index.js",
 }
 `;
 
-exports[`test outside link 1`] = `
+exports[`outside link 1`] = `
 Object {
   "offset": "4876",
   "size": 4,

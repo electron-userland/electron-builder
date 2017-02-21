@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-builder-squirrel-windows": "out/electron-builder-squirrel-windows.d.ts"
-  },
+  "declaration": true,
   "include": [
     "src/**/*.ts"
   ],

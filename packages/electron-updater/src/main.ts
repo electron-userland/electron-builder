@@ -1,5 +1,6 @@
 // autoUpdater to mimic electron bundled autoUpdater
 import { AppUpdater } from "./AppUpdater"
+
 let impl
 if (process.platform === "win32") {
   impl = new (require("./NsisUpdater").NsisUpdater)()

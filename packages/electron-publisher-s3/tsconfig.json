@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-publisher-s3": "out/electron-publisher-s3.d.ts"
-  },
+  "declaration": true,
   "include": [
     "src/**/*.ts"
   ],

@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-publish": "out/electron-publish.d.ts"
-  },
+  "declaration": true,
   "include": [
     "src/**/*.ts"
   ],

@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-builder": "out/electron-builder.d.ts"
-  },
+  "declaration": true,
   "docs": "../../docs/Options.md",
   "include": [
     "src/**/*.ts",

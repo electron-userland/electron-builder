@@ -3,9 +3,8 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-updater": "out/electron-updater.d.ts"
-  },
+  "declaration": true,
+  "jsdoc": "../../jsdoc/out/electron-updater",
   "files": [
     "../../typings/semver.d.ts",
     "../../typings/debug.d.ts"

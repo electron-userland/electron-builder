@@ -465,7 +465,7 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
     return
   }
 
-  for (const name of ["electron", "electron-prebuilt", "electron-builder"]) {
+  for (const name of ["electron", "electron-prebuilt", "electron-builder", "electron-rebuild"]) {
     if (name in dependencies) {
       errors.push(`Package "${name}" is only allowed in "devDependencies". `
         + `Please remove it from the "dependencies" section in your package.json.`)

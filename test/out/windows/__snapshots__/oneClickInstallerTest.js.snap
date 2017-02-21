@@ -1,52 +1,54 @@
-exports[`test custom include 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom include 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test custom include 2`] = `
+exports[`custom include 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test custom script 1`] = `
+exports[`custom script 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test custom script 2`] = `
+exports[`custom script 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test menuCategory 1`] = `
+exports[`menuCategory 1`] = `
 Array [
   "Test Menu Category CustomName 1.1.0.exe",
 ]
 `;
 
-exports[`test menuCategory 2`] = `
+exports[`menuCategory 2`] = `
 Array [
   "test-menu-category-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test one-click 1`] = `
+exports[`one-click 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`test one-click 2`] = `
+exports[`one-click 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test one-click 3`] = `
+exports[`one-click 3`] = `
 Object {
   "owner": "actperepo",
   "package": "TestApp",
@@ -54,27 +56,27 @@ Object {
 }
 `;
 
-exports[`test perMachine, no run after finish 1`] = `
+exports[`perMachine, no run after finish 1`] = `
 Array [
   "TestApp Setup 1.1.0.exe",
   "latest.yml",
 ]
 `;
 
-exports[`test perMachine, no run after finish 2`] = `
+exports[`perMachine, no run after finish 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
 
-exports[`test perMachine, no run after finish 3`] = `
+exports[`perMachine, no run after finish 3`] = `
 Object {
   "provider": "generic",
   "url": "https://develar.s3.amazonaws.com/test/win/x64",
 }
 `;
 
-exports[`test perMachine, no run after finish 4`] = `
+exports[`perMachine, no run after finish 4`] = `
 Object {
   "githubArtifactName": "TestApp-Setup-1.1.0.exe",
   "path": "TestApp Setup 1.1.0.exe",
@@ -82,7 +84,7 @@ Object {
 }
 `;
 
-exports[`test web installer 1`] = `
+exports[`web installer 1`] = `
 Array [
   "Test App ßW Web Setup 1.1.0.exe",
   "TestApp-1.1.0-x64.nsis.7z",
@@ -91,7 +93,7 @@ Array [
 ]
 `;
 
-exports[`test web installer 2`] = `
+exports[`web installer 2`] = `
 Array [
   "TestApp-Web-Setup-1.1.0.exe",
 ]

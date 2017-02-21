@@ -50,6 +50,8 @@
       <w>difflet</w>
       <w>digester</w>
       <w>disturl</w>
+      <w>docdash</w>
+      <w>docstrap</w>
       <w>dpkg</w>
       <w>ebusy</w>
       <w>electronuserland</w>
@@ -127,12 +129,14 @@
       <w>makedeb</w>
       <w>makedmg</w>
       <w>makensis</w>
+      <w>minami</w>
       <w>minimatch</w>
       <w>mkdirp</w>
       <w>mkdtemp</w>
       <w>mpass</w>
       <w>multilib</w>
       <w>multiuser</w>
+      <w>mutators</w>
       <w>nevershow</w>
       <w>nokeys</w>
       <w>nomacver</w>

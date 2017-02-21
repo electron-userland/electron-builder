@@ -1,11 +1,13 @@
-exports[`test repo slug from APPVEYOR 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`repo slug from APPVEYOR 1`] = `
 Object {
   "project": "travis-build",
   "user": "travis-ci",
 }
 `;
 
-exports[`test repo slug from TRAVIS_REPO_SLUG 1`] = `
+exports[`repo slug from TRAVIS_REPO_SLUG 1`] = `
 Object {
   "auth": null,
   "browsetemplate": "https://{domain}/{user}/{project}{/tree/committish}",
@@ -17,7 +19,7 @@ Object {
   "filetemplate": "https://{auth@}raw.githubusercontent.com/{user}/{project}/{committish}/{path}",
   "gittemplate": "git://{auth@}{domain}/{user}/{project}.git{#committish}",
   "httpstemplate": "git+https://{auth@}{domain}/{user}/{project}.git{#committish}",
-  "pathmatch": /^[\\/]([^\\/]+)[\\/]([^\\/]+?)(?:[.]git)?$/,
+  "pathmatch": /\\^\\[\\\\/\\]\\(\\[\\^\\\\/\\]\\+\\)\\[\\\\/\\]\\(\\[\\^\\\\/\\]\\+\\?\\)\\(\\?:\\[\\.\\]git\\)\\?\\$/,
   "pathtemplate": "{user}/{project}{#committish}",
   "project": "travis-build",
   "protocols": Array [
@@ -28,7 +30,7 @@ Object {
     "ssh",
     "https",
   ],
-  "protocols_re": /^(git|http|git\\+ssh|git\\+https|ssh|https):$/,
+  "protocols_re": /\\^\\(git\\|http\\|git\\\\\\+ssh\\|git\\\\\\+https\\|ssh\\|https\\):\\$/,
   "shortcuttemplate": "{type}:{user}/{project}{#committish}",
   "sshtemplate": "git@{domain}:{user}/{project}.git{#committish}",
   "sshurltemplate": "git+ssh://git@{domain}/{user}/{project}.git{#committish}",

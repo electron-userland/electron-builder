@@ -1,7 +1,9 @@
-exports[`test extra metadata 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extra metadata 1`] = `
 Object {
   "author": "Foo Bar <foo@example.com>",
-  "description": "Test Application (test quite \" #378)",
+  "description": "Test Application (test quite \\" #378)",
   "foo": Object {
     "bar": 12,
     "existingProp": 22,

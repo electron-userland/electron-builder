@@ -33,3 +33,5 @@ dist/
 
 /packages/electron-builder/README.md
 /packages/electron-builder/scheme.json
+
+/jsdoc/out/

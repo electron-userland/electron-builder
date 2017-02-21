@@ -1,4 +1,6 @@
-exports[`test mas 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mas 1`] = `
 Array [
   Object {
     "file": "Test App ßW-1.1.0.pkg",
@@ -7,7 +9,7 @@ Array [
 ]
 `;
 
-exports[`test mas and 7z 1`] = `
+exports[`mas and 7z 1`] = `
 Array [
   Object {
     "file": "Test App ßW-1.1.0.pkg",

@@ -1,4 +1,6 @@
-exports[`test one-package 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`one-package 1`] = `
 Object {
   "BuildMachineOSBuild": "15G31",
   "CFBundleDisplayName": "Test App ßW",
@@ -50,7 +52,7 @@ Object {
 }
 `;
 
-exports[`test one-package 2`] = `
+exports[`one-package 2`] = `
 Array [
   Object {
     "file": "latest-mac.json",
@@ -66,7 +68,7 @@ Array [
 ]
 `;
 
-exports[`test one-package 3`] = `
+exports[`one-package 3`] = `
 Object {
   "releaseDate": "1970-01-01T00:00:00.000Z",
   "url": "https://develar.s3.amazonaws.com/test/mac/x64/Test%20App%20%C3%9FW-1.1.0-mac.zip",
@@ -74,7 +76,7 @@ Object {
 }
 `;
 
-exports[`test two-package 1`] = `
+exports[`two-package 1`] = `
 Array [
   Object {
     "file": "latest-mac.json",

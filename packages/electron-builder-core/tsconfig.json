@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": {
-    "electron-builder-core": "out/electron-builder-core.d.ts"
-  },
+  "declaration": true,
   "include": [
     "src/**/*.ts"
   ]

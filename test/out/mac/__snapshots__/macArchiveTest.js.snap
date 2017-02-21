@@ -1,4 +1,6 @@
-exports[`test only zip 1`] = `
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`only zip 1`] = `
 Array [
   Object {
     "file": "latest-mac.json",
@@ -10,7 +12,7 @@ Array [
 ]
 `;
 
-exports[`test pkg 1`] = `
+exports[`pkg 1`] = `
 Array [
   Object {
     "file": "Test App ßW-1.1.0.pkg",
@@ -19,7 +21,7 @@ Array [
 ]
 `;
 
-exports[`test pkg scripts 1`] = `
+exports[`pkg scripts 1`] = `
 Array [
   Object {
     "file": "Test App ßW-1.1.0.pkg",
@@ -28,7 +30,7 @@ Array [
 ]
 `;
 
-exports[`test pkg scripts 2`] = `
+exports[`pkg scripts 2`] = `
 Array [
   "Test App ßW.app",
   "Test App ßW.app/Contents",
@@ -354,7 +356,7 @@ Array [
 ]
 `;
 
-exports[`test pkg scripts 3`] = `
+exports[`pkg scripts 3`] = `
 Object {
   "choice": Array [
     Object {
@@ -419,7 +421,7 @@ Object {
 }
 `;
 
-exports[`test tar.gz 1`] = `
+exports[`tar.gz 1`] = `
 Array [
   Object {
     "file": "Test App ßW-1.1.0-mac.tar.gz",
