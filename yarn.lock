@@ -236,9 +236,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.16.0:
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.16.0.tgz#c3bf4cac031b5af0db2a0f03e75f59a70ace8ff4"
+aws-sdk@^2.17.0:
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.17.0.tgz#b60351f37a77f04e5441fa900b0aea6df027aae3"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -981,10 +981,6 @@ diff@^3.0.0, diff@^3.0.1:
 "docdash@https://github.com/develar/docdash.git":
   version "0.4.0"
   resolved "https://github.com/develar/docdash.git#8b7ce8fe611abdc5885e56048cfcd94f3807da56"
-
-"docdash@https://github.com/develar/docdash/tarball/master":
-  version "0.4.0"
-  resolved "https://github.com/develar/docdash/tarball/master#637a3dab2715f5d70a21154cf0560a61b6e92d66"
 
 doctrine@^2.0.0:
   version "2.0.0"

@@ -41,7 +41,6 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
   * [squirrelWindows](#SquirrelWindowsOptions)
   * [win Windows Specific Options](#WinBuildOptions)
   * [snap [Snap](http://snapcraft.io) Specific Options](#SnapOptions)
-  * [appImage [AppImage](http://appimage.org) Specific Options](#AppImageOptions)
   * [dmg.window DMG Windows Position and Size](#DmgWindow)
 * [Fields in the package.json](#Metadata)
 
@@ -263,12 +262,6 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 | stagePackages | <a name="SnapOptions-stagePackages"></a><p>The list of Ubuntu packages to use that are needed to support the <code>app</code> part creation. Like <code>depends</code> for <code>deb</code>. Defaults to <code>[&quot;libnotify4&quot;, &quot;libappindicator1&quot;, &quot;libxtst6&quot;, &quot;libnss3&quot;, &quot;libxss1&quot;, &quot;fontconfig-config&quot;, &quot;gconf2&quot;, &quot;libasound2&quot;, &quot;pulseaudio&quot;]</code>.</p> <p>If list contains <code>default</code>, it will be replaced to default list, so, <code>[&quot;default&quot;, &quot;foo&quot;]</code> can be used to add custom package <code>foo</code> in addition to defaults.</p>
 | plugs | <a name="SnapOptions-plugs"></a><p>The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to <code>[&quot;home&quot;, &quot;x11&quot;, &quot;unity7&quot;, &quot;browser-support&quot;, &quot;network&quot;, &quot;gsettings&quot;, &quot;pulseaudio&quot;, &quot;opengl&quot;]</code>.</p> <p>If list contains <code>default</code>, it will be replaced to default list, so, <code>[&quot;default&quot;, &quot;foo&quot;]</code> can be used to add custom plug <code>foo</code> in addition to defaults.</p>
 | ubuntuAppPlatformContent | <a name="SnapOptions-ubuntuAppPlatformContent"></a><p>Specify <code>ubuntu-app-platform1</code> to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because “the snaps must be connected before running uitk-gallery for the first time”.</p>
-
-<a name="AppImageOptions"></a>
-### `appImage` [AppImage](http://appimage.org) Specific Options
-| Name | Description
-| --- | ---
-| includeRequiredLib | <a name="AppImageOptions-includeRequiredLib"></a>Whether to include required system libraries (`gconf2`, `libappindicator1`). Defaults to `false`.
 
 <a name="DmgWindow"></a>
 ### `dmg.window` DMG Windows Position and Size

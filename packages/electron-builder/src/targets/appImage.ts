@@ -63,8 +63,8 @@ export default class AppImageTarget extends Target {
     }
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
-    if (this.options.includeRequiredLib === true && arch === Arch.x64) {
-      const libDir = await getBin("AppImage-packages", "16.01.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-16.01.17-x64.7z", "4a2da2d718bc1f5c6ca2f3a58e0655f39e23450b43e20424679dedf9b9b1ecae")
+    if (arch === Arch.x64) {
+      const libDir = await getBin("AppImage-packages", "21.02.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-21.02.17-x64.7z", "85af3bb0923235608910a5794a7a3ce0d6439614c0ebf9ba7545fd2087c3c152")
       args.push("-map", libDir, "/usr/lib")
     }
 

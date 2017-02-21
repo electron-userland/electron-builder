@@ -138,8 +138,4 @@ export interface SnapOptions extends LinuxBuildOptions {
  ### `appImage` [AppImage](http://appimage.org) Specific Options
  */
 export interface AppImageOptions extends LinuxBuildOptions {
-  /**
-  Whether to include required system libraries (`gconf2`, `libappindicator1`). Defaults to `false`.
-   */
-  readonly includeRequiredLib?: boolean | null
 }

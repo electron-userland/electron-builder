@@ -116,7 +116,8 @@ export class LinuxTargetHelper {
 
     const category = platformSpecificBuildOptions.category
     if (!isEmptyOrSpaces(category)) {
-      desktopMeta.Categories = category
+      if (category)
+      desktopMeta.Categories = category + (category.endsWith(";") ? "" : ";")
     }
 
     let data = `[Desktop Entry]`
