@@ -1,5 +1,6 @@
+import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options } from "electron-builder-http/out/publishOptions"
+import { warn } from "electron-builder-util/out/log"
 import { BuildInfo } from "../packagerApi"
-import { PublishConfiguration, GithubOptions, S3Options, BintrayOptions, GenericServerOptions } from "electron-builder-http/out/publishOptions"
 
 export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
   if (publishConfig.provider === "generic") {
@@ -22,11 +23,13 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
       return info
     }
 
+    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`
     if (!errorIfCannot) {
+      warn(message)
       return null
     }
 
-    throw new Error(`Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`)
+    throw new Error(message)
   }
 
   let owner = publishConfig.owner

@@ -128,6 +128,7 @@ async function runTests() {
             case "skipFpm": {
               testPathIgnorePatterns.push("[\\/]{1}fpmTest.js$")
               testPathIgnorePatterns.push("[\\/]{1}linuxArchiveTest.js$")
+              testPathIgnorePatterns.push("[\\/]{1}snapTest.js$")
               config.cacheDirectory += `-${suffix}`
             }
             break
@@ -140,6 +141,7 @@ async function runTests() {
 
             case "skipArtifactPublisher": {
               testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
+              testPathIgnorePatterns.push("[\\/]{1}httpRequestTest.js$")
               config.cacheDirectory += `-${suffix}`
             }
             break

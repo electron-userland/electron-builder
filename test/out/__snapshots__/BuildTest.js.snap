@@ -256,25 +256,6 @@ Array [
 ]
 `;
 
-exports[`name in the build 1`] = `
-"Config is invalid:
-{
-  \\"name\\": \\"Unknown option\\"
-}
-
-Raw validation errors: [
-  {
-    \\"keyword\\": \\"additionalProperties\\",
-    \\"dataPath\\": \\"\\",
-    \\"schemaPath\\": \\"#/additionalProperties\\",
-    \\"params\\": {
-      \\"additionalProperty\\": \\"name\\"
-    },
-    \\"message\\": \\"should NOT have additional properties\\"
-  }
-]"
-`;
-
 exports[`scheme validation 1`] = `
 "Config is invalid:
 {

@@ -1,6 +1,6 @@
-import { extractFile } from "asar-electron-builder"
+import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, BuildOptions, DIR_TARGET, PackagerOptions, Platform } from "electron-builder"
+import { Arch, BuildOptions, DIR_TARGET, Platform } from "electron-builder"
 import { build, normalizeOptions } from "electron-builder/out/builder"
 import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { checkWineVersion } from "electron-builder/out/packager"
@@ -9,7 +9,9 @@ import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./helpers/config"
 import { assertThat } from "./helpers/fileAssert"
-import { allPlatforms, app, appThrows, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { allPlatforms, app, appThrows, appTwo, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
+
+const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
 test("cli", async () => {
   const yargs = createYargs()
@@ -80,7 +82,7 @@ test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResou
 test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
 test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
 
-test("build in the app package.json", appTwoThrows(allPlatforms(), {
+test("build in the app package.json", appTwoThrows(linuxDirTarget, {
   projectDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
       "iconUrl": "bar",
@@ -88,16 +90,14 @@ test("build in the app package.json", appTwoThrows(allPlatforms(), {
   }, true)
 }))
 
-test("name in the build", appThrows(currentPlatform(), {projectDirCreated: packageJson(it => it.build = {"name": "Cool App"})}))
-
-test("relative index", () => assertPack("test-app", allPlatforms(false), {
+test("relative index", appTwo(allPlatforms(false), {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
   }, true)
 }))
 
 it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron-prebuilt", "package.json"), {
@@ -111,7 +111,7 @@ it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({
 }))
 
 test.ifDevOrLinuxCi("electron version from electron dependency", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
     outputJson(path.join(projectDir, "node_modules", "electron", "package.json"), {
@@ -125,7 +125,7 @@ test.ifDevOrLinuxCi("electron version from electron dependency", app({
 }))
 
 test.ifDevOrLinuxCi("electron version from build", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
 }, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.devDependencies = {}
@@ -133,12 +133,12 @@ test.ifDevOrLinuxCi("electron version from build", app({
   })
 }))
 
-test("www as default dir", () => assertPack("test-app", currentPlatform(), {
+test("www as default dir", appTwo(Platform.current().createTarget(DIR_TARGET), {
   projectDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
 test("afterPack", () => {
-  const targets = isCi ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+  const targets = isCi ? Platform.current().createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
   let called = 0
   return assertPack("test-app-one", {
     targets: targets,
@@ -156,7 +156,7 @@ test("afterPack", () => {
 })
 
 test("beforeBuild", () => {
-  const targets = isCi ? Platform.fromString(process.platform).createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+  const targets = isCi ? Platform.current().createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
   let called = 0
   return assertPack("test-app-one", {
     targets: targets,
@@ -174,39 +174,31 @@ test("beforeBuild", () => {
   })
 })
 
-test.ifDevOrLinuxCi("smart unpack", () => {
-  return assertPack("test-app-one", {
-    targets: Platform.LINUX.createTarget(DIR_TARGET),
-  }, {
-    npmInstallBefore: true,
-    projectDirCreated: packageJson(it => {
-      it.dependencies = {
-        "debug": "^2.2.0",
-        "edge-cs": "^1.0.0"
-      }
-    }),
-    packed: context => {
-      expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).toMatchObject({
-        name: "debug"
-      })
-      return BluebirdPromise.resolve()
+test.ifDevOrLinuxCi("smart unpack", app({
+  targets: linuxDirTarget,
+}, {
+  npmInstallBefore: true,
+  projectDirCreated: packageJson(it => {
+    it.dependencies = {
+      "debug": "^2.2.0",
+      "edge-cs": "^1.0.0"
     }
-  })
-})
+  }),
+  packed: context => {
+    expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).toMatchObject({
+      name: "debug"
+    })
+    return BluebirdPromise.resolve()
+  }
+}))
 
 test("wine version", async () => {
   await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))
   await checkWineVersion(BluebirdPromise.resolve("2.0-rc2"))
 })
 
-function currentPlatform(): PackagerOptions {
-  return {
-    targets: Platform.fromString(process.platform).createTarget(DIR_TARGET),
-  }
-}
-
 test.ifDevOrLinuxCi("prepackaged", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
 }, {
   packed: async (context) => {
     await build(normalizeOptions({
@@ -219,7 +211,7 @@ test.ifDevOrLinuxCi("prepackaged", app({
 }))
 
 test.ifDevOrLinuxCi("scheme validation", appThrows({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
   config: <any>{
     foo: 123,
     mac: {
@@ -229,7 +221,7 @@ test.ifDevOrLinuxCi("scheme validation", appThrows({
 }))
 
 test.ifDevOrLinuxCi("scheme validation 2", appThrows({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
   config: <any>{
     appId: 123,
   },

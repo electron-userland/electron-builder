@@ -1,4 +1,5 @@
-import { extractFile } from "asar-electron-builder"
+import Ajv from "ajv"
+import { extractFile } from "asar"
 import { log, warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -130,7 +131,28 @@ function findFromElectronPrebuilt(packageData: any): any {
   return null
 }
 
-export function normaliseErrorMessages(errors: Array<ErrorObject>) {
+let validatorPromise: Promise<any> | null = null
+
+async function createConfigValidator() {
+  const ajv = new Ajv({allErrors: true})
+  ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json"))
+  require("ajv-keywords")(ajv, ["typeof"])
+  const schema = await readJson(path.join(__dirname, "..", "..", "scheme.json"))
+  return ajv.compile(schema)
+}
+
+export async function validateConfig(config: Config) {
+  if (validatorPromise == null) {
+    validatorPromise = createConfigValidator()
+  }
+
+  const validator = await validatorPromise
+  if (!validator(config)) {
+    throw new Error("Config is invalid:\n" + JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2) + "\n\nRaw validation errors: " + JSON.stringify(validator.errors, null, 2))
+  }
+}
+
+function normaliseErrorMessages(errors: Array<ErrorObject>) {
   const result: any = Object.create(null)
   for (const e of errors) {
     if (e.keyword === "type" && (<TypeParams>e.params).type === "null") {
