@@ -1,9 +1,9 @@
-import { Platform, Arch, Target } from "electron-builder-core"
-import { PlatformPackager } from "./platformPackager"
-import { Metadata, Config, AfterPackContext } from "./metadata"
+import { Arch, Platform, Target } from "electron-builder-core"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"
+import { AfterPackContext, Config, Metadata } from "./metadata"
+import { PlatformPackager } from "./platformPackager"
 
 export interface PackagerOptions {
   targets?: Map<Platform, Map<Arch, string[]>>
@@ -60,6 +60,8 @@ export interface BuildInfo {
   readonly repositoryInfo: Promise<SourceRepositoryInfo | null>
 
   readonly isPrepackedAppAsar: boolean
+
+  readonly prepackaged?: string | null
 
   dispatchArtifactCreated(event: ArtifactCreated): void
 

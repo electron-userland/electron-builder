@@ -18,7 +18,7 @@ export class PkgTarget extends Target {
     super("pkg")
   }
 
-  async build(appOutDir: string, arch: Arch): Promise<any> {
+  async build(appPath: string, arch: Arch): Promise<any> {
     const packager = this.packager
     const options = this.options
     const appInfo = packager.appInfo
@@ -30,8 +30,7 @@ export class PkgTarget extends Target {
       throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
 
-    const appPath = path.join(appOutDir, `${appInfo.productFilename}.app`)
-
+    const appOutDir = path.dirname(appPath)
     const distInfo = path.join(appOutDir, "distribution.xml")
     await exec("productbuild", ["--synthesize", "--component", appPath, this.installLocation, distInfo], {
       cwd: appOutDir,

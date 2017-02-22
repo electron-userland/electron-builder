@@ -18,7 +18,7 @@ export class DmgTarget extends Target {
     super("dmg")
   }
 
-  async build(appOutDir: string, arch: Arch) {
+  async build(appPath: string, arch: Arch) {
     const packager = this.packager
     const appInfo = packager.appInfo
     log("Building DMG")
@@ -48,7 +48,7 @@ export class DmgTarget extends Target {
     //noinspection SpellCheckingInspection
     await spawn("hdiutil", addVerboseIfNeed(["create",
       "-srcfolder", backgroundDir,
-      "-srcfolder", path.join(appOutDir, `${packager.appInfo.productFilename}.app`),
+      "-srcfolder", appPath,
       "-volname", volumeName,
       "-anyowners", "-nospotlight", "-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16",
       "-format", "UDRW",
@@ -160,7 +160,7 @@ export class DmgTarget extends Target {
       }
     })
 
-    const artifactPath = path.join(appOutDir, packager.expandArtifactNamePattern(packager.config.dmg, "dmg"))
+    const artifactPath = path.join(path.dirname(appPath), packager.expandArtifactNamePattern(packager.config.dmg, "dmg"))
     //noinspection SpellCheckingInspection
     await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-format", packager.config.compression === "store" ? "UDRO" : "UDBZ", "-imagekey", "zlib-level=9", "-o", artifactPath]))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))

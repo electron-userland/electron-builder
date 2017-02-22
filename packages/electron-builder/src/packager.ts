@@ -68,9 +68,13 @@ export class Packager implements BuildInfo {
     return this._repositoryInfo
   }
 
+  readonly prepackaged?: string | null
+
   //noinspection JSUnusedGlobalSymbols
   constructor(readonly options: PackagerOptions, private readonly cancellationToken: CancellationToken) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
+
+    this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
   }
 
   addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
@@ -204,7 +208,7 @@ export class Packager implements BuildInfo {
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
 
     // custom packager - don't check wine
-    let checkWine = this.options.prepackaged == null && this.options.platformPackagerFactory == null
+    let checkWine = this.prepackaged == null && this.options.platformPackagerFactory == null
     for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
@@ -353,7 +357,7 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.options.prepackaged != null) {
+    if (this.prepackaged != null) {
       return
     }
 

@@ -71,7 +71,7 @@ export default class FpmTarget extends Target {
 
     const destination = path.join(this.outDir, this.packager.generateName(target, arch, true /* on Linux we use safe name — without space */))
     await unlinkIfExists(destination)
-    if (this.packager.info.options.prepackaged != null) {
+    if (this.packager.info.prepackaged != null) {
       await ensureDir(this.outDir)
     }
 

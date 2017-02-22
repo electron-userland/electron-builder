@@ -1494,8 +1494,8 @@ ini@^1.3.4, ini@~1.3.0:
   resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.4.tgz#0537cb79daf59b59a1a517dff706c86ec039162e"
 
 inquirer@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/inquirer/-/inquirer-3.0.1.tgz#6dfbffaf4d697dd76c8fe349f919de01c28afc4d"
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/inquirer/-/inquirer-3.0.2.tgz#13caca98cc488e99c8de759a3404a6d0fe224ba6"
   dependencies:
     ansi-escapes "^1.1.0"
     chalk "^1.0.0"
@@ -3229,9 +3229,9 @@ typescript-json-schema@^0.9.0:
     typescript "~2.1.5"
     yargs "^6.6.0"
 
-typescript@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.2.0.tgz#626f2fc70087d2480f21ebb12c1888288c8614e3"
+typescript@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.2.1.tgz#4862b662b988a4c8ff691cc7969622d24db76ae9"
 
 typescript@~2.1.5:
   version "2.1.6"

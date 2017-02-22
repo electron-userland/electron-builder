@@ -73,13 +73,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
-    const prepackaged = this.packagerOptions.prepackaged
+    const prepackaged = this.info.prepackaged
 
-    if (prepackaged == null && (!hasMas || targets.length > 1)) {
-      const appOutDir = this.computeAppOutDir(outDir, arch)
-      nonMasPromise = this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
-        .then(() => this.sign(appOutDir, null))
-        .then(() => this.packageInDistributableFormat(appOutDir, Arch.x64, targets, postAsyncTasks))
+    if (!hasMas || targets.length > 1) {
+      const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
+      nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions))
+        .then(() => this.sign(appPath, null))
+        .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, postAsyncTasks))
     }
 
     for (const target of targets) {
@@ -98,7 +98,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       if (prepackaged == null) {
         await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
       }
-      await this.sign(appOutDir, masBuildOptions)
+      await this.sign(path.join(appOutDir, `${this.appInfo.productFilename}.app`), masBuildOptions)
     }
 
     if (nonMasPromise != null) {
@@ -106,7 +106,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  private async sign(appOutDir: string, masOptions: MasBuildOptions | null): Promise<void> {
+  private async sign(appPath: string, masOptions: MasBuildOptions | null): Promise<void> {
     if (process.platform !== "darwin") {
       warn("macOS application code signing is supported only on macOS, skipping.")
       return
@@ -155,7 +155,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
     }
 
-    const appPath = path.join(appOutDir, `${this.appInfo.productFilename}.app`)
     const signOptions: any = {
       skipIdentityValidation: true,
       identity: name!,
@@ -199,7 +198,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     await task(`Signing app (identity: ${name})`, this.doSign(signOptions))
 
     if (masOptions != null) {
-      const pkg = path.join(appOutDir, `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
+      const pkg = path.join(path.dirname(appPath), `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
       const certType = "3rd Party Mac Developer Installer"
       const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
       if (masInstallerIdentity == null) {

@@ -1,8 +1,8 @@
-import { Target, Arch, Platform } from "electron-builder-core"
-import { PlatformPackager } from "../platformPackager"
+import { Arch, Platform, Target } from "electron-builder-core"
 import { log } from "electron-builder-util/out/log"
 import * as path from "path"
-import { tar, archive } from "./archive"
+import { PlatformPackager } from "../platformPackager"
+import { archive, tar } from "./archive"
 
 export class ArchiveTarget extends Target {
   constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>) {
@@ -21,7 +21,7 @@ export class ArchiveTarget extends Target {
     const outFile = (() => {
       switch (packager.platform) {
         case Platform.MAC:
-          return path.join(appOutDir, packager.generateName2(format, "mac", false))
+          return path.join(path.dirname(appOutDir), packager.generateName2(format, "mac", false))
         case Platform.WINDOWS:
           return path.join(outDir, packager.generateName(format, arch, false, "win"))
         case Platform.LINUX:
@@ -31,12 +31,11 @@ export class ArchiveTarget extends Target {
       }
     })()
 
-    const dirToArchive = isMac ? path.join(appOutDir, `${packager.appInfo.productFilename}.app`) : appOutDir
     if (format.startsWith("tar.")) {
-      await tar(packager.config.compression, format, outFile, dirToArchive, isMac)
+      await tar(packager.config.compression, format, outFile, appOutDir, isMac)
     }
     else {
-      await archive(packager.config.compression, format, outFile, dirToArchive)
+      await archive(packager.config.compression, format, outFile, appOutDir)
     }
 
     packager.dispatchArtifactCreated(outFile, this, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))

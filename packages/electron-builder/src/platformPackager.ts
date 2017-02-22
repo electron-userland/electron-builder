@@ -81,7 +81,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+    return this.info.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, safeArtifactName?: string) {
@@ -110,7 +110,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
-    if (this.info.options.prepackaged != null) {
+    if (this.info.prepackaged != null) {
       return
     }
 
