@@ -4,6 +4,9 @@ import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { Config } from "../metadata"
+import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
+import ErrorObject = ajv.ErrorObject
+import TypeParams = ajv.TypeParams
 
 const normalizeData = require("normalize-package-data")
 
@@ -34,14 +37,7 @@ async function authors(file: string, data: any) {
 
 function getConfigFromPackageData(metadata: any) {
   if (metadata.directories != null) {
-    warn(`"directories" in the root is deprecated, please specify in the "build"`)
-    if (metadata.build == null) {
-      metadata.build = {directories: metadata.directories}
-    }
-    else if (metadata.build.directories == null) {
-      metadata.build.directories = metadata.directories
-    }
-    delete metadata.directories
+    throw new Error(`"directories" in the root is deprecated, please specify in the "build"`)
   }
   return metadata.build
 }
@@ -132,4 +128,68 @@ function findFromElectronPrebuilt(packageData: any): any {
     }
   }
   return null
+}
+
+export function normaliseErrorMessages(errors: Array<ErrorObject>) {
+  const result: any = Object.create(null)
+  for (const e of errors) {
+    if (e.keyword === "type" && (<TypeParams>e.params).type === "null") {
+      // ignore - no sense to report that type accepts null
+      continue
+    }
+
+    const dataPath = e.dataPath.length === 0 ? [] : e.dataPath.substring(1).split(".")
+    if (e.keyword === "additionalProperties") {
+      dataPath.push((<AdditionalPropertiesParams>e.params).additionalProperty)
+    }
+
+    let o = result
+    let lastName: string | null = null
+    for (const p of dataPath) {
+      if (p === dataPath[dataPath.length - 1]) {
+        lastName = p
+        break
+      }
+      else {
+        if (o[p] == null) {
+          o[p] = Object.create(null)
+        }
+        else if (typeof o[p] === "string") {
+          o[p] = [o[p]]
+        }
+        o = o[p]
+      }
+    }
+
+    if (lastName == null) {
+      lastName = "unknown"
+    }
+
+    let message = e.message!.toUpperCase()[0] + e.message!.substring(1)
+    switch (e.keyword) {
+      case "additionalProperties":
+        message = "Unknown option"
+        break
+
+      case "required":
+        message = "Required option"
+        break
+
+      case "anyOf":
+        message = "Invalid option object"
+        break
+    }
+
+    if (o[lastName] != null && !Array.isArray(o[lastName])) {
+      o[lastName] = [o[lastName]]
+    }
+
+    if (Array.isArray(o[lastName])) {
+      o[lastName].push(message)
+    }
+    else {
+      o[lastName] = message
+    }
+  }
+  return result
 }

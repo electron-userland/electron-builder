@@ -3,13 +3,13 @@ import { move } from "fs-extra-p"
 import * as path from "path"
 import { allPlatforms, appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 
-test("invalid main in the app package.json", appTwoThrows(/Application entry file "main.js" in the /, allPlatforms(false), {
+test("invalid main in the app package.json", appTwoThrows(allPlatforms(false), {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"
   }, true)
 }))
 
-test("invalid main in the app package.json (no asar)", appTwoThrows(`Application entry file "main.js" does not exist. Seems like a wrong configuration.`, allPlatforms(false), {
+test("invalid main in the app package.json (no asar)", appTwoThrows(allPlatforms(false), {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
@@ -22,7 +22,7 @@ test("invalid main in the app package.json (no asar)", appTwoThrows(`Application
   }
 }))
 
-test("invalid main in the app package.json (custom asar)", appTwoThrows(/Application entry file "main.js" in the ("[^"]*") does not exist\. Seems like a wrong configuration\./, allPlatforms(false), {
+test("invalid main in the app package.json (custom asar)", appTwoThrows(allPlatforms(false), {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {

@@ -35,7 +35,7 @@ test("check updates - no versions at all", async () => {
     package: "no-versions",
   })
 
-  await assertThat(updater.checkForUpdates()).throws(/No latest version, please ensure that/)
+  await assertThat(updater.checkForUpdates()).throws()
 })
 
 test("cannot find suitable file for version", async () => {
@@ -45,7 +45,7 @@ test("cannot find suitable file for version", async () => {
     package: "incorrect-file-version",
   })
 
-  await assertThat(updater.checkForUpdates()).throws(/Cannot find suitable file for version 1.0.0 in/)
+  await assertThat(updater.checkForUpdates()).throws()
 })
 
 test("file url", async () => {
@@ -100,7 +100,7 @@ test.ifNotCiWin("sha2 mismatch error event", async () => {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(updateCheckResult.downloadPromise).throws(/SHA2 checksum mismatch,/)
+  await assertThat(updateCheckResult.downloadPromise).throws()
 
   expect(actualEvents).toMatchSnapshot()
 })
@@ -172,7 +172,7 @@ test("test error", async () => {
 
   const actualEvents = trackEvents(updater)
 
-  await assertThat(updater.checkForUpdates()).throws("Path must be a string. Received undefined")
+  await assertThat(updater.checkForUpdates()).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -224,7 +224,7 @@ test("cancel download with progress", async () => {
   }
 
   const downloadPromise = <BluebirdPromise<any>>checkResult.downloadPromise
-  await assertThat(downloadPromise).throws("Cancelled")
+  await assertThat(downloadPromise).throws()
   expect(downloadPromise.isRejected()).toBe(true)
   expect(cancelled).toBe(true)
 })

@@ -1,7 +1,5 @@
 export type PublishProvider = "github" | "bintray" | "s3" | "generic"
 
-export type Publish = string | Array<string> | PublishConfiguration | GithubOptions | S3Options | BintrayOptions | GenericServerOptions | Array<PublishConfiguration> | Array<GithubOptions> | Array<S3Options> | Array<GenericServerOptions> | Array<BintrayOptions> | null
-
 /**
 ### `publish`
 
@@ -150,3 +148,8 @@ export interface BintrayOptions extends PublishConfiguration {
    */
   user?: string | null
 }
+
+// typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
+export type AllPublishOptions = string | GithubOptions | S3Options | GenericServerOptions | BintrayOptions
+// https://github.com/YousefED/typescript-json-schema/issues/80
+export type Publish = AllPublishOptions | Array<AllPublishOptions> | null

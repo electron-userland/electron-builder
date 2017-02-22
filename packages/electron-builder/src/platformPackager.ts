@@ -9,7 +9,7 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
-import { copyFiles, deprecatedUserIgnoreFilter, FileMatcher } from "./fileMatcher"
+import { copyFiles, FileMatcher } from "./fileMatcher"
 import { AsarOptions, Config, FileAssociation, FilePattern, Macros, PlatformSpecificBuildOptions } from "./metadata"
 import { unpackElectron } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
@@ -172,17 +172,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       ".nyc_output}")
 
     let rawFilter: any = null
-    const deprecatedIgnore = (<any>this.config).ignore
-    if (deprecatedIgnore != null) {
-      if (typeof deprecatedIgnore === "function") {
-        warn(`"ignore" is specified as function, may be new "files" option will be suit your needs? Please see https://github.com/electron-userland/electron-builder/wiki/Options#Config-files`)
-      }
-      else {
-        warn(`"ignore" is deprecated, please use "files", see https://github.com/electron-userland/electron-builder/wiki/Options#Config-files`)
-      }
-      rawFilter = deprecatedUserIgnoreFilter(deprecatedIgnore, appDir)
-    }
-
     const excludePatterns: Array<Minimatch> = []
     if (extraResourceMatchers != null) {
       for (const matcher of extraResourceMatchers) {

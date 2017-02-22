@@ -13,12 +13,12 @@ Name "${PRODUCT_NAME}"
 !define UNINSTALL_FILENAME "Uninstall ${PRODUCT_FILENAME}.exe"
 
 !macro check64BitAndSetRegView
-  !ifdef APP_64
-    ${IfNot} ${AtLeastWin7}
-      MessageBox MB_OK "Windows 7 and above is required"
-      Quit
-    ${EndIf}
+  ${IfNot} ${AtLeastWin7}
+    MessageBox MB_OK "Windows 7 and above is required"
+    Quit
+  ${EndIf}
 
+  !ifdef APP_64
     ${If} ${RunningX64}
       SetRegView 64
     ${Else}

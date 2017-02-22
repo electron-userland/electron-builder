@@ -1,6 +1,6 @@
-import { stat, lstat } from "fs-extra-p"
-import * as path from "path"
 import { exists } from "electron-builder-util/out/fs"
+import { lstat, stat } from "fs-extra-p"
+import * as path from "path"
 
 // http://joel-costigliola.github.io/assertj/
 export function assertThat(actual: any): Assertions {
@@ -48,7 +48,7 @@ class Assertions {
     }
   }
 
-  async throws(error: string | RegExp) {
+  async throws() {
     let actualError: Error | null
     let result: any
     try {
@@ -58,13 +58,21 @@ class Assertions {
       actualError = e
     }
 
-    expect(() => {
-      if (actualError == null) {
-        return result
+    let m
+    if (actualError == null) {
+      m = result
+    }
+    else {
+      m = actualError.message
+
+      if (m.includes("HttpError: ") && m.indexOf("\n") > 0) {
+        m = m.substring(0, m.indexOf("\n"))
       }
-      else {
-        throw actualError
-      }
-    }).toThrowError(error)
+
+      m = m.replace(/\((\/|\\)[^(]+(\/|\\)([^(\/\\]+)\)/g, `(<path>/$3)`)
+      m = m.replace(/"(\/|\\)[^"]+(\/|\\)([^"\/\\]+)"/g, `"<path>/$3"`)
+      m = m.replace(/'(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$3'`)
+    }
+    expect(m).toMatchSnapshot()
   }
 }

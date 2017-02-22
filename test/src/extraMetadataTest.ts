@@ -1,8 +1,8 @@
-import { modifyPackageJson, appTwoThrows, app, appTwo } from "./helpers/packTester"
-import { Platform, DIR_TARGET } from "electron-builder"
-import { assertThat } from "./helpers/fileAssert"
-import * as path from "path"
 import { extractFile } from "asar-electron-builder"
+import { DIR_TARGET, Platform } from "electron-builder"
+import * as path from "path"
+import { assertThat } from "./helpers/fileAssert"
+import { app, appTwo, appTwoThrows, modifyPackageJson } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("extra metadata", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -46,7 +46,7 @@ test.ifDevOrLinuxCi("extra metadata - two", appTwo({
     }
 }))
 
-test.ifMac("extra metadata - override icon", appTwoThrows(/ENOENT: no such file or directory/, {
+test.ifMac("extra metadata - override icon", appTwoThrows({
   targets: Platform.MAC.createTarget(DIR_TARGET),
   extraMetadata: {
     build: {

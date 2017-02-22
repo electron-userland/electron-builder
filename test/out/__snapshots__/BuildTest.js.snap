@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`build in the app package.json 1`] = `"'build' in the application package.json (<path>/package.json) is not supported since 3.0 anymore. Please move 'build' into the development package.json (<path>/package.json)"`;
+
 exports[`cli 1`] = `
 Object {
   "config": undefined,
@@ -234,4 +236,148 @@ Object {
     },
   },
 }
+`;
+
+exports[`custom buildResources dir 1`] = `
+Array [
+  Object {
+    "file": "latest-mac.json",
+  },
+  Object {
+    "file": "Test App ßW-1.1.0.dmg",
+    "safeArtifactName": "TestApp-1.1.0.dmg",
+  },
+  Object {
+    "file": "Test App ßW-1.1.0-mac.zip",
+    "safeArtifactName": "TestApp-1.1.0-mac.zip",
+  },
+]
+`;
+
+exports[`custom buildResources dir 2`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`custom buildResources dir 3`] = `
+Array [
+  "TestApp-Setup-1.1.0.exe",
+]
+`;
+
+exports[`custom output dir 1`] = `
+Array [
+  Object {
+    "file": "latest-mac.json",
+  },
+  Object {
+    "file": "Test App ßW-1.1.0.dmg",
+    "safeArtifactName": "TestApp-1.1.0.dmg",
+  },
+  Object {
+    "file": "Test App ßW-1.1.0-mac.zip",
+    "safeArtifactName": "TestApp-1.1.0-mac.zip",
+  },
+]
+`;
+
+exports[`custom output dir 2`] = `
+Array [
+  "Test App ßW Setup 1.1.0.exe",
+]
+`;
+
+exports[`custom output dir 3`] = `
+Array [
+  "TestApp-Setup-1.1.0.exe",
+]
+`;
+
+exports[`name in the build 1`] = `
+"Config is invalid:
+{
+  \\"name\\": \\"Unknown option\\"
+}
+
+Raw validation errors: [
+  {
+    \\"keyword\\": \\"additionalProperties\\",
+    \\"dataPath\\": \\"\\",
+    \\"schemaPath\\": \\"#/additionalProperties\\",
+    \\"params\\": {
+      \\"additionalProperty\\": \\"name\\"
+    },
+    \\"message\\": \\"should NOT have additional properties\\"
+  }
+]"
+`;
+
+exports[`scheme validation 1`] = `
+"Config is invalid:
+{
+  \\"foo\\": \\"Unknown option\\",
+  \\"mac\\": [
+    {
+      \\"foo\\": \\"Unknown option\\"
+    },
+    \\"Invalid option object\\"
+  ]
+}
+
+Raw validation errors: [
+  {
+    \\"keyword\\": \\"additionalProperties\\",
+    \\"dataPath\\": \\"\\",
+    \\"schemaPath\\": \\"#/additionalProperties\\",
+    \\"params\\": {
+      \\"additionalProperty\\": \\"foo\\"
+    },
+    \\"message\\": \\"should NOT have additional properties\\"
+  },
+  {
+    \\"keyword\\": \\"additionalProperties\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/additionalProperties\\",
+    \\"params\\": {
+      \\"additionalProperty\\": \\"foo\\"
+    },
+    \\"message\\": \\"should NOT have additional properties\\"
+  },
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/properties/mac/anyOf/1/type\\",
+    \\"params\\": {
+      \\"type\\": \\"null\\"
+    },
+    \\"message\\": \\"should be null\\"
+  },
+  {
+    \\"keyword\\": \\"anyOf\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/properties/mac/anyOf\\",
+    \\"params\\": {},
+    \\"message\\": \\"should match some schema in anyOf\\"
+  }
+]"
+`;
+
+exports[`scheme validation 2 1`] = `
+"Config is invalid:
+{
+  \\"appId\\": \\"Should be null,string\\"
+}
+
+Raw validation errors: [
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".appId\\",
+    \\"schemaPath\\": \\"#/properties/appId/type\\",
+    \\"params\\": {
+      \\"type\\": \\"null,string\\"
+    },
+    \\"message\\": \\"should be null,string\\"
+  }
+]"
 `;

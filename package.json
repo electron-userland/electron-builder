@@ -2,7 +2,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && node ./test/vendor/yarn.js scheme",
+    "compile": "ts-babel packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && node ./test/vendor/yarn.js schema",
     "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js lint-deps",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
@@ -18,13 +18,15 @@
     "update-deps": "lerna exec -- npm-check-updates --reject 'electron-builder-http,electron-builder-util,electron-builder-core,electron-publish' -a",
     "set-versions": "node test/out/helpers/setVersions.js",
     "npm-publish": "yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
-    "scheme": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json",
+    "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps",
     "docs": "jsdoc -R jsdoc/readme.md -c jsdoc/jsdoc.json -d jsdoc/out -P packages/electron-updater/package.json jsdoc/out/electron-updater"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "electron-userland/electron-builder",
   "dependencies": {
     "7zip-bin": "^2.0.4",
+    "ajv": "^5.0.2-beta",
+    "ajv-keywords": "^1.5.1",
     "archiver": "^1.3.0",
     "asar-electron-builder": "^0.13.5",
     "aws-sdk": "^2.17.0",
@@ -58,6 +60,7 @@
     "yargs": "^6.6.0"
   },
   "devDependencies": {
+    "@develar/typescript-json-schema": "0.9.1",
     "@types/electron": "^1.4.32",
     "@types/ini": "^1.3.29",
     "@types/jest": "^18.1.1",
@@ -76,8 +79,8 @@
     "depcheck": "^0.6.7",
     "docdash": "https://github.com/develar/docdash.git",
     "electron-download-tf": "3.2.0",
-    "jest-cli": "^19.0.0",
-    "jest-environment-node-debug": "^1.0.0",
+    "jest-cli": "^19.0.1",
+    "jest-environment-node-debug": "^2.0.0",
     "jest-junit-reporter": "^1.0.1",
     "jsdoc": "^3.4.3",
     "lerna": "2.0.0-beta.37",

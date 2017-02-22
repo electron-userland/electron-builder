@@ -109,35 +109,3 @@ export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
     return await copyDir(pattern.from, pattern.to, pattern.createFilter())
   })
 }
-
-
-export function deprecatedUserIgnoreFilter(ignore: Array<RegExp> | ((file: string) => boolean), appDir: string) {
-  let ignoreFunc: any
-  if (typeof ignore === "function") {
-    ignoreFunc = function (file: string) { return !(<any>ignore)(file) }
-  }
-  else {
-    if (!Array.isArray(ignore)) {
-      ignore = [ignore]
-    }
-
-    ignoreFunc = function (file: string) {
-      for (const i of <Array<RegExp>>ignore) {
-        if (file.match(i)) {
-          return false
-        }
-      }
-
-      return true
-    }
-  }
-
-  return function filter(file: string) {
-    let name = file.split(path.resolve(appDir))[1]
-    if (path.sep === "\\") {
-      // convert slashes so unix-format ignores work
-      name = name.replace(/\\/g, "/")
-    }
-    return ignoreFunc(name)
-  }
-}

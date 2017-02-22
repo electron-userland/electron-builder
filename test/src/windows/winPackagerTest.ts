@@ -1,7 +1,7 @@
 import { Platform } from "electron-builder"
-import { assertPack, platform, app, appThrows, CheckingWinPackager } from "../helpers/packTester"
-import { writeFile, rename, unlink } from "fs-extra-p"
+import { rename, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { app, appThrows, assertPack, CheckingWinPackager, platform } from "../helpers/packTester"
 
 test.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
@@ -10,11 +10,11 @@ test.ifWinCi("beta version", app({
   }
 }))
 
-test.ifNotCiMac("icon < 256", appThrows(/Windows icon size must be at least 256x256, please fix ".+/, platform(Platform.WINDOWS), {
+test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
   projectDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }))
 
-test.ifNotCiMac("icon not an image", appThrows(/Windows icon is not valid ico file, please fix ".+/, platform(Platform.WINDOWS), {
+test.ifNotCiMac("icon not an image", appThrows(platform(Platform.WINDOWS), {
   projectDirCreated: async (projectDir) => {
     const file = path.join(projectDir, "build", "icon.ico")
     // because we use hardlinks
@@ -41,7 +41,7 @@ test.ifMac("custom icon", () => {
   })
 })
 
-it.ifDevOrLinuxCi("ev", appThrows(/certificateSubjectName supported only on Windows/, {
+it.ifDevOrLinuxCi("ev", appThrows({
   targets: Platform.WINDOWS.createTarget(["dir"]),
   config: {
     win: {
@@ -50,7 +50,7 @@ it.ifDevOrLinuxCi("ev", appThrows(/certificateSubjectName supported only on Wind
   }
 }))
 
-it.ifDevOrLinuxCi("forceCodeSigning", appThrows(/App is not signed and "forceCodeSigning"/, {
+it.ifDevOrLinuxCi("forceCodeSigning", appThrows({
   targets: Platform.WINDOWS.createTarget(["dir"]),
   config: {
     forceCodeSigning: true,

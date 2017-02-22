@@ -24,6 +24,8 @@ Array [
 ]
 `;
 
+exports[`file associations only perMachine 1`] = `"Please set perMachine to true — file associations works on Windows only if installed for all users"`;
+
 exports[`menuCategory 1`] = `
 Array [
   "Test Menu Category CustomName 1.1.0.exe",

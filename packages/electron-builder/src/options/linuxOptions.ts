@@ -23,6 +23,8 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `AppImage`.
 
    The most effective [xz](https://en.wikipedia.org/wiki/Xz) compression format used by default.
+
+   electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
    */
   readonly target?: Array<string> | null
 

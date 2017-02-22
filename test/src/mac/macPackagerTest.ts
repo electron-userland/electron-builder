@@ -58,11 +58,11 @@ test.ifMac("one-package", app({
   },
 }))
 
-test.ifMac("electronDist", appThrows(/ENOENT: no such file or directory/, {
+test.ifMac("electronDist", appThrows({
   targets: Platform.MAC.createTarget(DIR_TARGET),
   config: {
     electronDist: "foo",
   }
 }))
 
-test.ifWinCi("Build macOS on Windows is not supported", appThrows(/Build for macOS is supported only on macOS.+/, platform(Platform.MAC)))
+test.ifWinCi("Build macOS on Windows is not supported", appThrows(platform(Platform.MAC)))

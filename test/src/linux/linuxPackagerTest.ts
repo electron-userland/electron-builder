@@ -1,9 +1,9 @@
-import { modifyPackageJson, app, appThrows } from "../helpers/packTester"
-import { remove, readFile, rename } from "fs-extra-p"
+import { build, Platform } from "electron-builder"
+import { readFile, remove, rename } from "fs-extra-p"
 import * as path from "path"
-import { Platform, build } from "electron-builder"
-import { assertThat } from "../helpers/fileAssert"
 import { ELECTRON_VERSION } from "../helpers/config"
+import { assertThat } from "../helpers/fileAssert"
+import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 
 test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
@@ -52,7 +52,7 @@ test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()
   },
 }))
 
-test.ifNotWindows("no-author-email", appThrows(/Please specify author 'email' in .+/, {targets: Platform.LINUX.createTarget("deb")}, {
+test.ifNotWindows("no-author-email", appThrows({targets: Platform.LINUX.createTarget("deb")}, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.author = "Foo"
   })

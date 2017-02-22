@@ -8,7 +8,7 @@ import { parseString } from "xml2js"
 import { assertThat } from "../helpers/fileAssert"
 import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
-test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"])()).throws("Unknown target: ttt"))
+test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"])()).throws())
 
 test("only zip", createMacTargetTest(["zip"]));
 

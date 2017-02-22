@@ -3,7 +3,7 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
+import { app, modifyPackageJson } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -43,32 +43,30 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
 }))
 
 // skip on macOS because we want test only / and \
-test.ifNotCiMac("ignore node_modules dev dep", () => {
-  return assertPack("test-app-one", {
-    targets: Platform.LINUX.createTarget(DIR_TARGET),
-    config: <any>{
-      asar: false,
-      ignore: (file: string) => {
-        return file === "/ignoreMe"
-      }
-    },
-  }, {
-    projectDirCreated: projectDir => {
-      return BluebirdPromise.all([
-        modifyPackageJson(projectDir, data => {
-          data.devDependencies = Object.assign({
-              "electron-macos-sign": "*",
-            }, data.devDependencies)
-        }),
-        outputFile(path.join(projectDir, "node_modules", "electron-macos-sign", "package.json"), "{}"),
-        outputFile(path.join(projectDir, "ignoreMe"), ""),
-      ])
-    },
-    packed: context => {
-      return BluebirdPromise.all([
-        assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-macos-sign")).doesNotExist(),
-        assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
-      ])
-    },
-  })
-})
+test.ifNotCiMac("ignore node_modules dev dep", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  config: <any>{
+    asar: false,
+    // ignore: (file: string) => {
+    //   return file === "/ignoreMe"
+    // }
+  },
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      modifyPackageJson(projectDir, data => {
+        data.devDependencies = Object.assign({
+          "electron-macos-sign": "*",
+        }, data.devDependencies)
+      }),
+      outputFile(path.join(projectDir, "node_modules", "electron-macos-sign", "package.json"), "{}"),
+      // outputFile(path.join(projectDir, "ignoreMe"), ""),
+    ])
+  },
+  packed: context => {
+    return BluebirdPromise.all([
+      assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-macos-sign")).doesNotExist(),
+      assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
+    ])
+  },
+}))

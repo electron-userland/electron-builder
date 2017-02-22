@@ -124,7 +124,7 @@ test("menuCategory", app({
   }
 }))
 
-test.ifDevOrLinuxCi("file associations only perMachine", appThrows(/Please set perMachine to true/, {
+test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
     fileAssociations: [

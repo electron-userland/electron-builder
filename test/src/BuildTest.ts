@@ -57,31 +57,35 @@ test("cli", async () => {
 })
 
 // only dir - avoid DMG
-test("custom buildResources dir", app(allPlatforms(false), {
+test("custom buildResources dir", app({
+  targets: getPossiblePlatforms(),
+  config: {
+    directories: {
+      buildResources: "custom"
+    }
+  },
+}, {
   projectDirCreated: projectDir => BluebirdPromise.all([
-    modifyPackageJson(projectDir, data => {
-      data.directories = {
-        buildResources: "custom"
-      }
-    }),
     move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   ])
 }))
 
-test("custom output dir", app(allPlatforms(false), {
-  projectDirCreated: packageJson(it => {
-    it.directories = {
+test("custom output dir", app({
+  targets: getPossiblePlatforms(),
+  config: {
+    directories: {
       output: "customDist",
       // https://github.com/electron-userland/electron-builder/issues/601
       app: ".",
     }
-  }),
+  },
+}, {
   packed: async context => {
     await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
   }
 }))
 
-test("build in the app package.json", appTwoThrows(/'build' in the application package\.json .+/, allPlatforms(), {
+test("build in the app package.json", appTwoThrows(allPlatforms(), {
   projectDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
       "iconUrl": "bar",
@@ -89,7 +93,7 @@ test("build in the app package.json", appTwoThrows(/'build' in the application p
   }, true)
 }))
 
-test("name in the build", appThrows(/'name' in the config is forbidden/, currentPlatform(), {projectDirCreated: packageJson(it => it.build = {"name": "Cool App"})}))
+test("name in the build", appThrows(currentPlatform(), {projectDirCreated: packageJson(it => it.build = {"name": "Cool App"})}))
 
 test("relative index", () => assertPack("test-app", allPlatforms(false), {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
@@ -217,4 +221,21 @@ test.ifDevOrLinuxCi("prepackaged", app({
     }))
     await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_amd64.deb")).isFile()
   }
+}))
+
+test.ifDevOrLinuxCi("scheme validation", appThrows({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  config: <any>{
+    foo: 123,
+    mac: {
+      foo: 12123,
+    },
+  },
+}))
+
+test.ifDevOrLinuxCi("scheme validation 2", appThrows({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  config: <any>{
+    appId: 123,
+  },
 }))

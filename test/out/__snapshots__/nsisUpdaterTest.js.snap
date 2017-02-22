@@ -1,5 +1,62 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`cancel download with progress 1`] = `"Cancelled"`;
+
+exports[`cannot find suitable file for version 1`] = `
+"Cannot find suitable file for version 1.0.0 in: [
+  {
+    \\"name\\": \\"index.js\\",
+    \\"path\\": \\"index.js\\",
+    \\"repo\\": \\"generic\\",
+    \\"package\\": \\"incorrect-file-version\\",
+    \\"version\\": \\"1.0.0\\",
+    \\"owner\\": \\"actperepo\\",
+    \\"created\\": \\"2016-08-08T06:31:26.416Z\\",
+    \\"size\\": 3628,
+    \\"sha1\\": \\"8658d188bd524e1c2372afe79bb77e9580155604\\",
+    \\"sha256\\": \\"b1c15917ae5f79686eedbe0767a6c4aa6a57d338c919ad9126b2141fa73a0aa8\\"
+  },
+  {
+    \\"name\\": \\"foo.exe\\",
+    \\"path\\": \\"foo.exe\\",
+    \\"repo\\": \\"generic\\",
+    \\"package\\": \\"incorrect-file-version\\",
+    \\"version\\": \\"1.0.0\\",
+    \\"owner\\": \\"actperepo\\",
+    \\"created\\": \\"2016-09-08T07:02:31.179Z\\",
+    \\"size\\": 1,
+    \\"sha1\\": \\"adc83b19e793491b1c6ea0fd8b46cd9f32e592fc\\",
+    \\"sha256\\": \\"01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b\\"
+  },
+  {
+    \\"name\\": \\"11TestApp Setup 1.1.0.exe\\",
+    \\"path\\": \\"11TestApp Setup 1.1.0.exe\\",
+    \\"repo\\": \\"generic\\",
+    \\"package\\": \\"incorrect-file-version\\",
+    \\"version\\": \\"1.0.0\\",
+    \\"owner\\": \\"actperepo\\",
+    \\"created\\": \\"2016-09-18T16:51:26.240Z\\",
+    \\"size\\": 1,
+    \\"sha1\\": \\"adc83b19e793491b1c6ea0fd8b46cd9f32e592fc\\",
+    \\"sha256\\": \\"01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b\\"
+  },
+  {
+    \\"name\\": \\"11TestApp Setup 1.1.0 copy.exe\\",
+    \\"path\\": \\"11TestApp Setup 1.1.0 copy.exe\\",
+    \\"repo\\": \\"generic\\",
+    \\"package\\": \\"incorrect-file-version\\",
+    \\"version\\": \\"1.0.0\\",
+    \\"owner\\": \\"actperepo\\",
+    \\"created\\": \\"2016-09-18T16:51:26.095Z\\",
+    \\"size\\": 1,
+    \\"sha1\\": \\"adc83b19e793491b1c6ea0fd8b46cd9f32e592fc\\",
+    \\"sha256\\": \\"01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b\\"
+  }
+]"
+`;
+
+exports[`check updates - no versions at all 1`] = `"No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. HttpError: 404 Not Found"`;
+
 exports[`checkForUpdates several times 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
@@ -71,7 +128,9 @@ Object {
 }
 `;
 
-exports[`sha2 mismatch error event 2`] = `
+exports[`sha2 mismatch error event 2`] = `"SHA2 checksum mismatch, expected f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1, got f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2"`;
+
+exports[`sha2 mismatch error event 3`] = `
 Array [
   "checking-for-update",
   "update-available",
@@ -79,7 +138,9 @@ Array [
 ]
 `;
 
-exports[`test error 1`] = `
+exports[`test error 1`] = `"Path must be a string. Received undefined"`;
+
+exports[`test error 2`] = `
 Array [
   "checking-for-update",
   "error",

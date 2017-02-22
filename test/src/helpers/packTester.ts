@@ -1,26 +1,26 @@
-import { emptyDir, remove, writeJson, readJson, readFile, mkdir } from "fs-extra-p"
-import { assertThat } from "./fileAssert"
-import * as path from "path"
-import { parse as parsePlist } from "plist"
-import { CSC_LINK } from "./codeSignData"
-import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
-import { Packager, PackagerOptions, Platform, ArtifactCreated, Arch, DIR_TARGET, createTargets, getArchSuffix, MacOsTargetName, Target, MacOptions, BuildInfo, Config } from "electron-builder"
-import { exec, spawn, getTempName } from "electron-builder-util"
-import { log, warn } from "electron-builder-util/out/log"
-import pathSorter from "path-sort"
 import DecompressZip from "decompress-zip"
+import { Arch, ArtifactCreated, BuildInfo, Config, createTargets, DIR_TARGET, getArchSuffix, MacOptions, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
-import { TEST_DIR } from "./config"
+import { exec, getTempName, spawn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { copyDir, FileCopier } from "electron-builder-util/out/fs"
+import { log, warn } from "electron-builder-util/out/log"
+import OsXPackager from "electron-builder/out/macPackager"
+import { PublishManager } from "electron-builder/out/publish/PublishManager"
+import { DmgTarget } from "electron-builder/out/targets/dmg"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
-import { DmgTarget } from "electron-builder/out/targets/dmg"
-import OsXPackager from "electron-builder/out/macPackager"
 import { SignOptions as MacSignOptions } from "electron-macos-sign"
-import { copyDir, FileCopier } from "electron-builder-util/out/fs"
-import { PublishManager } from "electron-builder/out/publish/PublishManager"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
+import * as path from "path"
+import pathSorter from "path-sort"
+import { parse as parsePlist } from "plist"
+import { CSC_LINK } from "./codeSignData"
+import { TEST_DIR } from "./config"
+import { expectedLinuxContents, expectedWinContents } from "./expectedContents"
+import { assertThat } from "./fileAssert"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = 42
@@ -56,12 +56,12 @@ export interface PackedContext {
 let tmpDirCounter = 0
 const testDir = path.join(TEST_DIR, process.pid.toString(16))
 
-export function appThrows(error: RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws(error)
+export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws()
 }
 
-export function appTwoThrows(error: string | RegExp, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
-  return () => assertThat(assertPack("test-app", packagerOptions, checkOptions)).throws(error)
+export function appTwoThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
+  return () => assertThat(assertPack("test-app", packagerOptions, checkOptions)).throws()
 }
 
 export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {

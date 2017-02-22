@@ -44,6 +44,8 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
+    "ajv": "^5.0.2-beta",
+    "ajv-keywords": "^1.5.1",
     "7zip-bin": "^2.0.4",
     "asar-electron-builder": "^0.13.5",
     "bluebird-lst": "^1.0.1",

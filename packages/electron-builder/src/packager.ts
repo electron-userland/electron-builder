@@ -1,3 +1,4 @@
+import Ajv from "ajv"
 import { extractFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, Target } from "electron-builder-core"
@@ -8,6 +9,7 @@ import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { EventEmitter } from "events"
+import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
 import { AppInfo } from "./appInfo"
@@ -17,7 +19,7 @@ import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } fro
 import { PlatformPackager } from "./platformPackager"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { createTargets } from "./targets/targetFactory"
-import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson } from "./util/readPackageJson"
+import { doLoadConfig, getElectronVersion, loadConfig, normaliseErrorMessages, readPackageJson } from "./util/readPackageJson"
 import { WinPackager } from "./winPackager"
 import { getGypEnv, installOrRebuild } from "./yarn"
 
@@ -122,6 +124,15 @@ export class Packager implements BuildInfo {
         deepAssign(config, {directories: extraMetadata.directories})
         delete extraMetadata.directories
       }
+    }
+
+    const ajv = new Ajv({allErrors: true})
+    ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json"))
+    require("ajv-keywords")(ajv, ["typeof"])
+    const schema = await readJson(path.join(__dirname, "..", "scheme.json"))
+    const validator = ajv.compile(schema)
+    if (!validator(config)) {
+      throw new Error("Config is invalid:\n" + JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2) + "\n\nRaw validation errors: " + JSON.stringify(validator.errors, null, 2))
     }
 
     this._config = config
