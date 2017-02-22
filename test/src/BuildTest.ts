@@ -56,34 +56,29 @@ test("cli", async () => {
   expect(parseExtraMetadata("--em.foo=bar"))
 })
 
-// only dir - avoid DMG
-test("custom buildResources dir", app({
-  targets: getPossiblePlatforms(),
-  config: {
-    directories: {
-      buildResources: "custom"
-    }
-  },
-}, {
-  projectDirCreated: projectDir => BluebirdPromise.all([
-    move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
-  ])
-}))
+function createBuildResourcesTest(platform: Platform) {
+  return app({
+    // only dir - avoid DMG
+    targets: platform.createTarget(platform === Platform.MAC ? DIR_TARGET : null),
+    config: {
+      directories: {
+        buildResources: "custom",
+        output: "customDist",
+        // https://github.com/electron-userland/electron-builder/issues/601
+        app: ".",
+      }
+    },
+  }, {
+    packed: async context => {
+      await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
+    },
+    projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
+  })
+}
 
-test("custom output dir", app({
-  targets: getPossiblePlatforms(),
-  config: {
-    directories: {
-      output: "customDist",
-      // https://github.com/electron-userland/electron-builder/issues/601
-      app: ".",
-    }
-  },
-}, {
-  packed: async context => {
-    await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
-  }
-}))
+test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
+test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
+test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
 
 test("build in the app package.json", appTwoThrows(allPlatforms(), {
   projectDirCreated: it => modifyPackageJson(it, data => {

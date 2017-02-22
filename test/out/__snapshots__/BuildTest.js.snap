@@ -238,57 +238,19 @@ Object {
 }
 `;
 
-exports[`custom buildResources dir 1`] = `
+exports[`custom buildResources and output dirs: linux 1`] = `
 Array [
-  Object {
-    "file": "latest-mac.json",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0-mac.zip",
-    "safeArtifactName": "TestApp-1.1.0-mac.zip",
-  },
+  "TestApp-1.1.0-x86_64.AppImage",
 ]
 `;
 
-exports[`custom buildResources dir 2`] = `
+exports[`custom buildResources and output dirs: win 1`] = `
 Array [
   "Test App ßW Setup 1.1.0.exe",
 ]
 `;
 
-exports[`custom buildResources dir 3`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
-]
-`;
-
-exports[`custom output dir 1`] = `
-Array [
-  Object {
-    "file": "latest-mac.json",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0-mac.zip",
-    "safeArtifactName": "TestApp-1.1.0-mac.zip",
-  },
-]
-`;
-
-exports[`custom output dir 2`] = `
-Array [
-  "Test App ßW Setup 1.1.0.exe",
-]
-`;
-
-exports[`custom output dir 3`] = `
+exports[`custom buildResources and output dirs: win 2`] = `
 Array [
   "TestApp-Setup-1.1.0.exe",
 ]

@@ -216,30 +216,13 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
 }
 
 async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
-  const appInfo = packager.appInfo
-
-  function getExpected(): Array<string> {
-    const result: Array<string> = []
-    for (const target of nameToTarget.keys()) {
-      if (target === "appimage") {
-        result.push(`${appInfo.name}-${appInfo.version}-${arch === Arch.x64 ? "x86_64" : Arch[arch]}.AppImage`)
-      }
-      else if (target === "deb" || target === "snap") {
-        result.push(`${appInfo.name}_${appInfo.version}_${arch === Arch.x64 ? "amd64" : Arch[arch]}.${target}`)
-      }
-      else {
-        result.push(`TestApp-${appInfo.version}.${target}`)
-      }
-    }
-    return result
-  }
-
-  assertThat(getFileNames(artifacts)).containsAll(getExpected())
+  expect(getFileNames(artifacts)).toMatchSnapshot()
 
   if (!nameToTarget.has("deb")) {
     return
   }
 
+  const appInfo = packager.appInfo
   const productFilename = appInfo.productFilename
   const expectedContents = pathSorter(expectedLinuxContents.map(it => {
     if (it === "/opt/TestApp/TestApp") {
@@ -324,13 +307,13 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
 }
 
 function getFileNames(list: Array<ArtifactCreated>): Array<string> {
-  return list.map(it => path.basename(it.file))
+  return list.map(it => path.basename(it.file)).sort()
 }
 
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
 
-  expect(getFileNames(artifacts).sort()).toMatchSnapshot()
+  expect(getFileNames(artifacts)).toMatchSnapshot()
   expect(artifacts.map(it => it.safeArtifactName).filter(it => it != null).sort()).toMatchSnapshot()
 
   let squirrel = false

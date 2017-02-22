@@ -169,6 +169,7 @@ async function runTests() {
   }, rootDir, (result: any) => {
     const code = !result || result.success ? 0 : 1
     removeSync(TEST_DIR)
+    console.log(`Failed, exit code ${code}`)
     process.exitCode = code
     process.on("exit", () => {
       return process.exit(code)
