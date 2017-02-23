@@ -26,7 +26,7 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
    In case of AppVeyor, don't forget to click on lock icon to “Toggle variable encryption”.
 
 # Where to Buy Code Signing Certificate
-[StartSSL](https://startssl.com/Support?v=34) is recommended.
+See [Get a code signing certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) for Windows.
 Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).
 
 # How to Export Certificate on macOS
