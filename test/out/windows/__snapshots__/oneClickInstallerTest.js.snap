@@ -74,7 +74,7 @@ Array [
 exports[`perMachine, no run after finish 3`] = `
 Object {
   "provider": "generic",
-  "url": "https://develar.s3.amazonaws.com/test/win/x64",
+  "url": "https://develar.s3.amazonaws.com/test/win",
 }
 `;
 

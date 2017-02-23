@@ -343,7 +343,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
 export interface Macros {
   os: string
-  arch: string
+  arch: string | null
 }
 
 export function getPlatformIconFileName(value: string | null | undefined, isMac: boolean) {

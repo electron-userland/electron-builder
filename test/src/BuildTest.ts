@@ -133,7 +133,9 @@ test.ifDevOrLinuxCi("electron version from build", app({
   })
 }))
 
-test("www as default dir", appTwo(Platform.current().createTarget(DIR_TARGET), {
+test("www as default dir", appTwo({
+  targets: Platform.current().createTarget(DIR_TARGET),
+}, {
   projectDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 

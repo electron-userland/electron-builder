@@ -75,7 +75,7 @@ export class PublishManager implements PublishContext {
 
       let publishConfig = publishConfigs[0]
       if ((<GenericServerOptions>publishConfig).url != null) {
-        publishConfig = Object.assign({}, publishConfig, {url: expandPattern((<GenericServerOptions>publishConfig).url, {os: packager.platform.buildConfigurationKey, arch: Arch[Arch.x64]})})
+        publishConfig = Object.assign({}, publishConfig, {url: expandPattern((<GenericServerOptions>publishConfig).url, {os: packager.platform.buildConfigurationKey, arch: packager.platform === Platform.WINDOWS ? null : Arch[Arch.x64]})})
       }
 
       if (packager.platform === Platform.WINDOWS) {
@@ -322,9 +322,21 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
 }
 
 function expandPattern(pattern: string, macros: Macros): string {
+  const arch = macros.arch
+  if (arch == null) {
+    pattern = pattern
+      .replace("-${arch}", "")
+      .replace(" ${arch}", "")
+      .replace("_${arch}", "")
+      .replace("/${arch}", "")
+  }
+
+  pattern = pattern.replace(/\$\{os}/g, macros.os)
+  if (arch != null) {
+    pattern = pattern.replace(/\$\{arch}/g, arch)
+  }
+
   return pattern
-    .replace(/\$\{os}/g, macros.os)
-    .replace(/\$\{arch}/g, macros.arch)
 }
 
 export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean): Promise<Array<PublishConfiguration>> | null {

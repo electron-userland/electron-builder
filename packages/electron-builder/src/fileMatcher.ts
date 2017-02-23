@@ -74,7 +74,7 @@ export class FileMatcher {
 
   private expandPattern(pattern: string): string {
     return pattern
-      .replace(/\$\{arch}/g, this.options.arch)
+      .replace(/\$\{arch}/g, this.options.arch!)
       .replace(/\$\{os}/g, this.options.os)
       .replace(/\$\{\/\*}/g, "{,/**/*}")
   }
