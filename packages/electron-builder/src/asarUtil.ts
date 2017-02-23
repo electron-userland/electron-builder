@@ -1,4 +1,4 @@
-import { AsarFileInfo, listPackage, statFile } from "asar"
+import { AsarFileInfo, listPackage, statFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst"
 import { debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
@@ -10,7 +10,7 @@ import { AsarOptions } from "./metadata"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
-const Filesystem = require("asar/lib/filesystem")
+const Filesystem = require("asar-electron-builder/lib/filesystem")
 const UINT64 = require("cuint").UINT64
 
 const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`

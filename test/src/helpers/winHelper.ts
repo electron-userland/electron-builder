@@ -1,4 +1,4 @@
-import { extractFile } from "asar"
+import { extractFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder-core"
 import { walk } from "electron-builder-util/out/fs"

@@ -9,23 +9,27 @@ test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
 test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),
+  config: {
+    linux: {
+      executableName: "Foo",
+      desktop: {
+        Foo: "bar",
+        Terminal: "true",
+      },
+    }
+  },
   effectiveOptionComputed: async (it) => {
     const content = await readFile(it[1], "utf-8")
     expect(content.includes("Foo=bar")).toBeTruthy()
     expect(content.includes("Terminal=true")).toBeTruthy()
     return false
   },
-  config: {
-    linux: {
-      executableName: "foo",
-      desktop: {
-        Foo: "bar",
-        Terminal: "true",
-      },
-    }
-  }
 }, {
   projectDirCreated: it => remove(path.join(it, "build")),
+  packed: async context => {
+    const projectDir = context.getContent(Platform.LINUX)
+    await assertThat(path.join(projectDir, "foo")).isFile()
+  },
 }))
 
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102

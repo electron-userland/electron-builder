@@ -1,4 +1,4 @@
-import { statFile } from "asar"
+import { statFile } from "asar-electron-builder"
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"

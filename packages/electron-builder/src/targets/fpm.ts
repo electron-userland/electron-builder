@@ -31,13 +31,11 @@ export default class FpmTarget extends Target {
   private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
   private readonly scriptFiles: Promise<Array<string>>
-  private readonly desktopEntry: Promise<string>
 
   constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name, false)
 
     this.scriptFiles = this.createScripts()
-    this.desktopEntry = helper.computeDesktopEntry(this.options)
   }
 
   private async createScripts(): Promise<Array<string>> {
@@ -164,7 +162,12 @@ export default class FpmTarget extends Target {
       args.push(mapping.join("=/usr/share/icons/hicolor/"))
     }
 
-    args.push(`${await this.desktopEntry}=/usr/share/applications/${this.packager.executableName}.desktop`)
+    const desktopFilePath = await this.helper.computeDesktopEntry(this.options)
+    args.push(`${desktopFilePath}=/usr/share/applications/${this.packager.executableName}.desktop`)
+
+    if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFilePath])) {
+      return
+    }
 
     await exec(await fpmPath, args)
 

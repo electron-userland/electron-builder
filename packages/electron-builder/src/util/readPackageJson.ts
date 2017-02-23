@@ -1,5 +1,5 @@
 import Ajv from "ajv"
-import { extractFile } from "asar"
+import { extractFile } from "asar-electron-builder"
 import { log, warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
