@@ -6,7 +6,6 @@
 !endif
 
 !ifndef BUILD_UNINSTALLER
-  !include StrContains.nsh
   Function StartApp
     ${if} ${Updated}
       ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" "--updated"
@@ -35,6 +34,7 @@
 
   !ifdef allowToChangeInstallationDirectory
     !insertmacro MUI_PAGE_DIRECTORY
+    !include StrContains.nsh
     # Sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
     ${StrContains} $0 ${APP_FILENAME} $INSTDIR
     StrCmp $0 "" SanitizePath
