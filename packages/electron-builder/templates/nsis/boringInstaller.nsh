@@ -1,5 +1,6 @@
 !include UAC.nsh
 !include StdUtils.nsh
+!include StrContains.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh
@@ -34,6 +35,13 @@
 
   !ifdef allowToChangeInstallationDirectory
     !insertmacro MUI_PAGE_DIRECTORY
+    # Sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
+    ${StrContains} $0 ${APP_FILENAME} $INSTDIR
+    StrCmp $0 "" SanitizePath
+      Goto SanePath
+    SanitizePath:
+      StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+    SanePath:
   !endif
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
