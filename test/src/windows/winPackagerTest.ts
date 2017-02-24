@@ -41,18 +41,31 @@ test.ifMac("custom icon", () => {
   })
 })
 
-it.ifDevOrLinuxCi("ev", appThrows({
-  targets: Platform.WINDOWS.createTarget(["dir"]),
-  config: {
-    win: {
-      certificateSubjectName: "ev",
-    }
-  }
-}))
+describe.ifAll("sign", () => {
+  const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
 
-it.ifDevOrLinuxCi("forceCodeSigning", appThrows({
-  targets: Platform.WINDOWS.createTarget(["dir"]),
-  config: {
-    forceCodeSigning: true,
-  }
-}))
+  test.ifNotWindows("ev", appThrows({
+    targets: windowsDirTarget,
+    config: {
+      win: {
+        certificateSubjectName: "ev",
+      }
+    }
+  }))
+
+  test.ifNotWindows("certificateSha1", appThrows({
+    targets: windowsDirTarget,
+    config: {
+      win: {
+        certificateSha1: "boo",
+      }
+    }
+  }))
+
+  test("forceCodeSigning", appThrows({
+    targets: windowsDirTarget,
+    config: {
+      forceCodeSigning: true,
+    }
+  }))
+})

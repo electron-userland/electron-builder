@@ -26,8 +26,7 @@ export default class AppXTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    const cscInfo = await packager.cscInfo
-    if (cscInfo == null) {
+    if ((await packager.cscInfo) == null) {
       throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
     }
 

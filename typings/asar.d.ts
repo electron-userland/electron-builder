@@ -1,4 +1,4 @@
-declare module "asar-electron-builder" {
+declare module "asar" {
   interface AsarFileInfo {
     offset: number
     size: number

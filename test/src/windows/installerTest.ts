@@ -1,9 +1,9 @@
-import { Platform, Arch } from "electron-builder"
-import { assertPack, app, copyTestAsset } from "../helpers/packTester"
-import * as path from "path"
+import { Arch, Platform } from "electron-builder"
 import { archFromString } from "electron-builder-core"
+import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
-import { readFile } from "fs-extra-p";
+import * as path from "path"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
@@ -34,7 +34,7 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
   )
 })
 
-test.ifNotCiMac("boring, MUI_HEADER as option", () => {
+test.ifAll.ifNotCiMac("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
@@ -89,7 +89,7 @@ test.ifNotCiMac("boring", app({
   },
 }))
 
-test("allowToChangeInstallationDirectory", app({
+test.ifAll("allowToChangeInstallationDirectory", app({
   targets: nsisTarget,
   appMetadata: {
     name: "test-custom-inst-dir",

@@ -1,9 +1,9 @@
 import { exec } from "electron-builder-util"
-import { rename } from "fs-extra-p"
-import * as path from "path"
-import { release } from "os"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
+import { rename } from "fs-extra-p"
 import isCi from "is-ci"
+import { release } from "os"
+import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 
 const TOOLS_VERSION = "1.7.0"
@@ -13,11 +13,18 @@ export function getSignVendorPath() {
   return getBinFromBintray("winCodeSign", TOOLS_VERSION, "a34a60e74d02b81d0303e498f03c70ce0133f908b671f62ec32896db5cd0a716")
 }
 
+export interface FileCodeSigningInfo {
+  readonly file?: string | null
+  readonly password?: string | null
+
+  readonly subjectName?: string | null
+  readonly certificateSha1?: string | null
+}
+
 export interface SignOptions {
   readonly path: string
 
   readonly cert?: string | null
-  readonly subjectName?: string | null
 
   readonly name?: string | null
   readonly password?: string | null
@@ -75,10 +82,17 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
 
   const certificateFile = options.cert
   if (certificateFile == null) {
+    const subjectName = options.options.certificateSubjectName
     if (process.platform !== "win32") {
-      throw new Error("certificateSubjectName supported only on Windows")
+      throw new Error(`${subjectName == null ? "certificateSha1" : "certificateSubjectName"} supported only on Windows`)
     }
-    args.push("/n", options.subjectName!)
+
+    if (subjectName == null) {
+      args.push("/sha1", options.options.certificateSha1!)
+    }
+    else {
+      args.push("/n", subjectName)
+    }
   }
   else {
     const certExtension = path.extname(certificateFile)

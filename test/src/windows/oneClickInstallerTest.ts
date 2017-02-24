@@ -102,7 +102,7 @@ test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))
 
-test("menuCategory", app({
+test.ifAll("menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   appMetadata: {
     name: "test-menu-category",

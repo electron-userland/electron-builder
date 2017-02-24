@@ -1,4 +1,4 @@
-import { extractFile } from "asar-electron-builder"
+import { extractFile } from "asar"
 import { DIR_TARGET, Platform } from "electron-builder"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"

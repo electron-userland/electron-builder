@@ -1,4 +1,4 @@
-import { extractFile } from "asar-electron-builder"
+import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, BuildOptions, DIR_TARGET, Platform } from "electron-builder"
 import { build, normalizeOptions } from "electron-builder/out/builder"
@@ -77,10 +77,6 @@ function createBuildResourcesTest(platform: Platform) {
     projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
   })
 }
-
-test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
-test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
-test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
 
 test("build in the app package.json", appTwoThrows(linuxDirTarget, {
   projectDirCreated: it => modifyPackageJson(it, data => {
@@ -199,32 +195,38 @@ test("wine version", async () => {
   await checkWineVersion(BluebirdPromise.resolve("2.0-rc2"))
 })
 
-test.ifDevOrLinuxCi("prepackaged", app({
-  targets: linuxDirTarget,
-}, {
-  packed: async (context) => {
-    await build(normalizeOptions({
-      prepackaged: path.join(context.outDir, "linux-unpacked"),
-      project: context.projectDir,
-      linux: ["deb"]
-    }))
-    await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_amd64.deb")).isFile()
-  }
-}))
+describe.ifAll("sign", () => {
+  test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
+  test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
+  test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
 
-test.ifDevOrLinuxCi("scheme validation", appThrows({
-  targets: linuxDirTarget,
-  config: <any>{
-    foo: 123,
-    mac: {
-      foo: 12123,
+  test.ifDevOrLinuxCi("prepackaged", app({
+    targets: linuxDirTarget,
+  }, {
+    packed: async (context) => {
+      await build(normalizeOptions({
+        prepackaged: path.join(context.outDir, "linux-unpacked"),
+        project: context.projectDir,
+        linux: ["deb"]
+      }))
+      await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_amd64.deb")).isFile()
+    }
+  }))
+
+  test.ifDevOrLinuxCi("scheme validation", appThrows({
+    targets: linuxDirTarget,
+    config: <any>{
+      foo: 123,
+      mac: {
+        foo: 12123,
+      },
     },
-  },
-}))
+  }))
 
-test.ifDevOrLinuxCi("scheme validation 2", appThrows({
-  targets: linuxDirTarget,
-  config: <any>{
-    appId: 123,
-  },
-}))
+  test.ifDevOrLinuxCi("scheme validation 2", appThrows({
+    targets: linuxDirTarget,
+    config: <any>{
+      appId: 123,
+    },
+  }))
+})

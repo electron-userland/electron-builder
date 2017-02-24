@@ -48,6 +48,11 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly certificateSubjectName?: string
 
   /**
+   * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows.
+   */
+  readonly certificateSha1?: string
+
+  /**
   The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
    */
   readonly rfc3161TimeStampServer?: string

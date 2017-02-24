@@ -15,14 +15,7 @@ dist/
 
 /docs/.idea/
 
-/typings/browser/
-/typings/browser.d.ts
-/typings/main.d.ts
-
 .DS_Store
-
-/test/typings/electron-builder.d.ts
-/test/typings/electron-updater.d.ts
 
 /packages/*/out/
 /out/

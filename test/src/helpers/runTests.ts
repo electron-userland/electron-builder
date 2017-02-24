@@ -87,12 +87,12 @@ async function runTests() {
       args.push("fpmTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest.js", "extraMetadataTest.js", "mainEntryTest.js", "globTest.js", "filesTest.js", "ignoreTest.js")
-      args.push("mac.*")
+      args.push("BuildTest", "extraMetadataTest", "mainEntryTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest")
+      args.push("mac.+")
       args.push(...baseForLinuxTests)
     }
     else if (circleNodeIndex === 2) {
-      args.push("snapTest", "nsisUpdaterTest")
+      args.push("snapTest")
     }
     else {
       args.push("windows.*", "linuxArchiveTest")
@@ -121,27 +121,23 @@ async function runTests() {
       if ("runInBand" === scriptArg) {
         runInBand = true
       }
+      else if (scriptArg.includes("=")) {
+        const equalIndex = scriptArg.indexOf("=")
+        const envName = scriptArg.substring(0, equalIndex)
+        const envValue = scriptArg.substring(equalIndex + 1)
+        process.env[envName] = envValue
+        console.log(`Custom env ${envName}=${envValue}`)
+
+        if (envName === "ALL_TESTS" && envValue === "false") {
+          config.cacheDirectory += "-basic"
+        }
+      }
       else if (scriptArg.startsWith("skip")) {
         if (!isCi) {
           const suffix = scriptArg.substring("skip".length)
           switch (scriptArg) {
-            case "skipFpm": {
-              testPathIgnorePatterns.push("[\\/]{1}fpmTest.js$")
-              testPathIgnorePatterns.push("[\\/]{1}linuxArchiveTest.js$")
-              testPathIgnorePatterns.push("[\\/]{1}snapTest.js$")
-              config.cacheDirectory += `-${suffix}`
-            }
-            break
-
-            case "skipSw": {
-              testPathIgnorePatterns.push("[\\/]{1}squirrelWindowsTest.js$")
-              config.cacheDirectory += `-${suffix}`
-            }
-            break
-
             case "skipArtifactPublisher": {
               testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
-              testPathIgnorePatterns.push("[\\/]{1}httpRequestTest.js$")
               config.cacheDirectory += `-${suffix}`
             }
             break

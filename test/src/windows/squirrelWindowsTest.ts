@@ -3,7 +3,7 @@ import { Arch, Platform } from "electron-builder"
 import * as path from "path"
 import { app, assertPack, CheckingWinPackager, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 
-test.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
+test.ifAll.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
 
 // very slow
 test.skip("delta and msi", app({
@@ -16,7 +16,7 @@ test.skip("delta and msi", app({
   },
 }))
 
-test("detect install-spinner, certificateFile/password", () => {
+test.ifAll("detect install-spinner, certificateFile/password", () => {
   let platformPackager: CheckingWinPackager = null
   let loadingGifPath: string = null
 

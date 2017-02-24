@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`icon < 256 1`] = `"Windows icon size must be at least 256x256, please fix \\"<path>/icon.ico\\""`;
+
+exports[`icon not an image 1`] = `"Windows icon is not valid ico file, please fix \\"<path>/icon.ico\\""`;
+
+exports[`sign certificateSha1 1`] = `"certificateSha1 supported only on Windows"`;
+
+exports[`sign ev 1`] = `"certificateSubjectName supported only on Windows"`;
+
+exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"`;

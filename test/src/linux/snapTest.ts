@@ -1,14 +1,13 @@
 import { Platform } from "electron-builder"
 import { app, assertPack } from "../helpers/packTester"
-import isCi from "is-ci"
 
-if (isCi ? process.platform !== "linux" : (process.env.SNAP_TEST == null && process.env.TEST_DIR != null)) {
-  fit("Skip snapTest suite — not Linux CI or env SNAP_TEST not set to true", () => {
-    console.warn("[SKIP] Skip snapTest suite — not Linux CI or env SNAP_TEST not set to true")
+if (process.env.SNAP_TEST === "false") {
+  fit("Skip snapTest suite — SNAP_TEST is set to false", () => {
+    console.warn("[SKIP] Skip snapTest suite — SNAP_TEST is set to false")
   })
 }
 
-test("platform", app({
+test.ifAll.ifDevOrLinuxCi("platform", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep P",
@@ -21,7 +20,7 @@ test("platform", app({
   },
 }))
 
-test("snap", app({
+test.ifAll.ifDevOrLinuxCi("snap", app({
   targets: Platform.LINUX.createTarget("snap"),
   config: {
     productName: "Sep",
@@ -31,7 +30,7 @@ test("snap", app({
   },
 }))
 
-test("default stagePackages", async () => {
+test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
   for (const p of [["default"], ["default", "custom"], ["custom", "default"], ["foo1", "default", "foo2"]]) {
     await assertPack("test-app-one", {
       targets: Platform.LINUX.createTarget("snap"),

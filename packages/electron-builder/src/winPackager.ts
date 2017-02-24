@@ -12,47 +12,43 @@ import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
 import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
-import { getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
-
-export interface FileCodeSigningInfo {
-  readonly file?: string | null
-  readonly password?: string | null
-
-  readonly subjectName?: string | null
-}
+import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
-    const subjectName = this.platformSpecificBuildOptions.certificateSubjectName
-    if (subjectName == null) {
-      const certificateFile = this.platformSpecificBuildOptions.certificateFile
-      if (certificateFile != null) {
-        const certificatePassword = this.getCscPassword()
-        return BluebirdPromise.resolve({
-          file: certificateFile,
-          password: certificatePassword == null ? null : certificatePassword.trim(),
-        })
-      }
-      else {
-        const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
-        if (cscLink != null) {
-          return downloadCertificate(cscLink, this.info.tempDirManager)
-            .then(path => {
-              return {
-                file: path,
-                password: this.getCscPassword(),
-              }
-            })
-        }
-        else {
-          return BluebirdPromise.resolve(null)
-        }
-      }
+    const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+    const subjectName = platformSpecificBuildOptions.certificateSubjectName
+    if (subjectName != null) {
+      return BluebirdPromise.resolve({subjectName})
+    }
+
+    const certificateSha1 = platformSpecificBuildOptions.certificateSha1
+    if (certificateSha1 != null) {
+      return BluebirdPromise.resolve({certificateSha1})
+    }
+
+    const certificateFile = platformSpecificBuildOptions.certificateFile
+    if (certificateFile != null) {
+      const certificatePassword = this.getCscPassword()
+      return BluebirdPromise.resolve({
+        file: certificateFile,
+        password: certificatePassword == null ? null : certificatePassword.trim(),
+      })
     }
     else {
-      return BluebirdPromise.resolve({
-        subjectName: subjectName
-      })
+      const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
+      if (cscLink != null) {
+        return downloadCertificate(cscLink, this.info.tempDirManager)
+          .then(path => {
+            return {
+              file: path,
+              password: this.getCscPassword(),
+            }
+          })
+      }
+      else {
+        return BluebirdPromise.resolve(null)
+      }
     }
   })
 
@@ -171,7 +167,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       logMessagePrefix = `Signing ${path.basename(file)}`
     }
     if (certFile == null) {
-      log(`${logMessagePrefix} (subject name: "${cscInfo.subjectName}")`)
+      if (cscInfo.subjectName == null) {
+        log(`${logMessagePrefix} (certificate SHA1: "${cscInfo.certificateSha1}")`)
+      }
+      else {
+        log(`${logMessagePrefix} (certificate subject name: "${cscInfo.subjectName}")`)
+      }
     }
     else {
       log(`${logMessagePrefix} (certificate file: "${certFile}")`)
@@ -181,12 +182,14 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       path: file,
 
       cert: certFile,
-      subjectName: cscInfo.subjectName,
 
       password: cscInfo.password,
       name: this.appInfo.productName,
       site: await this.appInfo.computePackageUrl(),
-      options: this.platformSpecificBuildOptions,
+      options: Object.assign({}, this.platformSpecificBuildOptions, {
+        certificateSubjectName: cscInfo.subjectName,
+        certificateSha1: cscInfo.certificateSha1,
+      }),
     })
   }
 

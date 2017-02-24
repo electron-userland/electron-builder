@@ -11,6 +11,12 @@ declare module jest {
     ifDevOrLinuxCi: jest.It
     ifLinux: jest.It
     ifLinuxOrDevMac: jest.It
+
+    ifAll: jest.It
+  }
+
+  interface Describe {
+    ifAll: jest.Describe
   }
 
   interface Matchers {

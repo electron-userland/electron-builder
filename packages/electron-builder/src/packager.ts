@@ -1,4 +1,4 @@
-import { extractFile } from "asar-electron-builder"
+import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"

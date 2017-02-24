@@ -9,10 +9,29 @@ const isWindows = process.platform === "win32"
 jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 10) * 1000 * 60
 
 const skip = test.skip
+const skipSuite = describe.skip
+
+const isAllTests = process.env.ALL_TESTS === undefined || process.env.ALL_TESTS === "true"
+describe.ifAll = isAllTests ? describe : skipSuite
+test.ifAll = isAllTests ? test : skip
+
+skip.ifAll = skip
 
 const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 test.ifNotWindows = isWindows ? skip : test
+
+skip.ifMac = skip
+skip.ifLinux = skip
+skip.ifNotWindows = skip
+skip.ifCi = skip
+skip.ifNotCi = skip
+skip.ifNotCiMac = skip
+skip.ifNotCiWin = skip
+skip.ifDevOrWinCi = skip
+skip.ifDevOrLinuxCi = skip
+skip.ifWinCi = skip
+skip.ifLinuxOrDevMac = skip
 
 if (isCi) {
   test.ifCi = test
