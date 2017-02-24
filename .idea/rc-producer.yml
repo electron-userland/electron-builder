@@ -7,7 +7,7 @@
 
 -
   <<: *defaults
-  lineRegExp: '^\s*(?:test|it|testAndIgnoreApiRate)(?:\.\w+)?\("([^"'']+)'
+  lineRegExp: '^\s*(?:test|it|testAndIgnoreApiRate)(?:\.[\w.]+)?\("([^"'']+)'
   scriptArgs: ["-i", "--env", "jest-environment-node-debug", "-t", "${0regExp}", *filePattern]
   rcName: "${fileNameWithoutExt}.${0}"
   env:

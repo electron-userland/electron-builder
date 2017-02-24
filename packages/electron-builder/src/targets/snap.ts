@@ -1,13 +1,13 @@
-import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import { LinuxPackager } from "../linuxPackager"
-import { log } from "electron-builder-util/out/log"
-import { SnapOptions } from "../options/linuxOptions"
-import { emptyDir, outputFile, copy } from "fs-extra-p"
-import * as path from "path"
-import { safeDump } from "js-yaml"
+import { Arch, Target, toLinuxArchString } from "electron-builder-core"
 import { spawn } from "electron-builder-util"
+import { log } from "electron-builder-util/out/log"
+import { copy, emptyDir, outputFile } from "fs-extra-p"
+import { safeDump } from "js-yaml"
 import { homedir } from "os"
-import { Target, Arch, toLinuxArchString } from "electron-builder-core"
+import * as path from "path"
+import { LinuxPackager } from "../linuxPackager"
+import { SnapOptions } from "../options/linuxOptions"
+import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 export default class SnapTarget extends Target {
   private readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
@@ -35,7 +35,7 @@ export default class SnapTarget extends Target {
     }
 
     const snap: any = {}
-    snap.name = packager.executableName
+    snap.name = packager.executableName.toLowerCase()
     snap.version = appInfo.version
     snap.summary = options.summary || appInfo.productName
     snap.description = this.helper.getDescription(options)
@@ -48,7 +48,7 @@ export default class SnapTarget extends Target {
       await copy(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
     }
 
-    await this.helper.computeDesktopEntry(this.options, `${snap.name}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {
+    const desktopFile = await this.helper.computeDesktopEntry(this.options, `${packager.executableName}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {
       "Icon": "${SNAP}/meta/gui/icon.png"
     })
 
@@ -98,15 +98,15 @@ export default class SnapTarget extends Target {
       }
     }
 
-    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed(snap)) {
+    if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed({snap, desktopFile})) {
       return
     }
 
     const snapcraft = path.join(snapDir, "snapcraft.yaml")
     await outputFile(snapcraft, safeDump(snap, {lineWidth: 160}))
 
-    const snapName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
-    const resultFile = path.join(this.outDir, snapName)
+    const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
+    const resultFile = path.join(this.outDir, snapFileName)
 
     if (isUseDocker) {
       await spawn("docker", ["run", "--rm",
@@ -115,7 +115,7 @@ export default class SnapTarget extends Target {
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
         "electronuserland/electron-builder:latest",
-        "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapName}`], {
+        "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`], {
         cwd: packager.info.projectDir,
         stdio: ["ignore", "inherit", "inherit"],
       })

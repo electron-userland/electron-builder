@@ -1,4 +1,5 @@
 import { Platform } from "electron-builder"
+import { readFile } from "fs-extra-p"
 import { app, assertPack } from "../helpers/packTester"
 
 if (process.env.SNAP_TEST === "false") {
@@ -7,10 +8,15 @@ if (process.env.SNAP_TEST === "false") {
   })
 }
 
+const snapTarget = Platform.LINUX.createTarget("snap")
+
 test.ifAll.ifDevOrLinuxCi("platform", app({
-  targets: Platform.LINUX.createTarget("snap"),
+  targets: snapTarget,
   config: {
     productName: "Sep P",
+    linux: {
+      executableName: "Sep"
+    },
     snap: {
       ubuntuAppPlatformContent: "ubuntu-app-platform1",
     },
@@ -18,10 +24,18 @@ test.ifAll.ifDevOrLinuxCi("platform", app({
   appMetadata: {
     name: "sep-p",
   },
+  effectiveOptionComputed: async ({snap, desktopFile}) => {
+    delete snap.parts.app.source
+    expect(snap).toMatchSnapshot()
+
+    const content = await readFile(desktopFile, "utf-8")
+    expect(content).toMatchSnapshot()
+    return false
+  },
 }))
 
 test.ifAll.ifDevOrLinuxCi("snap", app({
-  targets: Platform.LINUX.createTarget("snap"),
+  targets: snapTarget,
   config: {
     productName: "Sep",
   },
@@ -44,11 +58,11 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
       appMetadata: {
         name: "sep",
       },
-      effectiveOptionComputed: async (snap) => {
+      effectiveOptionComputed: async ({snap}) => {
         delete snap.parts.app.source
         expect(snap).toMatchSnapshot()
         return true
-      }
+      },
     })
   }
 })

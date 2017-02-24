@@ -93,9 +93,9 @@ export interface DebOptions extends LinuxBuildOptions {
  */
 export interface SnapOptions extends LinuxBuildOptions {
   /**
-  The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
+  The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap. Defaults to `strict`.
    */
-  readonly confinement?: "devmode" | "strict" | null
+  readonly confinement?: "devmode" | "strict" | "classic" | null
 
   /**
   The 78 character long summary. Defaults to [productName](#AppMetadata-productName).

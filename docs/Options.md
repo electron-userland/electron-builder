@@ -256,7 +256,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 ### `snap` [Snap](http://snapcraft.io) Specific Options
 | Name | Description
 | --- | ---
-| confinement | <a name="SnapOptions-confinement"></a>The type of confinement supported by the snap. Can be either `devmode` (i.e. this snap doesn’t support running under confinement) or `strict` (i.e. full confinement supported via interfaces). Defaults to `strict`.
+| confinement | <a name="SnapOptions-confinement"></a>The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap. Defaults to `strict`.
 | summary | <a name="SnapOptions-summary"></a>The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
 | grade | <a name="SnapOptions-grade"></a><p>The quality grade of the snap. It can be either <code>devel</code> (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels). Defaults to <code>stable</code>.</p>
 | assumes | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install.

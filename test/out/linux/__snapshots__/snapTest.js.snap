@@ -1,5 +1,261 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`default stagePackages 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/sep",
+      "plugs": Array [
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-glib-only",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3",
+        "libxss1",
+        "fontconfig-config",
+        "gconf2",
+        "libasound2",
+        "pulseaudio",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`default stagePackages 2`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/sep",
+      "plugs": Array [
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+        "custom",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-glib-only",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3",
+        "libxss1",
+        "fontconfig-config",
+        "gconf2",
+        "libasound2",
+        "pulseaudio",
+        "custom",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`default stagePackages 3`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/sep",
+      "plugs": Array [
+        "custom",
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-glib-only",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "custom",
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3",
+        "libxss1",
+        "fontconfig-config",
+        "gconf2",
+        "libasound2",
+        "pulseaudio",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`default stagePackages 4`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/sep",
+      "plugs": Array [
+        "foo1",
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+        "foo2",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "desktop-glib-only",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "foo1",
+        "libnotify4",
+        "libappindicator1",
+        "libxtst6",
+        "libnss3",
+        "libxss1",
+        "fontconfig-config",
+        "gconf2",
+        "libasound2",
+        "pulseaudio",
+        "foo2",
+      ],
+    },
+  },
+  "summary": "Sep",
+  "version": "1.1.0",
+}
+`;
+
+exports[`platform 1`] = `
+Object {
+  "apps": Object {
+    "sep": Object {
+      "command": "desktop-launch $SNAP/Sep",
+      "plugs": Array [
+        "home",
+        "x11",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "pulseaudio",
+        "opengl",
+        "platform",
+      ],
+    },
+  },
+  "confinement": "strict",
+  "description": "Test Application (test quite “ #378)",
+  "grade": "stable",
+  "icon": "snap/gui/icon.png",
+  "name": "sep",
+  "parts": Object {
+    "app": Object {
+      "after": Array [
+        "extra",
+        "desktop-ubuntu-app-platform",
+      ],
+      "plugin": "dump",
+      "stage-packages": Array [
+        "libnss3",
+      ],
+    },
+    "extra": Object {
+      "plugin": "dump",
+      "source": "/out/linux-unpacked-snap/extra",
+    },
+  },
+  "plugs": Object {
+    "platform": Object {
+      "content": "ubuntu-app-platform1",
+      "default-provider": "ubuntu-app-platform",
+      "interface": "content",
+      "target": "ubuntu-app-platform",
+    },
+  },
+  "summary": "Sep P",
+  "version": "1.1.0",
+}
+`;
+
+exports[`platform 2`] = `
+"[Desktop Entry]
+Name=Sep P
+Comment=Test Application (test quite “ #378)
+Exec=Sep
+Terminal=false
+Type=Application
+Icon=\${SNAP}/meta/gui/icon.png
+Categories=Development;
+"
+`;
+
 exports[`snap 1`] = `
 Array [
   "sep_1.1.0_amd64.snap",

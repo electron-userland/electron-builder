@@ -11,7 +11,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = (isWindows ? 30 : 10) * 1000 * 60
 const skip = test.skip
 const skipSuite = describe.skip
 
-const isAllTests = process.env.ALL_TESTS === undefined || process.env.ALL_TESTS === "true"
+const isAllTests = process.env.ALL_TESTS !== "false"
 describe.ifAll = isAllTests ? describe : skipSuite
 test.ifAll = isAllTests ? test : skip
 
