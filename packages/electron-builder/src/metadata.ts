@@ -118,12 +118,12 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
 
    Glob rules the same as for [files](#multiple-glob-patterns).
    */
-  readonly extraResources?: Array<FilePattern> | FilePattern | Array<string> | string | null
+  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 
   /**
    The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
-  readonly extraFiles?: Array<FilePattern> | FilePattern | Array<string> | string | null
+  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
 
   /**
   Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/). Defaults to `true`.
@@ -325,8 +325,8 @@ export interface MetadataDirectories {
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly files?: Array<string> | string | null
-  readonly extraFiles?: Array<FilePattern> | FilePattern | Array<string> | string | null
-  readonly extraResources?: Array<FilePattern> | FilePattern | Array<string> | string | null
+  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
+  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 
   readonly asarUnpack?: Array<string> | string | null
 

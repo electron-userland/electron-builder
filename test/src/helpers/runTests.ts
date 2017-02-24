@@ -124,7 +124,11 @@ async function runTests() {
       else if (scriptArg.includes("=")) {
         const equalIndex = scriptArg.indexOf("=")
         const envName = scriptArg.substring(0, equalIndex)
-        const envValue = scriptArg.substring(equalIndex + 1)
+        let envValue = scriptArg.substring(equalIndex + 1)
+        if (envValue === "isCi") {
+          envValue = isCi ? "true" : "false"
+        }
+
         process.env[envName] = envValue
         console.log(`Custom env ${envName}=${envValue}`)
 

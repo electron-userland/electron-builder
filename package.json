@@ -7,7 +7,7 @@
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js lint-deps",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
-    "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=false",
+    "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=isCi",
     "test-all": "node ./test/vendor/yarn.js pretest && node ./test/out/helpers/runTests.js",
     "test-linux": "docker run --rm -ti -v ${PWD}: /project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /bin/bash -c \"node ./test/vendor/yarn.js && node ./test/vendor/yarn.js test\"",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",

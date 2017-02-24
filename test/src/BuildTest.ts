@@ -229,4 +229,34 @@ describe.ifAll("sign", () => {
       appId: 123,
     },
   }))
+
+  // https://github.com/electron-userland/electron-builder/issues/1302
+  test.ifDevOrLinuxCi("scheme validation extraFiles", app({
+    targets: linuxDirTarget,
+    config: <any>{
+      "extraFiles": [
+        "lib/*.jar",
+        "lib/Proguard/**/*",
+        {
+          "from": "lib/",
+          "to": ".",
+          "filter": [
+            "*.dll"
+          ]
+        },
+        {
+          "from": "lib/",
+          "to": ".",
+          "filter": [
+            "*.exe"
+          ]
+        },
+        "BLClient/BLClient.json",
+        {
+          "from": "include/",
+          "to": "."
+        }
+      ],
+    },
+  }))
 })
