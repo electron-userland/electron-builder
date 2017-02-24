@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`tar 1`] = `
+Array [
+  "TestApp-1.1.0.tar.bz2",
+  "TestApp-1.1.0.tar.lz",
+  "TestApp-1.1.0.tar.xz",
+]
+`;

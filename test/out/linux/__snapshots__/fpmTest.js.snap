@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`rpm and tar.gz 1`] = `
+Array [
+  "TestApp-1.1.0.rpm",
+  "TestApp-1.1.0.tar.gz",
+]
+`;
+
+exports[`targets 1`] = `
+Array [
+  "TestApp-1.1.0.7z",
+  "TestApp-1.1.0.freebsd",
+  "TestApp-1.1.0.pacman",
+  "TestApp-1.1.0.sh",
+  "TestApp-1.1.0.zip",
+]
+`;

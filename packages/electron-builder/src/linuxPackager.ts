@@ -1,15 +1,15 @@
-import * as path from "path"
-import { PlatformPackager } from "./platformPackager"
 import { Platform, Target } from "electron-builder-core"
-import FpmTarget from "./targets/fpm"
-import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
-import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
-import AppImageTarget from "./targets/appImage"
 import { rename } from "fs-extra-p"
-import { LinuxBuildOptions } from "./options/linuxOptions"
+import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import SnapTarget from "./targets/snap"
+import { LinuxBuildOptions } from "./options/linuxOptions"
 import { BuildInfo } from "./packagerApi"
+import { PlatformPackager } from "./platformPackager"
+import AppImageTarget from "./targets/appImage"
+import FpmTarget from "./targets/fpm"
+import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
+import SnapTarget from "./targets/snap"
+import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   readonly executableName: string
@@ -18,7 +18,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     super(info)
 
     const executableName = this.platformSpecificBuildOptions.executableName
-    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name : executableName).toLowerCase()
+    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name.toLowerCase() : executableName)
   }
 
   get defaultTarget(): Array<string> {

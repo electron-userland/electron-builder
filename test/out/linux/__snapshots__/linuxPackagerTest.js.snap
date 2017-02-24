@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppImage - default icon, custom executable and custom desktop 1`] = `
+"[Desktop Entry]
+Name=Test App ßW
+Comment=Test Application (test quite “ #378)
+Exec=AppRun
+Terminal=true
+Type=Application
+Icon=Foo
+Foo=bar
+Categories=Development;
+"
+`;
+
+exports[`AppImage 1`] = `
+Array [
+  "TestApp-1.1.0-x86_64.AppImage",
+]
+`;
+
+exports[`icons from ICNS 1`] = `
+Array [
+  "TestApp-1.1.0-x86_64.AppImage",
+]
+`;
+
+exports[`no-author-email 1`] = `
+"Please specify author 'email' in the application package.json
+
+See https://docs.npmjs.com/files/package.json#people-fields-author-contributors
+
+It is required to set Linux .deb package maintainer. Or you can set maintainer in the custom linux options.
+(see https://github.com/electron-userland/electron-builder#distributable-format-configuration).
+"
+`;

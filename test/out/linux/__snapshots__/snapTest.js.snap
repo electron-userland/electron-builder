@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`snap 1`] = `
+Array [
+  "sep_1.1.0_amd64.snap",
+]
+`;

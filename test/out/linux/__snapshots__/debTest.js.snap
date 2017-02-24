@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`arm deb 1`] = `
+Array [
+  "TestApp_1.1.0_armv7l.deb",
+]
+`;
+
+exports[`custom depends 1`] = `
+"[Desktop Entry]
+Name=Test App ßW
+Comment=Test Application (test quite “ #378)
+Exec=\\"/opt/Test App ßW/Boo\\"
+Terminal=false
+Type=Application
+Icon=Boo
+Categories=Development;
+"
+`;
+
+exports[`deb 1`] = `
+Array [
+  "TestApp_1.1.0_amd64.deb",
+]
+`;

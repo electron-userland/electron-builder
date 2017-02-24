@@ -20,8 +20,7 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
   },
   effectiveOptionComputed: async (it) => {
     const content = await readFile(it[1], "utf-8")
-    expect(content.includes("Foo=bar")).toBeTruthy()
-    expect(content.includes("Terminal=true")).toBeTruthy()
+    expect(content.split("\n").filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version")).join("\n")).toMatchSnapshot()
     return false
   },
 }, {
