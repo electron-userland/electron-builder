@@ -1,12 +1,12 @@
 !include UAC.nsh
 !include StdUtils.nsh
-!include StrContains.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh
 !endif
 
 !ifndef BUILD_UNINSTALLER
+  !include StrContains.nsh
   Function StartApp
     ${if} ${Updated}
       ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" "--updated"
