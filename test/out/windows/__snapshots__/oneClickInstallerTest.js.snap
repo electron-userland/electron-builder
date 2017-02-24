@@ -97,6 +97,6 @@ Array [
 
 exports[`web installer 2`] = `
 Array [
-  "TestApp-Web-Setup-1.1.0.exe",
+  "TestApp-WebSetup-1.1.0.exe",
 ]
 `;

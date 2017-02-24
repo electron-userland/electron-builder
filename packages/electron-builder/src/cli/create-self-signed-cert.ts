@@ -1,12 +1,12 @@
-import yargs from "yargs"
-import { printErrorAndExit } from "electron-builder-util/out/promise"
 import { exec, spawn } from "electron-builder-util"
-import { getSignVendorPath } from "../windowsCodeSign"
+import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { log } from "electron-builder-util/out/log"
+import { printErrorAndExit } from "electron-builder-util/out/promise"
+import { TmpDir } from "electron-builder-util/out/tmp"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { log } from "electron-builder-util/out/log"
-import { TmpDir } from "electron-builder-util/out/tmp"
-import { unlinkIfExists } from "electron-builder-util/out/fs"
+import yargs from "yargs"
+import { getSignVendorPath } from "../windowsCodeSign"
 
 async function main() {
   const args: any = yargs
@@ -34,7 +34,7 @@ async function main() {
   const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
   log(`${pfx} will be imported into ${certLocation} Operation will be succeed only if runned from root. Otherwise import file manually.`)
   await spawn("powershell.exe", ["Import-PfxCertificate", "-FilePath", `"${pfx}"`, "-CertStoreLocation", ""])
-  tmpDir.cleanup()
+  await tmpDir.cleanup()
 }
 
 main()

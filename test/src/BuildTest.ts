@@ -20,7 +20,7 @@ test("cli", async () => {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
-  function expected(opt: BuildOptions): any {
+  function expected(opt: BuildOptions): object {
     return Object.assign({
       publish: undefined,
       draft: undefined,

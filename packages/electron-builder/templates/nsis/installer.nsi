@@ -58,6 +58,10 @@ Function .onInit
   !endif
 FunctionEnd
 
+!ifndef BUILD_UNINSTALLER
+  !include "installUtil.nsh"
+!endif
+
 Section "install"
   !ifndef BUILD_UNINSTALLER
     !include "installSection.nsh"

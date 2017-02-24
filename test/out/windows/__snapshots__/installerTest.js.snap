@@ -51,3 +51,15 @@ Array [
   "TestApp-Setup-1.1.0.exe",
 ]
 `;
+
+exports[`portable 1`] = `
+Array [
+  "Test App ßW 1.1.0.exe",
+]
+`;
+
+exports[`portable 2`] = `
+Array [
+  "TestApp-1.1.0.exe",
+]
+`;

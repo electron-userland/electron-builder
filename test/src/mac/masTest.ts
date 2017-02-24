@@ -16,7 +16,7 @@ else if (process.env.CSC_KEY_PASSWORD == null) {
 }
 
 test("mas", createMacTargetTest(["mas"]))
-test("mas and 7z", createMacTargetTest(["mas", "7z"]))
+test.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
 test("custom mas", () => {
   let platformPackager: CheckingMacPackager = null

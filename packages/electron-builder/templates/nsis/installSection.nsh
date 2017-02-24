@@ -71,41 +71,6 @@
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 
-!macro doExtractEmbeddedAppPackage ARCH
-  !ifdef ZIP_COMPRESSION
-    nsisunz::Unzip "$PLUGINSDIR\app-${ARCH}.zip" "$INSTDIR"
-  !else
-    Nsis7z::Extract "$PLUGINSDIR\app-${ARCH}.7z"
-  !endif
-!macroend
-
-!macro extractEmbeddedAppPackage
-  !ifdef COMPRESS
-    SetCompress off
-  !endif
-
-  !ifdef APP_32
-    File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
-  !endif
-  !ifdef APP_64
-    File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
-  !endif
-
-  !ifdef COMPRESS
-    SetCompress "${COMPRESS}"
-  !endif
-
-  !ifdef APP_64
-    ${if} ${RunningX64}
-      !insertmacro doExtractEmbeddedAppPackage "64"
-    ${else}
-      !insertmacro doExtractEmbeddedAppPackage "32"
-    ${endif}
-  !else
-    !insertmacro doExtractEmbeddedAppPackage "32"
-  !endif
-!macroend
-
 InitPluginsDir
 
 !ifdef HEADER_ICO

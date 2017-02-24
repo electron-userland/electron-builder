@@ -12,7 +12,7 @@ Two options are available — [include](https://github.com/electron-userland/ele
 Keep in mind — if you customize NSIS script, you should always state about it in the issue reports. And don't expect that your issue will be resolved.
 
 1. Add file `build/installer.nsh`.
-2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`. Example:
+2. Define wanted macro to customise: `customHeader`, `preInit`, `customInit`, `customUnInit`, `customInstall`, `customUnInstall`, `customRemoveFiles`. Example:
    ```nsis
     !macro customHeader
       !system "echo '' > ${BUILD_RESOURCES_DIR}/customHeader"

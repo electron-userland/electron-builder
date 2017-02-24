@@ -36,67 +36,6 @@ Name "${PRODUCT_NAME}"
   Quit
 !macroend
 
-!ifndef BUILD_UNINSTALLER
-Function GetInQuotes
-  Exch $R0
-  Push $R1
-  Push $R2
-  Push $R3
-
-   StrCpy $R2 -1
-   IntOp $R2 $R2 + 1
-    StrCpy $R3 $R0 1 $R2
-    StrCmp $R3 "" 0 +3
-     StrCpy $R0 ""
-     Goto Done
-    StrCmp $R3 '"' 0 -5
-
-   IntOp $R2 $R2 + 1
-   StrCpy $R0 $R0 "" $R2
-
-   StrCpy $R2 0
-   IntOp $R2 $R2 + 1
-    StrCpy $R3 $R0 1 $R2
-    StrCmp $R3 "" 0 +3
-     StrCpy $R0 ""
-     Goto Done
-    StrCmp $R3 '"' 0 -5
-
-   StrCpy $R0 $R0 $R2
-   Done:
-
-  Pop $R3
-  Pop $R2
-  Pop $R1
-  Exch $R0
-FunctionEnd
-
-Function GetFileParent
-  Exch $R0
-  Push $R1
-  Push $R2
-  Push $R3
-
-  StrCpy $R1 0
-  StrLen $R2 $R0
-
-  loop:
-    IntOp $R1 $R1 + 1
-    IntCmp $R1 $R2 get 0 get
-    StrCpy $R3 $R0 1 -$R1
-    StrCmp $R3 "\" get
-  Goto loop
-
-  get:
-    StrCpy $R0 $R0 -$R1
-
-    Pop $R3
-    Pop $R2
-    Pop $R1
-    Exch $R0
-FunctionEnd
-!endif
-
 !macro setLinkVars
   StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
   !ifdef MENU_FILENAME
@@ -113,3 +52,38 @@ FunctionEnd
   IfErrors `${_f}` `${_t}`
 !macroend
 !define Updated `"" Updated ""`
+
+!macro extractEmbeddedAppPackage
+  !ifdef COMPRESS
+    SetCompress off
+  !endif
+
+  !ifdef APP_32
+    File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
+  !endif
+  !ifdef APP_64
+    File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
+  !endif
+
+  !ifdef COMPRESS
+    SetCompress "${COMPRESS}"
+  !endif
+
+  !ifdef APP_64
+    ${if} ${RunningX64}
+      !insertmacro doExtractEmbeddedAppPackage "64"
+    ${else}
+      !insertmacro doExtractEmbeddedAppPackage "32"
+    ${endif}
+  !else
+    !insertmacro doExtractEmbeddedAppPackage "32"
+  !endif
+!macroend
+
+!macro doExtractEmbeddedAppPackage ARCH
+  !ifdef ZIP_COMPRESSION
+    nsisunz::Unzip "$PLUGINSDIR\app-${ARCH}.zip" "$INSTDIR"
+  !else
+    Nsis7z::Extract "$PLUGINSDIR\app-${ARCH}.7z"
+  !endif
+!macroend

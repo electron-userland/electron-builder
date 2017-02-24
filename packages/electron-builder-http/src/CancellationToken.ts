@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { EventEmitter } from "events"
 
 export class CancellationToken extends EventEmitter {
-  private parentCancelHandler: any | null = null
+  private parentCancelHandler: (() => any) | null = null
 
   private _cancelled: boolean
   get cancelled(): boolean {
@@ -42,7 +42,7 @@ export class CancellationToken extends EventEmitter {
     }
   }
 
-  createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error?: any) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
+  createPromise<R>(callback: (resolve: (thenableOrResult?: R) => void, reject: (error?: Error) => void, onCancel: (callback: () => void) => void) => void): Promise<R> {
     if (this.cancelled) {
       return BluebirdPromise.reject(new CancellationError())
     }

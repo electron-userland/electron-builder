@@ -102,8 +102,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
         switch (name) {
           case "nsis":
-          case "nsis-web":
+          case "portable":
             return require("./targets/nsis").default
+          case "nsis-web":
+            return require("./targets/WebInstaller").default
 
           case "squirrel":
             try {

@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, Platform, Target } from "electron-builder-core"
+import { Arch, Target } from "electron-builder-core"
 import { asArray, debug, doSpawn, exec, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
@@ -9,9 +9,8 @@ import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
 import { getPlatformIconFileName } from "../metadata"
-import { NsisOptions, NsisWebOptions } from "../options/winOptions"
+import { NsisOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
-import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { archive } from "./archive"
@@ -24,13 +23,13 @@ const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cd
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
 export default class NsisTarget extends Target {
-  private readonly options: NsisOptions
+  protected readonly options: NsisOptions
 
   private archs: Map<Arch, string> = new Map()
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  constructor(private packager: WinPackager, readonly outDir: string, targetName: string) {
+  constructor(protected readonly packager: WinPackager, readonly outDir: string, targetName: string) {
     super(targetName)
 
     let options = this.packager.config.nsis || Object.create(null)
@@ -74,13 +73,23 @@ export default class NsisTarget extends Target {
     }
   }
 
+  protected get installerFilenamePattern(): string {
+    return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
+  }
+
+  private get isPortable() {
+    return this.name === "portable"
+  }
+
   private async buildInstaller(filesToDelete: Array<string>): Promise<any> {
+    const isPortable = this.isPortable
+
     const packager = this.packager
     const appInfo = packager.appInfo
     const version = appInfo.version
     const options = this.options
-    const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, "${productName} " + (this.isWebInstaller ? "Web " : "") + "Setup ${version}.${ext}")
-    const iconPath = await packager.getResource(options.installerIcon, "installerIcon.ico") || await packager.getIconPath()
+    const installerFilename = packager.expandArtifactNamePattern(options, "exe", null, this.installerFilenamePattern)
+    const iconPath = (isPortable ? null : await packager.getResource(options.installerIcon, "installerIcon.ico")) || await packager.getIconPath()
     const oneClick = options.oneClick !== false
 
     const installerPath = path.join(this.outDir, installerFilename)
@@ -105,9 +114,21 @@ export default class NsisTarget extends Target {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
 
+    const commands: any = {
+      OutFile: `"${installerPath}"`,
+      VIProductVersion: appInfo.versionInWeirdWindowsForm,
+      VIAddVersionKey: this.computeVersionKey(),
+      Unicode: this.isUnicodeEnabled,
+    }
+
     if (iconPath != null) {
-      defines.MUI_ICON = iconPath
-      defines.MUI_UNICON = iconPath
+      if (isPortable) {
+        commands.Icon = iconPath
+      }
+      else {
+        defines.MUI_ICON = iconPath
+        defines.MUI_UNICON = iconPath
+      }
     }
 
     if (this.archs.size === 1 && USE_NSIS_BUILT_IN_COMPRESSOR) {
@@ -128,32 +149,9 @@ export default class NsisTarget extends Target {
       })
     }
 
-    await this.configureDefines(oneClick, defines)
-
-    if (this.isWebInstaller) {
-      let appPackageUrl = (<NsisWebOptions>options).appPackageUrl
-      if (appPackageUrl == null) {
-        const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, false))
-        if (publishConfigs == null || publishConfigs.length === 0) {
-          throw new Error("Cannot compute app package download URL")
-        }
-
-        appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager.appInfo.version, {
-          os: Platform.WINDOWS.buildConfigurationKey,
-          arch: ""
-        })
-
-        defines.APP_PACKAGE_URL_IS_INCOMLETE = null
-      }
-
-      defines.APP_PACKAGE_URL = appPackageUrl
-    }
-
-    const commands: any = {
-      OutFile: `"${installerPath}"`,
-      VIProductVersion: appInfo.versionInWeirdWindowsForm,
-      VIAddVersionKey: this.computeVersionKey(),
-      Unicode: this.isUnicodeEnabled,
+    this.configureDefinesForAllTypeOfInstaller(defines)
+    if (!isPortable) {
+      await this.configureDefines(oneClick, defines)
     }
 
     if (packager.config.compression === "store") {
@@ -173,21 +171,26 @@ export default class NsisTarget extends Target {
       return
     }
 
-    await this.executeMakensis(defines, commands, true, await this.computeScript(defines, commands, installerPath))
+    const script = isPortable ? await readFile(path.join(this.nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath)
+    await this.executeMakensis(defines, commands, await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
-    packager.dispatchArtifactCreated(installerPath, this, `${packager.appInfo.name}-${this.isWebInstaller ? "Web-" : ""}Setup-${version}.exe`)
+    packager.dispatchArtifactCreated(installerPath, this, this.generateGitHubInstallerName())
+  }
+
+  protected generateGitHubInstallerName() {
+    return `${this.packager.appInfo.name}-${this.isPortable ? "" : "Setup-"}${this.packager.appInfo.version}.exe`
   }
 
   private get isUnicodeEnabled() {
     return this.options.unicode == null ? true : this.options.unicode
   }
 
-  private get isWebInstaller(): boolean {
-    return this.name === "nsis-web"
+  protected get isWebInstaller(): boolean {
+    return false
   }
 
-  private async computeScript(defines: any, commands: any, installerPath: string) {
+  private async computeScriptAndSignUninstaller(defines: any, commands: any, installerPath: string) {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
@@ -202,7 +205,7 @@ export default class NsisTarget extends Target {
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
-    await this.executeMakensis(defines, commands, false, script)
+    await this.executeMakensis(defines, commands, await this.computeFinalScript(script, false))
     await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
@@ -229,7 +232,7 @@ export default class NsisTarget extends Target {
     return versionKey
   }
 
-  private async configureDefines(oneClick: boolean, defines: any) {
+  protected async configureDefines(oneClick: boolean, defines: any) {
     const packager = this.packager
     const options = this.options
 
@@ -278,14 +281,6 @@ export default class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
-    if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
-      if (options.useZip) {
-        defines.ZIP_COMPRESSION = null
-      }
-
-      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
-    }
-
     if (options.menuCategory != null) {
       const menu = sanitizeFileName(options.menuCategory === true ? packager.appInfo.companyName : <string>options.menuCategory)
       if (!isEmptyOrSpaces(menu)) {
@@ -304,7 +299,19 @@ export default class NsisTarget extends Target {
     }
   }
 
-  private async executeMakensis(defines: any, commands: any, isInstaller: boolean, originalScript: string) {
+  private configureDefinesForAllTypeOfInstaller(defines: any) {
+    const options = this.options
+
+    if (!this.isWebInstaller && defines.APP_BUILD_DIR == null) {
+      if (options.useZip) {
+        defines.ZIP_COMPRESSION = null
+      }
+
+      defines.COMPRESSION_METHOD = options.useZip ? "zip" : "7z"
+    }
+  }
+
+  private async executeMakensis(defines: any, commands: any, script: string) {
     const args: Array<string> = (this.options.warningsAsErrors === false) ? [] : ["-WX"]
     for (const name of Object.keys(defines)) {
       const value = defines[name]
@@ -330,20 +337,39 @@ export default class NsisTarget extends Target {
 
     args.push("-")
 
-    const binDir = process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux")
-    const nsisPath = await nsisPathPromise
+    if (debug.enabled) {
+      process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
+    }
 
+    const nsisPath = await nsisPathPromise
+    await new BluebirdPromise<any>((resolve, reject) => {
+      const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
+      const childProcess = doSpawn(command, args, {
+        // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
+        env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
+        cwd: this.nsisTemplatesDir,
+      }, true)
+      handleProcess("close", childProcess, command, resolve, reject)
+
+      childProcess.stdin.end(script)
+    })
+  }
+
+  private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     let scriptHeader = `!addincludedir "${path.win32.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     scriptHeader += `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
 
-    let script = originalScript
+    if (this.isPortable) {
+      return scriptHeader + originalScript
+    }
+
     const packager = this.packager
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
       scriptHeader += `!addincludedir "${packager.buildResourcesDir}"\n`
       scriptHeader += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
-      script = `\n!include "${customInclude}"\n\n${script}`
+      scriptHeader += `!include "${customInclude}"\n\n`
     }
 
     const fileAssociations = packager.fileAssociations
@@ -353,7 +379,7 @@ export default class NsisTarget extends Target {
         throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
       }
 
-      script = "!include FileAssociation.nsh\n" + script
+      scriptHeader += "!include FileAssociation.nsh\n"
       if (isInstaller) {
         let registerFileAssociationsScript = ""
         for (const item of fileAssociations) {
@@ -373,7 +399,7 @@ export default class NsisTarget extends Target {
             registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
           }
         }
-        script = `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n${script}`
+        scriptHeader += `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n`
       }
       else {
         let unregisterFileAssociationsScript = ""
@@ -382,26 +408,10 @@ export default class NsisTarget extends Target {
             unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name || ext}"\n`
           }
         }
-        script = `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n${script}`
+        scriptHeader += `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n`
       }
     }
 
-    script = scriptHeader + script
-
-    if (debug.enabled) {
-      process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
-    }
-
-    await new BluebirdPromise<any>((resolve, reject) => {
-      const command = path.join(nsisPath, binDir, process.platform === "win32" ? "makensis.exe" : "makensis")
-      const childProcess = doSpawn(command, args, {
-        // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-        env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
-        cwd: this.nsisTemplatesDir,
-      }, true)
-      handleProcess("close", childProcess, command, resolve, reject)
-
-      childProcess.stdin.end(script)
-    })
+    return scriptHeader + originalScript
   }
 }
