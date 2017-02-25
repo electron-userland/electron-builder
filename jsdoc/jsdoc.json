@@ -19,5 +19,8 @@
       "title": "electron-builder"
     }
   },
-  "plugins": ["plugins/markdown"]
+  "plugins": ["plugins/markdown"],
+  "source": {
+    "include": ["jsdoc/out/electron-updater", "jsdoc/out/http"]
+  }
 }
