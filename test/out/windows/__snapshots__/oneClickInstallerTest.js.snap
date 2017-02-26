@@ -86,11 +86,46 @@ Object {
 }
 `;
 
+exports[`web installer (default github) 1`] = `
+Array [
+  "Test App ßW Web Setup 1.1.0.exe",
+  "TestApp-1.1.0-ia32.nsis.7z",
+  "TestApp-1.1.0-x64.nsis.7z",
+]
+`;
+
+exports[`web installer (default github) 2`] = `
+Array [
+  "TestApp-WebSetup-1.1.0.exe",
+]
+`;
+
+exports[`web installer (default github) 3`] = `
+Array [
+  "Test App ßW Web Setup 1.1.0.exe",
+  "TestApp-1.1.0-ia32.nsis.7z",
+  "TestApp-1.1.0-x64.nsis.7z",
+]
+`;
+
+exports[`web installer (default github) 4`] = `
+Array [
+  "TestApp-WebSetup-1.1.0.exe",
+]
+`;
+
+exports[`web installer (default github) 5`] = `
+Object {
+  "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+  "path": "Test App ßW Web Setup 1.1.0.exe",
+  "version": "1.1.0",
+}
+`;
+
 exports[`web installer 1`] = `
 Array [
   "Test App ßW Web Setup 1.1.0.exe",
   "TestApp-1.1.0-x64.nsis.7z",
-  "latest.yml",
   "latest.yml",
 ]
 `;

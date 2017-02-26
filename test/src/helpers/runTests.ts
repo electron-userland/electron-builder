@@ -158,8 +158,8 @@ async function runTests() {
   }
 
   if (process.env.CIRCLECI != null) {
-    config.testResultsProcessor = "<rootDir>/node_modules/jest-junit-reporter"
-    process.env.TEST_REPORT_PATH = process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports")
+    config.testResultsProcessor = "<rootDir>/node_modules/jest-junit"
+    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports"), "junit.xm")
   }
 
   require("jest-cli").runCLI({
@@ -171,7 +171,6 @@ async function runTests() {
   }, rootDir, (result: any) => {
     const code = !result || result.success ? 0 : 1
     removeSync(TEST_DIR)
-    console.log(`Failed, exit code ${code}`)
     process.exitCode = code
     process.on("exit", () => {
       return process.exit(code)

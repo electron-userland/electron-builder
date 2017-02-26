@@ -2,15 +2,16 @@ import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfigurati
 import { warn } from "electron-builder-util/out/log"
 import { BuildInfo } from "../packagerApi"
 
-export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration, errorIfCannot: boolean): Promise<PublishConfiguration | null> {
-  if (publishConfig.provider === "generic") {
+export async function getResolvedPublishConfig(packager: BuildInfo, publishConfig: PublishConfiguration, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+  const provider = publishConfig.provider
+  if (provider === "generic") {
     if ((<GenericServerOptions>publishConfig).url == null) {
       throw new Error(`Please specify "url" for "generic" update server`)
     }
     return publishConfig
   }
 
-  if (publishConfig.provider === "s3") {
+  if (provider === "s3") {
     if ((<S3Options>publishConfig).bucket == null) {
       throw new Error(`Please specify "bucket" for "s3" update server`)
     }
@@ -24,16 +25,17 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     }
 
     const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`
-    if (!errorIfCannot) {
+    if (errorIfCannot) {
+      throw new Error(message)
+    }
+    else {
       warn(message)
       return null
     }
-
-    throw new Error(message)
   }
 
   let owner = publishConfig.owner
-  let project = publishConfig.provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
+  let project = provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
   if (!owner || !project) {
     const info = await getInfo()
     if (info == null) {
@@ -53,14 +55,14 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     copy.owner = owner
   }
 
-  if (publishConfig.provider === "github") {
+  if (provider === "github") {
     const options = <GithubOptions>copy
     if (options.repo == null) {
       options.repo = project
     }
     return options
   }
-  else if (publishConfig.provider === "bintray") {
+  else if (provider === "bintray") {
     const options = <BintrayOptions>copy
     if (options.package == null) {
       options.package = project
@@ -68,7 +70,7 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     return options
   }
   else {
-    return null
+    throw new Error(`Unknown publish provider: ${provider}`)
   }
 }
 

@@ -26,6 +26,7 @@ test.ifAll.ifDevOrLinuxCi("platform", app({
   },
   effectiveOptionComputed: async ({snap, desktopFile}) => {
     delete snap.parts.app.source
+    delete snap.parts.extra.source
     expect(snap).toMatchSnapshot()
 
     const content = await readFile(desktopFile, "utf-8")

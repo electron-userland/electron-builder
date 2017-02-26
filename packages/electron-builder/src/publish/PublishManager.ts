@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { Arch, Platform } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -96,9 +96,10 @@ export class PublishManager implements PublishContext {
     const target = event.target
     const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name], !this.isPublishOptionGuessed) : [event.publishConfig]
 
+    const eventFile = event.file
     if (publishConfigs == null) {
       if (this.isPublish) {
-        debug(`${event.file} is not published: no publish configs`)
+        debug(`${eventFile} is not published: no publish configs`)
       }
       return
     }
@@ -111,18 +112,19 @@ export class PublishManager implements PublishContext {
 
         const publisher = this.getOrCreatePublisher(publishConfig, packager.info)
         if (publisher != null) {
-          if (event.file == null) {
+          if (eventFile == null) {
             this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
           }
           else {
-            this.addTask(publisher.upload(event.file!, event.safeArtifactName))
+            this.addTask(publisher.upload(eventFile!, event.safeArtifactName))
           }
         }
       }
     }
 
-    if (target != null && event.file != null && !this.cancellationToken.cancelled) {
-      if ((packager.platform === Platform.MAC && target.name === "zip") || (packager.platform === Platform.WINDOWS && (target.name === "nsis" || target.name.startsWith("nsis-")))) {
+    if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
+      if ((packager.platform === Platform.MAC && target.name === "zip") ||
+        (packager.platform === Platform.WINDOWS && (target.name === "nsis" || target.name.startsWith("nsis-")) && eventFile.endsWith(".exe"))) {
         this.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }
@@ -208,7 +210,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
   const target = event.target!
   let outDir = target.outDir
-  if (target!.name.startsWith("nsis-")) {
+  if (target.name.startsWith("nsis-")) {
     outDir = path.join(outDir, target.name)
     await ensureDir(outDir)
   }
@@ -240,44 +242,48 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       })
     }
     else {
-      const githubArtifactName = `${packager.appInfo.name}-Setup-${version}.exe`
-      const sha2 = await sha256(event.file!)
-      const updateInfoFile = path.join(outDir, `${channel}.yml`)
-      await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
-        version: version,
-        releaseDate: new Date().toISOString(),
-        githubArtifactName: githubArtifactName,
-        path: path.basename(event.file!),
-        sha2: sha2,
-      }))
-
-      const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
-      if (githubPublishConfig != null) {
-        // to preserve compatibility with old electron-updater (< 0.10.0), we upload file with path specific for GitHub
-        packager.info.dispatchArtifactCreated({
-          data: new Buffer(safeDump(<UpdateInfo>{
-            version: version,
-            path: githubArtifactName,
-            sha2: sha2,
-          })),
-          safeArtifactName: `${channel}.yml`,
-          packager: packager,
-          target: null,
-          publishConfig: githubPublishConfig,
-        })
-      }
-
-      const genericPublishConfig = publishConfigs.find(it => it.provider === "generic" ||  it.provider === "s3")
-      if (genericPublishConfig != null) {
-        packager.info.dispatchArtifactCreated({
-          file: updateInfoFile,
-          packager: packager,
-          target: null,
-          publishConfig: genericPublishConfig,
-        })
-      }
+      await writeWindowsUpdateInfo(event, version, outDir, channel, publishConfigs)
       break
     }
+  }
+}
+
+async function writeWindowsUpdateInfo(event: ArtifactCreated, version: string, outDir: any, channel: string, publishConfigs: Array<PublishConfiguration>): Promise<void> {
+  const packager = event.packager
+  const sha2 = await sha256(event.file!)
+  const updateInfoFile = path.join(outDir, `${channel}.yml`)
+  await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
+    version: version,
+    releaseDate: new Date().toISOString(),
+    githubArtifactName: event.safeArtifactName,
+    path: path.basename(event.file!),
+    sha2: sha2,
+  }))
+
+  const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
+  if (githubPublishConfig != null) {
+    // to preserve compatibility with old electron-updater (< 0.10.0), we upload file with path specific for GitHub
+    packager.info.dispatchArtifactCreated({
+      data: new Buffer(safeDump(<UpdateInfo>{
+        version: version,
+        path: event.safeArtifactName,
+        sha2: sha2,
+      })),
+      safeArtifactName: `${channel}.yml`,
+      packager: packager,
+      target: null,
+      publishConfig: githubPublishConfig,
+    })
+  }
+
+  const genericPublishConfig = publishConfigs.find(it => it.provider === "generic" || it.provider === "s3")
+  if (genericPublishConfig != null) {
+    packager.info.dispatchArtifactCreated({
+      file: updateInfoFile,
+      packager: packager,
+      target: null,
+      publishConfig: genericPublishConfig,
+    })
   }
 }
 
@@ -339,7 +345,7 @@ function expandPattern(pattern: string, macros: Macros): string {
   return pattern
 }
 
-export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean): Promise<Array<PublishConfiguration>> | null {
+export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean = true): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)
@@ -347,7 +353,7 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
     publishers = targetSpecificOptions.publish
     // if explicitly set to null - do not publish
     if (publishers === null) {
-      return BluebirdPromise.resolve(null)
+      return null
     }
   }
 
@@ -355,30 +361,37 @@ export function getPublishConfigs(packager: PlatformPackager<any>, targetSpecifi
   if (publishers == null) {
     publishers = packager.platformSpecificBuildOptions.publish
     if (publishers === null) {
-      return BluebirdPromise.resolve(null)
+      return null
     }
   }
 
   if (publishers == null) {
     publishers = packager.config.publish
     if (publishers === null) {
-      return BluebirdPromise.resolve(null)
-    }
-
-    if (publishers == null) {
-      if (!isEmptyOrSpaces(process.env.GH_TOKEN)) {
-        publishers = [{provider: "github"}]
-      }
-      else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
-        publishers = [{provider: "bintray"}]
-      }
-      else if (!isEmptyOrSpaces(process.env.AWS_ACCESS_KEY_ID) && !isEmptyOrSpaces(process.env.AWS_SECRET_ACCESS_KEY)) {
-        publishers = [{provider: "s3"}]
-      }
+      return null
     }
   }
 
-  return BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it, errorIfCannot))
+  if (publishers == null) {
+    let serviceName: PublishProvider | null = null
+    if (!isEmptyOrSpaces(process.env.GH_TOKEN)) {
+      serviceName = "github"
+    }
+    else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
+      serviceName = "bintray"
+    }
+    else if (!isEmptyOrSpaces(process.env.AWS_ACCESS_KEY_ID) && !isEmptyOrSpaces(process.env.AWS_SECRET_ACCESS_KEY)) {
+      serviceName = "s3"
+    }
+
+    if (serviceName != null) {
+      debug(`Detect ${serviceName} as publish provider`)
+      return [(await getResolvedPublishConfig(packager.info, {provider: serviceName}))!]
+    }
+  }
+
+  debug(`Explicit publish provider: ${JSON.stringify(publishers, null, 2)}`)
+  return <Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it))
 }
 
 function sha256(file: string) {
@@ -401,6 +414,7 @@ function sha256(file: string) {
 function isPullRequest() {
   // TRAVIS_PULL_REQUEST is set to the pull request number if the current job is a pull request build, or false if it’s not.
   function isSet(value: string) {
+    // value can be or null, or empty string
     return value && value !== "false"
   }
 

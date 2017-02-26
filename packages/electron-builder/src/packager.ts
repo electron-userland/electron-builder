@@ -2,7 +2,7 @@ import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, use } from "electron-builder-util"
+import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
@@ -55,15 +55,12 @@ export class Packager implements BuildInfo {
 
   readonly tempDirManager = new TmpDir()
 
-  private _repositoryInfo: Promise<SourceRepositoryInfo> | null
+  private _repositoryInfo = new Lazy<SourceRepositoryInfo>(() => getRepositoryInfo(this.projectDir, this.appInfo.metadata, this.devMetadata))
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
   get repositoryInfo(): Promise<SourceRepositoryInfo> {
-    if (this._repositoryInfo == null) {
-      this._repositoryInfo = getRepositoryInfo(this.appInfo.metadata, this.devMetadata)
-    }
-    return this._repositoryInfo
+    return this._repositoryInfo.value
   }
 
   readonly prepackaged?: string | null

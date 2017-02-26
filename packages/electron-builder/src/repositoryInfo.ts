@@ -8,14 +8,14 @@ export interface RepositorySlug {
   project: string
 }
 
-export function getRepositoryInfo(metadata?: Metadata, devMetadata?: Metadata): Promise<Info | null> {
-  return _getInfo(<RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
+export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<Info | null> {
+  return _getInfo(projectDir, <RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 
-async function getGitUrlFromGitConfig(): Promise<string | null> {
+async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
   let data: string | null = null
   try {
-    data = await readFile(path.join(".git", "config"), "utf8")
+    data = await readFile(path.join(projectDir, ".git", "config"), "utf8")
   }
   catch (e) {
     if (e.code === "ENOENT" || e.code === "ENOTDIR") {
@@ -40,7 +40,7 @@ async function getGitUrlFromGitConfig(): Promise<string | null> {
   return null
 }
 
-async function _getInfo(repo?: RepositoryInfo | null): Promise<RepositorySlug | null> {
+async function _getInfo(projectDir: string, repo?: RepositoryInfo | null): Promise<RepositorySlug | null> {
   if (repo != null) {
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }
@@ -56,7 +56,7 @@ async function _getInfo(repo?: RepositoryInfo | null): Promise<RepositorySlug | 
       }
     }
 
-    url = await getGitUrlFromGitConfig()
+    url = await getGitUrlFromGitConfig(projectDir)
   }
 
   return url == null ? null : parseRepositoryUrl(url)

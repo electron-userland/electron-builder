@@ -1007,7 +1007,7 @@ diff@^3.0.0, diff@^3.0.1:
 
 "docdash@https://github.com/develar/docdash.git":
   version "0.4.0"
-  resolved "https://github.com/develar/docdash.git#8b7ce8fe611abdc5885e56048cfcd94f3807da56"
+  resolved "https://github.com/develar/docdash.git#56e7c0fdfd56c0cbd13a450e4a3aff7867ee59f0"
 
 doctrine@^2.0.0:
   version "2.0.0"
@@ -1605,8 +1605,8 @@ is-glob@^2.0.0, is-glob@^2.0.1:
     is-extglob "^1.0.0"
 
 is-my-json-valid@^2.12.4:
-  version "2.15.0"
-  resolved "https://registry.yarnpkg.com/is-my-json-valid/-/is-my-json-valid-2.15.0.tgz#936edda3ca3c211fd98f3b2d3e08da43f7b2915b"
+  version "2.16.0"
+  resolved "https://registry.yarnpkg.com/is-my-json-valid/-/is-my-json-valid-2.16.0.tgz#f079dd9bfdae65ee2038aae8acbc86ab109e3693"
   dependencies:
     generate-function "^2.0.0"
     generate-object-property "^1.1.0"
@@ -1854,10 +1854,11 @@ jest-jasmine2@^19.0.2:
     jest-message-util "^19.0.0"
     jest-snapshot "^19.0.2"
 
-jest-junit-reporter@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/jest-junit-reporter/-/jest-junit-reporter-1.0.1.tgz#e29e7a0ebc3033fe62aeacea02b71fe8d88871bb"
+jest-junit@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/jest-junit/-/jest-junit-1.2.0.tgz#5894bab45a5a13a7e1380cc7c63e7aae260064f4"
   dependencies:
+    mkdirp "^0.5.1"
     xml "^1.0.1"
 
 jest-matcher-utils@^19.0.0:
@@ -3219,9 +3220,9 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^1.4.3:
-  version "1.4.3"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.4.3.tgz#1850dfc30c915cd6212b8f6877ee57fa474e49f3"
+ts-babel@^1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.4.4.tgz#af116d2ba3f57c5f5342ba54d951baf1313ac748"
   dependencies:
     "@types/doctrine" "^0.0.3"
     babel-core "^6.23.1"

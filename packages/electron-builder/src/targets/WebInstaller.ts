@@ -15,15 +15,14 @@ export default class WebInstallerTarget extends NsisTarget {
 
   protected async configureDefines(oneClick: boolean, defines: any) {
     //noinspection ES6MissingAwait
-    const promise = (<any>NsisTarget.prototype).configureDefines.call(this, oneClick, defines)
-    await promise
+    await (<any>NsisTarget.prototype).configureDefines.call(this, oneClick, defines)
 
     const packager = this.packager
     const options = this.options
 
     let appPackageUrl = (<NsisWebOptions>options).appPackageUrl
     if (appPackageUrl == null) {
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, false))
+      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options))
       if (publishConfigs == null || publishConfigs.length === 0) {
         throw new Error("Cannot compute app package download URL")
       }

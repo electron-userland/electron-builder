@@ -7,7 +7,15 @@ import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../helpers/packTester"
 
-test.ifMac("two-package", () => assertPack("test-app", {targets: createTargets([Platform.MAC], null, "all")}, {signed: true, useTempDir: true}))
+test.ifMac("two-package", () => assertPack("test-app", {
+  targets: createTargets([Platform.MAC], null, "all"),
+  appMetadata: {
+    repository: "foo/bar"
+  },
+}, {
+  signed: true,
+  useTempDir: true,
+}))
 
 test.ifMac("one-package", app({
   targets: Platform.MAC.createTarget(),

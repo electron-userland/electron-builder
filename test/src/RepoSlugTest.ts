@@ -4,7 +4,7 @@ test("repo slug from TRAVIS_REPO_SLUG", async () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
-    const info = await getRepositoryInfo()
+    const info = await getRepositoryInfo(process.cwd())
     expect(info).toMatchSnapshot()
   }
   finally {
@@ -25,7 +25,7 @@ test("repo slug from APPVEYOR", async () => {
 
     process.env.APPVEYOR_ACCOUNT_NAME = "travis-ci"
     process.env.APPVEYOR_PROJECT_NAME = "travis-build"
-    const info = await getRepositoryInfo()
+    const info = await getRepositoryInfo(process.cwd())
     expect(info).toMatchSnapshot()
   }
   finally {

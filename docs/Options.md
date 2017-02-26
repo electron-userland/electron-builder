@@ -24,6 +24,76 @@ Don't customize paths to background and icon, — just follow conventions.
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
+## File Patterns
+
+[files](#Config-files) defaults to:
+* `**/*`
+* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
+* `!**/node_modules/.bin`
+* `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
+* `!**/._*`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
+
+[Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
+
+Development dependencies are never copied in any case. You don't need to ignore it explicitly.
+
+[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` in the pattern.
+If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
+
+Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
+ `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
+
+May be specified in the platform options (e.g. in the [mac](#MacOptions)).
+
+## Multiple Glob Patterns
+ ```js
+ [
+   // match all files
+   "**/*",
+
+   // except for js files in the foo/ directory
+   "!foo/*.js",
+
+   // unless it's foo/bar.js
+   "foo/bar.js",
+ ]
+ ```
+
+### Excluding directories
+
+Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
+Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+
+## Source and Destination Directories
+You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
+Note this only works for `extraFiles` and `extraResources`.
+ ```js
+ [
+   {
+     "from": "path/to/source",
+     "to": "path/to/destination",
+     "filter": ["**/*", "!foo/*.js"]
+   }
+ ]
+ ```
+If `from` is given as a relative path, it is relative to the project directory.
+If `to` is given as a relative path, it is relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+
+`from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+
+You can use `${os}` and `${arch}` in the `from` and `to` fields as well.
+
+## Artifact File Name Pattern
+
+Supported macros: 
+* `${name}`
+* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
+* `${version}`
+* `${ext}`
+* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
+* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+
 <!-- do not edit. start of generated block -->
 * [Configuration Options](#Config)
   * [appx](#AppXOptions)
@@ -287,78 +357,6 @@ Some standard fields should be defined in the `package.json`.
 | license | <a name="Metadata-license"></a>*linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
 
 <!-- end of generated block -->
-
-## File Patterns
-
-[files](#Config-files) defaults to:
-* `**/*`
-* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
-* `!**/node_modules/.bin`
-* `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
-* `!**/._*`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
-
-[Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
-
-Development dependencies are never copied in any case. You don't need to ignore it explicitly.
-
-[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` in the pattern.
-If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
-
-Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
- `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
-
-May be specified in the platform options (e.g. in the [mac](#MacOptions)).
-
-## Multiple Glob Patterns
- ```js
- [
-   // match all files
-   "**/*",
-
-   // except for js files in the foo/ directory
-   "!foo/*.js",
-
-   // unless it's foo/bar.js
-   "foo/bar.js",
- ]
- ```
-
-### Excluding directories
-
-Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
-Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
-
-## Source and Destination Directories
-You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
-Note this only works for `extraFiles` and `extraResources`.
- ```js
- [
-   {
-     "from": "path/to/source",
-     "to": "path/to/destination",
-     "filter": ["**/*", "!foo/*.js"]
-   }
- ]
- ```
-If `from` is given as a relative path, it is relative to the project directory.
-If `to` is given as a relative path, it is relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
-
-`from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
-
-You can use `${os}` and `${arch}` in the `from` and `to` fields as well.
-
-## Artifact File Name Pattern
-
-Supported macros: 
-* `${name}`
-* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
-* `${version}`
-* `${ext}`
-* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
-* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
-
- 
 
 ## Build Version Management
 `CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).

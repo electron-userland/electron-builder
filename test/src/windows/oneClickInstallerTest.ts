@@ -147,3 +147,19 @@ test.ifNotCiMac("web installer", app({
     }
   }
 }))
+
+test.ifAll.ifNotCiMac("web installer (default github)", app({
+  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64),
+  appMetadata: {
+    repository: "foo/bar"
+  },
+}, {
+  packed: async context => {
+    const data = safeLoad(await readFile(path.join(context.outDir, "nsis-web", "latest.yml"), "utf-8"))
+    expect(data.releaseDate).toBeDefined()
+    expect(data.sha2).toBeDefined()
+    delete data.releaseDate
+    delete data.sha2
+    expect(data).toMatchSnapshot()
+  },
+}))

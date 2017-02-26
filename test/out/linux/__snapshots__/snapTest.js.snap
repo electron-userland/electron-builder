@@ -228,7 +228,6 @@ Object {
     },
     "extra": Object {
       "plugin": "dump",
-      "source": "/out/linux-unpacked-snap/extra",
     },
   },
   "plugs": Object {
