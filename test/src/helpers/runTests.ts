@@ -159,7 +159,7 @@ async function runTests() {
 
   if (process.env.CIRCLECI != null) {
     config.testResultsProcessor = "<rootDir>/node_modules/jest-junit"
-    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports"), "junit.xm")
+    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports"), "test-report.xml")
   }
 
   require("jest-cli").runCLI({

@@ -109,6 +109,32 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
   }
 
+  private createFileMatcher(appDir: string, resourcesPath: string, fileMatchOptions: Macros, platformSpecificBuildOptions: DC) {
+    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+    const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
+    if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+      matcher.addAllPattern()
+    }
+    else {
+      matcher.addPattern("package.json")
+    }
+    matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+    matcher.addPattern("!**/node_modules/.bin")
+    matcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
+    matcher.addPattern("!**/._*")
+    matcher.addPattern("!*.iml")
+    //noinspection SpellCheckingInspection
+    matcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
+      "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
+      ".editorconfig,.flowconfig,.jshintrc," +
+      ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
+      ".idea," +
+      "appveyor.yml,.travis.yml,circle.yml," +
+      ".nyc_output}")
+
+    return matcher
+  }
+
   protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
     if (this.info.prepackaged != null) {
       return
@@ -149,28 +175,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-    const defaultMatcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
-    if (defaultMatcher.isEmpty() || defaultMatcher.containsOnlyIgnore()) {
-      defaultMatcher.addAllPattern()
-    }
-    else {
-      defaultMatcher.addPattern("package.json")
-    }
-    defaultMatcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
-    defaultMatcher.addPattern("!**/node_modules/.bin")
-    defaultMatcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
-    defaultMatcher.addPattern("!**/._*")
-    defaultMatcher.addPattern("!*.iml")
-    //noinspection SpellCheckingInspection
-    defaultMatcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
-      "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
-      ".editorconfig,.flowconfig,.jshintrc," +
-      ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
-      ".idea," +
-      "appveyor.yml,.travis.yml,circle.yml," +
-      ".nyc_output}")
-
     let rawFilter: any = null
     const excludePatterns: Array<Minimatch> = []
     if (extraResourceMatchers != null) {
@@ -184,6 +188,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
+    const defaultMatcher = this.createFileMatcher(appDir, resourcesPath, fileMatchOptions, platformSpecificBuildOptions)
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
     let promise
     if (this.info.isPrepackedAppAsar) {
