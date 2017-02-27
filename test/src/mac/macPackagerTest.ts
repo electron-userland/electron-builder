@@ -62,7 +62,7 @@ test.ifMac("one-package", app({
     await assertThat(path.join(appDir, "Contents", "Resources", "someFoo.icns")).isFile()
   },
   packed: async context => {
-    expect(convertUpdateInfo(await readJson(path.join(context.outDir, "latest-mac.json")))).toMatchSnapshot()
+    expect(convertUpdateInfo(await readJson(path.join(context.outDir, "mac", "latest-mac.json")))).toMatchSnapshot()
   },
 }))
 

@@ -51,15 +51,15 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
           break
 
         case "dmg":
-          mapper("dmg", outDir => new DmgTarget(this, outDir))
+          mapper("dmg", outDir => new DmgTarget(this, path.join(outDir, "mac")))
           break
 
         case "pkg":
-          mapper("pkg", outDir => new PkgTarget(this, outDir))
+          mapper("pkg", outDir => new PkgTarget(this, path.join(outDir, "mac")))
           break
 
         default:
-          mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
+          mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, path.join(outDir, "mac"), this))
           break
       }
     }

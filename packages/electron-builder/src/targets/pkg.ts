@@ -30,7 +30,7 @@ export class PkgTarget extends Target {
       throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
 
-    const appOutDir = path.dirname(appPath)
+    const appOutDir = this.outDir
     const distInfo = path.join(appOutDir, "distribution.xml")
     await exec("productbuild", ["--synthesize", "--component", appPath, this.installLocation, distInfo], {
       cwd: appOutDir,

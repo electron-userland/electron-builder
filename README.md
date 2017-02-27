@@ -6,16 +6,17 @@ A complete solution to package and build a ready for distribution Electron app f
   * Development dependencies are never included. You don't need to ignore them explicitly.
 * [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) on a CI server or development machine.
 * [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) ready application packaging.
-* [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
   * [macOS](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
 * [Two package.json structure](https://github.com/electron-userland/electron-builder/wiki/Two-package.json-Structure) is supported, but you are not forced to use it even if you have native production dependencies.  
+* [Build version management](https://github.com/electron-userland/electron-builder/wiki/Options#build-version-management).
 * [Publishing artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) to GitHub Releases, Amazon S3 and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
+* Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 
 | Question | Answer |
 |--------|-------|
