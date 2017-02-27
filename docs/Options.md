@@ -38,13 +38,22 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
-[Multiple patterns](#multiple-glob-patterns) are supported. You can use `${os}` (expanded to `mac`, `linux` or `win` according to current platform) and `${arch}` in the pattern.
-If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
+[Multiple patterns](#multiple-glob-patterns) are supported. If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
  `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
 May be specified in the platform options (e.g. in the [mac](#MacOptions)).
+
+### File Macros
+
+You can use macros in the file patterns, artifact file name patterns and publish configuration url: 
+* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
+* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+* `${name}` – `package.json` `name`.
+* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
+* `${version}`
+* `${env.ENV_NAME}` — any environment variable.
 
 ## Multiple Glob Patterns
  ```js
@@ -82,17 +91,13 @@ If `to` is given as a relative path, it is relative to the app's content directo
 
 `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
 
-You can use `${os}` and `${arch}` in the `from` and `to` fields as well.
+You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 
 ## Artifact File Name Pattern
 
-Supported macros: 
-* `${name}`
-* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
-* `${version}`
-* `${ext}`
-* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
-* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+`${ext}` macro is supported in addition to [file macros](#file-macros).
+
+## Options
 
 <!-- do not edit. start of generated block -->
 * [Configuration Options](#Config)
