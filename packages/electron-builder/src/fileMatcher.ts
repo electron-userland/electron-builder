@@ -5,7 +5,6 @@ import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Macros } from "./metadata"
 import { createFilter, hasMagic } from "./util/filter"
 
 export class FileMatcher {
@@ -14,14 +13,14 @@ export class FileMatcher {
 
   readonly patterns: Array<string>
 
-  constructor(from: string, to: string, private options: Macros, patterns?: Array<string> | string | n) {
-    this.from = this.expandPattern(from)
-    this.to = this.expandPattern(to)
-    this.patterns = asArray(patterns).map(it => path.posix.normalize(it))
+  constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | n) {
+    this.from = macroExpander(from)
+    this.to = macroExpander(to)
+    this.patterns = asArray(patterns).map(it => path.posix.normalize(macroExpander(it)))
   }
 
   addPattern(pattern: string) {
-    this.patterns.push(path.posix.normalize((pattern)))
+    this.patterns.push(path.posix.normalize(this.macroExpander(pattern)))
   }
 
   addAllPattern() {
@@ -49,19 +48,18 @@ export class FileMatcher {
       return
     }
 
-    for (const p of this.patterns) {
-      let expandedPattern = this.expandPattern(p)
+    for (let pattern of this.patterns) {
       if (relativeFrom != null) {
-        expandedPattern = path.join(relativeFrom, expandedPattern)
+        pattern = path.join(relativeFrom, pattern)
       }
 
-      const parsedPattern = new Minimatch(expandedPattern, minimatchOptions)
+      const parsedPattern = new Minimatch(pattern, minimatchOptions)
       result.push(parsedPattern)
 
       if (!hasMagic(parsedPattern)) {
         // https://github.com/electron-userland/electron-builder/issues/545
         // add **/*
-        result.push(new Minimatch(`${expandedPattern}/**/*`, minimatchOptions))
+        result.push(new Minimatch(`${pattern}/**/*`, minimatchOptions))
       }
     }
   }
@@ -70,13 +68,6 @@ export class FileMatcher {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
     return createFilter(this.from, parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
-  }
-
-  private expandPattern(pattern: string): string {
-    return pattern
-      .replace(/\$\{arch}/g, this.options.arch!)
-      .replace(/\$\{os}/g, this.options.os)
-      .replace(/\$\{\/\*}/g, "{,/**/*}")
   }
 }
 

@@ -1,4 +1,3 @@
-import { Platform } from "electron-builder-core"
 import { NsisWebOptions } from "../options/winOptions"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 import { WinPackager } from "../winPackager"
@@ -27,10 +26,7 @@ export default class WebInstallerTarget extends NsisTarget {
         throw new Error("Cannot compute app package download URL")
       }
 
-      appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager.appInfo.version, {
-        os: Platform.WINDOWS.buildConfigurationKey,
-        arch: ""
-      })
+      appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager, null)
 
       defines.APP_PACKAGE_URL_IS_INCOMLETE = null
     }

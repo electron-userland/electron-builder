@@ -341,11 +341,6 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly publish?: Publish
 }
 
-export interface Macros {
-  os: string
-  arch: string | null
-}
-
 export function getPlatformIconFileName(value: string | null | undefined, isMac: boolean) {
   if (value === undefined) {
     return undefined

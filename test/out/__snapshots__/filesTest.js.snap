@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`expand not defined env 1`] = `"Env FOO_NOT_DEFINED is not defined"`;
+
 exports[`extraResources on Linux and Windows 1`] = `
 Array [
   "RELEASES",

@@ -15,7 +15,7 @@ import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
-import { Macros, PlatformSpecificBuildOptions } from "../metadata"
+import { PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
@@ -28,7 +28,6 @@ export class PublishManager implements PublishContext {
   readonly publishTasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
 
-  private isPublishOptionGuessed = false
   private isPublish = false
 
   readonly progress = (<NodeJS.WritableStream>process.stdout).isTTY ? new MultiProgress() : null
@@ -44,12 +43,10 @@ export class PublishManager implements PublishContext {
           if (tag != null) {
             log(`Tag ${tag} is defined, so artifacts will be published`)
             publishOptions.publish = "onTag"
-            this.isPublishOptionGuessed = true
           }
           else if (isCi) {
             log("CI detected, so artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
-            this.isPublishOptionGuessed = true
           }
         }
       }
@@ -68,14 +65,16 @@ export class PublishManager implements PublishContext {
       }
 
       const packager = event.packager
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, false))
+      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null))
       if (publishConfigs == null || publishConfigs.length === 0) {
         return
       }
 
       let publishConfig = publishConfigs[0]
       if ((<GenericServerOptions>publishConfig).url != null) {
-        publishConfig = Object.assign({}, publishConfig, {url: expandPattern((<GenericServerOptions>publishConfig).url, {os: packager.platform.buildConfigurationKey, arch: packager.platform === Platform.WINDOWS ? null : Arch[Arch.x64]})})
+        publishConfig = Object.assign({}, publishConfig, {
+          url: packager.expandMacro((<GenericServerOptions>publishConfig).url, packager.platform === Platform.WINDOWS ? null : Arch.x64)
+        })
       }
 
       if (packager.platform === Platform.WINDOWS) {
@@ -94,7 +93,7 @@ export class PublishManager implements PublishContext {
   private async artifactCreated(event: ArtifactCreated) {
     const packager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name], !this.isPublishOptionGuessed) : [event.publishConfig]
+    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name]) : [event.publishConfig]
 
     const eventFile = event.file
     if (publishConfigs == null) {
@@ -228,10 +227,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
         releaseDate: new Date().toISOString(),
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), version, {
-          os: Platform.MAC.buildConfigurationKey,
-          arch: Arch[Arch.x64]
-        }),
+        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager, null),
       }, {spaces: 2})
 
       packager.info.dispatchArtifactCreated({
@@ -301,9 +297,9 @@ export function createPublisher(context: PublishContext, version: string, publis
   return null
 }
 
-export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, version: string, macros: Macros) {
+export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>, arch: Arch | null) {
   if (publishConfig.provider === "generic") {
-    const baseUrlString = expandPattern((<GenericServerOptions>publishConfig).url, macros)
+    const baseUrlString = packager.expandMacro((<GenericServerOptions>publishConfig).url, arch)
     if (fileName == null) {
       return baseUrlString
     }
@@ -318,7 +314,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   }
   else {
     const gh = <GithubOptions>publishConfig
-    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/v${version}`
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/v${packager.appInfo.version}`
   }
 
   if (fileName == null) {
@@ -327,25 +323,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   return `${baseUrl}/${encodeURI(fileName)}`
 }
 
-function expandPattern(pattern: string, macros: Macros): string {
-  const arch = macros.arch
-  if (arch == null) {
-    pattern = pattern
-      .replace("-${arch}", "")
-      .replace(" ${arch}", "")
-      .replace("_${arch}", "")
-      .replace("/${arch}", "")
-  }
-
-  pattern = pattern.replace(/\$\{os}/g, macros.os)
-  if (arch != null) {
-    pattern = pattern.replace(/\$\{arch}/g, arch)
-  }
-
-  return pattern
-}
-
-export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, errorIfCannot: boolean = true): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)

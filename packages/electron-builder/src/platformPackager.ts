@@ -10,7 +10,7 @@ import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { checkFileInArchive, createAsarArchive } from "./asarUtil"
 import { copyFiles, FileMatcher } from "./fileMatcher"
-import { AsarOptions, Config, FileAssociation, FilePattern, Macros, PlatformSpecificBuildOptions } from "./metadata"
+import { AsarOptions, Config, FileAssociation, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { unpackElectron } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { readInstalled } from "./readInstalled"
@@ -104,14 +104,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       .then(() => BluebirdPromise.each(targets, it => it.isAsyncSupported ? null : it.build(appOutDir, arch))))
   }
 
-  private getExtraFileMatchers(isResources: boolean, appOutDir: string, fileMatchOptions: Macros, customBuildOptions: DC): Array<FileMatcher> | null {
+  private getExtraFileMatchers(isResources: boolean, appOutDir: string, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, fileMatchOptions, customBuildOptions)
+    return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, macroExpander, customBuildOptions)
   }
 
-  private createFileMatcher(appDir: string, resourcesPath: string, fileMatchOptions: Macros, platformSpecificBuildOptions: DC) {
-    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
-    const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), fileMatchOptions) : patterns[0]
+  private createFileMatcher(appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: DC) {
+    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
+    const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
     if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
       matcher.addAllPattern()
     }
@@ -141,13 +141,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const fileMatchOptions: Macros = {
-      arch: Arch[arch],
-      os: this.platform.buildConfigurationKey
-    }
-
-    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
-    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, fileMatchOptions, platformSpecificBuildOptions)
+    const macroExpander = (it: string) => this.expandMacro(it, arch, {"/*": "{,/**/*}"})
+    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
+    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
 
@@ -188,7 +184,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const defaultMatcher = this.createFileMatcher(appDir, resourcesPath, fileMatchOptions, platformSpecificBuildOptions)
+    const defaultMatcher = this.createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
     let promise
     if (this.info.isPrepackedAppAsar) {
@@ -198,7 +194,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       promise = copyDir(appDir, path.join(resourcesPath, "app"), filter)
     }
     else {
-      const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, fileMatchOptions, platformSpecificBuildOptions)
+      const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
     }
@@ -279,11 +275,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return deepAssign({}, result, defaultOptions)
   }
 
-  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, fileMatchOptions: Macros, customBuildOptions: DC): Array<FileMatcher> | null {
+  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
     const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
     const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
-    const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, fileMatchOptions)
+    const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, macroExpander)
     const fileMatchers: Array<FileMatcher> = []
 
     function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
@@ -306,7 +302,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         else if (allowAdvancedMatching) {
           const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
           const to = pattern.to == null ? defaultDest : path.resolve(defaultDest, pattern.to)
-          fileMatchers.push(new FileMatcher(from, to, fileMatchOptions, pattern.filter))
+          fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
         }
         else {
           throw new Error(`Advanced file copying not supported for "${name}"`)
@@ -393,16 +389,22 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (pattern == null) {
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}.${ext}"
     }
+    return this.expandMacro(pattern, arch, {
+      ext: ext
+    })
+  }
 
+  expandMacro(pattern: string, arch: Arch | n, extra: any = {}): string {
     if (arch == null) {
       pattern = pattern
         .replace("-${arch}", "")
         .replace(" ${arch}", "")
         .replace("_${arch}", "")
+        .replace("/${arch}", "")
     }
 
     const appInfo = this.appInfo
-    return pattern.replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+    return pattern.replace(/\$\{([_a-zA-Z./*]+)\}/g, (match, p1): string => {
       switch (p1) {
         case "name":
           return appInfo.name
@@ -423,11 +425,23 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         case "os":
           return this.platform.buildConfigurationKey
 
-        case "ext":
-          return ext
-
         default:
-          throw new Error(`Macro ${p1} is not defined`)
+          if (p1.startsWith("env.")) {
+            const envName = p1.substring("env.".length)
+            const envValue = process.env[envName]
+            if (envValue == null) {
+              throw new Error(`Env ${envName} is not defined`)
+            }
+            return envValue
+          }
+
+          const value = extra[p1]
+          if (value == null) {
+            throw new Error(`Macro ${p1} is not defined`)
+          }
+          else {
+            return value
+          }
       }
     })
   }

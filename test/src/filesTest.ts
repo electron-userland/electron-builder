@@ -8,13 +8,25 @@ import pathSorter from "path-sort"
 import Mode, { Permissions } from "stat-mode"
 import { expectedWinContents } from "./helpers/expectedContents"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack } from "./helpers/packTester"
+import { app, appThrows, assertPack } from "./helpers/packTester"
 
-test.ifDevOrLinuxCi("files", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
+
+test.ifDevOrLinuxCi("expand not defined env", appThrows({
+  targets: linuxDirTarget,
   config: {
     asar: false,
-    files: ["!ignoreMe${/*}", "!**/bar"],
+    files: ["${env.FOO_NOT_DEFINED}"],
+  }
+}))
+
+process.env.__NOT_BAR__ = "!**/bar"
+
+test.ifDevOrLinuxCi("files", app({
+  targets: linuxDirTarget,
+  config: {
+    asar: false,
+    files: ["!ignoreMe${/*}", "${env.__NOT_BAR__}"],
   }
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
@@ -31,7 +43,7 @@ test.ifDevOrLinuxCi("files", app({
 }))
 
 test.ifDevOrLinuxCi("map resources", app({
-  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  targets: linuxDirTarget,
   config: {
     asar: false,
     extraResources: [
