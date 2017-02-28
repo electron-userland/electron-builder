@@ -38,15 +38,15 @@ test("check updates - no versions at all", async () => {
   await assertThat(updater.checkForUpdates()).throws()
 })
 
-test("cannot find suitable file for version", async () => {
-  const updater = new NsisUpdater(<BintrayOptions>{
-    provider: "bintray",
-    owner: "actperepo",
-    package: "incorrect-file-version",
-  })
-
-  await assertThat(updater.checkForUpdates()).throws()
-})
+// test("cannot find suitable file for version", async () => {
+//   const updater = new NsisUpdater(<BintrayOptions>{
+//     provider: "bintray",
+//     owner: "actperepo",
+//     package: "incorrect-file-version",
+//   })
+//
+//   await assertThat(updater.checkForUpdates()).throws()
+// })
 
 test("file url", async () => {
   const updater = new NsisUpdater()

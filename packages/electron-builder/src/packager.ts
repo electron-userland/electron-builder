@@ -8,6 +8,7 @@ import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { EventEmitter } from "events"
+import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
 import { AppInfo } from "./appInfo"
@@ -16,7 +17,7 @@ import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { getRepositoryInfo } from "./repositoryInfo"
-import { createTargets } from "./targets/targetFactory"
+import { createTargets, NoOpTarget } from "./targets/targetFactory"
 import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson, validateConfig } from "./util/readPackageJson"
 import { WinPackager } from "./winPackager"
 import { getGypEnv, installOrRebuild } from "./yarn"
@@ -195,6 +196,8 @@ export class Packager implements BuildInfo {
 
     const platformToTarget: Map<Platform, Map<String, Target>> = new Map()
 
+    const createdOutDirs = new Set<string>()
+
     // custom packager - don't check wine
     let checkWine = this.prepackaged == null && this.options.platformPackagerFactory == null
     for (const [platform, archToType] of this.options.targets!) {
@@ -231,7 +234,22 @@ export class Packager implements BuildInfo {
           await checkWineVersion(wineCheck)
         }
 
-        await helper.pack(outDir, arch, createTargets(nameToTarget, targets, outDir, helper, cleanupTasks), distTasks)
+        const targetList = createTargets(nameToTarget, targets, outDir, helper, cleanupTasks)
+        const ourDirs = new Set<string>()
+        for (const target of targetList) {
+          if (!(target instanceof NoOpTarget) && !createdOutDirs.has(target.outDir)) {
+            ourDirs.add(target.outDir)
+          }
+        }
+
+        if (ourDirs.size > 0) {
+          await BluebirdPromise.map(Array.from(ourDirs).sort(), it => {
+            createdOutDirs.add(it)
+            return ensureDir(it)
+          })
+        }
+
+        await helper.pack(outDir, arch, targetList, distTasks)
       }
 
       if (this.cancellationToken.cancelled) {
