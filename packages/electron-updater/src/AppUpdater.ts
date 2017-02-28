@@ -131,14 +131,14 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   private async _checkForUpdates(): Promise<UpdateCheckResult> {
-    await this.untilAppReady
-
-    if (this.logger != null) {
-      this.logger.info("Checking for update")
-    }
-
-    this.emit("checking-for-update")
     try {
+      await this.untilAppReady
+
+      if (this.logger != null) {
+        this.logger.info("Checking for update")
+      }
+
+      this.emit("checking-for-update")
       return await this.doCheckForUpdates()
     }
     catch (e) {
