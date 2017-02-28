@@ -55,7 +55,7 @@ export class Packager implements BuildInfo {
 
   readonly tempDirManager = new TmpDir()
 
-  private _repositoryInfo = new Lazy<SourceRepositoryInfo>(() => getRepositoryInfo(this.projectDir, this.appInfo.metadata, this.devMetadata))
+  private _repositoryInfo = new Lazy<SourceRepositoryInfo>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
@@ -66,7 +66,7 @@ export class Packager implements BuildInfo {
   readonly prepackaged?: string | null
 
   //noinspection JSUnusedGlobalSymbols
-  constructor(readonly options: PackagerOptions, private readonly cancellationToken: CancellationToken) {
+  constructor(readonly options: PackagerOptions, readonly cancellationToken: CancellationToken) {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
 
     this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)

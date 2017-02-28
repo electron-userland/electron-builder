@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
-import { asArray, debug, isEmptyOrSpaces, use } from "electron-builder-util"
+import { asArray, debug, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
@@ -25,7 +25,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly platformSpecificBuildOptions: DC
 
-  readonly resourceList: Promise<Array<string>>
+  get resourceList(): Promise<Array<string>> {
+    return this._resourceList.value
+  }
+
+  private readonly _resourceList = new Lazy<Array<string>>(() => {
+    return readdir(this.buildResourcesDir)
+      .catch(e => {
+        if (e.code !== "ENOENT") {
+          throw e
+        }
+        return []
+      })
+  })
 
   abstract get platform(): Platform
 
@@ -39,14 +51,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.projectDir = info.projectDir
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
-
-    this.resourceList = readdir(this.buildResourcesDir)
-      .catch(e => {
-        if (e.code !== "ENOENT") {
-          throw e
-        }
-        return []
-      })
   }
 
   abstract get defaultTarget(): Array<string>
@@ -95,7 +99,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
-    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions)
+    await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets)
     this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
   }
 
@@ -135,7 +139,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return matcher
   }
 
-  protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC) {
+  protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
     if (this.info.prepackaged != null) {
       return
     }
@@ -218,11 +222,16 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await copyFiles(extraResourceMatchers)
     await copyFiles(extraFileMatchers)
 
+    if (this.info.cancellationToken.cancelled) {
+      return
+    }
+
     await this.info.afterPack({
       appOutDir: appOutDir,
       packager: this,
       electronPlatformName: platformName,
       arch: arch,
+      targets: targets,
     })
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
@@ -517,7 +526,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         }
       }
     }
-    else if (!isEmptyOrSpaces(custom)) {
+    else if (custom != null && !isEmptyOrSpaces(custom)) {
+      const resourceList = await this.resourceList
+      if (resourceList.includes(custom)) {
+        return path.join(this.buildResourcesDir, custom)
+      }
+
       let p = path.resolve(this.buildResourcesDir, custom)
       if (await statOrNull(p) == null) {
         p = path.resolve(this.projectDir, custom)

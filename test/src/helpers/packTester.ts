@@ -481,7 +481,7 @@ export class CheckingMacPackager extends OsXPackager {
     return await OsXPackager.prototype.pack.call(this, outDir, arch, targets, postAsyncTasks)
   }
 
-  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, postAsyncTasks: Array<Promise<any>> = null) {
+  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, targets: Array<Target>) {
     // skip
   }
 

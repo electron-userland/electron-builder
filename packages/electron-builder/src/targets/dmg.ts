@@ -60,7 +60,7 @@ export class DmgTarget extends Target {
       await detach(volumePath)
     }
 
-    await attachAndExecute(tempDmg, true, async () => {
+    const isContinue = await attachAndExecute(tempDmg, true, async () => {
       const promises = [
         specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`),
       ]
@@ -155,14 +155,18 @@ export class DmgTarget extends Target {
 
       await exec("sync")
 
-      if (packager.packagerOptions.effectiveOptionComputed != null && await packager.packagerOptions.effectiveOptionComputed([volumePath, specification])) {
-        return
-      }
+      return packager.packagerOptions.effectiveOptionComputed == null || !(await packager.packagerOptions.effectiveOptionComputed({volumePath, specification, packager}))
     })
 
+    if (!isContinue) {
+      return
+    }
+
     const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(packager.config.dmg, "dmg"))
+
+    // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     //noinspection SpellCheckingInspection
-    await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-format", packager.config.compression === "store" ? "UDRO" : "UDBZ", "-imagekey", "zlib-level=9", "-o", artifactPath]))
+    await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-ov", "-format", specification.format!, "-imagekey", "zlib-level=9", "-o", artifactPath]))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
 
     this.packager.dispatchArtifactCreated(artifactPath, this, `${appInfo.name}-${appInfo.version}.dmg`)
@@ -249,7 +253,12 @@ export class DmgTarget extends Target {
     }
 
     if (specification.format == null) {
-      specification.format = packager.config.compression === "store" ? "UDRO" : "UDBZ"
+      if (packager.config.compression === "store") {
+        specification.format = "UDRO"
+      }
+      else {
+        specification.format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
+      }
     }
 
     return specification
@@ -289,7 +298,7 @@ export async function attachAndExecute(dmgPath: string, readWrite: boolean, task
     throw new Error(`Cannot mount: ${attachResult}`)
   }
 
-  await executeFinally(task(), () => detach(device))
+  return await executeFinally(task(), () => detach(device))
 }
 
 function addVerboseIfNeed(args: Array<string>): Array<string> {

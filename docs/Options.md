@@ -143,7 +143,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 | publish | <a name="Config-publish"></a>See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
 | forceCodeSigning | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | electronVersion | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
-| artifactName | <a name="Config-artifactName"></a><p>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to <code>${productName}-${version}.${ext}</code> (some target can have another defaults, see corresponding options).</p> <p>Currently supported only for <code>pkg</code>, <code>dmg</code> and <code>nsis</code>.</p>
+| artifactName | <a name="Config-artifactName"></a><p>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to <code>${productName}-${version}.${ext}</code> (some target can have another defaults, see corresponding options).</p> <p>Currently supported only for <code>mas</code>, <code>pkg</code>, <code>dmg</code> and <code>nsis</code>.</p>
 
 <a name="AppXOptions"></a>
 ### `appx`

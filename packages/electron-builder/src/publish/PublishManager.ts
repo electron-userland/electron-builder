@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { Arch, Platform } from "electron-builder-core"
+import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
@@ -60,11 +60,21 @@ export class PublishManager implements PublishContext {
     }
 
     packager.addAfterPackHandler(async event => {
-      if (this.cancellationToken.cancelled || !(event.electronPlatformName == "darwin" || event.packager.platform === Platform.WINDOWS)) {
+      const packager = event.packager
+      if (event.electronPlatformName === "darwin") {
+        if (!event.targets.some(it => it.name === "zip")) {
+          return
+        }
+      }
+      else if (packager.platform === Platform.WINDOWS) {
+        if (!event.targets.some(it => isSuitableWindowsTarget(it))) {
+          return
+        }
+      }
+      else {
         return
       }
 
-      const packager = event.packager
       const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null))
       if (publishConfigs == null || publishConfigs.length === 0) {
         return
@@ -73,12 +83,12 @@ export class PublishManager implements PublishContext {
       let publishConfig = publishConfigs[0]
       if ((<GenericServerOptions>publishConfig).url != null) {
         publishConfig = Object.assign({}, publishConfig, {
-          url: packager.expandMacro((<GenericServerOptions>publishConfig).url, packager.platform === Platform.WINDOWS ? null : Arch.x64)
+          url: packager.expandMacro((<GenericServerOptions>publishConfig).url, null)
         })
       }
 
       if (packager.platform === Platform.WINDOWS) {
-        let publisherName = await (<WinPackager>packager).computedPublisherName.value
+        const publisherName = await (<WinPackager>packager).computedPublisherName.value
         if (publisherName != null) {
           publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
         }
@@ -123,7 +133,7 @@ export class PublishManager implements PublishContext {
 
     if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") ||
-        (packager.platform === Platform.WINDOWS && (target.name === "nsis" || target.name.startsWith("nsis-")) && eventFile.endsWith(".exe"))) {
+        (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target) && eventFile.endsWith(".exe"))) {
         this.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }
@@ -368,8 +378,12 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
     }
   }
 
+  if (publishers == null) {
+    return []
+  }
+
   debug(`Explicit publish provider: ${JSON.stringify(publishers, null, 2)}`)
-  return <Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it))
+  return await <Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it))
 }
 
 function sha256(file: string) {
@@ -397,4 +411,8 @@ function isPullRequest() {
   }
 
   return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS)
+}
+
+function isSuitableWindowsTarget(target: Target) {
+  return target.name === "nsis" || target.name.startsWith("nsis-")
 }

@@ -4,6 +4,7 @@ import { exec } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, task, warn } from "electron-builder-util/out/log"
 import { signAsync, SignOptions } from "electron-macos-sign"
+import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CodeSigningInfo, createKeychain, findIdentity } from "./codeSign"
@@ -41,7 +42,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     if (iconPath != null && !iconPath.endsWith(".icns")) {
       iconPath += ".icns"
     }
-    return iconPath == null ? await this.getDefaultIcon("icns") : path.resolve(this.projectDir, iconPath)
+    return iconPath == null ? await this.getDefaultIcon("icns") : await this.getResource(iconPath)
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
@@ -77,8 +78,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
-      nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions))
-        .then(() => this.sign(appPath, null))
+      nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
+        .then(() => this.sign(appPath, null, null))
         .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, postAsyncTasks))
     }
 
@@ -88,17 +89,20 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         continue
       }
 
-      const appOutDir = prepackaged || path.join(outDir, targetName)
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
       if (targetName === "mas-dev") {
         deepAssign(masBuildOptions, (<any>this.config)[targetName])
         masBuildOptions.type = "development"
       }
 
+      const targetOutDir = path.join(outDir, targetName)
       if (prepackaged == null) {
-        await this.doPack(outDir, appOutDir, "mas", arch, masBuildOptions)
+        await this.doPack(outDir, targetOutDir, "mas", arch, masBuildOptions, [target])
+        await this.sign(path.join(targetOutDir, `${this.appInfo.productFilename}.app`), targetOutDir, masBuildOptions)
       }
-      await this.sign(path.join(appOutDir, `${this.appInfo.productFilename}.app`), masBuildOptions)
+      else {
+        await this.sign(prepackaged, targetOutDir, masBuildOptions)
+      }
     }
 
     if (nonMasPromise != null) {
@@ -106,7 +110,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  private async sign(appPath: string, masOptions: MasBuildOptions | null): Promise<void> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasBuildOptions | null): Promise<void> {
     if (process.platform !== "darwin") {
       warn("macOS application code signing is supported only on macOS, skipping.")
       return
@@ -198,12 +202,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     await task(`Signing app (identity: ${name})`, this.doSign(signOptions))
 
     if (masOptions != null) {
-      const pkg = path.join(path.dirname(appPath), `${this.appInfo.productFilename}-${this.appInfo.version}.pkg`)
       const certType = "3rd Party Mac Developer Installer"
       const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
       if (masInstallerIdentity == null) {
         throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
       }
+
+      const pkg = path.join(outDir!, this.expandArtifactNamePattern(masOptions, "pkg"))
       await this.doFlat(appPath, pkg, masInstallerIdentity, keychainName)
       this.dispatchArtifactCreated(pkg, null, `${this.appInfo.name}-${this.appInfo.version}.pkg`)
     }
@@ -216,9 +221,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
   //noinspection JSMethodCanBeStatic
   protected async doFlat(appPath: string, outFile: string, identity: string, keychain: string | n): Promise<any> {
+    // productbuild doesn't created directory for out file
+    await ensureDir(path.dirname(outFile))
+
     const args = prepareProductBuildArgs(identity, keychain)
     args.push("--component", appPath, "/Applications")
     args.push(outFile)
-    return exec("productbuild", args)
+    return await exec("productbuild", args)
   }
 }

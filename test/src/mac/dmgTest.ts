@@ -1,10 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
+import { PlatformPackager } from "electron-builder/out/platformPackager"
 import { attachAndExecute } from "electron-builder/out/targets/dmg"
 import { copy, remove } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack, CheckingMacPackager } from "../helpers/packTester"
+import { app, assertPack } from "../helpers/packTester"
 
 test.ifMac("no build directory", app({
   targets: Platform.MAC.createTarget("dmg"),
@@ -13,23 +14,20 @@ test.ifMac("no build directory", app({
     productName: "NoBuildDirectory",
   },
   effectiveOptionComputed: async it => {
-    const volumePath = it[0]
-    const specification = it[1]
+    const volumePath = it.volumePath
     await assertThat(path.join(volumePath, ".background", "background.tiff")).isFile()
     await assertThat(path.join(volumePath, "Applications")).isSymbolicLink()
-    expect(specification.contents).toMatchSnapshot()
+    expect(it.specification.contents).toMatchSnapshot()
     return false
   },
 }, {
   projectDirCreated: projectDir => remove(path.join(projectDir, "build")),
 }))
 
-test.ifMac("custom background - new way", () => {
-  let platformPackager: CheckingMacPackager = null
+test.ifAll.ifMac("custom background - new way", () => {
   const customBackground = "customBackground.png"
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
     config: {
       mac: {
         icon: "customIcon"
@@ -38,14 +36,21 @@ test.ifMac("custom background - new way", () => {
         background: customBackground,
         icon: "foo.icns",
       },
-    }
-  }, {
-    projectDirCreated: projectDir => copy(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
-    packed: async context => {
-      expect(platformPackager.effectiveDistOptions.background).toEqual(customBackground)
-      expect(platformPackager.effectiveDistOptions.icon).toEqual("foo.icns")
-      expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.icns"))
     },
+    effectiveOptionComputed: async it => {
+      expect(it.specification.background).toEqual(customBackground)
+      expect(it.specification.icon).toEqual("foo.icns")
+      const packager: PlatformPackager<any> = it.packager
+      expect(await packager.getIconPath()).toEqual(path.join(packager.projectDir, "build", "customIcon.icns"))
+      return true
+    },
+  }, {
+    projectDirCreated: projectDir => BluebirdPromise.all([
+      copy(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
+      // copy, but not rename to test that default icon is not used
+      copy(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "customIcon.icns")),
+      copy(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns")),
+    ]),
   })
 })
 
@@ -70,15 +75,14 @@ test.ifMac("no Applications link", () => {
       },
     },
     effectiveOptionComputed: async it => {
-      const volumePath = it[0]
-      const specification = it[1]
+      const volumePath = it.volumePath
       await BluebirdPromise.all([
         assertThat(path.join(volumePath, ".background", "background.tiff")).isFile(),
         assertThat(path.join(volumePath, "Applications")).doesNotExist(),
         assertThat(path.join(volumePath, "TextEdit.app")).isSymbolicLink(),
         assertThat(path.join(volumePath, "TextEdit.app")).isDirectory(),
       ])
-      expect(specification.contents).toMatchSnapshot()
+      expect(it.specification.contents).toMatchSnapshot()
       return false
     },
   })
@@ -123,11 +127,9 @@ test.ifMac("no background", app({
   }
 }))
 
-test.ifMac("disable dmg icon (light), bundleVersion", () => {
-  let platformPackager: CheckingMacPackager = null
+test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
     config: {
       dmg: {
         icon: null,
@@ -135,12 +137,12 @@ test.ifMac("disable dmg icon (light), bundleVersion", () => {
       mac: {
         bundleVersion: "50"
       },
-    }
-  }, {
-    packed: async () => {
-      expect(platformPackager.effectiveDistOptions.icon).toBeNull()
-      expect(await platformPackager.getIconPath()).not.toBeNull()
-      expect(platformPackager.appInfo.buildVersion).toEqual("50")
+    },
+    effectiveOptionComputed: async it => {
+      expect(it.specification.icon).toBeNull()
+      expect(it.packager.appInfo.buildVersion).toEqual("50")
+      expect(await it.packager.getIconPath()).not.toBeNull()
+      return true
     },
   })
 })

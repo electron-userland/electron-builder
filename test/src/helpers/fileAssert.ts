@@ -69,6 +69,10 @@ class Assertions {
         m = m.substring(0, m.indexOf("\n"))
       }
 
+      if (m.startsWith("Cannot find specified resource")) {
+        m = m.substring(0, m.indexOf(","))
+      }
+
       m = m.replace(/\((C:)?(\/|\\)[^(]+(\/|\\)([^(\/\\]+)\)/g, `(<path>/$4)`)
       m = m.replace(/"(C:)?(\/|\\)[^"]+(\/|\\)([^"\/\\]+)"/g, `"<path>/$4"`)
       m = m.replace(/'(C:)?(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$4'`)

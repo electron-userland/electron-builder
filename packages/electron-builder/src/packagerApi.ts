@@ -1,4 +1,5 @@
 import { Arch, Platform, Target } from "electron-builder-core"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"
@@ -62,6 +63,8 @@ export interface BuildInfo {
   readonly isPrepackedAppAsar: boolean
 
   readonly prepackaged?: string | null
+
+  readonly cancellationToken: CancellationToken
 
   dispatchArtifactCreated(event: ArtifactCreated): void
 

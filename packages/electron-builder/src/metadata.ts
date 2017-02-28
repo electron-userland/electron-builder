@@ -1,4 +1,4 @@
-import { Arch, Platform, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -221,7 +221,7 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
   /**
    The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
 
-   Currently supported only for `pkg`, `dmg` and `nsis`.
+   Currently supported only for `mas`, `pkg`, `dmg` and `nsis`.
    */
   readonly artifactName?: string | null
 }
@@ -231,6 +231,7 @@ export interface AfterPackContext {
   readonly packager: PlatformPackager<any>
   readonly electronPlatformName: string
   readonly arch: Arch
+  readonly targets: Array<Target>
 }
 
 export interface BeforeBuildContext {
