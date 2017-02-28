@@ -1,8 +1,8 @@
-import { Provider, FileInfo } from "./api"
-import { BintrayClient } from "electron-builder-http/out/bintray"
-import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { HttpError } from "electron-builder-http"
+import { BintrayClient } from "electron-builder-http/out/bintray"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { FileInfo, Provider } from "./api"
 
 export class BintrayProvider extends Provider<VersionInfo> {
   private client: BintrayClient
@@ -32,18 +32,17 @@ export class BintrayProvider extends Provider<VersionInfo> {
     try {
       const files = await this.client.getVersionFiles(versionInfo.version)
       const suffix = `${versionInfo.version}.exe`
-      for (const file of files) {
-        if (file.name.endsWith(suffix) && file.name.includes("Setup")) {
-          return {
-            name: file.name,
-            url: `https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${file.name}`,
-            sha2: file.sha256,
-          }
-        }
+      const file = files.find(it => it.name.endsWith(suffix) && it.name.includes("Setup")) || files.find(it => it.name.endsWith(suffix)) || files.find(it => it.name.endsWith(".exe"))
+      if (file == null) {
+        //noinspection ExceptionCaughtLocallyJS
+        throw new Error(`Cannot find suitable file for version ${versionInfo.version} in: ${JSON.stringify(files, null, 2)}`)
       }
 
-      //noinspection ExceptionCaughtLocallyJS
-      throw new Error(`Cannot find suitable file for version ${versionInfo.version} in: ${JSON.stringify(files, null, 2)}`)
+      return {
+        name: file.name,
+        url: `https://dl.bintray.com/${this.client.owner}/${this.client.repo}/${file.name}`,
+        sha2: file.sha256,
+      }
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
