@@ -15,13 +15,19 @@ Categories=Development;
 
 exports[`AppImage 1`] = `
 Array [
-  "TestApp-1.1.0-x86_64.AppImage",
+  Object {
+    "file": "TestApp-1.1.0-x86_64.AppImage",
+    "safeArtifactName": undefined,
+  },
 ]
 `;
 
 exports[`icons from ICNS 1`] = `
 Array [
-  "TestApp-1.1.0-x86_64.AppImage",
+  Object {
+    "file": "TestApp-1.1.0-x86_64.AppImage",
+    "safeArtifactName": undefined,
+  },
 ]
 `;
 

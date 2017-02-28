@@ -2,8 +2,17 @@
 
 exports[`tar 1`] = `
 Array [
-  "TestApp-1.1.0.tar.bz2",
-  "TestApp-1.1.0.tar.lz",
-  "TestApp-1.1.0.tar.xz",
+  Object {
+    "file": "TestApp-1.1.0.tar.bz2",
+    "safeArtifactName": "TestApp-1.1.0.tar.bz2",
+  },
+  Object {
+    "file": "TestApp-1.1.0.tar.lz",
+    "safeArtifactName": "TestApp-1.1.0.tar.lz",
+  },
+  Object {
+    "file": "TestApp-1.1.0.tar.xz",
+    "safeArtifactName": "TestApp-1.1.0.tar.xz",
+  },
 ]
 `;

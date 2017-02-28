@@ -4,14 +4,17 @@ exports[`expand not defined env 1`] = `"Env FOO_NOT_DEFINED is not defined"`;
 
 exports[`extraResources on Linux and Windows 1`] = `
 Array [
-  "RELEASES",
-  "Test App ßW Setup 1.1.0.exe",
-  "TestApp-1.1.0-full.nupkg",
-]
-`;
-
-exports[`extraResources on Linux and Windows 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
+  Object {
+    "file": "TestApp-1.1.0-full.nupkg",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "RELEASES",
+    "safeArtifactName": undefined,
+  },
 ]
 `;

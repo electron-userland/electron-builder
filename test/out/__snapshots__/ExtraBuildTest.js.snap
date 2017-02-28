@@ -1,0 +1,88 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`custom buildResources and output dirs: linux 1`] = `
+Array [
+  Object {
+    "file": "TestApp-1.1.0-x86_64.AppImage",
+    "safeArtifactName": undefined,
+  },
+]
+`;
+
+exports[`custom buildResources and output dirs: win 1`] = `
+Array [
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
+]
+`;
+
+exports[`scheme validation 1`] = `
+"Config is invalid:
+{
+  \\"foo\\": \\"Unknown option\\",
+  \\"mac\\": [
+    {
+      \\"foo\\": \\"Unknown option\\"
+    },
+    \\"Invalid option object\\"
+  ]
+}
+
+Raw validation errors: [
+  {
+    \\"keyword\\": \\"additionalProperties\\",
+    \\"dataPath\\": \\"\\",
+    \\"schemaPath\\": \\"#/additionalProperties\\",
+    \\"params\\": {
+      \\"additionalProperty\\": \\"foo\\"
+    },
+    \\"message\\": \\"should NOT have additional properties\\"
+  },
+  {
+    \\"keyword\\": \\"additionalProperties\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/additionalProperties\\",
+    \\"params\\": {
+      \\"additionalProperty\\": \\"foo\\"
+    },
+    \\"message\\": \\"should NOT have additional properties\\"
+  },
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/properties/mac/anyOf/1/type\\",
+    \\"params\\": {
+      \\"type\\": \\"null\\"
+    },
+    \\"message\\": \\"should be null\\"
+  },
+  {
+    \\"keyword\\": \\"anyOf\\",
+    \\"dataPath\\": \\".mac\\",
+    \\"schemaPath\\": \\"#/properties/mac/anyOf\\",
+    \\"params\\": {},
+    \\"message\\": \\"should match some schema in anyOf\\"
+  }
+]"
+`;
+
+exports[`scheme validation 2 1`] = `
+"Config is invalid:
+{
+  \\"appId\\": \\"Should be null,string\\"
+}
+
+Raw validation errors: [
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".appId\\",
+    \\"schemaPath\\": \\"#/properties/appId/type\\",
+    \\"params\\": {
+      \\"type\\": \\"null,string\\"
+    },
+    \\"message\\": \\"should be null,string\\"
+  }
+]"
+`;

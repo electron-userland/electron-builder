@@ -165,6 +165,7 @@
       <w>prerelease</w>
       <w>productbuild</w>
       <w>progexe</w>
+      <w>proguard</w>
       <w>promisify</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>

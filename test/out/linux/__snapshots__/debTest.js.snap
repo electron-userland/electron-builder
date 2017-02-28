@@ -2,7 +2,10 @@
 
 exports[`arm deb 1`] = `
 Array [
-  "TestApp_1.1.0_armv7l.deb",
+  Object {
+    "file": "TestApp_1.1.0_armv7l.deb",
+    "safeArtifactName": undefined,
+  },
 ]
 `;
 
@@ -20,6 +23,9 @@ Categories=Development;
 
 exports[`deb 1`] = `
 Array [
-  "TestApp_1.1.0_amd64.deb",
+  Object {
+    "file": "TestApp_1.1.0_amd64.deb",
+    "safeArtifactName": undefined,
+  },
 ]
 `;

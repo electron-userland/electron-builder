@@ -26,12 +26,11 @@ test.ifMac("pkg scripts", app({
     await symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))
   },
   packed: async (context) => {
-    const macOutDir = context.getContent(Platform.MAC)
-    const pkgPath = path.join(macOutDir, "Test App ßW-1.1.0.pkg")
+    const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
     const fileList = pathSorter(parseFileList(await exec("pkgutil", ["--payload-files", pkgPath]), false))
     expect(fileList).toMatchSnapshot()
 
-    const unpackedDir = path.join(macOutDir, "pkg-unpacked")
+    const unpackedDir = path.join(context.outDir, "pkg-unpacked")
     await exec("pkgutil", ["--expand", pkgPath, unpackedDir])
 
     const m: any = BluebirdPromise.promisify(parseString)

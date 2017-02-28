@@ -1,18 +1,12 @@
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, BuildInfo, Config, createTargets, DIR_TARGET, getArchSuffix, MacOptions, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { Arch, ArtifactCreated, Config, createTargets, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { exec, getTempName, spawn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
-import OsXPackager from "electron-builder/out/macPackager"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
-import { DmgTarget } from "electron-builder/out/targets/dmg"
-import { SignOptions } from "electron-builder/out/windowsCodeSign"
-import { WinPackager } from "electron-builder/out/winPackager"
-import { SignOptions as MacSignOptions } from "electron-macos-sign"
 import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -200,14 +194,32 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
       }
 
       const nameToTarget = platformToTarget.get(platform)
+      const platformArtifacts = artifacts.get(platform)
+
+      const emptyTarget = {name: ""}
+      expect(platformArtifacts
+        .sort((a, b) => (a.target || emptyTarget).name.localeCompare((b.target || emptyTarget).name))
+        .map(it => {
+          const result: any = Object.assign({}, it)
+          if (result.file != null) {
+            result.file = path.basename(result.file)
+          }
+          delete result.packager
+          delete result.target
+          delete result.publishConfig
+          return result
+        })).toMatchSnapshot()
+
       if (platform === Platform.MAC) {
-        await checkMacResult(packager, packagerOptions, checkOptions, artifacts.get(Platform.MAC))
+        const outDir = path.resolve(packager.projectDir, path.join((packager.config.directories == null ? null : packager.config.directories!.output) || "dist"))
+        const packedAppDir = path.join(outDir, nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
+        await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       }
       else if (platform === Platform.LINUX) {
-        await checkLinuxResult(outDir, packager, checkOptions, artifacts.get(Platform.LINUX), arch, nameToTarget)
+        await checkLinuxResult(outDir, packager, checkOptions, arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(Platform.WINDOWS), nameToTarget)
+        await checkWindowsResult(packager, checkOptions, platformArtifacts, nameToTarget)
       }
     }
   }
@@ -215,9 +227,7 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
   return packager
 }
 
-async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, arch: Arch, nameToTarget: Map<String, Target>) {
-  expect(getFileNames(artifacts)).toMatchSnapshot()
-
+async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, arch: Arch, nameToTarget: Map<String, Target>) {
   if (!nameToTarget.has("deb")) {
     return
   }
@@ -270,9 +280,8 @@ function parseDebControl(info: string): any {
   return metadata
 }
 
-async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>) {
+async function checkMacResult(packager: Packager, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions, packedAppDir: string) {
   const appInfo = packager.appInfo
-  const packedAppDir = path.join(path.dirname(artifacts.find(it => it.file != null && !it.file.endsWith("json")).file), `${appInfo.productFilename}.app`)
   const info = parsePlist(await readFile(path.join(packedAppDir, "Contents", "Info.plist"), "utf8"))
   expect(info).toMatchObject({
     CFBundleDisplayName: appInfo.productName,
@@ -292,30 +301,10 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
     const result = await exec("codesign", ["--verify", packedAppDir])
     expect(result).not.toMatch(/is not signed at all/)
   }
-
-  const emptyTarget = {name: ""}
-  expect(artifacts.sort((a, b) => (a.target || emptyTarget).name.localeCompare((b.target || emptyTarget).name)).map(it => {
-    const result: any = Object.assign({}, it)
-    if (result.file != null) {
-      result.file = path.basename(result.file)
-    }
-    delete result.packager
-    delete result.target
-    delete result.publishConfig
-    return result
-  })).toMatchSnapshot()
-}
-
-function getFileNames(list: Array<ArtifactCreated>): Array<string> {
-  return list.map(it => path.basename(it.file)).sort()
 }
 
 async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<String, Target>) {
   const appInfo = packager.appInfo
-
-  expect(getFileNames(artifacts)).toMatchSnapshot()
-  expect(artifacts.map(it => it.safeArtifactName).filter(it => it != null).sort()).toMatchSnapshot()
-
   let squirrel = false
   for (const target of nameToTarget.keys()) {
     if (target === "squirrel") {
@@ -434,72 +423,6 @@ export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, str
     platforms.push(Platform.WINDOWS)
   }
   return createTargets(platforms, type)
-}
-
-export class CheckingWinPackager extends WinPackager {
-  effectiveDistOptions: any
-  signOptions: SignOptions | null
-
-  constructor(info: BuildInfo) {
-    super(info)
-  }
-
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    // skip pack
-    const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
-    this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
-
-    await this.sign(this.computeAppOutDir(outDir, arch))
-  }
-
-  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
-    // skip
-  }
-
-  protected async doSign(opts: SignOptions): Promise<any> {
-    this.signOptions = opts
-  }
-}
-
-export class CheckingMacPackager extends OsXPackager {
-  effectiveDistOptions: any
-  effectiveSignOptions: MacSignOptions
-
-  constructor(info: BuildInfo) {
-    super(info)
-  }
-
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
-    for (const target of targets) {
-      // do not use instanceof to avoid dmg require
-      if (target.name === "dmg") {
-        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions()
-        break
-      }
-    }
-    // http://madole.xyz/babel-plugin-transform-async-to-module-method-gotcha/
-    return await OsXPackager.prototype.pack.call(this, outDir, arch, targets, postAsyncTasks)
-  }
-
-  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, targets: Array<Target>) {
-    // skip
-  }
-
-  async doSign(opts: MacSignOptions): Promise<any> {
-    this.effectiveSignOptions = opts
-  }
-
-  async doFlat(appPath: string, outFile: string, identity: string, keychain?: string | null): Promise<any> {
-    // skip
-  }
-
-  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
-    // skip
-  }
-
-  protected async writeUpdateInfo(appOutDir: string, outDir: string) {
-    // ignored
-  }
 }
 
 export function createMacTargetTest(target: Array<MacOsTargetName>) {

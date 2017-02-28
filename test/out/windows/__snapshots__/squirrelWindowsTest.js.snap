@@ -2,16 +2,21 @@
 
 exports[`Squirrel.Windows 1`] = `
 Array [
-  "RELEASES",
-  "Test App ßW Setup 1.1.0.exe",
-  "Test App ßW-1.1.0-win.zip",
-  "TestApp-1.1.0-full.nupkg",
-]
-`;
-
-exports[`Squirrel.Windows 2`] = `
-Array [
-  "TestApp-1.1.0-win.zip",
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
+  Object {
+    "file": "TestApp-1.1.0-full.nupkg",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "RELEASES",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "Test App ßW-1.1.0-win.zip",
+    "safeArtifactName": "TestApp-1.1.0-win.zip",
+  },
 ]
 `;

@@ -2,17 +2,14 @@
 
 exports[`allowToChangeInstallationDirectory 1`] = `
 Array [
-  "Test Custom Installation Dir Setup 1.1.0.exe",
+  Object {
+    "file": "Test Custom Installation Dir Setup 1.1.0.exe",
+    "safeArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`allowToChangeInstallationDirectory 2`] = `
-Array [
-  "test-custom-inst-dir-Setup-1.1.0.exe",
-]
-`;
-
-exports[`allowToChangeInstallationDirectory 3`] = `
 Object {
   "owner": "foo",
   "provider": "github",
@@ -20,7 +17,7 @@ Object {
 }
 `;
 
-exports[`allowToChangeInstallationDirectory 4`] = `
+exports[`allowToChangeInstallationDirectory 3`] = `
 Object {
   "githubArtifactName": "test-custom-inst-dir-Setup-1.1.0.exe",
   "path": "Test Custom Installation Dir Setup 1.1.0.exe",
@@ -30,36 +27,27 @@ Object {
 
 exports[`boring 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
-]
-`;
-
-exports[`boring 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`boring, only perMachine 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
-]
-`;
-
-exports[`boring, only perMachine 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`portable 1`] = `
 Array [
-  "Test App ßW 1.1.0.exe",
-]
-`;
-
-exports[`portable 2`] = `
-Array [
-  "TestApp-1.1.0.exe",
+  Object {
+    "file": "Test App ßW 1.1.0.exe",
+    "safeArtifactName": "TestApp-1.1.0.exe",
+  },
 ]
 `;

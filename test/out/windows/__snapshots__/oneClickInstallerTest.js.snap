@@ -2,25 +2,19 @@
 
 exports[`custom include 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
-]
-`;
-
-exports[`custom include 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`custom script 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
-]
-`;
-
-exports[`custom script 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
@@ -28,29 +22,23 @@ exports[`file associations only perMachine 1`] = `"Please set perMachine to true
 
 exports[`menuCategory 1`] = `
 Array [
-  "Test Menu Category CustomName 1.1.0.exe",
-]
-`;
-
-exports[`menuCategory 2`] = `
-Array [
-  "test-menu-category-Setup-1.1.0.exe",
+  Object {
+    "file": "Test Menu Category CustomName 1.1.0.exe",
+    "safeArtifactName": "test-menu-category-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`one-click 1`] = `
 Array [
-  "Test App ßW Setup 1.1.0.exe",
+  Object {
+    "file": "Test App ßW Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`one-click 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
-]
-`;
-
-exports[`one-click 3`] = `
 Object {
   "owner": "actperepo",
   "package": "TestApp",
@@ -60,25 +48,24 @@ Object {
 
 exports[`perMachine, no run after finish 1`] = `
 Array [
-  "TestApp Setup 1.1.0.exe",
-  "latest.yml",
+  Object {
+    "file": "latest.yml",
+  },
+  Object {
+    "file": "TestApp Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`perMachine, no run after finish 2`] = `
-Array [
-  "TestApp-Setup-1.1.0.exe",
-]
-`;
-
-exports[`perMachine, no run after finish 3`] = `
 Object {
   "provider": "generic",
   "url": "https://develar.s3.amazonaws.com/test/win",
 }
 `;
 
-exports[`perMachine, no run after finish 4`] = `
+exports[`perMachine, no run after finish 3`] = `
 Object {
   "githubArtifactName": "TestApp-Setup-1.1.0.exe",
   "path": "TestApp Setup 1.1.0.exe",
@@ -88,33 +75,39 @@ Object {
 
 exports[`web installer (default github) 1`] = `
 Array [
-  "Test App ßW Web Setup 1.1.0.exe",
-  "TestApp-1.1.0-ia32.nsis.7z",
-  "TestApp-1.1.0-x64.nsis.7z",
+  Object {
+    "file": "TestApp-1.1.0-ia32.nsis.7z",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "TestApp-1.1.0-x64.nsis.7z",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "Test App ßW Web Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`web installer (default github) 2`] = `
 Array [
-  "TestApp-WebSetup-1.1.0.exe",
+  Object {
+    "file": "TestApp-1.1.0-ia32.nsis.7z",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "TestApp-1.1.0-x64.nsis.7z",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "Test App ßW Web Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+  },
 ]
 `;
 
 exports[`web installer (default github) 3`] = `
-Array [
-  "Test App ßW Web Setup 1.1.0.exe",
-  "TestApp-1.1.0-ia32.nsis.7z",
-  "TestApp-1.1.0-x64.nsis.7z",
-]
-`;
-
-exports[`web installer (default github) 4`] = `
-Array [
-  "TestApp-WebSetup-1.1.0.exe",
-]
-`;
-
-exports[`web installer (default github) 5`] = `
 Object {
   "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
   "path": "Test App ßW Web Setup 1.1.0.exe",
@@ -124,14 +117,16 @@ Object {
 
 exports[`web installer 1`] = `
 Array [
-  "Test App ßW Web Setup 1.1.0.exe",
-  "TestApp-1.1.0-x64.nsis.7z",
-  "latest.yml",
-]
-`;
-
-exports[`web installer 2`] = `
-Array [
-  "TestApp-WebSetup-1.1.0.exe",
+  Object {
+    "file": "latest.yml",
+  },
+  Object {
+    "file": "TestApp-1.1.0-x64.nsis.7z",
+    "safeArtifactName": undefined,
+  },
+  Object {
+    "file": "Test App ßW Web Setup 1.1.0.exe",
+    "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+  },
 ]
 `;

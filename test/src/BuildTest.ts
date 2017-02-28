@@ -1,15 +1,14 @@
 import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, BuildOptions, DIR_TARGET, Platform } from "electron-builder"
-import { build, normalizeOptions } from "electron-builder/out/builder"
+import { normalizeOptions } from "electron-builder/out/builder"
 import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { checkWineVersion } from "electron-builder/out/packager"
 import { move, outputJson } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./helpers/config"
-import { assertThat } from "./helpers/fileAssert"
-import { allPlatforms, app, appThrows, appTwo, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { allPlatforms, app, appTwo, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
 
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
@@ -57,26 +56,6 @@ test("cli", async () => {
 
   expect(parseExtraMetadata("--em.foo=bar"))
 })
-
-function createBuildResourcesTest(platform: Platform) {
-  return app({
-    // only dir - avoid DMG
-    targets: platform.createTarget(platform === Platform.MAC ? DIR_TARGET : null),
-    config: {
-      directories: {
-        buildResources: "custom",
-        output: "customDist",
-        // https://github.com/electron-userland/electron-builder/issues/601
-        app: ".",
-      }
-    },
-  }, {
-    packed: async context => {
-      await assertThat(path.join(context.projectDir, "customDist")).isDirectory()
-    },
-    projectDirCreated: projectDir => move(path.join(projectDir, "build"), path.join(projectDir, "custom"))
-  })
-}
 
 test("build in the app package.json", appTwoThrows(linuxDirTarget, {
   projectDirCreated: it => modifyPackageJson(it, data => {
@@ -193,70 +172,4 @@ test.ifDevOrLinuxCi("smart unpack", app({
 test("wine version", async () => {
   await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))
   await checkWineVersion(BluebirdPromise.resolve("2.0-rc2"))
-})
-
-describe.ifAll("sign", () => {
-  test.ifNotWindows("custom buildResources and output dirs: mac", createBuildResourcesTest(Platform.MAC))
-  test.ifNotCiMac("custom buildResources and output dirs: win", createBuildResourcesTest(Platform.WINDOWS))
-  test.ifNotWindows("custom buildResources and output dirs: linux", createBuildResourcesTest(Platform.LINUX))
-
-  test.ifDevOrLinuxCi("prepackaged", app({
-    targets: linuxDirTarget,
-  }, {
-    packed: async (context) => {
-      await build(normalizeOptions({
-        prepackaged: path.join(context.outDir, "linux-unpacked"),
-        project: context.projectDir,
-        linux: ["deb"]
-      }))
-      await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_amd64.deb")).isFile()
-    }
-  }))
-
-  test.ifDevOrLinuxCi("scheme validation", appThrows({
-    targets: linuxDirTarget,
-    config: <any>{
-      foo: 123,
-      mac: {
-        foo: 12123,
-      },
-    },
-  }))
-
-  test.ifDevOrLinuxCi("scheme validation 2", appThrows({
-    targets: linuxDirTarget,
-    config: <any>{
-      appId: 123,
-    },
-  }))
-
-  // https://github.com/electron-userland/electron-builder/issues/1302
-  test.ifDevOrLinuxCi("scheme validation extraFiles", app({
-    targets: linuxDirTarget,
-    config: <any>{
-      "extraFiles": [
-        "lib/*.jar",
-        "lib/Proguard/**/*",
-        {
-          "from": "lib/",
-          "to": ".",
-          "filter": [
-            "*.dll"
-          ]
-        },
-        {
-          "from": "lib/",
-          "to": ".",
-          "filter": [
-            "*.exe"
-          ]
-        },
-        "BLClient/BLClient.json",
-        {
-          "from": "include/",
-          "to": "."
-        }
-      ],
-    },
-  }))
 })

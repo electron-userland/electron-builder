@@ -99,7 +99,7 @@ test.ifMac("unset dmg icon", app({
   }
 }, {
   packed: (context) => {
-    return attachAndExecute(path.join(context.outDir, "mac/Test ß No Volume Icon-1.1.0.dmg"), false, () => {
+    return attachAndExecute(path.join(context.outDir, "Test ß No Volume Icon-1.1.0.dmg"), false, () => {
       return BluebirdPromise.all([
         assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
         assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.VolumeIcon.icns")).doesNotExist(),
@@ -121,7 +121,7 @@ test.ifMac("no background", app({
   }
 }, {
   packed: (context) => {
-    return attachAndExecute(path.join(context.outDir, "mac/NoBackground-1.1.0.dmg"), false, () => {
+    return attachAndExecute(path.join(context.outDir, "NoBackground-1.1.0.dmg"), false, () => {
       return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
     })
   }
