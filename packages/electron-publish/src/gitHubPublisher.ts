@@ -192,7 +192,7 @@ export class GitHubPublisher extends HttpPublisher {
     return httpExecutor.request<T>(configureRequestOptions({
       hostname: baseUrl.hostname,
       port: <any>baseUrl.port,
-      path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3/${path}` : path,
+      path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
       headers: {Accept: "application/vnd.github.v3+json"}
     }, token, method), this.context.cancellationToken, data)
   }

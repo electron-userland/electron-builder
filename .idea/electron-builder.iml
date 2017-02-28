@@ -13,6 +13,7 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-squirrel-windows/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-util/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder/out" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/electron-publish/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-publisher-s3/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-updater/out" />
       <excludeFolder url="file://$MODULE_DIR$/test/fixtures/app-executable-deps/app/node_modules" />

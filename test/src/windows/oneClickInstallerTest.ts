@@ -150,8 +150,12 @@ test.ifNotCiMac("web installer", app({
 
 test.ifAll.ifNotCiMac("web installer (default github)", app({
   targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64),
-  appMetadata: {
-    repository: "foo/bar"
+  config: {
+    publish: {
+      provider: "github",
+      // test form without owner
+      repo: "foo/bar"
+    }
   },
 }, {
   packed: async context => {

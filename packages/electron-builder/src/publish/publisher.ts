@@ -36,6 +36,16 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
 
   let owner = publishConfig.owner
   let project = provider === "github" ? (<GithubOptions>publishConfig).repo : (<BintrayOptions>publishConfig).package
+
+  if (provider === "github" && owner == null && project != null) {
+    const index = project.indexOf("/")
+    if (index > 0) {
+      const repo = project
+      project = repo.substring(0, index)
+      owner = repo.substring(index + 1)
+    }
+  }
+
   if (!owner || !project) {
     const info = await getInfo()
     if (info == null) {
