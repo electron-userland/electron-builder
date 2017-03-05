@@ -1,5 +1,5 @@
-import { extractFile } from "asar"
 import { DIR_TARGET, Platform } from "electron-builder"
+import { readAsarJson } from "electron-builder/out/asar"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appTwo, appTwoThrows, modifyPackageJson } from "./helpers/packTester"
@@ -27,7 +27,7 @@ test.ifDevOrLinuxCi("extra metadata", app({
   }),
   packed: async context => {
     await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
-    expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json").toString())).toMatchSnapshot()
+    expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "package.json")).toMatchSnapshot()
   }
 }))
 

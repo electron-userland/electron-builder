@@ -1,4 +1,3 @@
-import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -12,6 +11,7 @@ import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
 import { AppInfo } from "./appInfo"
+import { readAsarJson } from "./asar"
 import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions, SourceRepositoryInfo } from "./packagerApi"
@@ -173,9 +173,9 @@ export class Packager implements BuildInfo {
       }
 
       try {
-        const file = extractFile(path.join(this.projectDir, "app.asar"), "package.json")
-        if (file != null) {
-          this.metadata = JSON.parse(file.toString())
+        const data = await readAsarJson(path.join(this.projectDir, "app.asar"), "package.json")
+        if (data != null) {
+          this.metadata = data
           this._isPrepackedAppAsar = true
           return
         }

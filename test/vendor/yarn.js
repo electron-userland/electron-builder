@@ -753,7 +753,12 @@ let symlink = exports.symlink = (() => {
         yield fsSymlink(src, dest, 'junction');
       } else {
         // use relative paths otherwise which will be retained if the directory is moved
-        const relative = path.relative(fs.realpathSync(path.dirname(dest)), fs.realpathSync(src));
+        let relative;
+        if (yield exists(src)) {
+          relative = path.relative(fs.realpathSync(path.dirname(dest)), fs.realpathSync(src));
+        } else {
+          relative = path.relative(path.dirname(dest), src);
+        }
         yield fsSymlink(relative, dest);
       }
     } catch (err) {
@@ -35651,7 +35656,7 @@ Identity._oldVersionDetect = function (obj) {
 module.exports = {
 	"name": "yarn",
 	"installationMethod": "unknown",
-	"version": "0.21.2",
+	"version": "0.21.3",
 	"license": "BSD-2-Clause",
 	"preferGlobal": true,
 	"description": "📦🐈 Fast, reliable, and secure dependency management.",

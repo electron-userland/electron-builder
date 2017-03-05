@@ -1,9 +1,9 @@
 import Ajv from "ajv"
-import { extractFile } from "asar"
 import { log, warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
+import { readAsarJson } from "../asar"
 import { Config } from "../metadata"
 import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
 import ErrorObject = ajv.ErrorObject
@@ -71,9 +71,9 @@ export async function loadConfig(projectDir: string): Promise<Config | null> {
     }
 
     try {
-      const file = extractFile(path.join(projectDir, "app.asar"), "package.json")
-      if (file != null) {
-        return getConfigFromPackageData(JSON.parse(file.toString()))
+      const data = await readAsarJson(path.join(projectDir, "app.asar"), "package.json")
+      if (data != null) {
+        return getConfigFromPackageData(data)
       }
     }
     catch (e) {

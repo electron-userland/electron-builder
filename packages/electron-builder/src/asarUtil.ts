@@ -1,4 +1,3 @@
-import { AsarFileInfo, listPackage, statFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
@@ -6,12 +5,11 @@ import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull, walk } 
 import { log } from "electron-builder-util/out/log"
 import { createReadStream, createWriteStream, ensureDir, readFile, readJson, readlink, stat, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
+import { AsarFilesystem, Node, readAsar } from "./asar"
 import { AsarOptions } from "./metadata"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
-const Filesystem = require("asar/lib/filesystem")
-const UINT64 = require("cuint").UINT64
 
 const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
@@ -51,7 +49,7 @@ function writeUnpackedFiles(filesToUnpack: Array<UnpackedFileTask>, fileCopier: 
 
 class AsarPackager {
   private readonly toPack: Array<string> = []
-  private readonly fs = new Filesystem(this.src)
+  private readonly fs = new AsarFilesystem(this.src)
   private readonly changedFiles = new Map<string, string>()
   private readonly outFile: string
 
@@ -188,7 +186,7 @@ class AsarPackager {
       const stat = metadata.get(file)!
       if (stat.isFile()) {
         const fileParent = path.dirname(file)
-        const dirNode = this.fs.searchNodeFromPath(fileParent)
+        const dirNode = this.fs.getOrCreateNode(fileParent)
         const packageDataPromise = fileIndexToModulePackageData.get(i)
         let newData: string | null = null
         if (packageDataPromise == null) {
@@ -213,7 +211,7 @@ class AsarPackager {
         }
 
         const fileSize = newData == null ? stat.size : Buffer.byteLength(newData)
-        const node = this.fs.searchNodeFromPath(file)
+        const node = this.fs.getOrCreateNode(file)
         node.size = fileSize
         if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))) {
           node.unpacked = true
@@ -234,18 +232,8 @@ class AsarPackager {
           if (newData != null) {
             this.changedFiles.set(file, newData)
           }
-
-          if (fileSize > 4294967295) {
-            throw new Error(`${file}: file size can not be larger than 4.2GB`)
-          }
-
-          node.offset = this.fs.offset.toString()
-          //noinspection JSBitwiseOperatorUsage
-          if (process.platform !== "win32" && stat.mode & 0x40) {
-            node.executable = true
-          }
+          this.fs.insertFileNode(node, stat, file)
           this.toPack.push(file)
-          this.fs.offset.add(UINT64(fileSize))
         }
       }
       else if (stat.isDirectory()) {
@@ -268,7 +256,7 @@ class AsarPackager {
         this.fs.insertDirectory(file, unpacked)
       }
       else if (stat.isSymbolicLink()) {
-        this.fs.searchNodeFromPath(file).link = (<any>stat).relativeLink
+        this.fs.getOrCreateNode(file).link = (<any>stat).relativeLink
       }
     }
 
@@ -289,7 +277,7 @@ class AsarPackager {
     const writeStream = createWriteStream(this.outFile)
     return new BluebirdPromise((resolve, reject) => {
       writeStream.on("error", reject)
-      writeStream.once("finish", resolve)
+      writeStream.on("close", resolve)
       writeStream.write(sizeBuf)
 
       let w: (list: Array<any>, index: number) => void
@@ -386,21 +374,22 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
     return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)
   }
 
-  let stat: AsarFileInfo | null
+  let fs
   try {
-    stat = statFile(asarFile, relativeFile)
+    fs = await readAsar(asarFile)
+  }
+  catch (e) {
+    throw error(`is corrupted: ${e}`)
+  }
+
+  let stat: Node | null
+  try {
+    stat = fs.getFile(relativeFile)
   }
   catch (e) {
     const fileStat = await statOrNull(asarFile)
     if (fileStat == null) {
       throw error(`does not exist. Seems like a wrong configuration.`)
-    }
-
-    try {
-      listPackage(asarFile)
-    }
-    catch (e) {
-      throw error(`is corrupted: ${e}`)
     }
 
     // asar throws error on access to undefined object (info.link)

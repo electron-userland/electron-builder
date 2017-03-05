@@ -1,6 +1,6 @@
-import { statFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
+import { readAsar } from "electron-builder/out/asar"
 import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
@@ -57,7 +57,7 @@ test.ifNotWindows("link", app({
     return symlink(path.join(projectDir, "index.js"), path.join(projectDir, "foo.js"))
   },
   packed: async context => {
-    expect(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "foo.js", false)).toMatchSnapshot()
+    expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("foo.js", false)).toMatchSnapshot()
   },
 }))
 
@@ -70,7 +70,7 @@ test.ifNotWindows("outside link", app({
     await symlink(tempDir, path.join(projectDir, "o-dir"))
   },
   packed: async context => {
-    expect(statFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "o-dir/foo", false)).toMatchSnapshot()
+    expect((await readAsar(path.join(context.getResources(Platform.LINUX), "app.asar"))).getFile("o-dir/foo", false)).toMatchSnapshot()
   },
 }))
 

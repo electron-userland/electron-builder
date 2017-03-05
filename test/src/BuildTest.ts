@@ -1,6 +1,6 @@
-import { extractFile } from "asar"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, BuildOptions, DIR_TARGET, Platform } from "electron-builder"
+import { readAsarJson } from "electron-builder/out/asar"
 import { normalizeOptions } from "electron-builder/out/builder"
 import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { checkWineVersion } from "electron-builder/out/packager"
@@ -161,11 +161,10 @@ test.ifDevOrLinuxCi("smart unpack", app({
       "edge-cs": "^1.0.0"
     }
   }),
-  packed: context => {
-    expect(JSON.parse(extractFile(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json").toString())).toMatchObject({
+  packed: async context => {
+    expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json")).toMatchObject({
       name: "debug"
     })
-    return BluebirdPromise.resolve()
   }
 }))
 

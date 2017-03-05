@@ -85,7 +85,7 @@ export default class AppImageTarget extends Target {
       rd.on("error", reject)
       const wr = createWriteStream(resultFile, {flags: "r+"})
       wr.on("error", reject)
-      wr.on("finish", resolve)
+      wr.on("close", resolve)
       rd.pipe(wr)
     })
 
