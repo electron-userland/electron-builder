@@ -7,7 +7,6 @@ Can be specified in the [config](https://github.com/electron-userland/electron-b
 
 If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-If `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` are set and neither `GH_TOKEN` and `BT_TOKEN` are set — defaults to `[{provider: "s3"}]`.
 
 Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
 

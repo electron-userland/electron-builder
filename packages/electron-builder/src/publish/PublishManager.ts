@@ -368,9 +368,6 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
     else if (!isEmptyOrSpaces(process.env.BT_TOKEN)) {
       serviceName = "bintray"
     }
-    else if (!isEmptyOrSpaces(process.env.AWS_ACCESS_KEY_ID) && !isEmptyOrSpaces(process.env.AWS_SECRET_ACCESS_KEY)) {
-      serviceName = "s3"
-    }
 
     if (serviceName != null) {
       debug(`Detect ${serviceName} as publish provider`)
