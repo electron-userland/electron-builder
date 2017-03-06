@@ -19,22 +19,14 @@ For example, to change icon location for DMG:
 }
 ```
 
-As you can see, you need to customize MacOS options only if you want to provide custom `x, y`.
+As you can see, you need to customize macOS options only if you want to provide custom `x, y`.
 Don't customize paths to background and icon, — just follow conventions.
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
 ## File Patterns
 
-[files](#Config-files) defaults to:
-* `**/*`
-* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
-* `!**/node_modules/.bin`
-* `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
-* `!**/._*`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
-
-[Hidden files are not ignored by default](https://www.npmjs.com/package/glob#dots), but as you see, all files that should be ignored, are ignored by default.
+Hidden files are not ignored by default, but all files that should be ignored, are [ignored by default](#default-file-pattern).
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
 
@@ -45,17 +37,7 @@ Remember that default pattern `**/*` **is not added to your custom** if some of 
 
 May be specified in the platform options (e.g. in the [mac](#MacOptions)).
 
-### File Macros
-
-You can use macros in the file patterns, artifact file name patterns and publish configuration url: 
-* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
-* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
-* `${name}` – `package.json` `name`.
-* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
-* `${version}`
-* `${env.ENV_NAME}` — any environment variable.
-
-## Multiple Glob Patterns
+### Multiple Glob Patterns
  ```js
  [
    // match all files
@@ -68,11 +50,22 @@ You can use macros in the file patterns, artifact file name patterns and publish
    "foo/bar.js",
  ]
  ```
-
+ 
 ### Excluding directories
-
+ 
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
+
+
+### File Macros
+
+You can use macros in the file patterns, artifact file name patterns and publish configuration url: 
+* `${arch}` — expanded to `ia32`, `x64`. If no `arch`, macro will be removed from your pattern with leading space, `-` and `_` (so, you don't need to worry and can reuse pattern).
+* `${os}` — expanded to `mac`, `linux` or `win` according to target platform.
+* `${name}` – `package.json` `name`.
+* `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
+* `${version}`
+* `${env.ENV_NAME}` — any environment variable.
 
 ## Source and Destination Directories
 You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
@@ -125,7 +118,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 | --- | ---
 | appId | <a name="Config-appId"></a><p>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).</p> <p>Defaults to <code>com.electron.${name}</code>. It is strongly recommended that an explicit ID be set.</p>
 | copyright | <a name="Config-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`.
-| productName | <a name="Config-productName"></a>See [AppMetadata.productName](#AppMetadata-productName).
+| productName | <a name="Config-productName"></a><p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
 | files | <a name="Config-files"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.</p> <p>See [File Patterns](#multiple-glob-patterns).</p>
 | extraResources | <a name="Config-extraResources"></a><p>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app’s resources directory (<code>Contents/Resources</code> for MacOS, <code>resources</code> for Linux/Windows).</p> <p>Glob rules the same as for [files](#multiple-glob-patterns).</p>
 | extraFiles | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
@@ -144,6 +137,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 | forceCodeSigning | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
 | electronVersion | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
 | artifactName | <a name="Config-artifactName"></a><p>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to <code>${productName}-${version}.${ext}</code> (some target can have another defaults, see corresponding options).</p> <p>Currently supported only for <code>mas</code>, <code>pkg</code>, <code>dmg</code> and <code>nsis</code>.</p>
+| buildVersion | <a name="Config-buildVersion"></a><ul> <li>The build version. Maps to the <code>CFBundleVersion</code> on macOS, and <code>FileVersion</code> metadata property on Windows. Defaults to the <code>version</code>.</li> <li>If <code>TRAVIS_BUILD_NUMBER</code> or <code>APPVEYOR_BUILD_NUMBER</code> or <code>CIRCLE_BUILD_NUM</code> or <code>BUILD_NUMBER</code> or <code>bamboo.buildNumber</code> env defined, it will be used as a build version (<code>version.build_number</code>).</li> </ul>
 
 <a name="AppXOptions"></a>
 ### `appx`
@@ -356,7 +350,6 @@ Some standard fields should be defined in the `package.json`.
 | Name | Description
 | --- | ---
 | **name** | <a name="Metadata-name"></a>The application name.
-| productName | <a name="Metadata-productName"></a><p>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).</p>
 | description | <a name="Metadata-description"></a>The application description.
 | homepage | <a name="Metadata-homepage"></a><p>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package <code>projectUrl</code> (optional) or Linux Package URL (required)).</p> <p>If not specified and your project repository is public on GitHub, it will be <code>https://github.com/${user}/${project}</code> by default.</p>
 | license | <a name="Metadata-license"></a>*linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
@@ -364,4 +357,14 @@ Some standard fields should be defined in the `package.json`.
 <!-- end of generated block -->
 
 ## Build Version Management
-`CFBundleVersion` (MacOS) and `FileVersion` (Windows) will be set automatically to `version`.`build_number` on CI server (Travis, AppVeyor and CircleCI supported).
+`CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
+
+## Default File Pattern
+
+[files](#Config-files) defaults to:
+* `**/*`
+* `!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}`
+* `!**/node_modules/.bin`
+* `!**/*.{o,hprof,orig,pyc,pyo,rbc}`
+* `!**/._*`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`

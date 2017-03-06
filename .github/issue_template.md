@@ -7,4 +7,4 @@
 * **Target**: 
 
 <!-- Enter your issue details below this comment. -->
-<!-- If you want, you can donate to increase issue priority (https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) -->
+<!-- If you want, you can donate to increase issue priority (https://github.com/electron-userland/electron-builder/wiki/Donations) -->

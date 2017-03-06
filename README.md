@@ -23,7 +23,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](http://electron-builder-slack.herokuapp.com) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
+| “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) or [Bitcoin](https://cex.io/#/modal/donation/pid/DP100018863) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 

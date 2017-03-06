@@ -33,10 +33,6 @@ export interface Metadata {
    */
   readonly name?: string
 
-  /**
-   As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
-   not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
-   */
   readonly productName?: string | null
 
   /**
@@ -102,7 +98,8 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
   readonly iconUrl?: string | null
 
   /**
-   See [AppMetadata.productName](#AppMetadata-productName).
+   As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters
+   not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */
   readonly productName?: string | null
 
@@ -224,6 +221,12 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
    Currently supported only for `mas`, `pkg`, `dmg` and `nsis`.
    */
   readonly artifactName?: string | null
+
+  /**
+   * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
+   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
+   */
+  readonly buildVersion?: string | null
 }
 
 export interface AfterPackContext {

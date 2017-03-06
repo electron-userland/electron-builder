@@ -1,8 +1,8 @@
-import { Config, Metadata } from "./metadata"
-import { warn } from "electron-builder-util/out/log"
 import { isEmptyOrSpaces, smarten } from "electron-builder-util"
+import { warn } from "electron-builder-util/out/log"
 import sanitizeFileName from "sanitize-filename"
 import { SemVer } from "semver"
+import { Config, Metadata } from "./metadata"
 import { BuildInfo } from "./packagerApi"
 
 export class AppInfo {
@@ -21,7 +21,7 @@ export class AppInfo {
   constructor(public metadata: Metadata, private info: BuildInfo, buildVersion?: string | null) {
     this.version = metadata.version!
 
-    this.buildNumber = (<any>this.config)["build-version"] || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    this.buildNumber = this.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
 
     if (isEmptyOrSpaces(buildVersion)) {
       buildVersion = this.version
