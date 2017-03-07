@@ -133,7 +133,10 @@ export default class FpmTarget extends Target {
         depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
       }
       else if (target === "pacman") {
-        depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy"]
+        depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk2", "libappindicator-gtk3", "libappindicator-sharp"]
+      }
+      else if (target === "rpm") {
+        depends = ["libnotify", "libappindicator"]
       }
       else {
         depends = []
