@@ -28,7 +28,7 @@ export class NsisUpdater extends AppUpdater {
       if (this.requestHeaders != null) {
         Object.assign(fileInfo.headers, this.requestHeaders)
       } else {
-        this.requestHeaders = fileInfo.headers;
+        this.requestHeaders = fileInfo.headers
       }
     }
 

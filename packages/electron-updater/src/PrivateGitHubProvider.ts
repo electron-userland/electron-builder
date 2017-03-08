@@ -82,7 +82,7 @@ export class PrivateGitHubProvider extends Provider<VersionInfo> {
     // space is not supported on GitHub
     if (getCurrentPlatform() === "darwin") {
       let info = <any>versionInfo
-      const name = info.url.split('/').pop()
+      const name = info.url.split("/").pop()
       
       const assetPath = parseUrl(this.apiResult.assets.find( (elem: any) => {
                   return elem.name == name
