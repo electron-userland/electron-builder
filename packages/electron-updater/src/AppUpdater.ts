@@ -13,6 +13,7 @@ import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
+import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export interface Logger {
   info(message?: any): void
@@ -254,8 +255,11 @@ function createClient(data: string | PublishConfiguration) {
   const provider = (<PublishConfiguration>data).provider
   switch (provider) {
     case "github":
-      return new GitHubProvider(<GithubOptions>data)
-
+      if (process.env.GH_TOKEN != null) {
+        return new PrivateGitHubProvider(<GithubOptions>data)
+      } else {
+        return new GitHubProvider(<GithubOptions>data)
+      }
     case "s3": {
       const s3 = <S3Options>data
       return new GenericProvider({
