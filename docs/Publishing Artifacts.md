@@ -58,73 +58,14 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 ## Publish Options
 
-[publish](#PublishConfiguration) can be specified in the [configuration options](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
+See [GithubOptions](https://github.com/electron-userland/electron-builder/wiki/API#electron-builder-httpoutpublishoptionsgithuboptions--publishconfiguration),
+[S3Options](https://github.com/electron-userland/electron-builder/wiki/API#electron-builder-httpoutpublishoptionss3options--publishconfiguration),
+[BintrayOptions](https://github.com/electron-userland/electron-builder/wiki/API#module_electron-builder-http/out/publishOptions.BintrayOptions).
+
+Can be specified in the [configuration options](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
 
 ```json
 "win": {
   "publish": ["github", "bintray"]
 }
 ```
-
-<!-- do not edit. start of generated block -->
-* [publish](#PublishConfiguration)
-* [publish Amazon S3](#S3Options)
-* [publish Bintray](#BintrayOptions)
-* [publish Generic (any HTTP(S) server)](#GenericServerOptions)
-* [publish GitHub](#GithubOptions)
-
-<a name="PublishConfiguration"></a>
-### `publish`
-
-Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#configuration-options) or any platform- or target- specific options.
-
-If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-
-Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
-
-Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
-
-| Name | Description
-| --- | ---
-| **provider** | <a name="PublishConfiguration-provider"></a>The provider, one of `github`, `s3`, `bintray`, `generic`.
-| owner | <a name="PublishConfiguration-owner"></a>The owner.
-
-<a name="S3Options"></a>
-### `publish` Amazon S3
-
-[Getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
-
-| Name | Description
-| --- | ---
-| **bucket** | <a name="S3Options-bucket"></a>The bucket name.
-| path | <a name="S3Options-path"></a>The directory path. Defaults to `/`.
-| channel | <a name="S3Options-channel"></a>The channel. Defaults to `latest`.
-| acl | <a name="S3Options-acl"></a>The ACL. Defaults to `public-read`.
-| storageClass | <a name="S3Options-storageClass"></a>The type of storage to use for the object. One of `STANDARD`, `REDUCED_REDUNDANCY`, `STANDARD_IA`. Defaults to `STANDARD`.
-
-<a name="BintrayOptions"></a>
-### `publish` Bintray
-| Name | Description
-| --- | ---
-| package | <a name="BintrayOptions-package"></a>The Bintray package name.
-| repo | <a name="BintrayOptions-repo"></a>The Bintray repository name. Defaults to `generic`.
-| user | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization.
-
-<a name="GenericServerOptions"></a>
-### `publish` Generic (any HTTP(S) server)
-| Name | Description
-| --- | ---
-| **url** | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
-| channel | <a name="GenericServerOptions-channel"></a>The channel. Defaults to `latest`.
-
-<a name="GithubOptions"></a>
-### `publish` GitHub
-| Name | Description
-| --- | ---
-| repo | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
-| vPrefixedTagName | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. Defaults to `true`.
-| host | <a name="GithubOptions-host"></a>The host (including the port if need). Defaults to `github.com`.
-| protocol | <a name="GithubOptions-protocol"></a><p>The protocol, one of <code>https</code> or <code>http</code>. Defaults to <code>https</code>.</p> <p>GitHub Publisher supports only <code>https</code>.</p>
-
-<!-- end of generated block -->

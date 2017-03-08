@@ -206,7 +206,9 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
   readonly icon?: string | null
 
   /**
-  See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#PublishConfiguration).
+   * Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
+   * 
+   * See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
    */
   readonly publish?: Publish
 

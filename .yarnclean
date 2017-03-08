@@ -5,15 +5,16 @@ tests
 powered-test
 
 # asset directories
-docs
-doc
-website
-images
-assets
+# breaks jsdoc2md
+#docs
+#doc
+#website
+#images
+#assets
 
 # examples
-example
-examples
+#example
+#examples
 
 # code coverage directories
 coverage
@@ -42,4 +43,3 @@ Gruntfile.js
 *.md
 
 !tslint/lib/test
-!tslint\lib\test

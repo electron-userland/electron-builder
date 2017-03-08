@@ -60,24 +60,11 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
     }
   }
 
-  const copy: PublishConfiguration = Object.assign({}, publishConfig)
-  if (copy.owner == null) {
-    copy.owner = owner
-  }
-
   if (provider === "github") {
-    const options = <GithubOptions>copy
-    if (options.repo == null) {
-      options.repo = project
-    }
-    return options
+    return Object.assign({owner, repo: project}, publishConfig)
   }
   else if (provider === "bintray") {
-    const options = <BintrayOptions>copy
-    if (options.package == null) {
-      options.package = project
-    }
-    return options
+    return Object.assign({owner, package: project}, publishConfig)
   }
   else {
     throw new Error(`Unknown publish provider: ${provider}`)
