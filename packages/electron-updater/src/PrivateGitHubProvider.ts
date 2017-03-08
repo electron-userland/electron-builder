@@ -37,7 +37,7 @@ export class PrivateGitHubProvider extends Provider<VersionInfo> {
       result = await request<UpdateInfo>(requestOptions, cancellationToken)
       //Maybe better to parse in httpExecutor ?
       if (typeof result === "string") {
-        if (getCurrentPlatform() === "darwin"){
+        if (getCurrentPlatform() === "darwin") {
           result = JSON.parse(result)
         } else {
           result = safeLoad(result)
