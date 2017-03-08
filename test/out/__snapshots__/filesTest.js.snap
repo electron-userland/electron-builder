@@ -2,19 +2,49 @@
 
 exports[`expand not defined env 1`] = `"Env FOO_NOT_DEFINED is not defined"`;
 
+exports[`extraResources - two-package 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`extraResources on Linux and Windows 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW Setup 1.1.0.exe",
-    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-  },
-  Object {
-    "file": "TestApp-1.1.0-full.nupkg",
-    "safeArtifactName": undefined,
-  },
-  Object {
-    "file": "RELEASES",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extraResources on Linux and Windows 2`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "RELEASES",
+    },
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+    Object {
+      "file": "TestApp-1.1.0-full.nupkg",
+    },
+  ],
+}
+`;
+
+exports[`extraResources on macOS 1`] = `
+Object {
+  "mac": Array [],
+}
+`;
+
+exports[`files 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`map resources 1`] = `
+Object {
+  "linux": Array [],
+}
 `;

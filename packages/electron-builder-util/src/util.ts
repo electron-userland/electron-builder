@@ -1,4 +1,3 @@
-import "source-map-support/register"
 import BluebirdPromise from "bluebird-lst"
 import { red, yellow } from "chalk"
 import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
@@ -6,6 +5,7 @@ import { createHash } from "crypto"
 import _debug from "debug"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
+import "source-map-support/register"
 import { statOrNull } from "./fs"
 import { log, warn } from "./log"
 
@@ -252,4 +252,31 @@ export class Lazy<T> {
   constructor(creator: () => Promise<T>) {
     this.creator = creator
   }
+}
+
+export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
+  const list = map.get(key)
+  if (list == null) {
+    map.set(key, [value])
+  }
+  else if (!list.includes(value)) {
+    list.push(value)
+  }
+}
+
+export function replaceDefault(inList: Array<string> | null | undefined, defaultList: Array<string>): Array<string> {
+  if (inList == null) {
+    return defaultList
+  }
+
+  const index = inList.indexOf("default")
+  if (index >= 0) {
+    let list = inList.slice(0, index)
+    list.push(...defaultList)
+    if (index != (inList.length - 1)) {
+      list.push(...inList.slice(index + 1))
+    }
+    inList = list
+  }
+  return inList
 }

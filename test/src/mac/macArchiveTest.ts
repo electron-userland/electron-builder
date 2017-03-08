@@ -20,7 +20,6 @@ it("pkg", createMacTargetTest(["pkg"]))
 test.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),
 }, {
-  useTempDir: true,
   signed: false,
   projectDirCreated: async (projectDir) => {
     await symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))

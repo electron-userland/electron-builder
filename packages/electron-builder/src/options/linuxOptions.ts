@@ -1,3 +1,4 @@
+import { TargetConfigType } from "electron-builder-core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 /**
@@ -26,7 +27,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
 
    electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
    */
-  readonly target?: Array<string> | null
+  readonly target?: TargetConfigType
 
   /**
    The maintainer. Defaults to [author](#AppMetadata-author).

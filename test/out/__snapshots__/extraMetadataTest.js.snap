@@ -2,7 +2,19 @@
 
 exports[`extra metadata - override icon 1`] = `"Cannot find specified resource \\"dev.icns\\""`;
 
+exports[`extra metadata - two 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`extra metadata 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`extra metadata 2`] = `
 Object {
   "author": "Foo Bar <foo@example.com>",
   "description": "Test Application (test quite \\" #378)",

@@ -1,14 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, archFromString, Platform } from "electron-builder-core"
+import { Arch, archFromString, DIR_TARGET, Platform } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { isEmptyOrSpaces } from "electron-builder-util"
+import { addValue, isEmptyOrSpaces } from "electron-builder-util"
 import { warn } from "electron-builder-util/out/log"
 import { executeFinally } from "electron-builder-util/out/promise"
 import { PublishOptions } from "electron-publish"
 import { normalizePlatforms, Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
-import { DIR_TARGET } from "./targets/targetFactory"
 
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
@@ -31,16 +30,6 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   project?: string
 }
 
-function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {
-  const list = map.get(key)
-  if (list == null) {
-    map.set(key, [value])
-  }
-  else {
-    list.push(value)
-  }
-}
-
 export function normalizeOptions(args: CliOptions): BuildOptions {
   if (args.targets != null) {
     return args
@@ -49,14 +38,11 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   let targets = new Map<Platform, Map<Arch, Array<string>>>()
 
   function processTargets(platform: Platform, types: Array<string>) {
-    if (args.platform != null) {
-      throw new Error(`--platform cannot be used if --${platform.buildConfigurationKey} is passed`)
-    }
-    if (args.arch != null) {
-      throw new Error(`--arch cannot be used if --${platform.buildConfigurationKey} is passed`)
-    }
+    function commonArch(currentIfNotSpecified: boolean): Array<Arch> {
+      if (platform === Platform.MAC) {
+        return args.x64 || currentIfNotSpecified ? [Arch.x64] : []
+      }
 
-    function commonArch(): Array<Arch> {
       const result = Array<Arch>()
       if (args.x64) {
         result.push(Arch.x64)
@@ -68,7 +54,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
         result.push(Arch.ia32)
       }
 
-      return result.length === 0 ? [archFromString(process.arch)] : result
+      return result.length === 0 && currentIfNotSpecified ? [archFromString(process.arch)] : result
+    }
+
+    if (args.platform != null) {
+      throw new Error(`--platform cannot be used if --${platform.buildConfigurationKey} is passed`)
+    }
+    if (args.arch != null) {
+      throw new Error(`--arch cannot be used if --${platform.buildConfigurationKey} is passed`)
     }
 
     let archToType = targets.get(platform)
@@ -79,32 +72,20 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
 
     if (types.length === 0) {
       const defaultTargetValue = args.dir ? [DIR_TARGET] : []
-      if (platform === Platform.MAC) {
-        archToType.set(Arch.x64, defaultTargetValue)
-      }
-      else {
-        for (const arch of commonArch()) {
-          archToType.set(arch, defaultTargetValue)
-        }
+      for (const arch of commonArch(args.dir === true)) {
+        archToType.set(arch, defaultTargetValue)
       }
       return
     }
 
     for (const type of types) {
-      let arch: string
-      if (platform === Platform.MAC) {
-        arch = "x64"
-        addValue(archToType, Arch.x64, type)
+      const suffixPos = type.lastIndexOf(":")
+      if (suffixPos > 0) {
+        addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
       }
       else {
-        const suffixPos = type.lastIndexOf(":")
-        if (suffixPos > 0) {
-          addValue(archToType, archFromString(type.substring(suffixPos + 1)), type.substring(0, suffixPos))
-        }
-        else {
-          for (const arch of commonArch()) {
-            addValue(archToType, arch, type)
-          }
+        for (const arch of commonArch(true)) {
+          addValue(archToType, arch, type)
         }
       }
     }

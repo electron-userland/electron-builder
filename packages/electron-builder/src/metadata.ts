@@ -1,6 +1,6 @@
-import { Arch, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, Platform, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
 import { AppXOptions, NsisOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
@@ -143,13 +143,20 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
 
   readonly win?: WinBuildOptions  | null
   readonly nsis?: NsisOptions  | null
+  readonly portable?: NsisOptions  | null
   readonly pkg?: PkgOptions  | null
-  readonly squirrelWindows?: SquirrelWindowsOptions  | null
   readonly appx?: AppXOptions  | null
+  readonly squirrelWindows?: SquirrelWindowsOptions  | null
 
   readonly linux?: LinuxBuildOptions | null
   readonly deb?: DebOptions | null
   readonly snap?: SnapOptions | null
+  readonly appimage?: AppImageOptions | null
+  readonly pacman?: LinuxBuildOptions | null
+  readonly rpm?: LinuxBuildOptions | null
+  readonly freebsd?: LinuxBuildOptions | null
+  readonly p5p?: LinuxBuildOptions | null
+  readonly apk?: LinuxBuildOptions | null
 
   /**
    The compression level, one of `store`, `normal`, `maximum` (default: `normal`). If you want to rapidly test build, `store` can reduce build time significantly.
@@ -336,7 +343,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   readonly asar?: AsarOptions | boolean | null
 
-  readonly target?: Array<string> | string | null
+  readonly target?: Array<string | TargetConfig> | string | TargetConfig | null
 
   readonly icon?: string | null
 

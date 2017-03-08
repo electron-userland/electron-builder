@@ -3,19 +3,21 @@
 exports[`electronDist 1`] = `"ENOENT: no such file or directory, scandir '<path>/Electron.app'"`;
 
 exports[`one-package 1`] = `
-Array [
-  Object {
-    "file": "latest-mac.json",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0-mac.zip",
-    "safeArtifactName": "TestApp-1.1.0-mac.zip",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+    Object {
+      "file": "latest-mac.json",
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
 `;
 
 exports[`one-package 2`] = `
@@ -79,17 +81,19 @@ Object {
 `;
 
 exports[`two-package 1`] = `
-Array [
-  Object {
-    "file": "latest-mac.json",
-  },
-  Object {
-    "file": "TestApp-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-  Object {
-    "file": "TestApp-1.1.0-mac.zip",
-    "safeArtifactName": "TestApp-1.1.0-mac.zip",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "TestApp-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+    Object {
+      "file": "latest-mac.json",
+    },
+    Object {
+      "file": "TestApp-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
 `;

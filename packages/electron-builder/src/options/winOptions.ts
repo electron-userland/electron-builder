@@ -1,3 +1,4 @@
+import { TargetConfigType } from "electron-builder-core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 /**
@@ -11,7 +12,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 
    To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
   */
-  readonly target?: Array<string> | null
+  readonly target?: TargetConfigType
 
   /**
    Array of signing algorithms used. Defaults to `['sha1', 'sha256']`

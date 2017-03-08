@@ -69,7 +69,7 @@ export default class AppImageTarget extends Target {
     }
 
     args.push("-chown_r", "0", "/", "--")
-    args.push("-zisofs", `level=${packager.config.compression === "store" ? "0" : "9"}:block_size=128k:by_magic=off`)
+    args.push("-zisofs", `level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || (packager.config.compression === "store" ? "0" : "9")}:block_size=128k:by_magic=off`)
     args.push("set_filter_r", "--zisofs", "/")
 
     if (this.packager.packagerOptions.effectiveOptionComputed != null && await this.packager.packagerOptions.effectiveOptionComputed([args, desktopFile])) {

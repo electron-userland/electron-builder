@@ -1,10 +1,10 @@
+import { Arch, getArchSuffix, Target } from "electron-builder-core"
+import { getBinFromBintray } from "electron-builder-util/out/binDownload"
+import { log, warn } from "electron-builder-util/out/log"
+import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
 import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
-import { warn, log } from "electron-builder-util/out/log"
-import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
-import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
-import { Target, Arch, getArchSuffix } from "electron-builder-core"
 
 const SW_VERSION = "1.5.2.0"
 //noinspection SpellCheckingInspection
@@ -75,7 +75,7 @@ export default class SquirrelWindowsTarget extends Target {
       iconUrl: iconUrl,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: packager.config.compression === "store" ? 0 : 9,
+      packageCompressionLevel: parseInt(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL) || (packager.config.compression === "store" ? 0 : 9),
       vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, this.options)
 

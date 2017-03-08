@@ -7,7 +7,7 @@ import { AfterPackContext, Config, Metadata } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 
 export interface PackagerOptions {
-  targets?: Map<Platform, Map<Arch, string[]>>
+  targets?: Map<Platform, Map<Arch, Array<string>>>
 
   projectDir?: string | null
 

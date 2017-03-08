@@ -1,9 +1,9 @@
-import { spawn, debug7zArgs } from "electron-builder-util"
-import { CompressionLevel } from "../metadata"
-import * as path from "path"
-import { unlink } from "fs-extra-p"
 import { path7za } from "7zip-bin"
+import { debug7zArgs, spawn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
+import { unlink } from "fs-extra-p"
+import * as path from "path"
+import { CompressionLevel } from "../metadata"
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
@@ -22,7 +22,11 @@ export async function tar(compression: CompressionLevel | n, format: string, out
   // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
   const info = extToCompressionDescriptor[format]
   let tarEnv = process.env
-  if (compression != null && compression !== "normal") {
+  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+    tarEnv = Object.assign({}, process.env)
+    tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
+  }
+  else if (compression != null && compression !== "normal") {
     tarEnv = Object.assign({}, process.env)
     tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
   }
@@ -40,25 +44,27 @@ export async function tar(compression: CompressionLevel | n, format: string, out
 }
 
 export async function archive(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<string> {
-  const storeOnly = compression === "store"
+  let storeOnly = compression === "store"
   const args = debug7zArgs("a")
   if (format === "7z" || format.endsWith(".7z")) {
-    if (!storeOnly) {
+    if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+      storeOnly = false
+      args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    }
+    else if (!storeOnly) {
       // 7z is very fast, so, use ultra compression
       args.push("-mx=9", "-mfb=64", "-md=64m", "-ms=on")
     }
   }
-  else if (format === "zip") {
-    if (compression === "maximum") {
-      // http://superuser.com/a/742034
-      //noinspection SpellCheckingInspection
-      args.push("-mfb=258", "-mpass=15")
-    }
-    else if (!storeOnly) {
-      args.push("-mpass=7")
-    }
+  else if (format === "zip" && compression === "maximum") {
+    // http://superuser.com/a/742034
+    args.push("-mfb=258", "-mpass=15")
   }
-  else if (compression === "maximum") {
+  else if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+    storeOnly = false
+    args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+  }
+  else if (!storeOnly) {
     args.push("-mx=9")
   }
 

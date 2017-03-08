@@ -22,10 +22,6 @@
     "7zip-bin-mac" "^1.0.1"
     "7zip-bin-win" "^2.0.2"
 
-"@types/doctrine@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@types/doctrine/-/doctrine-0.0.3.tgz#e892d293c92c9c1d3f9af72c15a554fbc7e0895a"
-
 "@types/electron@^1.4.33":
   version "1.4.33"
   resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.33.tgz#10b82bb065115e19a5ef0848e142cf5949435979"
@@ -44,9 +40,9 @@
   version "3.5.29"
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.29.tgz#29f4dd9314fbccb080d8bd84b9c23811ec5090c2"
 
-"@types/node-forge@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.5.tgz#4ed3ea29b20ccca4e7cd778de0e039b01ddb3239"
+"@types/node-forge@^0.6.6":
+  version "0.6.6"
+  resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.6.tgz#e9707d36cc4b50bd7147b9747323d461a1089613"
 
 "@types/node@*":
   version "7.0.5"
@@ -240,9 +236,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.22.0:
-  version "2.22.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.22.0.tgz#f7b67d5ece7e67c36f9d3d55e137872572e5c998"
+aws-sdk@^2.24.0:
+  version "2.24.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.24.0.tgz#9d811e639b9aa6422e10d215523a2b9f899c0ea8"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -1662,9 +1658,9 @@ jest-jasmine2@^19.0.2:
     jest-message-util "^19.0.0"
     jest-snapshot "^19.0.2"
 
-jest-junit@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/jest-junit/-/jest-junit-1.2.0.tgz#5894bab45a5a13a7e1380cc7c63e7aae260064f4"
+jest-junit@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/jest-junit/-/jest-junit-1.3.0.tgz#e0c792a44f0adbfaa912bda586d5542a0b562fb9"
   dependencies:
     mkdirp "^0.5.1"
     xml "^1.0.1"
@@ -2000,9 +1996,9 @@ map-obj@^1.0.0, map-obj@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/map-obj/-/map-obj-1.0.1.tgz#d933ceb9205d82bdcf4886f6742bdc2b4dea146d"
 
-markdown-it@^8.3.0:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.3.0.tgz#3d7a727a100cd24e276419c66da20ffbe28c3602"
+markdown-it@^8.3.1:
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-8.3.1.tgz#2f4b622948ccdc193d66f3ca2d43125ac4ac7323"
   dependencies:
     argparse "^1.0.7"
     entities "~1.1.1"
@@ -2136,9 +2132,9 @@ nopt@~1.0.10:
   dependencies:
     abbrev "1"
 
-normalize-package-data@^2.3.2, normalize-package-data@^2.3.4, normalize-package-data@^2.3.5:
-  version "2.3.5"
-  resolved "https://registry.yarnpkg.com/normalize-package-data/-/normalize-package-data-2.3.5.tgz#8d924f142960e1777e7ffe170543631cc7cb02df"
+normalize-package-data@^2.3.2, normalize-package-data@^2.3.4, normalize-package-data@^2.3.6:
+  version "2.3.6"
+  resolved "https://registry.yarnpkg.com/normalize-package-data/-/normalize-package-data-2.3.6.tgz#498fa420c96401f787402ba21e600def9f981fff"
   dependencies:
     hosted-git-info "^2.1.4"
     is-builtin-module "^1.0.0"
@@ -2407,8 +2403,8 @@ q@^1.1.2:
   resolved "https://registry.yarnpkg.com/q/-/q-1.4.1.tgz#55705bcd93c5f3673530c2c2cbc0c2b3addc286e"
 
 qs@~6.3.0:
-  version "6.3.1"
-  resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.1.tgz#918c0b3bcd36679772baf135b1acb4c1651ed79d"
+  version "6.3.2"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.2.tgz#e75bd5f6e268122a2a0e0bda630b2550c166502c"
 
 querystring@0.2.0:
   version "0.2.0"
@@ -2884,17 +2880,25 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-1.4.4.tgz#af116d2ba3f57c5f5342ba54d951baf1313ac748"
+ts-babel@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-2.0.0.tgz#1681e8d70d242adf3d705d432ddd3459f1564c26"
   dependencies:
-    "@types/doctrine" "^0.0.3"
     babel-core "^6.23.1"
+    bluebird-lst "^1.0.1"
+    chalk "^1.1.3"
+    fs-extra-p "^4.0.2"
+    markdown-it "^8.3.1"
+    source-map-support "^0.4.11"
+
+ts-jsdoc@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.0.0.tgz#455a9d3fc7e20974669ce9e2b12c64703b4e9a7b"
+  dependencies:
     bluebird-lst "^1.0.1"
     chalk "^1.1.3"
     doctrine "^2.0.0"
     fs-extra-p "^4.0.2"
-    markdown-it "^8.3.0"
     source-map-support "^0.4.11"
 
 tslint@^4.5.1:
@@ -2912,8 +2916,8 @@ tslint@^4.5.1:
     update-notifier "^2.0.0"
 
 tsutils@^1.1.0:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-1.2.1.tgz#74101a75dbf435800614ccafa4cd89a8d41ea03e"
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-1.2.2.tgz#7e165c601367b9f89200b97ff47d9e38d1a6e4c8"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
@@ -2957,8 +2961,8 @@ uc.micro@^1.0.1, uc.micro@^1.0.3:
   resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.3.tgz#7ed50d5e0f9a9fb0a573379259f2a77458d50192"
 
 uglify-js@^2.6:
-  version "2.8.7"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.7.tgz#e0391911507b6d2e05697a528f1686e90a11b160"
+  version "2.8.8"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.8.tgz#1a5cd145eb528b606fa2b86e578885272b597cd7"
   dependencies:
     source-map "~0.5.1"
     uglify-to-browserify "~1.0.0"

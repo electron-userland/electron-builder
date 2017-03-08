@@ -1,23 +1,27 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`mas 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW-1.1.0.pkg",
-    "safeArtifactName": "TestApp-1.1.0.pkg",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
 `;
 
 exports[`mas and 7z 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW-1.1.0.pkg",
-    "safeArtifactName": "TestApp-1.1.0.pkg",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0-mac.7z",
-    "safeArtifactName": "TestApp-1.1.0-mac.7z",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0-mac.7z",
+      "safeArtifactName": "TestApp-1.1.0-mac.7z",
+    },
+    Object {
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
 `;

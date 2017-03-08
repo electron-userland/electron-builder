@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Platform, Target } from "electron-builder-core"
+import { DIR_TARGET, Platform, Target } from "electron-builder-core"
 import { asArray, exec, Lazy, use } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { close, open, read, readFile, rename } from "fs-extra-p"
@@ -11,7 +11,7 @@ import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
 import NsisTarget from "./targets/nsis"
-import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
+import { createCommonTarget } from "./targets/targetFactory"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {

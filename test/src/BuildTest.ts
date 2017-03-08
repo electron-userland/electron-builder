@@ -1,14 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, BuildOptions, DIR_TARGET, Platform } from "electron-builder"
+import { Arch, BuildOptions, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readAsarJson } from "electron-builder/out/asar"
 import { normalizeOptions } from "electron-builder/out/builder"
 import { createYargs } from "electron-builder/out/cli/cliOptions"
 import { checkWineVersion } from "electron-builder/out/packager"
 import { move, outputJson } from "fs-extra-p"
-import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./helpers/config"
-import { allPlatforms, app, appTwo, appTwoThrows, assertPack, getPossiblePlatforms, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson } from "./helpers/packTester"
 
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
@@ -35,7 +34,7 @@ test("cli", async () => {
 
   expect(parse("--dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET)}))
   expect(parse("--mac --dir")).toMatchSnapshot()
-  expect(parse("--ia32 --dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.ia32)}))
+  expect(parse("--x64 --dir")).toMatchObject(expected({targets: Platform.current().createTarget(DIR_TARGET, Arch.x64)}))
   expect(parse("--platform linux --dir")).toMatchSnapshot()
 
   expect(parse("--arch x64")).toMatchObject(expected({targets: Platform.current().createTarget(null, Arch.x64)}))
@@ -65,7 +64,9 @@ test("build in the app package.json", appTwoThrows(linuxDirTarget, {
   }, true)
 }))
 
-test("relative index", appTwo(allPlatforms(false), {
+test("relative index", appTwo({
+  targets: linuxDirTarget,
+}, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
   }, true)
@@ -109,16 +110,15 @@ test.ifDevOrLinuxCi("electron version from build", app({
 }))
 
 test("www as default dir", appTwo({
-  targets: Platform.current().createTarget(DIR_TARGET),
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   projectDirCreated: projectDir => move(path.join(projectDir, "app"), path.join(projectDir, "www"))
 }))
 
-test("afterPack", () => {
-  const targets = isCi ? Platform.current().createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+test.ifLinuxOrDevMac("afterPack", () => {
   let called = 0
   return assertPack("test-app-one", {
-    targets: targets,
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
     config: {
       afterPack: () => {
         called++
@@ -127,26 +127,24 @@ test("afterPack", () => {
     }
   }, {
     packed: async () => {
-      expect(called).toEqual(targets.size)
+      expect(called).toEqual(2)
     }
   })
 })
 
-test("beforeBuild", () => {
-  const targets = isCi ? Platform.current().createTarget(DIR_TARGET) : getPossiblePlatforms(DIR_TARGET)
+test.ifLinuxOrDevMac("beforeBuild", () => {
   let called = 0
   return assertPack("test-app-one", {
-    targets: targets,
+    targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET),
     config: {
       npmRebuild: true,
-      beforeBuild: () => {
+      beforeBuild: async () => {
         called++
-        return BluebirdPromise.resolve()
       }
     }
   }, {
     packed: async () => {
-      expect(called).toEqual(targets.size)
+      expect(called).toEqual(2)
     }
   })
 })

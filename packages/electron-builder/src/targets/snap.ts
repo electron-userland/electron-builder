@@ -1,5 +1,5 @@
 import { Arch, Target, toLinuxArchString } from "electron-builder-core"
-import { spawn } from "electron-builder-util"
+import { replaceDefault, spawn } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { copy, emptyDir, outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -128,21 +128,4 @@ export default class SnapTarget extends Target {
     }
     packager.dispatchArtifactCreated(resultFile, this)
   }
-}
-
-function replaceDefault(inList: Array<string> | n, defaultList: Array<string>): Array<string> {
-  if (inList == null) {
-    return defaultList
-  }
-
-  const index = inList.indexOf("default")
-  if (index >= 0) {
-    let list = inList.slice(0, index)
-    list.push(...defaultList)
-    if (index != (inList.length - 1)) {
-      list.push(...inList.slice(index + 1))
-    }
-    inList = list
-  }
-  return inList
 }

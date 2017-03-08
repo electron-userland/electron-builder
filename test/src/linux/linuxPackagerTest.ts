@@ -32,7 +32,9 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
 }))
 
 // test prepacked asar also https://github.com/electron-userland/electron-builder/issues/1102
-test.ifNotWindows("icons from ICNS", app({targets: Platform.LINUX.createTarget()}, {
+test.ifNotWindows("icons from ICNS", app({
+  targets: Platform.LINUX.createTarget()
+}, {
   projectDirCreated: it => remove(path.join(it, "build", "icons")),
   packed: async context => {
     const projectDir = context.getResources(Platform.LINUX)

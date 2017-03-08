@@ -2,8 +2,24 @@ export enum Arch {
   ia32, x64, armv7l
 }
 
+export type ArchType = "x64" | "ia32" | "armv7l"
+
 export function getArchSuffix(arch: Arch): string {
   return arch === Arch.x64 ? "" : `-${Arch[arch]}`
+}
+
+export type TargetConfigType = Array<string | TargetConfig> | string | TargetConfig | null
+
+export interface TargetConfig {
+  /**
+   * The target name. e.g. `snap`.
+   */
+  readonly target: string
+
+  /**
+   * The arch or list of archs.
+   */
+  readonly arch?: Array<"x64" | "ia32" | "armv7l"> | string
 }
 
 export function toLinuxArchString(arch: Arch) {
@@ -41,6 +57,10 @@ export class Platform {
   }
 
   createTarget(type?: string | Array<string> | null, ...archs: Array<Arch>): Map<Platform, Map<Arch, Array<string>>> {
+    if (type == null && (archs == null || archs.length === 0)) {
+      return new Map([[this, new Map()]])
+    }
+
     const archToType = new Map()
     if (this === Platform.MAC) {
       archs = [Arch.x64]
@@ -98,3 +118,6 @@ export interface TargetSpecificOptions {
 
   readonly forceCodeSigning?: boolean
 }
+
+export const DEFAULT_TARGET = "default"
+export const DIR_TARGET = "dir"

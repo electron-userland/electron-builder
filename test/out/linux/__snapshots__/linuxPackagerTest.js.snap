@@ -14,21 +14,23 @@ Categories=Development;
 `;
 
 exports[`AppImage 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0-x86_64.AppImage",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+    },
+  ],
+}
 `;
 
 exports[`icons from ICNS 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0-x86_64.AppImage",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+    },
+  ],
+}
 `;
 
 exports[`no-author-email 1`] = `

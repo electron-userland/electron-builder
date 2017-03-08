@@ -256,10 +256,11 @@ Categories=Development;
 `;
 
 exports[`snap 1`] = `
-Array [
-  Object {
-    "file": "sep_1.1.0_amd64.snap",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "sep_1.1.0_amd64.snap",
+    },
+  ],
+}
 `;

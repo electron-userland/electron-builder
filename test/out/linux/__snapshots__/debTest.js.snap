@@ -1,12 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`arm deb 1`] = `
-Array [
-  Object {
-    "file": "TestApp_1.1.0_armv7l.deb",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp_1.1.0_armv7l.deb",
+    },
+  ],
+}
 `;
 
 exports[`custom depends 1`] = `
@@ -22,10 +23,11 @@ Categories=Development;
 `;
 
 exports[`deb 1`] = `
-Array [
-  Object {
-    "file": "TestApp_1.1.0_amd64.deb",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp_1.1.0_amd64.deb",
+    },
+  ],
+}
 `;

@@ -1,39 +1,39 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`rpm and tar.gz 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0.rpm",
-    "safeArtifactName": undefined,
-  },
-  Object {
-    "file": "TestApp-1.1.0.tar.gz",
-    "safeArtifactName": "TestApp-1.1.0.tar.gz",
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0.rpm",
+    },
+    Object {
+      "file": "TestApp-1.1.0.tar.gz",
+      "safeArtifactName": "TestApp-1.1.0.tar.gz",
+    },
+  ],
+}
 `;
 
 exports[`targets 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0.7z",
-    "safeArtifactName": "TestApp-1.1.0.7z",
-  },
-  Object {
-    "file": "TestApp-1.1.0.freebsd",
-    "safeArtifactName": undefined,
-  },
-  Object {
-    "file": "TestApp-1.1.0.pacman",
-    "safeArtifactName": undefined,
-  },
-  Object {
-    "file": "TestApp-1.1.0.sh",
-    "safeArtifactName": undefined,
-  },
-  Object {
-    "file": "TestApp-1.1.0.zip",
-    "safeArtifactName": "TestApp-1.1.0.zip",
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0.7z",
+      "safeArtifactName": "TestApp-1.1.0.7z",
+    },
+    Object {
+      "file": "TestApp-1.1.0.freebsd",
+    },
+    Object {
+      "file": "TestApp-1.1.0.pacman",
+    },
+    Object {
+      "file": "TestApp-1.1.0.sh",
+    },
+    Object {
+      "file": "TestApp-1.1.0.zip",
+      "safeArtifactName": "TestApp-1.1.0.zip",
+    },
+  ],
+}
 `;

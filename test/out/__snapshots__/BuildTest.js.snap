@@ -1,5 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`afterPack 1`] = `
+Object {
+  "linux": Array [],
+  "mac": Array [],
+}
+`;
+
+exports[`beforeBuild 1`] = `
+Object {
+  "linux": Array [],
+  "mac": Array [],
+}
+`;
+
 exports[`build in the app package.json 1`] = `"'build' in the application package.json (<path>/package.json) is not supported since 3.0 anymore. Please move 'build' into the development package.json (<path>/package.json)"`;
 
 exports[`cli 1`] = `
@@ -83,9 +97,7 @@ Object {
       "buildConfigurationKey": "linux",
       "name": "linux",
       "nodeName": "linux",
-    } => Map {
-      1 => Array [],
-    },
+    } => Map {},
   },
 }
 `;
@@ -104,9 +116,7 @@ Object {
       "buildConfigurationKey": "win",
       "name": "windows",
       "nodeName": "win32",
-    } => Map {
-      1 => Array [],
-    },
+    } => Map {},
   },
 }
 `;
@@ -125,23 +135,17 @@ Object {
       "buildConfigurationKey": "mac",
       "name": "mac",
       "nodeName": "darwin",
-    } => Map {
-      1 => Array [],
-    },
+    } => Map {},
     Platform {
       "buildConfigurationKey": "linux",
       "name": "linux",
       "nodeName": "linux",
-    } => Map {
-      1 => Array [],
-    },
+    } => Map {},
     Platform {
       "buildConfigurationKey": "win",
       "name": "windows",
       "nodeName": "win32",
-    } => Map {
-      1 => Array [],
-    },
+    } => Map {},
   },
 }
 `;
@@ -235,5 +239,41 @@ Object {
       ],
     },
   },
+}
+`;
+
+exports[`electron version from build 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`electron version from electron dependency 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`electron version from electron-prebuilt dependency 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`relative index 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`smart unpack 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`www as default dir 1`] = `
+Object {
+  "linux": Array [],
 }
 `;

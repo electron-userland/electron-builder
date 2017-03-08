@@ -23,7 +23,6 @@ test("one-click", app({
     },
   }
 }, {
-  useTempDir: true,
   signed: true,
   packed: async (context) => {
     await doTest(context.outDir, true)

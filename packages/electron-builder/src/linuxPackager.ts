@@ -1,4 +1,4 @@
-import { Platform, Target } from "electron-builder-core"
+import { DIR_TARGET, Platform, Target } from "electron-builder-core"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -9,7 +9,7 @@ import AppImageTarget from "./targets/appImage"
 import FpmTarget from "./targets/fpm"
 import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
-import { createCommonTarget, DIR_TARGET } from "./targets/targetFactory"
+import { createCommonTarget } from "./targets/targetFactory"
 
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   readonly executableName: string

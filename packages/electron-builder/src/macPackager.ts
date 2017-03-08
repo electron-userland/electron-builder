@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, Platform, Target } from "electron-builder-core"
+import { Arch, DIR_TARGET, Platform, Target } from "electron-builder-core"
 import { exec } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, task, warn } from "electron-builder-util/out/log"
@@ -13,7 +13,7 @@ import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
-import { createCommonTarget, DIR_TARGET, NoOpTarget } from "./targets/targetFactory"
+import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>

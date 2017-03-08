@@ -1,12 +1,12 @@
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, Config, createTargets, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
-import { exec, getTempName, spawn } from "electron-builder-util"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { addValue, exec, getTempName, spawn } from "electron-builder-util"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
+import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -76,28 +76,24 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
-  const useTempDir = process.env.TEST_APP_TMP_DIR != null || (checkOptions.useTempDir !== false && (checkOptions.useTempDir || projectDirCreated != null || packagerOptions.config != null || checkOptions.npmInstallBefore))
-
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   let dirToDelete: string | null = null
-  if (useTempDir) {
-    // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-    const dir = customTmpDir == null ? getTempFile() : path.resolve(customTmpDir)
-    if (customTmpDir == null) {
-      dirToDelete = dir
-    }
-    else {
-      log(`Custom temp dir used: ${customTmpDir}`)
-    }
-    await emptyDir(dir)
-    await copyDir(projectDir, dir, it => {
-      const basename = path.basename(it)
-      return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
-    }, it => path.basename(it) != "package.json")
-    projectDir = dir
+  // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
+  const dir = customTmpDir == null ? getTempFile() : path.resolve(customTmpDir)
+  if (customTmpDir == null) {
+    dirToDelete = dir
   }
+  else {
+    log(`Custom temp dir used: ${customTmpDir}`)
+  }
+  await emptyDir(dir)
+  await copyDir(projectDir, dir, it => {
+    const basename = path.basename(it)
+    return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
+  }, it => path.basename(it) != "package.json")
+  projectDir = dir
 
   try {
     if (projectDirCreated != null) {
@@ -109,18 +105,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       }
     }
 
-    // never output to test fixture app
-    if (!useTempDir) {
-      dirToDelete = path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
-      const config = <Config>packagerOptions.config
-      if (config != null && config.directories != null) {
-        throw new Error("unsupported")
-      }
-      packagerOptions = deepAssign({}, packagerOptions, {config: {directories: {output: dirToDelete}}})
-    }
-
-    const outDir = useTempDir ? path.join(projectDir, OUT_DIR_NAME) : dirToDelete
-    const packager = await packAndCheck(outDir, Object.assign({
+    const {packager, outDir} = await packAndCheck(Object.assign({
       projectDir: projectDir,
     }, packagerOptions), checkOptions)
 
@@ -160,7 +145,7 @@ export function getFixtureDir() {
   return path.join(__dirname, "..", "..", "fixtures")
 }
 
-async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions): Promise<Packager> {
+async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
   const publishManager = new PublishManager(packager, {publish: "never"}, cancellationToken)
@@ -172,46 +157,52 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
     }
 
     assertThat(event.file).isAbsolute()
-    let list = artifacts.get(event.packager.platform)
-    if (list == null) {
-      list = []
-      artifacts.set(event.packager.platform, list)
-    }
-    list.push(event)
+    addValue(artifacts, event.packager.platform, event)
   })
 
-  const platformToTarget = await packager.build()
+  const {outDir, platformToTargets} = await packager.build()
   await publishManager.awaitTasks()
 
   if (packagerOptions.platformPackagerFactory != null || packagerOptions.effectiveOptionComputed != null) {
-    return packager
+    return {packager, outDir}
   }
 
+  function sortKey(a: ArtifactCreated) {
+    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.data.toString("hex") : path.basename(a.file)}`
+  }
+
+  const objectToCompare: any = {}
+  for (const platform of packagerOptions.targets.keys()) {
+    objectToCompare[platform.buildConfigurationKey] = (artifacts.get(platform) || [])
+      .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
+      .map(it => {
+        const result: any = Object.assign({}, it)
+        if (result.file != null) {
+          result.file = path.basename(result.file)
+        }
+
+        // reduce snapshot - avoid noise
+        if (result.safeArtifactName == null) {
+          delete result.safeArtifactName
+        }
+
+        delete result.packager
+        delete result.target
+        delete result.publishConfig
+        return result
+      })
+  }
+
+  expect(objectToCompare).toMatchSnapshot()
+
   c: for (const [platform, archToType] of packagerOptions.targets) {
-    for (const [arch, targets] of archToType) {
+    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, (<any>packagerOptions)[platform.buildConfigurationKey] || {}, platform)) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
 
-      const nameToTarget = platformToTarget.get(platform)
-      const platformArtifacts = artifacts.get(platform)
-
-      const emptyTarget = {name: ""}
-      expect(platformArtifacts
-        .sort((a, b) => (a.target || emptyTarget).name.localeCompare((b.target || emptyTarget).name))
-        .map(it => {
-          const result: any = Object.assign({}, it)
-          if (result.file != null) {
-            result.file = path.basename(result.file)
-          }
-          delete result.packager
-          delete result.target
-          delete result.publishConfig
-          return result
-        })).toMatchSnapshot()
-
+      const nameToTarget = platformToTargets.get(platform)
       if (platform === Platform.MAC) {
-        const outDir = path.resolve(packager.projectDir, path.join((packager.config.directories == null ? null : packager.config.directories!.output) || "dist"))
         const packedAppDir = path.join(outDir, nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       }
@@ -219,12 +210,12 @@ async function packAndCheck(outDir: string, packagerOptions: PackagerOptions, ch
         await checkLinuxResult(outDir, packager, checkOptions, arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, platformArtifacts, nameToTarget)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(platform), nameToTarget)
       }
     }
   }
 
-  return packager
+  return {packager, outDir}
 }
 
 async function checkLinuxResult(outDir: string, packager: Packager, checkOptions: AssertPackOptions, arch: Arch, nameToTarget: Map<String, Target>) {
@@ -413,18 +404,6 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
   return packagerOptions
 }
 
-export function getPossiblePlatforms(type?: string): Map<Platform, Map<Arch, string[]>> {
-  const platforms = [Platform.fromString(process.platform)]
-  if (process.platform === Platform.MAC.nodeName) {
-    platforms.push(Platform.LINUX)
-    platforms.push(Platform.WINDOWS)
-  }
-  else if (process.platform === Platform.LINUX.nodeName) {
-    platforms.push(Platform.WINDOWS)
-  }
-  return createTargets(platforms, type)
-}
-
 export function createMacTargetTest(target: Array<MacOsTargetName>) {
   return app({
     targets: Platform.MAC.createTarget(),
@@ -437,7 +416,6 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
       }
     }
   }, {
-    useTempDir: true,
     signed: target.includes("mas") || target.includes("pkg"),
     packed: async (context) => {
       if (!target.includes("tar.gz")) {
@@ -450,12 +428,6 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
       await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
     }
   })
-}
-
-export function allPlatforms(dist = true): PackagerOptions {
-  return {
-    targets: getPossiblePlatforms(dist ? null : DIR_TARGET),
-  }
 }
 
 export function convertUpdateInfo(info: any) {

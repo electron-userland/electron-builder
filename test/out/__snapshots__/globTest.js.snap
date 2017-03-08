@@ -1,6 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`failed peer dep 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`link 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`link 2`] = `
 Object {
   "link": "index.js",
 }
@@ -8,7 +20,25 @@ Object {
 
 exports[`outside link 1`] = `
 Object {
+  "linux": Array [],
+}
+`;
+
+exports[`outside link 2`] = `
+Object {
   "offset": "4876",
   "size": 4,
+}
+`;
+
+exports[`unpackDir 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`unpackDir one 1`] = `
+Object {
+  "linux": Array [],
 }
 `;

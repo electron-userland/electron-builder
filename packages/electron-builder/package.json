@@ -63,7 +63,7 @@
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.8.2",
     "minimatch": "^3.0.3",
-    "normalize-package-data": "^2.3.5",
+    "normalize-package-data": "^2.3.6",
     "parse-color": "^1.0.0",
     "plist": "^2.0.1",
     "sanitize-filename": "^1.6.1",

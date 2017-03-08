@@ -1,15 +1,20 @@
 import BluebirdPromise from "bluebird-lst"
+import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { move } from "fs-extra-p"
 import * as path from "path"
-import { allPlatforms, appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
+import { appTwoThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 
-test("invalid main in the app package.json", appTwoThrows(allPlatforms(false), {
+const packagerOptions = {
+  targets: createTargets([Platform.LINUX, Platform.MAC], DIR_TARGET)
+}
+
+test.ifLinuxOrDevMac("invalid main in the app package.json", appTwoThrows(packagerOptions, {
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "main.js"
   }, true)
 }))
 
-test("invalid main in the app package.json (no asar)", appTwoThrows(allPlatforms(false), {
+test.ifLinuxOrDevMac("invalid main in the app package.json (no asar)", appTwoThrows(packagerOptions, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
@@ -22,7 +27,7 @@ test("invalid main in the app package.json (no asar)", appTwoThrows(allPlatforms
   }
 }))
 
-test("invalid main in the app package.json (custom asar)", appTwoThrows(allPlatforms(false), {
+test.ifLinuxOrDevMac("invalid main in the app package.json (custom asar)", appTwoThrows(packagerOptions, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
@@ -35,7 +40,7 @@ test("invalid main in the app package.json (custom asar)", appTwoThrows(allPlatf
   }
 }))
 
-test("main in the app package.json (no asar)", () => assertPack("test-app", allPlatforms(false), {
+test.ifLinuxOrDevMac("main in the app package.json (no asar)", () => assertPack("test-app", packagerOptions, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       move(path.join(projectDir, "app", "index.js"), path.join(projectDir, "app", "main.js")),
@@ -49,7 +54,7 @@ test("main in the app package.json (no asar)", () => assertPack("test-app", allP
   }
 }))
 
-test("main in the app package.json (custom asar)", () => assertPack("test-app", allPlatforms(false), {
+test.ifLinuxOrDevMac("main in the app package.json (custom asar)", () => assertPack("test-app", packagerOptions, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {

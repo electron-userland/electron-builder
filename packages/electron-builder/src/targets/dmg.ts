@@ -166,7 +166,7 @@ export class DmgTarget extends Target {
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     //noinspection SpellCheckingInspection
-    await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-ov", "-format", specification.format!, "-imagekey", "zlib-level=9", "-o", artifactPath]))
+    await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-ov", "-format", specification.format!, "-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`, "-o", artifactPath]))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
 
     this.packager.dispatchArtifactCreated(artifactPath, this, `${appInfo.name}-${appInfo.version}.dmg`)
@@ -253,7 +253,10 @@ export class DmgTarget extends Target {
     }
 
     if (specification.format == null) {
-      if (packager.config.compression === "store") {
+      if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+        specification.format = "UDZO"
+      }
+      else if (packager.config.compression === "store") {
         specification.format = "UDRO"
       }
       else {

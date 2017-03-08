@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ignore build resources 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore known ignored files 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`ignore node_modules dev dep 1`] = `
+Object {
+  "linux": Array [],
+}
+`;

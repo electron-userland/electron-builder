@@ -1,18 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`tar 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0.tar.bz2",
-    "safeArtifactName": "TestApp-1.1.0.tar.bz2",
-  },
-  Object {
-    "file": "TestApp-1.1.0.tar.lz",
-    "safeArtifactName": "TestApp-1.1.0.tar.lz",
-  },
-  Object {
-    "file": "TestApp-1.1.0.tar.xz",
-    "safeArtifactName": "TestApp-1.1.0.tar.xz",
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0.tar.bz2",
+      "safeArtifactName": "TestApp-1.1.0.tar.bz2",
+    },
+    Object {
+      "file": "TestApp-1.1.0.tar.lz",
+      "safeArtifactName": "TestApp-1.1.0.tar.lz",
+    },
+    Object {
+      "file": "TestApp-1.1.0.tar.xz",
+      "safeArtifactName": "TestApp-1.1.0.tar.xz",
+    },
+  ],
+}
 `;

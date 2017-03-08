@@ -16,21 +16,25 @@ Array [
 `;
 
 exports[`no background 1`] = `
-Array [
-  Object {
-    "file": "NoBackground-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "NoBackground-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+  ],
+}
 `;
 
 exports[`no build directory 1`] = `undefined`;
 
 exports[`unset dmg icon 1`] = `
-Array [
-  Object {
-    "file": "Test ß No Volume Icon-1.1.0.dmg",
-    "safeArtifactName": "TestApp-1.1.0.dmg",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test ß No Volume Icon-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+  ],
+}
 `;

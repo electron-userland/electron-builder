@@ -1,21 +1,36 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`custom buildResources and output dirs: linux 1`] = `
-Array [
-  Object {
-    "file": "TestApp-1.1.0-x86_64.AppImage",
-    "safeArtifactName": undefined,
-  },
-]
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+    },
+  ],
+}
+`;
+
+exports[`custom buildResources and output dirs: mac 1`] = `
+Object {
+  "mac": Array [],
+}
 `;
 
 exports[`custom buildResources and output dirs: win 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW Setup 1.1.0.exe",
-    "safeArtifactName": "TestApp-Setup-1.1.0.exe",
-  },
-]
+Object {
+  "win": Array [
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
+exports[`prepackaged 1`] = `
+Object {
+  "linux": Array [],
+}
 `;
 
 exports[`scheme validation 1`] = `
@@ -85,4 +100,18 @@ Raw validation errors: [
     \\"message\\": \\"should be null,string\\"
   }
 ]"
+`;
+
+exports[`scheme validation extraFiles 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "file": "TestApp-1.1.0-x86_64.AppImage",
+    },
+    Object {
+      "file": "TestApp-1.1.0-ia32.zip",
+      "safeArtifactName": "TestApp-1.1.0-ia32.zip",
+    },
+  ],
+}
 `;

@@ -5,8 +5,17 @@ exports[`invalid target 1`] = `
 {
   \\"mac\\": [
     {
-      \\"target[0]\\": \\"Should be equal to one of the allowed values\\",
-      \\"target\\": \\"Invalid option object\\"
+      \\"target\\": [
+        \\"Should be object\\",
+        \\"Should be equal to one of the allowed values\\",
+        \\"Should be string\\",
+        \\"Invalid option object\\"
+      ],
+      \\"target[0]\\": [
+        \\"Should be object\\",
+        \\"Should be equal to one of the allowed values\\",
+        \\"Invalid option object\\"
+      ]
     },
     \\"Invalid option object\\"
   ]
@@ -14,9 +23,55 @@ exports[`invalid target 1`] = `
 
 Raw validation errors: [
   {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".mac.target\\",
+    \\"schemaPath\\": \\"#/definitions/TargetConfig/type\\",
+    \\"params\\": {
+      \\"type\\": \\"object\\"
+    },
+    \\"message\\": \\"should be object\\"
+  },
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".mac.target[0]\\",
+    \\"schemaPath\\": \\"#/definitions/TargetConfig/type\\",
+    \\"params\\": {
+      \\"type\\": \\"object\\"
+    },
+    \\"message\\": \\"should be object\\"
+  },
+  {
     \\"keyword\\": \\"enum\\",
     \\"dataPath\\": \\".mac.target[0]\\",
-    \\"schemaPath\\": \\"#/properties/target/anyOf/0/items/enum\\",
+    \\"schemaPath\\": \\"#/properties/target/anyOf/1/items/anyOf/1/enum\\",
+    \\"params\\": {
+      \\"allowedValues\\": [
+        \\"7z\\",
+        \\"default\\",
+        \\"dir\\",
+        \\"dmg\\",
+        \\"mas\\",
+        \\"pkg\\",
+        \\"tar.bz2\\",
+        \\"tar.gz\\",
+        \\"tar.lz\\",
+        \\"tar.xz\\",
+        \\"zip\\"
+      ]
+    },
+    \\"message\\": \\"should be equal to one of the allowed values\\"
+  },
+  {
+    \\"keyword\\": \\"anyOf\\",
+    \\"dataPath\\": \\".mac.target[0]\\",
+    \\"schemaPath\\": \\"#/properties/target/anyOf/1/items/anyOf\\",
+    \\"params\\": {},
+    \\"message\\": \\"should match some schema in anyOf\\"
+  },
+  {
+    \\"keyword\\": \\"enum\\",
+    \\"dataPath\\": \\".mac.target\\",
+    \\"schemaPath\\": \\"#/properties/target/anyOf/2/enum\\",
     \\"params\\": {
       \\"allowedValues\\": [
         \\"7z\\",
@@ -37,7 +92,16 @@ Raw validation errors: [
   {
     \\"keyword\\": \\"type\\",
     \\"dataPath\\": \\".mac.target\\",
-    \\"schemaPath\\": \\"#/properties/target/anyOf/1/type\\",
+    \\"schemaPath\\": \\"#/properties/target/anyOf/2/type\\",
+    \\"params\\": {
+      \\"type\\": \\"string\\"
+    },
+    \\"message\\": \\"should be string\\"
+  },
+  {
+    \\"keyword\\": \\"type\\",
+    \\"dataPath\\": \\".mac.target\\",
+    \\"schemaPath\\": \\"#/properties/target/anyOf/3/type\\",
     \\"params\\": {
       \\"type\\": \\"null\\"
     },
@@ -70,33 +134,39 @@ Raw validation errors: [
 `;
 
 exports[`only zip 1`] = `
-Array [
-  Object {
-    "file": "latest-mac.json",
-  },
-  Object {
-    "file": "Test App ßW-1.1.0-mac.zip",
-    "safeArtifactName": "TestApp-1.1.0-mac.zip",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "latest-mac.json",
+    },
+    Object {
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
 `;
 
 exports[`pkg 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW-1.1.0.pkg",
-    "safeArtifactName": "TestApp-1.1.0.pkg",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
 `;
 
 exports[`pkg scripts 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW-1.1.0.pkg",
-    "safeArtifactName": "TestApp-1.1.0.pkg",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
 `;
 
 exports[`pkg scripts 2`] = `
@@ -490,10 +560,12 @@ Object {
 `;
 
 exports[`tar.gz 1`] = `
-Array [
-  Object {
-    "file": "Test App ßW-1.1.0-mac.tar.gz",
-    "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
-  },
-]
+Object {
+  "mac": Array [
+    Object {
+      "file": "Test App ßW-1.1.0-mac.tar.gz",
+      "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
+    },
+  ],
+}
 `;

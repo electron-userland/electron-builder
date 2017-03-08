@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { createTargets, Platform } from "electron-builder"
+import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { copyFile } from "electron-builder-util/out/fs"
-import { DIR_TARGET } from "electron-builder/out/targets/targetFactory"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -14,7 +13,6 @@ test.ifMac("two-package", () => assertPack("test-app", {
   },
 }, {
   signed: true,
-  useTempDir: true,
 }))
 
 test.ifMac("one-package", app({
