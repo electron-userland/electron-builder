@@ -98,7 +98,7 @@ Amazon S3 — `https` must be used, so, if you use direct Amazon S3 endpoints, f
 | Name | Description
 | --- | ---
 | **bucket** | <a name="S3Options-bucket"></a>The bucket name.
-| path | <a name="S3Options-path"></a>The directory path. Defaults to `/`.
+| path | <a name="S3Options-path"></a>The directory path (e.g. `win` or `mac`). Defaults to `/`.
 | channel | <a name="S3Options-channel"></a>The channel. Defaults to `latest`.
 | acl | <a name="S3Options-acl"></a>The ACL. Defaults to `public-read`.
 | storageClass | <a name="S3Options-storageClass"></a>The type of storage to use for the object. One of `STANDARD`, `REDUCED_REDUNDANCY`, `STANDARD_IA`. Defaults to `STANDARD`.
