@@ -121,3 +121,35 @@ export interface TargetSpecificOptions {
 
 export const DEFAULT_TARGET = "default"
 export const DIR_TARGET = "dir"
+
+export interface AuthorMetadata {
+  readonly name: string
+  readonly email?: string
+}
+
+export type CompressionLevel = "store" | "normal" | "maximum"
+
+export interface RepositoryInfo {
+  readonly url: string
+}
+
+export interface FilePattern {
+  from?: string
+  to?: string
+  filter?: Array<string> | string
+}
+
+export interface AsarOptions {
+  smartUnpack?: boolean
+
+  ordering?: string | null
+
+  extraMetadata?: any | null
+}
+
+export interface BeforeBuildContext {
+  readonly appDir: string
+  readonly electronVersion: string
+  readonly platform: Platform
+  readonly arch: string
+}

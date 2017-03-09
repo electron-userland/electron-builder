@@ -27,6 +27,38 @@ export interface PublishConfiguration {
 }
 
 /**
+ * GitHub options.
+ */
+export interface GithubOptions extends PublishConfiguration {
+  /**
+   * The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
+   */
+  readonly repo?: string | null
+
+  /**
+   * Whether to use `v`-prefixed tag name.
+   * @default true
+   */
+  readonly vPrefixedTagName?: boolean
+
+  /**
+   * The host (including the port if need).
+   * @default github.com
+   */
+  readonly host?: string | null
+
+  /**
+   * The protocol. GitHub Publisher supports only `https`.
+   * @default https
+   */
+  readonly protocol?: "https" | "http" | null
+}
+
+export function githubUrl(options: GithubOptions) {
+  return `${options.protocol || "https"}://${options.host || "github.com"}`
+}
+
+/**
  * Generic (any HTTP(S) server) options.
  */
 export interface GenericServerOptions extends PublishConfiguration {
@@ -85,52 +117,6 @@ export function s3Url(options: S3Options) {
   return url
 }
 
-export interface VersionInfo {
-  readonly version: string
-}
-
-export interface UpdateInfo extends VersionInfo {
-  readonly path: string
-  readonly githubArtifactName?: string | null
-  readonly sha2: string
-
-  readonly releaseName?: string | null
-  readonly releaseNotes?: string | null
-  readonly releaseDate: string
-}
-
-/**
- * GitHub options.
- */
-export interface GithubOptions extends PublishConfiguration {
-  /**
-   * The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
-   */
-  readonly repo?: string | null
-
-  /**
-   * Whether to use `v`-prefixed tag name.
-   * @default true
-   */
-  readonly vPrefixedTagName?: boolean
-
-  /**
-   * The host (including the port if need).
-   * @default github.com
-   */
-  readonly host?: string | null
-
-  /**
-   * The protocol. GitHub Publisher supports only `https`.
-   * @default https
-   */
-  readonly protocol?: "https" | "http" | null
-}
-
-export function githubUrl(options: GithubOptions) {
-  return `${options.protocol || "https"}://${options.host || "github.com"}`
-}
-
 /**
  * Bintray options.
  */
@@ -150,4 +136,18 @@ export interface BintrayOptions extends PublishConfiguration {
    * The Bintray user account. Used in cases where the owner is an organization.
    */
   readonly user?: string | null
+}
+
+export interface VersionInfo {
+  readonly version: string
+}
+
+export interface UpdateInfo extends VersionInfo {
+  readonly path: string
+  readonly githubArtifactName?: string | null
+  readonly sha2: string
+
+  readonly releaseName?: string | null
+  readonly releaseNotes?: string | null
+  readonly releaseDate: string
 }

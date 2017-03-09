@@ -18,7 +18,6 @@ test("one-click", app({
       package: "TestApp",
     },
     nsis: {
-      unicode: false,
       deleteAppDataOnUninstall: true,
     },
   }

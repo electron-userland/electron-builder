@@ -1,11 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, use } from "electron-builder-util"
+import { asArray, getPlatformIconFileName, use } from "electron-builder-util"
 import { copyFile, unlinkIfExists } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
 import { copy, readFile, rename, unlink, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
-import { getPlatformIconFileName } from "../metadata"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
 
 function doRename(basePath: string, oldName: string, newName: string) {

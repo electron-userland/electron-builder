@@ -280,3 +280,18 @@ export function replaceDefault(inList: Array<string> | null | undefined, default
   }
   return inList
 }
+
+export function getPlatformIconFileName(value: string | null | undefined, isMac: boolean) {
+  if (value === undefined) {
+    return undefined
+  }
+  if (value === null) {
+    return null
+  }
+
+  if (!value.includes(".")) {
+    return `${value}.${isMac ? "icns" : "ico"}`
+  }
+
+  return value.replace(isMac ? ".ico" : ".icns", isMac ? ".icns" : ".ico")
+}

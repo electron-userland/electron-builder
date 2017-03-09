@@ -1,19 +1,9 @@
-import { Arch, Platform, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FilePattern, RepositoryInfo, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { AppImageOptions, DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
 import { AppXOptions, NsisOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
-
-export interface AsarOptions {
-  dot?: boolean
-
-  smartUnpack?: boolean
-
-  ordering?: string | null
-
-  extraMetadata?: any | null
-}
 
 /**
 ## Fields in the package.json
@@ -59,23 +49,6 @@ export interface Metadata {
   readonly build?: Config
 }
 
-export interface RepositoryInfo {
-  readonly url: string
-}
-
-export interface AuthorMetadata {
-  readonly name: string
-  readonly email?: string
-}
-
-export type CompressionLevel = "store" | "normal" | "maximum"
-
-export interface FilePattern {
-  from?: string
-  to?: string
-  filter?: Array<string> | string
-}
-
 /**
  ## Configuration Options
  */
@@ -94,7 +67,9 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
    */
   readonly copyright?: string | null
 
-  // deprecated
+  /**
+   * @deprecated
+   */
   readonly iconUrl?: string | null
 
   /**
@@ -207,8 +182,7 @@ export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOpti
 
   /**
    * Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
-   * 
-   * See [publish](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
+   * @see [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
    */
   readonly publish?: Publish
 
@@ -244,13 +218,6 @@ export interface AfterPackContext {
   readonly electronPlatformName: string
   readonly arch: Arch
   readonly targets: Array<Target>
-}
-
-export interface BeforeBuildContext {
-  readonly appDir: string
-  readonly electronVersion: string
-  readonly platform: Platform
-  readonly arch: string
 }
 
 /**
@@ -352,19 +319,4 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 
   readonly publish?: Publish
-}
-
-export function getPlatformIconFileName(value: string | null | undefined, isMac: boolean) {
-  if (value === undefined) {
-    return undefined
-  }
-  if (value === null) {
-    return null
-  }
-
-  if (!value.includes(".")) {
-    return `${value}.${isMac ? "icns" : "ico"}`
-  }
-
-  return value.replace(isMac ? ".ico" : ".icns", isMac ? ".icns" : ".ico")
 }

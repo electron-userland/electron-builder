@@ -4,6 +4,7 @@
     "outDir": "out"
   },
   "declaration": true,
+  "jsdoc": "../../jsdoc/out/util",
   "include": [
     "src/**/*.ts"
   ],

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Target } from "electron-builder-core"
-import { asArray, debug, doSpawn, exec, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
+import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { log, subTask, warn } from "electron-builder-util/out/log"
@@ -8,7 +8,6 @@ import { readFile, unlink } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
-import { getPlatformIconFileName } from "../metadata"
 import { NsisOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { getSignVendorPath } from "../windowsCodeSign"
@@ -356,19 +355,20 @@ export default class NsisTarget extends Target {
   }
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
+    const packager = this.packager
     let scriptHeader = `!addincludedir "${path.win32.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
+    
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     scriptHeader += `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
+    scriptHeader += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
 
     if (this.isPortable) {
       return scriptHeader + originalScript
     }
 
-    const packager = this.packager
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
     if (customInclude != null) {
       scriptHeader += `!addincludedir "${packager.buildResourcesDir}"\n`
-      scriptHeader += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
       scriptHeader += `!include "${customInclude}"\n\n`
     }
 

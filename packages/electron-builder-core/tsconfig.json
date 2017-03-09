@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "out"
   },
+  "jsdoc": "../../jsdoc/out/core",
   "declaration": true,
   "include": [
     "src/**/*.ts"

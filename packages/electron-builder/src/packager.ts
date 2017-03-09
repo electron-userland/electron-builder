@@ -441,6 +441,9 @@ function checkConflictingOptions(options: any) {
   }
 }
 
+/**
+ * @private
+ */
 export async function checkWineVersion(checkPromise: Promise<string>) {
   function wineError(prefix: string): string {
     return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "macos")}`

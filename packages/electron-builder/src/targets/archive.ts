@@ -1,9 +1,9 @@
 import { path7za } from "7zip-bin"
+import { CompressionLevel } from "electron-builder-core"
 import { debug7zArgs, spawn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import * as path from "path"
-import { CompressionLevel } from "../metadata"
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {

@@ -19,9 +19,9 @@
     "set-versions": "node test/out/helpers/setVersions.js",
     "npm-publish": "yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks",
-    "jsdoc": "ts2jsdoc packages/electron-updater packages/electron-builder-http",
-    "docs": "jsdoc2md --files 'jsdoc/out/**/*.js' --name-format --module-index-format grouped --separators --plugin dmd-tf > docs/API.md",
-    "api-docs": "node ./test/vendor/yarn.js docs && node ./test/vendor/yarn.js docs"
+    "jsdoc": "ts2jsdoc packages/electron-updater packages/electron-builder-http packages/electron-builder-util packages/electron-publish packages/electron-builder",
+    "docs": "jsdoc2md --files 'jsdoc/out/**/*.js' --name-format --module-index-format grouped --separators --partial jsdoc/scope.hbs > docs/API.md",
+    "api-docs": "node ./test/vendor/yarn.js jsdoc && node ./test/vendor/yarn.js docs"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "electron-userland/electron-builder",
@@ -79,7 +79,6 @@
     "convert-source-map": "^1.4.0",
     "decompress-zip": "^0.3.0",
     "depcheck": "^0.6.7",
-    "dmd-tf": "^3.0.3",
     "electron-download-tf": "4.0.0",
     "jest-cli": "^19.0.2",
     "jest-environment-node-debug": "^2.0.0",
