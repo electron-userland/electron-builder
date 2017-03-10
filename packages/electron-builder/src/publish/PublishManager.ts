@@ -81,11 +81,6 @@ export class PublishManager implements PublishContext {
       }
 
       let publishConfig = publishConfigs[0]
-      if ((<GenericServerOptions>publishConfig).url != null) {
-        publishConfig = Object.assign({}, publishConfig, {
-          url: packager.expandMacro((<GenericServerOptions>publishConfig).url, null)
-        })
-      }
 
       if (packager.platform === Platform.WINDOWS) {
         const publisherName = await (<WinPackager>packager).computedPublisherName.value
@@ -309,7 +304,7 @@ export function createPublisher(context: PublishContext, version: string, publis
 
 export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>, arch: Arch | null) {
   if (publishConfig.provider === "generic") {
-    const baseUrlString = packager.expandMacro((<GenericServerOptions>publishConfig).url, arch)
+    const baseUrlString = (<GenericServerOptions>publishConfig).url
     if (fileName == null) {
       return baseUrlString
     }
@@ -380,7 +375,22 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   }
 
   debug(`Explicit publish provider: ${JSON.stringify(publishers, null, 2)}`)
-  return await <Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it))
+  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it)))
+    .then(publishConfigs => expandPublishConfigs(packager, publishConfigs))
+}
+
+function expandPublishConfigs(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration>) {
+  return publishConfigs.map(publishConfig => expandPublishConfig(packager, publishConfig))
+}
+
+function expandPublishConfig(packager: PlatformPackager<any>, publishConfig: any): PublishConfiguration {
+  return <PublishConfiguration>Object.keys(publishConfig).reduce((expandedPublishConfig: {[key: string]: string}, key) => {
+    const option = publishConfig[key]
+    if (option != null) {
+      expandedPublishConfig[key] = packager.expandMacro(option, null)
+    }
+    return expandedPublishConfig
+  }, {})
 }
 
 function sha256(file: string) {
