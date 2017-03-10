@@ -8,7 +8,7 @@ import { chmod, close, createReadStream, createWriteStream, open, write } from "
 import * as path from "path"
 import { v1 as uuid1 } from "uuid-1345"
 import { LinuxPackager } from "../linuxPackager"
-import { AppImageOptions } from "../options/linuxOptions"
+import { LinuxBuildOptions } from "../options/linuxOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
@@ -18,7 +18,7 @@ const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef
 const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
 
 export default class AppImageTarget extends Target {
-  private readonly options: AppImageOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  private readonly options: LinuxBuildOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
   private readonly desktopEntry: Promise<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
@@ -64,7 +64,7 @@ export default class AppImageTarget extends Target {
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
     if (arch === Arch.x64) {
-      const libDir = await getBin("AppImage-packages", "22.02.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-22.02.17-x64.7z", "04842227380e319f80727457ca76017df9e23356408df0d71f2919840cd4ffaf")
+      const libDir = await getBin("AppImage-packages", "10.03.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-10.03.17-x64.7z", "172f9977fe9b24d35091d26ecbfebe2a14d96516a9c903e109e12b2a929042fe")
       args.push("-map", libDir, "/usr/lib")
     }
 

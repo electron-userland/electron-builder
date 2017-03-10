@@ -70,7 +70,7 @@
     "semver": "^5.3.0",
     "update-notifier": "^2.1.0",
     "uuid-1345": "^0.99.6",
-    "yargs": "^7.0.1",
+    "yargs": "^7.0.2",
     "node-forge": "^0.7.0"
   },
   "typings": "./out/electron-builder.d.ts",

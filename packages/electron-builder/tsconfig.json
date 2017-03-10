@@ -4,8 +4,11 @@
     "outDir": "out"
   },
   "declaration": true,
-  "jsdoc": "../../jsdoc/out/builder",
-  "docs": "../../docs/Options.md",
+  "jsdoc": {
+    "out": "../../jsdoc/out/builder",
+    "externalIfNotMain": "Developer-API",
+    "examples": "../../jsdoc/examples"
+  },
   "include": [
     "src/**/*.ts",
     "../../typings/*.d.ts"

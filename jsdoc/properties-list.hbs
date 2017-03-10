@@ -1,0 +1,7 @@
+{{#if properties}}**Properties**
+
+{{#each properties~}}
+{{#if (regexp-test name "\w+\.\w+")}}  {{/if}}- `{{{name}}}`{{#if defaultvalue}} = {{>defaultvalue}}{{/if~}} {{>linked-type-list types=type.names delimiter=" &#124; " ~}}{{#if description}} - {{{inlineLinks description}}}{{/if}}  
+{{/each}}
+
+{{/if~}}

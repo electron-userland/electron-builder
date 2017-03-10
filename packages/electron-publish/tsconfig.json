@@ -4,7 +4,7 @@
     "outDir": "out"
   },
   "declaration": true,
-  "jsdoc": "../../jsdoc/out/electron-updater",
+  "jsdoc": "../../jsdoc/out/publisher",
   "include": [
     "src/**/*.ts"
   ],

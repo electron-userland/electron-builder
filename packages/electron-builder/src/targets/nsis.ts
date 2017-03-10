@@ -33,7 +33,7 @@ export default class NsisTarget extends Target {
 
     let options = this.packager.config.nsis || Object.create(null)
     if (targetName !== "nsis") {
-      options = Object.assign(options, (<any>this.packager.config)[targetName])
+      options = Object.assign(options, (<any>this.packager.config)[targetName === "nsis-web" ? "nsisWeb" : ""])
     }
     this.options = options
 

@@ -2,7 +2,7 @@
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/jsdoc" />
+      <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/node_modules" />
