@@ -10,7 +10,7 @@ if (process.env.SNAP_TEST === "false") {
 
 const snapTarget = Platform.LINUX.createTarget("snap")
 
-test.ifAll.ifDevOrLinuxCi("platform", app({
+test.skip("platform", app({
   targets: snapTarget,
   config: {
     productName: "Sep P",

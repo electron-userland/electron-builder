@@ -32,9 +32,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^19.2.0":
-  version "19.2.0"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-19.2.0.tgz#253ed874ba134647acde4ad7d7d2c6716609b5f8"
+"@types/jest@^19.2.1":
+  version "19.2.1"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-19.2.1.tgz#57db82d71c1b8ca1523bfdfbb00a4d848dfcc5fe"
 
 "@types/js-yaml@^3.5.29":
   version "3.5.29"
@@ -54,9 +54,9 @@
   dependencies:
     "@types/node" "*"
 
-"@types/xml2js@^0.0.32":
-  version "0.0.32"
-  resolved "https://registry.yarnpkg.com/@types/xml2js/-/xml2js-0.0.32.tgz#9f7e98cf0adcca085a35cdead0319b5ac19c9fd9"
+"@types/xml2js@^0.0.33":
+  version "0.0.33"
+  resolved "https://registry.yarnpkg.com/@types/xml2js/-/xml2js-0.0.33.tgz#20c5dd6460245284d64a55690015b95e409fb7de"
 
 abab@^1.0.3:
   version "1.0.3"
@@ -97,7 +97,7 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-ajv@^5.0.3-beta:
+ajv@^5.0.3-beta.0:
   version "5.0.3-beta.0"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.0.3-beta.0.tgz#4ee44b57ab3bb43bc00fe727af9b350c9d9712fa"
   dependencies:
@@ -271,9 +271,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.26.0:
-  version "2.26.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.26.0.tgz#44b2157ac25dfc9d1527937218aeb5c9019f5bd1"
+aws-sdk@^2.27.0:
+  version "2.27.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.27.0.tgz#8d823c8e7dcc19a41a9df8c1427a9bab0fa5ee82"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -930,9 +930,9 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.1:
-  version "2.6.1"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.1.tgz#79855090ba2c4e3115cc7d8769491d58f0491351"
+debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.1, debug@^2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.2.tgz#dfa96a861ee9b8c2f29349b3bcc41aa599a71e0f"
   dependencies:
     ms "0.7.2"
 
@@ -1079,8 +1079,8 @@ electron-macos-sign@~1.6.0:
     plist "^2.0.1"
 
 end-of-stream@^1.0.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.1.0.tgz#e9353258baa9108965efc41cb0ef8ade2f3cfb07"
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.2.0.tgz#bce82685eab6262e2a780ae740e6334027c01622"
   dependencies:
     once "~1.3.0"
 
@@ -1521,8 +1521,8 @@ is-arrayish@^0.2.1:
   resolved "https://registry.yarnpkg.com/is-arrayish/-/is-arrayish-0.2.1.tgz#77c99840527aa8ecb1a8ba697b80645a7a926a9d"
 
 is-buffer@^1.0.2:
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-1.1.4.tgz#cfc86ccd5dc5a52fa80489111c6920c457e2d98b"
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/is-buffer/-/is-buffer-1.1.5.tgz#1f3b26ef613b214b88cbca23cc6c01d87961eecc"
 
 is-builtin-module@^1.0.0:
   version "1.0.0"
@@ -3195,9 +3195,9 @@ ts-babel@^2.0.0:
     markdown-it "^8.3.1"
     source-map-support "^0.4.11"
 
-ts-jsdoc@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.0.5.tgz#25618761ac36232ac61011d02a3401c1e95eb4fd"
+ts-jsdoc@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.0.6.tgz#5d6b3af99283e3f922ce5a8fb39906308f4f56ae"
   dependencies:
     bluebird-lst "^1.0.1"
     chalk "^1.1.3"
@@ -3265,8 +3265,8 @@ uc.micro@^1.0.1, uc.micro@^1.0.3:
   resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.3.tgz#7ed50d5e0f9a9fb0a573379259f2a77458d50192"
 
 uglify-js@^2.6:
-  version "2.8.11"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.11.tgz#11a51c43d810b47bc00aee4d512cb3947ddd1ac4"
+  version "2.8.12"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.12.tgz#8a50f5d482243650b7108f6080aa3a6afe2a6c55"
   dependencies:
     source-map "~0.5.1"
     uglify-to-browserify "~1.0.0"
