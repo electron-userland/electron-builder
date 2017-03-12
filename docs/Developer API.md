@@ -1,406 +1,119 @@
 ## Modules
 
-* [electron-builder/out/appInfo](#module_electron-builder/out/appInfo)
-    * [.AppInfo](#module_electron-builder/out/appInfo.AppInfo)
-        * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise</code>
-* [electron-builder/out/asar](#module_electron-builder/out/asar)
-    * [.AsarFilesystem](#module_electron-builder/out/asar.AsarFilesystem)
-        * [`.getFile(p, followLinks)`](#module_electron-builder/out/asar.AsarFilesystem+getFile) ⇒ <code>[Node](#module_electron-builder/out/asar.Node)</code>
-        * [`.insertDirectory(p, unpacked)`](#module_electron-builder/out/asar.AsarFilesystem+insertDirectory) ⇒ <code>module:electron-builder/out/asar.__type</code>
-        * [`.insertFileNode(node, stat, file)`](#module_electron-builder/out/asar.AsarFilesystem+insertFileNode)
-        * [`.getNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getNode) ⇒ <code>[Node](#module_electron-builder/out/asar.Node)</code>
-        * [`.getOrCreateNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getOrCreateNode) ⇒ <code>[Node](#module_electron-builder/out/asar.Node)</code>
-        * [`.readFile(file)`](#module_electron-builder/out/asar.AsarFilesystem+readFile) ⇒ <code>Promise</code>
-        * [`.readJson(file)`](#module_electron-builder/out/asar.AsarFilesystem+readJson) ⇒ <code>Promise</code>
-        * [`.searchNodeFromDirectory(p)`](#module_electron-builder/out/asar.AsarFilesystem+searchNodeFromDirectory) ⇒ <code>[Node](#module_electron-builder/out/asar.Node)</code>
-    * [.Node](#module_electron-builder/out/asar.Node)
-    * [`.readAsar(archive)`](#module_electron-builder/out/asar.readAsar) ⇒ <code>Promise</code>
-    * [`.readAsarJson(archive, file)`](#module_electron-builder/out/asar.readAsarJson) ⇒ <code>Promise</code>
-* [electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)
-    * [`.checkFileInArchive(asarFile, relativeFile, messagePrefix)`](#module_electron-builder/out/asarUtil.checkFileInArchive) ⇒ <code>Promise</code>
-    * [`.createAsarArchive(src, resourcesPath, options, filter, unpackPattern)`](#module_electron-builder/out/asarUtil.createAsarArchive) ⇒ <code>Promise</code>
-* [electron-builder/out/builder](#module_electron-builder/out/builder)
-    * [`.normalizeOptions(args)`](#module_electron-builder/out/builder.normalizeOptions) ⇒ <code>module:electron-builder/out/builder.BuildOptions</code>
-* [electron-builder/out/cli/cliOptions](#module_electron-builder/out/cli/cliOptions)
-    * [`.createYargs()`](#module_electron-builder/out/cli/cliOptions.createYargs) ⇒ <code>any</code>
-* [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
-    * [`.CodeSigningInfo`](#module_electron-builder/out/codeSign.CodeSigningInfo)
-    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise</code> &#124; <code>null</code>
-    * [`.createKeychain(tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise</code>
-    * [`.downloadCertificate(urlOrBase64, tmpDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise</code>
-    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise</code>
-    * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise</code>
-* [electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)
-    * [.FileMatcher](#module_electron-builder/out/fileMatcher.FileMatcher)
-        * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
-        * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
-        * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
-        * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
-    * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise</code>
-* [electron-builder/out/linuxPackager](#module_electron-builder/out/linuxPackager)
-    * [.LinuxPackager](#module_electron-builder/out/linuxPackager.LinuxPackager) ⇐ <code>[PlatformPackager](#module_electron-builder/out/platformPackager.PlatformPackager)</code>
-        * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
-        * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise</code>
-        * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#module_electron-builder/out/appInfo.AppInfo)</code>
-* [electron-builder/out/macPackager](#module_electron-builder/out/macPackager)
-    * [.MacPackager](#module_electron-builder/out/macPackager.MacPackager) ⇐ <code>[PlatformPackager](#module_electron-builder/out/platformPackager.PlatformPackager)</code>
-        * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
-        * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise</code>
-        * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise</code>
-        * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise</code>
-        * [`.doSign(opts)`](#module_electron-builder/out/macPackager.MacPackager+doSign) ⇒ <code>Promise</code>
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/macPackager.MacPackager+prepareAppInfo) ⇒ <code>[AppInfo](#module_electron-builder/out/appInfo.AppInfo)</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise</code>
-        * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise</code>
-* [electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)
-    * [`.unpackElectron(packager, out, platform, arch, electronVersion)`](#module_electron-builder/out/packager/dirPackager.unpackElectron) ⇒ <code>Promise</code>
-* [electron-builder/out/packager/mac](#module_electron-builder/out/packager/mac)
-    * [`.createApp(packager, appOutDir)`](#module_electron-builder/out/packager/mac.createApp) ⇒ <code>Promise</code>
-    * [`.filterCFBundleIdentifier(identifier)`](#module_electron-builder/out/packager/mac.filterCFBundleIdentifier) ⇒ <code>string</code>
-* [electron-builder/out/packager](#module_electron-builder/out/packager)
-    * [`.normalizePlatforms(rawPlatforms)`](#module_electron-builder/out/packager.normalizePlatforms) ⇒ <code>Array</code>
-* [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
-    * [.PlatformPackager](#module_electron-builder/out/platformPackager.PlatformPackager)
-        * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise</code>
-        * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise</code>
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#module_electron-builder/out/appInfo.AppInfo)</code>
-    * [`.normalizeExt(ext)`](#module_electron-builder/out/platformPackager.normalizeExt) ⇒ <code>string</code>
-* [electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)
-    * [.PublishManager](#module_electron-builder/out/publish/PublishManager.PublishManager) ⇐ <code>module:electron-publish.PublishContext</code>
-        * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise</code>
-        * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒
-    * [`.computeDownloadUrl(publishConfig, fileName, packager, arch)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
-    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒
-    * [`.getPublishConfigs(packager, targetSpecificOptions)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise</code>
-    * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise</code>
-* [electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)
-    * [`.getCiTag()`](#module_electron-builder/out/publish/publisher.getCiTag) ⇒ <code>any</code>
-    * [`.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)`](#module_electron-builder/out/publish/publisher.getResolvedPublishConfig) ⇒ <code>Promise</code>
-* [electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)
-    * [`.Dependency`](#module_electron-builder/out/readInstalled.Dependency)
-    * [`.readInstalled(folder)`](#module_electron-builder/out/readInstalled.readInstalled) ⇒ <code>Promise</code>
-* [electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)
-    * [`.RepositorySlug`](#module_electron-builder/out/repositoryInfo.RepositorySlug)
-    * [`.getRepositoryInfo(projectDir, metadata, devMetadata)`](#module_electron-builder/out/repositoryInfo.getRepositoryInfo) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)
-    * [.ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)
-    * [.LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper)
-        * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise</code>
-        * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
-* [electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)
-    * [.WebInstallerTarget](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
-* [electron-builder/out/targets/appImage](#module_electron-builder/out/targets/appImage)
-    * [.AppImageTarget](#module_electron-builder/out/targets/appImage.AppImageTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appImage.AppImageTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)
-    * [.AppXTarget](#module_electron-builder/out/targets/appx.AppXTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appx.AppXTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/archive](#module_electron-builder/out/targets/archive)
-    * [`.archive(compression, format, outFile, dirToArchive, withoutDir)`](#module_electron-builder/out/targets/archive.archive) ⇒ <code>Promise</code>
-    * [`.tar(compression, format, outFile, dirToArchive, isMacApp)`](#module_electron-builder/out/targets/archive.tar) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)
-    * [.DmgTarget](#module_electron-builder/out/targets/dmg.DmgTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise</code>
-        * [`.computeDmgOptions()`](#module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions) ⇒ <code>Promise</code>
-        * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>string</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-    * [`.attachAndExecute(dmgPath, readWrite, task)`](#module_electron-builder/out/targets/dmg.attachAndExecute) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/fpm](#module_electron-builder/out/targets/fpm)
-    * [.FpmTarget](#module_electron-builder/out/targets/fpm.FpmTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/fpm.FpmTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)
-    * [.NsisTarget](#module_electron-builder/out/targets/nsis.NsisTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName) ⇒ <code>string</code>
-* [electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)
-    * [.PkgTarget](#module_electron-builder/out/targets/pkg.PkgTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appPath, arch)`](#module_electron-builder/out/targets/pkg.PkgTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-    * [`.prepareProductBuildArgs(identity, keychain)`](#module_electron-builder/out/targets/pkg.prepareProductBuildArgs) ⇒ <code>Array</code>
-* [electron-builder/out/targets/snap](#module_electron-builder/out/targets/snap)
-    * [.SnapTarget](#module_electron-builder/out/targets/snap.SnapTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/snap.SnapTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-* [electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)
-    * [.NoOpTarget](#module_electron-builder/out/targets/targetFactory.NoOpTarget) ⇐ <code>[Target](#module_electron-builder-core.Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map</code>
-    * [`.createCommonTarget(target, outDir, packager)`](#module_electron-builder/out/targets/targetFactory.createCommonTarget) ⇒ <code>[Target](#module_electron-builder-core.Target)</code>
-    * [`.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)`](#module_electron-builder/out/targets/targetFactory.createTargets) ⇒ <code>Array</code>
-* [electron-builder/out/util/filter](#module_electron-builder/out/util/filter)
-    * [`.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/util/filter.createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>boolean</code>
-* [electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)
-    * [`.doLoadConfig(configFile, projectDir)`](#module_electron-builder/out/util/readPackageJson.doLoadConfig) ⇒ <code>Promise</code>
-    * [`.getElectronVersion(config, projectDir, projectMetadata)`](#module_electron-builder/out/util/readPackageJson.getElectronVersion) ⇒ <code>Promise</code>
-    * [`.loadConfig(projectDir)`](#module_electron-builder/out/util/readPackageJson.loadConfig) ⇒ <code>Promise</code>
-    * [`.readPackageJson(file)`](#module_electron-builder/out/util/readPackageJson.readPackageJson) ⇒ <code>Promise</code>
-    * [`.validateConfig(config)`](#module_electron-builder/out/util/readPackageJson.validateConfig) ⇒ <code>Promise</code>
-* [electron-builder/out/winPackager](#module_electron-builder/out/winPackager)
-    * [.WinPackager](#module_electron-builder/out/winPackager.WinPackager) ⇐ <code>[PlatformPackager](#module_electron-builder/out/platformPackager.PlatformPackager)</code>
-        * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/winPackager.WinPackager+createTargets)
-        * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise</code>
-        * [`.sign(file, logMessagePrefix)`](#module_electron-builder/out/winPackager.WinPackager+sign) ⇒ <code>Promise</code>
-        * [`.signAndEditResources(file)`](#module_electron-builder/out/winPackager.WinPackager+signAndEditResources) ⇒ <code>Promise</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/winPackager.WinPackager+doGetCscPassword) ⇒ <code>string</code>
-        * [`.doSign(options)`](#module_electron-builder/out/winPackager.WinPackager+doSign) ⇒ <code>Promise</code>
-        * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise</code>
-        * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#module_electron-builder/out/appInfo.AppInfo)</code>
-* [electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)
-    * [`.FileCodeSigningInfo`](#module_electron-builder/out/windowsCodeSign.FileCodeSigningInfo)
-    * [`.SignOptions`](#module_electron-builder/out/windowsCodeSign.SignOptions)
-    * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise</code>
-    * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise</code>
-    * [`.sign(options)`](#module_electron-builder/out/windowsCodeSign.sign) ⇒ <code>Promise</code>
-* [electron-builder/out/yarn](#module_electron-builder/out/yarn)
-    * [`.getGypEnv(electronVersion, platform, arch, buildFromSource)`](#module_electron-builder/out/yarn.getGypEnv) ⇒ <code>any</code>
-    * [`.installOrRebuild(config, appDir, electronVersion, platform, arch, forceInstall)`](#module_electron-builder/out/yarn.installOrRebuild) ⇒ <code>Promise</code>
-    * [`.rebuild(appDir, electronVersion, platform, arch, additionalArgs, buildFromSource)`](#module_electron-builder/out/yarn.rebuild) ⇒ <code>Promise</code>
-* [electron-builder-core](#module_electron-builder-core)
-    * [`.AsarOptions`](#module_electron-builder-core.AsarOptions)
-    * [`.AuthorMetadata`](#module_electron-builder-core.AuthorMetadata)
-    * [`.BeforeBuildContext`](#module_electron-builder-core.BeforeBuildContext)
-    * [`.FilePattern`](#module_electron-builder-core.FilePattern)
-    * [`.RepositoryInfo`](#module_electron-builder-core.RepositoryInfo)
-    * [`.TargetConfig`](#module_electron-builder-core.TargetConfig)
-    * [`.TargetSpecificOptions`](#module_electron-builder-core.TargetSpecificOptions)
-    * [.Platform](#module_electron-builder-core.Platform)
-        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map</code>
-        * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#module_electron-builder-core.Platform)</code>
-        * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#module_electron-builder-core.Platform)</code>
-        * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>string</code>
-    * [.Target](#module_electron-builder-core.Target)
-        * [`.build(appOutDir, arch)`](#module_electron-builder-core.Target+build) ⇒ <code>Promise</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise</code>
-    * [`.archFromString(name)`](#module_electron-builder-core.archFromString) ⇒ <code>module:electron-builder-core.Arch</code>
-    * [`.getArchSuffix(arch)`](#module_electron-builder-core.getArchSuffix) ⇒ <code>string</code>
-    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒
-* [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
-    * [.CancellationError](#module_electron-builder-http/out/CancellationToken.CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#module_electron-builder-http/out/CancellationToken.CancellationToken) ⇐ <code>internal:EventEmitter</code>
-        * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise</code>
-        * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-* [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
-    * [`.ProgressInfo`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressInfo)
-    * [.ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-* [electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)
-    * [`.File`](#module_electron-builder-http/out/bintray.File)
-    * [`.Version`](#module_electron-builder-http/out/bintray.Version)
-    * [.BintrayClient](#module_electron-builder-http/out/bintray.BintrayClient)
-        * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise</code>
-        * [`.deleteVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+deleteVersion) ⇒ <code>Promise</code>
-        * [`.getVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersion) ⇒ <code>Promise</code>
-        * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise</code>
-    * [`.bintrayRequest(path, auth, data, cancellationToken, method)`](#module_electron-builder-http/out/bintray.bintrayRequest) ⇒ <code>Promise</code>
-* [electron-builder-http](#module_electron-builder-http)
-    * [`.DownloadOptions`](#module_electron-builder-http.DownloadOptions)
-        * [`.onProgress(progress)`](#module_electron-builder-http.DownloadOptions+onProgress)
-    * [`.RequestHeaders`](#module_electron-builder-http.RequestHeaders)
-    * [`.Response`](#module_electron-builder-http.Response) ⇐ <code>internal:EventEmitter</code>
-        * [`.setEncoding(encoding)`](#module_electron-builder-http.Response+setEncoding)
-    * [.HttpError](#module_electron-builder-http.HttpError) ⇐ <code>Error</code>
-    * [.HttpExecutor](#module_electron-builder-http.HttpExecutor)
-        * [`.download(url, destination, options)`](#module_electron-builder-http.HttpExecutor+download) ⇒ <code>Promise</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-http.HttpExecutor+doApiRequest) ⇒ <code>Promise</code>
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.doRequest(options, callback)`](#module_electron-builder-http.HttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-    * [.HttpExecutorHolder](#module_electron-builder-http.HttpExecutorHolder)
-    * [`.configureRequestOptions(options, token, method)`](#module_electron-builder-http.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
-    * [`.download(url, destination, options)`](#module_electron-builder-http.download) ⇒ <code>Promise</code>
-    * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>string</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.request) ⇒ <code>Promise</code>
-* [electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)
-    * [.BintrayPublisher](#module_electron-publish/out/BintrayPublisher.BintrayPublisher) ⇐ <code>module:electron-publish.HttpPublisher</code>
-        * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise</code>
-        * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise</code>
-* [electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)
-    * [`.Release`](#module_electron-publish/out/gitHubPublisher.Release)
-    * [.GitHubPublisher](#module_electron-publish/out/gitHubPublisher.GitHubPublisher) ⇐ <code>module:electron-publish.HttpPublisher</code>
-        * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise</code>
-        * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise</code>
-        * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise</code>
-* [electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)
-    * [.MultiProgress](#module_electron-publish/out/multiProgress.MultiProgress)
-        * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>any</code>
-        * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
-* [electron-updater/out/BintrayProvider](#module_electron-updater/out/BintrayProvider)
-    * [.BintrayProvider](#module_electron-updater/out/BintrayProvider.BintrayProvider) ⇐ <code>module:electron-updater/out/api.Provider</code>
-        * [`.getLatestVersion()`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getLatestVersion) ⇒ <code>Promise</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile) ⇒ <code>Promise</code>
-* [electron-updater/out/GenericProvider](#module_electron-updater/out/GenericProvider)
-    * [.GenericProvider](#module_electron-updater/out/GenericProvider.GenericProvider) ⇐ <code>module:electron-updater/out/api.Provider</code>
-        * [`.getLatestVersion()`](#module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion) ⇒ <code>Promise</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise</code>
-    * [`.validateUpdateInfo(info)`](#module_electron-updater/out/GenericProvider.validateUpdateInfo)
-* [electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)
-    * [.GitHubProvider](#module_electron-updater/out/GitHubProvider.GitHubProvider) ⇐ <code>module:electron-updater/out/api.Provider</code>
-        * [`.getLatestVersion()`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion) ⇒ <code>Promise</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise</code>
-* [electron-updater/out/MacUpdater](#module_electron-updater/out/MacUpdater)
-    * [.MacUpdater](#module_electron-updater/out/MacUpdater.MacUpdater) ⇐ <code>module:electron-updater/out/AppUpdater.AppUpdater</code>
-        * [`.quitAndInstall()`](#module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate) ⇒ <code>module:bluebird-lst.Bluebird</code>
-        * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable)
-* [electron-updater/out/NsisUpdater](#module_electron-updater/out/NsisUpdater)
-    * [.NsisUpdater](#module_electron-updater/out/NsisUpdater.NsisUpdater) ⇐ <code>module:electron-updater/out/AppUpdater.AppUpdater</code>
-        * [`.quitAndInstall()`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise</code>
-* [electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)
-    * [.ElectronHttpExecutor](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#module_electron-builder-http.HttpExecutor)</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise</code>
-        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise</code>
-        * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-* [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
-    * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise</code>
-    * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise</code>
-* [electron-builder-util/out/deepAssign](#module_electron-builder-util/out/deepAssign)
-    * [`.deepAssign(target, objects)`](#module_electron-builder-util/out/deepAssign.deepAssign) ⇒ <code>any</code>
-* [electron-builder-util/out/fs](#module_electron-builder-util/out/fs)
-    * [.FileCopier](#module_electron-builder-util/out/fs.FileCopier)
-        * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise</code>
-    * [`.copyDir(src, destination, filter, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise</code>
-    * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise</code>
-    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise</code>
-    * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise</code>
-    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise</code>
-    * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise</code>
-* [electron-builder-util/out/log](#module_electron-builder-util/out/log)
-    * [`.log(message)`](#module_electron-builder-util/out/log.log)
-    * [`.setPrinter(value)`](#module_electron-builder-util/out/log.setPrinter)
-    * [`.subTask(title, promise)`](#module_electron-builder-util/out/log.subTask) ⇒ <code>module:bluebird-lst.Bluebird</code>
-    * [`.task(title, promise)`](#module_electron-builder-util/out/log.task) ⇒ <code>module:bluebird-lst.Bluebird</code>
-    * [`.warn(message)`](#module_electron-builder-util/out/log.warn)
-* [electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)
-    * [.NodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor) ⇐ <code>[HttpExecutor](#module_electron-builder-http.HttpExecutor)</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest) ⇒ <code>Promise</code>
-        * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise</code>
-        * [`.doRequest(options, callback)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-    * [`.httpExecutor`](#module_electron-builder-util/out/nodeHttpExecutor.httpExecutor) : <code>[NodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor)</code>
-* [electron-builder-util/out/promise](#module_electron-builder-util/out/promise)
-    * [.NestedError](#module_electron-builder-util/out/promise.NestedError) ⇐ <code>Error</code>
-    * [`.all(promises)`](#module_electron-builder-util/out/promise.all) ⇒ <code>module:bluebird-lst.Bluebird</code>
-    * [`.executeFinally(promise, task)`](#module_electron-builder-util/out/promise.executeFinally) ⇒ <code>Promise</code>
-    * [`.printErrorAndExit(error)`](#module_electron-builder-util/out/promise.printErrorAndExit)
-    * [`.throwError(errors)`](#module_electron-builder-util/out/promise.throwError)
-* [electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)
-    * [.TmpDir](#module_electron-builder-util/out/tmp.TmpDir)
-        * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise</code>
-* [electron-builder-util](#module_electron-builder-util)
-    * [`.BaseExecOptions`](#module_electron-builder-util.BaseExecOptions)
-    * [`.ExecOptions`](#module_electron-builder-util.ExecOptions) ⇐ <code>[BaseExecOptions](#module_electron-builder-util.BaseExecOptions)</code>
-    * [.Lazy](#module_electron-builder-util.Lazy)
-    * [`.addValue(map, key, value)`](#module_electron-builder-util.addValue)
-    * [`.asArray(v)`](#module_electron-builder-util.asArray) ⇒ <code>Array</code>
-    * [`.computeDefaultAppDirectory(projectDir, userAppDir)`](#module_electron-builder-util.computeDefaultAppDirectory) ⇒ <code>Promise</code>
-    * [`.debug7zArgs(command)`](#module_electron-builder-util.debug7zArgs) ⇒ <code>Array</code>
-    * [`.doSpawn(command, args, options, pipeInput)`](#module_electron-builder-util.doSpawn) ⇒ <code>module:child_process.ChildProcess</code>
-    * [`.exec(file, args, options)`](#module_electron-builder-util.exec) ⇒ <code>Promise</code>
-    * [`.execWine(file, args, options)`](#module_electron-builder-util.execWine) ⇒ <code>Promise</code>
-    * [`.getCacheDirectory()`](#module_electron-builder-util.getCacheDirectory) ⇒ <code>string</code>
-    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒
-    * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>string</code>
-    * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
-    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>boolean</code>
-    * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array</code>
-    * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
-    * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array</code>
-    * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>string</code>
-    * [`.spawn(command, args, options)`](#module_electron-builder-util.spawn) ⇒ <code>Promise</code>
-    * [`.use(value, task)`](#module_electron-builder-util.use) ⇒
+<dl>
+<dt><a href="#module_electron-builder/out/appInfo">electron-builder/out/appInfo</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/asar">electron-builder/out/asar</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/asarUtil">electron-builder/out/asarUtil</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/builder">electron-builder/out/builder</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/cli/cliOptions">electron-builder/out/cli/cliOptions</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/codeSign">electron-builder/out/codeSign</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/fileMatcher">electron-builder/out/fileMatcher</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/linuxPackager">electron-builder/out/linuxPackager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/macPackager">electron-builder/out/macPackager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/packager/dirPackager">electron-builder/out/packager/dirPackager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/packager/mac">electron-builder/out/packager/mac</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/packager">electron-builder/out/packager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/platformPackager">electron-builder/out/platformPackager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/publish/publisher">electron-builder/out/publish/publisher</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/readInstalled">electron-builder/out/readInstalled</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/repositoryInfo">electron-builder/out/repositoryInfo</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/ArchiveTarget">electron-builder/out/targets/ArchiveTarget</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/LinuxTargetHelper">electron-builder/out/targets/LinuxTargetHelper</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/WebInstaller">electron-builder/out/targets/WebInstaller</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/appImage">electron-builder/out/targets/appImage</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/appx">electron-builder/out/targets/appx</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/archive">electron-builder/out/targets/archive</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/dmg">electron-builder/out/targets/dmg</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/fpm">electron-builder/out/targets/fpm</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/nsis">electron-builder/out/targets/nsis</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/pkg">electron-builder/out/targets/pkg</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/snap">electron-builder/out/targets/snap</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/targetFactory">electron-builder/out/targets/targetFactory</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/util/filter">electron-builder/out/util/filter</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/util/readPackageJson">electron-builder/out/util/readPackageJson</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/winPackager">electron-builder/out/winPackager</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/yarn">electron-builder/out/yarn</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-core">electron-builder-core</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-http/out/CancellationToken">electron-builder-http/out/CancellationToken</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-http/out/ProgressCallbackTransform">electron-builder-http/out/ProgressCallbackTransform</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-http/out/bintray">electron-builder-http/out/bintray</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-http">electron-builder-http</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-publish/out/BintrayPublisher">electron-publish/out/BintrayPublisher</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-publish/out/gitHubPublisher">electron-publish/out/gitHubPublisher</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-publish/out/multiProgress">electron-publish/out/multiProgress</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/GenericProvider">electron-updater/out/GenericProvider</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/GitHubProvider">electron-updater/out/GitHubProvider</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/MacUpdater">electron-updater/out/MacUpdater</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/NsisUpdater">electron-updater/out/NsisUpdater</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/binDownload">electron-builder-util/out/binDownload</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/deepAssign">electron-builder-util/out/deepAssign</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/fs">electron-builder-util/out/fs</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/log">electron-builder-util/out/log</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/nodeHttpExecutor">electron-builder-util/out/nodeHttpExecutor</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/promise">electron-builder-util/out/promise</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util/out/tmp">electron-builder-util/out/tmp</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-util">electron-builder-util</a></dt>
+<dd></dd>
+</dl>
 
 <a name="module_electron-builder/out/appInfo"></a>
 

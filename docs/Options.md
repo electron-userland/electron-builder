@@ -89,95 +89,20 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 <!-- do not edit. start of generated block -->
 ## API
 
-* [electron-builder](#module_electron-builder)
-    * [`.AfterPackContext`](#module_electron-builder.AfterPackContext)
-    * [`.AppXOptions`](#module_electron-builder.AppXOptions)
-    * [`.ArtifactCreated`](#module_electron-builder.ArtifactCreated)
-    * [`.BuildInfo`](#module_electron-builder.BuildInfo)
-    * [`.BuildOptions`](#module_electron-builder.BuildOptions) ⇐ <code>[PublishOptions](Developer-API#module_electron-publish.PublishOptions)</code>
-    * [`.BuildResult`](#module_electron-builder.BuildResult)
-    * [`.CliOptions`](#module_electron-builder.CliOptions) ⇐ <code>[PublishOptions](Developer-API#module_electron-publish.PublishOptions)</code>
-    * [`.Config`](#module_electron-builder.Config) ⇐ <code>[TargetSpecificOptions](Developer-API#module_electron-builder-core.TargetSpecificOptions)</code>
-    * [`.DebOptions`](#module_electron-builder.DebOptions) ⇐ <code>[LinuxBuildOptions](#module_electron-builder.LinuxBuildOptions)</code>
-    * [`.DmgContent`](#module_electron-builder.DmgContent)
-    * [`.DmgOptions`](#module_electron-builder.DmgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#module_electron-builder-core.TargetSpecificOptions)</code>
-    * [`.DmgWindow`](#module_electron-builder.DmgWindow)
-    * [`.FileAssociation`](#module_electron-builder.FileAssociation)
-    * [`.LinuxBuildOptions`](#module_electron-builder.LinuxBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](#module_electron-builder.PlatformSpecificBuildOptions)</code>
-    * [`.MacOptions`](#module_electron-builder.MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](#module_electron-builder.PlatformSpecificBuildOptions)</code>
-    * [`.MasBuildOptions`](#module_electron-builder.MasBuildOptions) ⇐ <code>[MacOptions](#module_electron-builder.MacOptions)</code>
-    * [`.Metadata`](#module_electron-builder.Metadata)
-    * [`.MetadataDirectories`](#module_electron-builder.MetadataDirectories)
-    * [`.NsisOptions`](#module_electron-builder.NsisOptions)
-    * [`.NsisWebOptions`](#module_electron-builder.NsisWebOptions) ⇐ <code>[NsisOptions](#module_electron-builder.NsisOptions)</code>
-    * [`.PackagerOptions`](#module_electron-builder.PackagerOptions)
-    * [`.PkgOptions`](#module_electron-builder.PkgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#module_electron-builder-core.TargetSpecificOptions)</code>
-    * [`.PlatformSpecificBuildOptions`](#module_electron-builder.PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#module_electron-builder-core.TargetSpecificOptions)</code>
-    * [`.Protocol`](#module_electron-builder.Protocol)
-    * [`.SnapOptions`](#module_electron-builder.SnapOptions) ⇐ <code>[LinuxBuildOptions](#module_electron-builder.LinuxBuildOptions)</code>
-    * [`.SourceRepositoryInfo`](#module_electron-builder.SourceRepositoryInfo)
-    * [`.SquirrelWindowsOptions`](#module_electron-builder.SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#module_electron-builder.WinBuildOptions)</code>
-    * [`.WinBuildOptions`](#module_electron-builder.WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](#module_electron-builder.PlatformSpecificBuildOptions)</code>
-    * [.Packager](#module_electron-builder.Packager) ⇐ <code>[BuildInfo](#module_electron-builder.BuildInfo)</code>
-    * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map</code>
-* [electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)
-    * [`.BintrayOptions`](#module_electron-builder-http/out/publishOptions.BintrayOptions) ⇐ <code>[PublishConfiguration](#module_electron-builder-http/out/publishOptions.PublishConfiguration)</code>
-    * [`.GenericServerOptions`](#module_electron-builder-http/out/publishOptions.GenericServerOptions) ⇐ <code>[PublishConfiguration](#module_electron-builder-http/out/publishOptions.PublishConfiguration)</code>
-    * [`.GithubOptions`](#module_electron-builder-http/out/publishOptions.GithubOptions) ⇐ <code>[PublishConfiguration](#module_electron-builder-http/out/publishOptions.PublishConfiguration)</code>
-    * [`.PublishConfiguration`](#module_electron-builder-http/out/publishOptions.PublishConfiguration)
-    * [`.S3Options`](#module_electron-builder-http/out/publishOptions.S3Options) ⇐ <code>[PublishConfiguration](#module_electron-builder-http/out/publishOptions.PublishConfiguration)</code>
-    * [`.UpdateInfo`](#module_electron-builder-http/out/publishOptions.UpdateInfo) ⇐ <code>[VersionInfo](#module_electron-builder-http/out/publishOptions.VersionInfo)</code>
-    * [`.VersionInfo`](#module_electron-builder-http/out/publishOptions.VersionInfo)
-    * [`.githubUrl(options)`](#module_electron-builder-http/out/publishOptions.githubUrl) ⇒ <code>string</code>
-    * [`.s3Url(options)`](#module_electron-builder-http/out/publishOptions.s3Url) ⇒ <code>string</code>
-* [electron-publish](#module_electron-publish)
-    * [`.PublishContext`](#module_electron-publish.PublishContext)
-    * [`.PublishOptions`](#module_electron-publish.PublishOptions)
-    * [.HttpPublisher](#module_electron-publish.HttpPublisher) ⇐ <code>[Publisher](#module_electron-publish.Publisher)</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise</code>
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-    * [.Publisher](#module_electron-publish.Publisher)
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-* [electron-updater/out/api](#module_electron-updater/out/api)
-    * [`.FileInfo`](#module_electron-updater/out/api.FileInfo)
-    * [`.UpdateCheckResult`](#module_electron-updater/out/api.UpdateCheckResult)
-    * [.Provider](#module_electron-updater/out/api.Provider)
-        * [`.getLatestVersion()`](#module_electron-updater/out/api.Provider+getLatestVersion) ⇒ <code>Promise</code>
-        * [`.setRequestHeaders(value)`](#module_electron-updater/out/api.Provider+setRequestHeaders)
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/api.Provider+getUpdateFile) ⇒ <code>Promise</code>
-    * [.UpdaterSignal](#module_electron-updater/out/api.UpdaterSignal)
-        * [`.progress(handler)`](#module_electron-updater/out/api.UpdaterSignal+progress)
-        * [`.updateCancelled(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateCancelled)
-        * [`.updateDownloaded(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateDownloaded)
-    * [`.getChannelFilename(channel)`](#module_electron-updater/out/api.getChannelFilename) ⇒ <code>string</code>
-    * [`.getCurrentPlatform()`](#module_electron-updater/out/api.getCurrentPlatform) ⇒ <code>any</code>
-    * [`.getCustomChannelName(channel)`](#module_electron-updater/out/api.getCustomChannelName) ⇒ <code>string</code>
-    * [`.getDefaultChannelName()`](#module_electron-updater/out/api.getDefaultChannelName) ⇒ <code>string</code>
-* [electron-updater](#module_electron-updater)
-    * [`.autoUpdater`](#module_electron-updater.autoUpdater) : <code>[AppUpdater](#module_electron-updater/out/AppUpdater.AppUpdater)</code>
-* [electron-updater/out/AppUpdater](#module_electron-updater/out/AppUpdater)
-    * [`.Logger`](#module_electron-updater/out/AppUpdater.Logger)
-        * [`.error(message)`](#module_electron-updater/out/AppUpdater.Logger+error)
-        * [`.info(message)`](#module_electron-updater/out/AppUpdater.Logger+info)
-        * [`.warn(message)`](#module_electron-updater/out/AppUpdater.Logger+warn)
-    * [.AppUpdater](#module_electron-updater/out/AppUpdater.AppUpdater) ⇐ <code>internal:EventEmitter</code>
-        * [`.checkForUpdates()`](#module_electron-updater/out/AppUpdater.AppUpdater+checkForUpdates) ⇒ <code>Promise</code>
-        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+downloadUpdate) ⇒ <code>Promise</code>
-        * [`.getFeedURL()`](#module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL) ⇒
-        * [`.setFeedURL(options)`](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL)
-        * [`.loadUpdateConfig()`](#module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise</code>
-        * [`.quitAndInstall()`](#module_electron-updater/out/AppUpdater.AppUpdater+quitAndInstall)
-        * [`.dispatchError(e)`](#module_electron-updater/out/AppUpdater.AppUpdater+dispatchError)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise</code>
-        * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable)
+<dl>
+<dt><a href="#module_electron-builder">electron-builder</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder-http/out/publishOptions">electron-builder-http/out/publishOptions</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-publish">electron-publish</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/api">electron-updater/out/api</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater">electron-updater</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater/out/AppUpdater">electron-updater/out/AppUpdater</a></dt>
+<dd></dd>
+</dl>
 
 <a name="module_electron-builder"></a>
 

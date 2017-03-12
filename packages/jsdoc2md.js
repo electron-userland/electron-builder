@@ -31,7 +31,6 @@ async function main() {
   const defaultJsdoc2MdOptions = {
     partial: partials,
     "name-format": true,
-    "module-index-format": "grouped",
     "helper": [
       path.join(partialDir, "property-link.js")
     ],
