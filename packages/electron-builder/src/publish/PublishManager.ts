@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { asArray, debug, isEmptyOrSpaces } from "electron-builder-util"
+import { asArray, debug, isEmptyOrSpaces, isPullRequest } from "electron-builder-util"
 import { log } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -408,16 +408,6 @@ function sha256(file: string) {
       })
       .pipe(hash, {end: false})
   })
-}
-
-function isPullRequest() {
-  // TRAVIS_PULL_REQUEST is set to the pull request number if the current job is a pull request build, or false if it’s not.
-  function isSet(value: string) {
-    // value can be or null, or empty string
-    return value && value !== "false"
-  }
-
-  return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS)
 }
 
 function isSuitableWindowsTarget(target: Target) {
