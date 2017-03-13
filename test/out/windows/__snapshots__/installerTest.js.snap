@@ -49,6 +49,17 @@ Object {
 }
 `;
 
+exports[`portable - artifactName 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "Test App ßWPortable.1.1.0.exe",
+      "safeArtifactName": "TestApp-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`portable 1`] = `
 Object {
   "win": Array [

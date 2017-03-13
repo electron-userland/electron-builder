@@ -122,3 +122,15 @@ test.ifNotCiMac("portable", app({
     }
   }
 }))
+
+test.ifAll.ifNotCiMac("portable - artifactName", app({
+  targets: Platform.WINDOWS.createTarget(["portable"]),
+  config: {
+    "nsis": {
+      "artifactName": "${productName}Installer.${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}Portable.${version}.${ext}"
+    }
+  }
+}))
