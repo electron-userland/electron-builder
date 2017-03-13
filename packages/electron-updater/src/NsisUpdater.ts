@@ -23,6 +23,15 @@ export class NsisUpdater extends AppUpdater {
    * @returns {Promise<string>} Path to downloaded file.
    */
   protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
+    //allow custom headers from provider
+    if (fileInfo.headers != null) {
+      if (this.requestHeaders != null) {
+        Object.assign(fileInfo.headers, this.requestHeaders)
+      } else {
+        this.requestHeaders = fileInfo.headers
+      }
+    }
+
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.requestHeaders || undefined,

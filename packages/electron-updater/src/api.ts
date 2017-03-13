@@ -8,6 +8,7 @@ export interface FileInfo {
   readonly name: string
   readonly url: string
   readonly sha2?: string
+  readonly headers?: Object
 }
 
 export abstract class Provider<T extends VersionInfo> {
