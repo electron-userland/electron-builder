@@ -7,6 +7,13 @@ import { ArchiveTarget } from "./ArchiveTarget"
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
 export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: PlatformSpecificBuildOptions, platform: Platform): Map<Arch, string[]> {
+  for (const targetNames of raw.values()) {
+    if (targetNames.length > 0) {
+      // https://github.com/electron-userland/electron-builder/issues/1355
+      return raw
+    }
+  }
+  
   const result = new Map(raw)
   const defaultArch = platform === Platform.MAC ? "x64" : process.arch
   for (const target of asArray(options.target).map<TargetConfig>(it => typeof it === "string" ? {target: it} : it)) {

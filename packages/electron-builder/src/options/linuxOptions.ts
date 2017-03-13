@@ -21,9 +21,12 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly description?: string | null
 
   /**
-   * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `AppImage`.
+   * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * 
    * electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
+   * 
+   * @see [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
+   * @default AppImage
    */
   readonly target?: TargetConfigType
 

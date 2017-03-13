@@ -54,6 +54,29 @@ test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   }
 }))
 
+test.ifAll.ifLinuxOrDevMac("override targets in the config", app({
+  targets: linuxDirTarget,
+}, {
+  packed: async (context) => {
+    await build({
+      project: context.projectDir,
+      linux: ["deb"],
+      config: {
+        publish: null,
+        // https://github.com/electron-userland/electron-builder/issues/1355
+        linux: {
+          "target": [
+            "AppImage",
+            "deb",
+            "rpm"
+          ],
+        },
+        compression: "store"
+      }
+    })
+  }
+}))
+
 test.ifAll.ifDevOrLinuxCi("scheme validation", appThrows({
   targets: linuxDirTarget,
   config: <any>{
