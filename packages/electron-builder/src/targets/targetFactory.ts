@@ -14,8 +14,8 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: P
     }
   }
   
+  const defaultArchs: Array<string> = raw.size === 0 ? [platform === Platform.MAC ? "x64" : process.arch] : Array.from(raw.keys()).map(it => Arch[it])
   const result = new Map(raw)
-  const defaultArch = platform === Platform.MAC ? "x64" : process.arch
   for (const target of asArray(options.target).map<TargetConfig>(it => typeof it === "string" ? {target: it} : it)) {
     let name = target.target
     let archs = target.arch
@@ -27,13 +27,15 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: P
       }
     }
 
-    for (const arch of asArray(archs || defaultArch)) {
+    for (const arch of archs == null ? defaultArchs : asArray(archs)) {
       addValue(result, archFromString(arch), name)
     }
   }
 
   if (result.size === 0) {
-    result.set(archFromString(defaultArch), [])
+    for (const arch of defaultArchs) {
+      result.set(archFromString(arch), [])
+    }
   }
 
   return result

@@ -27,6 +27,17 @@ Object {
 }
 `;
 
+exports[`override targets in the config - only arch 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`override targets in the config 1`] = `
 Object {
   "linux": Array [],

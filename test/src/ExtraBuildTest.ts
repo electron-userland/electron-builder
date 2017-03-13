@@ -1,4 +1,4 @@
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Arch, DIR_TARGET, Platform } from "electron-builder"
 import { build } from "electron-builder/out/builder"
 import { move } from "fs-extra-p"
 import * as path from "path"
@@ -54,12 +54,12 @@ test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   }
 }))
 
-test.ifAll.ifLinuxOrDevMac("override targets in the config", app({
+test.ifAll.ifDevOrWinCi("override targets in the config", app({
   targets: linuxDirTarget,
 }, {
   packed: async (context) => {
     await build({
-      project: context.projectDir,
+      projectDir: context.projectDir,
       linux: ["deb"],
       config: {
         publish: null,
@@ -75,6 +75,23 @@ test.ifAll.ifLinuxOrDevMac("override targets in the config", app({
       }
     })
   }
+}))
+
+
+test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
+  targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
+  config: {
+    // https://github.com/electron-userland/electron-builder/issues/1348
+    win: {
+      target: [
+        "nsis",
+      ],
+    },
+  },
+}, {
+  packed: async (context) => {
+    await assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist()
+  },
 }))
 
 test.ifAll.ifDevOrLinuxCi("scheme validation", appThrows({

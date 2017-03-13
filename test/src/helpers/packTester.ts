@@ -192,7 +192,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         return result
       })
   }
-
+  
   expect(objectToCompare).toMatchSnapshot()
 
   c: for (const [platform, archToType] of packagerOptions.targets) {
