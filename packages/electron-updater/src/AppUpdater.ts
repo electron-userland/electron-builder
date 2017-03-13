@@ -1,4 +1,3 @@
-import "source-map-support/register"
 import BluebirdPromise from "bluebird-lst"
 import { executorHolder, RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -8,11 +7,13 @@ import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { gt as isVersionGreaterThan, valid as parseVersion } from "semver"
+import "source-map-support/register"
 import { FileInfo, Provider, UpdateCheckResult, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
+import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export interface Logger {
   info(message?: any): void
@@ -244,6 +245,14 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }
+
+  protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders | null {
+    let requestHeaders = this.requestHeaders
+    if (fileInfo.headers != null) {
+      return requestHeaders == null ? fileInfo.headers : Object.assign({}, fileInfo.headers, requestHeaders)
+    }
+    return requestHeaders
+  }
 }
 
 function createClient(data: string | PublishConfiguration) {
@@ -254,8 +263,13 @@ function createClient(data: string | PublishConfiguration) {
   const provider = (<PublishConfiguration>data).provider
   switch (provider) {
     case "github":
-      return new GitHubProvider(<GithubOptions>data)
-
+      if (process.env.GH_TOKEN == null) {
+        return new GitHubProvider(<GithubOptions>data)
+      }
+      else {
+        return new PrivateGitHubProvider(<GithubOptions>data)
+      }
+      
     case "s3": {
       const s3 = <S3Options>data
       return new GenericProvider({

@@ -1,4 +1,3 @@
-import "source-map-support/register"
 import { spawn } from "child_process"
 import { download, DownloadOptions } from "electron-builder-http"
 import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -6,6 +5,7 @@ import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/pub
 import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
+import "source-map-support/register"
 import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
 import { AppUpdater } from "./AppUpdater"
 
@@ -25,7 +25,7 @@ export class NsisUpdater extends AppUpdater {
   protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
-      headers: this.requestHeaders || undefined,
+      headers: this.computeRequestHeaders(fileInfo),
       cancellationToken: cancellationToken,
       sha2: fileInfo == null ? null : fileInfo.sha2,
     }

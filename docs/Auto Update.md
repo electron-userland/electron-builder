@@ -26,6 +26,12 @@ Simplified auto-update is not supported for Squirrel.Windows.
 
 `latest.yml` (or `latest-mac.json` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
+## Private Update Repo
+
+You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable. If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
+
+**Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check. If you are worried about hitting your rate limit, consider using [conditional requests](https://developer.github.com/v3/#conditional-requests) before checking for updates to reduce rate limit usage.
+
 ## Debugging
 
 You don't need to listen all events to understand what's wrong. Just set `logger`.

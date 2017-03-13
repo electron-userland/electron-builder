@@ -1,11 +1,11 @@
-import { Provider, FileInfo, getDefaultChannelName, getChannelFilename, getCurrentPlatform } from "./api"
-import { VersionInfo, GithubOptions, UpdateInfo, githubUrl } from "electron-builder-http/out/publishOptions"
-import { validateUpdateInfo } from "./GenericProvider"
-import * as path from "path"
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { Url, parse as parseUrl, format as buggyFormat }  from "url"
+import { GithubOptions, githubUrl, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
+import * as path from "path"
+import { parse as parseUrl } from "url"
+import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./api"
+import { validateUpdateInfo } from "./GenericProvider"
 
 export class GitHubProvider extends Provider<VersionInfo> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -83,12 +83,4 @@ export class GitHubProvider extends Provider<VersionInfo> {
 
 interface GithubReleaseInfo {
   readonly tag_name: string
-}
-
-// url.format doesn't correctly use path and requires explicit pathname
-function formatUrl(url: Url) {
-  if (url.path != null && url.pathname == null) {
-    url.pathname = url.path
-  }
-  return buggyFormat(url)
 }

@@ -3,11 +3,13 @@ import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
+import { format as buggyFormat, Url } from "url"
 
 export interface FileInfo {
   readonly name: string
   readonly url: string
   readonly sha2?: string
+  readonly headers?: Object
 }
 
 export abstract class Provider<T extends VersionInfo> {
@@ -83,4 +85,12 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   else {
     emitter.on(event, handler)
   }
+}
+
+// url.format doesn't correctly use path and requires explicit pathname
+export function formatUrl(url: Url) {
+  if (url.path != null && url.pathname == null) {
+    url.pathname = url.path
+  }
+  return buggyFormat(url)
 }
