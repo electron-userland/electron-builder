@@ -44,7 +44,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
-    "ajv": "^5.0.3-beta.0",
+    "ajv": "^5.0.4-beta.0",
     "ajv-keywords": "^2.0.1-beta.1",
     "7zip-bin": "^2.0.4",
     "bluebird-lst": "^1.0.1",

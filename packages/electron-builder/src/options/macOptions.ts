@@ -84,7 +84,8 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly scripts?: string | null
 
   /**
-   * @private should be not documented, only to experiment
+   * should be not documented, only to experiment
+   * @private
    */
   readonly productbuild?: Array<string> | null
 

@@ -6,7 +6,7 @@ export type AllPublishOptions = string | GithubOptions | S3Options | GenericServ
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
 
 /**
- * Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#configuration-options) or any platform- or target- specific options.
+ * Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
  * 
  * If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
  * 
@@ -31,7 +31,7 @@ export interface PublishConfiguration {
  */
 export interface GithubOptions extends PublishConfiguration {
   /**
-   * The repository name. [Detected automatically](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#github-repository).
+   * The repository name. [Detected automatically](#github-repository-and-bintray-package).
    */
   readonly repo?: string | null
 
@@ -139,6 +139,9 @@ export interface BintrayOptions extends PublishConfiguration {
 }
 
 export interface VersionInfo {
+  /**
+   * The version.
+   */
   readonly version: string
 }
 
@@ -147,7 +150,16 @@ export interface UpdateInfo extends VersionInfo {
   readonly githubArtifactName?: string | null
   readonly sha2: string
 
+  /**
+   * The release name.
+   */
   readonly releaseName?: string | null
+  /**
+   * The release notes.
+   */
   readonly releaseNotes?: string | null
+  /**
+   * The release date.
+   */
   readonly releaseDate: string
 }

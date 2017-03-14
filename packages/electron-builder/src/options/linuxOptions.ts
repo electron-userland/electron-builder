@@ -41,7 +41,8 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly vendor?: string | null
 
   /**
-   * @private should be not documented, only to experiment
+   * should be not documented, only to experiment
+   * @private
    */
   readonly fpm?: Array<string> | null
 

@@ -6,7 +6,6 @@
   "declaration": true,
   "jsdoc": {
     "out": "../../jsdoc/out/builder",
-    "externalIfNotMain": "Developer-API",
     "examples": "../../jsdoc/examples"
   },
   "include": [

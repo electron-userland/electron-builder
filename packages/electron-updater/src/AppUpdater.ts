@@ -29,6 +29,9 @@ export abstract class AppUpdater extends EventEmitter {
    */
   public autoDownload = true
 
+  /**
+   *  The request headers.
+   */
   public requestHeaders: RequestHeaders | null
 
   /**
@@ -116,6 +119,9 @@ export abstract class AppUpdater extends EventEmitter {
     this.clientPromise = BluebirdPromise.resolve(client)
   }
 
+  /**
+   * Asks the server whether there is an update.
+   */
   checkForUpdates(): Promise<UpdateCheckResult> {
     let checkForUpdatesPromise = this.checkForUpdatesPromise
     if (checkForUpdatesPromise != null) {
@@ -237,6 +243,13 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<any>
 
+  /**
+   * Restarts the app and installs the update after it has been downloaded. 
+   * It should only be called after `update-downloaded` has been emitted.
+   * 
+   * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
+   * This is different from the normal quit event sequence.
+   */
   abstract quitAndInstall(): void
 
   async loadUpdateConfig() {

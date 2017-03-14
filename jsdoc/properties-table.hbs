@@ -4,7 +4,7 @@
 
 {{#tableRow properties "name" "type" "defaultvalue" "description" ~}}
 | {{#if @col1}}{{#unless optional}}**{{/unless~}}{{name}}{{#unless optional}}**{{/unless~}}{{#if defaultvalue}} = {{>defaultvalue}}{{/if~}} | {{/if~}}
-{{#if @col2}}{{>linked-type-list types=type.names delimiter=" &#124; " }} | {{/if~}}
+{{#if @col2}}{{>linked-type-list types=type.names delimiter=" \| " }} | {{/if~}}
 {{#if @col4}}{{{propertyAnchor name ../../name }}}{{{stripNewlines (inlineLinks description)}}} |{{/if}}
 {{/tableRow}}
 

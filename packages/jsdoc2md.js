@@ -5,12 +5,14 @@ const path = require("path")
 const fs = require("fs-extra-p")
 const jsdoc2md = require("jsdoc-to-markdown")
 
+const source = path.join(__dirname, "..", "jsdoc", "out")
+
 async function main() {
-  const source = path.join(__dirname, "..", "jsdoc", "out")
   const userFiles = await globby([
     "builder/electron-builder.js",
-    "http/electron-builder-http-out-publishOptions.js",
-    "publisher/electron-publish.js",
+  ], {cwd: source, flipNegate: true})
+  
+  const appUpdateFiles = await globby([
     "updater/*.js",
     "!updater/electron-updater-out-electronHttpExecutor.js",
     "!updater/electron-updater-out-*Updater.js",
@@ -19,35 +21,65 @@ async function main() {
     "",
   ], {cwd: source, flipNegate: true})
   
-
+  const publishFiles = await globby([
+    "http/electron-builder-http-out-publishOptions.js",
+    "publisher/electron-publish.js",
+  ], {cwd: source, flipNegate: true})
+  
   const developerFiles = (await globby([
     "**/*.js",
   ], {cwd: source, flipNegate: true}))
-    .filter(it => !userFiles.includes(it))
-  
+    .filter(it => !userFiles.includes(it) && !appUpdateFiles.includes(it) && !publishFiles.includes(it))
+
   const partialDir = path.join(__dirname, "..", "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
-  
-  const defaultJsdoc2MdOptions = {
+
+  const pages = [
+    {page: "Options.md", pageUrl: "Options", mainHeader: "API", files: userFiles},
+    {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
+    {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishFiles},
+    {page: "Developer API.md", pageUrl: "Developer-API", files: developerFiles},
+  ]
+
+  await render(pages, {
     partial: partials,
     "name-format": true,
     "helper": [
-      path.join(partialDir, "property-link.js")
+      path.join(partialDir, "helpers.js")
     ],
-    separators: true,
+  })
+}
+
+async function render(pages, jsdoc2MdOptions) {
+  require(path.join(__dirname, "..", "jsdoc", "helpers.js")).pages = pages
+
+  for (const page of pages) {
+    page.data = await jsdoc2md.getTemplateData(Object.assign({
+      files: page.files.map(it => path.resolve(source, it)),
+    }, jsdoc2MdOptions))
+
+    const map = new Map()
+    for (const member of page.data) {
+      map.set(member.id, member)
+    }
+
+    page.dataMap = map
   }
-  
-  function render(files) {
-    return jsdoc2md.render(Object.assign({
-      files: files.map(it => path.resolve(source, it)),
-    }, defaultJsdoc2MdOptions))
+
+  for (const page of pages) {
+    let content = await jsdoc2md.render(Object.assign({
+      data: page.data,
+    }, jsdoc2MdOptions))
+
+    if (page.mainHeader != null && content.startsWith("## Modules")) {
+      content = "## API" + content.substring("## Modules".length)
+    }
+    if (page.mainHeader != null) {
+      content = "## API" + content.substring(content.indexOf("\n", content.indexOf("##")))
+    }
+
+    await writeDocFile(path.join(__dirname, "..", "docs", page.page), content)
   }
-  
-  let userContent = await render(userFiles)
-  userContent = "## API" + userContent.substring("## Modules".length)
-  await writeDocFile(path.join(__dirname, "..", "docs", "Options.md"), userContent)
-  
-  await writeDocFile(path.join(__dirname, "..", "docs", "Developer API.md"), await render(developerFiles))
 }
 
 async function writeDocFile(docOutFile, content) {
@@ -83,18 +115,3 @@ async function writeDocFile(docOutFile, content) {
       process.exit(-1)
     })
 })()
-
-  
-// const configData = data.find(it => it.id === "module:electron-builder.Config")
-//
-// let result = {}
-// for (const p of configData.properties) {
-//   const typeNames = p.type.names.filter(it => it.startsWith("module:"))
-//   if (typeNames.length != 1) {
-//     continue
-//   }
-//
-//   const namePath = typeNames[0]
-//   result[p.name] = `[${namePath.substring(namePath.lastIndexOf(".") + 1)}](#${namePath.replace(":", "_")})`
-// }
-// console.log(JSON.stringify(result, null, 2))

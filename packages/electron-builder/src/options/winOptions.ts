@@ -181,7 +181,8 @@ export interface NsisOptions {
   readonly menuCategory?: boolean | string
 
   /**
-   * @private defaults to false
+   * @private
+   * @default false
    */
   readonly useZip?: boolean
 

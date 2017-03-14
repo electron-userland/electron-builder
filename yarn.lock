@@ -32,9 +32,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^19.2.1":
-  version "19.2.1"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-19.2.1.tgz#57db82d71c1b8ca1523bfdfbb00a4d848dfcc5fe"
+"@types/jest@^19.2.2":
+  version "19.2.2"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-19.2.2.tgz#71f428be2fa6eb9f15bb0abc3cade67905f94839"
 
 "@types/js-yaml@^3.5.29":
   version "3.5.29"
@@ -97,9 +97,9 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-ajv@^5.0.3-beta.0:
-  version "5.0.3-beta.0"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.0.3-beta.0.tgz#4ee44b57ab3bb43bc00fe727af9b350c9d9712fa"
+ajv@^5.0.4-beta.0:
+  version "5.0.4-beta.0"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.0.4-beta.0.tgz#7d929baca196a46f81a8802ac21271fd0d1b6186"
   dependencies:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
@@ -245,13 +245,13 @@ asn1@~0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/asn1/-/asn1-0.2.3.tgz#dac8787713c9966849fc8180777ebe9c1ddf3b86"
 
+assert-plus@1.0.0, assert-plus@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/assert-plus/-/assert-plus-1.0.0.tgz#f12e0f3c5d77b0b1cdd9146942e4e96c1e4dd525"
+
 assert-plus@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/assert-plus/-/assert-plus-0.2.0.tgz#d74e1b87e7affc0db8aadb7021f3fe48101ab234"
-
-assert-plus@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/assert-plus/-/assert-plus-1.0.0.tgz#f12e0f3c5d77b0b1cdd9146942e4e96c1e4dd525"
 
 async@^1.4.0, async@^1.4.2:
   version "1.5.2"
@@ -271,9 +271,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.27.0:
-  version "2.27.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.27.0.tgz#8d823c8e7dcc19a41a9df8c1427a9bab0fa5ee82"
+aws-sdk@^2.28.0:
+  version "2.28.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.28.0.tgz#0b7628c5d48820187332c5a30835945c41f84f46"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -689,7 +689,7 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
 
-catharsis@~0.8.8:
+catharsis@^0.8.8, catharsis@~0.8.8:
   version "0.8.8"
   resolved "https://registry.yarnpkg.com/catharsis/-/catharsis-0.8.8.tgz#693479f43aac549d806bd73e924cd0d944951a06"
   dependencies:
@@ -772,8 +772,8 @@ color-convert@~0.5.0:
   resolved "https://registry.yarnpkg.com/color-convert/-/color-convert-0.5.3.tgz#bdb6c69ce660fadffe0b0007cc447e1b9f7282bd"
 
 color-name@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.1.tgz#4b1415304cf50028ea81643643bd82ea05803689"
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.2.tgz#5c8ab72b64bd2215d617ae9559ebb148475cf98d"
 
 colors@^1.1.2:
   version "1.1.2"
@@ -930,9 +930,9 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.1, debug@^2.6.2:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.2.tgz#dfa96a861ee9b8c2f29349b3bcc41aa599a71e0f"
+debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.1, debug@^2.6.3:
+  version "2.6.3"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.3.tgz#0f7eb8c30965ec08c72accfa0130c8b79984141d"
   dependencies:
     ms "0.7.2"
 
@@ -2062,9 +2062,10 @@ jsonify@~0.0.0:
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
 
 jsprim@^1.2.2:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/jsprim/-/jsprim-1.3.1.tgz#2a7256f70412a29ee3670aaca625994c4dcff252"
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/jsprim/-/jsprim-1.4.0.tgz#a3b87e40298d8c380552d8cc7628a0bb95a22918"
   dependencies:
+    assert-plus "1.0.0"
     extsprintf "1.0.2"
     json-schema "0.2.3"
     verror "1.3.6"
@@ -2904,11 +2905,11 @@ sort-array@^1.1.1:
     object-get "^2.0.4"
     typical "^2.4.2"
 
-source-map-support@^0.4.11, source-map-support@^0.4.2:
-  version "0.4.11"
-  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.11.tgz#647f939978b38535909530885303daf23279f322"
+source-map-support@^0.4.11, source-map-support@^0.4.12, source-map-support@^0.4.2:
+  version "0.4.12"
+  resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.4.12.tgz#f47d02bf01efaf0c160d3a37d038401b92b1867e"
   dependencies:
-    source-map "^0.5.3"
+    source-map "^0.5.6"
 
 source-map@^0.1.40, source-map@~0.1.7:
   version "0.1.43"
@@ -2922,7 +2923,7 @@ source-map@^0.4.4:
   dependencies:
     amdefine ">=0.0.4"
 
-source-map@^0.5.0, source-map@^0.5.3, source-map@~0.5.1:
+source-map@^0.5.0, source-map@^0.5.3, source-map@^0.5.6, source-map@~0.5.1:
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.6.tgz#75ce38f52bf0733c5a7f0c118d81334a2bb5f412"
 
@@ -3195,15 +3196,15 @@ ts-babel@^2.0.0:
     markdown-it "^8.3.1"
     source-map-support "^0.4.11"
 
-ts-jsdoc@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.0.6.tgz#5d6b3af99283e3f922ce5a8fb39906308f4f56ae"
+ts-jsdoc@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.0.7.tgz#69e05f4aabc18afc9a053737b788d3395473fca6"
   dependencies:
     bluebird-lst "^1.0.1"
     chalk "^1.1.3"
     doctrine "^2.0.0"
     fs-extra-p "^4.0.2"
-    source-map-support "^0.4.11"
+    source-map-support "^0.4.12"
 
 tslint@^4.5.1:
   version "4.5.1"
@@ -3555,8 +3556,8 @@ y18n@^3.2.1:
   resolved "https://registry.yarnpkg.com/y18n/-/y18n-3.2.1.tgz#6d15fba884c08679c0d77e88e7759e811e07fa41"
 
 yallist@^2.0.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/yallist/-/yallist-2.1.0.tgz#3a0f3b45f42cb60f822c92f69ade2bb88beb1ae0"
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/yallist/-/yallist-2.1.2.tgz#1c11f9218f076089a47dd512f93c6699a6a81d52"
 
 yargs-parser@^4.2.0:
   version "4.2.1"
