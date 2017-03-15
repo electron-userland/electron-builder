@@ -137,6 +137,7 @@ GitHub options.
 | vPrefixedTagName = <code>true</code>| <code>boolean</code> | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. |
 | host = <code>&quot;github.com&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GithubOptions-host"></a>The host (including the port if need). |
 | protocol = <code>https</code>| <code>"https"</code> \| <code>"http"</code> \| <code>null</code> | <a name="GithubOptions-protocol"></a>The protocol. GitHub Publisher supports only `https`. |
+| token| <code>string</code> \| <code>null</code> | <a name="GithubOptions-token"></a>The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL). |
 
 <a name="PublishConfiguration"></a>
 

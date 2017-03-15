@@ -167,7 +167,7 @@ test("file url github", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
-test.skip("file url github private", async () => {
+test("file url github private", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",

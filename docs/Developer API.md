@@ -3405,17 +3405,23 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 ## electron-updater/out/GitHubProvider
 
 * [electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)
-    * [.GitHubProvider](#GitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+    * [.BaseGitHubProvider](#BaseGitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+    * [.GitHubProvider](#GitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
         * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
 
-<a name="GitHubProvider"></a>
+<a name="BaseGitHubProvider"></a>
 
-### GitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### BaseGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
 **Kind**: class of <code>[electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)</code>  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+<a name="GitHubProvider"></a>
 
-* [.GitHubProvider](#GitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### GitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
+**Kind**: class of <code>[electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)</code>  
+**Extends**: <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>  
+
+* [.GitHubProvider](#GitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
     * [`.getLatestVersion()`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
     * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
 
@@ -3523,23 +3529,47 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 ## electron-updater/out/PrivateGitHubProvider
 
 * [electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)
-    * [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
-        * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
+    * [`.Asset`](#Asset)
+    * [`.PrivateGitHubUpdateInfo`](#PrivateGitHubUpdateInfo) ⇐ <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>
+    * [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
+        * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
         * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+
+<a name="Asset"></a>
+
+### `Asset`
+**Kind**: interface of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **name**| <code>string</code> | 
+| **url**| <code>string</code> | 
+
+<a name="PrivateGitHubUpdateInfo"></a>
+
+### `PrivateGitHubUpdateInfo` ⇐ <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>
+**Kind**: interface of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
+**Extends**: <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **assets**| <code>Array&lt;[Asset](#Asset)&gt;</code> | 
 
 <a name="PrivateGitHubProvider"></a>
 
-### PrivateGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### PrivateGitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
 **Kind**: class of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
-**Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+**Extends**: <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>  
 
-* [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
-    * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
+* [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
+    * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
     * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
 
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion"></a>
 
-#### `privateGitHubProvider.getLatestVersion()` ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
+#### `privateGitHubProvider.getLatestVersion()` ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
 **Kind**: instance method of <code>[PrivateGitHubProvider](#PrivateGitHubProvider)</code>  
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile"></a>
 
@@ -3548,7 +3578,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 | Param | Type |
 | --- | --- |
-| versionInfo | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
+| versionInfo | <code>[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)</code> | 
 
 <a name="module_electron-updater/out/electronHttpExecutor"></a>
 
