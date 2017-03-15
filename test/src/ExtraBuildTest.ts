@@ -54,7 +54,7 @@ test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   }
 }))
 
-test.ifAll.ifDevOrWinCi("override targets in the config", app({
+test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
   targets: linuxDirTarget,
 }, {
   packed: async (context) => {
