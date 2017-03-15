@@ -1,7 +1,5 @@
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
 
-A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
-
 Simplified auto-update is not supported for Squirrel.Windows.
 
 ## Quick Setup Guide
@@ -18,9 +16,81 @@ Simplified auto-update is not supported for Squirrel.Windows.
     
     Or if you don't use ES6: `const autoUpdater = require("electron-updater").autoUpdater`
 
-4. Do not call [setFeedURL](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#autoupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
+4. Implement `electron-updater` events, check examples below.
 
-**NOTICE**: Bintray provider doesn't support [macOS auto-update](https://github.com/electron-userland/electron-builder/issues/1172) currently.
+**NOTICE**: 
+
+1. Do not call [setFeedURL](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#autoupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
+2. Bintray provider doesn't support [macOS auto-update](https://github.com/electron-userland/electron-builder/issues/1172) currently.
+3. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error.
+
+### Examples
+
+**Auto Update**
+
+A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
+
+**Manual Update**
+
+The following code snippet gives another example, which illustrate an encapsulated manual update via menu.
+
+```js
+// updater.js
+const { dialog } = require('electron')
+const { autoUpdater } = require('electron-updater')
+
+
+let updater
+autoUpdater.autoDownload = false
+autoUpdater.on('error', (event, error) => {
+  dialog.showErrorBox('Error: ', error)
+})
+autoUpdater.on('update-available', () => {
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Found Updates',
+    message: 'Found updates, do you want update now?',
+    buttons: ['Sure', 'No']
+  }, (buttonIndex) => {
+    if (buttonIndex === 0) {
+      autoUpdater.downloadUpdate()
+    } else {
+      updater.enabled = true
+      updater = null
+    }
+  })
+})
+autoUpdater.on('update-not-available', () => {
+  dialog.showMessageBox({
+    title: 'No Updates', 
+    message: 'Current version is up-to-date.'
+  })
+  updater.enabled = true
+  updater = null
+})
+autoUpdater.on('update-downloaded', () => {
+  dialog.showMessageBox({
+    title: 'Install Updates',
+    message: 'Updates downloaded, application will be quit for update...'
+  }, () => {
+    autoUpdater.quitAndInstall()
+  })
+})
+
+
+// export this to MenuItem click callback
+function checkForUpdates (menuItem, focusedWindow, event) {
+  updater = menuItem
+  updater.enabled = false
+  autoUpdater.checkForUpdates()
+}
+module.exports.checkForUpdates = checkForUpdates
+```
+
+Import steps:
+
+1. create `updater.js` for the code snippet
+2. require `updater.js` for menu implementation, and set `checkForUpdates` callback from `updater` for the click property of `Check Updates...` MenuItem.
 
 ## File Generated and Uploaded in Addition
 
