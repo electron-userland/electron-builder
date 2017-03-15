@@ -108,10 +108,9 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
         return
       }
 
-      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, parseUrl(redirectUrl)), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, removeAuthHeader(options), parseUrl(redirectUrl)), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
-
       return
     }
 
@@ -160,7 +159,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
           const parsedUrl = parseUrl(redirectUrl)
-          this.doDownload(Object.assign({}, requestOptions, {
+          this.doDownload(Object.assign({}, removeAuthHeader(requestOptions), {
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             port: parsedUrl.port == null ? undefined : parsedUrl.port
@@ -305,4 +304,15 @@ export function dumpRequestOptions(options: RequestOptions): string {
     safe.headers.authorization = "<skipped>"
   }
   return JSON.stringify(safe, null, 2)
+}
+
+function removeAuthHeader(requestOptions: RequestOptions): RequestOptions {
+  const result = Object.assign({}, requestOptions)
+  // github redirect to amazon s3 - avoid error "Only one auth mechanism allowed" 
+  if (result.headers != null) {
+    result.headers = Object.assign({}, result.headers)
+    delete result.headers.Authorization
+    delete result.headers.authorization
+  }
+  return result
 }

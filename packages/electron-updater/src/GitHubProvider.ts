@@ -1,29 +1,35 @@
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { GithubOptions, githubUrl, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { GithubOptions, githubUrl, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./api"
 import { validateUpdateInfo } from "./GenericProvider"
 
-export class GitHubProvider extends Provider<VersionInfo> {
+export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
-  private readonly baseUrl: RequestOptions
-
-  constructor(private readonly options: GithubOptions) {
+  protected readonly baseUrl: RequestOptions
+  
+  constructor(protected readonly options: GithubOptions, baseHost: string) {
     super()
 
-    const baseUrl = parseUrl(`${options.protocol || "https"}://${options.host || "github.com"}`)
+    const baseUrl = parseUrl(`${options.protocol || "https"}://${options.host || baseHost}`)
     this.baseUrl = {
       protocol: baseUrl.protocol,
       hostname: baseUrl.hostname,
       port: <any>baseUrl.port,
     }
   }
+}
+
+export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
+  constructor(protected readonly options: GithubOptions) {
+    super(options, "github.com")
+  }
 
   async getLatestVersion(): Promise<UpdateInfo> {
-    const basePath = this.getBasePath()
+    const basePath = this.basePath
     const cancellationToken = new CancellationToken()
     const version = await this.getLatestVersionString(basePath, cancellationToken)
     let result: any
@@ -61,7 +67,7 @@ export class GitHubProvider extends Provider<VersionInfo> {
     }
   }
 
-  private getBasePath() {
+  protected get basePath() {
     return `/${this.options.owner}/${this.options.repo}/releases`
   }
 
@@ -70,12 +76,11 @@ export class GitHubProvider extends Provider<VersionInfo> {
       return <any>versionInfo
     }
 
-    const basePath = this.getBasePath()
     // space is not supported on GitHub
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
     return {
       name: name,
-      url: formatUrl(Object.assign({path: `${basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
+      url: formatUrl(Object.assign({path: `${this.basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
       sha2: versionInfo.sha2,
     }
   }

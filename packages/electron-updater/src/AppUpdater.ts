@@ -276,11 +276,13 @@ function createClient(data: string | PublishConfiguration) {
   const provider = (<PublishConfiguration>data).provider
   switch (provider) {
     case "github":
-      if (process.env.GH_TOKEN == null) {
-        return new GitHubProvider(<GithubOptions>data)
+      const githubOptions = <GithubOptions>data
+      const token = process.env.GH_TOKEN || githubOptions.token
+      if (token == null) {
+        return new GitHubProvider(githubOptions)
       }
       else {
-        return new PrivateGitHubProvider(<GithubOptions>data)
+        return new PrivateGitHubProvider(githubOptions, token)
       }
       
     case "s3": {

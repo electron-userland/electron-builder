@@ -1,54 +1,34 @@
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { GithubOptions, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
-import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./api"
+import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName } from "./api"
 import { validateUpdateInfo } from "./GenericProvider"
+import { BaseGitHubProvider } from "./GitHubProvider"
 
-export class PrivateGitHubProvider extends Provider<VersionInfo> {
-  // so, we don't need to parse port (because node http doesn't support host as url does)
-  private readonly baseUrl: RequestOptions
-  private apiResult: any
+interface PrivateGitHubUpdateInfo extends UpdateInfo {
+  assets: Array<Asset>
+}
 
-  constructor(private readonly options: GithubOptions) {
-    super()
-
-    const baseUrl = parseUrl(`${options.protocol || "https"}://${options.host || "api.github.com"}`)
-    this.baseUrl = {
-      protocol: baseUrl.protocol,
-      hostname: baseUrl.hostname,
-      port: <any>baseUrl.port,
-    }
+export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
+  constructor(options: GithubOptions, private readonly token: string) {
+    super(options, "api.github.com")
   }
-
-  async getLatestVersion(): Promise<UpdateInfo> {
-    const basePath = this.getBasePath()
+  
+  async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
+    const basePath = this.basePath
     const cancellationToken = new CancellationToken()
-    let result: any
     const channelFile = getChannelFilename(getDefaultChannelName())
-    const versionUrl = await this.getLatestVersionUrl(basePath, cancellationToken, channelFile)
-    const assetPath = parseUrl(versionUrl).path
+    
+    const assets = await this.getLatestVersionInfo(basePath, cancellationToken)
     const requestOptions = Object.assign({
-      path: `${assetPath}?access_token=${process.env.GH_TOKEN}`,
-      headers: Object.assign({
-        Accept: "application/octet-stream",
-        "User-Agent": this.options.owner
-      }, this.requestHeaders)
-    }, this.baseUrl)
+      headers: this.configureHeaders("application/octet-stream")
+    }, parseUrl(assets.find(it => it.name == channelFile)!.url))
+    let result: any
     try {
       result = await request<UpdateInfo>(requestOptions, cancellationToken)
-      //Maybe better to parse in httpExecutor ?
-      if (typeof result === "string") {
-        if (getCurrentPlatform() === "darwin") {
-          result = JSON.parse(result)
-        }
-        else {
-          result = safeLoad(result)
-        }
-      }
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -61,54 +41,62 @@ export class PrivateGitHubProvider extends Provider<VersionInfo> {
     if (getCurrentPlatform() === "darwin") {
       result.releaseJsonUrl = `${this.options.protocol || "https"}://${this.options.host || "api.github.com"}${requestOptions.path}`
     }
+    (<PrivateGitHubUpdateInfo>result).assets = assets
     return result
   }
 
-  private async getLatestVersionUrl(basePath: string, cancellationToken: CancellationToken, channelFile: string): Promise<string> {
+  private configureHeaders(accept: string) {
+    return Object.assign({
+      Accept: accept,
+      Authorization: `token ${this.token}`,
+    }, this.requestHeaders)
+  }
+  
+  private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<Array<Asset>> {
     const requestOptions: RequestOptions = Object.assign({
-      path: `${basePath}/latest?access_token=${process.env.GH_TOKEN}`,
-      headers: Object.assign({Accept: "application/json", "User-Agent": this.options.owner}, this.requestHeaders)
+      path: `${basePath}/latest`,
+      headers: this.configureHeaders("application/vnd.github.v3+json"),
     }, this.baseUrl)
     try {
-      this.apiResult = (await request<any>(requestOptions, cancellationToken))
-      return this.apiResult.assets.find((elem: any) => {
-        return elem.name == channelFile
-      }).url
+      return (await request<any>(requestOptions, cancellationToken)).assets
     }
     catch (e) {
       throw new Error(`Unable to find latest version on GitHub (${formatUrl(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)
     }
   }
 
-  private getBasePath() {
+  private get basePath() {
     return `/repos/${this.options.owner}/${this.options.repo}/releases`
   }
 
-  async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
+  async getUpdateFile(versionInfo: PrivateGitHubUpdateInfo): Promise<FileInfo> {
     const headers = {
       Accept: "application/octet-stream",
-      "User-Agent": this.options.owner,
-      Authorization: `token ${process.env.GH_TOKEN}`
+      Authorization: `token ${this.token}`
     }
     
     // space is not supported on GitHub
     if (getCurrentPlatform() === "darwin") {
       const info = <any>versionInfo
       const name = info.url.split("/").pop()
-      const assetPath = parseUrl(this.apiResult.assets.find((it: any) => it.name == name).url).path
+      const assetPath = parseUrl(versionInfo.assets.find(it => it.name == name)!.url).path
       info.url = formatUrl(Object.assign({path: `${assetPath}`}, this.baseUrl))
       info.headers = headers
       return info
     }
     else {
       const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
-      const assetPath = parseUrl(this.apiResult.assets.find((it: any) => it.name == name).url).path
       return {
         name: name,
-        url: formatUrl(Object.assign({path: `${assetPath}`}, this.baseUrl)),
+        url: versionInfo.assets.find(it => it.name == name)!.url,
         sha2: versionInfo.sha2,
         headers: headers,
       }
     }
   }
+}
+
+interface Asset {
+  name: string
+  url: string
 }

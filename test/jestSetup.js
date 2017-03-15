@@ -52,7 +52,10 @@ test.ifLinux = process.platform === "linux" ? test : skip
 test.ifLinuxOrDevMac = process.platform === "linux" || (!isCi && isMac) ? test : skip
 
 delete process.env.CSC_NAME
-delete process.env.GH_TOKEN
+if (process.env.TEST_APP_TMP_DIR == null) {
+  delete process.env.GH_TOKEN
+}
+
 process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
 if (!process.env.USE_HARD_LINKS) {
   process.env.USE_HARD_LINKS = "true"

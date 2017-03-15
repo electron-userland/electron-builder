@@ -52,6 +52,11 @@ export interface GithubOptions extends PublishConfiguration {
    * @default https
    */
   readonly protocol?: "https" | "http" | null
+
+  /**
+   * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).
+   */
+  readonly token?: string | null
 }
 
 export function githubUrl(options: GithubOptions) {
