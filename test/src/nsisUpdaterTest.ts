@@ -167,7 +167,7 @@ test("file url github", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("file url github private", async () => {
+test.skip("file url github private", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
@@ -203,7 +203,7 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    url: "https://s3.amazonaws.com/test/develar",
   })
   updater.autoDownload = false
 
