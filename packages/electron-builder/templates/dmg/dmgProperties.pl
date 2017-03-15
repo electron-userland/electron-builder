@@ -4,6 +4,7 @@ use Mac::Finder::DSStore qw( writeDSDBEntries makeEntries );
 use Mac::Memory qw( );
 use Mac::Files qw( NewAliasMinimal );
 use Encode ();
+use utf8;
 
 my($backgroundWidth, $backgroundHeight);
 
