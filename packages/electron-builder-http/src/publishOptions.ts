@@ -68,7 +68,7 @@ export function githubUrl(options: GithubOptions) {
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**
-   * The base url. e.g. `https://s3.amazonaws.com/bucket_name`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+   * The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
    */
   readonly url: string
 

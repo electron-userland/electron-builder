@@ -119,7 +119,7 @@ Generic (any HTTP(S) server) options.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
+| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
 | channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
 
 <a name="GithubOptions"></a>
@@ -171,6 +171,7 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 | --- | --- | --- |
 | **bucket**| <code>string</code> | <a name="S3Options-bucket"></a>The bucket name. |
 | path = <code>&quot;/&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-path"></a>The directory path. |
+| region| <code>string</code> \| <code>null</code> | <a name="S3Options-region"></a>The region. Is determined and set automatically when publishing. |
 | channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-channel"></a>The channel. |
 | acl = <code>public-read</code>| <code>"private"</code> \| <code>"public-read"</code> \| <code>null</code> | <a name="S3Options-acl"></a>The ACL. |
 | storageClass = <code>STANDARD</code>| <code>"STANDARD"</code> \| <code>"REDUCED_REDUNDANCY"</code> \| <code>"STANDARD_IA"</code> \| <code>null</code> | <a name="S3Options-storageClass"></a>The type of storage to use for the object. |
