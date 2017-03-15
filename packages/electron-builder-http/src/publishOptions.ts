@@ -68,7 +68,7 @@ export function githubUrl(options: GithubOptions) {
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**
-   * The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+   * The base url. e.g. `https://s3.amazonaws.com/bucket_name`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
    */
   readonly url: string
 
@@ -115,7 +115,7 @@ export interface S3Options extends PublishConfiguration {
 }
 
 export function s3Url(options: S3Options) {
-  let url = `https://${options.bucket}.s3.amazonaws.com`
+  let url = `https://s3.amazonaws.com/${options.bucket}`
   if (options.path != null) {
     url += `/${options.path}`
   }

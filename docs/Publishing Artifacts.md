@@ -119,7 +119,7 @@ Generic (any HTTP(S) server) options.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
+| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://s3.amazonaws.com/bucket_name`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
 | channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
 
 <a name="GithubOptions"></a>
