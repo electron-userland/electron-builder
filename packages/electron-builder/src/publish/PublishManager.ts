@@ -15,6 +15,7 @@ import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
+import { S3 } from "aws-sdk"
 import { PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
@@ -87,6 +88,12 @@ export class PublishManager implements PublishContext {
         if (publisherName != null) {
           publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
         }
+      }
+
+      if (publishConfig.provider === "s3") {
+        const s3 = new S3({signatureVersion: "v4"})
+        const region = (await s3.getBucketLocation({ Bucket: (<S3Options>publishConfig).bucket }).promise()).LocationConstraint
+        publishConfig = Object.assign(publishConfig, {region: region})
       }
 
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))

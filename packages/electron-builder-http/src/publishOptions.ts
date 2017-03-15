@@ -96,6 +96,11 @@ export interface S3Options extends PublishConfiguration {
   readonly path?: string | null
 
   /**
+   * The region. Is determined and set automatically when publishing.
+   */
+  readonly region?: string | null
+
+  /**
    * The channel.
    * @default latest
    */
@@ -115,7 +120,8 @@ export interface S3Options extends PublishConfiguration {
 }
 
 export function s3Url(options: S3Options) {
-  let url = `https://s3.amazonaws.com/${options.bucket}`
+  let url = `https://s3.${options.region}.amazonaws.com/${options.bucket}`
+
   if (options.path != null) {
     url += `/${options.path}`
   }
