@@ -8,7 +8,7 @@ import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefault
 import { validateUpdateInfo } from "./GenericProvider"
 import { BaseGitHubProvider } from "./GitHubProvider"
 
-interface PrivateGitHubUpdateInfo extends UpdateInfo {
+export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
 }
 
@@ -96,7 +96,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 }
 
-interface Asset {
+export interface Asset {
   name: string
   url: string
 }
