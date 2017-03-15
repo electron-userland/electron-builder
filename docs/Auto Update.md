@@ -32,7 +32,7 @@ A [complete example](https://github.com/iffy/electron-updater-example) showing h
 
 **Manual Update**
 
-The following code snippet gives another example, which illustrate an encapsulated menual update via menu.
+The following code snippet gives another example, which illustrate an encapsulated manual update via menu.
 
 ```js
 // updater.js
