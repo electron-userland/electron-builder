@@ -26,9 +26,13 @@ Simplified auto-update is not supported for Squirrel.Windows.
 
 ### Examples
 
+**Auto Update**
+
 A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 
-The following code snippet give another example of how to implement few `electron-updater` events, which gives a optional update function.
+**Manual Update**
+
+The following code snippet gives another example, which illustrate an encapsulated menual update via menu.
 
 ```js
 // updater.js
