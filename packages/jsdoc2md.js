@@ -4,7 +4,7 @@ const globby = require("globby")
 const path = require("path")
 const fs = require("fs-extra-p")
 const jsdoc2md = require("jsdoc-to-markdown")
-
+const pathSorter = require("path-sort")
 const source = path.join(__dirname, "..", "jsdoc", "out")
 
 async function main() {
@@ -55,7 +55,7 @@ async function render(pages, jsdoc2MdOptions) {
 
   for (const page of pages) {
     page.data = await jsdoc2md.getTemplateData(Object.assign({
-      files: page.files.map(it => path.resolve(source, it)),
+      files: pathSorter(page.files).map(it => path.resolve(source, it)),
     }, jsdoc2MdOptions))
 
     const map = new Map()

@@ -35,6 +35,17 @@ Object {
 }
 `;
 
+exports[`multi language license 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`one-click 1`] = `
 Object {
   "win": Array [

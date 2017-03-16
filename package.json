@@ -87,7 +87,7 @@
     "jest-junit": "^1.3.0",
     "jsdoc-to-markdown": "^3.0.0",
     "path-sort": "^0.1.0",
-    "source-map-support": "^0.4.12",
+    "source-map-support": "^0.4.13",
     "ts-babel": "^2.0.0",
     "tslint": "^4.5.1",
     "typescript": "^2.2.1",

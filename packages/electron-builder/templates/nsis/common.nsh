@@ -87,3 +87,13 @@ Name "${PRODUCT_NAME}"
     Nsis7z::Extract "$PLUGINSDIR\app-${ARCH}.7z"
   !endif
 !macroend
+
+!macro licensePageHelper
+  Function licensePre
+    ${if} ${Updated}
+      Abort
+    ${endif}
+  FunctionEnd
+
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
+!macroend

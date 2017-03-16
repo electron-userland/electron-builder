@@ -310,10 +310,9 @@ export function dumpRequestOptions(options: RequestOptions): string {
 // requestOptions should be cloned already, modified in place
 function removeAuthHeader(requestOptions: RequestOptions): RequestOptions {
   // github redirect to amazon s3 - avoid error "Only one auth mechanism allowed" 
-  if (requestOptions.headers != null && (requestOptions.hostname || "").includes(".amazonaws.")) {
+  if (requestOptions.headers != null && (requestOptions.hostname || "").includes(".amazonaws.") && requestOptions.headers.Authorization != null && requestOptions.headers.Authorization.startsWith("token ")) {
     requestOptions.headers = Object.assign({}, requestOptions.headers)
     delete requestOptions.headers.Authorization
-    delete requestOptions.headers.authorization
   }
   return requestOptions
 }

@@ -14,15 +14,9 @@
     FunctionEnd
   !endif
 
-  !ifdef LICENSE_FILE
-    Function licensePre
-      ${if} ${Updated}
-        Abort
-      ${endif}
-    FunctionEnd
-
-    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
-    !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+  !ifmacrodef licensePage
+    !insertmacro licensePageHelper
+    !insertmacro licensePage
   !endif
 !endif
 

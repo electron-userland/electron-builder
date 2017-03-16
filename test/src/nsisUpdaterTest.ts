@@ -203,7 +203,7 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://s3.amazonaws.com/test/develar",
+    url: "https://develar.s3.amazonaws.com/test",
   })
   updater.autoDownload = false
 

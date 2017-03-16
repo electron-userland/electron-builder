@@ -153,7 +153,12 @@ export interface NsisOptions {
   readonly script?: string | null
 
   /**
-   * The path to EULA license file. Defaults to `build/license.rtf` or `build/license.txt`.
+   * The path to EULA license file. Defaults to `license.rtf` or `license.txt` or `eula.rtf` or `eula.txt` (or uppercase variants, e.g. `EULA.txt` or `LICENSE.TXT`).
+   * 
+   * Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
+   * If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+   * 
+   * Appropriate license file will be selected by user OS language.
    */
   readonly license?: string | null
 

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder"
-import { readFile } from "fs-extra-p"
+import { readFile, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -29,6 +29,17 @@ test("one-click", app({
   }
 }))
 
+test("multi language license", app({
+  targets: Platform.WINDOWS.createTarget("nsis"),
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
+      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+    ])
+  },
+}))
+
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
@@ -53,8 +64,8 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo.ico")),
-      copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"),
-      )])
+      copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
+    ])
   },
   packed: async(context) => {
     await expectUpdateMetadata(context)

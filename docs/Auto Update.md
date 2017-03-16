@@ -157,9 +157,9 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 <dl>
 <dt><a href="#module_electron-updater/out/api">electron-updater/out/api</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-updater">electron-updater</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-updater/out/AppUpdater">electron-updater/out/AppUpdater</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-updater">electron-updater</a></dt>
 <dd></dd>
 </dl>
 
@@ -314,13 +314,6 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 ### `electron-updater/out/api.getDefaultChannelName()` ⇒ <code>string</code>
 **Kind**: method of <code>[electron-updater/out/api](#module_electron-updater/out/api)</code>  
-<a name="module_electron-updater"></a>
-
-## electron-updater
-<a name="module_electron-updater.autoUpdater"></a>
-
-### `electron-updater.autoUpdater` : <code>[AppUpdater](#AppUpdater)</code>
-**Kind**: constant of <code>[electron-updater](#module_electron-updater)</code>  
 <a name="module_electron-updater/out/AppUpdater"></a>
 
 ## electron-updater/out/AppUpdater
@@ -486,5 +479,12 @@ This is different from the normal quit event sequence.
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo | <code>[FileInfo](#FileInfo)</code> | 
 
+<a name="module_electron-updater"></a>
+
+## electron-updater
+<a name="module_electron-updater.autoUpdater"></a>
+
+### `electron-updater.autoUpdater` : <code>[AppUpdater](#AppUpdater)</code>
+**Kind**: constant of <code>[electron-updater](#module_electron-updater)</code>  
 
 <!-- end of generated block -->

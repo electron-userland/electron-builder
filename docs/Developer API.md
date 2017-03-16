@@ -27,19 +27,13 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/platformPackager">electron-builder/out/platformPackager</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/publish/publisher">electron-builder/out/publish/publisher</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/readInstalled">electron-builder/out/readInstalled</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/repositoryInfo">electron-builder/out/repositoryInfo</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/ArchiveTarget">electron-builder/out/targets/ArchiveTarget</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/LinuxTargetHelper">electron-builder/out/targets/LinuxTargetHelper</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/WebInstaller">electron-builder/out/targets/WebInstaller</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/appImage">electron-builder/out/targets/appImage</a></dt>
 <dd></dd>
@@ -47,9 +41,13 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/archive">electron-builder/out/targets/archive</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/targets/ArchiveTarget">electron-builder/out/targets/ArchiveTarget</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/targets/dmg">electron-builder/out/targets/dmg</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/fpm">electron-builder/out/targets/fpm</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/LinuxTargetHelper">electron-builder/out/targets/LinuxTargetHelper</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/nsis">electron-builder/out/targets/nsis</a></dt>
 <dd></dd>
@@ -59,23 +57,25 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/targetFactory">electron-builder/out/targets/targetFactory</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/targets/WebInstaller">electron-builder/out/targets/WebInstaller</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/util/filter">electron-builder/out/util/filter</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/util/readPackageJson">electron-builder/out/util/readPackageJson</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/winPackager">electron-builder/out/winPackager</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/winPackager">electron-builder/out/winPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/yarn">electron-builder/out/yarn</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder-core">electron-builder-core</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder-http/out/bintray">electron-builder-http/out/bintray</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder-http/out/CancellationToken">electron-builder-http/out/CancellationToken</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder-http/out/ProgressCallbackTransform">electron-builder-http/out/ProgressCallbackTransform</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http/out/bintray">electron-builder-http/out/bintray</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder-http">electron-builder-http</a></dt>
 <dd></dd>
@@ -87,6 +87,8 @@
 <dd></dd>
 <dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-updater/out/GenericProvider">electron-updater/out/GenericProvider</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/GitHubProvider">electron-updater/out/GitHubProvider</a></dt>
@@ -96,8 +98,6 @@
 <dt><a href="#module_electron-updater/out/NsisUpdater">electron-updater/out/NsisUpdater</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/PrivateGitHubProvider">electron-updater/out/PrivateGitHubProvider</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder-util/out/binDownload">electron-builder-util/out/binDownload</a></dt>
 <dd></dd>
@@ -1324,6 +1324,29 @@
 | --- | --- |
 | ext | <code>string</code> | 
 
+<a name="module_electron-builder/out/publish/publisher"></a>
+
+## electron-builder/out/publish/publisher
+
+* [electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)
+    * [`.getCiTag()`](#module_electron-builder/out/publish/publisher.getCiTag) ⇒ <code>any</code>
+    * [`.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)`](#module_electron-builder/out/publish/publisher.getResolvedPublishConfig) ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
+
+<a name="module_electron-builder/out/publish/publisher.getCiTag"></a>
+
+### `electron-builder/out/publish/publisher.getCiTag()` ⇒ <code>any</code>
+**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
+<a name="module_electron-builder/out/publish/publisher.getResolvedPublishConfig"></a>
+
+### `electron-builder/out/publish/publisher.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)` ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
+**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| packager | <code>[BuildInfo](Options#BuildInfo)</code> | 
+| publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
+| errorIfCannot | <code>boolean</code> | 
+
 <a name="module_electron-builder/out/publish/PublishManager"></a>
 
 ## electron-builder/out/publish/PublishManager
@@ -1411,29 +1434,6 @@
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> &#124; <code>null</code> | 
 
-<a name="module_electron-builder/out/publish/publisher"></a>
-
-## electron-builder/out/publish/publisher
-
-* [electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)
-    * [`.getCiTag()`](#module_electron-builder/out/publish/publisher.getCiTag) ⇒ <code>any</code>
-    * [`.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)`](#module_electron-builder/out/publish/publisher.getResolvedPublishConfig) ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
-
-<a name="module_electron-builder/out/publish/publisher.getCiTag"></a>
-
-### `electron-builder/out/publish/publisher.getCiTag()` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
-<a name="module_electron-builder/out/publish/publisher.getResolvedPublishConfig"></a>
-
-### `electron-builder/out/publish/publisher.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)` ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[BuildInfo](Options#BuildInfo)</code> | 
-| publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| errorIfCannot | <code>boolean</code> | 
-
 <a name="module_electron-builder/out/readInstalled"></a>
 
 ## electron-builder/out/readInstalled
@@ -1495,114 +1495,6 @@
 | metadata | <code>[Metadata](Options#Metadata)</code> | 
 | devMetadata | <code>[Metadata](Options#Metadata)</code> | 
 
-<a name="module_electron-builder/out/targets/ArchiveTarget"></a>
-
-## electron-builder/out/targets/ArchiveTarget
-
-* [electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)
-    * [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
-        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
-<a name="ArchiveTarget"></a>
-
-### ArchiveTarget ⇐ <code>[Target](#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)</code>  
-**Extends**: <code>[Target](#Target)</code>  
-
-* [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
-<a name="module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build"></a>
-
-#### `archiveTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `archiveTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
-<a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
-
-## electron-builder/out/targets/LinuxTargetHelper
-
-* [electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)
-    * [.LinuxTargetHelper](#LinuxTargetHelper)
-        * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
-
-<a name="LinuxTargetHelper"></a>
-
-### LinuxTargetHelper
-**Kind**: class of <code>[electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)</code>  
-
-* [.LinuxTargetHelper](#LinuxTargetHelper)
-    * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
-
-<a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry"></a>
-
-#### `linuxTargetHelper.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
-
-| Param | Type |
-| --- | --- |
-| platformSpecificBuildOptions | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
-| exec | <code>string</code> | 
-| destination | <code>string</code> &#124; <code>null</code> | 
-| extra | <code>Object&lt;string, any&gt;</code> | 
-
-<a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription"></a>
-
-#### `linuxTargetHelper.getDescription(options)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
-
-<a name="module_electron-builder/out/targets/WebInstaller"></a>
-
-## electron-builder/out/targets/WebInstaller
-
-* [electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)
-    * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
-
-<a name="WebInstallerTarget"></a>
-
-### WebInstallerTarget ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-**Kind**: class of <code>[electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)</code>  
-**Extends**: <code>module:electron-builder/out/targets/nsis.default</code>  
-
-* [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
-
-<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines"></a>
-
-#### `webInstallerTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| oneClick | <code>boolean</code> | 
-| defines | <code>any</code> | 
-
-<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName"></a>
-
-#### `webInstallerTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
-**Access**: protected  
 <a name="module_electron-builder/out/targets/appImage"></a>
 
 ## electron-builder/out/targets/appImage
@@ -1705,6 +1597,40 @@
 | dirToArchive | <code>string</code> | 
 | isMacApp | <code>boolean</code> | 
 
+<a name="module_electron-builder/out/targets/ArchiveTarget"></a>
+
+## electron-builder/out/targets/ArchiveTarget
+
+* [electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)
+    * [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
+        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
+
+<a name="ArchiveTarget"></a>
+
+### ArchiveTarget ⇐ <code>[Target](#Target)</code>
+**Kind**: class of <code>[electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)</code>  
+**Extends**: <code>[Target](#Target)</code>  
+
+* [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
+    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
+
+<a name="module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build"></a>
+
+#### `archiveTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
+**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
+
+<a name="module_electron-builder-core.Target+finishBuild"></a>
+
+#### `archiveTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
 <a name="module_electron-builder/out/targets/dmg"></a>
 
 ## electron-builder/out/targets/dmg
@@ -1802,6 +1728,45 @@
 
 #### `fpmTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[FpmTarget](#FpmTarget)</code>  
+<a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
+
+## electron-builder/out/targets/LinuxTargetHelper
+
+* [electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)
+    * [.LinuxTargetHelper](#LinuxTargetHelper)
+        * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
+
+<a name="LinuxTargetHelper"></a>
+
+### LinuxTargetHelper
+**Kind**: class of <code>[electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)</code>  
+
+* [.LinuxTargetHelper](#LinuxTargetHelper)
+    * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
+
+<a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry"></a>
+
+#### `linuxTargetHelper.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
+
+| Param | Type |
+| --- | --- |
+| platformSpecificBuildOptions | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
+| exec | <code>string</code> | 
+| destination | <code>string</code> &#124; <code>null</code> | 
+| extra | <code>Object&lt;string, any&gt;</code> | 
+
+<a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription"></a>
+
+#### `linuxTargetHelper.getDescription(options)` ⇒ <code>string</code>
+**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
+
+| Param | Type |
+| --- | --- |
+| options | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
+
 <a name="module_electron-builder/out/targets/nsis"></a>
 
 ## electron-builder/out/targets/nsis
@@ -2008,6 +1973,41 @@
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/targets/targetFactory.__type&gt;</code> | 
 
+<a name="module_electron-builder/out/targets/WebInstaller"></a>
+
+## electron-builder/out/targets/WebInstaller
+
+* [electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)
+    * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
+        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+
+<a name="WebInstallerTarget"></a>
+
+### WebInstallerTarget ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
+**Kind**: class of <code>[electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)</code>  
+**Extends**: <code>module:electron-builder/out/targets/nsis.default</code>  
+
+* [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
+    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+
+<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines"></a>
+
+#### `webInstallerTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| oneClick | <code>boolean</code> | 
+| defines | <code>any</code> | 
+
+<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName"></a>
+
+#### `webInstallerTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
+**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Access**: protected  
 <a name="module_electron-builder/out/util/filter"></a>
 
 ## electron-builder/out/util/filter
@@ -2096,6 +2096,62 @@
 | Param | Type |
 | --- | --- |
 | config | <code>[Config](Options#Config)</code> | 
+
+<a name="module_electron-builder/out/windowsCodeSign"></a>
+
+## electron-builder/out/windowsCodeSign
+
+* [electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)
+    * [`.FileCodeSigningInfo`](#FileCodeSigningInfo)
+    * [`.SignOptions`](#SignOptions)
+    * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.sign(options)`](#module_electron-builder/out/windowsCodeSign.sign) ⇒ <code>Promise&lt;void&gt;</code>
+
+<a name="FileCodeSigningInfo"></a>
+
+### `FileCodeSigningInfo`
+**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| file| <code>string</code> \| <code>null</code> | 
+| password| <code>string</code> \| <code>null</code> | 
+| subjectName| <code>string</code> \| <code>null</code> | 
+| certificateSha1| <code>string</code> \| <code>null</code> | 
+
+<a name="SignOptions"></a>
+
+### `SignOptions`
+**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **path**| <code>string</code> | 
+| cert| <code>string</code> \| <code>null</code> | 
+| name| <code>string</code> \| <code>null</code> | 
+| password| <code>string</code> \| <code>null</code> | 
+| site| <code>string</code> \| <code>null</code> | 
+| **options**| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
+
+<a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
+
+### `electron-builder/out/windowsCodeSign.getSignVendorPath()` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+<a name="module_electron-builder/out/windowsCodeSign.getToolPath"></a>
+
+### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+<a name="module_electron-builder/out/windowsCodeSign.sign"></a>
+
+### `electron-builder/out/windowsCodeSign.sign(options)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+
+| Param | Type |
+| --- | --- |
+| options | <code>[SignOptions](#SignOptions)</code> | 
 
 <a name="module_electron-builder/out/winPackager"></a>
 
@@ -2389,62 +2445,6 @@
 | Param | Type |
 | --- | --- |
 | appInfo | <code>[AppInfo](#AppInfo)</code> | 
-
-<a name="module_electron-builder/out/windowsCodeSign"></a>
-
-## electron-builder/out/windowsCodeSign
-
-* [electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)
-    * [`.FileCodeSigningInfo`](#FileCodeSigningInfo)
-    * [`.SignOptions`](#SignOptions)
-    * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.sign(options)`](#module_electron-builder/out/windowsCodeSign.sign) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="FileCodeSigningInfo"></a>
-
-### `FileCodeSigningInfo`
-**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| file| <code>string</code> \| <code>null</code> | 
-| password| <code>string</code> \| <code>null</code> | 
-| subjectName| <code>string</code> \| <code>null</code> | 
-| certificateSha1| <code>string</code> \| <code>null</code> | 
-
-<a name="SignOptions"></a>
-
-### `SignOptions`
-**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **path**| <code>string</code> | 
-| cert| <code>string</code> \| <code>null</code> | 
-| name| <code>string</code> \| <code>null</code> | 
-| password| <code>string</code> \| <code>null</code> | 
-| site| <code>string</code> \| <code>null</code> | 
-| **options**| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
-
-<a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
-
-### `electron-builder/out/windowsCodeSign.getSignVendorPath()` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
-<a name="module_electron-builder/out/windowsCodeSign.getToolPath"></a>
-
-### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
-<a name="module_electron-builder/out/windowsCodeSign.sign"></a>
-
-### `electron-builder/out/windowsCodeSign.sign(options)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>[SignOptions](#SignOptions)</code> | 
 
 <a name="module_electron-builder/out/yarn"></a>
 
@@ -2768,104 +2768,6 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | arch | <code>[Arch](#Arch)</code> | 
 
-<a name="module_electron-builder-http/out/CancellationToken"></a>
-
-## electron-builder-http/out/CancellationToken
-
-* [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
-    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-        * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-        * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="CancellationError"></a>
-
-### CancellationError ⇐ <code>Error</code>
-**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
-**Extends**: <code>Error</code>  
-<a name="CancellationToken"></a>
-
-### CancellationToken ⇐ <code>internal:EventEmitter</code>
-**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
-**Extends**: <code>internal:EventEmitter</code>  
-
-* [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-    * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-    * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-    * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+cancel"></a>
-
-#### `cancellationToken.cancel()`
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise"></a>
-
-#### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+dispose"></a>
-
-#### `cancellationToken.dispose()`
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-<a name="module_electron-builder-http/out/ProgressCallbackTransform"></a>
-
-## electron-builder-http/out/ProgressCallbackTransform
-
-* [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
-    * [`.ProgressInfo`](#ProgressInfo)
-    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="ProgressInfo"></a>
-
-### `ProgressInfo`
-**Kind**: interface of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **total**| <code>number</code> | 
-| **delta**| <code>number</code> | 
-| **transferred**| <code>number</code> | 
-| **percent**| <code>number</code> | 
-| **bytesPerSecond**| <code>number</code> | 
-
-<a name="ProgressCallbackTransform"></a>
-
-### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
-**Kind**: class of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
-**Extends**: <code>internal:Transform</code>  
-
-* [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-    * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush"></a>
-
-#### `progressCallbackTransform._flush(callback)`
-**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>function</code> | 
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform"></a>
-
-#### `progressCallbackTransform._transform(chunk, encoding, callback)`
-**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
-
-| Param | Type |
-| --- | --- |
-| chunk | <code>any</code> | 
-| encoding | <code>string</code> | 
-| callback | <code>function</code> | 
-
 <a name="module_electron-builder-http/out/bintray"></a>
 
 ## electron-builder-http/out/bintray
@@ -2963,6 +2865,104 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
 | method | <code>"GET"</code> &#124; <code>"DELETE"</code> &#124; <code>"PUT"</code> | 
+
+<a name="module_electron-builder-http/out/CancellationToken"></a>
+
+## electron-builder-http/out/CancellationToken
+
+* [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
+    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
+    * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
+        * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
+        * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+        * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
+
+<a name="CancellationError"></a>
+
+### CancellationError ⇐ <code>Error</code>
+**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
+**Extends**: <code>Error</code>  
+<a name="CancellationToken"></a>
+
+### CancellationToken ⇐ <code>internal:EventEmitter</code>
+**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
+**Extends**: <code>internal:EventEmitter</code>  
+
+* [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
+    * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
+    * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+    * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
+
+<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+cancel"></a>
+
+#### `cancellationToken.cancel()`
+**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
+<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise"></a>
+
+#### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
+
+| Param | Type |
+| --- | --- |
+| callback | <code>callback</code> | 
+
+<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+dispose"></a>
+
+#### `cancellationToken.dispose()`
+**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
+<a name="module_electron-builder-http/out/ProgressCallbackTransform"></a>
+
+## electron-builder-http/out/ProgressCallbackTransform
+
+* [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
+    * [`.ProgressInfo`](#ProgressInfo)
+    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
+        * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
+        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
+
+<a name="ProgressInfo"></a>
+
+### `ProgressInfo`
+**Kind**: interface of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **total**| <code>number</code> | 
+| **delta**| <code>number</code> | 
+| **transferred**| <code>number</code> | 
+| **percent**| <code>number</code> | 
+| **bytesPerSecond**| <code>number</code> | 
+
+<a name="ProgressCallbackTransform"></a>
+
+### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
+**Kind**: class of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
+**Extends**: <code>internal:Transform</code>  
+
+* [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
+    * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
+    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
+
+<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush"></a>
+
+#### `progressCallbackTransform._flush(callback)`
+**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
+
+| Param | Type |
+| --- | --- |
+| callback | <code>function</code> | 
+
+<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform"></a>
+
+#### `progressCallbackTransform._transform(chunk, encoding, callback)`
+**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
+
+| Param | Type |
+| --- | --- |
+| chunk | <code>any</code> | 
+| encoding | <code>string</code> | 
+| callback | <code>function</code> | 
 
 <a name="module_electron-builder-http"></a>
 
@@ -3358,6 +3358,125 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 
+<a name="module_electron-updater/out/electronHttpExecutor"></a>
+
+## electron-updater/out/electronHttpExecutor
+
+* [electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)
+    * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
+        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
+        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
+        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
+        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
+
+<a name="ElectronHttpExecutor"></a>
+
+### ElectronHttpExecutor ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+**Kind**: class of <code>[electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)</code>  
+**Extends**: <code>[HttpExecutor](#HttpExecutor)</code>  
+
+* [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+    * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
+    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
+    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
+    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
+    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
+
+<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
+
+#### `electronHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Overrides**: <code>[doApiRequest](#module_electron-builder-http.HttpExecutor+doApiRequest)</code>  
+
+| Param | Type |
+| --- | --- |
+| options | <code>Electron:RequestOptions</code> | 
+| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| requestProcessor | <code>callback</code> | 
+| redirectCount | <code>number</code> | 
+
+<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download"></a>
+
+#### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Overrides**: <code>[download](#module_electron-builder-http.HttpExecutor+download)</code>  
+
+| Param | Type |
+| --- | --- |
+| url | <code>string</code> | 
+| destination | <code>string</code> | 
+| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
+
+<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
+
+#### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Overrides**: <code>[doRequest](#module_electron-builder-http.HttpExecutor+doRequest)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| options | <code>any</code> | 
+| callback | <code>callback</code> | 
+
+<a name="module_electron-builder-http.HttpExecutor+request"></a>
+
+#### `electronHttpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+
+| Param | Type |
+| --- | --- |
+| options | <code>module:http.RequestOptions</code> | 
+| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+
+<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
+
+#### `electronHttpExecutor.addTimeOutHandler(request, callback)`
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| request | <code>any</code> | 
+| callback | <code>callback</code> | 
+
+<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
+
+#### `electronHttpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| requestOptions | <code>any</code> | 
+| destination | <code>string</code> | 
+| redirectCount | <code>number</code> | 
+| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
+| callback | <code>callback</code> | 
+| onCancel | <code>callback</code> | 
+
+<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
+
+#### `electronHttpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
+**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| response | <code>[Response](#Response)</code> | 
+| options | <code>module:http.RequestOptions</code> | 
+| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| resolve | <code>callback</code> | 
+| reject | <code>callback</code> | 
+| redirectCount | <code>number</code> | 
+| requestProcessor | <code>callback</code> | 
+
 <a name="module_electron-updater/out/GenericProvider"></a>
 
 ## electron-updater/out/GenericProvider
@@ -3579,125 +3698,6 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 | Param | Type |
 | --- | --- |
 | versionInfo | <code>[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)</code> | 
-
-<a name="module_electron-updater/out/electronHttpExecutor"></a>
-
-## electron-updater/out/electronHttpExecutor
-
-* [electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)
-    * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-
-<a name="ElectronHttpExecutor"></a>
-
-### ElectronHttpExecutor ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-**Kind**: class of <code>[electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)</code>  
-**Extends**: <code>[HttpExecutor](#HttpExecutor)</code>  
-
-* [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-    * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-
-<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
-
-#### `electronHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[doApiRequest](#module_electron-builder-http.HttpExecutor+doApiRequest)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>Electron:RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-
-<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download"></a>
-
-#### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[download](#module_electron-builder-http.HttpExecutor+download)</code>  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-
-<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
-
-#### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[doRequest](#module_electron-builder-http.HttpExecutor+doRequest)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+request"></a>
-
-#### `electronHttpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
-
-#### `electronHttpExecutor.addTimeOutHandler(request, callback)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| request | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
-
-#### `electronHttpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| requestOptions | <code>any</code> | 
-| destination | <code>string</code> | 
-| redirectCount | <code>number</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-| callback | <code>callback</code> | 
-| onCancel | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
-
-#### `electronHttpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| response | <code>[Response](#Response)</code> | 
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| resolve | <code>callback</code> | 
-| reject | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/binDownload"></a>
 

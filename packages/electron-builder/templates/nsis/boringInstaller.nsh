@@ -17,15 +17,9 @@
   !define MUI_FINISHPAGE_RUN
   !define MUI_FINISHPAGE_RUN_FUNCTION "StartApp"
 
-  !ifdef LICENSE_FILE
-    Function licensePre
-      ${if} ${Updated}
-        Abort
-      ${endif}
-    FunctionEnd
-
-    !define MUI_PAGE_CUSTOMFUNCTION_PRE licensePre
-    !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
+  !ifmacrodef licensePage
+    !insertmacro licensePageHelper
+    !insertmacro licensePage
   !endif
 
   !ifndef INSTALL_MODE_PER_ALL_USERS
