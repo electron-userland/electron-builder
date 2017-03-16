@@ -90,7 +90,8 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      if (publishConfig.provider === "s3") {
+      if (publishConfig.provider === "s3" && (<S3Options>publishConfig).bucket.indexOf(".") !== -1) {
+        // On dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
         const s3 = new S3({signatureVersion: "v4"})
         const region = (await s3.getBucketLocation({ Bucket: (<S3Options>publishConfig).bucket }).promise()).LocationConstraint
         publishConfig = Object.assign(publishConfig, {region: region})
