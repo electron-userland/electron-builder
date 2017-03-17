@@ -1,4 +1,4 @@
-import { net } from "electron"
+import { net, session } from "electron"
 import { configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { ensureDir } from "fs-extra-p"
@@ -54,6 +54,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
 
   protected doRequest(options: any, callback: (response: any) => void): any {
+    options.session = session.fromPartition('electron-updater')
     return net.request(options, callback)
   }
 }

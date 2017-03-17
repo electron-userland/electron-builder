@@ -1,9 +1,11 @@
+import { session } from "electron"
 import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
 import * as path from "path"
 import { parse as parseUrl } from "url"
+import { safeLoad } from "js-yaml"
 import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName } from "./api"
 import { validateUpdateInfo } from "./GenericProvider"
 import { BaseGitHubProvider } from "./GitHubProvider"
@@ -13,8 +15,13 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
+  private sess: any
+
   constructor(options: GithubOptions, private readonly token: string) {
     super(options, "api.github.com")
+
+    this.sess = session.fromPartition('electron-updater')
+    this.registerHeaderRemovalListener();
   }
   
   async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
@@ -24,11 +31,21 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     
     const assets = await this.getLatestVersionInfo(basePath, cancellationToken)
     const requestOptions = Object.assign({
-      headers: this.configureHeaders("application/octet-stream")
+      headers: this.configureHeaders("application/octet-stream"),
+      session: this.sess
     }, parseUrl(assets.find(it => it.name == channelFile)!.url))
     let result: any
     try {
       result = await request<UpdateInfo>(requestOptions, cancellationToken)
+
+      if (typeof result === "string") {
+        if (getCurrentPlatform() === "darwin") {
+          result = JSON.parse(result)
+        }
+        else {
+          result = safeLoad(result)
+        }
+      }
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -44,6 +61,20 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     (<PrivateGitHubUpdateInfo>result).assets = assets
     return result
   }
+
+  private registerHeaderRemovalListener(): void {
+    const filter = {
+      urls: ["*://*.amazonaws.com/*"]
+    };
+
+    this.sess.webRequest.onBeforeSendHeaders(filter, (details: any, callback: any) => {
+      if(details.requestHeaders['Authorization']) {
+        delete details.requestHeaders['Authorization']
+      }
+
+      callback({cancel: false, requestHeaders: details.requestHeaders})
+    });
+  };
 
   private configureHeaders(accept: string) {
     return Object.assign({
@@ -91,6 +122,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
         url: versionInfo.assets.find(it => it.name == name)!.url,
         sha2: versionInfo.sha2,
         headers: headers,
+        session: this.sess
       }
     }
   }
