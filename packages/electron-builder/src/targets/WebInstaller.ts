@@ -26,7 +26,7 @@ export default class WebInstallerTarget extends NsisTarget {
         throw new Error("Cannot compute app package download URL")
       }
 
-      appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager, null)
+      appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager)
 
       defines.APP_PACKAGE_URL_IS_INCOMLETE = null
     }

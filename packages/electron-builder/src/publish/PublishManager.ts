@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { Arch, Platform, Target } from "electron-builder-core"
+import { Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest } from "electron-builder-util"
@@ -15,7 +15,6 @@ import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
-import { S3 } from "aws-sdk"
 import { PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
@@ -90,11 +89,9 @@ export class PublishManager implements PublishContext {
         }
       }
 
-      if (publishConfig.provider === "s3" && (<S3Options>publishConfig).bucket.indexOf(".") !== -1) {
-        // On dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
-        const s3 = new S3({signatureVersion: "v4"})
-        const region = (await s3.getBucketLocation({ Bucket: (<S3Options>publishConfig).bucket }).promise()).LocationConstraint
-        publishConfig = Object.assign(publishConfig, {region: region})
+      const providerClass = requireProviderClass(publishConfig.provider)
+      if (providerClass != null && providerClass.modifyPublishConfig != null) {
+        publishConfig = await providerClass.modifyPublishConfig(publishConfig)
       }
 
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
@@ -200,6 +197,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
   }
 
   if (publishConfigs.length === 0) {
+    debug("No publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
@@ -240,7 +238,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
         releaseDate: new Date().toISOString(),
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager, null),
+        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
       }, {spaces: 2})
 
       packager.info.dispatchArtifactCreated({
@@ -297,20 +295,40 @@ async function writeWindowsUpdateInfo(event: ArtifactCreated, version: string, o
 }
 
 export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
-  if (publishConfig.provider === "github") {
-    return new GitHubPublisher(context, publishConfig, version, options)
+  const provider = publishConfig.provider
+  switch (provider) {
+    case "github":
+      return new GitHubPublisher(context, publishConfig, version, options)
+
+    case "bintray":
+      return new BintrayPublisher(context, publishConfig, version, options)
+    
+    case "generic":
+      return null
+
+    default:
+      const clazz = requireProviderClass(provider)
+      return clazz == null ? null : new clazz(context, publishConfig)
   }
-  if (publishConfig.provider === "bintray") {
-    return new BintrayPublisher(context, publishConfig, version, options)
-  }
-  if (publishConfig.provider === "s3") {
-    const clazz = require(`electron-publisher-${publishConfig.provider}`).default
-    return new clazz(context, publishConfig)
-  }
-  return null
 }
 
-export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>, arch: Arch | null) {
+function requireProviderClass(provider: string): any | null {
+  switch (provider) {
+    case "github":
+      return GitHubPublisher
+
+    case "bintray":
+      return BintrayPublisher
+
+    case "generic":
+      return null
+
+    default:
+      return require(`electron-publisher-${provider}`).default
+  }
+}
+
+export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
   if (publishConfig.provider === "generic") {
     const baseUrlString = (<GenericServerOptions>publishConfig).url
     if (fileName == null) {

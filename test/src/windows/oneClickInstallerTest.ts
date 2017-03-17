@@ -29,7 +29,7 @@ test("one-click", app({
   }
 }))
 
-test("multi language license", app({
+test.ifAll("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
 }, {
   projectDirCreated: projectDir => {

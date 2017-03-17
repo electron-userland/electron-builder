@@ -121,14 +121,17 @@ export interface S3Options extends PublishConfiguration {
 
 export function s3Url(options: S3Options) {
   let url: string
-  if (options.bucket.indexOf(".") === -1) {
+  if (!options.bucket.includes(".")) {
     url = `https://${options.bucket}.s3.amazonaws.com`
-  } else {
-    if (!options.region) throw new Error("Bucket name includes a dot, but S3 region is missing")
+  } 
+  else {
+    if (!options.region) {
+      throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
+    }
 
-    // Special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
-    url = (options.region === "us-east-1")
-      ? `https://s3.amazonaws.com/${options.bucket}` 
+    // special case, see http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro
+    url = options.region === "us-east-1"
+      ? `https://s3.amazonaws.com/${options.bucket}`
       : `https://s3-${options.region}.amazonaws.com/${options.bucket}`
   }
 

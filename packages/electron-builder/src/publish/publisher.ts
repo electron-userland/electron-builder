@@ -1,4 +1,5 @@
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options } from "electron-builder-http/out/publishOptions"
+import { debug } from "electron-builder-util"
 import { warn } from "electron-builder-util/out/log"
 import { BuildInfo } from "../packagerApi"
 
@@ -47,6 +48,7 @@ export async function getResolvedPublishConfig(packager: BuildInfo, publishConfi
   }
 
   if (!owner || !project) {
+    debug(`no owner or project for ${provider}, call getInfo: owner: ${owner}, project: ${project}`)
     const info = await getInfo()
     if (info == null) {
       return null
