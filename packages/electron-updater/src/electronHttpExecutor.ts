@@ -5,6 +5,8 @@ import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 
+export const NET_SESSION_NAME = "electron-updater"
+
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
     if (options == null || !options.skipDirCreation) {
@@ -54,7 +56,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
 
   protected doRequest(options: any, callback: (response: any) => void): any {
-    options.session = session.fromPartition('electron-updater')
+    options.session = session.fromPartition(NET_SESSION_NAME)
     return net.request(options, callback)
   }
 }
