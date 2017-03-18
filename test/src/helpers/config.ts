@@ -11,4 +11,4 @@ docker: Error response from daemon: Mounts denied: o Docker.
  */
 const baseDir = process.env.ELECTRON_BUILDER_TEST_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
 export const TEST_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
-export const ELECTRON_VERSION = "1.6.0"
+export const ELECTRON_VERSION = "1.6.3"

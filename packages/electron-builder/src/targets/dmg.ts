@@ -12,6 +12,8 @@ import { DmgOptions, MacOptions } from "../options/macOptions"
 import { PlatformPackager } from "../platformPackager"
 
 export class DmgTarget extends Target {
+  readonly options = this.packager.config.dmg
+  
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
   constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
@@ -186,13 +188,12 @@ export class DmgTarget extends Target {
 
   // public to test
   async computeDmgOptions(): Promise<DmgOptions> {
-    const packager = this.packager
     const specification: any = deepAssign({
       window: {
         x: 400,
         y: 100,
       },
-    }, packager.config.dmg)
+    }, this.options)
 
     // appdmg
     const oldPosition = specification.window.position
@@ -214,6 +215,7 @@ export class DmgTarget extends Target {
       warn("dmg.icon-size is deprecated, please use dmg.iconSize instead")
     }
 
+    const packager = this.packager
     if (!("icon" in specification)) {
       use(await packager.getIconPath(), it => {
         specification.icon = it

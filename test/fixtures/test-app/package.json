@@ -1,7 +1,7 @@
 {
   "private": true,
   "build": {
-    "electronVersion": "1.6.0",
+    "electronVersion": "1.6.3",
     "appId": "org.electron-builder.testApp",
     "iconUrl": "https://raw.githubusercontent.com/szwacz/electron-boilerplate/master/resources/windows/icon.ico",
     "compression": "store",

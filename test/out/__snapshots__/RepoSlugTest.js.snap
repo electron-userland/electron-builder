@@ -14,13 +14,8 @@ Object {
   "bugstemplate": "https://{domain}/{user}/{project}/issues",
   "committish": null,
   "default": "shortcut",
-  "docstemplate": "https://{domain}/{user}/{project}{/tree/committish}#readme",
   "domain": "github.com",
-  "filetemplate": "https://{auth@}raw.githubusercontent.com/{user}/{project}/{committish}/{path}",
   "gittemplate": "git://{auth@}{domain}/{user}/{project}.git{#committish}",
-  "httpstemplate": "git+https://{auth@}{domain}/{user}/{project}.git{#committish}",
-  "pathmatch": /\\^\\[\\\\/\\]\\(\\[\\^\\\\/\\]\\+\\)\\[\\\\/\\]\\(\\[\\^\\\\/\\]\\+\\?\\)\\(\\?:\\[\\.\\]git\\)\\?\\$/,
-  "pathtemplate": "{user}/{project}{#committish}",
   "project": "travis-build",
   "protocols": Array [
     "git",

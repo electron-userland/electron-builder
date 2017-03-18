@@ -1,11 +1,20 @@
 import { getRepositoryInfo } from "electron-builder/out/repositoryInfo"
 
+function checkInfo(info: any) {
+  delete info.pathmatch
+  delete info.pathtemplate
+  delete info.httpstemplate
+  delete info.filetemplate
+  delete info.docstemplate
+  expect(info).toMatchSnapshot()
+}
+
 test("repo slug from TRAVIS_REPO_SLUG", async () => {
   const oldValue = process.env.TRAVIS_REPO_SLUG
   try {
     process.env.TRAVIS_REPO_SLUG = "travis-ci/travis-build"
-    const info = await getRepositoryInfo(process.cwd())
-    expect(info).toMatchSnapshot()
+    const info: any = await getRepositoryInfo(process.cwd())
+    checkInfo(info)
   }
   finally {
     if (oldValue != null) {
@@ -26,7 +35,7 @@ test("repo slug from APPVEYOR", async () => {
     process.env.APPVEYOR_ACCOUNT_NAME = "travis-ci"
     process.env.APPVEYOR_PROJECT_NAME = "travis-build"
     const info = await getRepositoryInfo(process.cwd())
-    expect(info).toMatchSnapshot()
+    checkInfo(info)
   }
   finally {
     restoreEnv("APPVEYOR_ACCOUNT_NAME", oldAppveyorAccountName)

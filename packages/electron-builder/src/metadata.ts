@@ -1,4 +1,4 @@
-import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FileAssociation, FilePattern, MetadataDirectories, Protocol, RepositoryInfo, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FileAssociation, FilePattern, MetadataDirectories, PlatformSpecificBuildOptions, Protocol, RepositoryInfo, Target } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -51,7 +51,7 @@ export interface Metadata {
 /**
  * Configuration Options
  */
-export interface Config extends PlatformSpecificBuildOptions, TargetSpecificOptions {
+export interface Config extends PlatformSpecificBuildOptions {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).
@@ -231,22 +231,4 @@ export interface AfterPackContext {
   readonly electronPlatformName: string
   readonly arch: Arch
   readonly targets: Array<Target>
-}
-
-export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
-  readonly files?: Array<string> | string | null
-  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
-  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
-
-  readonly asarUnpack?: Array<string> | string | null
-
-  readonly asar?: AsarOptions | boolean | null
-
-  readonly target?: Array<string | TargetConfig> | string | TargetConfig | null
-
-  readonly icon?: string | null
-
-  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
-
-  readonly publish?: Publish
 }

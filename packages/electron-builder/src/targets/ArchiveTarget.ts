@@ -5,6 +5,8 @@ import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 
 export class ArchiveTarget extends Target {
+  readonly options = (<any>this.packager.config)[this.name]
+  
   constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>) {
     super(name)
   }

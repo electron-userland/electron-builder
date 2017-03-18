@@ -154,6 +154,13 @@ export class Packager implements BuildInfo {
     }
 
     this.checkMetadata(appPackageFile, devPackageFile)
+    
+    debug(`Effective config: ${JSON.stringify(this.config, (name, value) => {
+      if (name.endsWith("Password") || name.endsWith("Token") || name.includes("password") || name.includes("token")) {
+        return "<stripped sensitive data>"
+      }
+      return value
+    }, 2)}`)
     checkConflictingOptions(this.config)
 
     this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)

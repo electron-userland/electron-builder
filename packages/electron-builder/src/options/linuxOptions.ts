@@ -1,5 +1,4 @@
-import { TargetConfigType } from "electron-builder-core"
-import { PlatformSpecificBuildOptions } from "../metadata"
+import { PlatformSpecificBuildOptions, TargetConfigType } from "electron-builder-core"
 
 /**
  * Linux Options

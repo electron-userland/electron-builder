@@ -11,7 +11,7 @@ import { filterCFBundleIdentifier } from "../packager/mac"
 
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
 export class PkgTarget extends Target {
-  private readonly options: PkgOptions = this.packager.config.pkg || Object.create(null)
+  readonly options: PkgOptions = this.packager.config.pkg || Object.create(null)
   private readonly installLocation = this.options.installLocation || "/Applications"
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {

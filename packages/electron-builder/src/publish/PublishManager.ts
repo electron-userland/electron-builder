@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { Platform, Target } from "electron-builder-core"
+import { Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest } from "electron-builder-util"
-import { log } from "electron-builder-util/out/log"
+import { log, warn } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
@@ -15,12 +15,10 @@ import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
-import { PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
-import { getCiTag, getResolvedPublishConfig } from "./publisher"
 
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
@@ -103,7 +101,7 @@ export class PublishManager implements PublishContext {
   private async artifactCreated(event: ArtifactCreated) {
     const packager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : (<any>packager.config)[target.name]) : [event.publishConfig]
+    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options) : [event.publishConfig]
 
     const eventFile = event.file
     if (publishConfigs == null) {
@@ -438,4 +436,80 @@ function sha256(file: string) {
 
 function isSuitableWindowsTarget(target: Target) {
   return target.name === "nsis" || target.name.startsWith("nsis-")
+}
+
+function getCiTag() {
+  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.CI_BUILD_TAG
+  return tag != null && tag.length > 0 ? tag : null
+}
+
+async function getResolvedPublishConfig(packager: BuildInfo, options: PublishConfiguration, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+  const provider = options.provider
+  if (provider === "generic") {
+    if ((<GenericServerOptions>options).url == null) {
+      throw new Error(`Please specify "url" for "generic" update server`)
+    }
+    return options
+  }
+
+  const providerClass = requireProviderClass(options.provider)
+  if (providerClass != null && providerClass.checkPublishConfig != null) {
+    providerClass.checkPublishConfig(options)
+    return options
+  }
+  
+  const isGithub = provider === "github"
+  if (!isGithub && provider !== "bintray") {
+    return options
+  }
+  
+  let owner = options.owner
+  let project = isGithub ? (<GithubOptions>options).repo : (<BintrayOptions>options).package
+
+  if (isGithub && owner == null && project != null) {
+    const index = project.indexOf("/")
+    if (index > 0) {
+      const repo = project
+      project = repo.substring(0, index)
+      owner = repo.substring(index + 1)
+    }
+  }
+  
+  async function getInfo() {
+    const info = await packager.repositoryInfo
+    if (info != null) {
+      return info
+    }
+
+    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`
+    if (errorIfCannot) {
+      throw new Error(message)
+    }
+    else {
+      warn(message)
+      return null
+    }
+  }
+
+  if (!owner || !project) {
+    debug(`No owner or project for ${provider}, call getInfo: owner: ${owner}, project: ${project}`)
+    const info = await getInfo()
+    if (info == null) {
+      return null
+    }
+
+    if (!owner) {
+      owner = info.user
+    }
+    if (!project) {
+      project = info.project
+    }
+  }
+
+  if (isGithub) {
+    return Object.assign({owner, repo: project}, options)
+  }
+  else {
+    return Object.assign({owner, package: project}, options)
+  }
 }

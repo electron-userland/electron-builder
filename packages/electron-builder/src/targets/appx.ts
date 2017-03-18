@@ -11,7 +11,7 @@ import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
 export default class AppXTarget extends Target {
-  private readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("appx")

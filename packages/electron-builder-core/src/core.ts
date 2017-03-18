@@ -1,3 +1,5 @@
+import { Publish } from "electron-builder-http/out/publishOptions"
+
 export enum Arch {
   ia32, x64, armv7l
 }
@@ -99,6 +101,7 @@ export class Platform {
 
 export abstract class Target {
   abstract readonly outDir: string
+  abstract readonly options: TargetSpecificOptions | null | undefined
 
   constructor(readonly name: string, readonly isAsyncSupported: boolean = true) {
   }
@@ -117,6 +120,24 @@ export interface TargetSpecificOptions {
   readonly artifactName?: string | null
 
   readonly forceCodeSigning?: boolean
+  
+  readonly publish?: Publish
+}
+
+export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
+  readonly files?: Array<string> | string | null
+  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
+  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
+
+  readonly asarUnpack?: Array<string> | string | null
+
+  readonly asar?: AsarOptions | boolean | null
+
+  readonly target?: Array<string | TargetConfig> | string | TargetConfig | null
+
+  readonly icon?: string | null
+
+  readonly fileAssociations?: Array<FileAssociation> | FileAssociation
 }
 
 export const DEFAULT_TARGET = "default"

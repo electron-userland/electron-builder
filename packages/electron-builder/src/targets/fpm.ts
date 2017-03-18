@@ -28,7 +28,7 @@ function downloadFpm(): Promise<string> {
 }
 
 export default class FpmTarget extends Target {
-  private readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
   private readonly scriptFiles: Promise<Array<string>>
 

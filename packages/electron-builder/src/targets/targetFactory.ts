@@ -1,6 +1,5 @@
-import { Arch, archFromString, DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfig } from "electron-builder-core"
+import { Arch, archFromString, DEFAULT_TARGET, DIR_TARGET, Platform, PlatformSpecificBuildOptions, Target, TargetConfig } from "electron-builder-core"
 import { addValue, asArray } from "electron-builder-util"
-import { PlatformSpecificBuildOptions } from "../metadata"
 import { PlatformPackager } from "../platformPackager"
 import { ArchiveTarget } from "./ArchiveTarget"
 
@@ -85,6 +84,8 @@ export function createCommonTarget(target: string, outDir: string, packager: Pla
 }
 
 export class NoOpTarget extends Target {
+  readonly options = null
+  
   get outDir(): string {
     throw new Error("NoOpTarget")
   }

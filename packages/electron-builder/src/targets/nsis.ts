@@ -22,7 +22,7 @@ const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cd
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
 export default class NsisTarget extends Target {
-  protected readonly options: NsisOptions
+  readonly options: NsisOptions
 
   private archs: Map<Arch, string> = new Map()
 
@@ -42,6 +42,8 @@ export default class NsisTarget extends Target {
       warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
   }
+  
+  
 
   async build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)

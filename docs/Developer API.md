@@ -27,8 +27,6 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/platformPackager">electron-builder/out/platformPackager</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/publish/publisher">electron-builder/out/publish/publisher</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/readInstalled">electron-builder/out/readInstalled</a></dt>
@@ -1324,29 +1322,6 @@
 | --- | --- |
 | ext | <code>string</code> | 
 
-<a name="module_electron-builder/out/publish/publisher"></a>
-
-## electron-builder/out/publish/publisher
-
-* [electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)
-    * [`.getCiTag()`](#module_electron-builder/out/publish/publisher.getCiTag) ⇒ <code>any</code>
-    * [`.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)`](#module_electron-builder/out/publish/publisher.getResolvedPublishConfig) ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
-
-<a name="module_electron-builder/out/publish/publisher.getCiTag"></a>
-
-### `electron-builder/out/publish/publisher.getCiTag()` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
-<a name="module_electron-builder/out/publish/publisher.getResolvedPublishConfig"></a>
-
-### `electron-builder/out/publish/publisher.getResolvedPublishConfig(packager, publishConfig, errorIfCannot)` ⇒ <code>Promise&lt; &#124; [PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/publish/publisher](#module_electron-builder/out/publish/publisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[BuildInfo](Options#BuildInfo)</code> | 
-| publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| errorIfCannot | <code>boolean</code> | 
-
 <a name="module_electron-builder/out/publish/PublishManager"></a>
 
 ## electron-builder/out/publish/PublishManager
@@ -1356,7 +1331,7 @@
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
         * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
-    * [`.computeDownloadUrl(publishConfig, fileName, packager, arch)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
+    * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
     * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
     * [`.getPublishConfigs(packager, targetSpecificOptions)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; &#124; Array&gt;</code>
     * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; &#124; Array&gt;</code>
@@ -1392,7 +1367,7 @@
 
 <a name="module_electron-builder/out/publish/PublishManager.computeDownloadUrl"></a>
 
-### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager, arch)` ⇒ <code>string</code>
+### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>string</code>
 **Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 
 | Param | Type |
@@ -1400,7 +1375,6 @@
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
 | fileName | <code>string</code> &#124; <code>null</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>null</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
 
@@ -1422,7 +1396,7 @@
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](Options#PlatformSpecificBuildOptions)</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 
@@ -1946,7 +1920,7 @@
 | Param | Type |
 | --- | --- |
 | raw | <code>Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;</code> | 
-| options | <code>[PlatformSpecificBuildOptions](Options#PlatformSpecificBuildOptions)</code> | 
+| options | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
 | platform | <code>[Platform](#Platform)</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.createCommonTarget"></a>
@@ -2506,6 +2480,7 @@
     * [`.FileAssociation`](#FileAssociation)
     * [`.FilePattern`](#FilePattern)
     * [`.MetadataDirectories`](#MetadataDirectories)
+    * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
     * [`.Protocol`](#Protocol)
     * [`.RepositoryInfo`](#RepositoryInfo)
     * [`.SourceRepositoryInfo`](#SourceRepositoryInfo)
@@ -2607,6 +2582,24 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | output = <code>&quot;dist&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-output"></a>The output directory. |
 | app| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory. |
 
+<a name="PlatformSpecificBuildOptions"></a>
+
+### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
+**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
+| extraFiles| <code>Array&lt;string \| [FilePattern](#FilePattern)&gt;</code> \| <code>[FilePattern](#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
+| extraResources| <code>Array&lt;string \| [FilePattern](#FilePattern)&gt;</code> \| <code>[FilePattern](#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
+| asarUnpack| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
+| asar| <code>[AsarOptions](#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | 
+| target| <code>Array&lt;string \| [TargetConfig](#TargetConfig)&gt;</code> \| <code>string</code> \| <code>[TargetConfig](#TargetConfig)</code> \| <code>null</code> | 
+| icon| <code>string</code> \| <code>null</code> | 
+| fileAssociations| <code>Array&lt;[FileAssociation](#FileAssociation)&gt;</code> \| <code>[FileAssociation](#FileAssociation)</code> | 
+
 <a name="Protocol"></a>
 
 ### `Protocol`
@@ -2667,6 +2660,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- | --- |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="TargetSpecificOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). |
 | forceCodeSigning| <code>boolean</code> | <a name="TargetSpecificOptions-forceCodeSigning"></a> |
+| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="TargetSpecificOptions-publish"></a> |
 
 <a name="Platform"></a>
 

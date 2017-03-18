@@ -33,6 +33,12 @@ export default class S3Publisher extends Publisher {
     }
     return options
   }
+  
+  static checkPublishConfig(options: S3Options) {
+    if (options.bucket == null) {
+      throw new Error(`Please specify "bucket" for "s3" update server`)
+    }
+  }
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
   async upload(file: string, safeArtifactName?: string): Promise<any> {

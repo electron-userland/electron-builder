@@ -97,23 +97,22 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
     * [`.BuildResult`](#BuildResult)
     * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
-    * [`.Config`](#Config) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+    * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.DmgContent`](#DmgContent)
     * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
     * [`.DmgWindow`](#DmgWindow)
-    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
-    * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
+    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+    * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
     * [`.NsisOptions`](#NsisOptions)
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
     * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
-    * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
     * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-    * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
+    * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](Developer-API#Platform) &#124; Map&lt;[Arch](Developer-API#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
@@ -224,11 +223,11 @@ AppX Options
 
 <a name="Config"></a>
 
-### `Config` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+### `Config` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
 Configuration Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -362,11 +361,11 @@ DMG Windows Position and Size
 
 <a name="LinuxBuildOptions"></a>
 
-### `LinuxBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
+### `LinuxBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
 Linux Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -386,11 +385,11 @@ Linux Options
 
 <a name="MacOptions"></a>
 
-### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
+### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
 macOS Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -527,25 +526,6 @@ Web Installer Specific Options
 | installLocation = <code>&quot;/Applications&quot;</code>| <code>string</code> \| <code>null</code> | <a name="PkgOptions-installLocation"></a>The install location. |
 | identity| <code>string</code> \| <code>null</code> | <a name="PkgOptions-identity"></a> |
 
-<a name="PlatformSpecificBuildOptions"></a>
-
-### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
-| extraFiles| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
-| extraResources| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
-| asarUnpack| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
-| asar| <code>[AsarOptions](Developer-API#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | 
-| target| <code>Array&lt;string \| [TargetConfig](Developer-API#TargetConfig)&gt;</code> \| <code>string</code> \| <code>[TargetConfig](Developer-API#TargetConfig)</code> \| <code>null</code> | 
-| icon| <code>string</code> \| <code>null</code> | 
-| fileAssociations| <code>Array&lt;[FileAssociation](Developer-API#FileAssociation)&gt;</code> \| <code>[FileAssociation](Developer-API#FileAssociation)</code> | 
-| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | 
-
 <a name="SnapOptions"></a>
 
 ### `SnapOptions` ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
@@ -586,11 +566,11 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 
 <a name="WinBuildOptions"></a>
 
-### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>
+### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
 Windows Specific Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
