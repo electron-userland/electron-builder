@@ -59,7 +59,7 @@ test("cli", async () => {
 test("build in the app package.json", appTwoThrows(linuxDirTarget, {
   projectDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
-      "iconUrl": "bar",
+      "productName": "bar",
     }
   }, true)
 }))

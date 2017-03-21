@@ -233,7 +233,7 @@ export class AsarPackager {
 
   private writeAsarFile(files: Array<string>, transformedFiles: Array<string | Buffer | null | true>): Promise<any> {
     const headerPickle = pickle.createEmpty()
-    headerPickle.writeString(JSON.stringify(this.fs.header, (name, value) => name === "data" ? undefined : value))
+    headerPickle.writeString(JSON.stringify(this.fs.header))
     const headerBuf = headerPickle.toBuffer()
 
     const sizePickle = pickle.createEmpty()

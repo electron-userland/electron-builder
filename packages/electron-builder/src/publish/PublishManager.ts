@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { asArray, debug, isEmptyOrSpaces, isPullRequest } from "electron-builder-util"
+import { asArray, debug, isEmptyOrSpaces, isPullRequest, safeStringifyJson } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -85,11 +85,6 @@ export class PublishManager implements PublishContext {
         if (publisherName != null) {
           publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
         }
-      }
-
-      const providerClass = requireProviderClass(publishConfig.provider)
-      if (providerClass != null && providerClass.modifyPublishConfig != null) {
-        publishConfig = await providerClass.modifyPublishConfig(publishConfig)
       }
 
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
@@ -200,7 +195,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      const resolvedPublishConfig = await getResolvedPublishConfig(packager.info, {provider: repositoryInfo.type}, false)
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager, {provider: repositoryInfo.type}, false)
       if (resolvedPublishConfig != null) {
         return [resolvedPublishConfig]
       }
@@ -390,7 +385,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
     if (serviceName != null) {
       debug(`Detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(packager.info, {provider: serviceName}))!]
+      return [(await getResolvedPublishConfig(packager, {provider: serviceName}))!]
     }
   }
 
@@ -398,23 +393,8 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
     return []
   }
 
-  debug(`Explicit publish provider: ${JSON.stringify(publishers, null, 2)}`)
-  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager.info, typeof it === "string" ? {provider: it} : it)))
-    .then(publishConfigs => expandPublishConfigs(packager, publishConfigs))
-}
-
-function expandPublishConfigs(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration>) {
-  return publishConfigs.map(publishConfig => expandPublishConfig(packager, publishConfig))
-}
-
-function expandPublishConfig(packager: PlatformPackager<any>, publishConfig: any): PublishConfiguration {
-  return <PublishConfiguration>Object.keys(publishConfig).reduce((expandedPublishConfig: {[key: string]: string}, key) => {
-    const option = publishConfig[key]
-    if (option != null) {
-      expandedPublishConfig[key] = packager.expandMacro(option, null)
-    }
-    return expandedPublishConfig
-  }, {})
+  debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
+  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it)))
 }
 
 function sha256(file: string) {
@@ -443,7 +423,23 @@ function getCiTag() {
   return tag != null && tag.length > 0 ? tag : null
 }
 
-async function getResolvedPublishConfig(packager: BuildInfo, options: PublishConfiguration, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+function expandPublishConfig(options: any, packager: PlatformPackager<any>): void {
+  for (const name of Object.keys(options)) {
+    const value = options[name]
+    if (typeof value === "string") {
+      const expanded = packager.expandMacro(value, null)
+      if (expanded !== value) {
+        options[name] = expanded
+      }
+    }
+  }
+}
+  
+
+async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+  options = Object.assign(Object.create(null), options)
+  expandPublishConfig(options, packager)
+  
   const provider = options.provider
   if (provider === "generic") {
     if ((<GenericServerOptions>options).url == null) {
@@ -453,8 +449,8 @@ async function getResolvedPublishConfig(packager: BuildInfo, options: PublishCon
   }
 
   const providerClass = requireProviderClass(options.provider)
-  if (providerClass != null && providerClass.checkPublishConfig != null) {
-    providerClass.checkPublishConfig(options)
+  if (providerClass != null && providerClass.checkAndResolveOptions != null) {
+    await providerClass.checkAndResolveOptions(options)
     return options
   }
   
@@ -476,7 +472,7 @@ async function getResolvedPublishConfig(packager: BuildInfo, options: PublishCon
   }
   
   async function getInfo() {
-    const info = await packager.repositoryInfo
+    const info = await packager.info.repositoryInfo
     if (info != null) {
       return info
     }

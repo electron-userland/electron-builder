@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, SourceRepositoryInfo, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
+import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, Lazy, safeStringifyJson, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log, warn } from "electron-builder-util/out/log"
 import { all, executeFinally } from "electron-builder-util/out/promise"
@@ -155,12 +155,7 @@ export class Packager implements BuildInfo {
 
     this.checkMetadata(appPackageFile, devPackageFile)
     
-    debug(`Effective config: ${JSON.stringify(this.config, (name, value) => {
-      if (name.endsWith("Password") || name.endsWith("Token") || name.includes("password") || name.includes("token")) {
-        return "<stripped sensitive data>"
-      }
-      return value
-    }, 2)}`)
+    debug(`Effective config: ${safeStringifyJson(this.config)}`)
     checkConflictingOptions(this.config)
 
     this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)

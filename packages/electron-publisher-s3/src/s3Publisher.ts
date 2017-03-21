@@ -24,22 +24,19 @@ export default class S3Publisher extends Publisher {
     }
   }
 
-  static async modifyPublishConfig(options: S3Options) {
-    if (options.bucket.includes(".") && options.region == null) {
-      // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
-      const s3 = new S3({signatureVersion: "v4"})
-      const region = (await s3.getBucketLocation({Bucket: options.bucket}).promise()).LocationConstraint
-      return Object.assign({region: region}, options)
-    }
-    return options
-  }
-  
-  static checkPublishConfig(options: S3Options) {
-    if (options.bucket == null) {
+  static async checkAndResolveOptions(options: S3Options) {
+    const bucket = options.bucket
+    if (bucket == null) {
       throw new Error(`Please specify "bucket" for "s3" update server`)
     }
+    
+    if (bucket.includes(".") && options.region == null) {
+      // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
+      const s3 = new S3({signatureVersion: "v4"});
+      (<any>options).region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+    }
   }
-
+  
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
   async upload(file: string, safeArtifactName?: string): Promise<any> {
     const fileName = basename(file)

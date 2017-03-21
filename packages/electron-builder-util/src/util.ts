@@ -305,3 +305,12 @@ export function isPullRequest() {
 
   return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS)
 }
+
+export function safeStringifyJson(data: any) {
+  return JSON.stringify(data, (name, value) => {
+    if (name.endsWith("Password") || name.endsWith("Token") || name.includes("password") || name.includes("token")) {
+      return "<stripped sensitive data>"
+    }
+    return value
+  }, 2)
+}
