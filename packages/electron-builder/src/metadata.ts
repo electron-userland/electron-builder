@@ -64,12 +64,7 @@ export interface Config extends PlatformSpecificBuildOptions {
    * The human-readable copyright line for the app. Defaults to `Copyright © year author`.
    */
   readonly copyright?: string | null
-
-  /**
-   * @private
-   */
-  readonly iconUrl?: string | null
-
+  
   /**
    * As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
    */

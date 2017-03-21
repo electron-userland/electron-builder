@@ -49,7 +49,7 @@ export default class SquirrelWindowsTarget extends Target {
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
     const packager = this.packager
-    let iconUrl = this.options.iconUrl || packager.config.iconUrl
+    let iconUrl = this.options.iconUrl
     if (iconUrl == null) {
       const info = await packager.info.repositoryInfo
       if (info != null) {
