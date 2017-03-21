@@ -17,6 +17,7 @@ A complete solution to package and build a ready for distribution Electron app f
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
+* [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
 
 | Question | Answer |
 |--------|-------|

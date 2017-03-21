@@ -77,24 +77,6 @@ export class AsarFilesystem {
     this.offset.add(UINT64(node.size))
   }
 
-  // listFiles() {
-  //   const files: Array<string> = []
-  //   const fillFilesFromHeader = (p: string, json: Node) => {
-  //     if (json.files == null) {
-  //       return
-  //     }
-  //
-  //     for (const f in json.files) {
-  //       const fullPath = path.join(p, f)
-  //       files.push(fullPath)
-  //       fillFilesFromHeader(fullPath, json.files[f]!)
-  //     }
-  //   }
-  //
-  //   fillFilesFromHeader("/", this.header)
-  //   return files
-  // }
-
   getNode(p: string) {
     const node = this.searchNodeFromDirectory(path.dirname(p))
     return node.files![path.basename(p)]

@@ -86,6 +86,10 @@ export function createCommonTarget(target: string, outDir: string, packager: Pla
 export class NoOpTarget extends Target {
   readonly options = null
   
+  constructor(name: string) {
+    super(name)
+  }
+  
   get outDir(): string {
     throw new Error("NoOpTarget")
   }

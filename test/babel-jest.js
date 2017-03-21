@@ -1,10 +1,10 @@
-'use strict'
+"use strict"
 
 let babel
-const crypto = require('crypto')
-const fs = require('fs')
-const jestPreset = require('babel-preset-jest')
-const path = require('path')
+const crypto = require("crypto")
+const fs = require("fs")
+const jestPreset = require("babel-preset-jest")
+const path = require("path")
 
 const convert = require("convert-source-map")
 

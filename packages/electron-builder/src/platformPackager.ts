@@ -8,8 +8,9 @@ import { readdir, remove, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { checkFileInArchive, createAsarArchive } from "./asarUtil"
+import { AsarPackager, checkFileInArchive } from "./asarUtil"
 import { copyFiles, FileMatcher } from "./fileMatcher"
+import { createTransformer } from "./fileTransformer"
 import { Config } from "./metadata"
 import { unpackElectron } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
@@ -200,7 +201,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     else {
       const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      promise = createAsarArchive(appDir, resourcesPath, asarOptions, filter, fileMatcher == null ? null : fileMatcher.createFilter())
+      
+      let transformer = await createTransformer(this.projectDir, appDir, this)
+      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(filter, transformer)
     }
 
     //noinspection ES6MissingAwait
@@ -268,12 +271,8 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    const defaultOptions = {
-      extraMetadata: this.packagerOptions.extraMetadata,
-    }
-
     if (result == null || result === true) {
-      return defaultOptions
+      return {}
     }
 
     for (const name of ["unpackDir", "unpack"]) {
@@ -281,7 +280,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         throw new Error(errorMessage(`asar.${name}`))
       }
     }
-    return deepAssign({}, result, defaultOptions)
+    return deepAssign({}, result)
   }
 
   private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {

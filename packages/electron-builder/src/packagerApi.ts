@@ -44,6 +44,7 @@ export interface BuildInfo {
   readonly options: PackagerOptions
 
   readonly metadata: Metadata
+  readonly devMetadata: Metadata
 
   readonly config: Config
 

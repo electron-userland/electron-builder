@@ -38,7 +38,7 @@ export class Packager implements BuildInfo {
     return this._isPrepackedAppAsar
   }
 
-  private devMetadata: Metadata
+  devMetadata: Metadata
 
   private _config: Config
 
@@ -502,6 +502,10 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
       errors.push(`Package "${name}" is only allowed in "devDependencies". `
         + `Please remove it from the "dependencies" section in your package.json.`)
     }
+  }
+  if ("electron-compile" in dependencies) {
+    warn(`Package "electron-compile" should be in "devDependencies". `
+      + `Please remove it from the "dependencies" section in your package.json. Please see https://github.com/electron/electron-compile/issues/207`)
   }
 }
 

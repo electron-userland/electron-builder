@@ -18,7 +18,7 @@ export class AppInfo {
     return this.info.config
   }
 
-  constructor(public metadata: Metadata, private info: BuildInfo, buildVersion?: string | null) {
+  constructor(public readonly metadata: Metadata, private readonly info: BuildInfo, buildVersion?: string | null) {
     this.version = metadata.version!
 
     this.buildNumber = this.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER

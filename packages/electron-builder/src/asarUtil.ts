@@ -1,22 +1,17 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsarOptions } from "electron-builder-core"
 import { debug } from "electron-builder-util"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
-import { createReadStream, createWriteStream, ensureDir, readFile, readJson, readlink, stat, Stats, writeFile } from "fs-extra-p"
+import { createReadStream, createWriteStream, ensureDir, readFile, readlink, stat, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "./asar"
+import { FileTransformer } from "./fileTransformer"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
 
 const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
-
-export async function createAsarArchive(src: string, resourcesPath: string, options: AsarOptions, filter: Filter, unpackPattern: Filter | null): Promise<any> {
-  // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
-  await new AsarPackager(src, resourcesPath, options, unpackPattern).pack(filter)
-}
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   let list = map.get(key)
@@ -47,17 +42,16 @@ function writeUnpackedFiles(filesToUnpack: Array<UnpackedFileTask>, fileCopier: 
   })
 }
 
-class AsarPackager {
-  private readonly toPack: Array<string> = []
+export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
-  private readonly changedFiles = new Map<string, string>()
   private readonly outFile: string
 
   constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
   }
 
-  async pack(filter: Filter) {
+  // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
+  async pack(filter: Filter, transformer: ((path: string) => any) | null) {
     const metadata = new Map<string, Stats>()
     const files = await walk(this.src, filter, (file, fileStat) => {
       metadata.set(file, fileStat)
@@ -83,12 +77,11 @@ class AsarPackager {
       }
       return null
     })
-    await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files), metadata)
-    await this.writeAsarFile()
+
+    await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files), metadata, transformer)
   }
 
-  async detectUnpackedDirs(files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, unpackedDest: string, fileIndexToModulePackageData: Map<number, BluebirdPromise<string>>) {
-    const packageJsonStringLength = "package.json".length
+  async detectUnpackedDirs(files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, unpackedDest: string) {
     const dirToCreate = new Map<string, Array<string>>()
 
     /* tslint:disable:rule1 prefer-const */
@@ -109,11 +102,6 @@ class AsarPackager {
       }
 
       const nodeModuleDir = file.substring(0, nextSlashIndex)
-
-      if (file.length === (nodeModuleDir.length + 1 + packageJsonStringLength) && file.endsWith("package.json")) {
-        fileIndexToModulePackageData.set(i, <BluebirdPromise<string>>readJson(file).then(it => cleanupPackageJson(it)))
-      }
-
       if (autoUnpackDirs.has(nodeModuleDir)) {
         const fileParent = path.dirname(file)
         if (fileParent !== nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
@@ -149,11 +137,7 @@ class AsarPackager {
       }
       autoUnpackDirs.add(nodeModuleDir)
     }
-
-    if (fileIndexToModulePackageData.size > 0) {
-      await BluebirdPromise.all(<any>fileIndexToModulePackageData.values())
-    }
-
+    
     if (dirToCreate.size > 0) {
       // child directories should be not created asynchronously - parent directories should be created first
       await BluebirdPromise.map(dirToCreate.keys(), async (it) => {
@@ -164,21 +148,20 @@ class AsarPackager {
     }
   }
 
-  async createPackageFromFiles(files: Array<string>, metadata: Map<string, Stats>) {
+  private async createPackageFromFiles(files: Array<string>, metadata: Map<string, Stats>, transformer: FileTransformer | null) {
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
     const unpackedDest = `${this.outFile}.unpacked`
-    const fileIndexToModulePackageData = new Map<number, BluebirdPromise<string>>()
     await ensureDir(path.dirname(this.outFile))
 
     if (this.options.smartUnpack !== false) {
-      await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest, fileIndexToModulePackageData)
+      await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest)
     }
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
-
+    
+    const transformedFiles = transformer == null ? new Array(files.length) : await BluebirdPromise.map(files, it => it.includes("/node_modules/") || it.includes("/bower_components/") || !metadata.get(it)!.isFile() ? null : transformer(it), CONCURRENCY)
     const filesToUnpack: Array<UnpackedFileTask> = []
-    const mainPackageJson = path.join(this.src, "package.json")
     const fileCopier = new FileCopier()
     /* tslint:disable:rule1 prefer-const */
     for (let i = 0, n = files.length; i < n; i++) {
@@ -187,34 +170,15 @@ class AsarPackager {
       if (stat.isFile()) {
         const fileParent = path.dirname(file)
         const dirNode = this.fs.getOrCreateNode(fileParent)
-        const packageDataPromise = fileIndexToModulePackageData.get(i)
-        let newData: string | null = null
-        if (packageDataPromise == null) {
-          if (file === mainPackageJson) {
-            const mainPackageData = await readJson(file)
-            if (this.options.extraMetadata != null) {
-              deepAssign(mainPackageData, this.options.extraMetadata)
-            }
-
-            // https://github.com/electron-userland/electron-builder/issues/1212
-            const serializedDataIfChanged = cleanupPackageJson(mainPackageData)
-            if (serializedDataIfChanged != null) {
-              newData = serializedDataIfChanged
-            }
-            else if (this.options.extraMetadata != null) {
-              newData = JSON.stringify(mainPackageData, null, 2)
-            }
-          }
-        }
-        else {
-          newData = packageDataPromise.value()
-        }
-
-        const fileSize = newData == null ? stat.size : Buffer.byteLength(newData)
+        
+        const newData = transformedFiles == null ? null : transformedFiles[i]
         const node = this.fs.getOrCreateNode(file)
-        node.size = fileSize
+        node.size = newData == null ? stat.size : Buffer.byteLength(newData)
         if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))) {
           node.unpacked = true
+          if (newData != null) {
+            transformedFiles[i] = null
+          }
 
           if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
             dirToCreateForUnpackedFiles.add(fileParent)
@@ -229,11 +193,11 @@ class AsarPackager {
           }
         }
         else {
-          if (newData != null) {
-            this.changedFiles.set(file, newData)
+          if (newData == null) {
+            transformedFiles[i] = true
           }
+          
           this.fs.insertFileNode(node, stat, file)
-          this.toPack.push(file)
         }
       }
       else if (stat.isDirectory()) {
@@ -263,11 +227,13 @@ class AsarPackager {
     if (filesToUnpack.length > 0) {
       await writeUnpackedFiles(filesToUnpack, fileCopier)
     }
+    
+    await this.writeAsarFile(files, transformedFiles)
   }
 
-  private writeAsarFile(): Promise<any> {
+  private writeAsarFile(files: Array<string>, transformedFiles: Array<string | Buffer | null | true>): Promise<any> {
     const headerPickle = pickle.createEmpty()
-    headerPickle.writeString(JSON.stringify(this.fs.header))
+    headerPickle.writeString(JSON.stringify(this.fs.header, (name, value) => name === "data" ? undefined : value))
     const headerBuf = headerPickle.toBuffer()
 
     const sizePickle = pickle.createEmpty()
@@ -280,30 +246,31 @@ class AsarPackager {
       writeStream.on("close", resolve)
       writeStream.write(sizeBuf)
 
-      let w: (list: Array<any>, index: number) => void
-      w = (list: Array<any>, index: number) => {
-        if (list.length === index) {
+      const w = (index: number) => {
+        let data
+        while (index < files.length && (data = transformedFiles[index++]) == null) {
+        }
+        
+        if (index >= files.length) {
           writeStream.end()
           return
         }
 
-        const file = list[index]
-
-        const data = this.changedFiles.get(file)
-        if (data != null) {
-          writeStream.write(data, () => w(list, index + 1))
+        const file = files[index - 1]
+        if (data !== true && data != null) {
+          writeStream.write(data, () => w(index))
           return
         }
 
         const readStream = createReadStream(file)
         readStream.on("error", reject)
-        readStream.once("end", () => w(list, index + 1))
+        readStream.once("end", () => w(index))
         readStream.pipe(writeStream, {
           end: false
         })
       }
 
-      writeStream.write(headerBuf, () => w(this.toPack, 0))
+      writeStream.write(headerBuf, () => w(0))
     })
   }
 
@@ -346,27 +313,6 @@ class AsarPackager {
     log(`Ordering file has ${((total - missing) / total * 100)}% coverage.`)
     return filenamesSorted
   }
-}
-
-function cleanupPackageJson(data: any): any {
-  try {
-    let changed = false
-    for (const prop of Object.getOwnPropertyNames(data)) {
-      if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords" || prop === "build" || prop === "devDependencies" || prop === "scripts") {
-        delete data[prop]
-        changed = true
-      }
-    }
-
-    if (changed) {
-      return JSON.stringify(data, null, 2)
-    }
-  }
-  catch (e) {
-    debug(e)
-  }
-
-  return null
 }
 
 export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {

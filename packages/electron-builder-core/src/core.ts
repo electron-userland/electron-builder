@@ -164,8 +164,6 @@ export interface AsarOptions {
   smartUnpack?: boolean
 
   ordering?: string | null
-
-  extraMetadata?: any | null
 }
 
 export interface BeforeBuildContext {

@@ -63,6 +63,7 @@
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.8.2",
     "minimatch": "^3.0.3",
+    "mime": "^1.3.4",
     "node-forge": "^0.7.0",
     "normalize-package-data": "^2.3.6",
     "parse-color": "^1.0.0",
