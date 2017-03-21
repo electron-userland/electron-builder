@@ -48,11 +48,7 @@ export class AppInfo {
   }
 
   get id(): string {
-    let appId = (<any>this.config)["app-bundle-id"]
-    if (appId != null) {
-      warn("app-bundle-id is deprecated, please use appId")
-    }
-
+    let appId
     if (this.config.appId != null) {
       appId = this.config.appId
     }
@@ -61,7 +57,7 @@ export class AppInfo {
       return `com.electron.${this.metadata.name!.toLowerCase()}`
     }
 
-    if (appId === "your.id" || isEmptyOrSpaces(appId)) {
+    if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {
       const incorrectAppId = appId
       appId = generateDefaultAppId()
       warn(`Do not use "${incorrectAppId}" as appId, "${appId}" will be used instead`)

@@ -212,7 +212,7 @@ export function getCacheDirectory(): string {
   const localappdata = process.env.LOCALAPPDATA
   if (process.platform === "win32" && localappdata != null) {
     // https://github.com/electron-userland/electron-builder/issues/1164
-    if (localappdata.includes("\\Windows\\System32\\") || process.env.USERNAME === "SYSTEM") {
+    if (localappdata.toLowerCase().includes("\\windows\\system32\\") || (process.env.USERNAME || "").toLowerCase() === "system") {
       return path.join(tmpdir(), "electron-builder-cache")
     }
     return path.join(localappdata, "electron-builder", "cache")
