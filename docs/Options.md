@@ -19,7 +19,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
  `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
-May be specified in the platform options (e.g. in the [mac](#module_electron-builder.MacOptions)).
+May be specified in the platform options (e.g. in the [mac](#MacOptions)).
 
 ### Multiple Glob Patterns
  ```js
@@ -115,6 +115,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.buildForge(appDir, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
@@ -237,7 +238,7 @@ Configuration Options
 | appId| <code>string</code> \| <code>null</code> | <a name="Config-appId"></a>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).<br><br>Defaults to `com.electron.${name}`. It is strongly recommended that an explicit ID be set. |
 | copyright| <code>string</code> \| <code>null</code> | <a name="Config-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`. |
 | productName| <code>string</code> \| <code>null</code> | <a name="Config-productName"></a>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}). |
-| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-files"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. See: [File Patterns](#multiple-glob-patterns). |
+| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-files"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. See: [File Patterns](#file-patterns). |
 | extraResources| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraResources"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).<br><br>Glob rules the same as for [files](#multiple-glob-patterns). |
 | extraFiles| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows). |
 | asar = <code>true</code>| <code>[AsarOptions](Developer-API#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | <a name="Config-asar"></a>Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).<br><br>Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work. |
@@ -603,6 +604,16 @@ Windows Specific Options
 | Param | Type |
 | --- | --- |
 | rawOptions | <code>[CliOptions](#CliOptions)</code> | 
+
+<a name="module_electron-builder.buildForge"></a>
+
+### `electron-builder.buildForge(appDir, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+**Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
+
+| Param | Type |
+| --- | --- |
+| appDir | <code>string</code> | 
+| options | <code>[CliOptions](#CliOptions)</code> | 
 
 <a name="module_electron-builder.createTargets"></a>
 

@@ -72,7 +72,7 @@ export interface Config extends PlatformSpecificBuildOptions {
 
   /**
    * A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
-   * @see [File Patterns](#multiple-glob-patterns).
+   * @see [File Patterns](#file-patterns).
    */
   readonly files?: Array<string> | string | null
 

@@ -1,7 +1,6 @@
 "use strict"
 
 const Linter = require("tslint").Linter
-const fs = require("fs")
 const path = require("path")
 
 const configuration = {
@@ -67,9 +66,7 @@ const options = {
 }
 
 let hasErrors = false
-const args = process.argv.slice(2)
-const packages = args.length == 0 ? fs.readdirSync(__dirname).filter(it => !it.includes(".")).sort().map(it => path.join(__dirname, it)) : [args[0]]
-for (const projectDir of packages) {
+for (const projectDir of require("./process").getPackages()) {
   console.log(`Linting ${path.basename(projectDir)}`)
   const program = Linter.createProgram("tsconfig.json", projectDir)
   for (const file of Linter.getFileNames(program)) {
