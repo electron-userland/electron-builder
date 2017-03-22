@@ -180,7 +180,9 @@ export default class NsisTarget extends Target {
   }
 
   protected generateGitHubInstallerName() {
-    return `${this.packager.appInfo.name}-${this.isPortable ? "" : "Setup-"}${this.packager.appInfo.version}.exe`
+    const appInfo = this.packager.appInfo
+    const classifier = appInfo.name.toLowerCase() === appInfo.name ? "setup-" : "Setup-"
+    return `${appInfo.name}-${this.isPortable ? "" : classifier}${appInfo.version}.exe`
   }
 
   private get isUnicodeEnabled() {

@@ -29,7 +29,7 @@ Object {
   "win": Array [
     Object {
       "file": "Test Menu Category CustomName 1.1.0.exe",
-      "safeArtifactName": "test-menu-category-Setup-1.1.0.exe",
+      "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
     },
   ],
 }

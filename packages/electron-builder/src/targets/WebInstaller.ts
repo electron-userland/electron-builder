@@ -39,6 +39,8 @@ export default class WebInstallerTarget extends NsisTarget {
   }
 
   protected generateGitHubInstallerName(): string {
-    return `${this.packager.appInfo.name}-WebSetup-${this.packager.appInfo.version}.exe`
+    const appInfo = this.packager.appInfo
+    const classifier = appInfo.name.toLowerCase() === appInfo.name ? "web-setup" : "WebSetup"
+    return `${appInfo.name}-${classifier}-${appInfo.version}.exe`
   }
 }
