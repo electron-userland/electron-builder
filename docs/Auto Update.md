@@ -20,17 +20,17 @@ Simplified auto-update is not supported for Squirrel.Windows.
 
 **NOTICE**: 
 
-1. Do not call [setFeedURL](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#autoupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
+1. Do not call [setFeedURL](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
 2. Bintray provider doesn't support [macOS auto-update](https://github.com/electron-userland/electron-builder/issues/1172) currently.
-3. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error.
+3. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error. Default [target](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
 
 ### Examples
 
-**Auto Update**
+#### Auto Update
 
 A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 
-**Manual Update**
+#### Manual Update
 
 The following code snippet gives another example, which illustrate an encapsulated manual update via menu.
 
@@ -39,12 +39,13 @@ The following code snippet gives another example, which illustrate an encapsulat
 const { dialog } = require('electron')
 const { autoUpdater } = require('electron-updater')
 
-
 let updater
 autoUpdater.autoDownload = false
+
 autoUpdater.on('error', (event, error) => {
   dialog.showErrorBox('Error: ', error)
 })
+
 autoUpdater.on('update-available', () => {
   dialog.showMessageBox({
     type: 'info',
@@ -54,12 +55,14 @@ autoUpdater.on('update-available', () => {
   }, (buttonIndex) => {
     if (buttonIndex === 0) {
       autoUpdater.downloadUpdate()
-    } else {
+    } 
+    else {
       updater.enabled = true
       updater = null
     }
   })
 })
+
 autoUpdater.on('update-not-available', () => {
   dialog.showMessageBox({
     title: 'No Updates', 
@@ -68,6 +71,7 @@ autoUpdater.on('update-not-available', () => {
   updater.enabled = true
   updater = null
 })
+
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
     title: 'Install Updates',
@@ -76,7 +80,6 @@ autoUpdater.on('update-downloaded', () => {
     autoUpdater.quitAndInstall()
   })
 })
-
 
 // export this to MenuItem click callback
 function checkForUpdates (menuItem, focusedWindow, event) {
@@ -96,11 +99,14 @@ Import steps:
 
 `latest.yml` (or `latest-mac.json` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
-## Private Update Repo
+## Private GitHub Update Repo
 
-You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable. If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
+You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
+If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
 
-**Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check. If you are worried about hitting your rate limit, consider using [conditional requests](https://developer.github.com/v3/#conditional-requests) before checking for updates to reduce rate limit usage.
+Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
+
+**Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
 
 ## Debugging
 
@@ -231,7 +237,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Param | Type |
 | --- | --- |
-| value | <code>[RequestHeaders](Developer-API#RequestHeaders)</code> &#124; <code>null</code> | 
+| value | <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | 
 
 <a name="module_electron-updater/out/api.Provider+getUpdateFile"></a>
 
@@ -326,11 +332,11 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
     * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
         * [`.checkForUpdates()`](#module_electron-updater/out/AppUpdater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getFeedURL()`](#module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> &#124; <code>null</code> &#124; <code>string</code>
+        * [`.getFeedURL()`](#module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
         * [`.setFeedURL(options)`](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL)
         * [`.loadUpdateConfig()`](#module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.quitAndInstall()`](#module_electron-updater/out/AppUpdater.AppUpdater+quitAndInstall)
-        * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> &#124; <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+        * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
         * [`.dispatchError(e)`](#module_electron-updater/out/AppUpdater.AppUpdater+dispatchError)
         * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable)
@@ -381,11 +387,11 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
     * [`.checkForUpdates()`](#module_electron-updater/out/AppUpdater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getFeedURL()`](#module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> &#124; <code>null</code> &#124; <code>string</code>
+    * [`.getFeedURL()`](#module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
     * [`.setFeedURL(options)`](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL)
     * [`.loadUpdateConfig()`](#module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.quitAndInstall()`](#module_electron-updater/out/AppUpdater.AppUpdater+quitAndInstall)
-    * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> &#124; <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+    * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
     * [`.dispatchError(e)`](#module_electron-updater/out/AppUpdater.AppUpdater+dispatchError)
     * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable)
@@ -421,7 +427,7 @@ Configure update provider. If value is `string`, [module:electron-builder-http/o
 
 | Param | Type | Description |
 | --- | --- | --- |
-| options | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> &#124; <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> &#124; <code>[S3Options](Publishing-Artifacts#S3Options)</code> &#124; <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> &#124; <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> &#124; <code>string</code> | If you want to override configuration in the `app-update.yml`. |
+| options | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>string</code> | If you want to override configuration in the `app-update.yml`. |
 
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig"></a>
 

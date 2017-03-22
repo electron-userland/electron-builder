@@ -115,7 +115,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](Developer-API#Platform) &#124; Map&lt;[Arch](Developer-API#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
+    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
 
@@ -173,6 +173,7 @@ AppX Options
 | --- | --- |
 | **options**| <code>[PackagerOptions](#PackagerOptions)</code> | 
 | **metadata**| <code>[Metadata](#Metadata)</code> | 
+| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
 | **config**| <code>[Config](#Config)</code> | 
 | **projectDir**| <code>string</code> | 
 | **appDir**| <code>string</code> | 
@@ -609,8 +610,8 @@ Windows Specific Options
 | Param | Type |
 | --- | --- |
 | platforms | <code>Array&lt;[Platform](Developer-API#Platform)&gt;</code> | 
-| type | <code>string</code> &#124; <code>null</code> | 
-| arch | <code>string</code> &#124; <code>null</code> | 
+| type | <code>string</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>null</code> | 
 
 
 <!-- end of generated block -->

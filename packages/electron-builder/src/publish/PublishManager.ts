@@ -503,6 +503,9 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   }
 
   if (isGithub) {
+    if (options.token != null && !(<GithubOptions>options).private) {
+      warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
+    }
     return Object.assign({owner, repo: project}, options)
   }
   else {

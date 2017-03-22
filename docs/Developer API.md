@@ -15,6 +15,8 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/fileMatcher">electron-builder/out/fileMatcher</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/fileTransformer">electron-builder/out/fileTransformer</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/linuxPackager">electron-builder/out/linuxPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/macPackager">electron-builder/out/macPackager</a></dt>
@@ -121,7 +123,7 @@
 
 * [electron-builder/out/appInfo](#module_electron-builder/out/appInfo)
     * [.AppInfo](#AppInfo)
-        * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; \| string&gt;</code>
 
 <a name="AppInfo"></a>
 
@@ -268,8 +270,41 @@
 ## electron-builder/out/asarUtil
 
 * [electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)
+    * [.AsarPackager](#AsarPackager)
+        * [`.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.pack(filter, transformer)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.checkFileInArchive(asarFile, relativeFile, messagePrefix)`](#module_electron-builder/out/asarUtil.checkFileInArchive) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.createAsarArchive(src, resourcesPath, options, filter, unpackPattern)`](#module_electron-builder/out/asarUtil.createAsarArchive) ⇒ <code>Promise&lt;any&gt;</code>
+
+<a name="AsarPackager"></a>
+
+### AsarPackager
+**Kind**: class of <code>[electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)</code>  
+
+* [.AsarPackager](#AsarPackager)
+    * [`.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.pack(filter, transformer)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
+
+<a name="module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs"></a>
+
+#### `asarPackager.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+
+| Param | Type |
+| --- | --- |
+| files | <code>Array&lt;string&gt;</code> | 
+| metadata | <code>Map&lt;string \| module:fs.Stats&gt;</code> | 
+| autoUnpackDirs | <code>Set&lt;string&gt;</code> | 
+| unpackedDest | <code>string</code> | 
+
+<a name="module_electron-builder/out/asarUtil.AsarPackager+pack"></a>
+
+#### `asarPackager.pack(filter, transformer)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+
+| Param | Type |
+| --- | --- |
+| filter | <code>module:electron-builder-util/out/fs.__type</code> | 
+| transformer | <code>module:electron-builder/out/asarUtil.__type</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/asarUtil.checkFileInArchive"></a>
 
@@ -281,19 +316,6 @@
 | asarFile | <code>string</code> | 
 | relativeFile | <code>string</code> | 
 | messagePrefix | <code>string</code> | 
-
-<a name="module_electron-builder/out/asarUtil.createAsarArchive"></a>
-
-### `electron-builder/out/asarUtil.createAsarArchive(src, resourcesPath, options, filter, unpackPattern)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)</code>  
-
-| Param | Type |
-| --- | --- |
-| src | <code>string</code> | 
-| resourcesPath | <code>string</code> | 
-| options | <code>[AsarOptions](#AsarOptions)</code> | 
-| filter | <code>module:electron-builder-util/out/fs.__type</code> | 
-| unpackPattern | <code>module:electron-builder-util/out/fs.__type</code> &#124; <code>null</code> | 
 
 <a name="module_electron-builder/out/builder"></a>
 
@@ -320,10 +342,10 @@
 
 * [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
     * [`.CodeSigningInfo`](#CodeSigningInfo)
-    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;string&gt;&gt;</code> &#124; <code>null</code>
+    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
     * [`.createKeychain(tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
     * [`.downloadCertificate(urlOrBase64, tmpDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="CodeSigningInfo"></a>
@@ -350,8 +372,8 @@
 | tmpDir | <code>[TmpDir](#TmpDir)</code> | 
 | cscLink | <code>string</code> | 
 | cscKeyPassword | <code>string</code> | 
-| cscILink | <code>string</code> &#124; <code>null</code> | 
-| cscIKeyPassword | <code>string</code> &#124; <code>null</code> | 
+| cscILink | <code>string</code> \| <code>null</code> | 
+| cscIKeyPassword | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
 
@@ -370,9 +392,9 @@
 
 | Param | Type |
 | --- | --- |
-| certType | <code>"Developer ID Application"</code> &#124; <code>"Developer ID Installer"</code> &#124; <code>"3rd Party Mac Developer Application"</code> &#124; <code>"3rd Party Mac Developer Installer"</code> &#124; <code>"Mac Developer"</code> | 
-| qualifier | <code>string</code> &#124; <code>null</code> | 
-| keychain | <code>string</code> &#124; <code>null</code> | 
+| certType | <code>"Developer ID Application"</code> \| <code>"Developer ID Installer"</code> \| <code>"3rd Party Mac Developer Application"</code> \| <code>"3rd Party Mac Developer Installer"</code> \| <code>"Mac Developer"</code> | 
+| qualifier | <code>string</code> \| <code>null</code> | 
+| keychain | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/codeSign.sign"></a>
 
@@ -394,9 +416,9 @@
         * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
         * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
         * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
         * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
     * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="FileMatcher"></a>
@@ -408,9 +430,9 @@
     * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
     * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
     * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-    * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+    * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
     * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+    * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern"></a>
 
@@ -448,7 +470,7 @@
 | --- | --- |
 | ignoreFiles | <code>Set&lt;string&gt;</code> | 
 | rawFilter | <code>callback</code> | 
-| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+isEmpty"></a>
 
@@ -461,7 +483,21 @@
 
 | Param | Type |
 | --- | --- |
-| patterns | <code>Array&lt;[FileMatcher](#FileMatcher)&gt;</code> &#124; <code>null</code> | 
+| patterns | <code>Array&lt;[FileMatcher](#FileMatcher)&gt;</code> \| <code>null</code> | 
+
+<a name="module_electron-builder/out/fileTransformer"></a>
+
+## electron-builder/out/fileTransformer
+<a name="module_electron-builder/out/fileTransformer.createTransformer"></a>
+
+### `electron-builder/out/fileTransformer.createTransformer(projectDir, srcDir, packager)` ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
+**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+
+| Param | Type |
+| --- | --- |
+| projectDir | <code>string</code> | 
+| srcDir | <code>string</code> | 
+| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 
 <a name="module_electron-builder/out/linuxPackager"></a>
 
@@ -471,16 +507,16 @@
     * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
         * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
         * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -499,16 +535,16 @@
 * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
     * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -558,7 +594,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> &#124; <code>null</code> | 
+| target | <code>[Target](#Target)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -568,9 +604,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -581,7 +617,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -591,10 +627,10 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> | 
 | deployment | <code>boolean</code> | 
-| classifier | <code>string</code> &#124; <code>null</code> | 
+| classifier | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
@@ -603,8 +639,8 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
-| classifier | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
+| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | deployment | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
@@ -639,7 +675,7 @@
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | names | <code>Array&lt;string&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
@@ -726,19 +762,19 @@
 * [electron-builder/out/macPackager](#module_electron-builder/out/macPackager)
     * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
-        * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.doSign(opts)`](#module_electron-builder/out/macPackager.MacPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/macPackager.MacPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
         * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
         * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -756,19 +792,19 @@
 
 * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
-    * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.doSign(opts)`](#module_electron-builder/out/macPackager.MacPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/macPackager.MacPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
     * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -819,7 +855,7 @@
 | appPath | <code>string</code> | 
 | outFile | <code>string</code> | 
 | identity | <code>string</code> | 
-| keychain | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| keychain | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+doSign"></a>
 
@@ -859,7 +895,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> &#124; <code>null</code> | 
+| target | <code>[Target](#Target)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -869,9 +905,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -882,7 +918,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -892,10 +928,10 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> | 
 | deployment | <code>boolean</code> | 
-| classifier | <code>string</code> &#124; <code>null</code> | 
+| classifier | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
@@ -904,8 +940,8 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
-| classifier | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
+| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | deployment | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
@@ -924,7 +960,7 @@
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | names | <code>Array&lt;string&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
@@ -1057,7 +1093,7 @@
 
 | Param | Type |
 | --- | --- |
-| rawPlatforms | <code>Array&lt;string &#124; [Platform](#Platform)&gt;</code> &#124; <code>string</code> &#124; <code>[Platform](#Platform)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| rawPlatforms | <code>Array&lt;string \| [Platform](#Platform)&gt;</code> \| <code>string</code> \| <code>[Platform](#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager"></a>
 
@@ -1066,16 +1102,16 @@
 * [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
     * [.PlatformPackager](#PlatformPackager)
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
         * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -1094,16 +1130,16 @@
 
 * [.PlatformPackager](#PlatformPackager)
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -1142,7 +1178,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> &#124; <code>null</code> | 
+| target | <code>[Target](#Target)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -1152,9 +1188,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -1165,7 +1201,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -1175,10 +1211,10 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> | 
 | deployment | <code>boolean</code> | 
-| classifier | <code>string</code> &#124; <code>null</code> | 
+| classifier | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
@@ -1187,8 +1223,8 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
-| classifier | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
+| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | deployment | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
@@ -1223,7 +1259,7 @@
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | names | <code>Array&lt;string&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
@@ -1330,11 +1366,11 @@
     * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
     * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
-    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
-    * [`.getPublishConfigs(packager, targetSpecificOptions)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; &#124; Array&gt;</code>
-    * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; &#124; Array&gt;</code>
+    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+    * [`.getPublishConfigs(packager, targetSpecificOptions)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; \| Array&gt;</code>
+    * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; \| Array&gt;</code>
 
 <a name="PublishManager"></a>
 
@@ -1345,7 +1381,7 @@
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>
     * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
 
@@ -1373,7 +1409,7 @@
 | Param | Type |
 | --- | --- |
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| fileName | <code>string</code> &#124; <code>null</code> | 
+| fileName | <code>string</code> \| <code>null</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
@@ -1396,7 +1432,7 @@
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 
@@ -1406,7 +1442,7 @@
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> &#124; <code>null</code> | 
+| publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/readInstalled"></a>
 
@@ -1414,7 +1450,7 @@
 
 * [electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)
     * [`.Dependency`](#Dependency)
-    * [`.readInstalled(folder)`](#module_electron-builder/out/readInstalled.readInstalled) ⇒ <code>Promise&lt;Map&lt;string &#124; [Dependency](#Dependency)&gt;&gt;</code>
+    * [`.readInstalled(folder)`](#module_electron-builder/out/readInstalled.readInstalled) ⇒ <code>Promise&lt;Map&lt;string \| [Dependency](#Dependency)&gt;&gt;</code>
 
 <a name="Dependency"></a>
 
@@ -1445,7 +1481,7 @@
 
 * [electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)
     * [`.RepositorySlug`](#RepositorySlug)
-    * [`.getRepositoryInfo(projectDir, metadata, devMetadata)`](#module_electron-builder/out/repositoryInfo.getRepositoryInfo) ⇒ <code>Promise&lt; &#124; module:hosted-git-info.Info&gt;</code>
+    * [`.getRepositoryInfo(projectDir, metadata, devMetadata)`](#module_electron-builder/out/repositoryInfo.getRepositoryInfo) ⇒ <code>Promise&lt; \| module:hosted-git-info.Info&gt;</code>
 
 <a name="RepositorySlug"></a>
 
@@ -1552,7 +1588,7 @@
 
 | Param | Type |
 | --- | --- |
-| compression | <code>"store"</code> &#124; <code>"normal"</code> &#124; <code>"maximum"</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| compression | <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>undefined</code> \| <code>null</code> | 
 | format | <code>string</code> | 
 | outFile | <code>string</code> | 
 | dirToArchive | <code>string</code> | 
@@ -1565,7 +1601,7 @@
 
 | Param | Type |
 | --- | --- |
-| compression | <code>"store"</code> &#124; <code>"normal"</code> &#124; <code>"maximum"</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| compression | <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>undefined</code> \| <code>null</code> | 
 | format | <code>string</code> | 
 | outFile | <code>string</code> | 
 | dirToArchive | <code>string</code> | 
@@ -1651,7 +1687,7 @@
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> &#124; <code>null</code> | 
+| custom | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-core.Target+finishBuild"></a>
 
@@ -1729,7 +1765,7 @@
 | --- | --- |
 | platformSpecificBuildOptions | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
 | exec | <code>string</code> | 
-| destination | <code>string</code> &#124; <code>null</code> | 
+| destination | <code>string</code> \| <code>null</code> | 
 | extra | <code>Object&lt;string, any&gt;</code> | 
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription"></a>
@@ -1838,8 +1874,8 @@
 
 | Param | Type |
 | --- | --- |
-| identity | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
-| keychain | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| identity | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| keychain | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/targets/snap"></a>
 
@@ -1883,7 +1919,7 @@
     * [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;</code>
+    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code>
     * [`.createCommonTarget(target, outDir, packager)`](#module_electron-builder/out/targets/targetFactory.createCommonTarget) ⇒ <code>[Target](#Target)</code>
     * [`.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)`](#module_electron-builder/out/targets/targetFactory.createTargets) ⇒ <code>Array&lt;[Target](#Target)&gt;</code>
 
@@ -1919,7 +1955,7 @@
 
 | Param | Type |
 | --- | --- |
-| raw | <code>Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;</code> | 
+| raw | <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code> | 
 | options | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
 | platform | <code>[Platform](#Platform)</code> | 
 
@@ -1941,7 +1977,7 @@
 
 | Param | Type |
 | --- | --- |
-| nameToTarget | <code>Map&lt;String &#124; [Target](#Target)&gt;</code> | 
+| nameToTarget | <code>Map&lt;String \| [Target](#Target)&gt;</code> | 
 | rawList | <code>Array&lt;string&gt;</code> | 
 | outDir | <code>string</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
@@ -1988,7 +2024,7 @@
 
 * [electron-builder/out/util/filter](#module_electron-builder/out/util/filter)
     * [`.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/util/filter.createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 
 <a name="module_electron-builder/out/util/filter.createFilter"></a>
 
@@ -2001,7 +2037,7 @@
 | patterns | <code>Array&lt;minimatch:Minimatch&gt;</code> | 
 | ignoreFiles | <code>Set&lt;string&gt;</code> | 
 | rawFilter | <code>callback</code> | 
-| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> &#124; <code>null</code> | 
+| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/util/filter.hasMagic"></a>
 
@@ -2019,7 +2055,7 @@
 * [electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)
     * [`.doLoadConfig(configFile, projectDir)`](#module_electron-builder/out/util/readPackageJson.doLoadConfig) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getElectronVersion(config, projectDir, projectMetadata)`](#module_electron-builder/out/util/readPackageJson.getElectronVersion) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.loadConfig(projectDir)`](#module_electron-builder/out/util/readPackageJson.loadConfig) ⇒ <code>Promise&lt; &#124; [Config](Options#Config)&gt;</code>
+    * [`.loadConfig(projectDir)`](#module_electron-builder/out/util/readPackageJson.loadConfig) ⇒ <code>Promise&lt; \| [Config](Options#Config)&gt;</code>
     * [`.readPackageJson(file)`](#module_electron-builder/out/util/readPackageJson.readPackageJson) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.validateConfig(config)`](#module_electron-builder/out/util/readPackageJson.validateConfig) ⇒ <code>Promise&lt;void&gt;</code>
 
@@ -2040,9 +2076,9 @@
 
 | Param | Type |
 | --- | --- |
-| config | <code>[Config](Options#Config)</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| config | <code>[Config](Options#Config)</code> \| <code>null</code> \| <code>undefined</code> | 
 | projectDir | <code>string</code> | 
-| projectMetadata | <code>any</code> &#124; <code>null</code> | 
+| projectMetadata | <code>any</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/util/readPackageJson.loadConfig"></a>
 
@@ -2140,7 +2176,7 @@
         * [`.doGetCscPassword()`](#module_electron-builder/out/winPackager.WinPackager+doGetCscPassword) ⇒ <code>string</code>
         * [`.doSign(options)`](#module_electron-builder/out/winPackager.WinPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
@@ -2148,7 +2184,7 @@
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
         * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
         * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -2171,7 +2207,7 @@
     * [`.doGetCscPassword()`](#module_electron-builder/out/winPackager.WinPackager+doGetCscPassword) ⇒ <code>string</code>
     * [`.doSign(options)`](#module_electron-builder/out/winPackager.WinPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
@@ -2179,7 +2215,7 @@
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
     * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; &#124; string&gt;</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
@@ -2268,7 +2304,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> &#124; <code>null</code> | 
+| target | <code>[Target](#Target)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -2278,9 +2314,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -2291,7 +2327,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -2301,10 +2337,10 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> | 
 | deployment | <code>boolean</code> | 
-| classifier | <code>string</code> &#124; <code>null</code> | 
+| classifier | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
@@ -2313,8 +2349,8 @@
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> &#124; <code>null</code> | 
-| classifier | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| ext | <code>string</code> \| <code>null</code> | 
+| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | deployment | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
@@ -2345,7 +2381,7 @@
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> &#124; <code>undefined</code> &#124; <code>null</code> | 
+| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | names | <code>Array&lt;string&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
@@ -2487,7 +2523,7 @@
     * [`.TargetConfig`](#TargetConfig)
     * [`.TargetSpecificOptions`](#TargetSpecificOptions)
     * [.Platform](#Platform)
-        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) &#124; Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
+        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
         * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
         * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
         * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>string</code>
@@ -2497,7 +2533,7 @@
     * [`.Arch`](#Arch) : <code>enum</code>
     * [`.archFromString(name)`](#module_electron-builder-core.archFromString) ⇒ <code>[Arch](#Arch)</code>
     * [`.getArchSuffix(arch)`](#module_electron-builder-core.getArchSuffix) ⇒ <code>string</code>
-    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒ <code>"armv7l"</code> &#124; <code>"i386"</code> &#124; <code>"amd64"</code>
+    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 
 <a name="AsarOptions"></a>
 
@@ -2509,7 +2545,6 @@
 | --- | --- |
 | smartUnpack| <code>boolean</code> | 
 | ordering| <code>string</code> \| <code>null</code> | 
-| extraMetadata| <code>any</code> \| <code>null</code> | 
 
 <a name="AuthorMetadata"></a>
 
@@ -2668,7 +2703,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 **Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
 
 * [.Platform](#Platform)
-    * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) &#124; Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
+    * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
     * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
     * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
     * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>string</code>
@@ -2680,7 +2715,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Param | Type |
 | --- | --- |
-| type | <code>string</code> &#124; <code>Array&lt;string&gt;</code> &#124; <code>null</code> | 
+| type | <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | 
 | archs | <code>Array&lt;[Arch](#Arch)&gt;</code> | 
 
 <a name="module_electron-builder-core.Platform+current"></a>
@@ -2855,10 +2890,10 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | Param | Type |
 | --- | --- |
 | path | <code>string</code> | 
-| auth | <code>string</code> &#124; <code>null</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+| auth | <code>string</code> \| <code>null</code> | 
+| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| method | <code>"GET"</code> &#124; <code>"DELETE"</code> &#124; <code>"PUT"</code> | 
+| method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
 
 <a name="module_electron-builder-http/out/CancellationToken"></a>
 
@@ -3070,7 +3105,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
 
@@ -3150,8 +3185,8 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | Param | Type |
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
-| token | <code>string</code> &#124; <code>null</code> | 
-| method | <code>"GET"</code> &#124; <code>"DELETE"</code> &#124; <code>"PUT"</code> | 
+| token | <code>string</code> \| <code>null</code> | 
+| method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
 
 <a name="module_electron-builder-http.download"></a>
 
@@ -3162,7 +3197,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | url | <code>string</code> | 
 | destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> &#124; <code>null</code> | 
+| options | <code>[DownloadOptions](#DownloadOptions)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.dumpRequestOptions"></a>
 
@@ -3182,7 +3217,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-publish/out/BintrayPublisher"></a>
 
@@ -3427,7 +3462,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
 
@@ -3744,11 +3779,11 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 * [electron-builder-util/out/fs](#module_electron-builder-util/out/fs)
     * [.FileCopier](#FileCopier)
         * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.copyDir(src, destination, filter, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.copyDir(src, destination, filter, transformer, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;"undefined" &#124; "undefined"&gt;</code>
-    * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; &#124; module:fs.Stats&gt;</code>
-    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;string &#124; void&gt;</code>
+    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;"undefined" \| "undefined"&gt;</code>
+    * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
+    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;string \| void&gt;</code>
     * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
 
 <a name="FileCopier"></a>
@@ -3764,11 +3799,11 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 | --- | --- |
 | src | <code>string</code> | 
 | dest | <code>string</code> | 
-| stat | <code>module:fs.Stats</code> &#124; <code>undefined</code> | 
+| stat | <code>module:fs.Stats</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyDir"></a>
 
-### `electron-builder-util/out/fs.copyDir(src, destination, filter, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
+### `electron-builder-util/out/fs.copyDir(src, destination, filter, transformer, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
 Empty directories is never created.
 Hard links is used if supported and allowed.
 
@@ -3779,6 +3814,7 @@ Hard links is used if supported and allowed.
 | src | <code>string</code> | 
 | destination | <code>string</code> | 
 | filter | <code>module:electron-builder-util/out/fs.__type</code> | 
+| transformer | <code>module:electron-builder-util/out/fs.__type</code> | 
 | isUseHardLink | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyFile"></a>
@@ -3793,7 +3829,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | --- | --- |
 | src | <code>string</code> | 
 | dest | <code>string</code> | 
-| stats | <code>module:fs.Stats</code> &#124; <code>null</code> | 
+| stats | <code>module:fs.Stats</code> \| <code>null</code> | 
 | isUseHardLink |  | 
 
 <a name="module_electron-builder-util/out/fs.exists"></a>
@@ -3831,7 +3867,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | initialDirPath | <code>string</code> | 
-| filter | <code>module:electron-builder-util/out/fs.__type</code> &#124; <code>null</code> | 
+| filter | <code>module:electron-builder-util/out/fs.__type</code> \| <code>null</code> | 
 | consumer | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/log"></a>
@@ -3861,7 +3897,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| value | <code>module:electron-builder-util/out/log.__type</code> &#124; <code>null</code> | 
+| value | <code>module:electron-builder-util/out/log.__type</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-util/out/log.subTask"></a>
 
@@ -3871,7 +3907,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | title | <code>string</code> | 
-| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> &#124; <code>Promise&lt;any&gt;</code> | 
+| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.task"></a>
 
@@ -3881,7 +3917,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | title | <code>string</code> | 
-| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> &#124; <code>Promise&lt;any&gt;</code> | 
+| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.warn"></a>
 
@@ -3968,7 +4004,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> &#124; <code>null</code> | 
+| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
 
@@ -4116,17 +4152,18 @@ File permission is fixed — allow execute for all if owner can, allow read for 
     * [`.exec(file, args, options)`](#module_electron-builder-util.exec) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.execWine(file, args, options)`](#module_electron-builder-util.execWine) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.getCacheDirectory()`](#module_electron-builder-util.getCacheDirectory) ⇒ <code>string</code>
-    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> &#124; <code>null</code> &#124; <code>string</code>
+    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
     * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>string</code>
     * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
-    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
-    * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code> &#124; <code>""</code>
+    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
     * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;string&gt;</code>
     * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
     * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;string&gt;</code>
+    * [`.safeStringifyJson(data)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>string</code>
     * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>string</code>
     * [`.spawn(command, args, options)`](#module_electron-builder-util.spawn) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> &#124; <code>module:electron-builder-util.R</code>
+    * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
 
 <a name="BaseExecOptions"></a>
 
@@ -4166,7 +4203,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| map | <code>Map&lt;module:electron-builder-util.K &#124; Array&lt;module:electron-builder-util.T&gt;&gt;</code> | 
+| map | <code>Map&lt;module:electron-builder-util.K \| Array&lt;module:electron-builder-util.T&gt;&gt;</code> | 
 | key | <code>module:electron-builder-util.K</code> | 
 | value | <code>module:electron-builder-util.T</code> | 
 
@@ -4177,7 +4214,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| v | <code>null</code> &#124; <code>undefined</code> &#124; <code>module:electron-builder-util.T</code> &#124; <code>Array&lt;module:electron-builder-util.T&gt;</code> | 
+| v | <code>null</code> \| <code>undefined</code> \| <code>module:electron-builder-util.T</code> \| <code>Array&lt;module:electron-builder-util.T&gt;</code> | 
 
 <a name="module_electron-builder-util.computeDefaultAppDirectory"></a>
 
@@ -4187,7 +4224,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | projectDir | <code>string</code> | 
-| userAppDir | <code>string</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| userAppDir | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.debug7zArgs"></a>
 
@@ -4196,7 +4233,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| command | <code>"a"</code> &#124; <code>"x"</code> | 
+| command | <code>"a"</code> \| <code>"x"</code> | 
 
 <a name="module_electron-builder-util.doSpawn"></a>
 
@@ -4218,7 +4255,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> &#124; <code>null</code> | 
+| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
 | options | <code>[ExecOptions](#ExecOptions)</code> | 
 
 <a name="module_electron-builder-util.execWine"></a>
@@ -4243,7 +4280,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| value | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
 | isMac | <code>boolean</code> | 
 
 <a name="module_electron-builder-util.getTempName"></a>
@@ -4253,7 +4290,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| prefix | <code>string</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| prefix | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.handleProcess"></a>
 
@@ -4265,7 +4302,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | event | <code>string</code> | 
 | childProcess | <code>module:child_process.ChildProcess</code> | 
 | command | <code>string</code> | 
-| resolve | <code>module:electron-builder-util.__type</code> &#124; <code>null</code> | 
+| resolve | <code>module:electron-builder-util.__type</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
@@ -4275,7 +4312,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| s | <code>string</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| s | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.isPullRequest"></a>
 
@@ -4307,8 +4344,17 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| inList | <code>Array&lt;string&gt;</code> &#124; <code>null</code> &#124; <code>undefined</code> | 
+| inList | <code>Array&lt;string&gt;</code> \| <code>null</code> \| <code>undefined</code> | 
 | defaultList | <code>Array&lt;string&gt;</code> | 
+
+<a name="module_electron-builder-util.safeStringifyJson"></a>
+
+### `electron-builder-util.safeStringifyJson(data)` ⇒ <code>string</code>
+**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+
+| Param | Type |
+| --- | --- |
+| data | <code>any</code> | 
 
 <a name="module_electron-builder-util.smarten"></a>
 
@@ -4327,7 +4373,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | command | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> &#124; <code>null</code> | 
+| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
 | options | <code>module:child_process.SpawnOptions</code> | 
 
 <a name="module_electron-builder-util.use"></a>
@@ -4337,6 +4383,6 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| value | <code>module:electron-builder-util.T</code> &#124; <code>null</code> | 
+| value | <code>module:electron-builder-util.T</code> \| <code>null</code> | 
 | task | <code>callback</code> | 
 

@@ -138,6 +138,7 @@ GitHub options.
 | host = <code>&quot;github.com&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GithubOptions-host"></a>The host (including the port if need). |
 | protocol = <code>https</code>| <code>"https"</code> \| <code>"http"</code> \| <code>null</code> | <a name="GithubOptions-protocol"></a>The protocol. GitHub Publisher supports only `https`. |
 | token| <code>string</code> \| <code>null</code> | <a name="GithubOptions-token"></a>The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL). |
+| private| <code>boolean</code> \| <code>null</code> | <a name="GithubOptions-private"></a>Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo |
 
 <a name="PublishConfiguration"></a>
 
@@ -232,12 +233,12 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
     * [.Publisher](#Publisher)
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="PublishContext"></a>
@@ -274,7 +275,7 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish.HttpPublisher+upload"></a>
@@ -336,7 +337,7 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> &#124; <code>null</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="Publisher"></a>
@@ -347,7 +348,7 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 * [.Publisher](#Publisher)
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish.Publisher+toString"></a>
@@ -385,7 +386,7 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> &#124; <code>null</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 

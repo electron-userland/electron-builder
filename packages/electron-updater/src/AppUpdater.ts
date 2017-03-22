@@ -277,7 +277,7 @@ function createClient(data: string | PublishConfiguration) {
   switch (provider) {
     case "github":
       const githubOptions = <GithubOptions>data
-      const token = process.env.GH_TOKEN || githubOptions.token
+      const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
       if (token == null) {
         return new GitHubProvider(githubOptions)
       }

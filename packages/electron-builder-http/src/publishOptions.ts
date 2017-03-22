@@ -57,6 +57,12 @@ export interface GithubOptions extends PublishConfiguration {
    * The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).
    */
   readonly token?: string | null
+
+  /**
+   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set.
+   * @see https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo 
+   */
+  readonly private?: boolean | null
 }
 
 export function githubUrl(options: GithubOptions) {
