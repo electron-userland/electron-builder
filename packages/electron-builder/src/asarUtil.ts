@@ -1,12 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { AsarOptions } from "electron-builder-core"
 import { debug } from "electron-builder-util"
-import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
+import { CONCURRENCY, FileCopier, FileTransformer, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
 import { createReadStream, createWriteStream, ensureDir, readFile, readlink, stat, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "./asar"
-import { FileTransformer } from "./fileTransformer"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -160,7 +159,7 @@ export class AsarPackager {
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
     
-    const transformedFiles = transformer == null ? new Array(files.length) : await BluebirdPromise.map(files, it => it.includes("/node_modules/") || it.includes("/bower_components/") || !metadata.get(it)!.isFile() ? null : transformer(it), CONCURRENCY)
+    const transformedFiles = transformer == null ? new Array(files.length) : await BluebirdPromise.map(files, it => metadata.get(it)!.isFile() ? transformer(it) : null, CONCURRENCY)
     const filesToUnpack: Array<UnpackedFileTask> = []
     const fileCopier = new FileCopier()
     /* tslint:disable:rule1 prefer-const */

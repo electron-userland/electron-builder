@@ -1,13 +1,12 @@
 import { debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { FileTransformer } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
 import { readJson } from "fs-extra-p"
 import mime from "mime"
 import * as path from "path"
 import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
-
-export type FileTransformer = (path: string) => Promise<null | string | Buffer> | null | string | Buffer
 
 function isElectronCompileUsed(info: BuildInfo): boolean {
   const depList = [(<any>info.metadata).devDependencies, info.metadata.dependencies]
@@ -56,6 +55,10 @@ async function createElectronCompileTransformer(projectDir: string, defaultTrans
     if (defaultResult != null) {
       return await defaultResult
     }
+    
+    if (file.includes("/node_modules/") || file.includes("/bower_components/")) {
+      return null
+    }
 
     const hashInfo = await compilerHost.fileChangeCache.getHashForPath(file)
 
@@ -74,11 +77,7 @@ async function createElectronCompileTransformer(projectDir: string, defaultTrans
 
     const cache = compilerHost.cachesForCompilers.get(compiler)
     const result = await cache.getOrFetch(file, (file: string, hashInfo: any) => compilerHost.compileUncached(file, hashInfo, compiler))
-    const code = result.code
-    if (type === "application/javascript" && code != null && (code.includes("require('electron-compile')") || code.includes('require("electron-compile")'))) {
-      warn("electron-compile should be not used in the production code")
-    }
-    return code || result.binaryData
+    return result.code || result.binaryData
   }
 }
 

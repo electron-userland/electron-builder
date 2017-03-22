@@ -92,7 +92,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   await copyDir(projectDir, dir, it => {
     const basename = path.basename(it)
     return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
-  }, it => path.basename(it) != "package.json")
+  }, null, it => path.basename(it) != "package.json")
   projectDir = dir
 
   try {

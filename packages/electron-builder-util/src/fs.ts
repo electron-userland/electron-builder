@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { access, createReadStream, createWriteStream, link, lstat, mkdirs, readdir, readlink, stat, Stats, symlink, unlink } from "fs-extra-p"
+import { access, createReadStream, createWriteStream, link, lstat, mkdirs, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
@@ -8,6 +8,7 @@ import { debug } from "./util"
 export const MAX_FILE_REQUESTS = 8
 export const CONCURRENCY = {concurrency: MAX_FILE_REQUESTS}
 
+export type FileTransformer = (path: string) => Promise<null | string | Buffer> | null | string | Buffer
 export type Filter = (file: string, stat: Stats) => boolean
 
 export function unlinkIfExists(file: string) {
@@ -160,11 +161,23 @@ export function copyFile(src: string, dest: string, stats?: Stats | null, isUseH
 }
 
 export class FileCopier {
-  constructor(private isUseHardLinkFunction?: (file: string) => boolean, private isUseHardLink = _isUseHardLink) {
+  private isUseHardLink = _isUseHardLink
+  
+  constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer) {
   }
 
   async copy(src: string, dest: string, stat: Stats | undefined) {
     try {
+      if (this.transformer != null && stat != null && stat.isFile()) {
+        let data = this.transformer(src)
+        if (data != null) {
+          if (typeof (<any>data).then === "function") {
+            data = await data
+          }
+          await writeFile(dest, data)
+          return
+        }
+      }
       await copyFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
     }
     catch (e) {
@@ -189,13 +202,13 @@ export class FileCopier {
  * Empty directories is never created.
  * Hard links is used if supported and allowed.
  */
-export function copyDir(src: string, destination: string, filter?: Filter, isUseHardLink?: (file: string) => boolean): Promise<any> {
+export function copyDir(src: string, destination: string, filter?: Filter, transformer?: FileTransformer, isUseHardLink?: (file: string) => boolean): Promise<any> {
   if (debug.enabled) {
     debug(`Copying ${src} to ${destination}${_isUseHardLink ? " using hard links" : ""}`)
   }
 
   const createdSourceDirs = new Set<string>()
-  const fileCopier = new FileCopier(isUseHardLink)
+  const fileCopier = new FileCopier(isUseHardLink, transformer)
   const links: Array<Link> = []
   return walk(src, filter, async(file, stat, parent) => {
     if (!stat.isFile() && !stat.isSymbolicLink()) {

@@ -6,6 +6,7 @@ function checkInfo(info: any) {
   delete info.httpstemplate
   delete info.filetemplate
   delete info.docstemplate
+  delete info.opts
   expect(info).toMatchSnapshot()
 }
 

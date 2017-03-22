@@ -191,18 +191,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const defaultMatcher = this.createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
+    const transformer = await createTransformer(this.projectDir, appDir, this)
     let promise
     if (this.info.isPrepackedAppAsar) {
-      promise = copyDir(appDir, path.join(resourcesPath), filter)
+      promise = copyDir(appDir, path.join(resourcesPath), filter, transformer)
     }
     else if (asarOptions == null) {
-      promise = copyDir(appDir, path.join(resourcesPath, "app"), filter)
+      promise = copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer)
     }
     else {
       const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       
-      let transformer = await createTransformer(this.projectDir, appDir, this)
       promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(filter, transformer)
     }
 
