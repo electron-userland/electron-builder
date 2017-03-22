@@ -49,6 +49,7 @@ export class Packager implements BuildInfo {
   isTwoPackageJsonProjectLayoutUsed = true
 
   electronVersion: string
+  muonVersion?: string | null
 
   readonly eventEmitter = new EventEmitter()
 
@@ -159,6 +160,7 @@ export class Packager implements BuildInfo {
     checkConflictingOptions(this.config)
 
     this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
+    this.muonVersion = this.config.muonVersion
 
     this.appInfo = new AppInfo(this.metadata, this)
     const cleanupTasks: Array<() => Promise<any>> = []

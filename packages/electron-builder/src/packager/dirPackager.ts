@@ -32,11 +32,23 @@ function subOptionWarning (properties: any, optionName: any, parameter: any, val
   properties[parameter] = value
 }
 
-export async function unpackElectron(packager: PlatformPackager<any>, out: string, platform: string, arch: string, electronVersion: string) {
-  const electronDist = packager.config.electronDist
-  if (electronDist == null) {
+export function unpackElectron(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
+  return unpack(packager, out, platform, createDownloadOpts(packager.config, platform, arch, version))
+}
+
+export function unpackMuon(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
+  return unpack(packager, out, platform, Object.assign({
+    mirror: "https://github.com/brave/muon/releases/download/v",
+    customFilename: `brave-v${version}-${platform}-${arch}.zip`,
+    verifyChecksum: false,
+  }, createDownloadOpts(packager.config, platform, arch, version)))
+}
+
+async function unpack(packager: PlatformPackager<any>, out: string, platform: string, options: any) {
+  const dist = packager.config.electronDist
+  if (dist == null) {
     const zipPath = (await BluebirdPromise.all<any>([
-      downloadElectron(createDownloadOpts(packager.config, platform, arch, electronVersion)),
+      downloadElectron(options),
       emptyDir(out)
     ]))[0]
 
@@ -44,7 +56,7 @@ export async function unpackElectron(packager: PlatformPackager<any>, out: strin
   }
   else {
     await emptyDir(out)
-    await copyDir(path.resolve(packager.info.projectDir, electronDist, "Electron.app"), path.join(out, "Electron.app"))
+    await copyDir(path.resolve(packager.info.projectDir, dist, "Electron.app"), path.join(out, "Electron.app"))
   }
 
   if (platform === "linux") {

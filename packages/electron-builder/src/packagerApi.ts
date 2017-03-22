@@ -52,6 +52,7 @@ export interface BuildInfo {
   readonly appDir: string
 
   readonly electronVersion: string
+  readonly muonVersion?: string | null
 
   readonly isTwoPackageJsonProjectLayoutUsed: boolean
 

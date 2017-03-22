@@ -178,6 +178,11 @@ export interface Config extends PlatformSpecificBuildOptions {
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
    */
   readonly electronVersion?: string | null
+  
+  /**
+   * The version of muon you are packaging for.
+   */
+  readonly muonVersion?: string | null
 
   /**
    * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).

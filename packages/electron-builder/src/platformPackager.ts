@@ -12,7 +12,7 @@ import { AsarPackager, checkFileInArchive } from "./asarUtil"
 import { copyFiles, FileMatcher } from "./fileMatcher"
 import { createTransformer } from "./fileTransformer"
 import { Config } from "./metadata"
-import { unpackElectron } from "./packager/dirPackager"
+import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { readInstalled } from "./readInstalled"
 
@@ -139,6 +139,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     return matcher
   }
+  
+  get electronDistMacOsAppName() {
+    return this.info.muonVersion == null ? "Electron.app" : "Brave.app"
+  }
+  
+  get electronDistExecutableName() {
+    return this.info.muonVersion == null ? "electron" : "brave"
+  }
+  
+  get electronDistMacOsExecutableName() {
+    return this.info.muonVersion == null ? "Electron" : "Brave"
+  }
 
   protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
     if (this.info.prepackaged != null) {
@@ -150,7 +162,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
     const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
 
-    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, "Electron.app", "Contents", "Resources") : path.join(appOutDir, "resources")
+    const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, this.electronDistMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
 
     log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
 
@@ -165,9 +177,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     else {
       // prune dev or not listed dependencies
+      const muonVersion = this.info.muonVersion
       await BluebirdPromise.all([
         dependencies(appDir, ignoreFiles),
-        unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion),
+        muonVersion == null ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion),
       ])
 
       if (debug.enabled) {

@@ -230,12 +230,12 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   protected async postInitApp(appOutDir: string) {
     const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, "electron.exe"), executable)
+    await rename(path.join(appOutDir, `${this.electronDistExecutableName}.exe`), executable)
     await this.signAndEditResources(executable)
   }
 }
 
-  async function checkIcon(file: string): Promise<void> {
+async function checkIcon(file: string): Promise<void> {
   const fd = await open(file, "r")
   const buffer = new Buffer(512)
   try {

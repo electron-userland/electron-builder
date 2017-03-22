@@ -11,11 +11,11 @@ function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
-function moveHelpers(frameworksPath: string, appName: string) {
+function moveHelpers(frameworksPath: string, appName: string, prefix: string) {
   return BluebirdPromise.map([" Helper", " Helper EH", " Helper NP"], suffix => {
-    const executableBasePath = path.join(frameworksPath, `Electron${suffix}.app`, "Contents", "MacOS")
-    return doRename(executableBasePath, `Electron${suffix}`, appName + suffix)
-      .then(() => doRename(frameworksPath, `Electron${suffix}.app`, `${appName}${suffix}.app`))
+    const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
+    return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)
+      .then(() => doRename(frameworksPath, `${prefix}${suffix}.app`, `${appName}${suffix}.app`))
   })
 }
 
@@ -29,13 +29,13 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
-  const contentsPath = path.join(appOutDir, "Electron.app", "Contents")
+  const contentsPath = path.join(appOutDir, packager.electronDistMacOsAppName, "Contents")
   const frameworksPath = path.join(contentsPath, "Frameworks")
 
   const appPlistFilename = path.join(contentsPath, "Info.plist")
-  const helperPlistFilename = path.join(frameworksPath, "Electron Helper.app", "Contents", "Info.plist")
-  const helperEHPlistFilename = path.join(frameworksPath, "Electron Helper EH.app", "Contents", "Info.plist")
-  const helperNPPlistFilename = path.join(frameworksPath, "Electron Helper NP.app", "Contents", "Info.plist")
+  const helperPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper.app`, "Contents", "Info.plist")
+  const helperEHPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper EH.app`, "Contents", "Info.plist")
+  const helperNPPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper NP.app`, "Contents", "Info.plist")
 
   const buildMetadata = packager.config!
   const fileContents: Array<string> = await BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
@@ -140,7 +140,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
     writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),
     writeFile(helperNPPlistFilename, buildPlist(helperNPPlist)),
-    doRename(path.join(contentsPath, "MacOS"), "Electron", appPlist.CFBundleExecutable),
+    doRename(path.join(contentsPath, "MacOS"), packager.electronDistMacOsExecutableName, appPlist.CFBundleExecutable),
     unlinkIfExists(path.join(appOutDir, "LICENSE")),
     unlinkIfExists(path.join(appOutDir, "LICENSES.chromium.html")),
   ]
@@ -152,7 +152,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   await BluebirdPromise.all(promises)
 
-  await moveHelpers(frameworksPath, appFilename)
+  await moveHelpers(frameworksPath, appFilename, packager.electronDistMacOsExecutableName)
   const appPath = path.join(appOutDir, `${appFilename}.app`)
   await rename(path.dirname(contentsPath), appPath)
   // https://github.com/electron-userland/electron-builder/issues/840

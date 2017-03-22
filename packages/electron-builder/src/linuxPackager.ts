@@ -67,6 +67,6 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   }
 
   protected postInitApp(appOutDir: string): Promise<any> {
-    return rename(path.join(appOutDir, "electron"), path.join(appOutDir, this.executableName))
+    return rename(path.join(appOutDir, this.electronDistExecutableName), path.join(appOutDir, this.executableName))
   }
 }
