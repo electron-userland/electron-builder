@@ -178,6 +178,7 @@ AppX Options
 | **projectDir**| <code>string</code> | 
 | **appDir**| <code>string</code> | 
 | **electronVersion**| <code>string</code> | 
+| muonVersion| <code>string</code> \| <code>null</code> | 
 | **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
 | **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
 | **tempDirManager**| <code>[TmpDir](Developer-API#TmpDir)</code> | 
@@ -256,6 +257,7 @@ Configuration Options
 | forceCodeSigning| <code>boolean</code> | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct). |
 | directories| <code>[MetadataDirectories](Developer-API#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
 | electronVersion| <code>string</code> \| <code>null</code> | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency. |
+| muonVersion| <code>string</code> \| <code>null</code> | <a name="Config-muonVersion"></a>The version of muon you are packaging for. |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="Config-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).<br><br>Currently supported only for `mas`, `pkg`, `dmg` and `nsis`. |
 | buildVersion| <code>string</code> \| <code>null</code> | <a name="Config-buildVersion"></a>The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`). |
 | mac| <code>[MacOptions](#MacOptions)</code> \| <code>null</code> | <a name="Config-mac"></a> |

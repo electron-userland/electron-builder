@@ -1043,9 +1043,14 @@
 <a name="module_electron-builder/out/packager/dirPackager"></a>
 
 ## electron-builder/out/packager/dirPackager
+
+* [electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)
+    * [`.unpackElectron(packager, out, platform, arch, version)`](#module_electron-builder/out/packager/dirPackager.unpackElectron) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.unpackMuon(packager, out, platform, arch, version)`](#module_electron-builder/out/packager/dirPackager.unpackMuon) ⇒ <code>Promise&lt;void&gt;</code>
+
 <a name="module_electron-builder/out/packager/dirPackager.unpackElectron"></a>
 
-### `electron-builder/out/packager/dirPackager.unpackElectron(packager, out, platform, arch, electronVersion)` ⇒ <code>Promise&lt;void&gt;</code>
+### `electron-builder/out/packager/dirPackager.unpackElectron(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: method of <code>[electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)</code>  
 
 | Param | Type |
@@ -1054,7 +1059,20 @@
 | out | <code>string</code> | 
 | platform | <code>string</code> | 
 | arch | <code>string</code> | 
-| electronVersion | <code>string</code> | 
+| version | <code>string</code> | 
+
+<a name="module_electron-builder/out/packager/dirPackager.unpackMuon"></a>
+
+### `electron-builder/out/packager/dirPackager.unpackMuon(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: method of <code>[electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)</code>  
+
+| Param | Type |
+| --- | --- |
+| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+| out | <code>string</code> | 
+| platform | <code>string</code> | 
+| arch | <code>string</code> | 
+| version | <code>string</code> | 
 
 <a name="module_electron-builder/out/packager/mac"></a>
 
