@@ -247,16 +247,19 @@ export class AsarPackager {
 
       const w = (index: number) => {
         let data
-        while (index < files.length && (data = transformedFiles[index++]) == null) {
-        }
-        
-        if (index >= files.length) {
-          writeStream.end()
-          return
+        while (true) {
+          if (index >= files.length) {
+            writeStream.end()
+            return
+          }
+          
+          if ((data = transformedFiles[index++]) != null) {
+            break
+          }
         }
 
         const file = files[index - 1]
-        if (data !== true && data != null) {
+        if (data !== true) {
           writeStream.write(data, () => w(index))
           return
         }

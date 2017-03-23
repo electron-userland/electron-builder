@@ -67,6 +67,10 @@ const options = {
 
 let hasErrors = false
 for (const projectDir of require("./process").getPackages()) {
+  if (projectDir.includes("electron-forge-maker-")) {
+    continue
+  }
+  
   console.log(`Linting ${path.basename(projectDir)}`)
   const program = Linter.createProgram("tsconfig.json", projectDir)
   for (const file of Linter.getFileNames(program)) {

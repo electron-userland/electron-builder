@@ -500,10 +500,6 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
         + `Please remove it from the "dependencies" section in your package.json.`)
     }
   }
-  if ("electron-compile" in dependencies) {
-    warn(`Package "electron-compile" should be in "devDependencies". `
-      + `Please remove it from the "dependencies" section in your package.json. Please see https://github.com/electron/electron-compile/issues/207`)
-  }
 }
 
 export interface BuildResult {
