@@ -164,7 +164,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, this.electronDistMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
 
-    log(`Packaging for ${platformName} ${Arch[arch]} using electron ${this.info.electronVersion} to ${path.relative(this.projectDir, appOutDir)}`)
+    const muonVersion = this.info.muonVersion
+    const isElectron = muonVersion == null
+    log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${this.info.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
     const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir),
@@ -177,10 +179,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     else {
       // prune dev or not listed dependencies
-      const muonVersion = this.info.muonVersion
       await BluebirdPromise.all([
         dependencies(appDir, ignoreFiles),
-        muonVersion == null ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion),
+        isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!),
       ])
 
       if (debug.enabled) {
