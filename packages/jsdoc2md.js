@@ -10,7 +10,7 @@ const source = path.join(__dirname, "..", "jsdoc", "out")
 async function main() {
   const userFiles = await globby([
     "builder/electron-builder.js",
-  ], {cwd: source, flipNegate: true})
+  ], {cwd: source})
   
   const appUpdateFiles = await globby([
     "updater/*.js",
@@ -19,16 +19,15 @@ async function main() {
     "!updater/electron-updater-out-*Provider.js",
     "updater/electron-updater-out-AppUpdater.js",
     "",
-  ], {cwd: source, flipNegate: true})
+  ], {cwd: source})
   
   const publishFiles = await globby([
     "http/electron-builder-http-out-publishOptions.js",
-    "publisher/electron-publish.js",
-  ], {cwd: source, flipNegate: true})
+  ], {cwd: source})
   
   const developerFiles = (await globby([
     "**/*.js",
-  ], {cwd: source, flipNegate: true}))
+  ], {cwd: source}))
     .filter(it => !userFiles.includes(it) && !appUpdateFiles.includes(it) && !publishFiles.includes(it))
 
   const partialDir = path.join(__dirname, "..", "jsdoc")

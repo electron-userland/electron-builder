@@ -416,7 +416,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL"></a>
 
-#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> &#124; <code>null</code> &#124; <code>string</code>
+#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
 **Kind**: instance method of <code>[AppUpdater](#AppUpdater)</code>  
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL"></a>
 
@@ -444,7 +444,7 @@ This is different from the normal quit event sequence.
 **Kind**: instance method of <code>[AppUpdater](#AppUpdater)</code>  
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders"></a>
 
-#### `appUpdater.computeRequestHeaders(fileInfo)` ⇒ <code>null</code> &#124; <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+#### `appUpdater.computeRequestHeaders(fileInfo)` ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
 **Kind**: instance method of <code>[AppUpdater](#AppUpdater)</code>  
 **Access**: protected  
 

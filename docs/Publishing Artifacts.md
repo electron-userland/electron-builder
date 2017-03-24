@@ -71,17 +71,6 @@ Can be specified in the [configuration options](https://github.com/electron-user
 <!-- do not edit. start of generated block -->
 ## API
 
-<dl>
-<dt><a href="#module_electron-builder-http/out/publishOptions">electron-builder-http/out/publishOptions</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish">electron-publish</a></dt>
-<dd></dd>
-</dl>
-
-<a name="module_electron-builder-http/out/publishOptions"></a>
-
-## electron-builder-http/out/publishOptions
-
 * [electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)
     * [`.BintrayOptions`](#BintrayOptions) ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
     * [`.GenericServerOptions`](#GenericServerOptions) ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
@@ -163,9 +152,11 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 ### `S3Options` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
 
+AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
+Define `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html). Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
+
 **Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
-**See**: [Getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).  
 **Properties**
 
 | Name | Type | Description |
@@ -177,6 +168,13 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 | acl = <code>public-read</code>| <code>"private"</code> \| <code>"public-read"</code> \| <code>null</code> | <a name="S3Options-acl"></a>The ACL. |
 | storageClass = <code>STANDARD</code>| <code>"STANDARD"</code> \| <code>"REDUCED_REDUNDANCY"</code> \| <code>"STANDARD_IA"</code> \| <code>null</code> | <a name="S3Options-storageClass"></a>The type of storage to use for the object. |
 
+<a name="S3Options-s3-publish-configuration"></a>**Example** *(S3 publish configuration)*  
+```js
+{
+  "provider": "s3",
+  "bucket": "bucket-name"
+}
+```
 <a name="UpdateInfo"></a>
 
 ### `UpdateInfo` ⇐ <code>[VersionInfo](#VersionInfo)</code>
@@ -220,174 +218,6 @@ Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoin
 | Param | Type |
 | --- | --- |
 | options | <code>[S3Options](#S3Options)</code> | 
-
-<a name="module_electron-publish"></a>
-
-## electron-publish
-
-* [electron-publish](#module_electron-publish)
-    * [`.PublishContext`](#PublishContext)
-    * [`.PublishOptions`](#PublishOptions)
-    * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-    * [.Publisher](#Publisher)
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="PublishContext"></a>
-
-### `PublishContext`
-**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **cancellationToken**| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
-| **progress**| <code>[MultiProgress](Developer-API#MultiProgress)</code> \| <code>null</code> | 
-
-<a name="PublishOptions"></a>
-
-### `PublishOptions`
-**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| publish| <code>"onTag"</code> \| <code>"onTagOrDraft"</code> \| <code>"always"</code> \| <code>"never"</code> \| <code>null</code> | 
-| draft| <code>boolean</code> | 
-| prerelease| <code>boolean</code> | 
-
-<a name="HttpPublisher"></a>
-
-### HttpPublisher ⇐ <code>[Publisher](#Publisher)</code>
-**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
-**Extends**: <code>[Publisher](#Publisher)</code>  
-
-* [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish.HttpPublisher+upload"></a>
-
-#### `httpPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Overrides**: <code>[upload](#module_electron-publish.Publisher+upload)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
-#### `httpPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+doUpload"></a>
-
-#### `httpPublisher.doUpload(fileName, dataLength, requestProcessor, file)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-| file | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+toString"></a>
-
-#### `httpPublisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `httpPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
-<a name="Publisher"></a>
-
-### Publisher
-**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
-
-* [.Publisher](#Publisher)
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish.Publisher+toString"></a>
-
-#### `publisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-<a name="module_electron-publish.Publisher+upload"></a>
-
-#### `publisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> &#124; <code>module:progress-ex.default</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `publisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
 
 
 <!-- end of generated block -->

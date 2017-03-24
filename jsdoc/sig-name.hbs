@@ -9,7 +9,7 @@
 {{#if @methodSign}}{{#if (isEvent)}} {{@methodSign}}{{else}}{{@methodSign}}{{/if}}{{/if~}}
 {{{@codeClose}~}}
 {{#if @returnSymbol}} {{@returnSymbol}}{{/if~}}
-{{#if @returnTypes}} {{>linked-type-list types=@returnTypes delimiter=" &#124; " }}{{/if~}}
+{{#if @returnTypes}} {{>linked-type-list types=@returnTypes delimiter=" \| " }}{{/if~}}
 {{#if @suffix}} {{@suffix}}{{/if~}}
 {{{@depClose}~}}
 {{~/sig}}{{/if~}}

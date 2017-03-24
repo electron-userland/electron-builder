@@ -94,9 +94,9 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.AppXOptions`](#AppXOptions)
     * [`.ArtifactCreated`](#ArtifactCreated)
     * [`.BuildInfo`](#BuildInfo)
-    * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
+    * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
     * [`.BuildResult`](#BuildResult)
-    * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
+    * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
     * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.DmgContent`](#DmgContent)
@@ -190,9 +190,9 @@ AppX Options
 
 <a name="BuildOptions"></a>
 
-### `BuildOptions` ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
+### `BuildOptions` ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>  
+**Extends**: <code>[PublishOptions](Developer-API#PublishOptions)</code>  
 <a name="BuildResult"></a>
 
 ### `BuildResult`
@@ -206,9 +206,9 @@ AppX Options
 
 <a name="CliOptions"></a>
 
-### `CliOptions` ⇐ <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>
+### `CliOptions` ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code>  
+**Extends**: <code>[PublishOptions](Developer-API#PublishOptions)</code>  
 **Properties**
 
 | Name | Type |
@@ -331,7 +331,7 @@ Debian Package Specific Options
 | format = <code>UDZO</code>| <code>"UDRW"</code> \| <code>"UDRO"</code> \| <code>"UDCO"</code> \| <code>"UDZO"</code> \| <code>"UDBZ"</code> \| <code>"ULFO"</code> | <a name="DmgOptions-format"></a>The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). |
 | window| <code>[DmgWindow](#DmgWindow)</code> | <a name="DmgOptions-window"></a>The DMG windows position and size. See [dmg.window](#DmgWindow). |
 
-**Example** *(change file icons location for DMG)*  
+<a name="DmgOptions-change-file-icons-location-for-dmg"></a>**Example** *(change file icons location for DMG)*  
 ```js
 {
   "contents": [
@@ -617,7 +617,7 @@ Windows Specific Options
 
 <a name="module_electron-builder.createTargets"></a>
 
-### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](Developer-API#Platform) &#124; Map&lt;[Arch](Developer-API#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
+### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 **Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
 
 | Param | Type |

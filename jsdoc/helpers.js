@@ -7,6 +7,10 @@ exports.propertyAnchor = function (propertyName, parentName) {
   return `<a name="${parentName}-${propertyName}"></a>`
 }
 
+exports.exampleAnchor = function (caption, parentName) {
+  return `<a name="${parentName}-${caption.toLowerCase().replace(/ /g, "-")}"></a>`
+}
+
 exports.listTypes = function (types, delimiter, root) {
   return types == null ? "" : types.map(it => "<code>" + link2(catharsis.parse(it, {jsdoc: true}), delimiter, root) + "</code>").join(delimiter)
 }

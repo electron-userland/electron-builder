@@ -85,6 +85,8 @@
 <dd></dd>
 <dt><a href="#module_electron-publish/out/multiProgress">electron-publish/out/multiProgress</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-publish">electron-publish</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
@@ -131,7 +133,7 @@
 **Kind**: class of <code>[electron-builder/out/appInfo](#module_electron-builder/out/appInfo)</code>  
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 
-#### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[AppInfo](#AppInfo)</code>  
 <a name="module_electron-builder/out/asar"></a>
 
@@ -271,8 +273,10 @@
 
 * [electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)
     * [.AsarPackager](#AsarPackager)
-        * [`.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.pack(filter, transformer)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.compileUsingElectronCompile(files)`](#module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+        * [`.createPackageFromFiles(files)`](#module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.pack(filter, isElectronCompile)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.checkFileInArchive(asarFile, relativeFile, messagePrefix)`](#module_electron-builder/out/asarUtil.checkFileInArchive) ⇒ <code>Promise&lt;void&gt;</code>
 
 <a name="AsarPackager"></a>
@@ -281,30 +285,49 @@
 **Kind**: class of <code>[electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)</code>  
 
 * [.AsarPackager](#AsarPackager)
-    * [`.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.pack(filter, transformer)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.compileUsingElectronCompile(files)`](#module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.createPackageFromFiles(files)`](#module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.pack(filter, isElectronCompile)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
 
-<a name="module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs"></a>
+<a name="module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile"></a>
 
-#### `asarPackager.detectUnpackedDirs(files, metadata, autoUnpackDirs, unpackedDest)` ⇒ <code>Promise&lt;void&gt;</code>
+#### `asarPackager.compileUsingElectronCompile(files)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
 **Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
 
 | Param | Type |
 | --- | --- |
 | files | <code>Array&lt;string&gt;</code> | 
-| metadata | <code>Map&lt;string \| module:fs.Stats&gt;</code> | 
+
+<a name="module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles"></a>
+
+#### `asarPackager.createPackageFromFiles(files)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+
+| Param | Type |
+| --- | --- |
+| files | <code>Array&lt;string&gt;</code> | 
+
+<a name="module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs"></a>
+
+#### `asarPackager.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+
+| Param | Type |
+| --- | --- |
+| files | <code>Array&lt;string&gt;</code> | 
 | autoUnpackDirs | <code>Set&lt;string&gt;</code> | 
 | unpackedDest | <code>string</code> | 
 
 <a name="module_electron-builder/out/asarUtil.AsarPackager+pack"></a>
 
-#### `asarPackager.pack(filter, transformer)` ⇒ <code>Promise&lt;void&gt;</code>
+#### `asarPackager.pack(filter, isElectronCompile)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
 
 | Param | Type |
 | --- | --- |
 | filter | <code>module:electron-builder-util/out/fs.__type</code> | 
-| transformer | <code>module:electron-builder/out/asarUtil.__type</code> \| <code>null</code> | 
+| isElectronCompile | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/asarUtil.checkFileInArchive"></a>
 
@@ -360,7 +383,7 @@
 
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
 
-### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;string&gt;&gt;</code> &#124; <code>null</code>
+### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
 **Kind**: property of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
 <a name="module_electron-builder/out/codeSign.createKeychain"></a>
 
@@ -387,7 +410,7 @@
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
 
-### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: method of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
 
 | Param | Type |
@@ -420,6 +443,8 @@
         * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
         * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
     * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
+    * [`.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)`](#module_electron-builder/out/fileMatcher.getFileMatchers) ⇒ <code>null</code> \| <code>Array</code>
 
 <a name="FileMatcher"></a>
 
@@ -459,7 +484,7 @@
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore"></a>
 
-#### `fileMatcher.containsOnlyIgnore()` ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+#### `fileMatcher.containsOnlyIgnore()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 **Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+createFilter"></a>
 
@@ -474,7 +499,7 @@
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+isEmpty"></a>
 
-#### `fileMatcher.isEmpty()` ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+#### `fileMatcher.isEmpty()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 **Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
 <a name="module_electron-builder/out/fileMatcher.copyFiles"></a>
 
@@ -485,19 +510,96 @@
 | --- | --- |
 | patterns | <code>Array&lt;[FileMatcher](#FileMatcher)&gt;</code> \| <code>null</code> | 
 
+<a name="module_electron-builder/out/fileMatcher.createFileMatcher"></a>
+
+### `electron-builder/out/fileMatcher.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)` ⇒ <code>[FileMatcher](#FileMatcher)</code>
+**Kind**: method of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+
+| Param | Type |
+| --- | --- |
+| info | <code>[BuildInfo](Options#BuildInfo)</code> | 
+| appDir | <code>string</code> | 
+| resourcesPath | <code>string</code> | 
+| macroExpander | <code>callback</code> | 
+| platformSpecificBuildOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
+
+<a name="module_electron-builder/out/fileMatcher.getFileMatchers"></a>
+
+### `electron-builder/out/fileMatcher.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)` ⇒ <code>null</code> \| <code>Array</code>
+**Kind**: method of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+
+| Param | Type |
+| --- | --- |
+| config | <code>[Config](Options#Config)</code> | 
+| name | <code>"files"</code> \| <code>"extraFiles"</code> \| <code>"extraResources"</code> \| <code>"asarUnpack"</code> | 
+| defaultSrc | <code>string</code> | 
+| defaultDest | <code>string</code> | 
+| allowAdvancedMatching | <code>boolean</code> | 
+| macroExpander | <code>callback</code> | 
+| customBuildOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
+
 <a name="module_electron-builder/out/fileTransformer"></a>
 
 ## electron-builder/out/fileTransformer
-<a name="module_electron-builder/out/fileTransformer.createTransformer"></a>
 
-### `electron-builder/out/fileTransformer.createTransformer(projectDir, srcDir, packager)` ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
+* [electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)
+    * [`.CompilerHost`](#CompilerHost)
+        * [`.compile(file)`](#module_electron-builder/out/fileTransformer.CompilerHost+compile) ⇒ <code>any</code>
+        * [`.saveConfiguration()`](#module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.createElectronCompilerHost(projectDir, cacheDir)`](#module_electron-builder/out/fileTransformer.createElectronCompilerHost) ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
+    * [`.createTransformer(srcDir, extraMetadata)`](#module_electron-builder/out/fileTransformer.createTransformer) ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
+    * [`.isElectronCompileUsed(info)`](#module_electron-builder/out/fileTransformer.isElectronCompileUsed) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+
+<a name="CompilerHost"></a>
+
+### `CompilerHost`
+**Kind**: interface of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+
+* [`.CompilerHost`](#CompilerHost)
+    * [`.compile(file)`](#module_electron-builder/out/fileTransformer.CompilerHost+compile) ⇒ <code>any</code>
+    * [`.saveConfiguration()`](#module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration) ⇒ <code>Promise&lt;any&gt;</code>
+
+<a name="module_electron-builder/out/fileTransformer.CompilerHost+compile"></a>
+
+#### `compilerHost.compile(file)` ⇒ <code>any</code>
+**Kind**: instance method of <code>[CompilerHost](#CompilerHost)</code>  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+
+<a name="module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration"></a>
+
+#### `compilerHost.saveConfiguration()` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[CompilerHost](#CompilerHost)</code>  
+<a name="module_electron-builder/out/fileTransformer.createElectronCompilerHost"></a>
+
+### `electron-builder/out/fileTransformer.createElectronCompilerHost(projectDir, cacheDir)` ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
 **Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
 
 | Param | Type |
 | --- | --- |
 | projectDir | <code>string</code> | 
+| cacheDir | <code>string</code> | 
+
+<a name="module_electron-builder/out/fileTransformer.createTransformer"></a>
+
+### `electron-builder/out/fileTransformer.createTransformer(srcDir, extraMetadata)` ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
+**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+
+| Param | Type |
+| --- | --- |
 | srcDir | <code>string</code> | 
-| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+| extraMetadata | <code>any</code> | 
+
+<a name="module_electron-builder/out/fileTransformer.isElectronCompileUsed"></a>
+
+### `electron-builder/out/fileTransformer.isElectronCompileUsed(info)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+
+| Param | Type |
+| --- | --- |
+| info | <code>[BuildInfo](Options#BuildInfo)</code> | 
 
 <a name="module_electron-builder/out/linuxPackager"></a>
 
@@ -579,7 +681,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `linuxPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `linuxPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
 
 | Param | Type |
@@ -645,7 +747,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
-#### `linuxPackager.getIconPath()` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `linuxPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
@@ -670,7 +772,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `linuxPackager.getResource(custom, names)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `linuxPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
 
 | Param | Type |
@@ -828,7 +930,7 @@
 
 <a name="module_electron-builder/out/macPackager.MacPackager+getIconPath"></a>
 
-#### `macPackager.getIconPath()` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `macPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
 **Overrides**: <code>[getIconPath](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)</code>  
 <a name="module_electron-builder/out/macPackager.MacPackager+pack"></a>
@@ -880,7 +982,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
 
 | Param | Type |
@@ -955,7 +1057,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `macPackager.getResource(custom, names)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `macPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
 
 | Param | Type |
@@ -1181,7 +1283,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
 
 | Param | Type |
@@ -1247,7 +1349,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
-#### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
@@ -1272,7 +1374,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
 
 | Param | Type |
@@ -1381,25 +1483,25 @@
 ## electron-builder/out/publish/PublishManager
 
 * [electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)
-    * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>
+    * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](#PublishContext)</code>
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
     * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
-    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
     * [`.getPublishConfigs(packager, targetSpecificOptions)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; \| Array&gt;</code>
     * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; \| Array&gt;</code>
 
 <a name="PublishManager"></a>
 
-### PublishManager ⇐ <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>
+### PublishManager ⇐ <code>[PublishContext](#PublishContext)</code>
 **Kind**: class of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
-**Extends**: <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>  
+**Extends**: <code>[PublishContext](#PublishContext)</code>  
 
-* [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](Publishing-Artifacts#PublishContext)</code>
+* [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](#PublishContext)</code>
     * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
 
@@ -1411,7 +1513,7 @@
 **Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher"></a>
 
-#### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+#### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
 **Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
 
 | Param | Type |
@@ -1432,19 +1534,19 @@
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
 
-### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> &#124; <code>[Publisher](Publishing-Artifacts#Publisher)</code>
+### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
 **Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 
 | Param | Type |
 | --- | --- |
-| context | <code>[PublishContext](Publishing-Artifacts#PublishContext)</code> | 
+| context | <code>[PublishContext](#PublishContext)</code> | 
 | version | <code>string</code> | 
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| options | <code>[PublishOptions](Publishing-Artifacts#PublishOptions)</code> | 
+| options | <code>[PublishOptions](#PublishOptions)</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigs"></a>
 
-### `electron-builder/out/publish/PublishManager.getPublishConfigs(packager, targetSpecificOptions)` ⇒ <code>Promise&lt; &#124; Array&gt;</code>
+### `electron-builder/out/publish/PublishManager.getPublishConfigs(packager, targetSpecificOptions)` ⇒ <code>Promise&lt; \| Array&gt;</code>
 **Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 
 | Param | Type |
@@ -1454,7 +1556,7 @@
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 
-### `electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo(packager, publishConfigs)` ⇒ <code>Promise&lt; &#124; Array&gt;</code>
+### `electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo(packager, publishConfigs)` ⇒ <code>Promise&lt; \| Array&gt;</code>
 **Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 
 | Param | Type |
@@ -1486,7 +1588,7 @@
 
 <a name="module_electron-builder/out/readInstalled.readInstalled"></a>
 
-### `electron-builder/out/readInstalled.readInstalled(folder)` ⇒ <code>Promise&lt;Map&lt;string &#124; [Dependency](#Dependency)&gt;&gt;</code>
+### `electron-builder/out/readInstalled.readInstalled(folder)` ⇒ <code>Promise&lt;Map&lt;string \| [Dependency](#Dependency)&gt;&gt;</code>
 **Kind**: method of <code>[electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)</code>  
 
 | Param | Type |
@@ -1514,7 +1616,7 @@
 
 <a name="module_electron-builder/out/repositoryInfo.getRepositoryInfo"></a>
 
-### `electron-builder/out/repositoryInfo.getRepositoryInfo(projectDir, metadata, devMetadata)` ⇒ <code>Promise&lt; &#124; module:hosted-git-info.Info&gt;</code>
+### `electron-builder/out/repositoryInfo.getRepositoryInfo(projectDir, metadata, devMetadata)` ⇒ <code>Promise&lt; \| module:hosted-git-info.Info&gt;</code>
 **Kind**: method of <code>[electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)</code>  
 
 | Param | Type |
@@ -1968,7 +2070,7 @@
 **Kind**: instance method of <code>[NoOpTarget](#NoOpTarget)</code>  
 <a name="module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap"></a>
 
-### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;</code>
+### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code>
 **Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
 
 | Param | Type |
@@ -2059,7 +2161,7 @@
 
 <a name="module_electron-builder/out/util/filter.hasMagic"></a>
 
-### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 **Kind**: method of <code>[electron-builder/out/util/filter](#module_electron-builder/out/util/filter)</code>  
 
 | Param | Type |
@@ -2100,7 +2202,7 @@
 
 <a name="module_electron-builder/out/util/readPackageJson.loadConfig"></a>
 
-### `electron-builder/out/util/readPackageJson.loadConfig(projectDir)` ⇒ <code>Promise&lt; &#124; [Config](Options#Config)&gt;</code>
+### `electron-builder/out/util/readPackageJson.loadConfig(projectDir)` ⇒ <code>Promise&lt; \| [Config](Options#Config)&gt;</code>
 **Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
 
 | Param | Type |
@@ -2307,7 +2409,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
 
 | Param | Type |
@@ -2394,7 +2496,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `winPackager.getResource(custom, names)` ⇒ <code>Promise&lt; &#124; string&gt;</code>
+#### `winPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
 
 | Param | Type |
@@ -2728,7 +2830,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="module_electron-builder-core.Platform+createTarget"></a>
 
-#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) &#124; Map&lt;[Arch](#Arch) &#124; Array&lt;string&gt;&gt;&gt;</code>
+#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 **Kind**: instance method of <code>[Platform](#Platform)</code>  
 
 | Param | Type |
@@ -2808,7 +2910,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="module_electron-builder-core.toLinuxArchString"></a>
 
-### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> &#124; <code>"i386"</code> &#124; <code>"amd64"</code>
+### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 **Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
 
 | Param | Type |
@@ -3242,21 +3344,29 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 ## electron-publish/out/BintrayPublisher
 
 * [electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)
-    * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+    * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
         * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
         * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="BintrayPublisher"></a>
 
-### BintrayPublisher ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+### BintrayPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of <code>[electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)</code>  
-**Extends**: <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>  
+**Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
 
-* [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+* [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
     * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
 
@@ -3266,10 +3376,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 #### `bintrayPublisher.toString()` ⇒ <code>string</code>
 **Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+**Overrides**: <code>[toString](#module_electron-publish.Publisher+toString)</code>  
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload"></a>
 
 #### `bintrayPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+**Overrides**: <code>[doUpload](#module_electron-publish.HttpPublisher+doUpload)</code>  
 **Access**: protected  
 
 | Param | Type |
@@ -3278,17 +3390,65 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | dataLength | <code>number</code> | 
 | requestProcessor | <code>callback</code> | 
 
+<a name="module_electron-publish.HttpPublisher+upload"></a>
+
+#### `bintrayPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-publish.HttpPublisher+uploadData"></a>
+
+#### `bintrayPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Buffer</code> | 
+| fileName | <code>string</code> | 
+
+<a name="module_electron-publish.Publisher+createProgressBar"></a>
+
+#### `bintrayPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileName | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+
+<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
+
+#### `bintrayPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
+**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| reject | <code>callback</code> | 
+
 <a name="module_electron-publish/out/gitHubPublisher"></a>
 
 ## electron-publish/out/gitHubPublisher
 
 * [electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)
     * [`.Release`](#Release)
-    * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+    * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
         * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
         * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="Release"></a>
 
@@ -3307,15 +3467,19 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="GitHubPublisher"></a>
 
-### GitHubPublisher ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+### GitHubPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of <code>[electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)</code>  
-**Extends**: <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>  
+**Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
 
-* [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](Publishing-Artifacts#HttpPublisher)</code>
+* [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
     * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
 
@@ -3329,10 +3493,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 #### `gitHubPublisher.toString()` ⇒ <code>string</code>
 **Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+**Overrides**: <code>[toString](#module_electron-publish.Publisher+toString)</code>  
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload"></a>
 
 #### `gitHubPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+**Overrides**: <code>[doUpload](#module_electron-publish.HttpPublisher+doUpload)</code>  
 **Access**: protected  
 
 | Param | Type |
@@ -3340,6 +3506,50 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | fileName | <code>string</code> | 
 | dataLength | <code>number</code> | 
 | requestProcessor | <code>callback</code> | 
+
+<a name="module_electron-publish.HttpPublisher+upload"></a>
+
+#### `gitHubPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-publish.HttpPublisher+uploadData"></a>
+
+#### `gitHubPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Buffer</code> | 
+| fileName | <code>string</code> | 
+
+<a name="module_electron-publish.Publisher+createProgressBar"></a>
+
+#### `gitHubPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileName | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+
+<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
+
+#### `gitHubPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
+**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| reject | <code>callback</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
 
@@ -3373,6 +3583,174 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 #### `multiProgress.terminate()`
 **Kind**: instance method of <code>[MultiProgress](#MultiProgress)</code>  
+<a name="module_electron-publish"></a>
+
+## electron-publish
+
+* [electron-publish](#module_electron-publish)
+    * [`.PublishContext`](#PublishContext)
+    * [`.PublishOptions`](#PublishOptions)
+    * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
+        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+    * [.Publisher](#Publisher)
+        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+        * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+
+<a name="PublishContext"></a>
+
+### `PublishContext`
+**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
+| **progress**| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
+
+<a name="PublishOptions"></a>
+
+### `PublishOptions`
+**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| publish| <code>"onTag"</code> \| <code>"onTagOrDraft"</code> \| <code>"always"</code> \| <code>"never"</code> \| <code>null</code> | 
+| draft| <code>boolean</code> | 
+| prerelease| <code>boolean</code> | 
+
+<a name="HttpPublisher"></a>
+
+### HttpPublisher ⇐ <code>[Publisher](#Publisher)</code>
+**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
+**Extends**: <code>[Publisher](#Publisher)</code>  
+
+* [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
+    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+
+<a name="module_electron-publish.HttpPublisher+upload"></a>
+
+#### `httpPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+**Overrides**: <code>[upload](#module_electron-publish.Publisher+upload)</code>  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-publish.HttpPublisher+uploadData"></a>
+
+#### `httpPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| data | <code>Buffer</code> | 
+| fileName | <code>string</code> | 
+
+<a name="module_electron-publish.HttpPublisher+doUpload"></a>
+
+#### `httpPublisher.doUpload(fileName, dataLength, requestProcessor, file)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileName | <code>string</code> | 
+| dataLength | <code>number</code> | 
+| requestProcessor | <code>callback</code> | 
+| file | <code>string</code> | 
+
+<a name="module_electron-publish.Publisher+toString"></a>
+
+#### `httpPublisher.toString()` ⇒ <code>string</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+<a name="module_electron-publish.Publisher+createProgressBar"></a>
+
+#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileName | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+
+<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
+
+#### `httpPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
+**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| reject | <code>callback</code> | 
+
+<a name="Publisher"></a>
+
+### Publisher
+**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
+
+* [.Publisher](#Publisher)
+    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+    * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+
+<a name="module_electron-publish.Publisher+toString"></a>
+
+#### `publisher.toString()` ⇒ <code>string</code>
+**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
+<a name="module_electron-publish.Publisher+upload"></a>
+
+#### `publisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-publish.Publisher+createProgressBar"></a>
+
+#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileName | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+
+<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
+
+#### `publisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
+**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| file | <code>string</code> | 
+| fileStat | <code>module:fs.Stats</code> | 
+| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| reject | <code>callback</code> | 
+
 <a name="module_electron-updater/out/BintrayProvider"></a>
 
 ## electron-updater/out/BintrayProvider
@@ -3852,7 +4230,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util/out/fs.exists"></a>
 
-### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;"undefined" &#124; "undefined"&gt;</code>
+### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;"undefined" \| "undefined"&gt;</code>
 **Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
 
 | Param | Type |
@@ -3861,7 +4239,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util/out/fs.statOrNull"></a>
 
-### `electron-builder-util/out/fs.statOrNull(file)` ⇒ <code>Promise&lt; &#124; module:fs.Stats&gt;</code>
+### `electron-builder-util/out/fs.statOrNull(file)` ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
 **Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
 
 | Param | Type |
@@ -3870,7 +4248,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util/out/fs.unlinkIfExists"></a>
 
-### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;string &#124; void&gt;</code>
+### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;string \| void&gt;</code>
 **Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
 
 | Param | Type |
@@ -4293,7 +4671,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 <a name="module_electron-builder-util.getPlatformIconFileName"></a>
 
-### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> &#124; <code>null</code> &#124; <code>string</code>
+### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 
 | Param | Type |
@@ -4325,7 +4703,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
 
-### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code>
+### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 
 | Param | Type |
@@ -4334,7 +4712,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.isPullRequest"></a>
 
-### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> &#124; <code>"undefined"</code> &#124; <code>""</code>
+### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 <a name="module_electron-builder-util.prepareArgs"></a>
 
@@ -4396,7 +4774,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.use"></a>
 
-### `electron-builder-util.use(value, task)` ⇒ <code>null</code> &#124; <code>module:electron-builder-util.R</code>
+### `electron-builder-util.use(value, task)` ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 
 | Param | Type |
