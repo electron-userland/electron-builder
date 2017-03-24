@@ -1,14 +1,12 @@
 import { debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { FileTransformer } from "electron-builder-util/out/fs"
-import { log, warn } from "electron-builder-util/out/log"
+import { warn } from "electron-builder-util/out/log"
 import { readJson } from "fs-extra-p"
-import mime from "mime"
 import * as path from "path"
 import { BuildInfo } from "./packagerApi"
-import { PlatformPackager } from "./platformPackager"
 
-function isElectronCompileUsed(info: BuildInfo): boolean {
+export function isElectronCompileUsed(info: BuildInfo): boolean {
   const depList = [(<any>info.metadata).devDependencies, info.metadata.dependencies]
   if (info.isTwoPackageJsonProjectLayoutUsed) {
     depList.push((<any>info.devMetadata).devDependencies)
@@ -17,7 +15,6 @@ function isElectronCompileUsed(info: BuildInfo): boolean {
   
   for (const deps of depList) {
     if (deps != null && "electron-compile" in deps) {
-      log("electron-compile detected — files will be compiled")
       return true
     }
   }
@@ -25,11 +22,10 @@ function isElectronCompileUsed(info: BuildInfo): boolean {
   return false
 }
 
-export async function createTransformer(projectDir: string, srcDir: string, packager: PlatformPackager<any>): Promise<FileTransformer> {
-  const extraMetadata = packager.packagerOptions.extraMetadata
+export async function createTransformer(srcDir: string, extraMetadata: any): Promise<FileTransformer> {
   const mainPackageJson = path.join(srcDir, "package.json")
-  
-  const defaultTransformer: FileTransformer = file => {
+
+  return file => {
     if (file === mainPackageJson) {
       return modifyMainPackageJson(file, extraMetadata)
     }
@@ -42,43 +38,17 @@ export async function createTransformer(projectDir: string, srcDir: string, pack
       return null
     }
   }
-  
-  return isElectronCompileUsed(packager.info) ? await createElectronCompileTransformer(projectDir, defaultTransformer) : defaultTransformer
 }
 
-async function createElectronCompileTransformer(projectDir: string, defaultTransformer: FileTransformer) {
+export interface CompilerHost {
+  compile(file: string): any
+  
+  saveConfiguration(): Promise<any>
+}
+
+export function createElectronCompilerHost(projectDir: string, cacheDir: string): Promise<CompilerHost> {
   const electronCompilePath = path.join(projectDir, "node_modules", "electron-compile", "lib")
-  const CompilerHost = require(path.join(electronCompilePath, "compiler-host")).default
-  const compilerHost = await require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir)
-  return async (file: string) => {
-    const defaultResult = defaultTransformer(file)
-    if (defaultResult != null) {
-      return await defaultResult
-    }
-    
-    if (file.includes("/node_modules/") || file.includes("/bower_components/")) {
-      return null
-    }
-
-    const hashInfo = await compilerHost.fileChangeCache.getHashForPath(file)
-
-    if (CompilerHost.shouldPassthrough(hashInfo)) {
-      return null
-    }
-
-    // we don't use @paulcbetts/mime-types to lookup mime-type because it doesn't any value except size (@develar 20.03.17)
-    // as we already depends on mime module (github publisher)
-    // https://github.com/electron/electron-compile/pull/148#issuecomment-266669293
-    const type = mime.lookup(file)
-    const compiler = type == null ? null : compilerHost.compilersByMimeType[type]
-    if (compiler == null) {
-      return null
-    }
-
-    const cache = compilerHost.cachesForCompilers.get(compiler)
-    const result = await cache.getOrFetch(file, (file: string, hashInfo: any) => compilerHost.compileUncached(file, hashInfo, compiler))
-    return result.code || result.binaryData
-  }
+  return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
 function cleanupPackageJson(data: any): any {

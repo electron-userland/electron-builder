@@ -1,10 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
+import { FilePattern, PlatformSpecificBuildOptions } from "electron-builder-core"
 import { asArray } from "electron-builder-util"
 import { copyDir, copyFile, Filter, statOrNull } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { Config } from "./metadata"
+import { BuildInfo } from "./packagerApi"
 import { createFilter, hasMagic } from "./util/filter"
 
 export class FileMatcher {
@@ -69,6 +72,78 @@ export class FileMatcher {
     this.computeParsedPatterns(parsedPatterns)
     return createFilter(this.from, parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
   }
+}
+
+export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions) {
+  const patterns = info.isPrepackedAppAsar ? null : getFileMatchers(info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
+  const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
+  if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+    matcher.addAllPattern()
+  }
+  else {
+    matcher.addPattern("package.json")
+  }
+  matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+  matcher.addPattern("!**/node_modules/.bin")
+  matcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
+  matcher.addPattern("!**/._*")
+  matcher.addPattern("!*.iml")
+  //noinspection SpellCheckingInspection
+  matcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
+    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
+    ".editorconfig,.flowconfig,.jshintrc,.eslintrc," +
+    ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
+    ".idea," +
+    "appveyor.yml,.travis.yml,circle.yml," +
+    ".nyc_output}")
+
+  return matcher
+}
+
+export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
+  const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>config)[name]
+  const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
+
+  const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, macroExpander)
+  const fileMatchers: Array<FileMatcher> = []
+
+  function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
+    if (patterns == null) {
+      return
+    }
+    else if (!Array.isArray(patterns)) {
+      if (typeof patterns === "string") {
+        defaultMatcher.addPattern(patterns)
+        return
+      }
+      patterns = [patterns]
+    }
+
+    for (const pattern of patterns) {
+      if (typeof pattern === "string") {
+        // use normalize to transform ./foo to foo
+        defaultMatcher.addPattern(pattern)
+      }
+      else if (allowAdvancedMatching) {
+        const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
+        const to = pattern.to == null ? defaultDest : path.resolve(defaultDest, pattern.to)
+        fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
+      }
+      else {
+        throw new Error(`Advanced file copying not supported for "${name}"`)
+      }
+    }
+  }
+
+  addPatterns(globalPatterns)
+  addPatterns(platformSpecificPatterns)
+
+  if (!defaultMatcher.isEmpty()) {
+    // default matcher should be first in the array
+    fileMatchers.unshift(defaultMatcher)
+  }
+
+  return fileMatchers.length === 0 ? null : fileMatchers
 }
 
 export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {

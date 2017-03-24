@@ -1,16 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsarOptions, FileAssociation, FilePattern, getArchSuffix, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, AsarOptions, FileAssociation, getArchSuffix, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "electron-builder-core"
 import { asArray, debug, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
-import { readdir, remove, rename } from "fs-extra-p"
+import { readdir, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { AsarPackager, checkFileInArchive } from "./asarUtil"
-import { copyFiles, FileMatcher } from "./fileMatcher"
-import { createTransformer } from "./fileTransformer"
+import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
+import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { Config } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
@@ -111,33 +111,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return this.getFileMatchers(isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, macroExpander, customBuildOptions)
-  }
-
-  private createFileMatcher(appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: DC) {
-    const patterns = this.info.isPrepackedAppAsar ? null : this.getFileMatchers("files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
-    const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
-    if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
-      matcher.addAllPattern()
-    }
-    else {
-      matcher.addPattern("package.json")
-    }
-    matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
-    matcher.addPattern("!**/node_modules/.bin")
-    matcher.addPattern("!**/*.{o,hprof,orig,pyc,pyo,rbc,swp}")
-    matcher.addPattern("!**/._*")
-    matcher.addPattern("!*.iml")
-    //noinspection SpellCheckingInspection
-    matcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
-      "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
-      ".editorconfig,.flowconfig,.jshintrc," +
-      ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
-      ".idea," +
-      "appveyor.yml,.travis.yml,circle.yml," +
-      ".nyc_output}")
-
-    return matcher
+    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, macroExpander, customBuildOptions)
   }
   
   get electronDistMacOsAppName() {
@@ -203,9 +177,18 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const defaultMatcher = this.createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
+    const defaultMatcher = createFileMatcher(this.info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
+    const isElectronCompile = isElectronCompileUsed(this.info)
+    if (isElectronCompile) {
+      defaultMatcher.addPattern("!.cache{,/**/*}")
+    }
+    
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
-    const transformer = await createTransformer(this.projectDir, appDir, this)
+
+    const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
+      originalMain: this.info.metadata.main,
+      main: "es6-shim.js",
+    }, this.packagerOptions.extraMetadata) : this.packagerOptions.extraMetadata)
     let promise
     if (this.info.isPrepackedAppAsar) {
       promise = copyDir(appDir, path.join(resourcesPath), filter, transformer)
@@ -214,20 +197,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       promise = copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer)
     }
     else {
-      const unpackPattern = this.getFileMatchers("asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
+      const unpackPattern = getFileMatchers(this.config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      
-      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(filter, transformer)
+      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile)
     }
 
     //noinspection ES6MissingAwait
     const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(appOutDir)]
     if (this.platform !== Platform.MAC) {
       promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
-    }
-    if (this.info.electronVersion != null && this.info.electronVersion[0] === "0") {
-      // electron release >= 0.37.4 - the default_app/ folder is a default_app.asar file
-      promises.push(remove(path.join(resourcesPath, "default_app")))
     }
 
     await BluebirdPromise.all(promises)
@@ -296,53 +274,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return deepAssign({}, result)
   }
-
-  private getFileMatchers(name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
-    const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>this.config)[name]
-    const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
-
-    const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, macroExpander)
-    const fileMatchers: Array<FileMatcher> = []
-
-    function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
-      if (patterns == null) {
-        return
-      }
-      else if (!Array.isArray(patterns)) {
-        if (typeof patterns === "string") {
-          defaultMatcher.addPattern(patterns)
-          return
-        }
-        patterns = [patterns]
-      }
-
-      for (const pattern of patterns) {
-        if (typeof pattern === "string") {
-          // use normalize to transform ./foo to foo
-          defaultMatcher.addPattern(pattern)
-        }
-        else if (allowAdvancedMatching) {
-          const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
-          const to = pattern.to == null ? defaultDest : path.resolve(defaultDest, pattern.to)
-          fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
-        }
-        else {
-          throw new Error(`Advanced file copying not supported for "${name}"`)
-        }
-      }
-    }
-
-    addPatterns(globalPatterns)
-    addPatterns(platformSpecificPatterns)
-
-    if (!defaultMatcher.isEmpty()) {
-      // default matcher should be first in the array
-      fileMatchers.unshift(defaultMatcher)
-    }
-
-    return fileMatchers.length === 0 ? null : fileMatchers
-  }
-
+  
   public getResourcesDir(appOutDir: string): string {
     return this.platform === Platform.MAC ? this.getMacOsResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }

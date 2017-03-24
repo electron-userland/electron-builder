@@ -3,9 +3,10 @@ import { AsarOptions } from "electron-builder-core"
 import { debug } from "electron-builder-util"
 import { CONCURRENCY, FileCopier, FileTransformer, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
-import { createReadStream, createWriteStream, ensureDir, readFile, readlink, stat, Stats, writeFile } from "fs-extra-p"
+import { createReadStream, createWriteStream, emptyDir, ensureDir, readFile, readlink, stat, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "./asar"
+import { createElectronCompilerHost } from "./fileTransformer"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -26,7 +27,7 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
 interface UnpackedFileTask {
   stats: Stats
   src?: string
-  data?: string
+  data?: string | Buffer
   destination: string
 }
 
@@ -44,15 +45,18 @@ function writeUnpackedFiles(filesToUnpack: Array<UnpackedFileTask>, fileCopier: 
 export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
+  
+  private transformedFiles: Array<string | Buffer | true | null>
+  private readonly metadata = new Map<string, Stats>()
 
-  constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
+  constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null, private readonly transformer: FileTransformer) {
     this.outFile = path.join(destination, "app.asar")
   }
 
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
-  async pack(filter: Filter, transformer: ((path: string) => any) | null) {
-    const metadata = new Map<string, Stats>()
-    const files = await walk(this.src, filter, (file, fileStat) => {
+  async pack(filter: Filter, isElectronCompile: boolean) {
+    const metadata = this.metadata
+    let files = await walk(this.src, filter, (file, fileStat) => {
       metadata.set(file, fileStat)
       if (fileStat.isSymbolicLink()) {
         return readlink(file)
@@ -76,13 +80,61 @@ export class AsarPackager {
       }
       return null
     })
-
-    await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files), metadata, transformer)
+    
+    // transform before electron-compile to avoid filtering (cache files in any case should be not transformed)
+    const transformer = this.transformer
+    this.transformedFiles = await BluebirdPromise.map(files, it => metadata.get(it)!.isFile() ? transformer(it) : null, CONCURRENCY)
+    
+    if (isElectronCompile) {
+      files = await this.compileUsingElectronCompile(files)
+    }
+    
+    await this.createPackageFromFiles(this.options.ordering == null ? files : await this.order(files))
   }
 
-  async detectUnpackedDirs(files: Array<string>, metadata: Map<string, Stats>, autoUnpackDirs: Set<string>, unpackedDest: string) {
-    const dirToCreate = new Map<string, Array<string>>()
+  async compileUsingElectronCompile(files: Array<string>): Promise<Array<string>> {
+    log("Compiling using electron-compile")
+    
+    const metadata = this.metadata
+    const cacheDir = path.join(this.src, ".cache")
+    // clear and create cache dir
+    await emptyDir(cacheDir)
+    const compilerHost = await createElectronCompilerHost(this.src, cacheDir)
+    const nextSlashIndex = this.src.length + 1
+    // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
+    await BluebirdPromise.map(files, file => {
+      if (file.includes("/node_modules/") || file.includes("/bower_components/")
+        || !file.includes("/", nextSlashIndex) // ignore not root files 
+        || !metadata.get(file)!.isFile()) {
+        return null
+      }
+      return compilerHost.compile(file)
+        .then((it: any) => null)
+    }, CONCURRENCY)
 
+    await compilerHost.saveConfiguration()
+    
+    const cacheFiles = await walk(cacheDir, (file, stat) => !file.startsWith("."), (file, fileStat) => {
+      this.metadata.set(file, fileStat)
+      return null
+    })
+    
+    // add es6-shim.js
+    const es6ShimPath = `${this.src}/es6-shim.js`
+    cacheFiles.push(es6ShimPath)
+    metadata.set(es6ShimPath, <any>{isFile: () => true, isDirectory: () => false})
+    
+    this.transformedFiles = (new Array(cacheFiles.length)).concat(this.transformedFiles)
+    
+    this.transformedFiles[cacheFiles.length - 1] = await readFile(path.join(this.src, "node_modules", "electron-compile", "lib", "es6-shim.js"))
+    
+    // cache files should be first (better IO)
+    return cacheFiles.concat(files)
+  }
+
+  async detectUnpackedDirs(files: Array<string>, autoUnpackDirs: Set<string>, unpackedDest: string) {
+    const dirToCreate = new Map<string, Array<string>>()
+    const metadata = this.metadata
     /* tslint:disable:rule1 prefer-const */
     for (let i = 0, n = files.length; i < n; i++) {
       const file = files[i]
@@ -147,19 +199,20 @@ export class AsarPackager {
     }
   }
 
-  private async createPackageFromFiles(files: Array<string>, metadata: Map<string, Stats>, transformer: FileTransformer | null) {
+  async createPackageFromFiles(files: Array<string>) {
+    const metadata = this.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
     const unpackedDest = `${this.outFile}.unpacked`
     await ensureDir(path.dirname(this.outFile))
 
     if (this.options.smartUnpack !== false) {
-      await this.detectUnpackedDirs(files, metadata, unpackedDirs, unpackedDest)
+      await this.detectUnpackedDirs(files, unpackedDirs, unpackedDest)
     }
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
     
-    const transformedFiles = transformer == null ? new Array(files.length) : await BluebirdPromise.map(files, it => metadata.get(it)!.isFile() ? transformer(it) : null, CONCURRENCY)
+    const transformedFiles = this.transformedFiles
     const filesToUnpack: Array<UnpackedFileTask> = []
     const fileCopier = new FileCopier()
     /* tslint:disable:rule1 prefer-const */
@@ -170,9 +223,9 @@ export class AsarPackager {
         const fileParent = path.dirname(file)
         const dirNode = this.fs.getOrCreateNode(fileParent)
         
-        const newData = transformedFiles == null ? null : transformedFiles[i]
+        const newData = transformedFiles == null ? null : <string | Buffer>transformedFiles[i]
         const node = this.fs.getOrCreateNode(file)
-        node.size = newData == null ? stat.size : Buffer.byteLength(newData)
+        node.size = newData == null ? stat.size : Buffer.byteLength(<any>newData)
         if (dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))) {
           node.unpacked = true
           if (newData != null) {
@@ -227,10 +280,10 @@ export class AsarPackager {
       await writeUnpackedFiles(filesToUnpack, fileCopier)
     }
     
-    await this.writeAsarFile(files, transformedFiles)
+    await this.writeAsarFile(files)
   }
 
-  private writeAsarFile(files: Array<string>, transformedFiles: Array<string | Buffer | null | true>): Promise<any> {
+  private writeAsarFile(files: Array<string>): Promise<any> {
     const headerPickle = pickle.createEmpty()
     headerPickle.writeString(JSON.stringify(this.fs.header))
     const headerBuf = headerPickle.toBuffer()
@@ -239,6 +292,7 @@ export class AsarPackager {
     sizePickle.writeUInt32(headerBuf.length)
     const sizeBuf = sizePickle.toBuffer()
 
+    const transformedFiles = this.transformedFiles
     const writeStream = createWriteStream(this.outFile)
     return new BluebirdPromise((resolve, reject) => {
       writeStream.on("error", reject)
