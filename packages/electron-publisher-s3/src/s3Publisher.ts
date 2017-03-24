@@ -1,6 +1,6 @@
 import { S3 } from "aws-sdk"
 import { S3Options } from "electron-builder-http/out/publishOptions"
-import { debug, isEmptyOrSpaces } from "electron-builder-util"
+import { debug } from "electron-builder-util"
 import { PublishContext, Publisher } from "electron-publish"
 import { stat } from "fs-extra-p"
 import mime from "mime"
@@ -15,13 +15,6 @@ export default class S3Publisher extends Publisher {
     super(context)
 
     debug(`Creating S3 Publisher — bucket: ${info.bucket}`)
-
-    if (isEmptyOrSpaces(process.env.AWS_ACCESS_KEY_ID)) {
-      throw new Error(`Env AWS_ACCESS_KEY_ID is not set`)
-    }
-    if (isEmptyOrSpaces(process.env.AWS_SECRET_ACCESS_KEY)) {
-      throw new Error(`Env AWS_SECRET_ACCESS_KEY is not set`)
-    }
   }
 
   static async checkAndResolveOptions(options: S3Options) {
