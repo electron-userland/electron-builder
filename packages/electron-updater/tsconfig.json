@@ -4,7 +4,10 @@
     "outDir": "out"
   },
   "declaration": true,
-  "jsdoc": "../../jsdoc/out/updater",
+  "jsdoc": {
+    "out": "../../jsdoc/out/updater",
+    "examples": "../../jsdoc/examples"
+  },
   "files": [
     "../../typings/semver.d.ts",
     "../../typings/debug.d.ts"
