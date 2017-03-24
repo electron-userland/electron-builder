@@ -60,6 +60,7 @@
       <w>emoji</w>
       <w>enoent</w>
       <w>eperm</w>
+      <w>ffmpeg</w>
       <w>finishpage</w>
       <w>flattennpmmodules</w>
       <w>fontconfig</w>
@@ -110,6 +111,7 @@
       <w>libappindicator</w>
       <w>libasound</w>
       <w>libdbusmenu</w>
+      <w>libevent</w>
       <w>libexec</w>
       <w>libgconf</w>
       <w>libgcrypt</w>
@@ -117,6 +119,7 @@
       <w>libnotify</w>
       <w>libnss</w>
       <w>libunity</w>
+      <w>libvpx</w>
       <w>libxss</w>
       <w>libxtst</w>
       <w>licensepage</w>

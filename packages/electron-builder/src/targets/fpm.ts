@@ -17,11 +17,11 @@ const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === 
 
 // can be called in parallel, all calls for the same version will get the same promise - will be downloaded only once
 function downloadFpm(): Promise<string> {
-  const version = process.platform === "darwin" ? "fpm-1.6.3-20150715-2.2.2" : "fpm-1.6.3-2.3.1"
+  const version = process.platform === "darwin" ? "fpm-1.8.1-20150715-2.2.2" : "fpm-1.8.1-2.3.1"
   const osAndArch = process.platform === "darwin" ? "mac" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`
   //noinspection SpellCheckingInspection
-  const sha2 = process.platform === "darwin" ? "1b13080ecfd2b6fddb984ed6e1dfcb38cdf5b051a04d609c2a95227ed9a5ecbc" :
-    (process.arch === "ia32" ? "b55f25749a27097140171f073466c52e59f733a275fea99e2334c540627ffc62" : "4c6fc529e996f7ff850da2d0bb6c85080e43be672494b14c0c6bdcc03bf57328")
+  const sha2 = process.platform === "darwin" ? "97352e184a1f54e5ed0d12f38ac383edebbe421db5a3fb59898e8c9a1c407ed7" :
+    (process.arch === "ia32" ? "8380331f7d9762a36d7c7181501c3fc9342745b8499b962f6ea37c7dc3778f99" : "6538fcd2486c2831949562abfd0017b67eff502addad5b444baec4899b0babc6")
 
   return getBin("fpm", version, `https://dl.bintray.com/electron-userland/bin/${version}-${osAndArch}.7z`, sha2)
     .then(it => path.join(it, "fpm"))

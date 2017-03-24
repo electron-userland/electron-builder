@@ -3,4 +3,16 @@ set -e
 
 ln -f README.md packages/electron-builder/README.md
 
-node packages/process.js
+npm publish packages/electron-builder-http || true
+npm publish packages/electron-builder-core || true
+npm publish packages/electron-builder-util || true
+npm publish packages/electron-publish || true
+npm publish packages/electron-publisher-s3 || true
+npm publish packages/electron-builder || true
+npm publish packages/electron-builder-squirrel-windows || true
+npm publish packages/electron-updater || true
+
+npm publish packages/electron-forge-maker-appimage || true
+npm publish packages/electron-forge-maker-snap || true
+npm publish packages/electron-forge-maker-nsis || true
+npm publish packages/electron-forge-maker-nsis-web || true
