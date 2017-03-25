@@ -19,6 +19,7 @@ exports[`no background 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "NoBackground-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -32,6 +33,7 @@ exports[`unset dmg icon 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test ß No Volume Icon-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },

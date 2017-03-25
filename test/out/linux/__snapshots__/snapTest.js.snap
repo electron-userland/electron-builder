@@ -259,6 +259,7 @@ exports[`snap 1`] = `
 Object {
   "linux": Array [
     Object {
+      "arch": 1,
       "file": "sep_1.1.0_amd64.snap",
     },
   ],

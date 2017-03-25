@@ -4,6 +4,7 @@ exports[`allowToChangeInstallationDirectory 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
     },
@@ -31,6 +32,7 @@ exports[`boring 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -42,6 +44,7 @@ exports[`boring, only perMachine 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -53,6 +56,7 @@ exports[`portable - artifactName 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßWPortable.1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
     },
@@ -64,6 +68,7 @@ exports[`portable 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW 1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
     },

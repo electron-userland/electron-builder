@@ -4,6 +4,7 @@ exports[`custom include 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -15,6 +16,7 @@ exports[`custom script 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -28,6 +30,7 @@ exports[`menuCategory 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 0,
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
     },
@@ -39,6 +42,7 @@ exports[`multi language license 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -50,6 +54,7 @@ exports[`one-click 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 0,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -69,9 +74,11 @@ exports[`perMachine, no run after finish 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": null,
       "file": "latest.yml",
     },
     Object {
+      "arch": 0,
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -82,7 +89,7 @@ Object {
 exports[`perMachine, no run after finish 2`] = `
 Object {
   "provider": "generic",
-  "url": "https://develar.s3.amazonaws.com/test/win",
+  "url": "https://develar.s3.amazonaws.com/test/win/ia32",
 }
 `;
 
@@ -98,13 +105,16 @@ exports[`web installer (default github) 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": null,
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
+      "arch": 0,
       "file": "TestApp-1.1.0-ia32.nsis.7z",
     },
     Object {
+      "arch": 1,
       "file": "TestApp-1.1.0-x64.nsis.7z",
     },
   ],
@@ -123,13 +133,16 @@ exports[`web installer 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": null,
       "file": "latest.yml",
     },
     Object {
+      "arch": 1,
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
+      "arch": 1,
       "file": "TestApp-1.1.0-x64.nsis.7z",
     },
   ],

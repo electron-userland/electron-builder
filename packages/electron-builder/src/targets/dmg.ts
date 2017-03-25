@@ -171,7 +171,7 @@ export class DmgTarget extends Target {
     await spawn("hdiutil", addVerboseIfNeed(["convert", tempDmg, "-ov", "-format", specification.format!, "-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`, "-o", artifactPath]))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
 
-    this.packager.dispatchArtifactCreated(artifactPath, this, `${appInfo.name}-${appInfo.version}.dmg`)
+    this.packager.dispatchArtifactCreated(artifactPath, this, arch, `${appInfo.name}-${appInfo.version}.dmg`)
   }
 
   computeVolumeName(custom?: string | null): string {

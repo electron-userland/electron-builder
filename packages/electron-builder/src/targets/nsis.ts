@@ -42,8 +42,6 @@ export default class NsisTarget extends Target {
       warn('"electron-squirrel-startup" dependency is not required for NSIS')
     }
   }
-  
-  
 
   async build(appOutDir: string, arch: Arch) {
     this.archs.set(arch, appOutDir)
@@ -142,7 +140,7 @@ export default class NsisTarget extends Target {
         defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
 
         if (this.isWebInstaller) {
-          packager.dispatchArtifactCreated(file, this)
+          packager.dispatchArtifactCreated(file, this, arch)
         }
         else {
           filesToDelete.push(file)
@@ -176,7 +174,7 @@ export default class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
-    packager.dispatchArtifactCreated(installerPath, this, this.generateGitHubInstallerName())
+    packager.dispatchArtifactCreated(installerPath, this, this.archs.size === 1 ? this.archs.keys().next().value : null, this.generateGitHubInstallerName())
   }
 
   protected generateGitHubInstallerName() {

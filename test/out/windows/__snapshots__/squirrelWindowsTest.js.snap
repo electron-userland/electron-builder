@@ -4,16 +4,20 @@ exports[`Squirrel.Windows 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": 1,
       "file": "RELEASES",
     },
     Object {
+      "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
     Object {
+      "arch": 1,
       "file": "TestApp-1.1.0-full.nupkg",
     },
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0-win.zip",
       "safeArtifactName": "TestApp-1.1.0-win.zip",
     },

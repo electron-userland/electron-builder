@@ -54,7 +54,7 @@ export class PkgTarget extends Target {
     })
     await BluebirdPromise.all([unlink(innerPackageFile), unlink(distInfo)])
 
-    packager.dispatchArtifactCreated(outFile, this, `${appInfo.name}-${appInfo.version}.pkg`)
+    packager.dispatchArtifactCreated(outFile, this, arch, `${appInfo.name}-${appInfo.version}.pkg`)
   }
 
   private async buildComponentPackage(appPath: string, outFile: string) {

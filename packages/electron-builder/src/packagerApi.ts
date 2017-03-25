@@ -76,6 +76,7 @@ export interface BuildInfo {
 export interface ArtifactCreated {
   readonly packager: PlatformPackager<any>
   readonly target: Target | null
+  readonly arch: Arch | null
 
   readonly file?: string
   readonly data?: Buffer

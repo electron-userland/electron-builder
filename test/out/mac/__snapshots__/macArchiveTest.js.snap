@@ -137,9 +137,11 @@ exports[`only zip 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": null,
       "file": "latest-mac.json",
     },
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -151,6 +153,7 @@ exports[`pkg 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -162,6 +165,7 @@ exports[`pkg scripts 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -563,6 +567,7 @@ exports[`tar.gz 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0-mac.tar.gz",
       "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
     },

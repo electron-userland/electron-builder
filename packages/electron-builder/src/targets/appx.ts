@@ -71,7 +71,7 @@ export default class AppXTarget extends Target {
     await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
 
     await packager.sign(destination)
-    packager.dispatchArtifactCreated(destination, this, packager.generateName("appx", arch, true))
+    packager.dispatchArtifactCreated(destination, this, arch, packager.generateName("appx", arch, true))
   }
 
   private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {

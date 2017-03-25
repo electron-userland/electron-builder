@@ -100,6 +100,6 @@ export default class AppImageTarget extends Target {
 
     await chmod(resultFile, "0755")
 
-    packager.dispatchArtifactCreated(resultFile, this)
+    packager.dispatchArtifactCreated(resultFile, this, arch)
   }
 }

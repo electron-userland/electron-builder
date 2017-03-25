@@ -4,6 +4,7 @@ exports[`arm deb 1`] = `
 Object {
   "linux": Array [
     Object {
+      "arch": 2,
       "file": "TestApp_1.1.0_armv7l.deb",
     },
   ],
@@ -26,6 +27,7 @@ exports[`deb 1`] = `
 Object {
   "linux": Array [
     Object {
+      "arch": 1,
       "file": "TestApp_1.1.0_amd64.deb",
     },
   ],

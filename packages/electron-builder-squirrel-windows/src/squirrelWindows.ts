@@ -36,15 +36,15 @@ export default class SquirrelWindowsTarget extends Target {
 
     await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir)
 
-    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 
     const packagePrefix = `${appInfo.name}-${convertVersion(version)}-`
-    packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
     if (distOptions.remoteReleases != null) {
-      packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`), this)
+      packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`), this, arch)
     }
 
-    packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"), this)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"), this, arch)
   }
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {

@@ -4,6 +4,7 @@ exports[`mas 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -15,10 +16,12 @@ exports[`mas and 7z 1`] = `
 Object {
   "mac": Array [
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0-mac.7z",
       "safeArtifactName": "TestApp-1.1.0-mac.7z",
     },
     Object {
+      "arch": 1,
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },

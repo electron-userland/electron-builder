@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
+import { Arch, Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest, safeStringifyJson } from "electron-builder-util"
@@ -73,7 +73,7 @@ export class PublishManager implements PublishContext {
         return
       }
 
-      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null))
+      const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, null, event.arch), event.arch)
       if (publishConfigs == null || publishConfigs.length === 0) {
         return
       }
@@ -96,7 +96,7 @@ export class PublishManager implements PublishContext {
   private async artifactCreated(event: ArtifactCreated) {
     const packager = event.packager
     const target = event.target
-    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options) : [event.publishConfig]
+    const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
 
     const eventFile = event.file
     if (publishConfigs == null) {
@@ -184,7 +184,7 @@ export class PublishManager implements PublishContext {
   }
 }
 
-export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<any>, publishConfigs: Array<PublishConfiguration> | null, arch: Arch | null): Promise<Array<PublishConfiguration> | null> {
   if (publishConfigs === null) {
     return null
   }
@@ -195,7 +195,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
     if (repositoryInfo != null && repositoryInfo.type === "github") {
-      const resolvedPublishConfig = await getResolvedPublishConfig(packager, {provider: repositoryInfo.type}, false)
+      const resolvedPublishConfig = await getResolvedPublishConfig(packager, {provider: repositoryInfo.type}, arch, false)
       if (resolvedPublishConfig != null) {
         return [resolvedPublishConfig]
       }
@@ -206,7 +206,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
 
 async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<PublishConfiguration>) {
   const packager = event.packager
-  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs)
+  const publishConfigs = await getPublishConfigsForUpdateInfo(packager, _publishConfigs, event.arch)
   if (publishConfigs == null || publishConfigs.length === 0) {
     return
   }
@@ -236,6 +236,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
       packager.info.dispatchArtifactCreated({
         file: updateInfoFile,
+        arch: null,
         packager: packager,
         target: null,
         publishConfig: publishConfig,
@@ -273,6 +274,7 @@ async function writeWindowsUpdateInfo(event: ArtifactCreated, version: string, o
       packager: packager,
       target: null,
       publishConfig: githubPublishConfig,
+      arch: null,
     })
   }
 
@@ -280,6 +282,7 @@ async function writeWindowsUpdateInfo(event: ArtifactCreated, version: string, o
   if (genericPublishConfig != null) {
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,
+      arch: null,
       packager: packager,
       target: null,
       publishConfig: genericPublishConfig,
@@ -347,7 +350,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   return `${baseUrl}/${encodeURI(fileName)}`
 }
 
-export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined): Promise<Array<PublishConfiguration> | null> {
+export async function getPublishConfigs(packager: PlatformPackager<any>, targetSpecificOptions: PlatformSpecificBuildOptions | null | undefined, arch: Arch | null): Promise<Array<PublishConfiguration> | null> {
   let publishers
 
   // check build.nsis (target)
@@ -385,7 +388,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
     if (serviceName != null) {
       debug(`Detect ${serviceName} as publish provider`)
-      return [(await getResolvedPublishConfig(packager, {provider: serviceName}))!]
+      return [(await getResolvedPublishConfig(packager, {provider: serviceName}, arch))!]
     }
   }
 
@@ -394,7 +397,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it)))
+  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)))
 }
 
 function sha256(file: string) {
@@ -423,22 +426,21 @@ function getCiTag() {
   return tag != null && tag.length > 0 ? tag : null
 }
 
-function expandPublishConfig(options: any, packager: PlatformPackager<any>): void {
+function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch: Arch | null): void {
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
-      const expanded = packager.expandMacro(value, null)
+      const expanded = packager.expandMacro(value, arch)
       if (expanded !== value) {
         options[name] = expanded
       }
     }
   }
 }
-  
 
-async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
   options = Object.assign(Object.create(null), options)
-  expandPublishConfig(options, packager)
+  expandPublishConfig(options, packager, arch)
   
   const provider = options.provider
   if (provider === "generic") {
