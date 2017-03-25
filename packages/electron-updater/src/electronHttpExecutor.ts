@@ -1,3 +1,4 @@
+import _debug from "debug"
 import { net, session } from "electron"
 import { configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -6,6 +7,8 @@ import * as path from "path"
 import { parse as parseUrl } from "url"
 
 export const NET_SESSION_NAME = "electron-updater"
+
+const debug = _debug("electron-builder")
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
@@ -34,8 +37,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
   }
 
   doApiRequest<T>(options: Electron.RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    if (this.debug.enabled) {
-      this.debug(`request: ${dumpRequestOptions(options)}`)
+    if (debug.enabled) {
+      debug(`request: ${dumpRequestOptions(options)}`)
     }
 
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {

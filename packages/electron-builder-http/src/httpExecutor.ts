@@ -10,6 +10,8 @@ import { parse as parseUrl } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
+const debug = _debug("electron-builder")
+
 export interface RequestHeaders {
   [key: string]: any
 }
@@ -64,8 +66,7 @@ export class HttpError extends Error {
 
 export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected readonly maxRedirects = 10
-  protected readonly debug = _debug("electron-builder")
-
+  
   request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: { [name: string]: any; } | null): Promise<T> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
@@ -82,8 +83,8 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
 
   protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
-    if (this.debug.enabled) {
-      this.debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
+    if (debug.enabled) {
+      debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
     }
 
     // we handle any other >= 400 error on request end (read detailed message in the response body)

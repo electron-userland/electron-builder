@@ -1,3 +1,4 @@
+import _debug from "debug"
 import { configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { ensureDir, readFile } from "fs-extra-p"
@@ -8,6 +9,8 @@ import { parse as parseIni } from "ini"
 import { homedir } from "os"
 import * as path from "path"
 import { parse as parseUrl } from "url"
+
+const debug = _debug("electron-builder")
 
 export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null
@@ -41,8 +44,8 @@ export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest
   }
 
   doApiRequest<T>(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    if (this.debug.enabled) {
-      this.debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
+    if (debug.enabled) {
+      debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
     }
 
     return cancellationToken.createPromise((resolve, reject, onCancel) => {
