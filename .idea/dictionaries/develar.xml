@@ -169,6 +169,7 @@
       <w>postinstall</w>
       <w>powerrequired</w>
       <w>powershell</w>
+      <w>precompilation</w>
       <w>preinstall</w>
       <w>prerelease</w>
       <w>productbuild</w>

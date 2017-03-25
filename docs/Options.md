@@ -126,11 +126,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 
 | Name | Type |
 | --- | --- |
-| appOutDir| <code>string</code> | 
-| packager| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
-| electronPlatformName| <code>string</code> | 
-| arch| <code>[Arch](Developer-API#Arch)</code> | 
-| targets| <code>Array&lt;[Target](Developer-API#Target)&gt;</code> | 
+| **appOutDir**| <code>string</code> | 
+| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| **electronPlatformName**| <code>string</code> | 
+| **arch**| <code>[Arch](Developer-API#Arch)</code> | 
+| **targets**| <code>Array&lt;[Target](Developer-API#Target)&gt;</code> | 
 
 <a name="AppXOptions"></a>
 
@@ -157,7 +157,7 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| packager| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
 | target| <code>[Target](Developer-API#Target)</code> \| <code>null</code> | 
 | file| <code>string</code> | 
 | data| <code>Buffer</code> | 
@@ -172,21 +172,21 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| options| <code>[PackagerOptions](#PackagerOptions)</code> | 
-| metadata| <code>[Metadata](#Metadata)</code> | 
-| devMetadata| <code>[Metadata](#Metadata)</code> | 
-| config| <code>[Config](#Config)</code> | 
-| projectDir| <code>string</code> | 
-| appDir| <code>string</code> | 
-| electronVersion| <code>string</code> | 
+| **options**| <code>[PackagerOptions](#PackagerOptions)</code> | 
+| **metadata**| <code>[Metadata](#Metadata)</code> | 
+| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
+| **config**| <code>[Config](#Config)</code> | 
+| **projectDir**| <code>string</code> | 
+| **appDir**| <code>string</code> | 
+| **electronVersion**| <code>string</code> | 
 | muonVersion| <code>string</code> \| <code>null</code> | 
-| isTwoPackageJsonProjectLayoutUsed| <code>boolean</code> | 
-| appInfo| <code>[AppInfo](Developer-API#AppInfo)</code> | 
-| tempDirManager| <code>[TmpDir](Developer-API#TmpDir)</code> | 
-| repositoryInfo| <code>Promise&lt; \| [SourceRepositoryInfo](Developer-API#SourceRepositoryInfo)&gt;</code> | 
-| isPrepackedAppAsar| <code>boolean</code> | 
+| **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
+| **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
+| **tempDirManager**| <code>[TmpDir](Developer-API#TmpDir)</code> | 
+| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](Developer-API#SourceRepositoryInfo)&gt;</code> | 
+| **isPrepackedAppAsar**| <code>boolean</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
-| cancellationToken| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| **cancellationToken**| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
 
 <a name="BuildOptions"></a>
 
@@ -201,8 +201,8 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| outDir| <code>string</code> | 
-| platformToTargets| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;String \| [Target](Developer-API#Target)&gt;&gt;</code> | 
+| **outDir**| <code>string</code> | 
+| **platformToTargets**| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;String \| [Target](Developer-API#Target)&gt;&gt;</code> | 
 
 <a name="CliOptions"></a>
 
@@ -261,6 +261,7 @@ Configuration Options
 | muonVersion| <code>string</code> \| <code>null</code> | <a name="Config-muonVersion"></a>The version of muon you are packaging for. |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="Config-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).<br><br>Currently supported only for `mas`, `pkg`, `dmg` and `nsis`. |
 | buildVersion| <code>string</code> \| <code>null</code> | <a name="Config-buildVersion"></a>The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`). |
+| electronCompile| <code>boolean</code> | <a name="Config-electronCompile"></a>Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified. |
 | mac| <code>[MacOptions](#MacOptions)</code> \| <code>null</code> | <a name="Config-mac"></a> |
 | mas| <code>[MasBuildOptions](#MasBuildOptions)</code> \| <code>null</code> | <a name="Config-mas"></a> |
 | dmg| <code>[DmgOptions](#DmgOptions)</code> \| <code>null</code> | <a name="Config-dmg"></a> |

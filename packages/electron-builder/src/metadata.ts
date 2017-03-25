@@ -197,6 +197,11 @@ export interface Config extends PlatformSpecificBuildOptions {
    */
   readonly buildVersion?: string | null
   
+  /**
+   * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
+   */
+  readonly electronCompile?: boolean
+  
   readonly mac?: MacOptions | null
   readonly mas?: MasBuildOptions | null
   readonly dmg?: DmgOptions | null

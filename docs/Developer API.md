@@ -2380,12 +2380,12 @@
 
 | Name | Type |
 | --- | --- |
-| path| <code>string</code> | 
+| **path**| <code>string</code> | 
 | cert| <code>string</code> \| <code>null</code> | 
 | name| <code>string</code> \| <code>null</code> | 
 | password| <code>string</code> \| <code>null</code> | 
 | site| <code>string</code> \| <code>null</code> | 
-| options| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
+| **options**| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
 
@@ -2862,7 +2862,7 @@
 
 | Name | Type |
 | --- | --- |
-| name| <code>string</code> | 
+| **name**| <code>string</code> | 
 | email| <code>string</code> | 
 
 <a name="BeforeBuildContext"></a>
@@ -2873,10 +2873,10 @@
 
 | Name | Type |
 | --- | --- |
-| appDir| <code>string</code> | 
-| electronVersion| <code>string</code> | 
-| platform| <code>[Platform](#Platform)</code> | 
-| arch| <code>string</code> | 
+| **appDir**| <code>string</code> | 
+| **electronVersion**| <code>string</code> | 
+| **platform**| <code>[Platform](#Platform)</code> | 
+| **arch**| <code>string</code> | 
 
 <a name="FileAssociation"></a>
 
@@ -2892,7 +2892,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 
 | Name | Type | Description |
 | --- | --- | --- |
-| ext| <code>string</code> \| <code>Array&lt;string&gt;</code> | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`. |
+| **ext**| <code>string</code> \| <code>Array&lt;string&gt;</code> | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`. |
 | name| <code>string</code> \| <code>null</code> | <a name="FileAssociation-name"></a>The name. e.g. `PNG`. Defaults to `ext`. |
 | description| <code>string</code> \| <code>null</code> | <a name="FileAssociation-description"></a>*windows-only.* The description. |
 | icon| <code>string</code> \| <code>null</code> | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon. |
@@ -2955,9 +2955,9 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type | Description |
 | --- | --- | --- |
-| name| <code>string</code> | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`. |
+| **name**| <code>string</code> | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`. |
 | role = <code>Editor</code>| <code>"Editor"</code> \| <code>"Viewer"</code> \| <code>"Shell"</code> \| <code>"None"</code> | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. |
-| schemes| <code>Array&lt;string&gt;</code> | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`. |
+| **schemes**| <code>Array&lt;string&gt;</code> | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`. |
 
 <a name="RepositoryInfo"></a>
 
@@ -2967,7 +2967,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| url| <code>string</code> | 
+| **url**| <code>string</code> | 
 
 <a name="SourceRepositoryInfo"></a>
 
@@ -2990,7 +2990,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type | Description |
 | --- | --- | --- |
-| target| <code>string</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
+| **target**| <code>string</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
 | arch| <code>Array&lt;"x64" \| "ia32" \| "armv7l"&gt;</code> \| <code>string</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
 
 <a name="TargetSpecificOptions"></a>
@@ -3156,8 +3156,8 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| name| <code>string</code> | 
-| package| <code>string</code> | 
+| **name**| <code>string</code> | 
+| **package**| <code>string</code> | 
 
 <a name="BintrayClient"></a>
 
@@ -3363,7 +3363,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | headers| <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
 | skipDirCreation| <code>boolean</code> | 
 | sha2| <code>string</code> \| <code>null</code> | 
-| cancellationToken| <code>[CancellationToken](#CancellationToken)</code> | 
+| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
 
 <a name="module_electron-builder-http.DownloadOptions+onProgress"></a>
 
@@ -3844,7 +3844,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| cancellationToken| <code>[CancellationToken](#CancellationToken)</code> | 
+| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
 | progress| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
 
 <a name="PublishOptions"></a>

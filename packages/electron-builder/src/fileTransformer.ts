@@ -7,19 +7,13 @@ import * as path from "path"
 import { BuildInfo } from "./packagerApi"
 
 export function isElectronCompileUsed(info: BuildInfo): boolean {
-  const depList = [(<any>info.metadata).devDependencies, info.metadata.dependencies]
-  if (info.isTwoPackageJsonProjectLayoutUsed) {
-    depList.push((<any>info.devMetadata).devDependencies)
-    depList.push(info.devMetadata.dependencies)
+  if (info.config.electronCompile != null) {
+    return info.config.electronCompile
   }
   
-  for (const deps of depList) {
-    if (deps != null && "electron-compile" in deps) {
-      return true
-    }
-  }
-  
-  return false
+  // if in devDependencies - it means that babel is used for precompilation or for some reason user decided to not use electron-compile for production
+  const deps = info.metadata.dependencies
+  return deps != null && "electron-compile" in deps
 }
 
 export async function createTransformer(srcDir: string, extraMetadata: any): Promise<FileTransformer> {

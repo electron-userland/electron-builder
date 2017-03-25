@@ -133,8 +133,8 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| name| <code>string</code> | 
-| url| <code>string</code> | 
+| **name**| <code>string</code> | 
+| **url**| <code>string</code> | 
 | sha2| <code>string</code> | 
 | headers| <code>Object</code> | 
 
@@ -146,7 +146,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| versionInfo| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
+| **versionInfo**| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo| <code>[FileInfo](#FileInfo)</code> | 
 | downloadPromise| <code>Promise&lt;any&gt;</code> \| <code>null</code> | 
 | cancellationToken| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
