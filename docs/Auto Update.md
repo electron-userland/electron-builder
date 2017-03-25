@@ -27,7 +27,8 @@ Simplified auto-update is not supported for Squirrel.Windows.
 ### Examples
 
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
-* An  [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/master/docs/encapsulated%20manual%20update%20via%20menu.js).
+* [Example in Typescript](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts) using system notifications.
+* An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/master/docs/encapsulated%20manual%20update%20via%20menu.js).
 
 ## File Generated and Uploaded in Addition
 
@@ -38,7 +39,7 @@ Simplified auto-update is not supported for Squirrel.Windows.
 You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
 
-Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
+Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users. Doesn't work [on macOs](https://github.com/electron-userland/electron-builder/issues/1370).
 
 **Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
 
@@ -132,8 +133,8 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **url**| <code>string</code> | 
+| name| <code>string</code> | 
+| url| <code>string</code> | 
 | sha2| <code>string</code> | 
 | headers| <code>Object</code> | 
 
@@ -145,7 +146,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| **versionInfo**| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
+| versionInfo| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo| <code>[FileInfo](#FileInfo)</code> | 
 | downloadPromise| <code>Promise&lt;any&gt;</code> \| <code>null</code> | 
 | cancellationToken| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
@@ -154,6 +155,12 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 ### Provider
 **Kind**: class of <code>[electron-updater/out/api](#module_electron-updater/out/api)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| requestHeaders| <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | 
+
 
 * [.Provider](#Provider)
     * [`.getLatestVersion()`](#module_electron-updater/out/api.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater/out/api.T&gt;</code>
@@ -317,6 +324,18 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 ### AppUpdater ⇐ <code>internal:EventEmitter</code>
 **Kind**: class of <code>[electron-updater/out/AppUpdater](#module_electron-updater/out/AppUpdater)</code>  
 **Extends**: <code>internal:EventEmitter</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| autoDownload = <code>true</code>| <code>boolean</code> | <a name="AppUpdater-autoDownload"></a>Automatically download an update when it is found. |
+| requestHeaders| <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
+| logger = <code>(&lt;any&gt;global).__test_app ? null : console</code>| <code>[Logger](#Logger)</code> \| <code>null</code> | <a name="AppUpdater-logger"></a>The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature. |
+| signals = <code>new UpdaterSignal(this)</code>| <code>[UpdaterSignal](#UpdaterSignal)</code> | <a name="AppUpdater-signals"></a>For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})` |
+| updateAvailable| <code>boolean</code> | <a name="AppUpdater-updateAvailable"></a> |
+| app| <code>Electron:App</code> | <a name="AppUpdater-app"></a> |
+| versionInfo| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> \| <code>null</code> | <a name="AppUpdater-versionInfo"></a> |
+
 
 * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
     * [`.checkForUpdates()`](#module_electron-updater/out/AppUpdater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>

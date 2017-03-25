@@ -45,8 +45,8 @@
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.8.tgz#fb38ae420be9c9b679bed3f974201120947b920f"
 
 "@types/node@*":
-  version "7.0.10"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.10.tgz#d860abb18c1b58b552c7c6cd8b2ba7adf6546fa3"
+  version "7.0.11"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.11.tgz#55680189f2335f080f0aeb57871f0b9823646d89"
 
 "@types/source-map-support@^0.2.28":
   version "0.2.28"
@@ -1350,8 +1350,8 @@ glob@~5.0.0:
     path-is-absolute "^1.0.0"
 
 globals@^9.0.0:
-  version "9.16.0"
-  resolved "https://registry.yarnpkg.com/globals/-/globals-9.16.0.tgz#63e903658171ec2d9f51b1d31de5e2b8dc01fb80"
+  version "9.17.0"
+  resolved "https://registry.yarnpkg.com/globals/-/globals-9.17.0.tgz#0c0ca696d9b9bb694d2e5470bd37777caad50286"
 
 globby@^6.1.0:
   version "6.1.0"
@@ -2255,13 +2255,17 @@ mime@^1.3.4:
   dependencies:
     brace-expansion "^1.0.0"
 
-minimist@0.0.8, minimist@~0.0.1:
+minimist@0.0.8:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
 
 minimist@^1.1.0, minimist@^1.1.1, minimist@^1.1.3, minimist@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
+
+minimist@~0.0.1:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.10.tgz#de3f98543dbf96082be48ad1a0c7cda836301dcf"
 
 mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.1:
   version "0.5.1"
@@ -3165,9 +3169,9 @@ ts-babel@^3.0.0:
     fs-extra-p "^4.1.0"
     source-map-support "^0.4.14"
 
-ts-jsdoc@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.1.1.tgz#3dbcc31885062ef438413ffb8c839920a86468fe"
+ts-jsdoc@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-1.2.0.tgz#7400db16493fe3292bf884122142bd02b755d085"
   dependencies:
     bluebird-lst "^1.0.2"
     chalk "^1.1.3"
@@ -3231,8 +3235,8 @@ typical@^2.4.2, typical@^2.6.0:
   resolved "https://registry.yarnpkg.com/typical/-/typical-2.6.0.tgz#89d51554ab139848a65bcc2c8772f8fb450c40ed"
 
 uglify-js@^2.6:
-  version "2.8.15"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.15.tgz#835dd4cd5872554756e6874508d0d0561704d94d"
+  version "2.8.16"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-2.8.16.tgz#d286190b6eefc6fd65eb0ecac6551e0b0e8839a4"
   dependencies:
     source-map "~0.5.1"
     yargs "~3.10.0"

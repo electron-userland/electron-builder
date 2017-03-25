@@ -121,7 +121,16 @@ function link2(type, delimiter, root) {
 function identifierToLink(id, root) {
   let linked = resolveById(id)
   if (!linked) {
-    if (id.startsWith("module")) {
+    if (id.startsWith("module") && 
+      !id.startsWith("module:http.") && 
+      !id.startsWith("module:bluebird-lst.") && 
+      !id.startsWith("module:child_process.") &&
+      !id.startsWith("module:progress-ex") &&
+      !id.endsWith(".T") &&
+      !id.endsWith(".R") &&
+      !id.endsWith(".K") &&
+      !id.startsWith("module:fs.")
+    ) {
       console.warn(`Unresolved member ${id}`)
     }
     return id

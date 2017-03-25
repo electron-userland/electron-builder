@@ -108,7 +108,7 @@ Generic (any HTTP(S) server) options.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
+| url| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
 | channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
 
 <a name="GithubOptions"></a>
@@ -143,7 +143,7 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **provider**| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
+| provider| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
 | owner| <code>string</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
 | token| <code>string</code> \| <code>null</code> | <a name="PublishConfiguration-token"></a> |
 
@@ -161,7 +161,7 @@ Define `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` [environment variables](h
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **bucket**| <code>string</code> | <a name="S3Options-bucket"></a>The bucket name. |
+| bucket| <code>string</code> | <a name="S3Options-bucket"></a>The bucket name. |
 | path = <code>&quot;/&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-path"></a>The directory path. |
 | region| <code>string</code> \| <code>null</code> | <a name="S3Options-region"></a>The region. Is determined and set automatically when publishing. |
 | channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-channel"></a>The channel. |
@@ -184,12 +184,12 @@ Define `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` [environment variables](h
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **path**| <code>string</code> | <a name="UpdateInfo-path"></a> |
+| path| <code>string</code> | <a name="UpdateInfo-path"></a> |
 | githubArtifactName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-githubArtifactName"></a> |
-| **sha2**| <code>string</code> | <a name="UpdateInfo-sha2"></a> |
+| sha2| <code>string</code> | <a name="UpdateInfo-sha2"></a> |
 | releaseName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseName"></a>The release name. |
 | releaseNotes| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseNotes"></a>The release notes. |
-| **releaseDate**| <code>string</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |
+| releaseDate| <code>string</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |
 
 <a name="VersionInfo"></a>
 
@@ -199,7 +199,7 @@ Define `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` [environment variables](h
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **version**| <code>string</code> | <a name="VersionInfo-version"></a>The version. |
+| version| <code>string</code> | <a name="VersionInfo-version"></a>The version. |
 
 <a name="module_electron-builder-http/out/publishOptions.githubUrl"></a>
 

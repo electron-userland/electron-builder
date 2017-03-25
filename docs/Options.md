@@ -126,11 +126,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 
 | Name | Type |
 | --- | --- |
-| **appOutDir**| <code>string</code> | 
-| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
-| **electronPlatformName**| <code>string</code> | 
-| **arch**| <code>[Arch](Developer-API#Arch)</code> | 
-| **targets**| <code>Array&lt;[Target](Developer-API#Target)&gt;</code> | 
+| appOutDir| <code>string</code> | 
+| packager| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| electronPlatformName| <code>string</code> | 
+| arch| <code>[Arch](Developer-API#Arch)</code> | 
+| targets| <code>Array&lt;[Target](Developer-API#Target)&gt;</code> | 
 
 <a name="AppXOptions"></a>
 
@@ -157,8 +157,8 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
-| **target**| <code>[Target](Developer-API#Target)</code> \| <code>null</code> | 
+| packager| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| target| <code>[Target](Developer-API#Target)</code> \| <code>null</code> | 
 | file| <code>string</code> | 
 | data| <code>Buffer</code> | 
 | safeArtifactName| <code>string</code> | 
@@ -172,21 +172,21 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| **options**| <code>[PackagerOptions](#PackagerOptions)</code> | 
-| **metadata**| <code>[Metadata](#Metadata)</code> | 
-| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
-| **config**| <code>[Config](#Config)</code> | 
-| **projectDir**| <code>string</code> | 
-| **appDir**| <code>string</code> | 
-| **electronVersion**| <code>string</code> | 
+| options| <code>[PackagerOptions](#PackagerOptions)</code> | 
+| metadata| <code>[Metadata](#Metadata)</code> | 
+| devMetadata| <code>[Metadata](#Metadata)</code> | 
+| config| <code>[Config](#Config)</code> | 
+| projectDir| <code>string</code> | 
+| appDir| <code>string</code> | 
+| electronVersion| <code>string</code> | 
 | muonVersion| <code>string</code> \| <code>null</code> | 
-| **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
-| **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
-| **tempDirManager**| <code>[TmpDir](Developer-API#TmpDir)</code> | 
-| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](Developer-API#SourceRepositoryInfo)&gt;</code> | 
-| **isPrepackedAppAsar**| <code>boolean</code> | 
+| isTwoPackageJsonProjectLayoutUsed| <code>boolean</code> | 
+| appInfo| <code>[AppInfo](Developer-API#AppInfo)</code> | 
+| tempDirManager| <code>[TmpDir](Developer-API#TmpDir)</code> | 
+| repositoryInfo| <code>Promise&lt; \| [SourceRepositoryInfo](Developer-API#SourceRepositoryInfo)&gt;</code> | 
+| isPrepackedAppAsar| <code>boolean</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
-| **cancellationToken**| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| cancellationToken| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
 
 <a name="BuildOptions"></a>
 
@@ -201,8 +201,8 @@ AppX Options
 
 | Name | Type |
 | --- | --- |
-| **outDir**| <code>string</code> | 
-| **platformToTargets**| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;String \| [Target](Developer-API#Target)&gt;&gt;</code> | 
+| outDir| <code>string</code> | 
+| platformToTargets| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;String \| [Target](Developer-API#Target)&gt;&gt;</code> | 
 
 <a name="CliOptions"></a>
 
@@ -596,6 +596,22 @@ Windows Specific Options
 ### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
 **Kind**: class of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[BuildInfo](#BuildInfo)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| projectDir| <code>string</code> | 
+| **appDir**| <code>string</code> | 
+| **metadata**| <code>[Metadata](#Metadata)</code> | 
+| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
+| isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>boolean</code> | 
+| **electronVersion**| <code>string</code> | 
+| muonVersion| <code>string</code> \| <code>null</code> | 
+| eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
+| **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
+| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](Developer-API#TmpDir)</code> | 
+| prepackaged| <code>string</code> \| <code>null</code> | 
+
 <a name="module_electron-builder.build"></a>
 
 ### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>

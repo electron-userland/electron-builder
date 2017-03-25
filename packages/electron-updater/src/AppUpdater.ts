@@ -27,20 +27,23 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    * Automatically download an update when it is found.
    */
-  public autoDownload = true
+  autoDownload = true
 
   /**
    *  The request headers.
    */
-  public requestHeaders: RequestHeaders | null
+  requestHeaders: RequestHeaders | null
 
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
    * Set it to `null` if you would like to disable a logging feature.
    */
-  public logger: Logger | null = (<any>global).__test_app ? null : console
+  logger: Logger | null = (<any>global).__test_app ? null : console
 
-  public readonly signals = new UpdaterSignal(this)
+  /**
+   * For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
+   */
+  readonly signals = new UpdaterSignal(this)
 
   private _appUpdateConfigPath: string | null
 
@@ -56,7 +59,7 @@ export abstract class AppUpdater extends EventEmitter {
   private readonly untilAppReady: Promise<boolean>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
 
-  protected readonly app: any
+  protected readonly app: Electron.App
 
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null

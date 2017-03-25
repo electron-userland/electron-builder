@@ -131,6 +131,17 @@
 
 ### AppInfo
 **Kind**: class of <code>[electron-builder/out/appInfo](#module_electron-builder/out/appInfo)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| description = <code>&quot;smarten(this.metadata.description || \&quot;\&quot;)&quot;</code>| <code>string</code> | 
+| version| <code>string</code> | 
+| buildNumber| <code>string</code> | 
+| buildVersion| <code>string</code> | 
+| productName| <code>string</code> | 
+| productFilename| <code>string</code> | 
+
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 
 #### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| string&gt;</code>
@@ -248,6 +259,17 @@
 
 ### Node
 **Kind**: class of <code>[electron-builder/out/asar](#module_electron-builder/out/asar)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| files| <code>Object&lt;string, any&gt;</code> | 
+| unpacked| <code>boolean</code> | 
+| **size**| <code>number</code> | 
+| **offset**| <code>number</code> | 
+| executable| <code>boolean</code> | 
+| link| <code>string</code> | 
+
 <a name="module_electron-builder/out/asar.readAsar"></a>
 
 ### `electron-builder/out/asar.readAsar(archive)` ⇒ <code>Promise&lt;[AsarFilesystem](#AsarFilesystem)&gt;</code>
@@ -439,9 +461,9 @@
         * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
         * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
         * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
         * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
     * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
     * [`.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)`](#module_electron-builder/out/fileMatcher.getFileMatchers) ⇒ <code>null</code> \| <code>Array</code>
@@ -450,14 +472,22 @@
 
 ### FileMatcher
 **Kind**: class of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| from| <code>string</code> | 
+| to| <code>string</code> | 
+| patterns| <code>Array&lt;string&gt;</code> | 
+
 
 * [.FileMatcher](#FileMatcher)
     * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
     * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
     * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-    * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
     * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern"></a>
 
@@ -484,7 +514,7 @@
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore"></a>
 
-#### `fileMatcher.containsOnlyIgnore()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+#### `fileMatcher.containsOnlyIgnore()` ⇒ <code>boolean</code>
 **Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+createFilter"></a>
 
@@ -499,7 +529,7 @@
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+isEmpty"></a>
 
-#### `fileMatcher.isEmpty()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+#### `fileMatcher.isEmpty()` ⇒ <code>boolean</code>
 **Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
 <a name="module_electron-builder/out/fileMatcher.copyFiles"></a>
 
@@ -548,7 +578,7 @@
         * [`.saveConfiguration()`](#module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.createElectronCompilerHost(projectDir, cacheDir)`](#module_electron-builder/out/fileTransformer.createElectronCompilerHost) ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
     * [`.createTransformer(srcDir, extraMetadata)`](#module_electron-builder/out/fileTransformer.createTransformer) ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
-    * [`.isElectronCompileUsed(info)`](#module_electron-builder/out/fileTransformer.isElectronCompileUsed) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.isElectronCompileUsed(info)`](#module_electron-builder/out/fileTransformer.isElectronCompileUsed) ⇒ <code>boolean</code>
 
 <a name="CompilerHost"></a>
 
@@ -594,7 +624,7 @@
 
 <a name="module_electron-builder/out/fileTransformer.isElectronCompileUsed"></a>
 
-### `electron-builder/out/fileTransformer.isElectronCompileUsed(info)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+### `electron-builder/out/fileTransformer.isElectronCompileUsed(info)` ⇒ <code>boolean</code>
 **Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
 
 | Param | Type |
@@ -633,6 +663,12 @@
 ### LinuxPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
 **Kind**: class of <code>[electron-builder/out/linuxPackager](#module_electron-builder/out/linuxPackager)</code>  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| executableName| <code>string</code> | 
+
 
 * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
@@ -891,6 +927,12 @@
 ### MacPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
 **Kind**: class of <code>[electron-builder/out/macPackager](#module_electron-builder/out/macPackager)</code>  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| codeSigningInfo| <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code> | 
+
 
 * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
@@ -1247,6 +1289,17 @@
 
 ### PlatformPackager
 **Kind**: class of <code>[electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| packagerOptions| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
+| projectDir| <code>string</code> | 
+| buildResourcesDir| <code>string</code> | 
+| config| <code>[Config](Options#Config)</code> | 
+| platformSpecificBuildOptions| <code>module:electron-builder/out/platformPackager.DC</code> | 
+| appInfo| <code>[AppInfo](#AppInfo)</code> | 
+
 
 * [.PlatformPackager](#PlatformPackager)
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
@@ -1497,6 +1550,13 @@
 ### PublishManager ⇐ <code>[PublishContext](#PublishContext)</code>
 **Kind**: class of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 **Extends**: <code>[PublishContext](#PublishContext)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| publishTasks=| <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
+| progress = <code>(&lt;NodeJS.WritableStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](#MultiProgress)</code> | 
+
 
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](#PublishContext)</code>
     * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
@@ -1639,6 +1699,12 @@
 ### AppImageTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/appImage](#module_electron-builder/out/targets/appImage)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
+
 
 * [.AppImageTarget](#AppImageTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appImage.AppImageTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -1673,6 +1739,12 @@
 ### AppXTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)</code>| <code>[AppXOptions](Options#AppXOptions)</code> | 
+
 
 * [.AppXTarget](#AppXTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appx.AppXTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -1741,6 +1813,12 @@
 ### ArchiveTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>(&lt;any&gt;this.packager.config)[this.name]</code>| <code>any</code> | 
+
 
 * [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -1778,6 +1856,12 @@
 ### DmgTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>this.packager.config.dmg</code>| <code>undefined</code> \| <code>null</code> \| <code>[DmgOptions](Options#DmgOptions)</code> | 
+
 
 * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
@@ -1838,6 +1922,12 @@
 ### FpmTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/fpm](#module_electron-builder/out/targets/fpm)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>any</code> | 
+
 
 * [.FpmTarget](#FpmTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/fpm.FpmTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -1871,6 +1961,13 @@
 
 ### LinuxTargetHelper
 **Kind**: class of <code>[electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| icons| <code>Promise&lt;Array&lt;Array&lt;string&gt;&gt;&gt;</code> | 
+| maxIconPath| <code>string</code> \| <code>null</code> | 
+
 
 * [.LinuxTargetHelper](#LinuxTargetHelper)
     * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
@@ -1913,6 +2010,12 @@
 ### NsisTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options| <code>[NsisOptions](Options#NsisOptions)</code> | 
+
 
 * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
@@ -1967,6 +2070,12 @@
 ### PkgTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>this.packager.config.pkg || Object.create(null)</code>| <code>[PkgOptions](Options#PkgOptions)</code> | 
+
 
 * [.PkgTarget](#PkgTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appPath, arch)`](#module_electron-builder/out/targets/pkg.PkgTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -2011,6 +2120,12 @@
 ### SnapTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/snap](#module_electron-builder/out/targets/snap)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[SnapOptions](Options#SnapOptions)</code> | 
+
 
 * [.SnapTarget](#SnapTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/snap.SnapTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -2048,6 +2163,12 @@
 ### NoOpTarget ⇐ <code>[Target](#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
 **Extends**: <code>[Target](#Target)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| options| <code>null</code> | 
+
 
 * [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -2144,7 +2265,7 @@
 
 * [electron-builder/out/util/filter](#module_electron-builder/out/util/filter)
     * [`.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/util/filter.createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>boolean</code>
 
 <a name="module_electron-builder/out/util/filter.createFilter"></a>
 
@@ -2161,7 +2282,7 @@
 
 <a name="module_electron-builder/out/util/filter.hasMagic"></a>
 
-### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>boolean</code>
 **Kind**: method of <code>[electron-builder/out/util/filter](#module_electron-builder/out/util/filter)</code>  
 
 | Param | Type |
@@ -2259,12 +2380,12 @@
 
 | Name | Type |
 | --- | --- |
-| **path**| <code>string</code> | 
+| path| <code>string</code> | 
 | cert| <code>string</code> \| <code>null</code> | 
 | name| <code>string</code> \| <code>null</code> | 
 | password| <code>string</code> \| <code>null</code> | 
 | site| <code>string</code> \| <code>null</code> | 
-| **options**| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
+| options| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
 
@@ -2318,6 +2439,73 @@
 ### WinPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
 **Kind**: class of <code>[electron-builder/out/winPackager](#module_electron-builder/out/winPackager)</code>  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **[cscInfo=new Lazy&lt;FileCodeSigningInfo | null&gt;(() =&gt; {
+    const platformSpecificBuildOptions = this.platformSpecificBuildOptions
+    const subjectName = platformSpecificBuildOptions.certificateSubjectName
+    if (subjectName != null) {
+      return BluebirdPromise.resolve({subjectName})
+    }
+
+    const certificateSha1 = platformSpecificBuildOptions.certificateSha1
+    if (certificateSha1 != null) {
+      return BluebirdPromise.resolve({certificateSha1})
+    }
+
+    const certificateFile = platformSpecificBuildOptions.certificateFile
+    if (certificateFile != null) {
+      const certificatePassword = this.getCscPassword()
+      return BluebirdPromise.resolve({
+        file: certificateFile,
+        password: certificatePassword == null ? null : certificatePassword.trim(),
+      })
+    }
+    else {
+      const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
+      if (cscLink != null) {
+        return downloadCertificate(cscLink, this.info.tempDirManager)
+          .then(path =&gt; {
+            return {
+              file: path,
+              password: this.getCscPassword(),
+            }
+          })
+      }
+      else {
+        return BluebirdPromise.resolve(null)
+      }
+    }
+  })]**| <code>[Lazy](#Lazy)&lt; \| [FileCodeSigningInfo](#FileCodeSigningInfo)&gt;</code> | 
+| **[computedPublisherName=new Lazy&lt;Array&lt;string&gt; | null&gt;(async () =&gt; {
+    let publisherName = (&lt;WinBuildOptions&gt;this.platformSpecificBuildOptions).publisherName
+    if (publisherName === null) {
+      return null
+    }
+
+    const cscInfo = await this.cscInfo.value
+    if (cscInfo == null) {
+      return null
+    }
+
+    if (publisherName == null &amp;&amp; cscInfo.file != null) {
+      try {
+        // https://github.com/digitalbazaar/forge/issues/338#issuecomment-164831585
+        const p12Asn1 = forge.asn1.fromDer(await readFile(cscInfo.file, &quot;binary&quot;), false)
+        const p12 = (&lt;any&gt;forge).pkcs12.pkcs12FromAsn1(p12Asn1, false, cscInfo.password)
+        const bagType = (&lt;any&gt;forge.pki.oids).certBag
+        publisherName = p12.getBags({bagType: bagType})[bagType][0].cert.subject.getField(&quot;CN&quot;).value
+      }
+      catch (e) {
+        throw new Error(&#x60;Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}&#x60;)
+      }
+    }
+
+    return publisherName == null ? null : asArray(publisherName)
+  })]**| <code>[Lazy](#Lazy)&lt; \| Array&gt;</code> | 
+
 
 * [.WinPackager](#WinPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/winPackager.WinPackager+createTargets)
@@ -2674,7 +2862,7 @@
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
+| name| <code>string</code> | 
 | email| <code>string</code> | 
 
 <a name="BeforeBuildContext"></a>
@@ -2685,10 +2873,10 @@
 
 | Name | Type |
 | --- | --- |
-| **appDir**| <code>string</code> | 
-| **electronVersion**| <code>string</code> | 
-| **platform**| <code>[Platform](#Platform)</code> | 
-| **arch**| <code>string</code> | 
+| appDir| <code>string</code> | 
+| electronVersion| <code>string</code> | 
+| platform| <code>[Platform](#Platform)</code> | 
+| arch| <code>string</code> | 
 
 <a name="FileAssociation"></a>
 
@@ -2704,7 +2892,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **ext**| <code>string</code> \| <code>Array&lt;string&gt;</code> | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`. |
+| ext| <code>string</code> \| <code>Array&lt;string&gt;</code> | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`. |
 | name| <code>string</code> \| <code>null</code> | <a name="FileAssociation-name"></a>The name. e.g. `PNG`. Defaults to `ext`. |
 | description| <code>string</code> \| <code>null</code> | <a name="FileAssociation-description"></a>*windows-only.* The description. |
 | icon| <code>string</code> \| <code>null</code> | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon. |
@@ -2767,9 +2955,9 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **name**| <code>string</code> | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`. |
+| name| <code>string</code> | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`. |
 | role = <code>Editor</code>| <code>"Editor"</code> \| <code>"Viewer"</code> \| <code>"Shell"</code> \| <code>"None"</code> | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. |
-| **schemes**| <code>Array&lt;string&gt;</code> | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`. |
+| schemes| <code>Array&lt;string&gt;</code> | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`. |
 
 <a name="RepositoryInfo"></a>
 
@@ -2779,7 +2967,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| **url**| <code>string</code> | 
+| url| <code>string</code> | 
 
 <a name="SourceRepositoryInfo"></a>
 
@@ -2802,7 +2990,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **target**| <code>string</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
+| target| <code>string</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
 | arch| <code>Array&lt;"x64" \| "ia32" \| "armv7l"&gt;</code> \| <code>string</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
 
 <a name="TargetSpecificOptions"></a>
@@ -2821,6 +3009,15 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 ### Platform
 **Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| MAC = <code>new Platform(&quot;mac&quot;, &quot;mac&quot;, &quot;darwin&quot;)</code>| <code>[Platform](#Platform)</code> | 
+| LINUX = <code>new Platform(&quot;linux&quot;, &quot;linux&quot;, &quot;linux&quot;)</code>| <code>[Platform](#Platform)</code> | 
+| WINDOWS = <code>new Platform(&quot;windows&quot;, &quot;win&quot;, &quot;win32&quot;)</code>| <code>[Platform](#Platform)</code> | 
+| OSX = <code>Platform.MAC</code>| <code>[Platform](#Platform)</code> | 
+
 
 * [.Platform](#Platform)
     * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
@@ -2859,6 +3056,13 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 ### Target
 **Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| outDir| <code>string</code> | 
+| options| <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
+
 
 * [.Target](#Target)
     * [`.build(appOutDir, arch)`](#module_electron-builder-core.Target+build) ⇒ <code>Promise&lt;any&gt;</code>
@@ -2952,13 +3156,23 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **package**| <code>string</code> | 
+| name| <code>string</code> | 
+| package| <code>string</code> | 
 
 <a name="BintrayClient"></a>
 
 ### BintrayClient
 **Kind**: class of <code>[electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| auth| <code>string</code> \| <code>null</code> | 
+| repo| <code>string</code> | 
+| owner| <code>string</code> | 
+| user| <code>string</code> | 
+| packageName| <code>string</code> | 
+
 
 * [.BintrayClient](#BintrayClient)
     * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise&lt;any&gt;</code>
@@ -3149,7 +3363,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | headers| <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
 | skipDirCreation| <code>boolean</code> | 
 | sha2| <code>string</code> \| <code>null</code> | 
-| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
+| cancellationToken| <code>[CancellationToken](#CancellationToken)</code> | 
 
 <a name="module_electron-builder-http.DownloadOptions+onProgress"></a>
 
@@ -3195,6 +3409,13 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 ### HttpExecutor
 **Kind**: class of <code>[electron-builder-http](#module_electron-builder-http)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| maxRedirects = <code>10</code>| <code>"10"</code> | 
+| debug = <code>_debug(&quot;electron-builder&quot;)</code>| <code>debug:Debugger</code> | 
+
 
 * [.HttpExecutor](#HttpExecutor)
     * [`.download(url, destination, options)`](#module_electron-builder-http.HttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
@@ -3358,6 +3579,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 ### BintrayPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of <code>[electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)</code>  
 **Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| providerName = <code>Bintray</code>| <code>"Bintray"</code> | 
+
 
 * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
@@ -3470,6 +3697,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 ### GitHubPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of <code>[electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)</code>  
 **Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| providerName = <code>GitHub</code>| <code>"GitHub"</code> | 
+
 
 * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
@@ -3611,8 +3844,8 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 | Name | Type |
 | --- | --- |
-| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
-| **progress**| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
+| cancellationToken| <code>[CancellationToken](#CancellationToken)</code> | 
+| progress| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
 
 <a name="PublishOptions"></a>
 
@@ -3959,6 +4192,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 ### BaseGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
 **Kind**: class of <code>[electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)</code>  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| baseUrl| <code>module:http.RequestOptions</code> | 
+
 <a name="GitHubProvider"></a>
 
 ### GitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
@@ -4177,7 +4416,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
         * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.copyDir(src, destination, filter, transformer, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;"undefined" \| "undefined"&gt;</code>
+    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;boolean&gt;</code>
     * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
     * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;string \| void&gt;</code>
     * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
@@ -4230,7 +4469,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util/out/fs.exists"></a>
 
-### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;"undefined" \| "undefined"&gt;</code>
+### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;boolean&gt;</code>
 **Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
 
 | Param | Type |
@@ -4551,7 +4790,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
     * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
     * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>string</code>
     * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
-    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>boolean</code>
     * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
     * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;string&gt;</code>
     * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
@@ -4703,7 +4942,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
 
-### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code>
+### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>boolean</code>
 **Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
 
 | Param | Type |
