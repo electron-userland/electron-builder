@@ -1,6 +1,6 @@
 Travis and AppVeyor support publishing artifacts. But it requires additional configuration for each CI (since AppVeyor can build only Windows and Travis only macOS / Linux).
 
-`electron-builder` allows you to just add `GH_TOKEN` environment variable and that's all.
+`electron-builder` allows you to just set `GH_TOKEN` environment variable and that's all.
 
 Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/) and [Bintray](https://bintray.com) are supported.
 
@@ -49,13 +49,6 @@ But please consider using automatic rules instead of explicitly specifying `publ
  ```
  and if you run `npm run release`, a release will be drafted (if doesn't already exist) and artifacts published.
 
-## GitHub Repository and Bintray Package
-
- Detected automatically using:
- * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
- * if not set, env `TRAVIS_REPO_SLUG` or `APPVEYOR_ACCOUNT_NAME`/`APPVEYOR_PROJECT_NAME` or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
- * if no env, from `.git/config` origin url.
-
 ## Publish Options
 
 See [GithubOptions](#GithubOptions), [S3Options](#S3Options), [BintrayOptions](#BintrayOptions).
@@ -67,6 +60,13 @@ Can be specified in the [configuration options](https://github.com/electron-user
   "publish": ["github", "bintray"]
 }
 ```
+
+## GitHub Repository and Bintray Package
+
+ Detected automatically using:
+ * [repository](https://docs.npmjs.com/files/package.json#repository) in the application or development `package.json`,
+ * if not set, env `TRAVIS_REPO_SLUG` or `APPVEYOR_ACCOUNT_NAME`/`APPVEYOR_PROJECT_NAME` or `CIRCLE_PROJECT_USERNAME`/`CIRCLE_PROJECT_REPONAME`,
+ * if no env, from `.git/config` origin url.
 
 <!-- do not edit. start of generated block -->
 ## API

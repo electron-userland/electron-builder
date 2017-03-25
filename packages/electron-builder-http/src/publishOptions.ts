@@ -28,6 +28,9 @@ export interface PublishConfiguration {
 
 /**
  * GitHub options.
+ * 
+ * GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
+ * Define `GH_TOKEN` environment variable.
  */
 export interface GithubOptions extends PublishConfiguration {
   /**
