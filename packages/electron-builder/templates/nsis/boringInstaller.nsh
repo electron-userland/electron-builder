@@ -28,6 +28,14 @@
 
   !ifdef allowToChangeInstallationDirectory
     !insertmacro MUI_PAGE_DIRECTORY
+    !include StrContains.nsh
+    # Sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
+    ${StrContains} $0 ${APP_FILENAME} $INSTDIR
+    StrCmp $0 "" SanitizePath
+      Goto SanePath
+    SanitizePath:
+      StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+    SanePath:
   !endif
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
