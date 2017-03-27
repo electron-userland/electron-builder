@@ -25,7 +25,7 @@ export async function createTransformer(srcDir: string, extraMetadata: any): Pro
     }
     else if (file.endsWith("/package.json") && file.includes("/node_modules/")) {
       return readJson(file)
-        .then(it => cleanupPackageJson(it))
+        .then(it => cleanupPackageJson(it, false))
         .catch(e => warn(e))
     }
     else {
@@ -45,11 +45,11 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-function cleanupPackageJson(data: any): any {
+function cleanupPackageJson(data: any, isMain: boolean): any {
   try {
     let changed = false
     for (const prop of Object.getOwnPropertyNames(data)) {
-      if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords" || prop === "build" || prop === "devDependencies" || prop === "scripts") {
+      if (prop[0] === "_" || prop === "dist" || prop === "gitHead" || prop === "keywords" || prop === "build" || (isMain && prop === "devDependencies") || prop === "scripts") {
         delete data[prop]
         changed = true
       }
@@ -73,7 +73,7 @@ async function modifyMainPackageJson(file: string, extraMetadata: any) {
   }
 
   // https://github.com/electron-userland/electron-builder/issues/1212
-  const serializedDataIfChanged = cleanupPackageJson(mainPackageData)
+  const serializedDataIfChanged = cleanupPackageJson(mainPackageData, true)
   if (serializedDataIfChanged != null) {
     return serializedDataIfChanged
   }
