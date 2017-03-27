@@ -176,7 +176,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const defaultMatcher = createFileMatcher(this.info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
-    const isElectronCompile = isElectronCompileUsed(this.info)
+    const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
     if (isElectronCompile) {
       defaultMatcher.addPattern("!.cache{,/**/*}")
     }

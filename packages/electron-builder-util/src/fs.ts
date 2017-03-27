@@ -174,8 +174,11 @@ export class FileCopier {
           if (typeof (<any>data).then === "function") {
             data = await data
           }
-          await writeFile(dest, data)
-          return
+
+          if (data != null) {
+            await writeFile(dest, data)
+            return
+          }
         }
       }
       await copyFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
