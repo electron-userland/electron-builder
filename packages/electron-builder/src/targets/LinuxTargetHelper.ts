@@ -63,7 +63,8 @@ export class LinuxTargetHelper {
         // If parseInt encounters a character that is not a numeral in the specified radix,
         // it returns the integer value parsed up to that point
         try {
-          const size = parseInt(file!, 10)
+          let sizeString = file.match(/\d+/)
+          const size = sizeString == null ? 0 : parseInt(sizeString[0], 10)
           if (size > 0) {
             const iconPath = `${iconDir}/${file}`
             mappings.push([iconPath, `${size}x${size}/apps/${this.packager.executableName}.png`])
