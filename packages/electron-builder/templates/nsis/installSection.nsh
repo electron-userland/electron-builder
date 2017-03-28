@@ -184,7 +184,7 @@ WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
     ${IfNot} ${Silent}
       # otherwise app window will be in backround
       HideWindow
-      Call StartApp
+      !insertmacro StartApp
     ${EndIf}
   !endif
   !insertmacro quitSuccess

@@ -282,7 +282,7 @@ export default class NsisTarget extends Target {
       defines.allowToChangeInstallationDirectory = null
     }
 
-    if (options.menuCategory != null) {
+    if (options.menuCategory != null && options.menuCategory !== false) {
       const menu = sanitizeFileName(options.menuCategory === true ? packager.appInfo.companyName : <string>options.menuCategory)
       if (!isEmptyOrSpaces(menu)) {
         defines.MENU_FILENAME = menu

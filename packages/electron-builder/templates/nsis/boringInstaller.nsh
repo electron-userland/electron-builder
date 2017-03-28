@@ -8,9 +8,9 @@
 !ifndef BUILD_UNINSTALLER
   Function StartApp
     ${if} ${Updated}
-      ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" "--updated"
+      ${StdUtils.ExecShellAsUser} $0 "$startMenuLink" "open" "--updated"
     ${else}
-      ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
+      ${StdUtils.ExecShellAsUser} $0 "$startMenuLink" "open" ""
     ${endif}
   FunctionEnd
 

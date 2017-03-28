@@ -1,3 +1,6 @@
+Var startMenuLink
+Var desktopLink
+
 !include "common.nsh"
 !include "MUI2.nsh"
 !include "multiUser.nsh"
@@ -22,9 +25,6 @@
 !ifmacrodef customHeader
   !insertmacro customHeader
 !endif
-
-Var startMenuLink
-Var desktopLink
 
 !ifdef BUILD_UNINSTALLER
   SilentInstall silent

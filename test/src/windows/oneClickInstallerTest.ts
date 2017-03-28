@@ -119,7 +119,7 @@ test.ifAll("menuCategory", app({
   },
   config: {
     nsis: {
-      perMachine: true,
+      oneClick: false,
       menuCategory: true,
       artifactName: "${productName} CustomName ${version}.${ext}"
     },

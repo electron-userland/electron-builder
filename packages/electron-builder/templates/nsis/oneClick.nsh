@@ -1,17 +1,20 @@
 !ifndef BUILD_UNINSTALLER
   !ifdef RUN_AFTER_FINISH
     !include StdUtils.nsh
-    Function StartApp
+    !macro StartApp
+      Var /GLOBAL startAppArgs
+      ${if} ${Updated}
+        StrCpy $startAppArgs "--updated"
+      ${else}
+        StrCpy $startAppArgs ""
+      ${endif}
+    
       !ifdef INSTALL_MODE_PER_ALL_USERS
-        ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "open" ""
+        ${StdUtils.ExecShellAsUser} $0 $startMenuLink "open" "$startAppArgs"
       !else
-        ${if} ${Updated}
-          ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk" "--updated"
-        ${else}
-          ExecShell "" "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
-        ${endif}
+        ExecShell "" "$startMenuLink" "$startAppArgs"
       !endif
-    FunctionEnd
+    !macroend
   !endif
 
   !ifmacrodef licensePage
