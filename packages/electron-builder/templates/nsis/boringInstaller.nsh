@@ -27,7 +27,23 @@
   !endif
 
   !ifdef allowToChangeInstallationDirectory
+    !include StrContains.nsh
+          
     !insertmacro MUI_PAGE_DIRECTORY
+
+    # pageDirectory leave doesn't work (it seems because $INSTDIR is set after custom leave function)
+    # so, we yse instfiles pre
+    !define MUI_PAGE_CUSTOMFUNCTION_PRE instFilesPre
+
+    # Sanitize the MUI_PAGE_DIRECTORY result to make sure it has a application name sub-folder
+    Function instFilesPre
+      ${If} ${FileExists} "$INSTDIR\*"
+        ${StrContains} $0 "${APP_FILENAME}" $INSTDIR
+        ${If} $0 == ""
+          StrCpy $INSTDIR "$INSTDIR\${APP_FILENAME}"
+        ${endIf}
+      ${endIf}
+    FunctionEnd
   !endif
   !insertmacro MUI_PAGE_INSTFILES
   !insertmacro MUI_PAGE_FINISH
@@ -49,7 +65,7 @@
       # special return value for outer instance so it knows we did not have admin rights
       SetErrorLevel 0x666666
       Quit
-    ${EndIf}
+    ${endIf}
 
     !ifndef MULTIUSER_INIT_TEXT_ADMINREQUIRED
       !define MULTIUSER_INIT_TEXT_ADMINREQUIRED "$(^Caption) requires administrator privileges."
