@@ -161,7 +161,7 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly electronDownload?: any
   
   /**
-   * Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS).
+   * Array of option objects. Order is important — first item will be used as a default auto-update server.
    * @see [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
    */
   readonly publish?: Publish

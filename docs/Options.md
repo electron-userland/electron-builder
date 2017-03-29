@@ -1,12 +1,18 @@
 electron-builder [configuration](#Config) can be defined 
-* in the `package.json` file of your project using the `build` key on the top level
+* in the `package.json` file of your project using the `build` key on the top level:
+   ```json
+   "build": {
+     "appId": "com.example.app"
+   }
+   ```
 * or through the `--config <path/to/yml-or-json5>` option (defaults to `electron-builder.yml` (or `json`, or [json5](http://json5.org))).
+   ```yaml
+   appId: "com.example.app"
+   ```
 
 See [Config](#Config).
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
-
-Most of the options supports inheritance — `f`
 
 ## File Patterns
 
