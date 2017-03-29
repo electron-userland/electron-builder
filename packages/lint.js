@@ -1,6 +1,6 @@
 "use strict"
 
-const Linter = require("tslint").Linter
+const { Linter } = require("tslint")
 const path = require("path")
 
 const configuration = {

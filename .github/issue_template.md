@@ -1,4 +1,5 @@
 <!-- Which version of electron-builder are you using? -->
+<!-- Please always try to use latest version before report. -->
 * **Version**: 
 
 <!-- Which version of electron-updater are you using (if applicable)? -->

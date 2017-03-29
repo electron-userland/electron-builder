@@ -23,7 +23,7 @@ export class ArchiveTarget extends Target {
     const outFile = (() => {
       switch (packager.platform) {
         case Platform.MAC:
-          return path.join(outDir, packager.generateName2(format, "mac", false))
+          return path.join(outDir, packager.expandArtifactNamePattern(this.options, format, arch, "${productName}-${version}-${os}.${ext}"))
         case Platform.WINDOWS:
           return path.join(outDir, packager.generateName(format, arch, false, "win"))
         case Platform.LINUX:

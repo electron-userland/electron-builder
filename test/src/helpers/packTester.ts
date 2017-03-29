@@ -424,7 +424,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
 
       const tempDir = path.join(context.outDir, getTempName())
       await mkdir(tempDir)
-      await exec("tar", ["xf", path.join(context.outDir, "mac", "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
+      await exec("tar", ["xf", path.join(context.outDir, "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
       await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
     }
   })

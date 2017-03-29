@@ -60,7 +60,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
           break
 
         default:
-          mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, path.join(outDir, "mac"), this))
+          mapper(name, outDir => name === "mas" || name === "mas-dev" ? new NoOpTarget(name) : createCommonTarget(name, outDir, this))
           break
       }
     }

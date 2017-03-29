@@ -88,7 +88,7 @@ Object {
   "mac": Array [
     Object {
       "arch": 1,
-      "file": "TestApp-1.1.0.dmg",
+      "file": "TestApp-1.1.0-mac.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
