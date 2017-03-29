@@ -341,7 +341,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   }
   else {
     const gh = <GithubOptions>publishConfig
-    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/v${packager.appInfo.version}`
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
   }
 
   if (fileName == null) {

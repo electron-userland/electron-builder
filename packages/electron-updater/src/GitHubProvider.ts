@@ -34,7 +34,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const version = await this.getLatestVersionString(basePath, cancellationToken)
     let result: any
     const channelFile = getChannelFilename(getDefaultChannelName())
-    const requestOptions = Object.assign({path: `${basePath}/download/v${version}/${channelFile}`, headers: this.requestHeaders || undefined}, this.baseUrl)
+    const requestOptions = Object.assign({path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined}, this.baseUrl)
     try {
       result = await request<UpdateInfo>(requestOptions, cancellationToken)
     }
@@ -67,7 +67,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
   }
 
-  protected get basePath() {
+  private get basePath() {
     return `/${this.options.owner}/${this.options.repo}/releases`
   }
 
@@ -80,9 +80,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
     return {
       name: name,
-      url: formatUrl(Object.assign({path: `${this.basePath}/download/v${versionInfo.version}/${name}`}, this.baseUrl)),
+      url: formatUrl(Object.assign({path: this.getBaseDownloadPath(versionInfo.version, name)}, this.baseUrl)),
       sha2: versionInfo.sha2,
     }
+  }
+  
+  private getBaseDownloadPath(version: string, fileName: string) {
+    return `${this.basePath}/download/${this.options.vPrefixedTagName === false ? "" : "v"}${version}/${fileName}`
   }
 }
 
