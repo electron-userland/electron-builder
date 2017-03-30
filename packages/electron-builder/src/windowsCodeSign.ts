@@ -136,20 +136,6 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
   return await exec(await getToolPath(), args)
 }
 
-// async function verify(options: any) {
-//   const out = await exec(await getToolPath(options), [
-//     "verify",
-//     "-in", options.path,
-//     "-require-leaf-hash", options.hash
-//   ])
-//   if (out.includes("No signature found.")) {
-//     throw new Error("No signature found")
-//   }
-//   else if (out.includes("Leaf hash match: failed")) {
-//     throw new Error("Leaf hash match failed")
-//   }
-// }
-
 function getOutputPath(inputPath: string, hash: string) {
   const extension = path.extname(inputPath)
   return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)

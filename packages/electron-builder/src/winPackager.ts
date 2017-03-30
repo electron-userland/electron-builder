@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform, Target } from "electron-builder-core"
 import { asArray, exec, Lazy, use } from "electron-builder-util"
-import { log } from "electron-builder-util/out/log"
+import { log, warn } from "electron-builder-util/out/log"
 import { close, open, read, readFile, rename } from "fs-extra-p"
 import * as forge from "node-forge"
 import * as path from "path"
@@ -196,8 +196,22 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected doSign(options: SignOptions): Promise<any> {
-    return sign(options)
+  protected async doSign(options: SignOptions) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        await sign(options)
+        break
+      }
+      catch (e) {
+        // https://github.com/electron-userland/electron-builder/issues/1414
+        const message = e.message
+        if (message != null && message.includes("Couldn't resolve host name")) {
+          warn(`Cannot sign, attempt ${i + 1}: ${message}`)
+          continue
+        }
+        throw e
+      }
+    }
   }
 
   async signAndEditResources(file: string) {

@@ -1,4 +1,5 @@
 import Ajv from "ajv"
+import { debug } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -148,7 +149,8 @@ export async function validateConfig(config: Config) {
 
   const validator = await validatorPromise
   if (!validator(config)) {
-    throw new Error("Config is invalid:\n" + JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2) + "\n\nRaw validation errors: " + JSON.stringify(validator.errors, null, 2))
+    debug(JSON.stringify(validator.errors, null, 2))
+    throw new Error("Config is invalid:\n" + JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2))
   }
 }
 

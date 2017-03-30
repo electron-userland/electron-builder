@@ -1,9 +1,9 @@
 "use strict"
 
-const { Linter } = require("tslint")
+const { Linter, Configuration } = require("tslint")
 const path = require("path")
 
-const configuration = {
+const configuration = Configuration.parseConfigFile({
   "extends": "tslint:latest",
   "rules": {
     "no-invalid-this": [true],
@@ -60,7 +60,8 @@ const configuration = {
     "jsdoc-format": false,
     "no-for-in-array": true,
   }
-}
+})
+
 const options = {
   formatter: "stylish",
 }
