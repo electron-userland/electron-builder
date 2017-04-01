@@ -165,6 +165,7 @@ AppX Options
 | --- | --- |
 | **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
 | target| <code>[Target](Developer-API#Target)</code> \| <code>null</code> | 
+| arch| <code>[Arch](Developer-API#Arch)</code> \| <code>null</code> | 
 | file| <code>string</code> | 
 | data| <code>Buffer</code> | 
 | safeArtifactName| <code>string</code> | 
@@ -260,7 +261,7 @@ Configuration Options
 | nodeGypRebuild| <code>boolean</code> | <a name="Config-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. |
 | electronDist| <code>string</code> | <a name="Config-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows. |
 | electronDownload| <code>any</code> | <a name="Config-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options. |
-| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="Config-publish"></a>Array of option objects. Order is important — first item will be used as a default auto-update server on Windows (NSIS). See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). |
+| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="Config-publish"></a>Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). |
 | forceCodeSigning| <code>boolean</code> | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct). |
 | directories| <code>[MetadataDirectories](Developer-API#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
 | electronVersion| <code>string</code> \| <code>null</code> | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency. |
@@ -302,6 +303,7 @@ Debian Package Specific Options
 | synopsis| <code>string</code> \| <code>null</code> | <a name="DebOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description). |
 | compression = <code>xz</code>| <code>"gz"</code> \| <code>"bzip2"</code> \| <code>"xz"</code> \| <code>null</code> | <a name="DebOptions-compression"></a>The compression type. |
 | priority| <code>string</code> \| <code>null</code> | <a name="DebOptions-priority"></a>The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute. |
+| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="DebOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`. |
 
 <a name="DmgContent"></a>
 
@@ -390,7 +392,7 @@ Linux Options
 | desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value). |
 | afterInstall| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-afterInstall"></a> |
 | afterRemove| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-afterRemove"></a> |
-| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`. |
+| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Consider to specify in the target options (e.g. in the `deb` or `rpm`). |
 | executableName| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-executableName"></a>The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`. |
 | icon| <code>string</code> | <a name="LinuxBuildOptions-icon"></a>The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file. |
 

@@ -59,10 +59,24 @@ async function _readInstalled(folder: string, parent: any | null, name: string |
     return obj
   }
 
-  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), pkg => _readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realpathSeen, findUnmetSeen), {concurrency: 8})
+  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), async pkg => {
+    try {
+      return await _readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realpathSeen, findUnmetSeen)
+    }
+    catch (e) {
+      // https://github.com/electron-userland/electron-builder/issues/1424
+      if (e.code === "ENOENT" || e.code === "ENOTDIR") {
+        return null
+      }
+
+      throw e
+    }
+  }, {concurrency: 8})
   if (obj.dependencies != null) {
     for (const dep of deps) {
-      obj.dependencies[dep.realName] = dep
+      if (dep != null) {
+        obj.dependencies[dep.realName] = dep
+      }
     }
 
     // any strings in the obj.dependencies are unmet deps. However, if it's optional, then that's fine, so just delete it.

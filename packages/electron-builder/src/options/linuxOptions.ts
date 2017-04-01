@@ -54,7 +54,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly afterRemove?: string | null
 
   /**
-   * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]` for `deb`.
+   * Package dependencies. Consider to specify in the target options (e.g. in the `deb` or `rpm`).
    */
   readonly depends?: string[] | null
 
@@ -90,6 +90,11 @@ export interface DebOptions extends LinuxBuildOptions {
    * The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
    */
   readonly priority?: string | null
+
+  /**
+   * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
+   */
+  readonly depends?: string[] | null
 }
 
 /**
