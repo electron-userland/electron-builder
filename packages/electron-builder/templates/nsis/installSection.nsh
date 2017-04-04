@@ -168,7 +168,7 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
 
 ${GetParameters} $R0
-${GetOptions} $R0 "/nodesktopshortcut" $R1
+${GetOptions} $R0 "--no-desktop-shortcut" $R1
 ${If} ${Errors}
   CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
 ${EndIf}
