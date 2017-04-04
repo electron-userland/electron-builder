@@ -166,7 +166,12 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 # create shortcuts in the start menu and on the desktop
 # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
 CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+
+${GetParameters} $R0
+${GetOptions} $R0 "/nodesktopshortcut" $R1
+${If} ${Errors}
+  CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+${EndIf}
 
 WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
 WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
