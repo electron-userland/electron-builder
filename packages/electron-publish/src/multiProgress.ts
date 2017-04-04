@@ -1,5 +1,5 @@
 import { setPrinter } from "electron-builder-util/out/log"
-import ProgressBar from "progress-ex"
+import { ProgressBar } from "./progress"
 
 export class MultiProgress {
   private readonly stream = <any>process.stdout
@@ -11,82 +11,58 @@ export class MultiProgress {
 
   private barCount = 0
 
-  createBar(format: string, options: any) {
+  createBar(format: string, options: any): ProgressBar {
     options.stream = this.stream
 
-    const bar: any = new ProgressBar(format, options)
+    const manager = this
+    class MultiProgressBar extends ProgressBar {
+      private index = -1
+
+      constructor(format: string, options: any) {
+        super(format, options)
+      }
+
+      render() {
+        if (this.index === -1) {
+          this.index = manager.totalLines
+          manager.allocateLines(1)
+        }
+        else {
+          manager.moveCursor(this.index)
+        }
+
+        super.render()
+
+        if (!manager.isLogListenerAdded) {
+          manager.isLogListenerAdded = true
+          setPrinter(message => {
+            let newLineCount = 0
+            let newLineIndex = message.indexOf("\n")
+            while (newLineIndex > -1) {
+              newLineCount++
+              newLineIndex = message.indexOf("\n", ++newLineIndex)
+            }
+
+            manager.allocateLines(newLineCount + 1)
+            manager.stream.write(message)
+          })
+        }
+      }
+
+      terminate() {
+        manager.barCount--
+        if (manager.barCount === 0 && manager.totalLines > 0) {
+          manager.allocateLines(1)
+          manager.totalLines = 0
+          manager.cursor = 0
+          setPrinter(null)
+          manager.isLogListenerAdded = false
+        }
+      }
+    }
+
+    const bar = new MultiProgressBar(format, options)
     this.barCount++
-    let index = -1
-
-    const render = bar.render
-    bar.render = (tokens: any) => {
-      if (index === -1) {
-        index = this.totalLines
-        this.allocateLines(1)
-      }
-      else {
-        this.moveCursor(index)
-      }
-
-      render.call(bar, tokens)
-
-      if (!this.isLogListenerAdded) {
-        this.isLogListenerAdded = true
-        setPrinter(message => {
-          let newLineCount = 0
-          let newLineIndex = message.indexOf("\n")
-          while (newLineIndex > -1) {
-            newLineCount++
-            newLineIndex = message.indexOf("\n", ++newLineIndex)
-          }
-
-          this.allocateLines(newLineCount + 1)
-          this.stream.write(message)
-        })
-      }
-    }
-
-    bar.terminate = () => {
-      this.barCount--
-      if (this.barCount === 0 && this.totalLines > 0) {
-        this.allocateLines(1)
-        this.totalLines = 0
-        this.cursor = 0
-        setPrinter(null)
-        this.isLogListenerAdded = false
-      }
-    }
-
-    bar.tick = (len: number, tokens: any) => {
-      if (len !== 0) {
-        len = len || 1
-      }
-
-      if (tokens != null) {
-        bar.tokens = tokens
-      }
-
-      // start time for eta
-      if (bar.curr == 0) {
-        bar.start = new Date()
-      }
-
-      bar.curr += len
-
-      if (bar.complete) {
-        return
-      }
-
-      bar.render()
-
-      // progress complete
-      if (bar.curr >= bar.total) {
-        bar.complete = true
-        bar.terminate()
-        bar.callback(this)
-      }
-    }
-
     return bar
   }
 

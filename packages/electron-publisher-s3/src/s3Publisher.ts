@@ -2,13 +2,12 @@ import { S3 } from "aws-sdk"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { debug } from "electron-builder-util"
 import { PublishContext, Publisher } from "electron-publish"
+import { ProgressCallback } from "electron-publish/out/progress"
 import { stat } from "fs-extra-p"
-import mime from "mime"
 import { basename } from "path"
+import { S3Client } from "./uploader"
 
 export default class S3Publisher extends Publisher {
-  private readonly s3 = new S3({signatureVersion: "v4"})
-
   readonly providerName = "S3"
 
   constructor(context: PublishContext, private readonly info: S3Options) {
@@ -34,26 +33,37 @@ export default class S3Publisher extends Publisher {
   async upload(file: string, safeArtifactName?: string): Promise<any> {
     const fileName = basename(file)
     const fileStat = await stat(file)
-    return this.context.cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const upload = this.s3.upload({
-        Bucket: this.info.bucket!,
-        Key: (this.info.path == null ? "" : `${this.info.path}/`) + fileName,
-        ACL: this.info.acl || "public-read",
-        Body: this.createReadStreamAndProgressBar(file, fileStat, this.createProgressBar(fileName, fileStat), reject),
-        ContentLength: fileStat.size,
-        ContentType: mime.lookup(fileName),
-        StorageClass: this.info.storageClass || undefined
-      }, (error: Error, data: any) => {
-        if (error != null) {
-          reject(error)
-          return
+    const client = new S3Client({s3Options: {signatureVersion: "v4"}})
+    const cancellationToken = this.context.cancellationToken
+
+    const uploader = client.createFileUploader(file, (this.info.path == null ? "" : `${this.info.path}/`) + fileName, {
+      Bucket: this.info.bucket!,
+      ACL: this.info.acl || "public-read",
+      StorageClass: this.info.storageClass || undefined
+    })
+
+    const progressBar = this.createProgressBar(fileName, fileStat)
+    if (progressBar != null) {
+      const callback = new ProgressCallback(progressBar)
+      uploader.on("progress", () => {
+        if (!cancellationToken.cancelled) {
+          callback.update(uploader.progressAmount, uploader.progressTotal)
         }
-
-        debug(`S3 Publisher: ${fileName} was uploaded to ${data.Location}`)
-        resolve()
       })
+    }
 
-      onCancel(() => upload.abort())
+    return cancellationToken.createPromise((resolve, reject, onCancel) => {
+      onCancel(() => uploader.abort())
+      uploader.upload()
+        .then(() => {
+          try {
+            debug(`S3 Publisher: ${fileName} was uploaded to ${this.info.bucket}`)
+          }
+          finally {
+            resolve()
+          }
+        })
+        .catch(reject)
     })
   }
 

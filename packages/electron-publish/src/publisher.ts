@@ -5,8 +5,8 @@ import { log } from "electron-builder-util/out/log"
 import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
 import { basename } from "path"
-import ProgressBar from "progress-ex"
 import { MultiProgress } from "./multiProgress"
+import { ProgressBar } from "./progress"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
 

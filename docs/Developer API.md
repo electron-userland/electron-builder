@@ -85,6 +85,8 @@
 <dd></dd>
 <dt><a href="#module_electron-publish/out/multiProgress">electron-publish/out/multiProgress</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-publish/out/progress">electron-publish/out/progress</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-publish">electron-publish</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
@@ -3576,7 +3578,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
         * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="BintrayPublisher"></a>
@@ -3597,7 +3599,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
     * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
@@ -3644,7 +3646,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="module_electron-publish.Publisher+createProgressBar"></a>
 
-#### `bintrayPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+#### `bintrayPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
 **Access**: protected  
 
@@ -3663,7 +3665,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="module_electron-publish/out/gitHubPublisher"></a>
@@ -3679,7 +3681,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
         * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="Release"></a>
@@ -3716,7 +3718,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
     * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
@@ -3767,7 +3769,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="module_electron-publish.Publisher+createProgressBar"></a>
 
-#### `gitHubPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+#### `gitHubPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
 **Access**: protected  
 
@@ -3786,7 +3788,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
@@ -3795,7 +3797,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 * [electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)
     * [.MultiProgress](#MultiProgress)
-        * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>any</code>
+        * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>[ProgressBar](#ProgressBar)</code>
         * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
 
 <a name="MultiProgress"></a>
@@ -3804,12 +3806,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 **Kind**: class of <code>[electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)</code>  
 
 * [.MultiProgress](#MultiProgress)
-    * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>any</code>
+    * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>[ProgressBar](#ProgressBar)</code>
     * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
 
 <a name="module_electron-publish/out/multiProgress.MultiProgress+createBar"></a>
 
-#### `multiProgress.createBar(format, options)` ⇒ <code>any</code>
+#### `multiProgress.createBar(format, options)` ⇒ <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of <code>[MultiProgress](#MultiProgress)</code>  
 
 | Param | Type |
@@ -3821,6 +3823,99 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 #### `multiProgress.terminate()`
 **Kind**: instance method of <code>[MultiProgress](#MultiProgress)</code>  
+<a name="module_electron-publish/out/progress"></a>
+
+## electron-publish/out/progress
+
+* [electron-publish/out/progress](#module_electron-publish/out/progress)
+    * [.ProgressBar](#ProgressBar)
+        * [`.interrupt(message)`](#module_electron-publish/out/progress.ProgressBar+interrupt)
+        * [`.render()`](#module_electron-publish/out/progress.ProgressBar+render)
+        * [`.terminate()`](#module_electron-publish/out/progress.ProgressBar+terminate)
+        * [`.tick(delta)`](#module_electron-publish/out/progress.ProgressBar+tick)
+        * [`.update(ratio)`](#module_electron-publish/out/progress.ProgressBar+update)
+    * [.ProgressCallback](#ProgressCallback)
+        * [`.update(transferred, total)`](#module_electron-publish/out/progress.ProgressCallback+update)
+
+<a name="ProgressBar"></a>
+
+### ProgressBar
+**Kind**: class of <code>[electron-publish/out/progress](#module_electron-publish/out/progress)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| total| <code>number</code> | 
+
+
+* [.ProgressBar](#ProgressBar)
+    * [`.interrupt(message)`](#module_electron-publish/out/progress.ProgressBar+interrupt)
+    * [`.render()`](#module_electron-publish/out/progress.ProgressBar+render)
+    * [`.terminate()`](#module_electron-publish/out/progress.ProgressBar+terminate)
+    * [`.tick(delta)`](#module_electron-publish/out/progress.ProgressBar+tick)
+    * [`.update(ratio)`](#module_electron-publish/out/progress.ProgressBar+update)
+
+<a name="module_electron-publish/out/progress.ProgressBar+interrupt"></a>
+
+#### `progressBar.interrupt(message)`
+"interrupt" the progress bar and write a message above it.
+
+**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
+
+| Param | Type |
+| --- | --- |
+| message | <code>string</code> | 
+
+<a name="module_electron-publish/out/progress.ProgressBar+render"></a>
+
+#### `progressBar.render()`
+**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
+<a name="module_electron-publish/out/progress.ProgressBar+terminate"></a>
+
+#### `progressBar.terminate()`
+**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
+<a name="module_electron-publish/out/progress.ProgressBar+tick"></a>
+
+#### `progressBar.tick(delta)`
+"tick" the progress bar with optional `len` and optional `tokens`.
+
+**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
+
+| Param | Type |
+| --- | --- |
+| delta | <code>number</code> | 
+
+<a name="module_electron-publish/out/progress.ProgressBar+update"></a>
+
+#### `progressBar.update(ratio)`
+"update" the progress bar to represent an exact percentage.
+The ratio (between 0 and 1) specified will be multiplied by `total` and
+floored, representing the closest available "tick." For example, if a
+progress bar has a length of 3 and `update(0.5)` is called, the progress
+will be set to 1.
+
+A ratio of 0.5 will attempt to set the progress to halfway.
+
+**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
+
+| Param | Type |
+| --- | --- |
+| ratio | <code>number</code> | 
+
+<a name="ProgressCallback"></a>
+
+### ProgressCallback
+**Kind**: class of <code>[electron-publish/out/progress](#module_electron-publish/out/progress)</code>  
+<a name="module_electron-publish/out/progress.ProgressCallback+update"></a>
+
+#### `progressCallback.update(transferred, total)`
+**Kind**: instance method of <code>[ProgressCallback](#ProgressCallback)</code>  
+
+| Param | Type |
+| --- | --- |
+| transferred | <code>number</code> | 
+| total | <code>number</code> | 
+
 <a name="module_electron-publish"></a>
 
 ## electron-publish
@@ -3833,12 +3928,12 @@ Please note — on macOS [you need to register an `open-url` event handler](http
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
     * [.Publisher](#Publisher)
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
         * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="PublishContext"></a>
@@ -3875,7 +3970,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish.HttpPublisher+upload"></a>
@@ -3918,7 +4013,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 **Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
 <a name="module_electron-publish.Publisher+createProgressBar"></a>
 
-#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
 **Access**: protected  
 
@@ -3937,7 +4032,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="Publisher"></a>
@@ -3948,7 +4043,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 * [.Publisher](#Publisher)
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
     * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish.Publisher+toString"></a>
@@ -3967,7 +4062,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 
 <a name="module_electron-publish.Publisher+createProgressBar"></a>
 
-#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>module:progress-ex.default</code>
+#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of <code>[Publisher](#Publisher)</code>  
 **Access**: protected  
 
@@ -3986,7 +4081,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | --- | --- |
 | file | <code>string</code> | 
 | fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>module:progress-ex.default</code> \| <code>null</code> | 
+| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="module_electron-updater/out/BintrayProvider"></a>

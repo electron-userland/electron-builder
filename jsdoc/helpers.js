@@ -125,7 +125,6 @@ function identifierToLink(id, root) {
       !id.startsWith("module:http.") && 
       !id.startsWith("module:bluebird-lst.") && 
       !id.startsWith("module:child_process.") &&
-      !id.startsWith("module:progress-ex") &&
       !id.endsWith(".T") &&
       !id.endsWith(".R") &&
       !id.endsWith(".K") &&
