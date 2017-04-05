@@ -1,9 +1,9 @@
-import { PlatformSpecificBuildOptions, TargetConfigType } from "electron-builder-core"
+import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
 
 /**
  * Linux Options
  */
-export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
+export interface LinuxBuildOptions extends PlatformSpecificBuildOptions, CommonLinuxOptions {
   /**
    * The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
    */
@@ -40,21 +40,13 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
   readonly vendor?: string | null
 
   /**
-   * should be not documented, only to experiment
-   * @private
-   */
-  readonly fpm?: Array<string> | null
-
-  /**
    * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
    */
   readonly desktop?: { [key: string]: string; } | null
 
-  readonly afterInstall?: string | null
-  readonly afterRemove?: string | null
-
   /**
-   * Package dependencies. Consider to specify in the target options (e.g. in the `deb` or `rpm`).
+   * @deprecated
+   * @private
    */
   readonly depends?: string[] | null
 
@@ -69,17 +61,48 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions {
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
+
+  /**
+   * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+   */
+  readonly synopsis?: string | null
+}
+
+export interface CommonLinuxOptions {
+  readonly synopsis?: string | null
+  readonly description?: string | null
+
+  readonly category?: string | null
+  readonly packageCategory?: string | null
+
+  readonly desktop?: { [key: string]: string; } | null
+
+  readonly vendor?: string | null
+  readonly maintainer?: string | null
+
+  readonly afterInstall?: string | null
+  readonly afterRemove?: string | null
+
+  /**
+   * should be not documented, only to experiment
+   * @private
+   */
+  readonly fpm?: Array<string> | null
+}
+
+export interface LinuxTargetSpecificOptions extends TargetSpecificOptions, CommonLinuxOptions {
+  /**
+   * Package dependencies.
+   */
+  readonly depends?: string[] | null
+
+  readonly icon?: string
 }
 
 /**
  * Debian Package Specific Options
  */
-export interface DebOptions extends LinuxBuildOptions {
-  /**
-   * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
-   */
-  readonly synopsis?: string | null
-
+export interface DebOptions extends LinuxTargetSpecificOptions {
   /**
    * The compression type.
    * @default xz

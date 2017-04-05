@@ -4,7 +4,7 @@ import { statOrNull } from "electron-builder-util/out/fs"
 import { ensureDir, outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxBuildOptions } from "../options/linuxOptions"
+import { LinuxBuildOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 
 export const installPrefix = "/opt"
 
@@ -101,21 +101,21 @@ export class LinuxTargetHelper {
     return options.description || this.packager.appInfo.description
   }
 
-  async computeDesktopEntry(platformSpecificBuildOptions: LinuxBuildOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
+  async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
     const appInfo = this.packager.appInfo
 
     const productFilename = appInfo.productFilename
 
     const desktopMeta: any = Object.assign({
       Name: appInfo.productName,
-      Comment: this.getDescription(platformSpecificBuildOptions),
+      Comment: this.getDescription(targetSpecificOptions),
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}"` : exec,
       Terminal: "false",
       Type: "Application",
       Icon: this.packager.executableName,
-    }, extra, platformSpecificBuildOptions.desktop)
+    }, extra, targetSpecificOptions.desktop)
 
-    const category = platformSpecificBuildOptions.category
+    const category = targetSpecificOptions.category
     if (!isEmptyOrSpaces(category)) {
       if (category)
       desktopMeta.Categories = category + (category.endsWith(";") ? "" : ";")

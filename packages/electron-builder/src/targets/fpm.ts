@@ -9,7 +9,7 @@ import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
-import { DebOptions } from "../options/linuxOptions"
+import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
@@ -28,7 +28,7 @@ function downloadFpm(): Promise<string> {
 }
 
 export default class FpmTarget extends Target {
-  readonly options = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  readonly options: LinuxTargetSpecificOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
 
   private readonly scriptFiles: Promise<Array<string>>
 
@@ -57,8 +57,8 @@ export default class FpmTarget extends Target {
 
     //noinspection ES6MissingAwait
     return await BluebirdPromise.all<string>([
-      writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterInstall, "after-install.tpl"), templateOptions),
-      writeConfigFile(packager.info.tempDirManager, getResource(packager.platformSpecificBuildOptions.afterRemove, "after-remove.tpl"), templateOptions)
+      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
+      writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions)
     ])
   }
 
@@ -115,11 +115,10 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      args.push("--deb-compression", options.compression || (packager.config.compression === "store" ? "gz" : "xz"))
+      args.push("--deb-compression", (<DebOptions>options).compression || (packager.config.compression === "store" ? "gz" : "xz"))
       use((<DebOptions>options).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
-      // args.push("--rpm-compression", options.compression || (this.config.compression === "store" ? "none" : "xz"))
       args.push("--rpm-os", "linux")
 
       if (synopsis != null) {
@@ -127,12 +126,14 @@ export default class FpmTarget extends Target {
       }
     }
 
-    let depends = options.depends
+    // noinspection JSDeprecatedSymbols
+    let depends = options.depends || this.packager.platformSpecificBuildOptions.depends
     if (depends == null) {
       if (target === "deb") {
         depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
       }
       else if (target === "pacman") {
+        // noinspection SpellCheckingInspection
         depends = ["c-ares", "ffmpeg", "gtk3", "http-parser", "libevent", "libvpx", "libxslt", "libxss", "minizip", "nss", "re2", "snappy", "libnotify", "libappindicator-gtk2", "libappindicator-gtk3", "libappindicator-sharp"]
       }
       else if (target === "rpm") {

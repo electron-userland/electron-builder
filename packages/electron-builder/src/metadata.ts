@@ -1,6 +1,6 @@
 import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FileAssociation, FilePattern, MetadataDirectories, PlatformSpecificBuildOptions, Protocol, RepositoryInfo, Target } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { DebOptions, LinuxBuildOptions, SnapOptions } from "./options/linuxOptions"
+import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
 import { AppXOptions, NsisOptions, NsisWebOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
@@ -217,12 +217,12 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly linux?: LinuxBuildOptions | null
   readonly deb?: DebOptions | null
   readonly snap?: SnapOptions | null
-  readonly appimage?: LinuxBuildOptions | null
-  readonly pacman?: LinuxBuildOptions | null
-  readonly rpm?: LinuxBuildOptions | null
-  readonly freebsd?: LinuxBuildOptions | null
-  readonly p5p?: LinuxBuildOptions | null
-  readonly apk?: LinuxBuildOptions | null
+  readonly appimage?: LinuxTargetSpecificOptions | null
+  readonly pacman?: LinuxTargetSpecificOptions | null
+  readonly rpm?: LinuxTargetSpecificOptions | null
+  readonly freebsd?: LinuxTargetSpecificOptions | null
+  readonly p5p?: LinuxTargetSpecificOptions | null
+  readonly apk?: LinuxTargetSpecificOptions | null
   
   /**
    * @private

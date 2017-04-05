@@ -21,6 +21,4 @@ test.ifNotWindows("custom depends", app({
     expect(content).toMatchSnapshot()
     return false
   }
-}, {
-  expectedDepends: "foo",
 }))

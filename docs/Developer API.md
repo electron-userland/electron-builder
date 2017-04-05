@@ -21,6 +21,8 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/macPackager">electron-builder/out/macPackager</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/options/linuxOptions">electron-builder/out/options/linuxOptions</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/packager/dirPackager">electron-builder/out/packager/dirPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/packager/mac">electron-builder/out/packager/mac</a></dt>
@@ -1188,6 +1190,44 @@
 | --- | --- |
 | executableFile | <code>string</code> | 
 
+<a name="module_electron-builder/out/options/linuxOptions"></a>
+
+## electron-builder/out/options/linuxOptions
+
+* [electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)
+    * [`.CommonLinuxOptions`](#CommonLinuxOptions)
+    * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
+
+<a name="CommonLinuxOptions"></a>
+
+### `CommonLinuxOptions`
+**Kind**: interface of <code>[electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| synopsis| <code>string</code> \| <code>null</code> | 
+| description| <code>string</code> \| <code>null</code> | 
+| category| <code>string</code> \| <code>null</code> | 
+| packageCategory| <code>string</code> \| <code>null</code> | 
+| desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
+| vendor| <code>string</code> \| <code>null</code> | 
+| maintainer| <code>string</code> \| <code>null</code> | 
+| afterInstall| <code>string</code> \| <code>null</code> | 
+| afterRemove| <code>string</code> \| <code>null</code> | 
+
+<a name="LinuxTargetSpecificOptions"></a>
+
+### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
+**Kind**: interface of <code>[electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)</code>  
+**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxTargetSpecificOptions-depends"></a>Package dependencies. |
+| icon| <code>string</code> | <a name="LinuxTargetSpecificOptions-icon"></a> |
+
 <a name="module_electron-builder/out/packager/dirPackager"></a>
 
 ## electron-builder/out/packager/dirPackager
@@ -1933,7 +1973,7 @@
 
 | Name | Type |
 | --- | --- |
-| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>any</code> | 
+| options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[LinuxTargetSpecificOptions](#LinuxTargetSpecificOptions)</code> | 
 
 
 * [.FpmTarget](#FpmTarget) ⇐ <code>[Target](#Target)</code>
@@ -1961,7 +2001,7 @@
 
 * [electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)
     * [.LinuxTargetHelper](#LinuxTargetHelper)
-        * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
 
 <a name="LinuxTargetHelper"></a>
@@ -1977,17 +2017,17 @@
 
 
 * [.LinuxTargetHelper](#LinuxTargetHelper)
-    * [`.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry"></a>
 
-#### `linuxTargetHelper.computeDesktopEntry(platformSpecificBuildOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `linuxTargetHelper.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
 **Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
 
 | Param | Type |
 | --- | --- |
-| platformSpecificBuildOptions | <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
+| targetSpecificOptions | <code>[LinuxTargetSpecificOptions](#LinuxTargetSpecificOptions)</code> | 
 | exec | <code>string</code> | 
 | destination | <code>string</code> \| <code>null</code> | 
 | extra | <code>Object&lt;string, any&gt;</code> | 

@@ -104,11 +104,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.BuildResult`](#BuildResult)
     * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
     * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
-    * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
+    * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>
     * [`.DmgContent`](#DmgContent)
     * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
     * [`.DmgWindow`](#DmgWindow)
-    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>
     * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
@@ -282,25 +282,24 @@ Configuration Options
 | linux| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-linux"></a> |
 | deb| <code>[DebOptions](#DebOptions)</code> \| <code>null</code> | <a name="Config-deb"></a> |
 | snap| <code>[SnapOptions](#SnapOptions)</code> \| <code>null</code> | <a name="Config-snap"></a> |
-| appimage| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-appimage"></a> |
-| pacman| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-pacman"></a> |
-| rpm| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-rpm"></a> |
-| freebsd| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-freebsd"></a> |
-| p5p| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-p5p"></a> |
-| apk| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-apk"></a> |
+| appimage| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-appimage"></a> |
+| pacman| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-pacman"></a> |
+| rpm| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-rpm"></a> |
+| freebsd| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-freebsd"></a> |
+| p5p| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-p5p"></a> |
+| apk| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-apk"></a> |
 
 <a name="DebOptions"></a>
 
-### `DebOptions` ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
+### `DebOptions` ⇐ <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>
 Debian Package Specific Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>  
+**Extends**: <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| synopsis| <code>string</code> \| <code>null</code> | <a name="DebOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description). |
 | compression = <code>xz</code>| <code>"gz"</code> \| <code>"bzip2"</code> \| <code>"xz"</code> \| <code>null</code> | <a name="DebOptions-compression"></a>The compression type. |
 | priority| <code>string</code> \| <code>null</code> | <a name="DebOptions-priority"></a>The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute. |
 | depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="DebOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`. |
@@ -374,11 +373,11 @@ DMG Windows Position and Size
 
 <a name="LinuxBuildOptions"></a>
 
-### `LinuxBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+### `LinuxBuildOptions` ⇐ <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>
 Linux Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -390,11 +389,9 @@ Linux Options
 | maintainer| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author). |
 | vendor| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author). |
 | desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value). |
-| afterInstall| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-afterInstall"></a> |
-| afterRemove| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-afterRemove"></a> |
-| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-depends"></a>Package dependencies. Consider to specify in the target options (e.g. in the `deb` or `rpm`). |
 | executableName| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-executableName"></a>The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`. |
 | icon| <code>string</code> | <a name="LinuxBuildOptions-icon"></a>The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file. |
+| synopsis| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description). |
 
 <a name="MacOptions"></a>
 

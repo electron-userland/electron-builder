@@ -26,6 +26,18 @@ Object {
 
 exports[`file associations only perMachine 1`] = `"Please set perMachine to true — file associations works on Windows only if installed for all users"`;
 
+exports[`installerHeaderIcon 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`menuCategory 1`] = `
 Object {
   "win": Array [

@@ -40,6 +40,24 @@ Object {
 }
 `;
 
+exports[`boring, MUI_HEADER 1`] = `
+Object {
+  "win": Array [],
+}
+`;
+
+exports[`boring, MUI_HEADER as option 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": null,
+      "file": "Test App ßW Setup 1.1.0.exe",
+      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`boring, only perMachine 1`] = `
 Object {
   "win": Array [
