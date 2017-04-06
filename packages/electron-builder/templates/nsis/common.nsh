@@ -14,7 +14,7 @@ Name "${PRODUCT_NAME}"
 
 !macro check64BitAndSetRegView
   ${IfNot} ${AtLeastWin7}
-    MessageBox MB_OK "Windows 7 and above is required"
+    MessageBox MB_OK "$(win7Required)"
     Quit
   ${EndIf}
 
@@ -23,7 +23,7 @@ Name "${PRODUCT_NAME}"
       SetRegView 64
     ${Else}
       !ifndef APP_32
-        MessageBox MB_OK|MB_ICONEXCLAMATION "64-bit Windows is required"
+        MessageBox MB_OK|MB_ICONEXCLAMATION "$(x64WinRequired)"
         Quit
       !endif
     ${EndIf}

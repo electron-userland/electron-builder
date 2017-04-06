@@ -7,7 +7,7 @@ Function un.onInit
       Quit
 
       # one-click installer executes uninstall section in the silent mode, but we must show message dialog if silent mode was not explicitly set by user (using /S flag)
-      !insertmacro CHECK_APP_RUNNING "uninstall"
+      !insertmacro CHECK_APP_RUNNING
       SetSilent silent
     !endif
   ${endIf}
@@ -22,7 +22,7 @@ FunctionEnd
 Section "un.install"
   !ifndef ONE_CLICK
     # for boring installer we check it here to show progress
-    !insertmacro CHECK_APP_RUNNING "uninstall"
+    !insertmacro CHECK_APP_RUNNING
   !endif
 
   !insertmacro setLinkVars

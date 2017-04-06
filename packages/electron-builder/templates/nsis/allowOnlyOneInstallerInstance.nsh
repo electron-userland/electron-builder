@@ -23,7 +23,7 @@
   launch:
 !macroend
 
-!macro CHECK_APP_RUNNING MODE
+!macro CHECK_APP_RUNNING
   ${GetProcessInfo} 0 $0 $1 $2 $3 $4
   ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
     ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
@@ -31,7 +31,7 @@
       ${if} ${Updated}
         Goto doStopProcess
       ${endif}
-      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${PRODUCT_NAME} is running. $\r$\nClick OK to close it and continue with ${MODE}." /SD IDOK IDOK doStopProcess
+      MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
       Quit
       doStopProcess:
         DetailPrint "Closing running ${PRODUCT_NAME} ..."

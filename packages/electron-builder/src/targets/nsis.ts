@@ -5,6 +5,7 @@ import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { log, subTask, warn } from "electron-builder-util/out/log"
 import { readFile, unlink } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
@@ -14,9 +15,12 @@ import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { archive } from "./archive"
 
+// noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
+// noinspection SpellCheckingInspection
 const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.10", "302a8adebf0b553f74cddd494154a586719ff9d4767e94d8a76547a9bb06200c")
+// noinspection SpellCheckingInspection
 const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
@@ -59,6 +63,7 @@ export default class NsisTarget extends Target {
     return await archive(packager.config.compression, format, archiveFile, appOutDir, true)
   }
 
+  // noinspection JSUnusedGlobalSymbols
   async finishBuild(): Promise<any> {
     log("Building NSIS installer")
     const filesToDelete: Array<string> = []
@@ -365,63 +370,30 @@ export default class NsisTarget extends Target {
     scriptHeader += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
     
     // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
-    let licensePage: Array<string> | null
-    const license = await packager.getResource(this.options.license, "license.rtf", "license.txt", "eula.rtf", "eula.txt", "LICENSE.rtf", "LICENSE.txt", "EULA.rtf", "EULA.txt", "LICENSE.RTF", "LICENSE.TXT", "EULA.RTF", "EULA.TXT")
-    if (license == null) {
-      const licenseFiles = (await packager.resourceList)
-        .filter(it => {
-          const name = it.toLowerCase()
-          return (name.startsWith("license_") || name.startsWith("eula_")) && (name.endsWith(".rtf") || name.endsWith(".txt"))
-        })
-      
-      if (licenseFiles.length === 0) {
-        licensePage = null
-      }
-      else {
-        licensePage = []
-        const unspecifiedLangs = new Set(bundledLanguages)
-
-        let defaultFile: string | null = null
-        const sortedFiles = licenseFiles.sort((a, b) => {
-          const aW = a.includes("_en") ? 0 : 100
-          const bW = b.includes("_en") ? 0 : 100
-          return aW === bW ? a.localeCompare(b) : aW - bW
-        })
-        for (const file of sortedFiles) {
-          let lang = file.match(/_([^.]+)\./)![1]
-          let langWithRegion
-          if (lang.includes("_")) {
-            langWithRegion = lang
-          }
-          else {
-            lang = lang.toLowerCase()
-            langWithRegion = langToLangWithRegion.get(lang)
-            if (langWithRegion == null) {
-              langWithRegion = `${lang}_${lang.toUpperCase()}`
-            }
-          }
-          
-          unspecifiedLangs.delete(langWithRegion)
-          const fullFile = path.join(packager.buildResourcesDir, file)
-          if (defaultFile == null) {
-            defaultFile = fullFile
-          }
-          licensePage.push(`LicenseLangString MUILicense ${lcid[langWithRegion] || lang} "${fullFile}"`)
-        }
-        
-        for (const l of unspecifiedLangs) {
-          licensePage.push(`LicenseLangString MUILicense ${lcid[l]} "${defaultFile}"`)
-        }
-        
-        licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
-      }
-    }
-    else {
-      licensePage = [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
-    }
-    
+    const licensePage = await this.computeLicensePage()
     if (licensePage != null) {
       scriptHeader += createMacro("licensePage", licensePage)
+    }
+
+    const messages = safeLoad(await readFile(path.join(__dirname, "..", "..", "templates", "nsis", "messages.yml"), "utf-8"))
+    const langs: Array<string> = []
+    for (const messageId of Object.keys(messages)) {
+      const langToTranslations = messages[messageId]
+      const unspecifiedLangs = new Set(bundledLanguages)
+      for (const lang of Object.keys(langToTranslations)) {
+        const langWithRegion = toLangWithRegion(lang)
+        langs.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
+        unspecifiedLangs.delete(langWithRegion)
+      }
+
+      const defaultTranslation = langToTranslations["en"].replace(/\n/g, "$\\r$\\n")
+      for (const langWithRegion of unspecifiedLangs) {
+        langs.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
+      }
+    }
+
+    if (langs.length > 0) {
+      scriptHeader += "\n" + langs.join("\n") + "\n\n"
     }
 
     if (this.isPortable) {
@@ -476,6 +448,68 @@ export default class NsisTarget extends Target {
 
     return scriptHeader + originalScript
   }
+
+  private async computeLicensePage(): Promise<Array<string> | null> {
+    const packager = this.packager
+
+    const license = await packager.getResource(this.options.license, "license.rtf", "license.txt", "eula.rtf", "eula.txt", "LICENSE.rtf", "LICENSE.txt", "EULA.rtf", "EULA.txt", "LICENSE.RTF", "LICENSE.TXT", "EULA.RTF", "EULA.TXT")
+    if (license != null) {
+      return [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
+    }
+
+    const licenseFiles = (await packager.resourceList)
+      .filter(it => {
+        const name = it.toLowerCase()
+        return (name.startsWith("license_") || name.startsWith("eula_")) && (name.endsWith(".rtf") || name.endsWith(".txt"))
+      })
+
+    if (licenseFiles.length === 0) {
+      return null
+    }
+
+    const licensePage: Array<string> = []
+    const unspecifiedLangs = new Set(bundledLanguages)
+
+    let defaultFile: string | null = null
+    const sortedFiles = licenseFiles.sort((a, b) => {
+      const aW = a.includes("_en") ? 0 : 100
+      const bW = b.includes("_en") ? 0 : 100
+      return aW === bW ? a.localeCompare(b) : aW - bW
+    })
+    for (const file of sortedFiles) {
+      let lang = file.match(/_([^.]+)\./)![1]
+      let langWithRegion
+      if (lang.includes("_")) {
+        langWithRegion = lang
+      }
+      else {
+        lang = lang.toLowerCase()
+        langWithRegion = toLangWithRegion(lang)
+      }
+
+      unspecifiedLangs.delete(langWithRegion)
+      const fullFile = path.join(packager.buildResourcesDir, file)
+      if (defaultFile == null) {
+        defaultFile = fullFile
+      }
+      licensePage.push(`LicenseLangString MUILicense ${lcid[langWithRegion] || lang} "${fullFile}"`)
+    }
+
+    for (const l of unspecifiedLangs) {
+      licensePage.push(`LicenseLangString MUILicense ${lcid[l]} "${defaultFile}"`)
+    }
+
+    licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
+    return licensePage
+  }
+}
+
+function toLangWithRegion(lang: string): string {
+  let langWithRegion = langToLangWithRegion.get(lang)
+  if (langWithRegion == null) {
+    langWithRegion = `${lang}_${lang.toUpperCase()}`
+  }
+  return langWithRegion
 }
 
 function createMacro(name: string, lines: Array<string>) {

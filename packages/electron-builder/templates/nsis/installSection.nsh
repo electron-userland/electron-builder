@@ -90,10 +90,10 @@ ${IfNot} ${Silent}
 ${endif}
 
 !ifdef ONE_CLICK
-  !insertmacro CHECK_APP_RUNNING "install"
+  !insertmacro CHECK_APP_RUNNING
 !else
   ${IfNot} ${UAC_IsInnerInstance}
-    !insertmacro CHECK_APP_RUNNING "install"
+    !insertmacro CHECK_APP_RUNNING
   ${endif}
 !endif
 
