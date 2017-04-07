@@ -74,7 +74,7 @@ Array [
 exports[`arm deb 3`] = `
 Object {
   "Architecture": "armv7l",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3",
+  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
   "Description": " 
    Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
@@ -264,7 +264,7 @@ Array [
 exports[`deb 3`] = `
 Object {
   "Architecture": "amd64",
-  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3",
+  "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
   "Description": " 
    Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
