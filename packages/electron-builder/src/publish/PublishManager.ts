@@ -231,7 +231,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
         releaseDate: new Date().toISOString(),
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
+        url: await computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
       }, {spaces: 2})
 
       packager.info.dispatchArtifactCreated({
@@ -324,7 +324,7 @@ function requireProviderClass(provider: string): any | null {
   }
 }
 
-export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
+export async function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
   if (publishConfig.provider === "generic") {
     const baseUrlString = (<GenericServerOptions>publishConfig).url
     if (fileName == null) {
@@ -337,6 +337,10 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
 
   let baseUrl
   if (publishConfig.provider === "s3") {
+    const providerClass = requireProviderClass(publishConfig.provider)
+    if (providerClass != null && providerClass.modifyPublishConfig != null) {
+      publishConfig = await providerClass.modifyPublishConfig(publishConfig)
+    }
     baseUrl = s3Url((<S3Options>publishConfig))
   }
   else {
