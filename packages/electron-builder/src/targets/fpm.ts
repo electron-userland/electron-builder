@@ -130,7 +130,7 @@ export default class FpmTarget extends Target {
     let depends = options.depends || this.packager.platformSpecificBuildOptions.depends
     if (depends == null) {
       if (target === "deb") {
-        depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+        depends = ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1"]
       }
       else if (target === "pacman") {
         // noinspection SpellCheckingInspection
