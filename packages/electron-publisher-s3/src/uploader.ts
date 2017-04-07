@@ -47,7 +47,7 @@ export class S3Client {
   }
 
   createFileUploader(localFile: string, target: string, s3Options: any) {
-    return new Uploader(this, Object.assign({Key: encodeSpecialCharacters(target)}, s3Options), localFile)
+    return new Uploader(this, Object.assign({Key: target}, s3Options), localFile)
   }
 }
 
@@ -312,12 +312,6 @@ function cleanETag(eTag: string | null | undefined) {
 
 function compareMultipartETag(eTag: string | null | undefined, multipartETag: any) {
   return multipartETag.anyMatch(cleanETag(eTag))
-}
-
-function encodeSpecialCharacters(filename: string) {
-  // Note: these characters are valid in URIs, but S3 does not like them for
-  // some reason.
-  return encodeURI(filename).replace(/[!'()* ]/g, char => `%${char.charCodeAt(0).toString(16)}`)
 }
 
 function smallestPartSizeFromFileSize(fileSize: number) {

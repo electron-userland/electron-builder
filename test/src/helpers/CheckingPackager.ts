@@ -5,7 +5,7 @@ import OsXPackager from "electron-builder/out/macPackager"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
-import { SignOptions as MacSignOptions } from "electron-macos-sign"
+import { SignOptions as MacSignOptions } from "electron-osx-sign"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any

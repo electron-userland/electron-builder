@@ -1014,7 +1014,7 @@
 
 | Param | Type |
 | --- | --- |
-| opts | <code>module:electron-macos-sign.SignOptions</code> | 
+| opts | <code>module:electron-osx-sign.SignOptions</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+prepareAppInfo"></a>
 

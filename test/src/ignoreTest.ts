@@ -56,16 +56,16 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
         data.devDependencies = Object.assign({
-          "electron-macos-sign": "*",
+          "electron-osx-sign": "*",
         }, data.devDependencies)
       }),
-      outputFile(path.join(projectDir, "node_modules", "electron-macos-sign", "package.json"), "{}"),
+      outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
       // outputFile(path.join(projectDir, "ignoreMe"), ""),
     ])
   },
   packed: context => {
     return BluebirdPromise.all([
-      assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-macos-sign")).doesNotExist(),
+      assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", "electron-osx-sign")).doesNotExist(),
       assertThat(path.join(context.getResources(Platform.LINUX), "app", "ignoreMe")).doesNotExist(),
     ])
   },
