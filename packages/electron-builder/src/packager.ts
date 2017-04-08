@@ -372,11 +372,12 @@ export class Packager implements BuildInfo {
       return
     }
 
+    const frameworkInfo = {version: this.muonVersion || this.electronVersion, useCustomDist: this.muonVersion == null}
     const options = this.config
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-        env: getGypEnv(this.electronVersion, platform.nodeName, Arch[arch], true),
+        env: getGypEnv(frameworkInfo, platform.nodeName, Arch[arch], true),
       })
     }
 
@@ -400,7 +401,7 @@ export class Packager implements BuildInfo {
       log("Skip app dependencies rebuild because platform is different")
     }
     else {
-      await installOrRebuild(options, this.appDir, this.electronVersion, platform.nodeName, Arch[arch])
+      await installOrRebuild(options, this.appDir, frameworkInfo, platform.nodeName, Arch[arch])
     }
   }
 

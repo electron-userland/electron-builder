@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
 import { exec } from "electron-builder-util"
+import { log } from "electron-builder-util/out/log"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import yargs from "yargs"
 import { getElectronVersion, loadConfig } from "../util/readPackageJson"
-import { log } from "electron-builder-util/out/log"
 import { getGypEnv } from "../yarn"
 
 const args: any = yargs
@@ -21,8 +21,9 @@ async function main() {
   const projectDir = process.cwd()
   const config = await loadConfig(projectDir)
   log(`Execute node-gyp rebuild for ${args.platform}:${args.arch}`)
+  // this script must be used only for electron
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
-    env: getGypEnv(await getElectronVersion(config, projectDir), args.platform, args.arch, true),
+    env: getGypEnv({version: await getElectronVersion(config, projectDir), useCustomDist: true}, args.platform, args.arch, true),
   })
 }
 
