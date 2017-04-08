@@ -23,6 +23,8 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/options/linuxOptions">electron-builder/out/options/linuxOptions</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/options/winOptions">electron-builder/out/options/winOptions</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/packager/dirPackager">electron-builder/out/packager/dirPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/packager/mac">electron-builder/out/packager/mac</a></dt>
@@ -1227,6 +1229,39 @@
 | --- | --- | --- |
 | depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxTargetSpecificOptions-depends"></a>Package dependencies. |
 | icon| <code>string</code> | <a name="LinuxTargetSpecificOptions-icon"></a> |
+
+<a name="module_electron-builder/out/options/winOptions"></a>
+
+## electron-builder/out/options/winOptions
+
+* [electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)
+    * [`.CommonNsisOptions`](#CommonNsisOptions)
+    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](#CommonNsisOptions)</code>
+
+<a name="CommonNsisOptions"></a>
+
+### `CommonNsisOptions`
+**Kind**: interface of <code>[electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| unicode| <code>boolean</code> | 
+| guid| <code>string</code> \| <code>null</code> | 
+| warningsAsErrors| <code>boolean</code> | 
+
+<a name="PortableOptions"></a>
+
+### `PortableOptions` ⇐ <code>[CommonNsisOptions](#CommonNsisOptions)</code>
+Portable Specific Options ([portable](#Config-portable})
+
+**Kind**: interface of <code>[electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)</code>  
+**Extends**: <code>[CommonNsisOptions](#CommonNsisOptions)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| requestExecutionLevel = <code>user</code>| <code>"user"</code> \| <code>"highest"</code> \| <code>"admin"</code> | <a name="PortableOptions-requestExecutionLevel"></a>The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows. |
 
 <a name="module_electron-builder/out/packager/dirPackager"></a>
 
@@ -2990,6 +3025,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | target| <code>Array&lt;string \| [TargetConfig](#TargetConfig)&gt;</code> \| <code>string</code> \| <code>[TargetConfig](#TargetConfig)</code> \| <code>null</code> | 
 | icon| <code>string</code> \| <code>null</code> | 
 | fileAssociations| <code>Array&lt;[FileAssociation](#FileAssociation)&gt;</code> \| <code>[FileAssociation](#FileAssociation)</code> | 
+| forceCodeSigning| <code>boolean</code> | 
 
 <a name="Protocol"></a>
 
@@ -3050,7 +3086,6 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 | Name | Type | Description |
 | --- | --- | --- |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="TargetSpecificOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). |
-| forceCodeSigning| <code>boolean</code> | <a name="TargetSpecificOptions-forceCodeSigning"></a> |
 | publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="TargetSpecificOptions-publish"></a> |
 
 <a name="Platform"></a>

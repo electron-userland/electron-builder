@@ -118,8 +118,6 @@ export interface TargetSpecificOptions {
    The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
    */
   readonly artifactName?: string | null
-
-  readonly forceCodeSigning?: boolean
   
   readonly publish?: Publish
 }
@@ -138,6 +136,8 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
   readonly icon?: string | null
 
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
+
+  readonly forceCodeSigning?: boolean
 }
 
 export const DEFAULT_TARGET = "default"

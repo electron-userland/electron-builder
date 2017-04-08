@@ -2,7 +2,7 @@
 
 WindowIcon Off
 AutoCloseWindow True
-RequestExecutionLevel user
+RequestExecutionLevel ${REQUEST_EXECUTION_LEVEL}
 
 SilentInstall silent
 

@@ -1,7 +1,7 @@
-import { PlatformSpecificBuildOptions, TargetConfigType } from "electron-builder-core"
+import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
 
 /**
- * Windows Specific Options
+ * Windows Specific Options ([win](#Config-win}).
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /**
@@ -69,11 +69,18 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly publisherName?: string | Array<string> | null
 }
 
+export interface CommonNsisOptions {
+  readonly unicode?: boolean
+  readonly guid?: string | null
+  readonly warningsAsErrors?: boolean
+}
+
 /**
- * NSIS specific options
+ * NSIS specific options ([nsis](#Config-nsis}).
+ *
  * See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
  */
-export interface NsisOptions {
+export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   /**
    * One-click installation.
    * @default true
@@ -208,8 +215,19 @@ export interface NsisOptions {
   readonly deleteAppDataOnUninstall?: boolean
 }
 
+/**
+ * Portable Specific Options ([portable](#Config-portable})
+ */
+export interface PortableOptions extends TargetSpecificOptions, CommonNsisOptions {
+  /**
+   * The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.
+   * @default user
+   */
+  readonly requestExecutionLevel?: "user" | "highest" | "admin"
+}
+
 /** 
- * Web Installer Specific Options
+ * Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
  */
 export interface NsisWebOptions extends NsisOptions {
   /**
@@ -228,7 +246,8 @@ export interface NsisWebOptions extends NsisOptions {
 }
 
 /**
- * Squirrel.Windows Options.
+ * Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows}).
+ *
  * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
  */
 export interface SquirrelWindowsOptions extends WinBuildOptions {
@@ -270,7 +289,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 }
 
 /**
- * AppX Options
+ * AppX Options ([appx](#Config-appx}).
  * @see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */
 export interface AppXOptions {

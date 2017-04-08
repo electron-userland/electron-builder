@@ -9,7 +9,7 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
-import { NsisOptions } from "../options/winOptions"
+import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
@@ -154,7 +154,10 @@ export default class NsisTarget extends Target {
     }
 
     this.configureDefinesForAllTypeOfInstaller(defines)
-    if (!isPortable) {
+    if (isPortable) {
+      defines.REQUEST_EXECUTION_LEVEL = (<PortableOptions>options).requestExecutionLevel || "user"
+    }
+    else {
       await this.configureDefines(oneClick, defines)
     }
 
@@ -375,29 +378,14 @@ export default class NsisTarget extends Target {
       scriptHeader += createMacro("licensePage", licensePage)
     }
 
-    const messages = safeLoad(await readFile(path.join(__dirname, "..", "..", "templates", "nsis", "messages.yml"), "utf-8"))
-    const langs: Array<string> = []
-    for (const messageId of Object.keys(messages)) {
-      const langToTranslations = messages[messageId]
-      const unspecifiedLangs = new Set(bundledLanguages)
-      for (const lang of Object.keys(langToTranslations)) {
-        const langWithRegion = toLangWithRegion(lang)
-        langs.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
-        unspecifiedLangs.delete(langWithRegion)
-      }
-
-      const defaultTranslation = langToTranslations["en"].replace(/\n/g, "$\\r$\\n")
-      for (const langWithRegion of unspecifiedLangs) {
-        langs.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
-      }
-    }
-
-    if (langs.length > 0) {
-      scriptHeader += "\n" + langs.join("\n") + "\n\n"
-    }
+    scriptHeader += "\n" + computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, "messages.yml"), "utf-8"))).join("\n") + "\n\n"
 
     if (this.isPortable) {
       return scriptHeader + originalScript
+    }
+
+    if (this.options.oneClick === false) {
+      scriptHeader += "\n" + computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, "boringMessages.yml"), "utf-8"))).join("\n") + "\n\n"
     }
 
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
@@ -502,6 +490,25 @@ export default class NsisTarget extends Target {
     licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
     return licensePage
   }
+}
+
+function computeCustomMessageTranslations(messages: any): Array<string> {
+  const result: Array<string> = []
+  for (const messageId of Object.keys(messages)) {
+    const langToTranslations = messages[messageId]
+    const unspecifiedLangs = new Set(bundledLanguages)
+    for (const lang of Object.keys(langToTranslations)) {
+      const langWithRegion = toLangWithRegion(lang)
+      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
+      unspecifiedLangs.delete(langWithRegion)
+    }
+
+    const defaultTranslation = langToTranslations["en"].replace(/\n/g, "$\\r$\\n")
+    for (const langWithRegion of unspecifiedLangs) {
+      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
+    }
+  }
+  return result
 }
 
 function toLangWithRegion(lang: string): string {

@@ -2,7 +2,7 @@ import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
-import { AppXOptions, NsisOptions, NsisWebOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
+import { AppXOptions, NsisOptions, NsisWebOptions, PortableOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 
 /**
@@ -207,12 +207,12 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly dmg?: DmgOptions | null
   readonly pkg?: PkgOptions  | null
 
-  readonly win?: WinBuildOptions  | null
-  readonly nsis?: NsisOptions  | null
-  readonly nsisWeb?: NsisWebOptions  | null
-  readonly portable?: NsisOptions  | null
-  readonly appx?: AppXOptions  | null
-  readonly squirrelWindows?: SquirrelWindowsOptions  | null
+  readonly win?: WinBuildOptions | null
+  readonly nsis?: NsisOptions | null
+  readonly nsisWeb?: NsisWebOptions | null
+  readonly portable?: PortableOptions | null
+  readonly appx?: AppXOptions | null
+  readonly squirrelWindows?: SquirrelWindowsOptions | null
 
   readonly linux?: LinuxBuildOptions | null
   readonly deb?: DebOptions | null

@@ -1,0 +1,18 @@
+chooseInstallationOptions:
+  en: Choose Installation Options
+  ru: Выберите опции установки
+chooseUninstallationOptions:
+  en: Choose Uninstallation Options
+  ru: Выберите опции удаления
+freshInstallForAll:
+  en: Fresh install for all users.
+  ru: Новая установка для всех пользователей.
+freshInstallForCurrent:
+  en: Fresh install for current user only.
+  ru: Новая установка только для текущего пользователя.
+onlyForMe:
+  en: Only for &me
+  ru: Только для &меня
+forAll:
+  en: Anyone who uses this computer (&all users)
+  ru: Для &всех пользователей данного компьютера

@@ -112,7 +112,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
-    * [`.NsisOptions`](#NsisOptions)
+    * [`.NsisOptions`](#NsisOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
     * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
@@ -141,7 +141,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 <a name="AppXOptions"></a>
 
 ### `AppXOptions`
-AppX Options
+AppX Options ([appx](#Config-appx}).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **See**: [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).  
@@ -276,7 +276,7 @@ Configuration Options
 | win| <code>[WinBuildOptions](#WinBuildOptions)</code> \| <code>null</code> | <a name="Config-win"></a> |
 | nsis| <code>[NsisOptions](#NsisOptions)</code> \| <code>null</code> | <a name="Config-nsis"></a> |
 | nsisWeb| <code>[NsisWebOptions](#NsisWebOptions)</code> \| <code>null</code> | <a name="Config-nsisWeb"></a> |
-| portable| <code>[NsisOptions](#NsisOptions)</code> \| <code>null</code> | <a name="Config-portable"></a> |
+| portable| <code>[PortableOptions](Developer-API#PortableOptions)</code> \| <code>null</code> | <a name="Config-portable"></a> |
 | appx| <code>[AppXOptions](#AppXOptions)</code> \| <code>null</code> | <a name="Config-appx"></a> |
 | squirrelWindows| <code>[SquirrelWindowsOptions](#SquirrelWindowsOptions)</code> \| <code>null</code> | <a name="Config-squirrelWindows"></a> |
 | linux| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-linux"></a> |
@@ -454,11 +454,13 @@ Some standard fields should be defined in the `package.json`.
 
 <a name="NsisOptions"></a>
 
-### `NsisOptions`
-NSIS specific options
+### `NsisOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+NSIS specific options ([nsis](#Config-nsis}).
+
 See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -488,7 +490,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 <a name="NsisWebOptions"></a>
 
 ### `NsisWebOptions` ⇐ <code>[NsisOptions](#NsisOptions)</code>
-Web Installer Specific Options
+Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[NsisOptions](#NsisOptions)</code>  
@@ -558,7 +560,8 @@ Web Installer Specific Options
 <a name="SquirrelWindowsOptions"></a>
 
 ### `SquirrelWindowsOptions` ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-Squirrel.Windows Options.
+Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows}).
+
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
@@ -577,7 +580,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 <a name="WinBuildOptions"></a>
 
 ### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
-Windows Specific Options
+Windows Specific Options ([win](#Config-win}).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  

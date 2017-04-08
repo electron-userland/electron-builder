@@ -114,23 +114,3 @@ test.ifAll("allowToChangeInstallationDirectory", app({
     await doTest(context.outDir, false)
   }
 }))
-
-test.ifNotCiMac("portable", app({
-  targets: Platform.WINDOWS.createTarget(["portable"]),
-  config: {
-    nsis: {
-    }
-  }
-}))
-
-test.ifAll.ifNotCiMac("portable - artifactName", app({
-  targets: Platform.WINDOWS.createTarget(["portable"]),
-  config: {
-    "nsis": {
-      "artifactName": "${productName}Installer.${version}.${ext}"
-    },
-    "portable": {
-      "artifactName": "${productName}Portable.${version}.${ext}"
-    }
-  }
-}))
