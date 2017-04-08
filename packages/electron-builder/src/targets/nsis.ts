@@ -25,15 +25,63 @@ const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cd
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
-export default class NsisTarget extends Target {
+interface PackageFileInfo {
+  file: string
+}
+
+export class AppPackageHelper {
+  private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
+  private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()
+
+  /** @private */
+  refCount = 0
+
+  async packArch(arch: Arch, target: NsisTarget) {
+    let infoPromise = this.archToFileInfo.get(arch)
+    if (infoPromise == null) {
+      infoPromise = subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, target.buildAppPackage(target.archs.get(arch)!, arch))
+        .then(it => {return {file: it} })
+      this.archToFileInfo.set(arch, infoPromise)
+    }
+
+    const info = await infoPromise
+    if (target.isWebInstaller) {
+      this.infoToIsDelete.set(info, false)
+    }
+    else if (!this.infoToIsDelete.has(info)) {
+      this.infoToIsDelete.set(info, true)
+    }
+    return info.file
+  }
+
+  async finishBuild(): Promise<any> {
+    if (--this.refCount > 0) {
+      return
+    }
+
+    const filesToDelete: Array<string> = []
+    for (let [info, isDelete]  of this.infoToIsDelete.entries()) {
+      if (isDelete) {
+        filesToDelete.push(info.file)
+      }
+    }
+
+    await BluebirdPromise.map(filesToDelete, it => unlink(it))
+  }
+}
+
+export class NsisTarget extends Target {
   readonly options: NsisOptions
 
-  private archs: Map<Arch, string> = new Map()
+  /** @private */
+  readonly archs: Map<Arch, string> = new Map()
 
   private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
-  constructor(protected readonly packager: WinPackager, readonly outDir: string, targetName: string) {
+  constructor(protected readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
     super(targetName)
+
+    this.packageHelper.refCount++
 
     let options = this.packager.config.nsis || Object.create(null)
     if (targetName !== "nsis") {
@@ -51,7 +99,8 @@ export default class NsisTarget extends Target {
     this.archs.set(arch, appOutDir)
   }
 
-  private async buildAppPackage(appOutDir: string, arch: Arch) {
+  /** @private */
+  async buildAppPackage(appOutDir: string, arch: Arch) {
     await BluebirdPromise.all([
       copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
       copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
@@ -66,14 +115,11 @@ export default class NsisTarget extends Target {
   // noinspection JSUnusedGlobalSymbols
   async finishBuild(): Promise<any> {
     log("Building NSIS installer")
-    const filesToDelete: Array<string> = []
     try {
-      await this.buildInstaller(filesToDelete)
+      await this.buildInstaller()
     }
     finally {
-      if (filesToDelete.length > 0) {
-        await BluebirdPromise.map(filesToDelete, it => unlink(it))
-      }
+      await this.packageHelper.finishBuild()
     }
   }
 
@@ -85,7 +131,7 @@ export default class NsisTarget extends Target {
     return this.name === "portable"
   }
 
-  private async buildInstaller(filesToDelete: Array<string>): Promise<any> {
+  private async buildInstaller(): Promise<any> {
     const isPortable = this.isPortable
 
     const packager = this.packager
@@ -140,15 +186,12 @@ export default class NsisTarget extends Target {
     }
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
-        const file = await subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, this.buildAppPackage(this.archs.get(arch)!, arch))
+        const file = await this.packageHelper.packArch(arch, this, )
         defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
         defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)
-        }
-        else {
-          filesToDelete.push(file)
         }
       })
     }
@@ -195,7 +238,7 @@ export default class NsisTarget extends Target {
     return this.options.unicode == null ? true : this.options.unicode
   }
 
-  protected get isWebInstaller(): boolean {
+  get isWebInstaller(): boolean {
     return false
   }
 

@@ -1,15 +1,16 @@
 import { Platform } from "electron-builder"
 import { app } from "../helpers/packTester"
 
-test.ifNotCiMac("portable", app({
-  targets: Platform.WINDOWS.createTarget(["portable"]),
+// build in parallel - https://github.com/electron-userland/electron-builder/issues/1340#issuecomment-286061789
+test.ifAll.ifNotCiMac("portable", app({
+  targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
   config: {
     nsis: {
     }
   }
 }))
 
-test.ifAll.ifNotCiMac("portable - artifactName and request execution level", app({
+test.ifNotCiMac("portable - artifactName and request execution level", app({
   targets: Platform.WINDOWS.createTarget(["portable"]),
   config: {
     "nsis": {

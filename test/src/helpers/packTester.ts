@@ -229,7 +229,9 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
     expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
-  expect(parseDebControl(await exec("dpkg", ["--info", packageFile]))).toMatchSnapshot()
+  const control = parseDebControl(await exec("dpkg", ["--info", packageFile]))
+  delete control.Version
+  expect(control).toMatchSnapshot()
 }
 
 function parseDebControl(info: string): any {

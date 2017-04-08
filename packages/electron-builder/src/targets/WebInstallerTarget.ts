@@ -1,14 +1,14 @@
 import { NsisWebOptions } from "../options/winOptions"
 import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
 import { WinPackager } from "../winPackager"
-import NsisTarget from "./nsis"
+import { AppPackageHelper, NsisTarget } from "./nsis"
 
-export default class WebInstallerTarget extends NsisTarget {
-  constructor(packager: WinPackager, outDir: string, targetName: string) {
-    super(packager, outDir, targetName)
+export class WebInstallerTarget extends NsisTarget {
+  constructor(packager: WinPackager, outDir: string, targetName: string, packageHelper: AppPackageHelper) {
+    super(packager, outDir, targetName, packageHelper)
   }
 
-  protected get isWebInstaller(): boolean {
+  get isWebInstaller(): boolean {
     return true
   }
 

@@ -10,8 +10,9 @@ import { WinBuildOptions } from "./options/winOptions"
 import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
-import NsisTarget from "./targets/nsis"
+import { AppPackageHelper, NsisTarget } from "./targets/nsis"
 import { createCommonTarget } from "./targets/targetFactory"
+import { WebInstallerTarget } from "./targets/WebInstallerTarget"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
@@ -94,36 +95,46 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+    let helper: AppPackageHelper | null
+    const getHelper = () => {
+      if (helper == null) {
+        helper = new AppPackageHelper()
+      }
+      return helper
+    }
+
     for (const name of targets) {
       if (name === DIR_TARGET) {
         continue
       }
 
-      const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
-        switch (name) {
-          case "nsis":
-          case "portable":
-            return require("./targets/nsis").default
-          case "nsis-web":
-            return require("./targets/WebInstaller").default
+      if (name === "nsis" || name === "portable") {
+        mapper(name, outDir => new NsisTarget(this, outDir, name, getHelper()))
+      }
+      else if (name === "nsis-web") {
+        mapper(name, outDir => new WebInstallerTarget(this, outDir, name, getHelper()))
+      }
+      else {
+        const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
+          switch (name) {
+            case "squirrel":
+              try {
+                return require("electron-builder-squirrel-windows").default
+              }
+              catch (e) {
+                throw new Error(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
+              }
 
-          case "squirrel":
-            try {
-              return require("electron-builder-squirrel-windows").default
-            }
-            catch (e) {
-              throw new Error(`Module electron-builder-squirrel-windows must be installed in addition to build Squirrel.Windows: ${e.stack || e}`)
-            }
+            case "appx":
+              return require("./targets/appx").default
 
-          case "appx":
-            return require("./targets/appx").default
+            default:
+              return null
+          }
+        })()
 
-          default:
-            return null
-        }
-      })()
-
-      mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (<any>targetClass)(this, outDir, name))
+        mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (<any>targetClass)(this, outDir, name))
+      }
     }
   }
 

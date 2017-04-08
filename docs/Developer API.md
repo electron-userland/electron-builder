@@ -61,7 +61,7 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/targetFactory">electron-builder/out/targets/targetFactory</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/targets/WebInstaller">electron-builder/out/targets/WebInstaller</a></dt>
+<dt><a href="#module_electron-builder/out/targets/WebInstallerTarget">electron-builder/out/targets/WebInstallerTarget</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/util/filter">electron-builder/out/util/filter</a></dt>
 <dd></dd>
@@ -2081,11 +2081,37 @@ Portable Specific Options ([portable](#Config-portable})
 ## electron-builder/out/targets/nsis
 
 * [electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)
+    * [.AppPackageHelper](#AppPackageHelper)
+        * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;string&gt;</code>
     * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+
+<a name="AppPackageHelper"></a>
+
+### AppPackageHelper
+**Kind**: class of <code>[electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)</code>  
+
+* [.AppPackageHelper](#AppPackageHelper)
+    * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;string&gt;</code>
+
+<a name="module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild"></a>
+
+#### `appPackageHelper.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[AppPackageHelper](#AppPackageHelper)</code>  
+<a name="module_electron-builder/out/targets/nsis.AppPackageHelper+packArch"></a>
+
+#### `appPackageHelper.packArch(arch, target)` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: instance method of <code>[AppPackageHelper](#AppPackageHelper)</code>  
+
+| Param | Type |
+| --- | --- |
+| arch | <code>[Arch](#Arch)</code> | 
+| target | <code>[NsisTarget](#NsisTarget)</code> | 
 
 <a name="NsisTarget"></a>
 
@@ -2306,29 +2332,34 @@ Portable Specific Options ([portable](#Config-portable})
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/targets/targetFactory.__type&gt;</code> | 
 
-<a name="module_electron-builder/out/targets/WebInstaller"></a>
+<a name="module_electron-builder/out/targets/WebInstallerTarget"></a>
 
-## electron-builder/out/targets/WebInstaller
+## electron-builder/out/targets/WebInstallerTarget
 
-* [electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)
-    * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+* [electron-builder/out/targets/WebInstallerTarget](#module_electron-builder/out/targets/WebInstallerTarget)
+    * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
+        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+        * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="WebInstallerTarget"></a>
 
-### WebInstallerTarget ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-**Kind**: class of <code>[electron-builder/out/targets/WebInstaller](#module_electron-builder/out/targets/WebInstaller)</code>  
-**Extends**: <code>module:electron-builder/out/targets/nsis.default</code>  
+### WebInstallerTarget ⇐ <code>[NsisTarget](#NsisTarget)</code>
+**Kind**: class of <code>[electron-builder/out/targets/WebInstallerTarget](#module_electron-builder/out/targets/WebInstallerTarget)</code>  
+**Extends**: <code>[NsisTarget](#NsisTarget)</code>  
 
-* [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>module:electron-builder/out/targets/nsis.default</code>
-    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+* [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
+    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
+    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
-<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+configureDefines"></a>
+<a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines"></a>
 
 #### `webInstallerTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Overrides**: <code>[configureDefines](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines)</code>  
 **Access**: protected  
 
 | Param | Type |
@@ -2336,11 +2367,26 @@ Portable Specific Options ([portable](#Config-portable})
 | oneClick | <code>boolean</code> | 
 | defines | <code>any</code> | 
 
-<a name="module_electron-builder/out/targets/WebInstaller.WebInstallerTarget+generateGitHubInstallerName"></a>
+<a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName"></a>
 
 #### `webInstallerTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
 **Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Overrides**: <code>[generateGitHubInstallerName](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName)</code>  
 **Access**: protected  
+<a name="module_electron-builder/out/targets/nsis.NsisTarget+build"></a>
+
+#### `webInstallerTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
+
+<a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
+
+#### `webInstallerTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
 <a name="module_electron-builder/out/util/filter"></a>
 
 ## electron-builder/out/util/filter

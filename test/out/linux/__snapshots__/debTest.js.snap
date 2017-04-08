@@ -85,7 +85,6 @@ Object {
   "Section": "devel",
   "Size": "89541",
   "Vendor": "Foo Bar <foo@example.com>",
-  "Version": "1.1.0-42",
 }
 `;
 
@@ -186,7 +185,6 @@ Object {
   "Section": "devel",
   "Size": "123301",
   "Vendor": "Foo Bar <foo@example.com>",
-  "Version": "1.1.0-42",
 }
 `;
 
@@ -275,6 +273,5 @@ Object {
   "Section": "devel",
   "Size": "123301",
   "Vendor": "Foo Bar <foo@example.com>",
-  "Version": "1.1.0-42",
 }
 `;
