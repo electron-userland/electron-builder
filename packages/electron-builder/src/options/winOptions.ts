@@ -1,7 +1,7 @@
 import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
 
 /**
- * Windows Specific Options ([win](#Config-win}).
+ * Windows Specific Options ([win](#Config-win)).
  */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /**
@@ -76,7 +76,7 @@ export interface CommonNsisOptions {
 }
 
 /**
- * NSIS specific options ([nsis](#Config-nsis}).
+ * NSIS specific options ([nsis](#Config-nsis)).
  *
  * See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
  */
@@ -216,7 +216,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
 }
 
 /**
- * Portable Specific Options ([portable](#Config-portable})
+ * Portable Specific Options ([portable](#Config-portable)).
  */
 export interface PortableOptions extends TargetSpecificOptions, CommonNsisOptions {
   /**
@@ -227,7 +227,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
 }
 
 /** 
- * Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
+ * Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
  */
 export interface NsisWebOptions extends NsisOptions {
   /**
@@ -246,7 +246,7 @@ export interface NsisWebOptions extends NsisOptions {
 }
 
 /**
- * Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows}).
+ * Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows)).
  *
  * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
  */
@@ -289,7 +289,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 }
 
 /**
- * AppX Options ([appx](#Config-appx}).
+ * AppX Options ([appx](#Config-appx)).
  * @see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */
 export interface AppXOptions {

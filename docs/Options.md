@@ -142,7 +142,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 <a name="AppXOptions"></a>
 
 ### `AppXOptions`
-AppX Options ([appx](#Config-appx}).
+AppX Options ([appx](#Config-appx)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **See**: [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).  
@@ -322,7 +322,7 @@ Debian Package Specific Options
 <a name="DmgOptions"></a>
 
 ### `DmgOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
-`dmg` macOS DMG Options
+macOS DMG Options ([dmg](#Config-dmg)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
@@ -397,7 +397,7 @@ Linux Options
 <a name="MacOptions"></a>
 
 ### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
-macOS Options
+macOS Options ([mac](#Config-mac)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
@@ -419,7 +419,7 @@ macOS Options
 <a name="MasBuildOptions"></a>
 
 ### `MasBuildOptions` ⇐ <code>[MacOptions](#MacOptions)</code>
-MAS (Mac Application Store) Options
+MAS (Mac Application Store) Options ([mas](#Config-mas)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[MacOptions](#MacOptions)</code>  
@@ -456,7 +456,7 @@ Some standard fields should be defined in the `package.json`.
 <a name="NsisOptions"></a>
 
 ### `NsisOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
-NSIS specific options ([nsis](#Config-nsis}).
+NSIS specific options ([nsis](#Config-nsis)).
 
 See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
 
@@ -491,7 +491,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 <a name="NsisWebOptions"></a>
 
 ### `NsisWebOptions` ⇐ <code>[NsisOptions](#NsisOptions)</code>
-Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
+Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[NsisOptions](#NsisOptions)</code>  
@@ -527,7 +527,7 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
 <a name="PkgOptions"></a>
 
 ### `PkgOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
-`pkg` macOS Product Archive Options
+macOS Product Archive Options ([pkg](#Config-pkg)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
@@ -542,7 +542,7 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
 <a name="PortableOptions"></a>
 
 ### `PortableOptions` ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
-Portable Specific Options ([portable](#Config-portable})
+Portable Specific Options ([portable](#Config-portable)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>  
@@ -574,7 +574,7 @@ Portable Specific Options ([portable](#Config-portable})
 <a name="SquirrelWindowsOptions"></a>
 
 ### `SquirrelWindowsOptions` ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows}).
+Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows)).
 
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
 
@@ -594,7 +594,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 <a name="WinBuildOptions"></a>
 
 ### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
-Windows Specific Options ([win](#Config-win}).
+Windows Specific Options ([win](#Config-win)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  

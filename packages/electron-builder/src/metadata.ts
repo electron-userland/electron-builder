@@ -35,7 +35,7 @@ export interface Metadata {
 
   /**
    * The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
-   * 
+   *
    * If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
    */
   readonly homepage?: string | null
@@ -205,7 +205,7 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly mac?: MacOptions | null
   readonly mas?: MasBuildOptions | null
   readonly dmg?: DmgOptions | null
-  readonly pkg?: PkgOptions  | null
+  readonly pkg?: PkgOptions | null
 
   readonly win?: WinBuildOptions | null
   readonly nsis?: NsisOptions | null

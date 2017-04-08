@@ -3,7 +3,7 @@ import { PlatformSpecificBuildOptions, TargetConfig, TargetSpecificOptions } fro
 export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
 /**
- * macOS Options
+ * macOS Options ([mac](#Config-mac)).
  */
 export interface MacOptions extends PlatformSpecificBuildOptions {
   /**
@@ -70,7 +70,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 }
 
 /**
- * `pkg` macOS Product Archive Options
+ * macOS Product Archive Options ([pkg](#Config-pkg)).
  */
 export interface PkgOptions extends TargetSpecificOptions {
   /**
@@ -98,7 +98,7 @@ export interface PkgOptions extends TargetSpecificOptions {
 }
 
 /**
- * `dmg` macOS DMG Options
+ * macOS DMG Options ([dmg](#Config-dmg)).
  */
 export interface DmgOptions extends TargetSpecificOptions {
   /**
@@ -197,7 +197,7 @@ export interface DmgContent {
 }
 
 /**
- * MAS (Mac Application Store) Options
+ * MAS (Mac Application Store) Options ([mas](#Config-mas)).
  */
 export interface MasBuildOptions extends MacOptions {
   /**
