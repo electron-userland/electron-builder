@@ -1233,11 +1233,6 @@
 <a name="module_electron-builder/out/options/winOptions"></a>
 
 ## electron-builder/out/options/winOptions
-
-* [electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)
-    * [`.CommonNsisOptions`](#CommonNsisOptions)
-    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](#CommonNsisOptions)</code>
-
 <a name="CommonNsisOptions"></a>
 
 ### `CommonNsisOptions`
@@ -1249,19 +1244,6 @@
 | unicode| <code>boolean</code> | 
 | guid| <code>string</code> \| <code>null</code> | 
 | warningsAsErrors| <code>boolean</code> | 
-
-<a name="PortableOptions"></a>
-
-### `PortableOptions` ⇐ <code>[CommonNsisOptions](#CommonNsisOptions)</code>
-Portable Specific Options ([portable](#Config-portable})
-
-**Kind**: interface of <code>[electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)</code>  
-**Extends**: <code>[CommonNsisOptions](#CommonNsisOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| requestExecutionLevel = <code>user</code>| <code>"user"</code> \| <code>"highest"</code> \| <code>"admin"</code> | <a name="PortableOptions-requestExecutionLevel"></a>The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows. |
 
 <a name="module_electron-builder/out/packager/dirPackager"></a>
 
@@ -2898,45 +2880,57 @@ Portable Specific Options ([portable](#Config-portable})
 ## electron-builder/out/yarn
 
 * [electron-builder/out/yarn](#module_electron-builder/out/yarn)
-    * [`.getGypEnv(electronVersion, platform, arch, buildFromSource)`](#module_electron-builder/out/yarn.getGypEnv) ⇒ <code>any</code>
-    * [`.installOrRebuild(config, appDir, electronVersion, platform, arch, forceInstall)`](#module_electron-builder/out/yarn.installOrRebuild) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.rebuild(appDir, electronVersion, platform, arch, additionalArgs, buildFromSource)`](#module_electron-builder/out/yarn.rebuild) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.DesktopFrameworkInfo`](#DesktopFrameworkInfo)
+    * [`.getGypEnv(frameworkInfo, platform, arch, buildFromSource)`](#module_electron-builder/out/yarn.getGypEnv) ⇒ <code>any</code>
+    * [`.installOrRebuild(config, appDir, frameworkInfo, platform, arch, forceInstall)`](#module_electron-builder/out/yarn.installOrRebuild) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.rebuild(appDir, frameworkInfo, platform, arch, additionalArgs, buildFromSource)`](#module_electron-builder/out/yarn.rebuild) ⇒ <code>Promise&lt;void&gt;</code>
+
+<a name="DesktopFrameworkInfo"></a>
+
+### `DesktopFrameworkInfo`
+**Kind**: interface of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **version**| <code>string</code> | 
+| **useCustomDist**| <code>boolean</code> | 
 
 <a name="module_electron-builder/out/yarn.getGypEnv"></a>
 
-### `electron-builder/out/yarn.getGypEnv(electronVersion, platform, arch, buildFromSource)` ⇒ <code>any</code>
+### `electron-builder/out/yarn.getGypEnv(frameworkInfo, platform, arch, buildFromSource)` ⇒ <code>any</code>
 **Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
 
 | Param | Type |
 | --- | --- |
-| electronVersion | <code>string</code> | 
+| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
 | platform | <code>string</code> | 
 | arch | <code>string</code> | 
 | buildFromSource | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/yarn.installOrRebuild"></a>
 
-### `electron-builder/out/yarn.installOrRebuild(config, appDir, electronVersion, platform, arch, forceInstall)` ⇒ <code>Promise&lt;void&gt;</code>
+### `electron-builder/out/yarn.installOrRebuild(config, appDir, frameworkInfo, platform, arch, forceInstall)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
 
 | Param | Type |
 | --- | --- |
 | config | <code>[Config](Options#Config)</code> | 
 | appDir | <code>string</code> | 
-| electronVersion | <code>string</code> | 
+| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
 | platform | <code>string</code> | 
 | arch | <code>string</code> | 
 | forceInstall | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/yarn.rebuild"></a>
 
-### `electron-builder/out/yarn.rebuild(appDir, electronVersion, platform, arch, additionalArgs, buildFromSource)` ⇒ <code>Promise&lt;void&gt;</code>
+### `electron-builder/out/yarn.rebuild(appDir, frameworkInfo, platform, arch, additionalArgs, buildFromSource)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
 
 | Param | Type |
 | --- | --- |
 | appDir | <code>string</code> | 
-| electronVersion | <code>string</code> | 
+| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
 | platform | <code>string</code> | 
 | arch | <code>string</code> | 
 | additionalArgs | <code>Array&lt;string&gt;</code> | 

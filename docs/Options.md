@@ -116,6 +116,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
     * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
     * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
@@ -276,7 +277,7 @@ Configuration Options
 | win| <code>[WinBuildOptions](#WinBuildOptions)</code> \| <code>null</code> | <a name="Config-win"></a> |
 | nsis| <code>[NsisOptions](#NsisOptions)</code> \| <code>null</code> | <a name="Config-nsis"></a> |
 | nsisWeb| <code>[NsisWebOptions](#NsisWebOptions)</code> \| <code>null</code> | <a name="Config-nsisWeb"></a> |
-| portable| <code>[PortableOptions](Developer-API#PortableOptions)</code> \| <code>null</code> | <a name="Config-portable"></a> |
+| portable| <code>[PortableOptions](#PortableOptions)</code> \| <code>null</code> | <a name="Config-portable"></a> |
 | appx| <code>[AppXOptions](#AppXOptions)</code> \| <code>null</code> | <a name="Config-appx"></a> |
 | squirrelWindows| <code>[SquirrelWindowsOptions](#SquirrelWindowsOptions)</code> \| <code>null</code> | <a name="Config-squirrelWindows"></a> |
 | linux| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-linux"></a> |
@@ -537,6 +538,19 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb}).
 | scripts = <code>&quot;build/pkg-scripts&quot;</code>| <code>string</code> \| <code>null</code> | <a name="PkgOptions-scripts"></a>The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html). |
 | installLocation = <code>&quot;/Applications&quot;</code>| <code>string</code> \| <code>null</code> | <a name="PkgOptions-installLocation"></a>The install location. |
 | identity| <code>string</code> \| <code>null</code> | <a name="PkgOptions-identity"></a> |
+
+<a name="PortableOptions"></a>
+
+### `PortableOptions` ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
+Portable Specific Options ([portable](#Config-portable})
+
+**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Extends**: <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| requestExecutionLevel = <code>user</code>| <code>"user"</code> \| <code>"highest"</code> \| <code>"admin"</code> | <a name="PortableOptions-requestExecutionLevel"></a>The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows. |
 
 <a name="SnapOptions"></a>
 

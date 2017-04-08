@@ -4,6 +4,6 @@ export { getArchSuffix, Platform, Arch, archFromString, Target, DIR_TARGET } fro
 export { BuildOptions, build, CliOptions, createTargets } from "./builder"
 export { Metadata, Config, AfterPackContext } from "./metadata"
 export { MacOptions, DmgOptions, MasBuildOptions, MacOsTargetName, PkgOptions, DmgContent, DmgWindow } from "./options/macOptions"
-export { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions, NsisWebOptions } from "./options/winOptions"
+export { WinBuildOptions, NsisOptions, SquirrelWindowsOptions, AppXOptions, NsisWebOptions, PortableOptions } from "./options/winOptions"
 export { LinuxBuildOptions, DebOptions, SnapOptions } from "./options/linuxOptions"
 export { buildForge } from "./forge/forge-maker"
