@@ -10,7 +10,7 @@ electron-builder [configuration](#Config) can be defined
    appId: "com.example.app"
    ```
 
-See [Config](#Config).
+See [Config](#Config). Or [config json schema](http://electron-userland.github.io/electron-builder/) viewer (experimental).
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
