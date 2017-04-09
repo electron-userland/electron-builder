@@ -31,6 +31,20 @@
     typescript "~2.1.5"
     yargs "^7.0.2"
 
+"@electron-builder/electron-download@4.2.1":
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/@electron-builder/electron-download/-/electron-download-4.2.1.tgz#b10b7b077523ae2f6c21dc05658df145d716c223"
+  dependencies:
+    debug "^2.6.3"
+    env-paths "^1.0.0"
+    fs-extra "^2.1.2"
+    minimist "^1.2.0"
+    nugget "^2.0.1"
+    path-exists "^3.0.0"
+    rc "^1.2.1"
+    semver "^5.3.0"
+    sumchecker "^2.0.2"
+
 "@types/electron@^1.4.35":
   version "1.4.35"
   resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.35.tgz#48e5e6ef0b49f27b9f78b87d80f796e3f0a4f33c"
@@ -1064,19 +1078,6 @@ ecc-jsbn@~0.1.1:
   dependencies:
     jsbn "~0.1.0"
 
-electron-download-tf@4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/electron-download-tf/-/electron-download-tf-4.1.1.tgz#127aaa6a10ccf598bc15ed6ae83390348ebb3b4b"
-  dependencies:
-    debug "^2.6.3"
-    fs-extra "^2.1.2"
-    minimist "^1.2.0"
-    nugget "^2.0.1"
-    path-exists "^3.0.0"
-    rc "^1.1.7"
-    semver "^5.3.0"
-    sumchecker "^2.0.2"
-
 electron-osx-sign@0.4.4:
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/electron-osx-sign/-/electron-osx-sign-0.4.4.tgz#afdf38450ccaebe6dabeca71fb0fad6294a8c57c"
@@ -1094,6 +1095,10 @@ end-of-stream@^1.0.0:
   resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.4.0.tgz#7a90d833efda6cfa6eac0f4949dbb0fad3a63206"
   dependencies:
     once "^1.4.0"
+
+env-paths@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/env-paths/-/env-paths-1.0.0.tgz#4168133b42bb05c38a35b1ae4397c8298ab369e0"
 
 "errno@>=0.1.1 <0.2.0-0":
   version "0.1.4"
@@ -2612,7 +2617,7 @@ randomatic@^1.1.3:
     is-number "^2.0.2"
     kind-of "^3.0.2"
 
-rc@^1.0.1, rc@^1.1.6, rc@^1.1.7:
+rc@^1.0.1, rc@^1.1.6, rc@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/rc/-/rc-1.2.1.tgz#2e03e8e42ee450b8cb3dce65be1bf8974e1dfd95"
   dependencies:

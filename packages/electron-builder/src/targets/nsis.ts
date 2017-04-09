@@ -4,7 +4,7 @@ import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, 
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { log, subTask, warn } from "electron-builder-util/out/log"
-import { readFile, unlink } from "fs-extra-p"
+import { outputFile, readFile, unlink } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -407,6 +407,12 @@ export class NsisTarget extends Target {
     })
   }
 
+  private async writeCustomLangFile(data: string) {
+    const file = await this.packager.getTempFile("messages.nsh")
+    await outputFile(file, data)
+    return file
+  }
+
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     const packager = this.packager
     let scriptHeader = `!addincludedir "${path.win32.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
@@ -421,14 +427,18 @@ export class NsisTarget extends Target {
       scriptHeader += createMacro("licensePage", licensePage)
     }
 
-    scriptHeader += "\n" + computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, "messages.yml"), "utf-8"))).join("\n") + "\n\n"
+    const addCustomMessageFileInclude = async (input: string) => {
+      scriptHeader += "!include " + await this.writeCustomLangFile(computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")) + "\n"
+    }
+
+    await addCustomMessageFileInclude("messages.yml")
 
     if (this.isPortable) {
       return scriptHeader + originalScript
     }
 
     if (this.options.oneClick === false) {
-      scriptHeader += "\n" + computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, "boringMessages.yml"), "utf-8"))).join("\n") + "\n\n"
+      await addCustomMessageFileInclude("boringMessages.yml")
     }
 
     const customInclude = await packager.getResource(this.options.include, "installer.nsh")
