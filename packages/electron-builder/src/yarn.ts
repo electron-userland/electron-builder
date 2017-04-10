@@ -71,6 +71,7 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
   return spawn(execPath, execArgs, {
     cwd: appDir,
     env: getGypEnv(frameworkInfo, platform, arch, buildFromSource),
+    stdio: ["pipe", process.stdout, process.stderr]
   })
 }
 
@@ -114,7 +115,11 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
     execArgs.push(...additionalArgs)
     await BluebirdPromise.each(nativeDeps, dep => {
       log(`Rebuilding native dependency ${dep.name}`)
-      return spawn(execPath, execArgs, {cwd: dep.path, env: env})
+      return spawn(execPath, execArgs, {
+        cwd: dep.path,
+        env: env,
+        stdio: ["pipe", process.stdout, process.stderr]
+      })
         .catch(error => {
           if (dep.optional) {
             warn(`Cannot build optional native dep ${dep.name}`)
@@ -129,6 +134,10 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
     execArgs.push("rebuild")
     execArgs.push(...additionalArgs)
     execArgs.push(...nativeDeps.map(it => it.name))
-    await spawn(execPath, execArgs, {cwd: appDir, env: env})
+    await spawn(execPath, execArgs, {
+      cwd: appDir,
+      env: env,
+      stdio: ["pipe", process.stdout, process.stderr]
+    })
   }
 }
