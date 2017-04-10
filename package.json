@@ -28,6 +28,7 @@
   "///": "all dependencies for all packages (hoisted)",
   "dependencies": {
     "7zip-bin": "^2.0.4",
+    "@electron-builder/electron-download": "4.2.1",
     "ajv": "^5.0.4-beta.2",
     "ajv-keywords": "^2.0.1-beta.2",
     "archiver": "^1.3.0",
@@ -37,7 +38,7 @@
     "chromium-pickle-js": "^0.2.0",
     "cuint": "^0.2.2",
     "debug": "^2.6.3",
-    "@electron-builder/electron-download": "4.2.1",
+    "electron-is-dev": "^0.1.2",
     "electron-osx-sign": "0.4.4",
     "fs-extra-p": "^4.1.0",
     "hosted-git-info": "^2.4.1",
@@ -62,6 +63,7 @@
     "yargs": "^7.0.2"
   },
   "devDependencies": {
+    "@develar/typescript-json-schema": "0.11.0",
     "@types/electron": "^1.4.35",
     "@types/ini": "^1.3.29",
     "@types/jest": "^19.2.2",
@@ -89,7 +91,6 @@
     "ts-babel": "^3.0.0",
     "tslint": "^5.0.0",
     "typescript": "^2.2.2",
-    "@develar/typescript-json-schema": "0.11.0",
     "whitespace": "^2.1.0",
     "xml2js": "^0.4.17"
   },

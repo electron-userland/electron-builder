@@ -29,6 +29,7 @@ test.ifAll.ifMac("custom background - new way", () => {
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
     config: {
+      publish: null,
       mac: {
         icon: "customIcon"
       },
@@ -58,6 +59,7 @@ test.ifMac("no Applications link", () => {
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
     config: {
+      publish: null,
       productName: "NoApplicationsLink",
       dmg: {
         "contents": [
@@ -131,6 +133,7 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   return assertPack("test-app-one", {
     targets: Platform.MAC.createTarget(),
     config: {
+      publish: null,
       dmg: {
         icon: null,
       },

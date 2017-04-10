@@ -21,6 +21,9 @@ g.__test_app = {
     return "0.0.1"
   },
 
+  getAppPath: function () {
+  },
+
   on: function () {
     // ignored
   },
