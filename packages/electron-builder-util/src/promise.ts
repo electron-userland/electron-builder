@@ -58,3 +58,7 @@ export function throwError(errors: Array<Error>) {
     throw new NestedError(errors, "Cannot cleanup: ")
   }
 }
+
+export function asyncAll(tasks: Array<() => Promise<any>>) {
+  return BluebirdPromise.map(tasks, it => it())
+}

@@ -123,12 +123,7 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
 
     if (code !== 0) {
       function formatOut(text: string, title: string) {
-        if (text.length === 0) {
-          return ""
-        }
-        else {
-          return `\n${title}:\n${text}`
-        }
+        return text.length === 0 ? "" : `\n${title}:\n${text}`
       }
 
       reject(new Error(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`))

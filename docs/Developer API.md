@@ -4909,6 +4909,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 * [electron-builder-util/out/promise](#module_electron-builder-util/out/promise)
     * [.NestedError](#NestedError) ⇐ <code>Error</code>
     * [`.all(promises)`](#module_electron-builder-util/out/promise.all) ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
+    * [`.asyncAll(tasks)`](#module_electron-builder-util/out/promise.asyncAll) ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
     * [`.executeFinally(promise, task)`](#module_electron-builder-util/out/promise.executeFinally) ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
     * [`.printErrorAndExit(error)`](#module_electron-builder-util/out/promise.printErrorAndExit)
     * [`.throwError(errors)`](#module_electron-builder-util/out/promise.throwError)
@@ -4926,6 +4927,15 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Param | Type |
 | --- | --- |
 | promises | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
+
+<a name="module_electron-builder-util/out/promise.asyncAll"></a>
+
+### `electron-builder-util/out/promise.asyncAll(tasks)` ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
+**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+
+| Param | Type |
+| --- | --- |
+| tasks | <code>Array&lt;module:electron-builder-util/out/promise.__type&gt;</code> | 
 
 <a name="module_electron-builder-util/out/promise.executeFinally"></a>
 
