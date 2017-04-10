@@ -61,7 +61,7 @@ export default class SnapTarget extends Target {
 
     snap.apps = {
       [snap.name]: {
-        command: `desktop-launch $SNAP/${packager.executableName}`,
+        command: `env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/${packager.executableName}`,
         plugs: replaceDefault(options.plugs, ["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"])
       }
     }
