@@ -1,12 +1,10 @@
-# Kernel extensions
-
 Installing macOS kernel extensions with `electron-builder` can be done using scripts.
 
-First, in `package.json`, make sure you're building a package (.pkg) and not the default .dmg:
+First, in `package.json`, make sure you're building a package (`.pkg`) and not the default `.dmg`:
 
 ```json
 "mac": { 
-	"target": "pkg"
+  "target": "pkg"
 }
 ```
 

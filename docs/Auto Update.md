@@ -149,7 +149,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 | **versionInfo**| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo| <code>[FileInfo](#FileInfo)</code> | 
 | downloadPromise| <code>Promise&lt;any&gt;</code> \| <code>null</code> | 
-| cancellationToken| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| cancellationToken| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="Provider"></a>
 
@@ -159,7 +159,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| requestHeaders| <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | 
+| requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | 
 
 
 * [.Provider](#Provider)
@@ -178,7 +178,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Param | Type |
 | --- | --- |
-| value | <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | 
+| value | <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | 
 
 <a name="module_electron-updater/out/api.Provider+getUpdateFile"></a>
 
@@ -277,7 +277,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.setFeedURL(options)`](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL)
         * [`.loadUpdateConfig()`](#module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.quitAndInstall()`](#module_electron-updater/out/AppUpdater.AppUpdater+quitAndInstall)
-        * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+        * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
         * [`.dispatchError(e)`](#module_electron-updater/out/AppUpdater.AppUpdater+dispatchError)
         * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable)
@@ -329,7 +329,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 | Name | Type | Description |
 | --- | --- | --- |
 | autoDownload = <code>true</code>| <code>boolean</code> | <a name="AppUpdater-autoDownload"></a>Automatically download an update when it is found. |
-| requestHeaders| <code>[RequestHeaders](Developer-API#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
+| requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
 | logger = <code>(&lt;any&gt;global).__test_app ? null : console</code>| <code>[Logger](#Logger)</code> \| <code>null</code> | <a name="AppUpdater-logger"></a>The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature. |
 | signals = <code>new UpdaterSignal(this)</code>| <code>[UpdaterSignal](#UpdaterSignal)</code> | <a name="AppUpdater-signals"></a>For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})` |
 | updateAvailable| <code>boolean</code> | <a name="AppUpdater-updateAvailable"></a> |
@@ -344,7 +344,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
     * [`.setFeedURL(options)`](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL)
     * [`.loadUpdateConfig()`](#module_electron-updater/out/AppUpdater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.quitAndInstall()`](#module_electron-updater/out/AppUpdater.AppUpdater+quitAndInstall)
-    * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+    * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
     * [`.dispatchError(e)`](#module_electron-updater/out/AppUpdater.AppUpdater+dispatchError)
     * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/AppUpdater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable)
@@ -365,7 +365,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 | Param | Type |
 | --- | --- |
-| cancellationToken | <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+getFeedURL"></a>
 
@@ -397,7 +397,7 @@ This is different from the normal quit event sequence.
 **Kind**: instance method of <code>[AppUpdater](#AppUpdater)</code>  
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+computeRequestHeaders"></a>
 
-#### `appUpdater.computeRequestHeaders(fileInfo)` ⇒ <code>null</code> \| <code>[RequestHeaders](Developer-API#RequestHeaders)</code>
+#### `appUpdater.computeRequestHeaders(fileInfo)` ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
 **Kind**: instance method of <code>[AppUpdater](#AppUpdater)</code>  
 **Access**: protected  
 
@@ -425,7 +425,7 @@ This is different from the normal quit event sequence.
 | --- | --- |
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo | <code>[FileInfo](#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="module_electron-updater/out/AppUpdater.AppUpdater+onUpdateAvailable"></a>
 

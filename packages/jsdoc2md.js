@@ -21,14 +21,33 @@ async function main() {
     "",
   ], {cwd: source})
   
-  const publishFiles = await globby([
+  const publishOptionsFiles = await globby([
     "http/electron-builder-http-out-publishOptions.js",
   ], {cwd: source})
-  
+
+  const utilFiles = await globby([
+    "util/**/*.js",
+  ], {cwd: source})
+
+  const coreFiles = await globby([
+    "core/**/*.js",
+  ], {cwd: source})
+
+  const httpFiles = await globby([
+    "http/**/*.js",
+    "!http/electron-builder-http-out-publishOptions.js",
+  ], {cwd: source})
+
+  const publishFiles = await globby([
+    "publisher/**/*.js",
+  ], {cwd: source})
+
+  const customFiles = new Set(coreFiles.concat(httpFiles).concat(utilFiles).concat(publishOptionsFiles).concat(publishFiles))
+
   const developerFiles = (await globby([
     "**/*.js",
   ], {cwd: source}))
-    .filter(it => !userFiles.includes(it) && !appUpdateFiles.includes(it) && !publishFiles.includes(it))
+    .filter(it => !userFiles.includes(it) && !appUpdateFiles.includes(it) && !customFiles.has(it))
 
   const partialDir = path.join(__dirname, "..", "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
@@ -36,8 +55,12 @@ async function main() {
   const pages = [
     {page: "Options.md", pageUrl: "Options", mainHeader: "API", files: userFiles},
     {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
-    {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishFiles},
-    {page: "Developer API.md", pageUrl: "Developer-API", files: developerFiles},
+    {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
+    {page: "api/Developer API.md", pageUrl: "Developer-API", files: developerFiles},
+    {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
+    {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
+    {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
+    {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
   ]
 
   await render(pages, {

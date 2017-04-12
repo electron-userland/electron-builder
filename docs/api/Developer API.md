@@ -73,26 +73,6 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/yarn">electron-builder/out/yarn</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder-core">electron-builder-core</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http/out/bintray">electron-builder-http/out/bintray</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http/out/CancellationToken">electron-builder-http/out/CancellationToken</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http/out/ProgressCallbackTransform">electron-builder-http/out/ProgressCallbackTransform</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http">electron-builder-http</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish/out/BintrayPublisher">electron-publish/out/BintrayPublisher</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish/out/gitHubPublisher">electron-publish/out/gitHubPublisher</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish/out/multiProgress">electron-publish/out/multiProgress</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish/out/progress">electron-publish/out/progress</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-publish">electron-publish</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
@@ -106,22 +86,6 @@
 <dt><a href="#module_electron-updater/out/NsisUpdater">electron-updater/out/NsisUpdater</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/PrivateGitHubProvider">electron-updater/out/PrivateGitHubProvider</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/binDownload">electron-builder-util/out/binDownload</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/deepAssign">electron-builder-util/out/deepAssign</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/fs">electron-builder-util/out/fs</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/log">electron-builder-util/out/log</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/nodeHttpExecutor">electron-builder-util/out/nodeHttpExecutor</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/promise">electron-builder-util/out/promise</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util/out/tmp">electron-builder-util/out/tmp</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-util">electron-builder-util</a></dt>
 <dd></dd>
 </dl>
 
@@ -420,7 +384,7 @@
 
 | Param | Type |
 | --- | --- |
-| tmpDir | <code>[TmpDir](#TmpDir)</code> | 
+| tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | cscLink | <code>string</code> | 
 | cscKeyPassword | <code>string</code> | 
 | cscILink | <code>string</code> \| <code>null</code> | 
@@ -434,7 +398,7 @@
 | Param | Type |
 | --- | --- |
 | urlOrBase64 | <code>string</code> | 
-| tmpDir | <code>[TmpDir](#TmpDir)</code> | 
+| tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
 
@@ -557,7 +521,7 @@
 | appDir | <code>string</code> | 
 | resourcesPath | <code>string</code> | 
 | macroExpander | <code>callback</code> | 
-| platformSpecificBuildOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
+| platformSpecificBuildOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
 
 <a name="module_electron-builder/out/fileMatcher.getFileMatchers"></a>
 
@@ -572,7 +536,7 @@
 | defaultDest | <code>string</code> | 
 | allowAdvancedMatching | <code>boolean</code> | 
 | macroExpander | <code>callback</code> | 
-| customBuildOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
+| customBuildOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
 
 <a name="module_electron-builder/out/fileTransformer"></a>
 
@@ -738,8 +702,8 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -749,9 +713,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -762,7 +726,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -773,7 +737,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>string</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | deployment | <code>boolean</code> | 
 | classifier | <code>string</code> \| <code>null</code> | 
 
@@ -809,8 +773,8 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
@@ -850,7 +814,7 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
@@ -873,9 +837,9 @@
 | outDir | <code>string</code> | 
 | appOutDir | <code>string</code> | 
 | platformName | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
@@ -886,8 +850,8 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
@@ -991,8 +955,8 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+doFlat"></a>
@@ -1046,8 +1010,8 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -1057,9 +1021,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -1070,7 +1034,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -1081,7 +1045,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>string</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | deployment | <code>boolean</code> | 
 | classifier | <code>string</code> \| <code>null</code> | 
 
@@ -1142,7 +1106,7 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
@@ -1165,9 +1129,9 @@
 | outDir | <code>string</code> | 
 | appOutDir | <code>string</code> | 
 | platformName | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
@@ -1178,8 +1142,8 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
@@ -1311,12 +1275,12 @@
 ## electron-builder/out/packager
 <a name="module_electron-builder/out/packager.normalizePlatforms"></a>
 
-### `electron-builder/out/packager.normalizePlatforms(rawPlatforms)` ⇒ <code>Array&lt;[Platform](#Platform)&gt;</code>
+### `electron-builder/out/packager.normalizePlatforms(rawPlatforms)` ⇒ <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code>
 **Kind**: method of <code>[electron-builder/out/packager](#module_electron-builder/out/packager)</code>  
 
 | Param | Type |
 | --- | --- |
-| rawPlatforms | <code>Array&lt;string \| [Platform](#Platform)&gt;</code> \| <code>string</code> \| <code>[Platform](#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
+| rawPlatforms | <code>Array&lt;string \| [Platform](electron-builder-core#Platform)&gt;</code> \| <code>string</code> \| <code>[Platform](electron-builder-core#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager"></a>
 
@@ -1412,8 +1376,8 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -1423,9 +1387,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -1436,7 +1400,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -1447,7 +1411,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>string</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | deployment | <code>boolean</code> | 
 | classifier | <code>string</code> \| <code>null</code> | 
 
@@ -1483,8 +1447,8 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
@@ -1524,7 +1488,7 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
@@ -1547,9 +1511,9 @@
 | outDir | <code>string</code> | 
 | appOutDir | <code>string</code> | 
 | platformName | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
@@ -1560,8 +1524,8 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
@@ -1598,32 +1562,32 @@
 ## electron-builder/out/publish/PublishManager
 
 * [electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)
-    * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](#PublishContext)</code>
+    * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
+        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
     * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
-    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
+    * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
     * [`.getPublishConfigs(packager, targetSpecificOptions, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; \| Array&gt;</code>
     * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; \| Array&gt;</code>
 
 <a name="PublishManager"></a>
 
-### PublishManager ⇐ <code>[PublishContext](#PublishContext)</code>
+### PublishManager ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
 **Kind**: class of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
-**Extends**: <code>[PublishContext](#PublishContext)</code>  
+**Extends**: <code>[PublishContext](electron-publish#PublishContext)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | publishTasks=| <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-| progress = <code>(&lt;NodeJS.WritableStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](#MultiProgress)</code> | 
+| progress = <code>(&lt;NodeJS.WritableStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
 
 
-* [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](#PublishContext)</code>
+* [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
     * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
+    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
 
@@ -1635,7 +1599,7 @@
 **Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher"></a>
 
-#### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
+#### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
 **Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
 
 | Param | Type |
@@ -1656,15 +1620,15 @@
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
 
-### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> \| <code>[Publisher](#Publisher)</code>
+### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
 **Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
 
 | Param | Type |
 | --- | --- |
-| context | <code>[PublishContext](#PublishContext)</code> | 
+| context | <code>[PublishContext](electron-publish#PublishContext)</code> | 
 | version | <code>string</code> | 
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| options | <code>[PublishOptions](#PublishOptions)</code> | 
+| options | <code>[PublishOptions](electron-publish#PublishOptions)</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigs"></a>
 
@@ -1674,8 +1638,8 @@
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 
@@ -1686,7 +1650,7 @@
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/readInstalled"></a>
 
@@ -1754,81 +1718,59 @@
 ## electron-builder/out/targets/appImage
 
 * [electron-builder/out/targets/appImage](#module_electron-builder/out/targets/appImage)
-    * [.AppImageTarget](#AppImageTarget) ⇐ <code>[Target](#Target)</code>
+    * [.AppImageTarget](#AppImageTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appImage.AppImageTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="AppImageTarget"></a>
 
-### AppImageTarget ⇐ <code>[Target](#Target)</code>
+### AppImageTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/appImage](#module_electron-builder/out/targets/appImage)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[LinuxBuildOptions](Options#LinuxBuildOptions)</code> | 
 
-
-* [.AppImageTarget](#AppImageTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appImage.AppImageTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/appImage.AppImageTarget+build"></a>
 
 #### `appImageTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[AppImageTarget](#AppImageTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `appImageTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[AppImageTarget](#AppImageTarget)</code>  
 <a name="module_electron-builder/out/targets/appx"></a>
 
 ## electron-builder/out/targets/appx
 
 * [electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)
-    * [.AppXTarget](#AppXTarget) ⇐ <code>[Target](#Target)</code>
+    * [.AppXTarget](#AppXTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appx.AppXTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="AppXTarget"></a>
 
-### AppXTarget ⇐ <code>[Target](#Target)</code>
+### AppXTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)</code>| <code>[AppXOptions](Options#AppXOptions)</code> | 
 
-
-* [.AppXTarget](#AppXTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appx.AppXTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/appx.AppXTarget+build"></a>
 
 #### `appXTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[AppXTarget](#AppXTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `appXTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[AppXTarget](#AppXTarget)</code>  
 <a name="module_electron-builder/out/targets/archive"></a>
 
 ## electron-builder/out/targets/archive
@@ -1868,58 +1810,46 @@
 ## electron-builder/out/targets/ArchiveTarget
 
 * [electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)
-    * [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
+    * [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="ArchiveTarget"></a>
 
-### ArchiveTarget ⇐ <code>[Target](#Target)</code>
+### ArchiveTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>(&lt;any&gt;this.packager.config)[this.name]</code>| <code>any</code> | 
 
-
-* [.ArchiveTarget](#ArchiveTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build"></a>
 
 #### `archiveTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `archiveTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
 <a name="module_electron-builder/out/targets/dmg"></a>
 
 ## electron-builder/out/targets/dmg
 
 * [electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)
-    * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](#Target)</code>
+    * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.computeDmgOptions()`](#module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions) ⇒ <code>Promise&lt;[DmgOptions](Options#DmgOptions)&gt;</code>
         * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>string</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.attachAndExecute(dmgPath, readWrite, task)`](#module_electron-builder/out/targets/dmg.attachAndExecute) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="DmgTarget"></a>
 
-### DmgTarget ⇐ <code>[Target](#Target)</code>
+### DmgTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
@@ -1927,22 +1857,20 @@
 | options = <code>this.packager.config.dmg</code>| <code>undefined</code> \| <code>null</code> \| <code>[DmgOptions](Options#DmgOptions)</code> | 
 
 
-* [.DmgTarget](#DmgTarget) ⇐ <code>[Target](#Target)</code>
+* [.DmgTarget](#DmgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
     * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.computeDmgOptions()`](#module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions) ⇒ <code>Promise&lt;[DmgOptions](Options#DmgOptions)&gt;</code>
     * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>string</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+build"></a>
 
 #### `dmgTarget.build(appPath, arch)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of <code>[DmgTarget](#DmgTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appPath | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions"></a>
 
@@ -1957,10 +1885,6 @@
 | --- | --- |
 | custom | <code>string</code> \| <code>null</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `dmgTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[DmgTarget](#DmgTarget)</code>  
 <a name="module_electron-builder/out/targets/dmg.attachAndExecute"></a>
 
 ### `electron-builder/out/targets/dmg.attachAndExecute(dmgPath, readWrite, task)` ⇒ <code>Promise&lt;any&gt;</code>
@@ -1977,41 +1901,30 @@
 ## electron-builder/out/targets/fpm
 
 * [electron-builder/out/targets/fpm](#module_electron-builder/out/targets/fpm)
-    * [.FpmTarget](#FpmTarget) ⇐ <code>[Target](#Target)</code>
+    * [.FpmTarget](#FpmTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/fpm.FpmTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="FpmTarget"></a>
 
-### FpmTarget ⇐ <code>[Target](#Target)</code>
+### FpmTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/fpm](#module_electron-builder/out/targets/fpm)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[LinuxTargetSpecificOptions](#LinuxTargetSpecificOptions)</code> | 
 
-
-* [.FpmTarget](#FpmTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/fpm.FpmTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/fpm.FpmTarget+build"></a>
 
 #### `fpmTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[FpmTarget](#FpmTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `fpmTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[FpmTarget](#FpmTarget)</code>  
 <a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
 
 ## electron-builder/out/targets/LinuxTargetHelper
@@ -2066,7 +1979,7 @@
     * [.AppPackageHelper](#AppPackageHelper)
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;string&gt;</code>
-    * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](#Target)</code>
+    * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
@@ -2092,14 +2005,14 @@
 
 | Param | Type |
 | --- | --- |
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | target | <code>[NsisTarget](#NsisTarget)</code> | 
 
 <a name="NsisTarget"></a>
 
-### NsisTarget ⇐ <code>[Target](#Target)</code>
+### NsisTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
@@ -2107,7 +2020,7 @@
 | options| <code>[NsisOptions](Options#NsisOptions)</code> | 
 
 
-* [.NsisTarget](#NsisTarget) ⇐ <code>[Target](#Target)</code>
+* [.NsisTarget](#NsisTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
@@ -2117,18 +2030,16 @@
 
 #### `nsisTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
 #### `nsisTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
-**Overrides**: <code>[finishBuild](#module_electron-builder-core.Target+finishBuild)</code>  
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+configureDefines"></a>
 
 #### `nsisTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
@@ -2150,42 +2061,31 @@
 ## electron-builder/out/targets/pkg
 
 * [electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)
-    * [.PkgTarget](#PkgTarget) ⇐ <code>[Target](#Target)</code>
+    * [.PkgTarget](#PkgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appPath, arch)`](#module_electron-builder/out/targets/pkg.PkgTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.prepareProductBuildArgs(identity, keychain)`](#module_electron-builder/out/targets/pkg.prepareProductBuildArgs) ⇒ <code>Array&lt;string&gt;</code>
 
 <a name="PkgTarget"></a>
 
-### PkgTarget ⇐ <code>[Target](#Target)</code>
+### PkgTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>this.packager.config.pkg || Object.create(null)</code>| <code>[PkgOptions](Options#PkgOptions)</code> | 
 
-
-* [.PkgTarget](#PkgTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appPath, arch)`](#module_electron-builder/out/targets/pkg.PkgTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/pkg.PkgTarget+build"></a>
 
 #### `pkgTarget.build(appPath, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[PkgTarget](#PkgTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appPath | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `pkgTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[PkgTarget](#PkgTarget)</code>  
 <a name="module_electron-builder/out/targets/pkg.prepareProductBuildArgs"></a>
 
 ### `electron-builder/out/targets/pkg.prepareProductBuildArgs(identity, keychain)` ⇒ <code>Array&lt;string&gt;</code>
@@ -2201,98 +2101,76 @@
 ## electron-builder/out/targets/snap
 
 * [electron-builder/out/targets/snap](#module_electron-builder/out/targets/snap)
-    * [.SnapTarget](#SnapTarget) ⇐ <code>[Target](#Target)</code>
+    * [.SnapTarget](#SnapTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/snap.SnapTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="SnapTarget"></a>
 
-### SnapTarget ⇐ <code>[Target](#Target)</code>
+### SnapTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/snap](#module_electron-builder/out/targets/snap)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options = <code>Object.assign({}, this.packager.platformSpecificBuildOptions, (&lt;any&gt;this.packager.config)[this.name])</code>| <code>[SnapOptions](Options#SnapOptions)</code> | 
 
-
-* [.SnapTarget](#SnapTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/snap.SnapTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/snap.SnapTarget+build"></a>
 
 #### `snapTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[SnapTarget](#SnapTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `snapTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[SnapTarget](#SnapTarget)</code>  
 <a name="module_electron-builder/out/targets/targetFactory"></a>
 
 ## electron-builder/out/targets/targetFactory
 
 * [electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)
-    * [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](#Target)</code>
+    * [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code>
-    * [`.createCommonTarget(target, outDir, packager)`](#module_electron-builder/out/targets/targetFactory.createCommonTarget) ⇒ <code>[Target](#Target)</code>
-    * [`.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)`](#module_electron-builder/out/targets/targetFactory.createTargets) ⇒ <code>Array&lt;[Target](#Target)&gt;</code>
+    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code>
+    * [`.createCommonTarget(target, outDir, packager)`](#module_electron-builder/out/targets/targetFactory.createCommonTarget) ⇒ <code>[Target](electron-builder-core#Target)</code>
+    * [`.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)`](#module_electron-builder/out/targets/targetFactory.createTargets) ⇒ <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code>
 
 <a name="NoOpTarget"></a>
 
-### NoOpTarget ⇐ <code>[Target](#Target)</code>
+### NoOpTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: class of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
-**Extends**: <code>[Target](#Target)</code>  
+**Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | options| <code>null</code> | 
 
-
-* [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](#Target)</code>
-    * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
 <a name="module_electron-builder/out/targets/targetFactory.NoOpTarget+build"></a>
 
 #### `noOpTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of <code>[NoOpTarget](#NoOpTarget)</code>  
-**Overrides**: <code>[build](#module_electron-builder-core.Target+build)</code>  
 
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `noOpTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[NoOpTarget](#NoOpTarget)</code>  
 <a name="module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap"></a>
 
-### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code>
+### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code>
 **Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
 
 | Param | Type |
 | --- | --- |
-| raw | <code>Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;</code> | 
-| options | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
-| platform | <code>[Platform](#Platform)</code> | 
+| raw | <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code> | 
+| options | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
+| platform | <code>[Platform](electron-builder-core#Platform)</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.createCommonTarget"></a>
 
-### `electron-builder/out/targets/targetFactory.createCommonTarget(target, outDir, packager)` ⇒ <code>[Target](#Target)</code>
+### `electron-builder/out/targets/targetFactory.createCommonTarget(target, outDir, packager)` ⇒ <code>[Target](electron-builder-core#Target)</code>
 **Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
 
 | Param | Type |
@@ -2303,12 +2181,12 @@
 
 <a name="module_electron-builder/out/targets/targetFactory.createTargets"></a>
 
-### `electron-builder/out/targets/targetFactory.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)` ⇒ <code>Array&lt;[Target](#Target)&gt;</code>
+### `electron-builder/out/targets/targetFactory.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)` ⇒ <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code>
 **Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
 
 | Param | Type |
 | --- | --- |
-| nameToTarget | <code>Map&lt;String \| [Target](#Target)&gt;</code> | 
+| nameToTarget | <code>Map&lt;String \| [Target](electron-builder-core#Target)&gt;</code> | 
 | rawList | <code>Array&lt;string&gt;</code> | 
 | outDir | <code>string</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
@@ -2363,7 +2241,7 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
@@ -2588,7 +2466,7 @@
         return BluebirdPromise.resolve(null)
       }
     }
-  })]**| <code>[Lazy](#Lazy)&lt; \| [FileCodeSigningInfo](#FileCodeSigningInfo)&gt;</code> | 
+  })]**| <code>[Lazy](electron-builder-util#Lazy)&lt; \| [FileCodeSigningInfo](#FileCodeSigningInfo)&gt;</code> | 
 | **[computedPublisherName=new Lazy&lt;Array&lt;string&gt; | null&gt;(async () =&gt; {
     let publisherName = (&lt;WinBuildOptions&gt;this.platformSpecificBuildOptions).publisherName
     if (publisherName === null) {
@@ -2614,7 +2492,7 @@
     }
 
     return publisherName == null ? null : asArray(publisherName)
-  })]**| <code>[Lazy](#Lazy)&lt; \| Array&gt;</code> | 
+  })]**| <code>[Lazy](electron-builder-util#Lazy)&lt; \| Array&gt;</code> | 
 
 
 * [.WinPackager](#WinPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
@@ -2722,8 +2600,8 @@
 | Param | Type |
 | --- | --- |
 | file | <code>string</code> | 
-| target | <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
@@ -2733,9 +2611,9 @@
 
 | Param | Type |
 | --- | --- |
-| targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
+| targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
@@ -2746,7 +2624,7 @@
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -2757,7 +2635,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>string</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | deployment | <code>boolean</code> | 
 | classifier | <code>string</code> \| <code>null</code> | 
 
@@ -2789,8 +2667,8 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
@@ -2830,7 +2708,7 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
@@ -2848,9 +2726,9 @@
 | outDir | <code>string</code> | 
 | appOutDir | <code>string</code> | 
 | platformName | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
@@ -2861,8 +2739,8 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-| targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
@@ -2936,1269 +2814,6 @@
 | additionalArgs | <code>Array&lt;string&gt;</code> | 
 | buildFromSource | <code>boolean</code> | 
 
-<a name="module_electron-builder-core"></a>
-
-## electron-builder-core
-
-* [electron-builder-core](#module_electron-builder-core)
-    * [`.AsarOptions`](#AsarOptions)
-    * [`.AuthorMetadata`](#AuthorMetadata)
-    * [`.BeforeBuildContext`](#BeforeBuildContext)
-    * [`.FileAssociation`](#FileAssociation)
-    * [`.FilePattern`](#FilePattern)
-    * [`.MetadataDirectories`](#MetadataDirectories)
-    * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
-    * [`.Protocol`](#Protocol)
-    * [`.RepositoryInfo`](#RepositoryInfo)
-    * [`.SourceRepositoryInfo`](#SourceRepositoryInfo)
-    * [`.TargetConfig`](#TargetConfig)
-    * [`.TargetSpecificOptions`](#TargetSpecificOptions)
-    * [.Platform](#Platform)
-        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-        * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
-        * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
-        * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>string</code>
-    * [.Target](#Target)
-        * [`.build(appOutDir, arch)`](#module_electron-builder-core.Target+build) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.Arch`](#Arch) : <code>enum</code>
-    * [`.archFromString(name)`](#module_electron-builder-core.archFromString) ⇒ <code>[Arch](#Arch)</code>
-    * [`.getArchSuffix(arch)`](#module_electron-builder-core.getArchSuffix) ⇒ <code>string</code>
-    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
-
-<a name="AsarOptions"></a>
-
-### `AsarOptions`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| smartUnpack| <code>boolean</code> | 
-| ordering| <code>string</code> \| <code>null</code> | 
-
-<a name="AuthorMetadata"></a>
-
-### `AuthorMetadata`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **name**| <code>string</code> | 
-| email| <code>string</code> | 
-
-<a name="BeforeBuildContext"></a>
-
-### `BeforeBuildContext`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **appDir**| <code>string</code> | 
-| **electronVersion**| <code>string</code> | 
-| **platform**| <code>[Platform](#Platform)</code> | 
-| **arch**| <code>string</code> | 
-
-<a name="FileAssociation"></a>
-
-### `FileAssociation`
-File associations.
-
-macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only.
-
-On Windows works only if [nsis.perMachine](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-perMachine) is set to `true`.
-
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **ext**| <code>string</code> \| <code>Array&lt;string&gt;</code> | <a name="FileAssociation-ext"></a>The extension (minus the leading period). e.g. `png`. |
-| name| <code>string</code> \| <code>null</code> | <a name="FileAssociation-name"></a>The name. e.g. `PNG`. Defaults to `ext`. |
-| description| <code>string</code> \| <code>null</code> | <a name="FileAssociation-description"></a>*windows-only.* The description. |
-| icon| <code>string</code> \| <code>null</code> | <a name="FileAssociation-icon"></a>The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon. |
-| role = <code>&quot;Editor&quot;</code>| <code>string</code> | <a name="FileAssociation-role"></a>*macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`. |
-| isPackage| <code>boolean</code> | <a name="FileAssociation-isPackage"></a>*macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`. |
-
-<a name="FilePattern"></a>
-
-### `FilePattern`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| from| <code>string</code> | 
-| to| <code>string</code> | 
-| filter| <code>Array&lt;string&gt;</code> \| <code>string</code> | 
-
-<a name="MetadataDirectories"></a>
-
-### `MetadataDirectories`
-`directories`
-
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| buildResources = <code>&quot;build&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-buildResources"></a>The path to build resources. |
-| output = <code>&quot;dist&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-output"></a>The output directory. |
-| app| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory. |
-
-<a name="PlatformSpecificBuildOptions"></a>
-
-### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
-| extraFiles| <code>Array&lt;string \| [FilePattern](#FilePattern)&gt;</code> \| <code>[FilePattern](#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
-| extraResources| <code>Array&lt;string \| [FilePattern](#FilePattern)&gt;</code> \| <code>[FilePattern](#FilePattern)</code> \| <code>string</code> \| <code>null</code> | 
-| asarUnpack| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | 
-| asar| <code>[AsarOptions](#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | 
-| target| <code>Array&lt;string \| [TargetConfig](#TargetConfig)&gt;</code> \| <code>string</code> \| <code>[TargetConfig](#TargetConfig)</code> \| <code>null</code> | 
-| icon| <code>string</code> \| <code>null</code> | 
-| fileAssociations| <code>Array&lt;[FileAssociation](#FileAssociation)&gt;</code> \| <code>[FileAssociation](#FileAssociation)</code> | 
-| forceCodeSigning| <code>boolean</code> | 
-
-<a name="Protocol"></a>
-
-### `Protocol`
-URL Protocol Schemes. Protocols to associate the app with. macOS only.
-
-Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
-
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **name**| <code>string</code> | <a name="Protocol-name"></a>The name. e.g. `IRC server URL`. |
-| role = <code>Editor</code>| <code>"Editor"</code> \| <code>"Viewer"</code> \| <code>"Shell"</code> \| <code>"None"</code> | <a name="Protocol-role"></a>*macOS-only* The app’s role with respect to the type. |
-| **schemes**| <code>Array&lt;string&gt;</code> | <a name="Protocol-schemes"></a>The schemes. e.g. `["irc", "ircs"]`. |
-
-<a name="RepositoryInfo"></a>
-
-### `RepositoryInfo`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **url**| <code>string</code> | 
-
-<a name="SourceRepositoryInfo"></a>
-
-### `SourceRepositoryInfo`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **type**| <code>string</code> | 
-| **domain**| <code>string</code> | 
-| **user**| <code>string</code> | 
-| **project**| <code>string</code> | 
-
-<a name="TargetConfig"></a>
-
-### `TargetConfig`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **target**| <code>string</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
-| arch| <code>Array&lt;"x64" \| "ia32" \| "armv7l"&gt;</code> \| <code>string</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
-
-<a name="TargetSpecificOptions"></a>
-
-### `TargetSpecificOptions`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| artifactName| <code>string</code> \| <code>null</code> | <a name="TargetSpecificOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). |
-| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="TargetSpecificOptions-publish"></a> |
-
-<a name="Platform"></a>
-
-### Platform
-**Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| MAC = <code>new Platform(&quot;mac&quot;, &quot;mac&quot;, &quot;darwin&quot;)</code>| <code>[Platform](#Platform)</code> | 
-| LINUX = <code>new Platform(&quot;linux&quot;, &quot;linux&quot;, &quot;linux&quot;)</code>| <code>[Platform](#Platform)</code> | 
-| WINDOWS = <code>new Platform(&quot;windows&quot;, &quot;win&quot;, &quot;win32&quot;)</code>| <code>[Platform](#Platform)</code> | 
-| OSX = <code>Platform.MAC</code>| <code>[Platform](#Platform)</code> | 
-
-
-* [.Platform](#Platform)
-    * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-    * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
-    * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
-    * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>string</code>
-
-<a name="module_electron-builder-core.Platform+createTarget"></a>
-
-#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
-
-| Param | Type |
-| --- | --- |
-| type | <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | 
-| archs | <code>Array&lt;[Arch](#Arch)&gt;</code> | 
-
-<a name="module_electron-builder-core.Platform+current"></a>
-
-#### `platform.current()` ⇒ <code>[Platform](#Platform)</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
-<a name="module_electron-builder-core.Platform+fromString"></a>
-
-#### `platform.fromString(name)` ⇒ <code>[Platform](#Platform)</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
-
-| Param | Type |
-| --- | --- |
-| name | <code>string</code> | 
-
-<a name="module_electron-builder-core.Platform+toString"></a>
-
-#### `platform.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
-<a name="Target"></a>
-
-### Target
-**Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| outDir| <code>string</code> | 
-| options| <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
-
-
-* [.Target](#Target)
-    * [`.build(appOutDir, arch)`](#module_electron-builder-core.Target+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-
-<a name="module_electron-builder-core.Target+build"></a>
-
-#### `target.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Target](#Target)</code>  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
-
-<a name="module_electron-builder-core.Target+finishBuild"></a>
-
-#### `target.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Target](#Target)</code>  
-<a name="Arch"></a>
-
-### `electron-builder-core.Arch` : <code>enum</code>
-**Kind**: enum of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-**Properties**
-
-| Name |
-| --- |
-| **ia32**| 
-| **x64**| 
-| **armv7l**| 
-
-<a name="module_electron-builder-core.archFromString"></a>
-
-### `electron-builder-core.archFromString(name)` ⇒ <code>[Arch](#Arch)</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-
-| Param | Type |
-| --- | --- |
-| name | <code>string</code> | 
-
-<a name="module_electron-builder-core.getArchSuffix"></a>
-
-### `electron-builder-core.getArchSuffix(arch)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-
-| Param | Type |
-| --- | --- |
-| arch | <code>[Arch](#Arch)</code> | 
-
-<a name="module_electron-builder-core.toLinuxArchString"></a>
-
-### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
-
-| Param | Type |
-| --- | --- |
-| arch | <code>[Arch](#Arch)</code> | 
-
-<a name="module_electron-builder-http/out/bintray"></a>
-
-## electron-builder-http/out/bintray
-
-* [electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)
-    * [`.File`](#File)
-    * [`.Version`](#Version)
-    * [.BintrayClient](#BintrayClient)
-        * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.deleteVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+deleteVersion) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersion) ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
-        * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
-    * [`.bintrayRequest(path, auth, data, cancellationToken, method)`](#module_electron-builder-http/out/bintray.bintrayRequest) ⇒ <code>Promise&lt;module:electron-builder-http/out/bintray.T&gt;</code>
-
-<a name="File"></a>
-
-### `File`
-**Kind**: interface of <code>[electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **name**| <code>string</code> | 
-| **path**| <code>string</code> | 
-| **sha1**| <code>string</code> | 
-| **sha256**| <code>string</code> | 
-
-<a name="Version"></a>
-
-### `Version`
-**Kind**: interface of <code>[electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **name**| <code>string</code> | 
-| **package**| <code>string</code> | 
-
-<a name="BintrayClient"></a>
-
-### BintrayClient
-**Kind**: class of <code>[electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| auth| <code>string</code> \| <code>null</code> | 
-| repo| <code>string</code> | 
-| owner| <code>string</code> | 
-| user| <code>string</code> | 
-| packageName| <code>string</code> | 
-
-
-* [.BintrayClient](#BintrayClient)
-    * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.deleteVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+deleteVersion) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersion) ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
-    * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
-
-<a name="module_electron-builder-http/out/bintray.BintrayClient+createVersion"></a>
-
-#### `bintrayClient.createVersion(version)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayClient](#BintrayClient)</code>  
-
-| Param | Type |
-| --- | --- |
-| version | <code>string</code> | 
-
-<a name="module_electron-builder-http/out/bintray.BintrayClient+deleteVersion"></a>
-
-#### `bintrayClient.deleteVersion(version)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayClient](#BintrayClient)</code>  
-
-| Param | Type |
-| --- | --- |
-| version | <code>string</code> | 
-
-<a name="module_electron-builder-http/out/bintray.BintrayClient+getVersion"></a>
-
-#### `bintrayClient.getVersion(version)` ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
-**Kind**: instance method of <code>[BintrayClient](#BintrayClient)</code>  
-
-| Param | Type |
-| --- | --- |
-| version | <code>string</code> | 
-
-<a name="module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles"></a>
-
-#### `bintrayClient.getVersionFiles(version)` ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
-**Kind**: instance method of <code>[BintrayClient](#BintrayClient)</code>  
-
-| Param | Type |
-| --- | --- |
-| version | <code>string</code> | 
-
-<a name="module_electron-builder-http/out/bintray.bintrayRequest"></a>
-
-### `electron-builder-http/out/bintray.bintrayRequest(path, auth, data, cancellationToken, method)` ⇒ <code>Promise&lt;module:electron-builder-http/out/bintray.T&gt;</code>
-**Kind**: method of <code>[electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)</code>  
-
-| Param | Type |
-| --- | --- |
-| path | <code>string</code> | 
-| auth | <code>string</code> \| <code>null</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
-
-<a name="module_electron-builder-http/out/CancellationToken"></a>
-
-## electron-builder-http/out/CancellationToken
-
-* [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
-    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-        * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-        * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="CancellationError"></a>
-
-### CancellationError ⇐ <code>Error</code>
-**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
-**Extends**: <code>Error</code>  
-<a name="CancellationToken"></a>
-
-### CancellationToken ⇐ <code>internal:EventEmitter</code>
-**Kind**: class of <code>[electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)</code>  
-**Extends**: <code>internal:EventEmitter</code>  
-
-* [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-    * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-    * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-    * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+cancel"></a>
-
-#### `cancellationToken.cancel()`
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise"></a>
-
-#### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+dispose"></a>
-
-#### `cancellationToken.dispose()`
-**Kind**: instance method of <code>[CancellationToken](#CancellationToken)</code>  
-<a name="module_electron-builder-http/out/ProgressCallbackTransform"></a>
-
-## electron-builder-http/out/ProgressCallbackTransform
-
-* [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
-    * [`.ProgressInfo`](#ProgressInfo)
-    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="ProgressInfo"></a>
-
-### `ProgressInfo`
-**Kind**: interface of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **total**| <code>number</code> | 
-| **delta**| <code>number</code> | 
-| **transferred**| <code>number</code> | 
-| **percent**| <code>number</code> | 
-| **bytesPerSecond**| <code>number</code> | 
-
-<a name="ProgressCallbackTransform"></a>
-
-### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
-**Kind**: class of <code>[electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)</code>  
-**Extends**: <code>internal:Transform</code>  
-
-* [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-    * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush"></a>
-
-#### `progressCallbackTransform._flush(callback)`
-**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>function</code> | 
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform"></a>
-
-#### `progressCallbackTransform._transform(chunk, encoding, callback)`
-**Kind**: instance method of <code>[ProgressCallbackTransform](#ProgressCallbackTransform)</code>  
-
-| Param | Type |
-| --- | --- |
-| chunk | <code>any</code> | 
-| encoding | <code>string</code> | 
-| callback | <code>function</code> | 
-
-<a name="module_electron-builder-http"></a>
-
-## electron-builder-http
-
-* [electron-builder-http](#module_electron-builder-http)
-    * [`.DownloadOptions`](#DownloadOptions)
-        * [`.onProgress(progress)`](#module_electron-builder-http.DownloadOptions+onProgress)
-    * [`.RequestHeaders`](#RequestHeaders)
-    * [`.Response`](#Response) ⇐ <code>internal:EventEmitter</code>
-        * [`.setEncoding(encoding)`](#module_electron-builder-http.Response+setEncoding)
-    * [.HttpError](#HttpError) ⇐ <code>Error</code>
-    * [.HttpExecutor](#HttpExecutor)
-        * [`.download(url, destination, options)`](#module_electron-builder-http.HttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-http.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.doRequest(options, callback)`](#module_electron-builder-http.HttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-    * [.HttpExecutorHolder](#HttpExecutorHolder)
-    * [`.configureRequestOptions(options, token, method)`](#module_electron-builder-http.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
-    * [`.download(url, destination, options)`](#module_electron-builder-http.download) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>string</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-
-<a name="DownloadOptions"></a>
-
-### `DownloadOptions`
-**Kind**: interface of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| headers| <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
-| skipDirCreation| <code>boolean</code> | 
-| sha2| <code>string</code> \| <code>null</code> | 
-| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
-
-<a name="module_electron-builder-http.DownloadOptions+onProgress"></a>
-
-#### `downloadOptions.onProgress(progress)`
-**Kind**: instance method of <code>[DownloadOptions](#DownloadOptions)</code>  
-
-| Param | Type |
-| --- | --- |
-| progress | <code>[ProgressInfo](#ProgressInfo)</code> | 
-
-<a name="RequestHeaders"></a>
-
-### `RequestHeaders`
-**Kind**: interface of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-<a name="Response"></a>
-
-### `Response` ⇐ <code>internal:EventEmitter</code>
-**Kind**: interface of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-**Extends**: <code>internal:EventEmitter</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| statusCode| <code>number</code> | 
-| statusMessage| <code>string</code> | 
-| **headers**| <code>any</code> | 
-
-<a name="module_electron-builder-http.Response+setEncoding"></a>
-
-#### `response.setEncoding(encoding)`
-**Kind**: instance method of <code>[Response](#Response)</code>  
-
-| Param | Type |
-| --- | --- |
-| encoding | <code>string</code> | 
-
-<a name="HttpError"></a>
-
-### HttpError ⇐ <code>Error</code>
-**Kind**: class of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-**Extends**: <code>Error</code>  
-<a name="HttpExecutor"></a>
-
-### HttpExecutor
-**Kind**: class of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| maxRedirects = <code>10</code>| <code>"10"</code> | 
-
-
-* [.HttpExecutor](#HttpExecutor)
-    * [`.download(url, destination, options)`](#module_electron-builder-http.HttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-    * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-http.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-    * [`.doRequest(options, callback)`](#module_electron-builder-http.HttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-
-<a name="module_electron-builder-http.HttpExecutor+download"></a>
-
-#### `httpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+request"></a>
-
-#### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
-
-#### `httpExecutor.addTimeOutHandler(request, callback)`
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| request | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doApiRequest"></a>
-
-#### `httpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:electron-builder-http.REQUEST_OPTS</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
-
-#### `httpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| requestOptions | <code>any</code> | 
-| destination | <code>string</code> | 
-| redirectCount | <code>number</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-| callback | <code>callback</code> | 
-| onCancel | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doRequest"></a>
-
-#### `httpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
-
-#### `httpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
-**Kind**: instance method of <code>[HttpExecutor](#HttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| response | <code>[Response](#Response)</code> | 
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| resolve | <code>callback</code> | 
-| reject | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
-<a name="HttpExecutorHolder"></a>
-
-### HttpExecutorHolder
-**Kind**: class of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-<a name="module_electron-builder-http.configureRequestOptions"></a>
-
-### `electron-builder-http.configureRequestOptions(options, token, method)` ⇒ <code>module:http.RequestOptions</code>
-**Kind**: method of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| token | <code>string</code> \| <code>null</code> | 
-| method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
-
-<a name="module_electron-builder-http.download"></a>
-
-### `electron-builder-http.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-http.dumpRequestOptions"></a>
-
-### `electron-builder-http.dumpRequestOptions(options)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-
-<a name="module_electron-builder-http.request"></a>
-
-### `electron-builder-http.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: method of <code>[electron-builder-http](#module_electron-builder-http)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-publish/out/BintrayPublisher"></a>
-
-## electron-publish/out/BintrayPublisher
-
-* [electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)
-    * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-        * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="BintrayPublisher"></a>
-
-### BintrayPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-**Kind**: class of <code>[electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)</code>  
-**Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| providerName = <code>Bintray</code>| <code>"Bintray"</code> | 
-
-
-* [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-    * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
-
-#### `bintrayPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-<a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString"></a>
-
-#### `bintrayPublisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-**Overrides**: <code>[toString](#module_electron-publish.Publisher+toString)</code>  
-<a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload"></a>
-
-#### `bintrayPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-**Overrides**: <code>[doUpload](#module_electron-publish.HttpPublisher+doUpload)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
-<a name="module_electron-publish.HttpPublisher+upload"></a>
-
-#### `bintrayPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
-#### `bintrayPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `bintrayPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `bintrayPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[BintrayPublisher](#BintrayPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
-<a name="module_electron-publish/out/gitHubPublisher"></a>
-
-## electron-publish/out/gitHubPublisher
-
-* [electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)
-    * [`.Release`](#Release)
-    * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-        * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="Release"></a>
-
-### `Release`
-**Kind**: interface of <code>[electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **id**| <code>number</code> | 
-| **tag_name**| <code>string</code> | 
-| **draft**| <code>boolean</code> | 
-| **prerelease**| <code>boolean</code> | 
-| **published_at**| <code>string</code> | 
-| **upload_url**| <code>string</code> | 
-
-<a name="GitHubPublisher"></a>
-
-### GitHubPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-**Kind**: class of <code>[electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)</code>  
-**Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| providerName = <code>GitHub</code>| <code>"GitHub"</code> | 
-
-
-* [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
-    * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
-
-#### `gitHubPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-<a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease"></a>
-
-#### `gitHubPublisher.getRelease()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-<a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString"></a>
-
-#### `gitHubPublisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-**Overrides**: <code>[toString](#module_electron-publish.Publisher+toString)</code>  
-<a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload"></a>
-
-#### `gitHubPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-**Overrides**: <code>[doUpload](#module_electron-publish.HttpPublisher+doUpload)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
-<a name="module_electron-publish.HttpPublisher+upload"></a>
-
-#### `gitHubPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
-#### `gitHubPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `gitHubPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `gitHubPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[GitHubPublisher](#GitHubPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
-<a name="module_electron-publish/out/multiProgress"></a>
-
-## electron-publish/out/multiProgress
-
-* [electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)
-    * [.MultiProgress](#MultiProgress)
-        * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>[ProgressBar](#ProgressBar)</code>
-        * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
-
-<a name="MultiProgress"></a>
-
-### MultiProgress
-**Kind**: class of <code>[electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)</code>  
-
-* [.MultiProgress](#MultiProgress)
-    * [`.createBar(format, options)`](#module_electron-publish/out/multiProgress.MultiProgress+createBar) ⇒ <code>[ProgressBar](#ProgressBar)</code>
-    * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
-
-<a name="module_electron-publish/out/multiProgress.MultiProgress+createBar"></a>
-
-#### `multiProgress.createBar(format, options)` ⇒ <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of <code>[MultiProgress](#MultiProgress)</code>  
-
-| Param | Type |
-| --- | --- |
-| format | <code>string</code> | 
-| options | <code>any</code> | 
-
-<a name="module_electron-publish/out/multiProgress.MultiProgress+terminate"></a>
-
-#### `multiProgress.terminate()`
-**Kind**: instance method of <code>[MultiProgress](#MultiProgress)</code>  
-<a name="module_electron-publish/out/progress"></a>
-
-## electron-publish/out/progress
-
-* [electron-publish/out/progress](#module_electron-publish/out/progress)
-    * [.ProgressBar](#ProgressBar)
-        * [`.interrupt(message)`](#module_electron-publish/out/progress.ProgressBar+interrupt)
-        * [`.render()`](#module_electron-publish/out/progress.ProgressBar+render)
-        * [`.terminate()`](#module_electron-publish/out/progress.ProgressBar+terminate)
-        * [`.tick(delta)`](#module_electron-publish/out/progress.ProgressBar+tick)
-        * [`.update(ratio)`](#module_electron-publish/out/progress.ProgressBar+update)
-    * [.ProgressCallback](#ProgressCallback)
-        * [`.update(transferred, total)`](#module_electron-publish/out/progress.ProgressCallback+update)
-
-<a name="ProgressBar"></a>
-
-### ProgressBar
-**Kind**: class of <code>[electron-publish/out/progress](#module_electron-publish/out/progress)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| total| <code>number</code> | 
-
-
-* [.ProgressBar](#ProgressBar)
-    * [`.interrupt(message)`](#module_electron-publish/out/progress.ProgressBar+interrupt)
-    * [`.render()`](#module_electron-publish/out/progress.ProgressBar+render)
-    * [`.terminate()`](#module_electron-publish/out/progress.ProgressBar+terminate)
-    * [`.tick(delta)`](#module_electron-publish/out/progress.ProgressBar+tick)
-    * [`.update(ratio)`](#module_electron-publish/out/progress.ProgressBar+update)
-
-<a name="module_electron-publish/out/progress.ProgressBar+interrupt"></a>
-
-#### `progressBar.interrupt(message)`
-"interrupt" the progress bar and write a message above it.
-
-**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
-
-| Param | Type |
-| --- | --- |
-| message | <code>string</code> | 
-
-<a name="module_electron-publish/out/progress.ProgressBar+render"></a>
-
-#### `progressBar.render()`
-**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
-<a name="module_electron-publish/out/progress.ProgressBar+terminate"></a>
-
-#### `progressBar.terminate()`
-**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
-<a name="module_electron-publish/out/progress.ProgressBar+tick"></a>
-
-#### `progressBar.tick(delta)`
-"tick" the progress bar with optional `len` and optional `tokens`.
-
-**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
-
-| Param | Type |
-| --- | --- |
-| delta | <code>number</code> | 
-
-<a name="module_electron-publish/out/progress.ProgressBar+update"></a>
-
-#### `progressBar.update(ratio)`
-"update" the progress bar to represent an exact percentage.
-The ratio (between 0 and 1) specified will be multiplied by `total` and
-floored, representing the closest available "tick." For example, if a
-progress bar has a length of 3 and `update(0.5)` is called, the progress
-will be set to 1.
-
-A ratio of 0.5 will attempt to set the progress to halfway.
-
-**Kind**: instance method of <code>[ProgressBar](#ProgressBar)</code>  
-
-| Param | Type |
-| --- | --- |
-| ratio | <code>number</code> | 
-
-<a name="ProgressCallback"></a>
-
-### ProgressCallback
-**Kind**: class of <code>[electron-publish/out/progress](#module_electron-publish/out/progress)</code>  
-<a name="module_electron-publish/out/progress.ProgressCallback+update"></a>
-
-#### `progressCallback.update(transferred, total)`
-**Kind**: instance method of <code>[ProgressCallback](#ProgressCallback)</code>  
-
-| Param | Type |
-| --- | --- |
-| transferred | <code>number</code> | 
-| total | <code>number</code> | 
-
-<a name="module_electron-publish"></a>
-
-## electron-publish
-
-* [electron-publish](#module_electron-publish)
-    * [`.PublishContext`](#PublishContext)
-    * [`.PublishOptions`](#PublishOptions)
-    * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-    * [.Publisher](#Publisher)
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="PublishContext"></a>
-
-### `PublishContext`
-**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
-| progress| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
-
-<a name="PublishOptions"></a>
-
-### `PublishOptions`
-**Kind**: interface of <code>[electron-publish](#module_electron-publish)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| publish| <code>"onTag"</code> \| <code>"onTagOrDraft"</code> \| <code>"always"</code> \| <code>"never"</code> \| <code>null</code> | 
-| draft| <code>boolean</code> | 
-| prerelease| <code>boolean</code> | 
-
-<a name="HttpPublisher"></a>
-
-### HttpPublisher ⇐ <code>[Publisher](#Publisher)</code>
-**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
-**Extends**: <code>[Publisher](#Publisher)</code>  
-
-* [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish.HttpPublisher+upload"></a>
-
-#### `httpPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Overrides**: <code>[upload](#module_electron-publish.Publisher+upload)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
-#### `httpPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+doUpload"></a>
-
-#### `httpPublisher.doUpload(fileName, dataLength, requestProcessor, file)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-| file | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+toString"></a>
-
-#### `httpPublisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `httpPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[HttpPublisher](#HttpPublisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
-<a name="Publisher"></a>
-
-### Publisher
-**Kind**: class of <code>[electron-publish](#module_electron-publish)</code>  
-
-* [.Publisher](#Publisher)
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
-
-<a name="module_electron-publish.Publisher+toString"></a>
-
-#### `publisher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-<a name="module_electron-publish.Publisher+upload"></a>
-
-#### `publisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `publisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of <code>[Publisher](#Publisher)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
 <a name="module_electron-updater/out/BintrayProvider"></a>
 
 ## electron-updater/out/BintrayProvider
@@ -4236,40 +2851,31 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 ## electron-updater/out/electronHttpExecutor
 
 * [electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)
-    * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+    * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
         * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
         * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
 
 <a name="ElectronHttpExecutor"></a>
 
-### ElectronHttpExecutor ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+### ElectronHttpExecutor ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
 **Kind**: class of <code>[electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)</code>  
-**Extends**: <code>[HttpExecutor](#HttpExecutor)</code>  
+**Extends**: <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>  
 
-* [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
+* [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
     * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
     * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
 
 #### `electronHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
 **Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[doApiRequest](#module_electron-builder-http.HttpExecutor+doApiRequest)</code>  
 
 | Param | Type |
 | --- | --- |
 | options | <code>Electron:RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 | requestProcessor | <code>callback</code> | 
 | redirectCount | <code>number</code> | 
 
@@ -4277,78 +2883,23 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 #### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
 **Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[download](#module_electron-builder-http.HttpExecutor+download)</code>  
 
 | Param | Type |
 | --- | --- |
 | url | <code>string</code> | 
 | destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
+| options | <code>[DownloadOptions](electron-builder-http#DownloadOptions)</code> | 
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
 
 #### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
 **Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Overrides**: <code>[doRequest](#module_electron-builder-http.HttpExecutor+doRequest)</code>  
 **Access**: protected  
 
 | Param | Type |
 | --- | --- |
 | options | <code>any</code> | 
 | callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+request"></a>
-
-#### `electronHttpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
-
-#### `electronHttpExecutor.addTimeOutHandler(request, callback)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| request | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
-
-#### `electronHttpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| requestOptions | <code>any</code> | 
-| destination | <code>string</code> | 
-| redirectCount | <code>number</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-| callback | <code>callback</code> | 
-| onCancel | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
-
-#### `electronHttpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| response | <code>[Response](#Response)</code> | 
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| resolve | <code>callback</code> | 
-| reject | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
 
 <a name="module_electron-updater/out/GenericProvider"></a>
 
@@ -4471,7 +3022,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | --- | --- |
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable"></a>
 
@@ -4520,7 +3071,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 | --- | --- |
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="module_electron-updater/out/PrivateGitHubProvider"></a>
 
@@ -4577,672 +3128,4 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 | Param | Type |
 | --- | --- |
 | versionInfo | <code>[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)</code> | 
-
-<a name="module_electron-builder-util/out/binDownload"></a>
-
-## electron-builder-util/out/binDownload
-
-* [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
-    * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise&lt;string&gt;</code>
-
-<a name="module_electron-builder-util/out/binDownload.getBin"></a>
-
-### `electron-builder-util/out/binDownload.getBin(name, dirName, url, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)</code>  
-
-| Param | Type |
-| --- | --- |
-| name | <code>string</code> | 
-| dirName | <code>string</code> | 
-| url | <code>string</code> | 
-| sha2 | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
-
-### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)</code>  
-
-| Param | Type |
-| --- | --- |
-| name | <code>string</code> | 
-| version | <code>string</code> | 
-| sha2 | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/deepAssign"></a>
-
-## electron-builder-util/out/deepAssign
-<a name="module_electron-builder-util/out/deepAssign.deepAssign"></a>
-
-### `electron-builder-util/out/deepAssign.deepAssign(target, objects)` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder-util/out/deepAssign](#module_electron-builder-util/out/deepAssign)</code>  
-
-| Param | Type |
-| --- | --- |
-| target | <code>any</code> | 
-| objects | <code>Array&lt;any&gt;</code> | 
-
-<a name="module_electron-builder-util/out/fs"></a>
-
-## electron-builder-util/out/fs
-
-* [electron-builder-util/out/fs](#module_electron-builder-util/out/fs)
-    * [.FileCopier](#FileCopier)
-        * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.copyDir(src, destination, filter, transformer, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;boolean&gt;</code>
-    * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
-    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;string \| void&gt;</code>
-    * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-
-<a name="FileCopier"></a>
-
-### FileCopier
-**Kind**: class of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-<a name="module_electron-builder-util/out/fs.FileCopier+copy"></a>
-
-#### `fileCopier.copy(src, dest, stat)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[FileCopier](#FileCopier)</code>  
-
-| Param | Type |
-| --- | --- |
-| src | <code>string</code> | 
-| dest | <code>string</code> | 
-| stat | <code>module:fs.Stats</code> \| <code>undefined</code> | 
-
-<a name="module_electron-builder-util/out/fs.copyDir"></a>
-
-### `electron-builder-util/out/fs.copyDir(src, destination, filter, transformer, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
-Empty directories is never created.
-Hard links is used if supported and allowed.
-
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| src | <code>string</code> | 
-| destination | <code>string</code> | 
-| filter | <code>module:electron-builder-util/out/fs.__type</code> | 
-| transformer | <code>module:electron-builder-util/out/fs.__type</code> | 
-| isUseHardLink | <code>callback</code> | 
-
-<a name="module_electron-builder-util/out/fs.copyFile"></a>
-
-### `electron-builder-util/out/fs.copyFile(src, dest, stats, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
-Hard links is used if supported and allowed.
-File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
-
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| src | <code>string</code> | 
-| dest | <code>string</code> | 
-| stats | <code>module:fs.Stats</code> \| <code>null</code> | 
-| isUseHardLink |  | 
-
-<a name="module_electron-builder-util/out/fs.exists"></a>
-
-### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;boolean&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/fs.statOrNull"></a>
-
-### `electron-builder-util/out/fs.statOrNull(file)` ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/fs.unlinkIfExists"></a>
-
-### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;string \| void&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/fs.walk"></a>
-
-### `electron-builder-util/out/fs.walk(initialDirPath, filter, consumer)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
-
-| Param | Type |
-| --- | --- |
-| initialDirPath | <code>string</code> | 
-| filter | <code>module:electron-builder-util/out/fs.__type</code> \| <code>null</code> | 
-| consumer | <code>callback</code> | 
-
-<a name="module_electron-builder-util/out/log"></a>
-
-## electron-builder-util/out/log
-
-* [electron-builder-util/out/log](#module_electron-builder-util/out/log)
-    * [`.log(message)`](#module_electron-builder-util/out/log.log)
-    * [`.setPrinter(value)`](#module_electron-builder-util/out/log.setPrinter)
-    * [`.subTask(title, promise)`](#module_electron-builder-util/out/log.subTask) ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-    * [`.task(title, promise)`](#module_electron-builder-util/out/log.task) ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-    * [`.warn(message)`](#module_electron-builder-util/out/log.warn)
-
-<a name="module_electron-builder-util/out/log.log"></a>
-
-### `electron-builder-util/out/log.log(message)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
-
-| Param | Type |
-| --- | --- |
-| message | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/log.setPrinter"></a>
-
-### `electron-builder-util/out/log.setPrinter(value)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
-
-| Param | Type |
-| --- | --- |
-| value | <code>module:electron-builder-util/out/log.__type</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-util/out/log.subTask"></a>
-
-### `electron-builder-util/out/log.subTask(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
-
-| Param | Type |
-| --- | --- |
-| title | <code>string</code> | 
-| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
-
-<a name="module_electron-builder-util/out/log.task"></a>
-
-### `electron-builder-util/out/log.task(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
-
-| Param | Type |
-| --- | --- |
-| title | <code>string</code> | 
-| promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
-
-<a name="module_electron-builder-util/out/log.warn"></a>
-
-### `electron-builder-util/out/log.warn(message)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
-
-| Param | Type |
-| --- | --- |
-| message | <code>string</code> | 
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor"></a>
-
-## electron-builder-util/out/nodeHttpExecutor
-
-* [electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)
-    * [.NodeHttpExecutor](#NodeHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-        * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.doRequest(options, callback)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-    * [`.httpExecutor`](#module_electron-builder-util/out/nodeHttpExecutor.httpExecutor) : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
-
-<a name="NodeHttpExecutor"></a>
-
-### NodeHttpExecutor ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-**Kind**: class of <code>[electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)</code>  
-**Extends**: <code>[HttpExecutor](#HttpExecutor)</code>  
-
-* [.NodeHttpExecutor](#NodeHttpExecutor) ⇐ <code>[HttpExecutor](#HttpExecutor)</code>
-    * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-    * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.doRequest(options, callback)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest"></a>
-
-#### `nodeHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Overrides**: <code>[doApiRequest](#module_electron-builder-http.HttpExecutor+doApiRequest)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:https.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download"></a>
-
-#### `nodeHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Overrides**: <code>[download](#module_electron-builder-http.HttpExecutor+download)</code>  
-
-| Param | Type |
-| --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest"></a>
-
-#### `nodeHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Overrides**: <code>[doRequest](#module_electron-builder-http.HttpExecutor+doRequest)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+request"></a>
-
-#### `nodeHttpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-
-| Param | Type |
-| --- | --- |
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
-
-#### `nodeHttpExecutor.addTimeOutHandler(request, callback)`
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| request | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
-
-#### `nodeHttpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| requestOptions | <code>any</code> | 
-| destination | <code>string</code> | 
-| redirectCount | <code>number</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-| callback | <code>callback</code> | 
-| onCancel | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
-
-#### `nodeHttpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| response | <code>[Response](#Response)</code> | 
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| resolve | <code>callback</code> | 
-| reject | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor.httpExecutor"></a>
-
-### `electron-builder-util/out/nodeHttpExecutor.httpExecutor` : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
-**Kind**: constant of <code>[electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)</code>  
-<a name="module_electron-builder-util/out/promise"></a>
-
-## electron-builder-util/out/promise
-
-* [electron-builder-util/out/promise](#module_electron-builder-util/out/promise)
-    * [.NestedError](#NestedError) ⇐ <code>Error</code>
-    * [`.all(promises)`](#module_electron-builder-util/out/promise.all) ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-    * [`.asyncAll(tasks)`](#module_electron-builder-util/out/promise.asyncAll) ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
-    * [`.executeFinally(promise, task)`](#module_electron-builder-util/out/promise.executeFinally) ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
-    * [`.printErrorAndExit(error)`](#module_electron-builder-util/out/promise.printErrorAndExit)
-    * [`.throwError(errors)`](#module_electron-builder-util/out/promise.throwError)
-
-<a name="NestedError"></a>
-
-### NestedError ⇐ <code>Error</code>
-**Kind**: class of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-**Extends**: <code>Error</code>  
-<a name="module_electron-builder-util/out/promise.all"></a>
-
-### `electron-builder-util/out/promise.all(promises)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-
-| Param | Type |
-| --- | --- |
-| promises | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-
-<a name="module_electron-builder-util/out/promise.asyncAll"></a>
-
-### `electron-builder-util/out/promise.asyncAll(tasks)` ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-
-| Param | Type |
-| --- | --- |
-| tasks | <code>Array&lt;module:electron-builder-util/out/promise.__type&gt;</code> | 
-
-<a name="module_electron-builder-util/out/promise.executeFinally"></a>
-
-### `electron-builder-util/out/promise.executeFinally(promise, task)` ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-
-| Param | Type |
-| --- | --- |
-| promise | <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code> | 
-| task | <code>callback</code> | 
-
-<a name="module_electron-builder-util/out/promise.printErrorAndExit"></a>
-
-### `electron-builder-util/out/promise.printErrorAndExit(error)`
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-
-| Param | Type |
-| --- | --- |
-| error | <code>Error</code> | 
-
-<a name="module_electron-builder-util/out/promise.throwError"></a>
-
-### `electron-builder-util/out/promise.throwError(errors)`
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
-
-| Param | Type |
-| --- | --- |
-| errors | <code>Array&lt;Error&gt;</code> | 
-
-<a name="module_electron-builder-util/out/tmp"></a>
-
-## electron-builder-util/out/tmp
-
-* [electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)
-    * [.TmpDir](#TmpDir)
-        * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-
-<a name="TmpDir"></a>
-
-### TmpDir
-**Kind**: class of <code>[electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)</code>  
-
-* [.TmpDir](#TmpDir)
-    * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-
-<a name="module_electron-builder-util/out/tmp.TmpDir+cleanup"></a>
-
-#### `tmpDir.cleanup()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[TmpDir](#TmpDir)</code>  
-<a name="module_electron-builder-util/out/tmp.TmpDir+getTempFile"></a>
-
-#### `tmpDir.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[TmpDir](#TmpDir)</code>  
-
-| Param | Type |
-| --- | --- |
-| suffix | <code>string</code> | 
-
-<a name="module_electron-builder-util"></a>
-
-## electron-builder-util
-
-* [electron-builder-util](#module_electron-builder-util)
-    * [`.BaseExecOptions`](#BaseExecOptions)
-    * [`.ExecOptions`](#ExecOptions) ⇐ <code>[BaseExecOptions](#BaseExecOptions)</code>
-    * [.Lazy](#Lazy)
-    * [`.addValue(map, key, value)`](#module_electron-builder-util.addValue)
-    * [`.asArray(v)`](#module_electron-builder-util.asArray) ⇒ <code>Array&lt;module:electron-builder-util.T&gt;</code>
-    * [`.computeDefaultAppDirectory(projectDir, userAppDir)`](#module_electron-builder-util.computeDefaultAppDirectory) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.debug7zArgs(command)`](#module_electron-builder-util.debug7zArgs) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.doSpawn(command, args, options, pipeInput)`](#module_electron-builder-util.doSpawn) ⇒ <code>module:child_process.ChildProcess</code>
-    * [`.exec(file, args, options)`](#module_electron-builder-util.exec) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.execWine(file, args, options)`](#module_electron-builder-util.execWine) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getCacheDirectory()`](#module_electron-builder-util.getCacheDirectory) ⇒ <code>string</code>
-    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
-    * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>string</code>
-    * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
-    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>boolean</code>
-    * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
-    * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
-    * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.safeStringifyJson(data)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>string</code>
-    * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>string</code>
-    * [`.spawn(command, args, options)`](#module_electron-builder-util.spawn) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
-
-<a name="BaseExecOptions"></a>
-
-### `BaseExecOptions`
-**Kind**: interface of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| cwd| <code>string</code> | 
-| env| <code>any</code> | 
-| stdio| <code>any</code> | 
-
-<a name="ExecOptions"></a>
-
-### `ExecOptions` ⇐ <code>[BaseExecOptions](#BaseExecOptions)</code>
-**Kind**: interface of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-**Extends**: <code>[BaseExecOptions](#BaseExecOptions)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| customFds| <code>any</code> | 
-| encoding| <code>string</code> | 
-| timeout| <code>number</code> | 
-| maxBuffer| <code>number</code> | 
-| killSignal| <code>string</code> | 
-
-<a name="Lazy"></a>
-
-### Lazy
-**Kind**: class of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-<a name="module_electron-builder-util.addValue"></a>
-
-### `electron-builder-util.addValue(map, key, value)`
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| map | <code>Map&lt;module:electron-builder-util.K \| Array&lt;module:electron-builder-util.T&gt;&gt;</code> | 
-| key | <code>module:electron-builder-util.K</code> | 
-| value | <code>module:electron-builder-util.T</code> | 
-
-<a name="module_electron-builder-util.asArray"></a>
-
-### `electron-builder-util.asArray(v)` ⇒ <code>Array&lt;module:electron-builder-util.T&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| v | <code>null</code> \| <code>undefined</code> \| <code>module:electron-builder-util.T</code> \| <code>Array&lt;module:electron-builder-util.T&gt;</code> | 
-
-<a name="module_electron-builder-util.computeDefaultAppDirectory"></a>
-
-### `electron-builder-util.computeDefaultAppDirectory(projectDir, userAppDir)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| projectDir | <code>string</code> | 
-| userAppDir | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
-
-<a name="module_electron-builder-util.debug7zArgs"></a>
-
-### `electron-builder-util.debug7zArgs(command)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| command | <code>"a"</code> \| <code>"x"</code> | 
-
-<a name="module_electron-builder-util.doSpawn"></a>
-
-### `electron-builder-util.doSpawn(command, args, options, pipeInput)` ⇒ <code>module:child_process.ChildProcess</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| command | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> | 
-| options | <code>module:child_process.SpawnOptions</code> | 
-| pipeInput | <code>Boolean</code> | 
-
-<a name="module_electron-builder-util.exec"></a>
-
-### `electron-builder-util.exec(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
-| options | <code>[ExecOptions](#ExecOptions)</code> | 
-
-<a name="module_electron-builder-util.execWine"></a>
-
-### `electron-builder-util.execWine(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> | 
-| options | <code>[ExecOptions](#ExecOptions)</code> | 
-
-<a name="module_electron-builder-util.getCacheDirectory"></a>
-
-### `electron-builder-util.getCacheDirectory()` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-<a name="module_electron-builder-util.getPlatformIconFileName"></a>
-
-### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| value | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
-| isMac | <code>boolean</code> | 
-
-<a name="module_electron-builder-util.getTempName"></a>
-
-### `electron-builder-util.getTempName(prefix)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| prefix | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
-
-<a name="module_electron-builder-util.handleProcess"></a>
-
-### `electron-builder-util.handleProcess(event, childProcess, command, resolve, reject)`
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| event | <code>string</code> | 
-| childProcess | <code>module:child_process.ChildProcess</code> | 
-| command | <code>string</code> | 
-| resolve | <code>module:electron-builder-util.__type</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
-<a name="module_electron-builder-util.isEmptyOrSpaces"></a>
-
-### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>boolean</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| s | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
-
-<a name="module_electron-builder-util.isPullRequest"></a>
-
-### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-<a name="module_electron-builder-util.prepareArgs"></a>
-
-### `electron-builder-util.prepareArgs(args, exePath)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| args | <code>Array&lt;string&gt;</code> | 
-| exePath | <code>string</code> | 
-
-<a name="module_electron-builder-util.removePassword"></a>
-
-### `electron-builder-util.removePassword(input)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| input | <code>string</code> | 
-
-<a name="module_electron-builder-util.replaceDefault"></a>
-
-### `electron-builder-util.replaceDefault(inList, defaultList)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| inList | <code>Array&lt;string&gt;</code> \| <code>null</code> \| <code>undefined</code> | 
-| defaultList | <code>Array&lt;string&gt;</code> | 
-
-<a name="module_electron-builder-util.safeStringifyJson"></a>
-
-### `electron-builder-util.safeStringifyJson(data)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| data | <code>any</code> | 
-
-<a name="module_electron-builder-util.smarten"></a>
-
-### `electron-builder-util.smarten(s)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| s | <code>string</code> | 
-
-<a name="module_electron-builder-util.spawn"></a>
-
-### `electron-builder-util.spawn(command, args, options)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| command | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
-| options | <code>module:child_process.SpawnOptions</code> | 
-
-<a name="module_electron-builder-util.use"></a>
-
-### `electron-builder-util.use(value, task)` ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
-
-| Param | Type |
-| --- | --- |
-| value | <code>module:electron-builder-util.T</code> \| <code>null</code> | 
-| task | <code>callback</code> | 
 

@@ -100,30 +100,30 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.AppXOptions`](#AppXOptions)
     * [`.ArtifactCreated`](#ArtifactCreated)
     * [`.BuildInfo`](#BuildInfo)
-    * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
+    * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
     * [`.BuildResult`](#BuildResult)
-    * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
-    * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+    * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
+    * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>
     * [`.DmgContent`](#DmgContent)
-    * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+    * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [`.DmgWindow`](#DmgWindow)
     * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>
-    * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+    * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
-    * [`.NsisOptions`](#NsisOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+    * [`.NsisOptions`](#NsisOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
-    * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+    * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
     * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-    * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+    * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.buildForge(appDir, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
 
@@ -136,8 +136,8 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 | **appOutDir**| <code>string</code> | 
 | **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
 | **electronPlatformName**| <code>string</code> | 
-| **arch**| <code>[Arch](Developer-API#Arch)</code> | 
-| **targets**| <code>Array&lt;[Target](Developer-API#Target)&gt;</code> | 
+| **arch**| <code>[Arch](electron-builder-core#Arch)</code> | 
+| **targets**| <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="AppXOptions"></a>
 
@@ -165,8 +165,8 @@ AppX Options ([appx](#Config-appx)).
 | Name | Type |
 | --- | --- |
 | **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
-| target| <code>[Target](Developer-API#Target)</code> \| <code>null</code> | 
-| arch| <code>[Arch](Developer-API#Arch)</code> \| <code>null</code> | 
+| target| <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch| <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | file| <code>string</code> | 
 | data| <code>Buffer</code> | 
 | safeArtifactName| <code>string</code> | 
@@ -190,17 +190,17 @@ AppX Options ([appx](#Config-appx)).
 | muonVersion| <code>string</code> \| <code>null</code> | 
 | **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
 | **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
-| **tempDirManager**| <code>[TmpDir](Developer-API#TmpDir)</code> | 
-| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](Developer-API#SourceRepositoryInfo)&gt;</code> | 
+| **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
 | **isPrepackedAppAsar**| <code>boolean</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
-| **cancellationToken**| <code>[CancellationToken](Developer-API#CancellationToken)</code> | 
+| **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="BuildOptions"></a>
 
-### `BuildOptions` ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
+### `BuildOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PublishOptions](Developer-API#PublishOptions)</code>  
+**Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
 <a name="BuildResult"></a>
 
 ### `BuildResult`
@@ -210,13 +210,13 @@ AppX Options ([appx](#Config-appx)).
 | Name | Type |
 | --- | --- |
 | **outDir**| <code>string</code> | 
-| **platformToTargets**| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;String \| [Target](Developer-API#Target)&gt;&gt;</code> | 
+| **platformToTargets**| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;String \| [Target](electron-builder-core#Target)&gt;&gt;</code> | 
 
 <a name="CliOptions"></a>
 
-### `CliOptions` ⇐ <code>[PublishOptions](Developer-API#PublishOptions)</code>
+### `CliOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PublishOptions](Developer-API#PublishOptions)</code>  
+**Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
 **Properties**
 
 | Name | Type |
@@ -234,11 +234,11 @@ AppX Options ([appx](#Config-appx)).
 
 <a name="Config"></a>
 
-### `Config` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+### `Config` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 Configuration Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -247,12 +247,12 @@ Configuration Options
 | copyright| <code>string</code> \| <code>null</code> | <a name="Config-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`. |
 | productName| <code>string</code> \| <code>null</code> | <a name="Config-productName"></a>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}). |
 | files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-files"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. See: [File Patterns](#file-patterns). |
-| extraResources| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraResources"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).<br><br>Glob rules the same as for [files](#multiple-glob-patterns). |
-| extraFiles| <code>Array&lt;string \| [FilePattern](Developer-API#FilePattern)&gt;</code> \| <code>[FilePattern](Developer-API#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows). |
-| asar = <code>true</code>| <code>[AsarOptions](Developer-API#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | <a name="Config-asar"></a>Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).<br><br>Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work. |
+| extraResources| <code>Array&lt;string \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraResources"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).<br><br>Glob rules the same as for [files](#multiple-glob-patterns). |
+| extraFiles| <code>Array&lt;string \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows). |
+| asar = <code>true</code>| <code>[AsarOptions](electron-builder-core#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | <a name="Config-asar"></a>Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).<br><br>Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work. |
 | asarUnpack| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-asarUnpack"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive. |
-| fileAssociations| <code>Array&lt;[FileAssociation](Developer-API#FileAssociation)&gt;</code> \| <code>[FileAssociation](Developer-API#FileAssociation)</code> | <a name="Config-fileAssociations"></a>File associations. |
-| protocols| <code>Array&lt;[Protocol](Developer-API#Protocol)&gt;</code> \| <code>[Protocol](Developer-API#Protocol)</code> | <a name="Config-protocols"></a>URL protocol schemes. |
+| fileAssociations| <code>Array&lt;[FileAssociation](electron-builder-core#FileAssociation)&gt;</code> \| <code>[FileAssociation](electron-builder-core#FileAssociation)</code> | <a name="Config-fileAssociations"></a>File associations. |
+| protocols| <code>Array&lt;[Protocol](electron-builder-core#Protocol)&gt;</code> \| <code>[Protocol](electron-builder-core#Protocol)</code> | <a name="Config-protocols"></a>URL protocol schemes. |
 | compression = <code>normal</code>| <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>null</code> | <a name="Config-compression"></a>The compression level. If you want to rapidly test build, `store` can reduce build time significantly. |
 | afterPack| <code>callback</code> | <a name="Config-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned. |
 | beforeBuild| <code>callback</code> | <a name="Config-beforeBuild"></a>*programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild. |
@@ -264,7 +264,7 @@ Configuration Options
 | electronDownload| <code>any</code> | <a name="Config-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options. |
 | publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="Config-publish"></a>Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). |
 | forceCodeSigning| <code>boolean</code> | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct). |
-| directories| <code>[MetadataDirectories](Developer-API#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
+| directories| <code>[MetadataDirectories](electron-builder-core#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
 | electronVersion| <code>string</code> \| <code>null</code> | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency. |
 | muonVersion| <code>string</code> \| <code>null</code> | <a name="Config-muonVersion"></a>The version of muon you are packaging for. |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="Config-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).<br><br>Currently supported only for `mas`, `pkg`, `dmg` and `nsis`. |
@@ -321,11 +321,11 @@ Debian Package Specific Options
 
 <a name="DmgOptions"></a>
 
-### `DmgOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+### `DmgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
 macOS DMG Options ([dmg](#Config-dmg)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
+**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -386,7 +386,7 @@ Linux Options
 | category| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry). |
 | packageCategory| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-packageCategory"></a>The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage. |
 | description| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-description"></a>As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux. |
-| target = <code>AppImage</code>| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](Developer-API#TargetConfig)</code> \| <code>Array</code> | <a name="LinuxBuildOptions-target"></a>Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.<br><br>electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) |
+| target = <code>AppImage</code>| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>Array</code> | <a name="LinuxBuildOptions-target"></a>Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.<br><br>electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) |
 | maintainer| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author). |
 | vendor| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author). |
 | desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value). |
@@ -396,17 +396,17 @@ Linux Options
 
 <a name="MacOptions"></a>
 
-### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 macOS Options ([mac](#Config-mac)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
 | category| <code>string</code> \| <code>null</code> | <a name="MacOptions-category"></a>The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.<br><br>For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.<br><br>Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8). |
-| target| <code>Array&lt;[TargetConfig](Developer-API#TargetConfig) \| "default" \| "dmg" \| "mas" \| "pkg" \| "7z" \| "zip" \| "tar.xz" \| "tar.lz" \| "tar.gz" \| "tar.bz2" \| "dir"&gt;</code> \| <code>"default"</code> \| <code>"dmg"</code> \| <code>"mas"</code> \| <code>"pkg"</code> \| <code>"7z"</code> \| <code>"zip"</code> \| <code>"tar.xz"</code> \| <code>"tar.lz"</code> \| <code>"tar.gz"</code> \| <code>"tar.bz2"</code> \| <code>"dir"</code> \| <code>[TargetConfig](Developer-API#TargetConfig)</code> \| <code>null</code> | <a name="MacOptions-target"></a>The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac). |
+| target| <code>Array&lt;[TargetConfig](electron-builder-core#TargetConfig) \| "default" \| "dmg" \| "mas" \| "pkg" \| "7z" \| "zip" \| "tar.xz" \| "tar.lz" \| "tar.gz" \| "tar.bz2" \| "dir"&gt;</code> \| <code>"default"</code> \| <code>"dmg"</code> \| <code>"mas"</code> \| <code>"pkg"</code> \| <code>"7z"</code> \| <code>"zip"</code> \| <code>"tar.xz"</code> \| <code>"tar.lz"</code> \| <code>"tar.gz"</code> \| <code>"tar.bz2"</code> \| <code>"dir"</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>null</code> | <a name="MacOptions-target"></a>The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac). |
 | identity| <code>string</code> \| <code>null</code> | <a name="MacOptions-identity"></a>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [mas](#MasBuildOptions-identity). |
 | icon = <code>&quot;build/icon.icns&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MacOptions-icon"></a>The path to application icon. |
 | entitlements| <code>string</code> \| <code>null</code> | <a name="MacOptions-entitlements"></a>The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements). |
@@ -441,27 +441,27 @@ Some standard fields should be defined in the `package.json`.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| repository| <code>string</code> \| <code>[RepositoryInfo](Developer-API#RepositoryInfo)</code> \| <code>null</code> | <a name="Metadata-repository"></a> |
+| repository| <code>string</code> \| <code>[RepositoryInfo](electron-builder-core#RepositoryInfo)</code> \| <code>null</code> | <a name="Metadata-repository"></a> |
 | dependencies| <code>Object&lt;string, any&gt;</code> | <a name="Metadata-dependencies"></a> |
 | version| <code>string</code> | <a name="Metadata-version"></a> |
 | **name**| <code>string</code> | <a name="Metadata-name"></a>The application name. |
 | productName| <code>string</code> \| <code>null</code> | <a name="Metadata-productName"></a> |
 | description| <code>string</code> | <a name="Metadata-description"></a>The application description. |
 | main| <code>string</code> \| <code>null</code> | <a name="Metadata-main"></a> |
-| author| <code>[AuthorMetadata](Developer-API#AuthorMetadata)</code> | <a name="Metadata-author"></a> |
+| author| <code>[AuthorMetadata](electron-builder-core#AuthorMetadata)</code> | <a name="Metadata-author"></a> |
 | homepage| <code>string</code> \| <code>null</code> | <a name="Metadata-homepage"></a>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).<br><br>If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default. |
 | license| <code>string</code> \| <code>null</code> | <a name="Metadata-license"></a>linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name. |
 | build| <code>[Config](#Config)</code> | <a name="Metadata-build"></a> |
 
 <a name="NsisOptions"></a>
 
-### `NsisOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+### `NsisOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
 NSIS specific options ([nsis](#Config-nsis)).
 
 See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
+**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -510,7 +510,7 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 
 | Name | Type | Description |
 | --- | --- | --- |
-| targets| <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code> | <a name="PackagerOptions-targets"></a> |
+| targets| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code> | <a name="PackagerOptions-targets"></a> |
 | projectDir| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-projectDir"></a> |
 | cscLink| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscLink"></a> |
 | cscKeyPassword| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscKeyPassword"></a> |
@@ -526,11 +526,11 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 
 <a name="PkgOptions"></a>
 
-### `PkgOptions` ⇐ <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>
+### `PkgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
 macOS Product Archive Options ([pkg](#Config-pkg)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[TargetSpecificOptions](Developer-API#TargetSpecificOptions)</code>  
+**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -593,16 +593,16 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 
 <a name="WinBuildOptions"></a>
 
-### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>
+### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 Windows Specific Options ([win](#Config-win)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[PlatformSpecificBuildOptions](Developer-API#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| target| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](Developer-API#TargetConfig)</code> \| <code>Array</code> | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`. AppX package can be built only on Windows 10.<br><br>To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. |
+| target| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>Array</code> | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`. AppX package can be built only on Windows 10.<br><br>To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. |
 | signingHashAlgorithms| <code>Array&lt;"sha1" \| "sha256"&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`<br><br>For AppX `sha256` is always used. |
 | icon = <code>&quot;build/icon.ico&quot;</code>| <code>string</code> \| <code>null</code> | <a name="WinBuildOptions-icon"></a>The path to application icon. |
 | legalTrademarks| <code>string</code> \| <code>null</code> | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks. |
@@ -632,7 +632,7 @@ Windows Specific Options ([win](#Config-win)).
 | muonVersion| <code>string</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
-| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](Developer-API#TmpDir)</code> | 
+| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder.build"></a>
@@ -656,12 +656,12 @@ Windows Specific Options ([win](#Config-win)).
 
 <a name="module_electron-builder.createTargets"></a>
 
-### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](Developer-API#Platform) \| Map&lt;[Arch](Developer-API#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 **Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
 
 | Param | Type |
 | --- | --- |
-| platforms | <code>Array&lt;[Platform](Developer-API#Platform)&gt;</code> | 
+| platforms | <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code> | 
 | type | <code>string</code> \| <code>null</code> | 
 | arch | <code>string</code> \| <code>null</code> | 
 
