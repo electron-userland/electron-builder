@@ -7,7 +7,7 @@ import { chmod, emptyDir } from "fs-extra-p"
 import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("@electron-builder/electron-download"))
+const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
   if (opts.download != null) {

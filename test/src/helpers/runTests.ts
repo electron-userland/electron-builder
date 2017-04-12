@@ -9,7 +9,7 @@ import { ELECTRON_VERSION, TEST_DIR } from "./config"
 const util = require("../../../packages/electron-builder-util/out/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("@electron-builder/electron-download"))
+const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 runTests()
   .catch(error => {

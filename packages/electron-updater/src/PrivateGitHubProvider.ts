@@ -117,7 +117,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
     else {
       const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
-      return {
+      return <any>{
         name: name,
         url: versionInfo.assets.find(it => it.name == name)!.url,
         sha2: versionInfo.sha2,

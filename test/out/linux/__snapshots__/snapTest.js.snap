@@ -4,7 +4,7 @@ exports[`default stagePackages 1`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "home",
         "x11",
@@ -56,7 +56,7 @@ exports[`default stagePackages 3`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "home",
         "x11",
@@ -110,7 +110,7 @@ exports[`default stagePackages 5`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "custom",
         "home",
@@ -164,7 +164,7 @@ exports[`default stagePackages 7`] = `
 Object {
   "apps": Object {
     "sep": Object {
-      "command": "desktop-launch $SNAP/sep",
+      "command": "env TMPDIR=$XDG_RUNTIME_DIR desktop-launch $SNAP/sep",
       "plugs": Array [
         "foo1",
         "home",
