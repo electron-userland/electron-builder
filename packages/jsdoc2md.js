@@ -42,7 +42,14 @@ async function main() {
     "publisher/**/*.js",
   ], {cwd: source})
 
-  const customFiles = new Set(coreFiles.concat(httpFiles).concat(utilFiles).concat(publishOptionsFiles).concat(publishFiles))
+  const updaterFiles = await globby([
+    "updater/electron-updater-out-electronHttpExecutor.js",
+    "updater/electron-updater-out-*Updater.js",
+    "updater/electron-updater-out-*Provider.js",
+    "!updater/electron-updater-out-AppUpdater.js",
+  ], {cwd: source})
+
+  const customFiles = new Set(coreFiles.concat(httpFiles).concat(utilFiles).concat(publishOptionsFiles).concat(publishFiles).concat(updaterFiles))
 
   const developerFiles = (await globby([
     "**/*.js",
@@ -61,6 +68,7 @@ async function main() {
     {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
     {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
+    {page: "api/electron-updater.md", pageUrl: "electron-updater", files: updaterFiles},
   ]
 
   await render(pages, {

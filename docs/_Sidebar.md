@@ -22,3 +22,4 @@
 * [[electron-builder-util]]
 * [[electron-builder-http]]
 * [[electron-publish]]
+* [[electron-updater]]

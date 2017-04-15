@@ -96,6 +96,7 @@ Bintray options.
 | package| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-package"></a>The Bintray package name. |
 | repo = <code>&quot;generic&quot;</code>| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-repo"></a>The Bintray repository name. |
 | user| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization. |
+| token| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-token"></a> |
 
 <a name="GenericServerOptions"></a>
 
@@ -148,7 +149,6 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 | --- | --- | --- |
 | **provider**| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
 | owner| <code>string</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
-| token| <code>string</code> \| <code>null</code> | <a name="PublishConfiguration-token"></a> |
 
 <a name="S3Options"></a>
 
