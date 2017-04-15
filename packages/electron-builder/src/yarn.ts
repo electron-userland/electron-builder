@@ -71,7 +71,6 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
   return spawn(execPath, execArgs, {
     cwd: appDir,
     env: getGypEnv(frameworkInfo, platform, arch, buildFromSource),
-    stdio: ["pipe", process.stdout, process.stderr]
   })
 }
 

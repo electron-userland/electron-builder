@@ -83,7 +83,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
     options = {}
   }
   if (options.stdio == null) {
-    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", "pipe"]
+    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", debug.enabled ? "inherit" : "pipe"]
   }
 
   if (debug.enabled) {
