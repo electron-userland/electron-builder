@@ -39,8 +39,8 @@ test.ifMac("pkg scripts", app({
       mergeAttrs: true,
     })
     delete info["pkg-ref"][0]["bundle-version"].bundle.CFBundleVersion
+    delete info["pkg-ref"][1].installKBytes
     delete info.product.version
-    delete info.installKBytes
     expect(info).toMatchSnapshot()
 
     const scriptDir = path.join(unpackedDir, "org.electron-builder.testApp.pkg", "Scripts")

@@ -397,7 +397,8 @@ export class NsisTarget extends Target {
       const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
       const childProcess = doSpawn(command, args, {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-        env: Object.assign({}, process.env, {NSISDIR: nsisPath}),
+        // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
+        env: Object.assign({}, process.env, {NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"}),
         cwd: this.nsisTemplatesDir,
       }, true)
       handleProcess("close", childProcess, command, resolve, error => {
@@ -416,10 +417,10 @@ export class NsisTarget extends Target {
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     const packager = this.packager
-    let scriptHeader = `!addincludedir "${path.win32.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
+    let scriptHeader = `!addincludedir "${path.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
 
     const addCustomMessageFileInclude = async (input: string) => {
-      return "!include " + await this.writeCustomLangFile(computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")) + "\n"
+      return '!include "' + await this.writeCustomLangFile(computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")) + '"\n'
     }
 
     const tasks: Array<() => Promise<any>> = [

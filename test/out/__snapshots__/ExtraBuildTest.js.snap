@@ -33,11 +33,31 @@ exports[`override targets in the config - only arch 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": null,
+      "file": "beta.yml",
+    },
+    Object {
       "arch": 0,
-      "file": "Test App ßW Setup 1.1.0.exe",
-      "safeArtifactName": "TestApp-Setup-1.1.0.exe",
+      "file": "Test App ßW Setup 1.0.0-beta.1.exe",
+      "safeArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
     },
   ],
+}
+`;
+
+exports[`override targets in the config - only arch 2`] = `
+Object {
+  "channel": "beta",
+  "provider": "generic",
+  "url": "https://develar.s3.amazonaws.com/test",
+}
+`;
+
+exports[`override targets in the config - only arch 3`] = `
+Object {
+  "githubArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
+  "path": "Test App ßW Setup 1.0.0-beta.1.exe",
+  "version": "1.0.0-beta.1",
 }
 `;
 

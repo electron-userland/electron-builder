@@ -4,9 +4,7 @@ import { copyDir } from "electron-builder-util/out/fs"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { outputFile, readFile, stat, symlink } from "fs-extra-p"
 import * as path from "path"
-import pathSorter from "path-sort"
 import Mode, { Permissions } from "stat-mode"
-import { expectedWinContents } from "./helpers/expectedContents"
 import { assertThat } from "./helpers/fileAssert"
 import { app, appThrows, assertPack } from "./helpers/packTester"
 
@@ -74,8 +72,6 @@ test.ifDevOrLinuxCi("map resources", app({
 
 async function doExtraResourcesTest(platform: Platform) {
   const osName = platform.buildConfigurationKey
-  const winDirPrefix = "lib/net45/resources/"
-
   //noinspection SpellCheckingInspection
   await assertPack("test-app-one", {
     // to check NuGet package
@@ -127,14 +123,6 @@ async function doExtraResourcesTest(platform: Platform) {
         assertThat(path.join(resourcesDir, "ignoreMe.txt")).doesNotExist(),
       ])
     },
-    expectedContents: platform === Platform.WINDOWS ? pathSorter(expectedWinContents.concat(
-        winDirPrefix + "bar/hello.txt",
-        winDirPrefix + "dir-relative/f.txt",
-        winDirPrefix + "bar/x64.txt",
-        winDirPrefix + "foo/nameWithoutDot",
-        winDirPrefix + "platformSpecificR",
-        winDirPrefix + "win/x64.txt"
-      )) : null,
   })
 }
 

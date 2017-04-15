@@ -22,8 +22,6 @@ export interface PublishConfiguration {
    * The owner.
    */
   readonly owner?: string | null
-
-  readonly token?: string | null
 }
 
 /**
@@ -172,6 +170,8 @@ export interface BintrayOptions extends PublishConfiguration {
    * The Bintray user account. Used in cases where the owner is an organization.
    */
   readonly user?: string | null
+
+  readonly token?: string | null
 }
 
 export interface VersionInfo {

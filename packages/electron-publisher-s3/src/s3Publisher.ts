@@ -16,7 +16,7 @@ export default class S3Publisher extends Publisher {
     debug(`Creating S3 Publisher — bucket: ${info.bucket}`)
   }
 
-  static async checkAndResolveOptions(options: S3Options) {
+  static async checkAndResolveOptions(options: S3Options, channelFromAppVersion: string | null) {
     const bucket = options.bucket
     if (bucket == null) {
       throw new Error(`Please specify "bucket" for "s3" update server`)
@@ -26,6 +26,10 @@ export default class S3Publisher extends Publisher {
       // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
       const s3 = new S3({signatureVersion: "v4"});
       (<any>options).region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+    }
+
+    if (options.channel == null && channelFromAppVersion != null) {
+      (<any>options).channel = channelFromAppVersion
     }
   }
   

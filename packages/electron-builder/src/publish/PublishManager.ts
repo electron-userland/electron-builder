@@ -14,6 +14,7 @@ import { createReadStream, ensureDir, outputJson, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
+import { prerelease } from "semver"
 import * as url from "url"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
@@ -441,18 +442,31 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
 async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
   options = Object.assign(Object.create(null), options)
   expandPublishConfig(options, packager, arch)
-  
+
+  let channelFromAppVersion: string | null = null
+  if ((<any>options).channel == null && packager.config.detectUpdateChannel !== false) {
+    const prereleaseInfo = prerelease(packager.appInfo.version)
+    if (prereleaseInfo != null && prereleaseInfo.length > 0) {
+      channelFromAppVersion = prereleaseInfo[0]
+    }
+  }
+
   const provider = options.provider
   if (provider === "generic") {
-    if ((<GenericServerOptions>options).url == null) {
+    const o = <GenericServerOptions>options
+    if (o.url == null) {
       throw new Error(`Please specify "url" for "generic" update server`)
+    }
+
+    if (channelFromAppVersion != null) {
+      (<any>o).channel = channelFromAppVersion
     }
     return options
   }
 
   const providerClass = requireProviderClass(options.provider)
   if (providerClass != null && providerClass.checkAndResolveOptions != null) {
-    await providerClass.checkAndResolveOptions(options)
+    await providerClass.checkAndResolveOptions(options, channelFromAppVersion)
     return options
   }
   
@@ -505,7 +519,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   }
 
   if (isGithub) {
-    if (options.token != null && !(<GithubOptions>options).private) {
+    if ((<GithubOptions>options).token != null && !(<GithubOptions>options).private) {
       warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
     return Object.assign({owner, repo: project}, options)

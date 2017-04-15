@@ -34,6 +34,43 @@ Object {
 }
 `;
 
+exports[`extraResources on Linux and Windows 3`] = `
+Array [
+  "lib/net45/blink_image_resources_200_percent.pak",
+  "lib/net45/content_resources_200_percent.pak",
+  "lib/net45/content_shell.pak",
+  "lib/net45/d3dcompiler_47.dll",
+  "lib/net45/ffmpeg.dll",
+  "lib/net45/icudtl.dat",
+  "lib/net45/libEGL.dll",
+  "lib/net45/libGLESv2.dll",
+  "lib/net45/LICENSE.electron.txt",
+  "lib/net45/LICENSES.chromium.html",
+  "lib/net45/natives_blob.bin",
+  "lib/net45/node.dll",
+  "lib/net45/pdf_viewer_resources.pak",
+  "lib/net45/snapshot_blob.bin",
+  "lib/net45/Test%20App%20%C3%9FW.exe",
+  "lib/net45/Test%20App%20%C3%9FW_ExecutionStub.exe",
+  "lib/net45/ui_resources_200_percent.pak",
+  "lib/net45/Update.exe",
+  "lib/net45/views_resources_200_percent.pak",
+  "lib/net45/xinput1_3.dll",
+  "lib/net45/locales/en-US.pak",
+  "lib/net45/resources/app.asar",
+  "lib/net45/resources/electron.asar",
+  "lib/net45/resources/platformSpecificR",
+  "lib/net45/resources/bar/hello.txt",
+  "lib/net45/resources/bar/x64.txt",
+  "lib/net45/resources/dir-relative/f.txt",
+  "lib/net45/resources/foo/nameWithoutDot",
+  "lib/net45/resources/win/x64.txt",
+  "TestApp.nuspec",
+  "[Content_Types].xml",
+  "_rels/.rels",
+]
+`;
+
 exports[`extraResources on macOS 1`] = `
 Object {
   "mac": Array [],

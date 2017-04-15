@@ -201,6 +201,12 @@ export interface Config extends PlatformSpecificBuildOptions {
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean
+
+  /**
+   * Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+   * @default true
+   */
+  readonly detectUpdateChannel?: boolean
   
   readonly mac?: MacOptions | null
   readonly mas?: MasBuildOptions | null

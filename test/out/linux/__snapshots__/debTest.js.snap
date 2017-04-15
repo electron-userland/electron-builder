@@ -26,6 +26,7 @@ Array [
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/natives_blob.bin",
+  "/opt/Test App ßW/pdf_viewer_resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
   "/opt/Test App ßW/ui_resources_200_percent.pak",
@@ -83,7 +84,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "89541",
+  "Size": "91139",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
@@ -127,6 +128,7 @@ Array [
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/natives_blob.bin",
+  "/opt/Test App ßW/pdf_viewer_resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/ui_resources_200_percent.pak",
   "/opt/Test App ßW/views_resources_200_percent.pak",
@@ -183,7 +185,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "123301",
+  "Size": "124968",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
@@ -214,6 +216,7 @@ Array [
   "/opt/Test App ßW/LICENSE.electron.txt",
   "/opt/Test App ßW/LICENSES.chromium.html",
   "/opt/Test App ßW/natives_blob.bin",
+  "/opt/Test App ßW/pdf_viewer_resources.pak",
   "/opt/Test App ßW/snapshot_blob.bin",
   "/opt/Test App ßW/testapp",
   "/opt/Test App ßW/ui_resources_200_percent.pak",
@@ -271,7 +274,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "123301",
+  "Size": "124968",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
