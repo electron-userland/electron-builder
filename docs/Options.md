@@ -104,11 +104,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.BuildResult`](#BuildResult)
     * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
     * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-    * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>
+    * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
     * [`.DmgContent`](#DmgContent)
     * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [`.DmgWindow`](#DmgWindow)
-    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>
+    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>
     * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
@@ -116,7 +116,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
     * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
+    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>
     * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
@@ -134,7 +134,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 | Name | Type |
 | --- | --- |
 | **appOutDir**| <code>string</code> | 
-| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| **packager**| <code>[PlatformPackager](electron-builder#PlatformPackager)&lt;any&gt;</code> | 
 | **electronPlatformName**| <code>string</code> | 
 | **arch**| <code>[Arch](electron-builder-core#Arch)</code> | 
 | **targets**| <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
@@ -164,7 +164,7 @@ AppX Options ([appx](#Config-appx)).
 
 | Name | Type |
 | --- | --- |
-| **packager**| <code>[PlatformPackager](Developer-API#PlatformPackager)&lt;any&gt;</code> | 
+| **packager**| <code>[PlatformPackager](electron-builder#PlatformPackager)&lt;any&gt;</code> | 
 | target| <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch| <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | file| <code>string</code> | 
@@ -189,7 +189,7 @@ AppX Options ([appx](#Config-appx)).
 | **electronVersion**| <code>string</code> | 
 | muonVersion| <code>string</code> \| <code>null</code> | 
 | **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
-| **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
+| **appInfo**| <code>[AppInfo](electron-builder#AppInfo)</code> | 
 | **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
 | **isPrepackedAppAsar**| <code>boolean</code> | 
@@ -284,20 +284,20 @@ Configuration Options
 | linux| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-linux"></a> |
 | deb| <code>[DebOptions](#DebOptions)</code> \| <code>null</code> | <a name="Config-deb"></a> |
 | snap| <code>[SnapOptions](#SnapOptions)</code> \| <code>null</code> | <a name="Config-snap"></a> |
-| appimage| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-appimage"></a> |
-| pacman| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-pacman"></a> |
-| rpm| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-rpm"></a> |
-| freebsd| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-freebsd"></a> |
-| p5p| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-p5p"></a> |
-| apk| <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-apk"></a> |
+| appimage| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-appimage"></a> |
+| pacman| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-pacman"></a> |
+| rpm| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-rpm"></a> |
+| freebsd| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-freebsd"></a> |
+| p5p| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-p5p"></a> |
+| apk| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-apk"></a> |
 
 <a name="DebOptions"></a>
 
-### `DebOptions` ⇐ <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>
+### `DebOptions` ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
 Debian Package Specific Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[LinuxTargetSpecificOptions](Developer-API#LinuxTargetSpecificOptions)</code>  
+**Extends**: <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -375,11 +375,11 @@ DMG Windows Position and Size
 
 <a name="LinuxBuildOptions"></a>
 
-### `LinuxBuildOptions` ⇐ <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>
+### `LinuxBuildOptions` ⇐ <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>
 Linux Options
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[CommonLinuxOptions](Developer-API#CommonLinuxOptions)</code>  
+**Extends**: <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -542,11 +542,11 @@ macOS Product Archive Options ([pkg](#Config-pkg)).
 
 <a name="PortableOptions"></a>
 
-### `PortableOptions` ⇐ <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>
+### `PortableOptions` ⇐ <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>
 Portable Specific Options ([portable](#Config-portable)).
 
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
-**Extends**: <code>[CommonNsisOptions](Developer-API#CommonNsisOptions)</code>  
+**Extends**: <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>  
 **Properties**
 
 | Name | Type | Description |
@@ -632,7 +632,7 @@ Windows Specific Options ([win](#Config-win)).
 | **electronVersion**| <code>string</code> | 
 | muonVersion| <code>string</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
-| **appInfo**| <code>[AppInfo](Developer-API#AppInfo)</code> | 
+| **appInfo**| <code>[AppInfo](electron-builder#AppInfo)</code> | 
 | tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
 

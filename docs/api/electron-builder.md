@@ -1,3 +1,6 @@
+Developer API only. See [[Options]] for user documentation.
+
+<!-- do not edit. start of generated block -->
 ## Modules
 
 <dl>
@@ -2800,3 +2803,5 @@
 | additionalArgs | <code>Array&lt;string&gt;</code> | 
 | buildFromSource | <code>boolean</code> | 
 
+
+<!-- end of generated block -->

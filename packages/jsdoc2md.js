@@ -49,12 +49,10 @@ async function main() {
     "!updater/electron-updater-out-AppUpdater.js",
   ], {cwd: source})
 
-  const customFiles = new Set(coreFiles.concat(httpFiles).concat(utilFiles).concat(publishOptionsFiles).concat(publishFiles).concat(updaterFiles))
-
   const developerFiles = (await globby([
-    "**/*.js",
+    "builder/**/*.js",
   ], {cwd: source}))
-    .filter(it => !userFiles.includes(it) && !appUpdateFiles.includes(it) && !customFiles.has(it))
+    .filter(it => !userFiles.includes(it))
 
   const partialDir = path.join(__dirname, "..", "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
@@ -63,7 +61,7 @@ async function main() {
     {page: "Options.md", pageUrl: "Options", mainHeader: "API", files: userFiles},
     {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
-    {page: "api/Developer API.md", pageUrl: "Developer-API", files: developerFiles},
+    {page: "api/electron-builder.md", pageUrl: "electron-builder", files: developerFiles},
     {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
     {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},

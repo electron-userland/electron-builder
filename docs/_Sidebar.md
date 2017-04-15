@@ -17,7 +17,7 @@
 
 **Programmatic API**
 
-* [[Developer API]]
+* [[electron-builder]]
 * [[electron-builder-core]]
 * [[electron-builder-util]]
 * [[electron-builder-http]]
