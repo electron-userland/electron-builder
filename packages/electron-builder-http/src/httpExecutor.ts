@@ -297,6 +297,10 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   if ((method == null || method === "GET") || headers["Cache-Control"] == null) {
     headers["Cache-Control"] = "no-cache"
   }
+
+  if (options.protocol == null) {
+    options.protocol = "https:"
+  }
   return options
 }
 
