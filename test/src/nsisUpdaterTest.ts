@@ -41,18 +41,8 @@ test("check updates - no versions at all", async () => {
   await assertThat(updater.checkForUpdates()).throws()
 })
 
-// test("cannot find suitable file for version", async () => {
-//   const updater = new NsisUpdater(<BintrayOptions>{
-//     provider: "bintray",
-//     owner: "actperepo",
-//     package: "incorrect-file-version",
-//   })
-//
-//   await assertThat(updater.checkForUpdates()).throws()
-// })
-
-test("file url", async () => {
-  const updater = new NsisUpdater()
+async function testUpdateFromBintray(app: any) {
+  const updater = new NsisUpdater(null, app)
   updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
@@ -72,7 +62,56 @@ test("file url", async () => {
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   expect(actualEvents).toEqual(expectedEvents)
+}
+test("file url", () => testUpdateFromBintray(null))
+
+test("downgrade (disallowed)", async () => {
+  const updater = new NsisUpdater(null, {
+      getVersion: function () {
+        return "2.0.0"
+      },
+
+      getAppPath: function () {
+      },
+
+      on: function () {
+        // ignored
+      },
+    }
+  )
+  updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
+    provider: "bintray",
+    owner: "actperepo",
+    package: "TestApp",
+  })
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-not-available"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(updateCheckResult.downloadPromise).toBeUndefined()
+
+  expect(actualEvents).toEqual(expectedEvents)
 })
+
+test("downgrade (allowed)", () => testUpdateFromBintray({
+  getVersion: function () {
+    return "2.0.0-beta.1"
+  },
+
+  getAppPath: function () {
+  },
+
+  on: function () {
+    // ignored
+  },
+}))
 
 test("file url generic", async () => {
   const updater = new NsisUpdater()

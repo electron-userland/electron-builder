@@ -22,15 +22,6 @@
     "7zip-bin-mac" "^1.0.1"
     "7zip-bin-win" "^2.0.2"
 
-"@develar/typescript-json-schema@0.11.0":
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/@develar/typescript-json-schema/-/typescript-json-schema-0.11.0.tgz#a1ac659a9b1cecdfed0e7e972d0404d7978fd8d7"
-  dependencies:
-    glob "~7.1.1"
-    json-stable-stringify "^1.0.1"
-    typescript "~2.1.5"
-    yargs "^7.0.2"
-
 "@types/electron@^1.4.35":
   version "1.4.35"
   resolved "https://registry.yarnpkg.com/@types/electron/-/electron-1.4.35.tgz#48e5e6ef0b49f27b9f78b87d80f796e3f0a4f33c"
@@ -1019,6 +1010,15 @@ detect-newline@^1.0.3:
   dependencies:
     get-stdin "^4.0.1"
     minimist "^1.1.0"
+
+develar-typescript-json-schema@0.11.0:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/develar-typescript-json-schema/-/develar-typescript-json-schema-0.11.0.tgz#d73580cae2fb0b8f9a7cee3d10aff6caae751cca"
+  dependencies:
+    glob "~7.1.1"
+    json-stable-stringify "^1.0.1"
+    typescript "~2.1.5"
+    yargs "^7.0.2"
 
 diff@^3.0.0, diff@^3.2.0:
   version "3.2.0"

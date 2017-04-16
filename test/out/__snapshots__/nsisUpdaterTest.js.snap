@@ -20,6 +20,16 @@ Array [
 ]
 `;
 
+exports[`downgrade (allowed) 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`downgrade (disallowed) 1`] = `undefined`;
+
 exports[`file url 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
