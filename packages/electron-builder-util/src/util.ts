@@ -29,7 +29,7 @@ export interface ExecOptions extends BaseExecOptions {
 }
 
 export function removePassword(input: string) {
-  return input.replace(/(-P |pass:| \/p|-pass )([^ ]+)/g, function (match, p1, p2) {
+  return input.replace(/(-P |pass:| \/p |-pass )([^ ]+)/g, function (match, p1, p2) {
     return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
 }
@@ -90,7 +90,13 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
     const argsString = args.join(" ")
     debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
   }
-  return _spawn(command, args, options)
+
+  try {
+    return _spawn(command, args, options)
+  }
+  catch (e) {
+    throw new Error(`Cannot spawn ${command}: ${e.stack || e}`)
+  }
 }
 
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): Promise<any> {

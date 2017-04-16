@@ -117,7 +117,6 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
       return spawn(execPath, execArgs, {
         cwd: dep.path,
         env: env,
-        stdio: ["pipe", process.stdout, process.stderr]
       })
         .catch(error => {
           if (dep.optional) {
@@ -136,7 +135,6 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
     await spawn(execPath, execArgs, {
       cwd: appDir,
       env: env,
-      stdio: ["pipe", process.stdout, process.stderr]
     })
   }
 }

@@ -34834,7 +34834,7 @@ Identity._oldVersionDetect = function (obj) {
 module.exports = {
 	"name": "yarn",
 	"installationMethod": "unknown",
-	"version": "0.23.1",
+	"version": "0.23.2",
 	"license": "BSD-2-Clause",
 	"preferGlobal": true,
 	"description": "📦🐈 Fast, reliable, and secure dependency management.",
