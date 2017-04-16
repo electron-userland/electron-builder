@@ -77,6 +77,24 @@ Object {
 }
 `;
 
+exports[`file url github pre-release 1`] = `
+Object {
+  "name": "TestApp-Setup-1.1.0.exe",
+  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.5.0/TestApp-Setup-1.1.0.exe",
+}
+`;
+
+exports[`file url github pre-release 2`] = `
+Object {
+  "path": "TestApp Setup 1.1.0.exe",
+  "releaseName": "1.5.0",
+  "releaseNotes": "<p>Test pre-release. qefr</p>",
+  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "version": "1.5.0",
+}
+`;
+
 exports[`file url github private 1`] = `
 Object {
   "headers": Object {

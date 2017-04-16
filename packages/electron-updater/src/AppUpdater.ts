@@ -142,7 +142,7 @@ export abstract class AppUpdater extends EventEmitter {
       client = new GenericProvider({provider: "generic", url: options})
     }
     else {
-      client = createClient(options)
+      client = this.createClient(options)
     }
     this.clientPromise = BluebirdPromise.resolve(client)
   }
@@ -184,7 +184,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     if (this.clientPromise == null) {
-      this.clientPromise = this.loadUpdateConfig().then(it => createClient(it))
+      this.clientPromise = this.loadUpdateConfig().then(it => this.createClient(it))
     }
 
     const client = await this.clientPromise
@@ -288,41 +288,41 @@ export abstract class AppUpdater extends EventEmitter {
     }
     return requestHeaders
   }
-}
 
-function createClient(data: string | PublishConfiguration) {
-  if (typeof data === "string") {
-    throw new Error("Please pass PublishConfiguration object")
-  }
-
-  const provider = (<PublishConfiguration>data).provider
-  switch (provider) {
-    case "github":
-      const githubOptions = <GithubOptions>data
-      const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
-      if (token == null) {
-        return new GitHubProvider(githubOptions)
-      }
-      else {
-        return new PrivateGitHubProvider(githubOptions, token)
-      }
-      
-    case "s3": {
-      const s3 = <S3Options>data
-      return new GenericProvider({
-        provider: "generic",
-        url: s3Url(s3),
-        channel: s3.channel || ""
-      })
+  private createClient(data: string | PublishConfiguration) {
+    if (typeof data === "string") {
+      throw new Error("Please pass PublishConfiguration object")
     }
 
-    case "generic":
-      return new GenericProvider(<GenericServerOptions>data)
+    const provider = (<PublishConfiguration>data).provider
+    switch (provider) {
+      case "github":
+        const githubOptions = <GithubOptions>data
+        const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
+        if (token == null) {
+          return new GitHubProvider(githubOptions, this)
+        }
+        else {
+          return new PrivateGitHubProvider(githubOptions, token)
+        }
 
-    case "bintray":
-      return new BintrayProvider(<BintrayOptions>data)
+      case "s3": {
+        const s3 = <S3Options>data
+        return new GenericProvider({
+          provider: "generic",
+          url: s3Url(s3),
+          channel: s3.channel || ""
+        })
+      }
 
-    default:
-      throw new Error(`Unsupported provider: ${provider}`)
+      case "generic":
+        return new GenericProvider(<GenericServerOptions>data)
+
+      case "bintray":
+        return new BintrayProvider(<BintrayOptions>data)
+
+      default:
+        throw new Error(`Unsupported provider: ${provider}`)
+    }
   }
 }

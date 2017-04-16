@@ -5,6 +5,7 @@ import { RequestOptions } from "http"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./api"
+import { AppUpdater } from "./AppUpdater"
 import { validateUpdateInfo } from "./GenericProvider"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
@@ -24,14 +25,39 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
 }
 
 export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
-  constructor(protected readonly options: GithubOptions) {
+  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater) {
     super(options, "github.com")
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
     const basePath = this.basePath
     const cancellationToken = new CancellationToken()
-    const version = await this.getLatestVersionString(basePath, cancellationToken)
+
+    const xElement = require("xelement")
+    const feedXml = await request(Object.assign({
+      path: `${basePath}.atom`,
+      headers: Object.assign({}, this.requestHeaders, {Accept: "application/xml"})
+    }, this.baseUrl), cancellationToken)
+
+    const feed = new xElement.Parse(feedXml)
+    const latestRelease = feed.element("entry")
+    if (latestRelease == null) {
+      throw new Error(`No published versions on GitHub`)
+    }
+
+    let version: string
+    try {
+      if (this.updater.allowPrerelease) {
+        version = latestRelease.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
+      }
+      else {
+        version = await this.getLatestVersionString(basePath, cancellationToken)
+      }
+    }
+    catch (e) {
+      throw new Error(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`)
+    }
+
     let result: any
     const channelFile = getChannelFilename(getDefaultChannelName())
     const requestOptions = Object.assign({path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined}, this.baseUrl)
@@ -39,8 +65,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       result = await request<UpdateInfo>(requestOptions, cancellationToken)
     }
     catch (e) {
-      if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(<any>requestOptions)}): ${e.stack || e.message}`)
+      if (!this.updater.allowPrerelease) {
+        if (e instanceof HttpError && e.response.statusCode === 404) {
+          throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(<any>requestOptions)}): ${e.stack || e.message}`)
+        }
       }
       throw e
     }
@@ -49,13 +77,20 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     if (getCurrentPlatform() === "darwin") {
       result.releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
     }
+
+    if (result.releaseName == null) {
+      result.releaseName = latestRelease.getElementValue("title")
+    }
+    if (result.releaseNotes == null) {
+      result.releaseNotes = latestRelease.getElementValue("content")
+    }
     return result
   }
 
   private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string> {
     const requestOptions: RequestOptions = Object.assign({
       path: `${basePath}/latest`,
-      headers: Object.assign({Accept: "application/json"}, this.requestHeaders)
+      headers: Object.assign({}, this.requestHeaders, {Accept: "application/json"})
     }, this.baseUrl)
     try {
       // do not use API to avoid limit

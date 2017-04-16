@@ -191,7 +191,7 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
       owner: "develar",
-      repo: "__test_nsis_release",
+        repo: "__test_nsis_release",
     })
 
   const actualEvents: Array<string> = []
@@ -204,6 +204,42 @@ test("file url github", async () => {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  expect(actualEvents).toEqual(expectedEvents)
+})
+
+test("file url github pre-release", async () => {
+  const updater = new NsisUpdater(null, {
+    getVersion: function () {
+      return "1.6.0-beta.1"
+    },
+
+    getAppPath: function () {
+    },
+
+    on: function () {
+      // ignored
+    },
+  })
+  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+      provider: "github",
+      owner: "develar",
+        repo: "__test_nsis_release",
+    })
+
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(updateCheckResult.versionInfo).toMatchSnapshot()
+
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
   expect(actualEvents).toEqual(expectedEvents)

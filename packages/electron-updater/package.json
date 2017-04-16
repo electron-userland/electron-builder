@@ -18,7 +18,8 @@
     "semver": "^5.3.0",
     "source-map-support": "^0.4.14",
     "electron-builder-http": "~0.0.0-semantic-release",
-    "electron-is-dev": "^0.1.2"
+    "electron-is-dev": "^0.1.2",
+    "xelement": "^1.0.13"
   },
   "typings": "./out/electron-updater.d.ts"
 }
