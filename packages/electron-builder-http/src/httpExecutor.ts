@@ -110,7 +110,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       }
 
       const newUrl = parseUrl(redirectUrl)
-      this.doApiRequest(<REQUEST_OPTS>removeAuthHeader(Object.assign({}, options, newUrl)), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, newUrl), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -161,11 +161,11 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
           const parsedUrl = parseUrl(redirectUrl)
-          this.doDownload(removeAuthHeader(Object.assign({}, requestOptions, {
+          this.doDownload(Object.assign({}, requestOptions, {
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             port: parsedUrl.port == null ? undefined : parsedUrl.port
-          })), destination, redirectCount++, options, callback, onCancel)
+          }), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -310,14 +310,4 @@ export function dumpRequestOptions(options: RequestOptions): string {
     safe.headers.authorization = "<skipped>"
   }
   return JSON.stringify(safe, null, 2)
-}
-
-// requestOptions should be cloned already, modified in place
-function removeAuthHeader(requestOptions: RequestOptions): RequestOptions {
-  // github redirect to amazon s3 - avoid error "Only one auth mechanism allowed" 
-  if (requestOptions.headers != null && (requestOptions.hostname || "").includes(".amazonaws.") && requestOptions.headers.Authorization != null && requestOptions.headers.Authorization.startsWith("token ")) {
-    requestOptions.headers = Object.assign({}, requestOptions.headers)
-    delete requestOptions.headers.Authorization
-  }
-  return requestOptions
 }
