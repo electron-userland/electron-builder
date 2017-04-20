@@ -1,6 +1,6 @@
 See the [Publishing Artifacts](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more information on how to configure your CI environment for automated deployments.
 
-Simplified auto-update is not supported for Squirrel.Windows.
+Simplified auto-update is supported on Windows if you use the default NSIS setup, but is not supported for Squirrel.Windows.
 
 ## Quick Setup Guide
 
