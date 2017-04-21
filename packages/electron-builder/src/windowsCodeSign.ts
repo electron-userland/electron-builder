@@ -128,6 +128,10 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     args.push(isWin ? "/p" : "-pass", options.password)
   }
 
+  if (options.options.additionalCertificateFile) {
+    args.push(isWin ? "/ac" : "-ac", options.options.additionalCertificateFile)
+  }
+
   if (isWin) {
     // must be last argument
     args.push(inputPath)
