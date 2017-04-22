@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "fs-extra-p": "^4.1.0",
-    "aws-sdk": "^2.41.0",
+    "aws-sdk": "^2.45.0",
     "mime": "^1.3.4",
     "electron-publish": "~0.0.0-semantic-release",
     "electron-builder-util": "~0.0.0-semantic-release"

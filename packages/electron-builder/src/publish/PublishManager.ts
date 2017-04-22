@@ -15,6 +15,7 @@ import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
 import { prerelease } from "semver"
+import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
@@ -29,7 +30,7 @@ export class PublishManager implements PublishContext {
 
   private isPublish = false
 
-  readonly progress = (<NodeJS.WritableStream>process.stdout).isTTY ? new MultiProgress() : null
+  readonly progress = (<TtyWriteStream>process.stdout).isTTY ? new MultiProgress() : null
 
   constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
     if (!isPullRequest()) {

@@ -117,8 +117,7 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error(`App version is not valid semver version: "${currentVersionString}`)
     }
 
-    const versionPrereleaseComponent = getVersionPreleaseComponents(this.currentVersion)
-    this.allowDowngrade = versionPrereleaseComponent != null && versionPrereleaseComponent.length > 0
+    this.allowDowngrade = hasPrereleaseComponents(this.currentVersion)
     this.allowPrerelease = this.allowDowngrade
 
     if (options != null) {
@@ -196,7 +195,7 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
-    if (this.allowDowngrade ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion)) {
+    if (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion)) {
       this.updateAvailable = false
       if (this.logger != null) {
         this.logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
@@ -325,4 +324,9 @@ export abstract class AppUpdater extends EventEmitter {
         throw new Error(`Unsupported provider: ${provider}`)
     }
   }
+}
+
+function hasPrereleaseComponents(version: string) {
+  const versionPrereleaseComponent = getVersionPreleaseComponents(version)
+  return versionPrereleaseComponent != null && versionPrereleaseComponent.length > 0
 }

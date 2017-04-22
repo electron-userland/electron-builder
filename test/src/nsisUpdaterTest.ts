@@ -15,19 +15,21 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
 
 const tmpDir = new TmpDir()
 
-const g = (<any>global)
-g.__test_app = {
-  getVersion: function () {
-    return "0.0.1"
-  },
+function createTestApp(version: string) {
+  return {
+    getVersion: () => version,
 
-  getAppPath: function () {
-  },
+    getAppPath: function () {
+    },
 
-  on: function () {
-    // ignored
-  },
+    on: function () {
+      // ignored
+    },
+  }
 }
+
+const g = (<any>global)
+g.__test_app = createTestApp("0.0.1")
 
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
@@ -66,19 +68,7 @@ async function testUpdateFromBintray(app: any) {
 test("file url", () => testUpdateFromBintray(null))
 
 test("downgrade (disallowed)", async () => {
-  const updater = new NsisUpdater(null, {
-      getVersion: function () {
-        return "2.0.0"
-      },
-
-      getAppPath: function () {
-      },
-
-      on: function () {
-        // ignored
-      },
-    }
-  )
+  const updater = new NsisUpdater(null, createTestApp("2.0.0"))
   updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
@@ -100,18 +90,30 @@ test("downgrade (disallowed)", async () => {
   expect(actualEvents).toEqual(expectedEvents)
 })
 
-test("downgrade (allowed)", () => testUpdateFromBintray({
-  getVersion: function () {
-    return "2.0.0-beta.1"
-  },
+test("downgrade (disallowed, beta)", async () => {
+  const updater = new NsisUpdater(null, createTestApp("1.5.2-beta.4"))
+  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
 
-  getAppPath: function () {
-  },
+  const actualEvents: Array<string> = []
+  const expectedEvents = ["checking-for-update", "update-not-available"]
+  for (const eventName of expectedEvents) {
+    updater.addListener(eventName, () => {
+      actualEvents.push(eventName)
+    })
+  }
 
-  on: function () {
-    // ignored
-  },
-}))
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  expect(updateCheckResult.downloadPromise).toBeUndefined()
+
+  expect(actualEvents).toEqual(expectedEvents)
+})
+
+test("downgrade (allowed)", () => testUpdateFromBintray(createTestApp("2.0.0-beta.1")))
 
 test("file url generic", async () => {
   const updater = new NsisUpdater()
@@ -210,18 +212,7 @@ test("file url github", async () => {
 })
 
 test("file url github pre-release", async () => {
-  const updater = new NsisUpdater(null, {
-    getVersion: function () {
-      return "1.6.0-beta.1"
-    },
-
-    getAppPath: function () {
-    },
-
-    on: function () {
-      // ignored
-    },
-  })
+  const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
       owner: "develar",
