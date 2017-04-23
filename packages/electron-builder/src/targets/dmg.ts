@@ -10,6 +10,7 @@ import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { DmgOptions, MacOptions } from "../options/macOptions"
 import { PlatformPackager } from "../platformPackager"
+import { addLicenseToDmg } from "./dmgLicense"
 
 export class DmgTarget extends Target {
   readonly options = this.packager.config.dmg
@@ -174,6 +175,8 @@ export class DmgTarget extends Target {
     }
     await spawn("hdiutil", addVerboseIfNeed(args))
     await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
+
+    await addLicenseToDmg(packager, artifactPath)
 
     this.packager.dispatchArtifactCreated(artifactPath, this, arch, `${appInfo.name}-${appInfo.version}.dmg`)
   }

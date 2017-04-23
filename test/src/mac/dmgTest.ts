@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
 import { PlatformPackager } from "electron-builder/out/platformPackager"
 import { attachAndExecute } from "electron-builder/out/targets/dmg"
-import { copy, remove } from "fs-extra-p"
+import { copy, remove, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, assertPack } from "../helpers/packTester"
@@ -149,3 +149,34 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
     },
   })
 })
+
+test.ifAll("multi language license", app({
+  targets: Platform.MAC.createTarget("dmg"),
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
+      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+    ])
+  },
+}))
+
+test.ifAll.ifMac("license ru", app({
+  targets: Platform.MAC.createTarget("dmg"),
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет".repeat(12)),
+    ])
+  },
+}))
+
+test.ifAll.ifMac("license en", app({
+  targets: Platform.MAC.createTarget("dmg"),
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Hi\n".repeat(12)),
+    ])
+  },
+}))

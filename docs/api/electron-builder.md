@@ -52,7 +52,11 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/dmg">electron-builder/out/targets/dmg</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/targets/dmgLicense">electron-builder/out/targets/dmgLicense</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/targets/fpm">electron-builder/out/targets/fpm</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/targets/license">electron-builder/out/targets/license</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/LinuxTargetHelper">electron-builder/out/targets/LinuxTargetHelper</a></dt>
 <dd></dd>
@@ -1570,7 +1574,7 @@ Developer API only. See [[Options]] for user documentation.
 | Name | Type |
 | --- | --- |
 | publishTasks=| <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-| progress = <code>(&lt;NodeJS.WritableStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
+| progress = <code>(&lt;TtyWriteStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
 
 
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
@@ -1885,6 +1889,19 @@ Developer API only. See [[Options]] for user documentation.
 | readWrite | <code>boolean</code> | 
 | task | <code>callback</code> | 
 
+<a name="module_electron-builder/out/targets/dmgLicense"></a>
+
+## electron-builder/out/targets/dmgLicense
+<a name="module_electron-builder/out/targets/dmgLicense.addLicenseToDmg"></a>
+
+### `electron-builder/out/targets/dmgLicense.addLicenseToDmg(packager, dmgPath)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: method of <code>[electron-builder/out/targets/dmgLicense](#module_electron-builder/out/targets/dmgLicense)</code>  
+
+| Param | Type |
+| --- | --- |
+| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+| dmgPath | <code>string</code> | 
+
 <a name="module_electron-builder/out/targets/fpm"></a>
 
 ## electron-builder/out/targets/fpm
@@ -1913,6 +1930,51 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | appOutDir | <code>string</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+
+<a name="module_electron-builder/out/targets/license"></a>
+
+## electron-builder/out/targets/license
+
+* [electron-builder/out/targets/license](#module_electron-builder/out/targets/license)
+    * [`.LicenseFile`](#LicenseFile)
+    * [`.lcid`](#module_electron-builder/out/targets/license.lcid) : <code>any</code>
+    * [`.getLicenseFiles(packager)`](#module_electron-builder/out/targets/license.getLicenseFiles) ⇒ <code>Promise&lt;Array&lt;[LicenseFile](#LicenseFile)&gt;&gt;</code>
+    * [`.toLangWithRegion(lang)`](#module_electron-builder/out/targets/license.toLangWithRegion) ⇒ <code>string</code>
+
+<a name="LicenseFile"></a>
+
+### `LicenseFile`
+**Kind**: interface of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **file**| <code>string</code> | 
+| **lang**| <code>string</code> | 
+| **langWithRegion**| <code>string</code> | 
+| **langName**| <code>string</code> | 
+
+<a name="module_electron-builder/out/targets/license.lcid"></a>
+
+### `electron-builder/out/targets/license.lcid` : <code>any</code>
+**Kind**: constant of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+<a name="module_electron-builder/out/targets/license.getLicenseFiles"></a>
+
+### `electron-builder/out/targets/license.getLicenseFiles(packager)` ⇒ <code>Promise&lt;Array&lt;[LicenseFile](#LicenseFile)&gt;&gt;</code>
+**Kind**: method of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+
+| Param | Type |
+| --- | --- |
+| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+
+<a name="module_electron-builder/out/targets/license.toLangWithRegion"></a>
+
+### `electron-builder/out/targets/license.toLangWithRegion(lang)` ⇒ <code>string</code>
+**Kind**: method of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+
+| Param | Type |
+| --- | --- |
+| lang | <code>string</code> | 
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
 

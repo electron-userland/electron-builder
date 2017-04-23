@@ -325,6 +325,9 @@ Debian Package Specific Options
 ### `DmgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
 macOS DMG Options ([dmg](#Config-dmg)).
 
+To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
+If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+
 **Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
 **Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
@@ -611,6 +614,7 @@ Windows Specific Options ([win](#Config-win)).
 | certificatePassword| <code>string</code> | <a name="WinBuildOptions-certificatePassword"></a>The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). |
 | certificateSubjectName| <code>string</code> | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows. |
 | certificateSha1| <code>string</code> | <a name="WinBuildOptions-certificateSha1"></a>The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows. |
+| additionalCertificateFile| <code>string</code> | <a name="WinBuildOptions-additionalCertificateFile"></a>The path to an additional certificate file you want to add to the signature block. |
 | rfc3161TimeStampServer| <code>string</code> | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`. |
 | timeStampServer| <code>string</code> | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`. |
 | publisherName| <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-publisherName"></a>[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate. |

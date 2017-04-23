@@ -24,6 +24,42 @@ Object {
 }
 `;
 
+exports[`license en 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+  ],
+}
+`;
+
+exports[`license ru 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+  ],
+}
+`;
+
+exports[`multi language license 1`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW-1.1.0.dmg",
+      "safeArtifactName": "TestApp-1.1.0.dmg",
+    },
+  ],
+}
+`;
+
 exports[`no Applications link 1`] = `
 Array [
   Object {
