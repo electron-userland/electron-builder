@@ -45,6 +45,7 @@ test("check updates - no versions at all", async () => {
 
 async function testUpdateFromBintray(app: any) {
   const updater = new NsisUpdater(null, app)
+  updater.allowDowngrade = true
   updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",

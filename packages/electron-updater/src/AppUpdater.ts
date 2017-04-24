@@ -38,7 +38,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   /**
    * Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
-   * Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
+   * @default false
    */
   allowDowngrade = false
 
@@ -117,8 +117,7 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error(`App version is not valid semver version: "${currentVersionString}`)
     }
 
-    this.allowDowngrade = hasPrereleaseComponents(this.currentVersion)
-    this.allowPrerelease = this.allowDowngrade
+    this.allowPrerelease = hasPrereleaseComponents(this.currentVersion)
 
     if (options != null) {
       this.setFeedURL(options)
