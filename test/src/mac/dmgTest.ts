@@ -5,7 +5,7 @@ import { attachAndExecute } from "electron-builder/out/targets/dmg"
 import { copy, remove, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { app, assertPack } from "../helpers/packTester"
+import { app, assertPack, copyTestAsset } from "../helpers/packTester"
 
 test.ifMac("no build directory", app({
   targets: Platform.MAC.createTarget("dmg"),
@@ -150,7 +150,7 @@ test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {
   })
 })
 
-test.ifAll("multi language license", app({
+test.ifAll.ifMac("multi language license", app({
   targets: Platform.MAC.createTarget("dmg"),
 }, {
   projectDirCreated: projectDir => {
@@ -176,7 +176,7 @@ test.ifAll.ifMac("license en", app({
 }, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
-      writeFile(path.join(projectDir, "build", "license_ru.txt"), "Hi\n".repeat(12)),
+      copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt")),
     ])
   },
 }))

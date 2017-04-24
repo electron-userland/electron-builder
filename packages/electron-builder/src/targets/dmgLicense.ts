@@ -22,14 +22,18 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
     const kind = item.file.toLowerCase().endsWith(".rtf") ? "RTF" : "TEXT"
     data += `data '${kind}' (${counter}, "${item.langName} SLA") {\n`
 
-    data += '$"' + (await readFile(item.file)).toString("hex").toUpperCase() + '"\n'
+    const hex = (await readFile(item.file)).toString("hex").toUpperCase()
+    for (let i = 0; i < hex.length; i += 32) {
+      data += '$"' + hex.substring(i, Math.min(i + 32, hex.length)) + '"\n'
+    }
+
     data += "};\n\n"
     // noinspection SpellCheckingInspection
     data += `data 'styl' (${counter}, "${item.langName} SLA") {
-	$"0003 0000 0000 000C 0009 0015 0000 0000"           
-	$"0000 0000 0000 0000 002A 000C 0009 0015"            
-	$"0100 0000 0000 0000 0000 0000 002E 000C"            
-	$"0009 0015 0000 0000 0000 0000 0000"                 
+  $"0003 0000 0000 000C 0009 0014 0000 0000"
+  $"0000 0000 0000 0000 0027 000C 0009 0014"
+  $"0100 0000 0000 0000 0000 0000 002A 000C"
+  $"0009 0014 0000 0000 0000 0000 0000"                
 };`
 
     counter++
