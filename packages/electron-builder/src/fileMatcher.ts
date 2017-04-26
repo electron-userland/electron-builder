@@ -14,16 +14,24 @@ export class FileMatcher {
   readonly from: string
   readonly to: string
 
-  readonly patterns: Array<string>
+  private readonly patterns: Array<string>
 
   constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | n) {
     this.from = macroExpander(from)
     this.to = macroExpander(to)
-    this.patterns = asArray(patterns).map(it => path.posix.normalize(macroExpander(it)))
+    this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
+  }
+
+  private normalizePattern(pattern: string) {
+    return path.posix.normalize(this.macroExpander(pattern))
   }
 
   addPattern(pattern: string) {
-    this.patterns.push(path.posix.normalize(this.macroExpander(pattern)))
+    this.patterns.push(this.normalizePattern(pattern))
+  }
+
+  prependPattern(pattern: string) {
+    this.patterns.unshift(this.normalizePattern(pattern))
   }
 
   addAllPattern() {
@@ -74,13 +82,23 @@ export class FileMatcher {
   }
 }
 
-export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions) {
+export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, buildResourceDir: string) {
   const patterns = info.isPrepackedAppAsar ? null : getFileMatchers(info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
   const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
+
+  const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
+  const ignoreBuildResourceDirPattern = (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) ? `!${relativeBuildResourceDir}{,/**/*}` : null
+
   if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
     matcher.addAllPattern()
+    if (ignoreBuildResourceDirPattern != null) {
+      matcher.addPattern(ignoreBuildResourceDirPattern)
+    }
   }
   else {
+    if (ignoreBuildResourceDirPattern != null) {
+      matcher.prependPattern(ignoreBuildResourceDirPattern)
+    }
     matcher.addPattern("package.json")
   }
   matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")

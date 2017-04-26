@@ -4,7 +4,7 @@ import { move, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows } from "./helpers/packTester"
+import { app, appThrows, assertPack } from "./helpers/packTester"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
 function createBuildResourcesTest(platform: Platform) {
@@ -161,3 +161,6 @@ test.ifAll.ifDevOrLinuxCi("scheme validation extraFiles", app({
     ],
   },
 }))
+
+// test on all CI to check path separators
+test.ifAll("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", {targets: linuxDirTarget}))

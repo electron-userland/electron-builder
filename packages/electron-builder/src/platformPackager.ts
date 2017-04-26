@@ -142,7 +142,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const appDir = this.info.appDir
     const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir),
-      path.resolve(this.info.projectDir, this.buildResourcesDir),
       path.resolve(this.info.projectDir, "electron-builder.yml"),
       path.resolve(this.info.projectDir, "electron-builder.json"),
       path.resolve(this.info.projectDir, "electron-builder.json5")])
@@ -175,7 +174,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const defaultMatcher = createFileMatcher(this.info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)
+    const defaultMatcher = createFileMatcher(this.info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, path.resolve(this.info.projectDir, this.buildResourcesDir))
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
     if (isElectronCompile) {
       defaultMatcher.addPattern("!.cache{,/**/*}")
