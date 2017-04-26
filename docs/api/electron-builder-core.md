@@ -31,7 +31,7 @@
 <a name="AsarOptions"></a>
 
 ### `AsarOptions`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -42,7 +42,7 @@
 <a name="AuthorMetadata"></a>
 
 ### `AuthorMetadata`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -53,7 +53,7 @@
 <a name="BeforeBuildContext"></a>
 
 ### `BeforeBuildContext`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -72,7 +72,7 @@ macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/librar
 
 On Windows works only if [nsis.perMachine](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-perMachine) is set to `true`.
 
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type | Description |
@@ -87,7 +87,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 <a name="FilePattern"></a>
 
 ### `FilePattern`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -101,7 +101,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 ### `MetadataDirectories`
 `directories`
 
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type | Description |
@@ -113,7 +113,7 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 <a name="PlatformSpecificBuildOptions"></a>
 
 ### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
 **Properties**
 
@@ -136,7 +136,7 @@ URL Protocol Schemes. Protocols to associate the app with. macOS only.
 
 Please note — on macOS [you need to register an `open-url` event handler](http://electron.atom.io/docs/api/app/#event-open-url-macos).
 
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type | Description |
@@ -148,7 +148,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="RepositoryInfo"></a>
 
 ### `RepositoryInfo`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -158,7 +158,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="SourceRepositoryInfo"></a>
 
 ### `SourceRepositoryInfo`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -171,7 +171,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="TargetConfig"></a>
 
 ### `TargetConfig`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type | Description |
@@ -182,7 +182,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="TargetSpecificOptions"></a>
 
 ### `TargetSpecificOptions`
-**Kind**: interface of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type | Description |
@@ -193,7 +193,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="Platform"></a>
 
 ### Platform
-**Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: class of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -213,7 +213,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.Platform+createTarget"></a>
 
 #### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
+**Kind**: instance method of [<code>Platform</code>](#Platform)  
 
 | Param | Type |
 | --- | --- |
@@ -223,11 +223,11 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.Platform+current"></a>
 
 #### `platform.current()` ⇒ <code>[Platform](#Platform)</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
+**Kind**: instance method of [<code>Platform</code>](#Platform)  
 <a name="module_electron-builder-core.Platform+fromString"></a>
 
 #### `platform.fromString(name)` ⇒ <code>[Platform](#Platform)</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
+**Kind**: instance method of [<code>Platform</code>](#Platform)  
 
 | Param | Type |
 | --- | --- |
@@ -236,11 +236,11 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.Platform+toString"></a>
 
 #### `platform.toString()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[Platform](#Platform)</code>  
+**Kind**: instance method of [<code>Platform</code>](#Platform)  
 <a name="Target"></a>
 
 ### Target
-**Kind**: class of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: class of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name | Type |
@@ -256,7 +256,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.Target+build"></a>
 
 #### `target.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Target](#Target)</code>  
+**Kind**: instance method of [<code>Target</code>](#Target)  
 
 | Param | Type |
 | --- | --- |
@@ -266,11 +266,11 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.Target+finishBuild"></a>
 
 #### `target.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[Target](#Target)</code>  
+**Kind**: instance method of [<code>Target</code>](#Target)  
 <a name="Arch"></a>
 
 ### `electron-builder-core.Arch` : <code>enum</code>
-**Kind**: enum of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: enum of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 **Properties**
 
 | Name |
@@ -282,7 +282,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.archFromString"></a>
 
 ### `electron-builder-core.archFromString(name)` ⇒ <code>[Arch](#Arch)</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: method of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 
 | Param | Type |
 | --- | --- |
@@ -291,7 +291,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.getArchSuffix"></a>
 
 ### `electron-builder-core.getArchSuffix(arch)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: method of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 
 | Param | Type |
 | --- | --- |
@@ -300,7 +300,7 @@ Please note — on macOS [you need to register an `open-url` event handler](http
 <a name="module_electron-builder-core.toLinuxArchString"></a>
 
 ### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
-**Kind**: method of <code>[electron-builder-core](#module_electron-builder-core)</code>  
+**Kind**: method of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 
 | Param | Type |
 | --- | --- |

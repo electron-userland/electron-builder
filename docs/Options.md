@@ -128,7 +128,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 <a name="AfterPackContext"></a>
 
 ### `AfterPackContext`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type |
@@ -144,7 +144,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 ### `AppXOptions`
 AppX Options ([appx](#Config-appx)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **See**: [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).  
 **Properties**
 
@@ -159,7 +159,7 @@ AppX Options ([appx](#Config-appx)).
 <a name="ArtifactCreated"></a>
 
 ### `ArtifactCreated`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type |
@@ -175,7 +175,7 @@ AppX Options ([appx](#Config-appx)).
 <a name="BuildInfo"></a>
 
 ### `BuildInfo`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type |
@@ -199,12 +199,12 @@ AppX Options ([appx](#Config-appx)).
 <a name="BuildOptions"></a>
 
 ### `BuildOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
 <a name="BuildResult"></a>
 
 ### `BuildResult`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type |
@@ -215,7 +215,7 @@ AppX Options ([appx](#Config-appx)).
 <a name="CliOptions"></a>
 
 ### `CliOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
 **Properties**
 
@@ -237,7 +237,7 @@ AppX Options ([appx](#Config-appx)).
 ### `Config` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 Configuration Options
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
@@ -296,7 +296,7 @@ Configuration Options
 ### `DebOptions` ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
 Debian Package Specific Options
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>  
 **Properties**
 
@@ -309,7 +309,7 @@ Debian Package Specific Options
 <a name="DmgContent"></a>
 
 ### `DmgContent`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type | Description |
@@ -328,7 +328,7 @@ macOS DMG Options ([dmg](#Config-dmg)).
 To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
 If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
@@ -366,7 +366,7 @@ If OS language is german, `license_de.txt` will be displayed. See map of [langua
 ### `DmgWindow`
 DMG Windows Position and Size
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type | Description |
@@ -381,7 +381,7 @@ DMG Windows Position and Size
 ### `LinuxBuildOptions` ⇐ <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>
 Linux Options
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>  
 **Properties**
 
@@ -403,7 +403,7 @@ Linux Options
 ### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 macOS Options ([mac](#Config-mac)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
@@ -425,7 +425,7 @@ macOS Options ([mac](#Config-mac)).
 ### `MasBuildOptions` ⇐ <code>[MacOptions](#MacOptions)</code>
 MAS (Mac Application Store) Options ([mas](#Config-mas)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[MacOptions](#MacOptions)</code>  
 **Properties**
 
@@ -440,7 +440,7 @@ MAS (Mac Application Store) Options ([mas](#Config-mas)).
 Fields in the package.json
 Some standard fields should be defined in the `package.json`.
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type | Description |
@@ -464,7 +464,7 @@ NSIS specific options ([nsis](#Config-nsis)).
 
 See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
@@ -497,7 +497,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 ### `NsisWebOptions` ⇐ <code>[NsisOptions](#NsisOptions)</code>
 Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[NsisOptions](#NsisOptions)</code>  
 **Properties**
 
@@ -509,7 +509,7 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 <a name="PackagerOptions"></a>
 
 ### `PackagerOptions`
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
 
 | Name | Type | Description |
@@ -533,7 +533,7 @@ Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
 ### `PkgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
 macOS Product Archive Options ([pkg](#Config-pkg)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
@@ -548,7 +548,7 @@ macOS Product Archive Options ([pkg](#Config-pkg)).
 ### `PortableOptions` ⇐ <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>
 Portable Specific Options ([portable](#Config-portable)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>  
 **Properties**
 
@@ -561,7 +561,7 @@ Portable Specific Options ([portable](#Config-portable)).
 ### `SnapOptions` ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
 [Snap](http://snapcraft.io) Options
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>  
 **Properties**
 
@@ -582,7 +582,7 @@ Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows)).
 
 To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[WinBuildOptions](#WinBuildOptions)</code>  
 **Properties**
 
@@ -600,7 +600,7 @@ To use Squirrel.Windows please install `electron-builder-squirrel-windows` depen
 ### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
 Windows Specific Options ([win](#Config-win)).
 
-**Kind**: interface of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
 **Properties**
 
@@ -622,7 +622,7 @@ Windows Specific Options ([win](#Config-win)).
 <a name="Packager"></a>
 
 ### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
-**Kind**: class of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: class of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[BuildInfo](#BuildInfo)</code>  
 **Properties**
 
@@ -643,7 +643,7 @@ Windows Specific Options ([win](#Config-win)).
 <a name="module_electron-builder.build"></a>
 
 ### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
 
 | Param | Type |
 | --- | --- |
@@ -652,7 +652,7 @@ Windows Specific Options ([win](#Config-win)).
 <a name="module_electron-builder.buildForge"></a>
 
 ### `electron-builder.buildForge(appDir, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
 
 | Param | Type |
 | --- | --- |
@@ -662,7 +662,7 @@ Windows Specific Options ([win](#Config-win)).
 <a name="module_electron-builder.createTargets"></a>
 
 ### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder](#module_electron-builder)</code>  
+**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
 
 | Param | Type |
 | --- | --- |

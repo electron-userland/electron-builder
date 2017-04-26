@@ -87,7 +87,7 @@ Can be specified in the [configuration options](https://github.com/electron-user
 ### `BintrayOptions` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 Bintray options.
 
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
 
@@ -103,7 +103,7 @@ Bintray options.
 ### `GenericServerOptions` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 Generic (any HTTP(S) server) options.
 
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
 
@@ -120,7 +120,7 @@ GitHub options.
 GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
 Define `GH_TOKEN` environment variable.
 
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
 
@@ -142,7 +142,7 @@ If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
 
 If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
 
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Properties**
 
 | Name | Type | Description |
@@ -159,7 +159,7 @@ AWS credentials are required, please see [getting your credentials](http://docs.
 Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
 Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
 
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
 
@@ -182,7 +182,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 <a name="UpdateInfo"></a>
 
 ### `UpdateInfo` ⇐ <code>[VersionInfo](#VersionInfo)</code>
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[VersionInfo](#VersionInfo)</code>  
 **Properties**
 
@@ -198,7 +198,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 <a name="VersionInfo"></a>
 
 ### `VersionInfo`
-**Kind**: interface of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Properties**
 
 | Name | Type | Description |
@@ -208,7 +208,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 <a name="module_electron-builder-http/out/publishOptions.githubUrl"></a>
 
 ### `electron-builder-http/out/publishOptions.githubUrl(options)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: method of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 
 | Param | Type |
 | --- | --- |
@@ -217,7 +217,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 <a name="module_electron-builder-http/out/publishOptions.s3Url"></a>
 
 ### `electron-builder-http/out/publishOptions.s3Url(options)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-http/out/publishOptions](#module_electron-builder-http/out/publishOptions)</code>  
+**Kind**: method of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 
 | Param | Type |
 | --- | --- |

@@ -93,7 +93,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AppInfo"></a>
 
 ### AppInfo
-**Kind**: class of <code>[electron-builder/out/appInfo](#module_electron-builder/out/appInfo)</code>  
+**Kind**: class of [<code>electron-builder/out/appInfo</code>](#module_electron-builder/out/appInfo)  
 **Properties**
 
 | Name | Type |
@@ -108,7 +108,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 
 #### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[AppInfo](#AppInfo)</code>  
+**Kind**: instance method of [<code>AppInfo</code>](#AppInfo)  
 <a name="module_electron-builder/out/asar"></a>
 
 ## electron-builder/out/asar
@@ -130,7 +130,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AsarFilesystem"></a>
 
 ### AsarFilesystem
-**Kind**: class of <code>[electron-builder/out/asar](#module_electron-builder/out/asar)</code>  
+**Kind**: class of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
 
 * [.AsarFilesystem](#AsarFilesystem)
     * [`.getFile(p, followLinks)`](#module_electron-builder/out/asar.AsarFilesystem+getFile) ⇒ <code>[Node](#Node)</code>
@@ -145,7 +145,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+getFile"></a>
 
 #### `asarFilesystem.getFile(p, followLinks)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -155,7 +155,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+insertDirectory"></a>
 
 #### `asarFilesystem.insertDirectory(p, unpacked)` ⇒ <code>module:electron-builder/out/asar.__type</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -165,7 +165,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+insertFileNode"></a>
 
 #### `asarFilesystem.insertFileNode(node, stat, file)`
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -176,7 +176,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+getNode"></a>
 
 #### `asarFilesystem.getNode(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -185,7 +185,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+getOrCreateNode"></a>
 
 #### `asarFilesystem.getOrCreateNode(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -194,7 +194,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+readFile"></a>
 
 #### `asarFilesystem.readFile(file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -203,7 +203,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+readJson"></a>
 
 #### `asarFilesystem.readJson(file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -212,7 +212,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.AsarFilesystem+searchNodeFromDirectory"></a>
 
 #### `asarFilesystem.searchNodeFromDirectory(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of <code>[AsarFilesystem](#AsarFilesystem)</code>  
+**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
 
 | Param | Type |
 | --- | --- |
@@ -221,7 +221,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="Node"></a>
 
 ### Node
-**Kind**: class of <code>[electron-builder/out/asar](#module_electron-builder/out/asar)</code>  
+**Kind**: class of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
 **Properties**
 
 | Name | Type |
@@ -236,7 +236,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.readAsar"></a>
 
 ### `electron-builder/out/asar.readAsar(archive)` ⇒ <code>Promise&lt;[AsarFilesystem](#AsarFilesystem)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/asar](#module_electron-builder/out/asar)</code>  
+**Kind**: method of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
 
 | Param | Type |
 | --- | --- |
@@ -245,7 +245,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asar.readAsarJson"></a>
 
 ### `electron-builder/out/asar.readAsarJson(archive, file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: method of <code>[electron-builder/out/asar](#module_electron-builder/out/asar)</code>  
+**Kind**: method of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
 
 | Param | Type |
 | --- | --- |
@@ -267,7 +267,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AsarPackager"></a>
 
 ### AsarPackager
-**Kind**: class of <code>[electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)</code>  
+**Kind**: class of [<code>electron-builder/out/asarUtil</code>](#module_electron-builder/out/asarUtil)  
 
 * [.AsarPackager](#AsarPackager)
     * [`.compileUsingElectronCompile(files)`](#module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
@@ -278,7 +278,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile"></a>
 
 #### `asarPackager.compileUsingElectronCompile(files)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -287,7 +287,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles"></a>
 
 #### `asarPackager.createPackageFromFiles(files)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -296,7 +296,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs"></a>
 
 #### `asarPackager.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -307,7 +307,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asarUtil.AsarPackager+pack"></a>
 
 #### `asarPackager.pack(filter, isElectronCompile)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[AsarPackager](#AsarPackager)</code>  
+**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -317,7 +317,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/asarUtil.checkFileInArchive"></a>
 
 ### `electron-builder/out/asarUtil.checkFileInArchive(asarFile, relativeFile, messagePrefix)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)</code>  
+**Kind**: method of [<code>electron-builder/out/asarUtil</code>](#module_electron-builder/out/asarUtil)  
 
 | Param | Type |
 | --- | --- |
@@ -331,7 +331,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/builder.normalizeOptions"></a>
 
 ### `electron-builder/out/builder.normalizeOptions(args)` ⇒ <code>[BuildOptions](Options#BuildOptions)</code>
-**Kind**: method of <code>[electron-builder/out/builder](#module_electron-builder/out/builder)</code>  
+**Kind**: method of [<code>electron-builder/out/builder</code>](#module_electron-builder/out/builder)  
 
 | Param | Type |
 | --- | --- |
@@ -343,7 +343,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/cli/cliOptions.createYargs"></a>
 
 ### `electron-builder/out/cli/cliOptions.createYargs()` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder/out/cli/cliOptions](#module_electron-builder/out/cli/cliOptions)</code>  
+**Kind**: method of [<code>electron-builder/out/cli/cliOptions</code>](#module_electron-builder/out/cli/cliOptions)  
 <a name="module_electron-builder/out/codeSign"></a>
 
 ## electron-builder/out/codeSign
@@ -359,7 +359,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="CodeSigningInfo"></a>
 
 ### `CodeSigningInfo`
-**Kind**: interface of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 **Properties**
 
 | Name | Type |
@@ -369,11 +369,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
 
 ### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
-**Kind**: property of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 <a name="module_electron-builder/out/codeSign.createKeychain"></a>
 
 ### `electron-builder/out/codeSign.createKeychain(tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword)` ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
@@ -386,7 +386,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
 
 ### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
@@ -396,7 +396,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
 
 ### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
@@ -407,7 +407,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/codeSign.sign"></a>
 
 ### `electron-builder/out/codeSign.sign(path, name, keychain)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/codeSign](#module_electron-builder/out/codeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
@@ -427,21 +427,21 @@ Developer API only. See [[Options]] for user documentation.
         * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
         * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
         * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
+        * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
     * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
+    * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, buildResourceDir)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
     * [`.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)`](#module_electron-builder/out/fileMatcher.getFileMatchers) ⇒ <code>null</code> \| <code>Array</code>
 
 <a name="FileMatcher"></a>
 
 ### FileMatcher
-**Kind**: class of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+**Kind**: class of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
 **Properties**
 
 | Name | Type |
 | --- | --- |
 | from| <code>string</code> | 
 | to| <code>string</code> | 
-| patterns| <code>Array&lt;string&gt;</code> | 
 
 
 * [.FileMatcher](#FileMatcher)
@@ -451,15 +451,16 @@ Developer API only. See [[Options]] for user documentation.
     * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
     * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
     * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
+    * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern"></a>
 
 #### `fileMatcher.addAllPattern()`
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+addPattern"></a>
 
 #### `fileMatcher.addPattern(pattern)`
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -468,7 +469,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns"></a>
 
 #### `fileMatcher.computeParsedPatterns(result, fromDir)`
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -478,11 +479,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore"></a>
 
 #### `fileMatcher.containsOnlyIgnore()` ⇒ <code>boolean</code>
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+createFilter"></a>
 
 #### `fileMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns)` ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -493,11 +494,20 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+isEmpty"></a>
 
 #### `fileMatcher.isEmpty()` ⇒ <code>boolean</code>
-**Kind**: instance method of <code>[FileMatcher](#FileMatcher)</code>  
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
+<a name="module_electron-builder/out/fileMatcher.FileMatcher+prependPattern"></a>
+
+#### `fileMatcher.prependPattern(pattern)`
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
+
+| Param | Type |
+| --- | --- |
+| pattern | <code>string</code> | 
+
 <a name="module_electron-builder/out/fileMatcher.copyFiles"></a>
 
 ### `electron-builder/out/fileMatcher.copyFiles(patterns)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -505,8 +515,8 @@ Developer API only. See [[Options]] for user documentation.
 
 <a name="module_electron-builder/out/fileMatcher.createFileMatcher"></a>
 
-### `electron-builder/out/fileMatcher.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions)` ⇒ <code>[FileMatcher](#FileMatcher)</code>
-**Kind**: method of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+### `electron-builder/out/fileMatcher.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, buildResourceDir)` ⇒ <code>[FileMatcher](#FileMatcher)</code>
+**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -515,11 +525,12 @@ Developer API only. See [[Options]] for user documentation.
 | resourcesPath | <code>string</code> | 
 | macroExpander | <code>callback</code> | 
 | platformSpecificBuildOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
+| buildResourceDir | <code>string</code> | 
 
 <a name="module_electron-builder/out/fileMatcher.getFileMatchers"></a>
 
 ### `electron-builder/out/fileMatcher.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)` ⇒ <code>null</code> \| <code>Array</code>
-**Kind**: method of <code>[electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)</code>  
+**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
 
 | Param | Type |
 | --- | --- |
@@ -546,7 +557,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="CompilerHost"></a>
 
 ### `CompilerHost`
-**Kind**: interface of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+**Kind**: interface of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
 
 * [`.CompilerHost`](#CompilerHost)
     * [`.compile(file)`](#module_electron-builder/out/fileTransformer.CompilerHost+compile) ⇒ <code>any</code>
@@ -555,7 +566,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileTransformer.CompilerHost+compile"></a>
 
 #### `compilerHost.compile(file)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[CompilerHost](#CompilerHost)</code>  
+**Kind**: instance method of [<code>CompilerHost</code>](#CompilerHost)  
 
 | Param | Type |
 | --- | --- |
@@ -564,11 +575,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration"></a>
 
 #### `compilerHost.saveConfiguration()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[CompilerHost](#CompilerHost)</code>  
+**Kind**: instance method of [<code>CompilerHost</code>](#CompilerHost)  
 <a name="module_electron-builder/out/fileTransformer.createElectronCompilerHost"></a>
 
 ### `electron-builder/out/fileTransformer.createElectronCompilerHost(projectDir, cacheDir)` ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
 
 | Param | Type |
 | --- | --- |
@@ -578,7 +589,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileTransformer.createTransformer"></a>
 
 ### `electron-builder/out/fileTransformer.createTransformer(srcDir, extraMetadata)` ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
-**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
 
 | Param | Type |
 | --- | --- |
@@ -588,7 +599,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/fileTransformer.isElectronCompileUsed"></a>
 
 ### `electron-builder/out/fileTransformer.isElectronCompileUsed(info)` ⇒ <code>boolean</code>
-**Kind**: method of <code>[electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)</code>  
+**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
 
 | Param | Type |
 | --- | --- |
@@ -624,7 +635,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="LinuxPackager"></a>
 
 ### LinuxPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
-**Kind**: class of <code>[electron-builder/out/linuxPackager](#module_electron-builder/out/linuxPackager)</code>  
+**Kind**: class of [<code>electron-builder/out/linuxPackager</code>](#module_electron-builder/out/linuxPackager)  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
 **Properties**
 
@@ -658,8 +669,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/linuxPackager.LinuxPackager+createTargets"></a>
 
 #### `linuxPackager.createTargets(targets, mapper, cleanupTasks)`
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
-**Overrides**: <code>[createTargets](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
+**Overrides**: [<code>createTargets</code>](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)  
 
 | Param | Type |
 | --- | --- |
@@ -670,8 +681,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp"></a>
 
 #### `linuxPackager.postInitApp(appOutDir)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
-**Overrides**: <code>[postInitApp](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
+**Overrides**: [<code>postInitApp</code>](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)  
 **Access**: protected  
 
 | Param | Type |
@@ -681,7 +692,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `linuxPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -690,7 +701,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
 #### `linuxPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)`
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -702,7 +713,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
 #### `linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -714,7 +725,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
 #### `linuxPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -725,7 +736,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
 #### `linuxPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -737,7 +748,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
 #### `linuxPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -748,11 +759,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
 #### `linuxPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
 #### `linuxPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -761,7 +772,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
 #### `linuxPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -773,7 +784,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
 #### `linuxPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -783,7 +794,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
 #### `linuxPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -792,7 +803,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
 #### `linuxPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -801,7 +812,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
 
 #### `linuxPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -812,17 +823,17 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
 #### `linuxPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
 
 #### `linuxPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
 
 #### `linuxPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -837,7 +848,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
 #### `linuxPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -850,7 +861,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
 
 #### `linuxPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of <code>[LinuxPackager](#LinuxPackager)</code>  
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -889,7 +900,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="MacPackager"></a>
 
 ### MacPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
-**Kind**: class of <code>[electron-builder/out/macPackager](#module_electron-builder/out/macPackager)</code>  
+**Kind**: class of [<code>electron-builder/out/macPackager</code>](#module_electron-builder/out/macPackager)  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
 **Properties**
 
@@ -925,8 +936,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/macPackager.MacPackager+createTargets"></a>
 
 #### `macPackager.createTargets(targets, mapper, cleanupTasks)`
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
-**Overrides**: <code>[createTargets](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>createTargets</code>](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)  
 
 | Param | Type |
 | --- | --- |
@@ -937,13 +948,13 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/macPackager.MacPackager+getIconPath"></a>
 
 #### `macPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
-**Overrides**: <code>[getIconPath](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>getIconPath</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)  
 <a name="module_electron-builder/out/macPackager.MacPackager+pack"></a>
 
 #### `macPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
-**Overrides**: <code>[pack](#module_electron-builder/out/platformPackager.PlatformPackager+pack)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>pack</code>](#module_electron-builder/out/platformPackager.PlatformPackager+pack)  
 
 | Param | Type |
 | --- | --- |
@@ -955,7 +966,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/macPackager.MacPackager+doFlat"></a>
 
 #### `macPackager.doFlat(appPath, outFile, identity, keychain)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -968,7 +979,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/macPackager.MacPackager+doSign"></a>
 
 #### `macPackager.doSign(opts)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -978,8 +989,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/macPackager.MacPackager+prepareAppInfo"></a>
 
 #### `macPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
-**Overrides**: <code>[prepareAppInfo](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>prepareAppInfo</code>](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo)  
 **Access**: protected  
 
 | Param | Type |
@@ -989,7 +1000,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -998,7 +1009,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
 #### `macPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)`
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1010,7 +1021,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
 #### `macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1022,7 +1033,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
 #### `macPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1033,7 +1044,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
 #### `macPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1045,7 +1056,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
 #### `macPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1056,7 +1067,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
 #### `macPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1065,7 +1076,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
 #### `macPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1075,7 +1086,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
 #### `macPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1084,7 +1095,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
 #### `macPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1093,7 +1104,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
 
 #### `macPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1104,17 +1115,17 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
 #### `macPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
 
 #### `macPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
 
 #### `macPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1129,7 +1140,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
 #### `macPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1142,7 +1153,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
 
 #### `macPackager.postInitApp(executableFile)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[MacPackager](#MacPackager)</code>  
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1160,7 +1171,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="CommonLinuxOptions"></a>
 
 ### `CommonLinuxOptions`
-**Kind**: interface of <code>[electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)</code>  
+**Kind**: interface of [<code>electron-builder/out/options/linuxOptions</code>](#module_electron-builder/out/options/linuxOptions)  
 **Properties**
 
 | Name | Type |
@@ -1178,7 +1189,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="LinuxTargetSpecificOptions"></a>
 
 ### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
-**Kind**: interface of <code>[electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)</code>  
+**Kind**: interface of [<code>electron-builder/out/options/linuxOptions</code>](#module_electron-builder/out/options/linuxOptions)  
 **Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>  
 **Properties**
 
@@ -1193,7 +1204,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="CommonNsisOptions"></a>
 
 ### `CommonNsisOptions`
-**Kind**: interface of <code>[electron-builder/out/options/winOptions](#module_electron-builder/out/options/winOptions)</code>  
+**Kind**: interface of [<code>electron-builder/out/options/winOptions</code>](#module_electron-builder/out/options/winOptions)  
 **Properties**
 
 | Name | Type |
@@ -1213,7 +1224,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/packager/dirPackager.unpackElectron"></a>
 
 ### `electron-builder/out/packager/dirPackager.unpackElectron(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)</code>  
+**Kind**: method of [<code>electron-builder/out/packager/dirPackager</code>](#module_electron-builder/out/packager/dirPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1226,7 +1237,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/packager/dirPackager.unpackMuon"></a>
 
 ### `electron-builder/out/packager/dirPackager.unpackMuon(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)</code>  
+**Kind**: method of [<code>electron-builder/out/packager/dirPackager</code>](#module_electron-builder/out/packager/dirPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1247,7 +1258,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/packager/mac.createApp"></a>
 
 ### `electron-builder/out/packager/mac.createApp(packager, appOutDir)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/packager/mac](#module_electron-builder/out/packager/mac)</code>  
+**Kind**: method of [<code>electron-builder/out/packager/mac</code>](#module_electron-builder/out/packager/mac)  
 
 | Param | Type |
 | --- | --- |
@@ -1257,7 +1268,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/packager/mac.filterCFBundleIdentifier"></a>
 
 ### `electron-builder/out/packager/mac.filterCFBundleIdentifier(identifier)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder/out/packager/mac](#module_electron-builder/out/packager/mac)</code>  
+**Kind**: method of [<code>electron-builder/out/packager/mac</code>](#module_electron-builder/out/packager/mac)  
 
 | Param | Type |
 | --- | --- |
@@ -1269,7 +1280,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/packager.normalizePlatforms"></a>
 
 ### `electron-builder/out/packager.normalizePlatforms(rawPlatforms)` ⇒ <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/packager](#module_electron-builder/out/packager)</code>  
+**Kind**: method of [<code>electron-builder/out/packager</code>](#module_electron-builder/out/packager)  
 
 | Param | Type |
 | --- | --- |
@@ -1306,7 +1317,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="PlatformPackager"></a>
 
 ### PlatformPackager
-**Kind**: class of <code>[electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)</code>  
+**Kind**: class of [<code>electron-builder/out/platformPackager</code>](#module_electron-builder/out/platformPackager)  
 **Properties**
 
 | Name | Type |
@@ -1344,7 +1355,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
 
 #### `platformPackager.createTargets(targets, mapper, cleanupTasks)`
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1355,7 +1366,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1364,7 +1375,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
 #### `platformPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)`
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1376,7 +1387,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
 #### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1388,7 +1399,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
 #### `platformPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1399,7 +1410,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
 #### `platformPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1411,7 +1422,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
 #### `platformPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1422,11 +1433,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
 #### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
 #### `platformPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1435,7 +1446,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
 #### `platformPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1447,7 +1458,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
 #### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1457,7 +1468,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
 #### `platformPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1466,7 +1477,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
 #### `platformPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1475,7 +1486,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
 
 #### `platformPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1486,17 +1497,17 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
 #### `platformPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
 
 #### `platformPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
 
 #### `platformPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1511,7 +1522,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
 #### `platformPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1524,7 +1535,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
 
 #### `platformPackager.postInitApp(executableFile)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1534,7 +1545,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
 
 #### `platformPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of <code>[PlatformPackager](#PlatformPackager)</code>  
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -1544,7 +1555,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.normalizeExt"></a>
 
 ### `electron-builder/out/platformPackager.normalizeExt(ext)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)</code>  
+**Kind**: method of [<code>electron-builder/out/platformPackager</code>](#module_electron-builder/out/platformPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -1567,7 +1578,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="PublishManager"></a>
 
 ### PublishManager ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
-**Kind**: class of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
+**Kind**: class of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 **Extends**: <code>[PublishContext](electron-publish#PublishContext)</code>  
 **Properties**
 
@@ -1585,15 +1596,15 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
 
 #### `publishManager.awaitTasks()` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
+**Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks"></a>
 
 #### `publishManager.cancelTasks()`
-**Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
+**Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher"></a>
 
 #### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
-**Kind**: instance method of <code>[PublishManager](#PublishManager)</code>  
+**Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 
 | Param | Type |
 | --- | --- |
@@ -1603,7 +1614,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/publish/PublishManager.computeDownloadUrl"></a>
 
 ### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
+**Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
 | Param | Type |
 | --- | --- |
@@ -1614,7 +1625,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
 
 ### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
-**Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
+**Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
 | Param | Type |
 | --- | --- |
@@ -1626,7 +1637,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigs"></a>
 
 ### `electron-builder/out/publish/PublishManager.getPublishConfigs(packager, targetSpecificOptions, arch)` ⇒ <code>Promise&lt; \| Array&gt;</code>
-**Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
+**Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
 | Param | Type |
 | --- | --- |
@@ -1637,7 +1648,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 
 ### `electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)` ⇒ <code>Promise&lt; \| Array&gt;</code>
-**Kind**: method of <code>[electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)</code>  
+**Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
 | Param | Type |
 | --- | --- |
@@ -1656,7 +1667,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="Dependency"></a>
 
 ### `Dependency`
-**Kind**: interface of <code>[electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)</code>  
+**Kind**: interface of [<code>electron-builder/out/readInstalled</code>](#module_electron-builder/out/readInstalled)  
 **Properties**
 
 | Name | Type |
@@ -1670,7 +1681,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/readInstalled.readInstalled"></a>
 
 ### `electron-builder/out/readInstalled.readInstalled(folder)` ⇒ <code>Promise&lt;Map&lt;string \| [Dependency](#Dependency)&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)</code>  
+**Kind**: method of [<code>electron-builder/out/readInstalled</code>](#module_electron-builder/out/readInstalled)  
 
 | Param | Type |
 | --- | --- |
@@ -1687,7 +1698,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="RepositorySlug"></a>
 
 ### `RepositorySlug`
-**Kind**: interface of <code>[electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)</code>  
+**Kind**: interface of [<code>electron-builder/out/repositoryInfo</code>](#module_electron-builder/out/repositoryInfo)  
 **Properties**
 
 | Name | Type |
@@ -1698,7 +1709,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/repositoryInfo.getRepositoryInfo"></a>
 
 ### `electron-builder/out/repositoryInfo.getRepositoryInfo(projectDir, metadata, devMetadata)` ⇒ <code>Promise&lt; \| module:hosted-git-info.Info&gt;</code>
-**Kind**: method of <code>[electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)</code>  
+**Kind**: method of [<code>electron-builder/out/repositoryInfo</code>](#module_electron-builder/out/repositoryInfo)  
 
 | Param | Type |
 | --- | --- |
@@ -1717,7 +1728,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AppImageTarget"></a>
 
 ### AppImageTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/appImage](#module_electron-builder/out/targets/appImage)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/appImage</code>](#module_electron-builder/out/targets/appImage)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -1728,7 +1739,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/appImage.AppImageTarget+build"></a>
 
 #### `appImageTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[AppImageTarget](#AppImageTarget)</code>  
+**Kind**: instance method of [<code>AppImageTarget</code>](#AppImageTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1746,7 +1757,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AppXTarget"></a>
 
 ### AppXTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/appx</code>](#module_electron-builder/out/targets/appx)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -1757,7 +1768,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/appx.AppXTarget+build"></a>
 
 #### `appXTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[AppXTarget](#AppXTarget)</code>  
+**Kind**: instance method of [<code>AppXTarget</code>](#AppXTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1775,7 +1786,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/archive.archive"></a>
 
 ### `electron-builder/out/targets/archive.archive(compression, format, outFile, dirToArchive, withoutDir)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/archive](#module_electron-builder/out/targets/archive)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/archive</code>](#module_electron-builder/out/targets/archive)  
 
 | Param | Type |
 | --- | --- |
@@ -1788,7 +1799,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/archive.tar"></a>
 
 ### `electron-builder/out/targets/archive.tar(compression, format, outFile, dirToArchive, isMacApp)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/archive](#module_electron-builder/out/targets/archive)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/archive</code>](#module_electron-builder/out/targets/archive)  
 
 | Param | Type |
 | --- | --- |
@@ -1809,7 +1820,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="ArchiveTarget"></a>
 
 ### ArchiveTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/ArchiveTarget](#module_electron-builder/out/targets/ArchiveTarget)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/ArchiveTarget</code>](#module_electron-builder/out/targets/ArchiveTarget)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -1820,7 +1831,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/ArchiveTarget.ArchiveTarget+build"></a>
 
 #### `archiveTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[ArchiveTarget](#ArchiveTarget)</code>  
+**Kind**: instance method of [<code>ArchiveTarget</code>](#ArchiveTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1841,7 +1852,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="DmgTarget"></a>
 
 ### DmgTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/dmg</code>](#module_electron-builder/out/targets/dmg)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -1858,7 +1869,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+build"></a>
 
 #### `dmgTarget.build(appPath, arch)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[DmgTarget](#DmgTarget)</code>  
+**Kind**: instance method of [<code>DmgTarget</code>](#DmgTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1868,11 +1879,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions"></a>
 
 #### `dmgTarget.computeDmgOptions()` ⇒ <code>Promise&lt;[DmgOptions](Options#DmgOptions)&gt;</code>
-**Kind**: instance method of <code>[DmgTarget](#DmgTarget)</code>  
+**Kind**: instance method of [<code>DmgTarget</code>](#DmgTarget)  
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName"></a>
 
 #### `dmgTarget.computeVolumeName(custom)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[DmgTarget](#DmgTarget)</code>  
+**Kind**: instance method of [<code>DmgTarget</code>](#DmgTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1881,7 +1892,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/dmg.attachAndExecute"></a>
 
 ### `electron-builder/out/targets/dmg.attachAndExecute(dmgPath, readWrite, task)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/dmg](#module_electron-builder/out/targets/dmg)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/dmg</code>](#module_electron-builder/out/targets/dmg)  
 
 | Param | Type |
 | --- | --- |
@@ -1895,7 +1906,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/dmgLicense.addLicenseToDmg"></a>
 
 ### `electron-builder/out/targets/dmgLicense.addLicenseToDmg(packager, dmgPath)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/dmgLicense](#module_electron-builder/out/targets/dmgLicense)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/dmgLicense</code>](#module_electron-builder/out/targets/dmgLicense)  
 
 | Param | Type |
 | --- | --- |
@@ -1913,7 +1924,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="FpmTarget"></a>
 
 ### FpmTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/fpm](#module_electron-builder/out/targets/fpm)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/fpm</code>](#module_electron-builder/out/targets/fpm)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -1924,7 +1935,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/fpm.FpmTarget+build"></a>
 
 #### `fpmTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[FpmTarget](#FpmTarget)</code>  
+**Kind**: instance method of [<code>FpmTarget</code>](#FpmTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -1944,7 +1955,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="LicenseFile"></a>
 
 ### `LicenseFile`
-**Kind**: interface of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+**Kind**: interface of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
 **Properties**
 
 | Name | Type |
@@ -1957,11 +1968,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/license.lcid"></a>
 
 ### `electron-builder/out/targets/license.lcid` : <code>any</code>
-**Kind**: constant of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+**Kind**: constant of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
 <a name="module_electron-builder/out/targets/license.getLicenseFiles"></a>
 
 ### `electron-builder/out/targets/license.getLicenseFiles(packager)` ⇒ <code>Promise&lt;Array&lt;[LicenseFile](#LicenseFile)&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
 
 | Param | Type |
 | --- | --- |
@@ -1970,7 +1981,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/license.toLangWithRegion"></a>
 
 ### `electron-builder/out/targets/license.toLangWithRegion(lang)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder/out/targets/license](#module_electron-builder/out/targets/license)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
 
 | Param | Type |
 | --- | --- |
@@ -1988,7 +1999,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="LinuxTargetHelper"></a>
 
 ### LinuxTargetHelper
-**Kind**: class of <code>[electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/LinuxTargetHelper</code>](#module_electron-builder/out/targets/LinuxTargetHelper)  
 **Properties**
 
 | Name | Type |
@@ -2004,7 +2015,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry"></a>
 
 #### `linuxTargetHelper.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
+**Kind**: instance method of [<code>LinuxTargetHelper</code>](#LinuxTargetHelper)  
 
 | Param | Type |
 | --- | --- |
@@ -2016,7 +2027,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription"></a>
 
 #### `linuxTargetHelper.getDescription(options)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[LinuxTargetHelper](#LinuxTargetHelper)</code>  
+**Kind**: instance method of [<code>LinuxTargetHelper</code>](#LinuxTargetHelper)  
 
 | Param | Type |
 | --- | --- |
@@ -2039,7 +2050,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="AppPackageHelper"></a>
 
 ### AppPackageHelper
-**Kind**: class of <code>[electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/nsis</code>](#module_electron-builder/out/targets/nsis)  
 
 * [.AppPackageHelper](#AppPackageHelper)
     * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
@@ -2048,11 +2059,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild"></a>
 
 #### `appPackageHelper.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[AppPackageHelper](#AppPackageHelper)</code>  
+**Kind**: instance method of [<code>AppPackageHelper</code>](#AppPackageHelper)  
 <a name="module_electron-builder/out/targets/nsis.AppPackageHelper+packArch"></a>
 
 #### `appPackageHelper.packArch(arch, target)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[AppPackageHelper](#AppPackageHelper)</code>  
+**Kind**: instance method of [<code>AppPackageHelper</code>](#AppPackageHelper)  
 
 | Param | Type |
 | --- | --- |
@@ -2062,7 +2073,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="NsisTarget"></a>
 
 ### NsisTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/nsis</code>](#module_electron-builder/out/targets/nsis)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -2080,7 +2091,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+build"></a>
 
 #### `nsisTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
+**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -2090,11 +2101,11 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
 #### `nsisTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
+**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+configureDefines"></a>
 
 #### `nsisTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
+**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
 **Access**: protected  
 
 | Param | Type |
@@ -2105,7 +2116,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName"></a>
 
 #### `nsisTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[NsisTarget](#NsisTarget)</code>  
+**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
 **Access**: protected  
 <a name="module_electron-builder/out/targets/pkg"></a>
 
@@ -2119,7 +2130,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="PkgTarget"></a>
 
 ### PkgTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/pkg</code>](#module_electron-builder/out/targets/pkg)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -2130,7 +2141,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/pkg.PkgTarget+build"></a>
 
 #### `pkgTarget.build(appPath, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[PkgTarget](#PkgTarget)</code>  
+**Kind**: instance method of [<code>PkgTarget</code>](#PkgTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -2140,7 +2151,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/pkg.prepareProductBuildArgs"></a>
 
 ### `electron-builder/out/targets/pkg.prepareProductBuildArgs(identity, keychain)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/pkg</code>](#module_electron-builder/out/targets/pkg)  
 
 | Param | Type |
 | --- | --- |
@@ -2158,7 +2169,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="SnapTarget"></a>
 
 ### SnapTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/snap](#module_electron-builder/out/targets/snap)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/snap</code>](#module_electron-builder/out/targets/snap)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -2169,7 +2180,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/snap.SnapTarget+build"></a>
 
 #### `snapTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[SnapTarget](#SnapTarget)</code>  
+**Kind**: instance method of [<code>SnapTarget</code>](#SnapTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -2190,7 +2201,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="NoOpTarget"></a>
 
 ### NoOpTarget ⇐ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: class of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/targetFactory</code>](#module_electron-builder/out/targets/targetFactory)  
 **Extends**: <code>[Target](electron-builder-core#Target)</code>  
 **Properties**
 
@@ -2201,7 +2212,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/targetFactory.NoOpTarget+build"></a>
 
 #### `noOpTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[NoOpTarget](#NoOpTarget)</code>  
+**Kind**: instance method of [<code>NoOpTarget</code>](#NoOpTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -2211,7 +2222,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap"></a>
 
 ### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/targetFactory</code>](#module_electron-builder/out/targets/targetFactory)  
 
 | Param | Type |
 | --- | --- |
@@ -2222,7 +2233,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/targetFactory.createCommonTarget"></a>
 
 ### `electron-builder/out/targets/targetFactory.createCommonTarget(target, outDir, packager)` ⇒ <code>[Target](electron-builder-core#Target)</code>
-**Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/targetFactory</code>](#module_electron-builder/out/targets/targetFactory)  
 
 | Param | Type |
 | --- | --- |
@@ -2233,7 +2244,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/targetFactory.createTargets"></a>
 
 ### `electron-builder/out/targets/targetFactory.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)` ⇒ <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)</code>  
+**Kind**: method of [<code>electron-builder/out/targets/targetFactory</code>](#module_electron-builder/out/targets/targetFactory)  
 
 | Param | Type |
 | --- | --- |
@@ -2257,7 +2268,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="WebInstallerTarget"></a>
 
 ### WebInstallerTarget ⇐ <code>[NsisTarget](#NsisTarget)</code>
-**Kind**: class of <code>[electron-builder/out/targets/WebInstallerTarget](#module_electron-builder/out/targets/WebInstallerTarget)</code>  
+**Kind**: class of [<code>electron-builder/out/targets/WebInstallerTarget</code>](#module_electron-builder/out/targets/WebInstallerTarget)  
 **Extends**: <code>[NsisTarget](#NsisTarget)</code>  
 
 * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
@@ -2269,8 +2280,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines"></a>
 
 #### `webInstallerTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
-**Overrides**: <code>[configureDefines](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines)</code>  
+**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
+**Overrides**: [<code>configureDefines</code>](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines)  
 **Access**: protected  
 
 | Param | Type |
@@ -2281,13 +2292,13 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName"></a>
 
 #### `webInstallerTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
-**Overrides**: <code>[generateGitHubInstallerName](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName)</code>  
+**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
+**Overrides**: [<code>generateGitHubInstallerName</code>](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName)  
 **Access**: protected  
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+build"></a>
 
 #### `webInstallerTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
 
 | Param | Type |
 | --- | --- |
@@ -2297,7 +2308,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
 #### `webInstallerTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[WebInstallerTarget](#WebInstallerTarget)</code>  
+**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
 <a name="module_electron-builder/out/util/filter"></a>
 
 ## electron-builder/out/util/filter
@@ -2309,7 +2320,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/filter.createFilter"></a>
 
 ### `electron-builder/out/util/filter.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)` ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-**Kind**: method of <code>[electron-builder/out/util/filter](#module_electron-builder/out/util/filter)</code>  
+**Kind**: method of [<code>electron-builder/out/util/filter</code>](#module_electron-builder/out/util/filter)  
 
 | Param | Type |
 | --- | --- |
@@ -2322,7 +2333,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/filter.hasMagic"></a>
 
 ### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>boolean</code>
-**Kind**: method of <code>[electron-builder/out/util/filter](#module_electron-builder/out/util/filter)</code>  
+**Kind**: method of [<code>electron-builder/out/util/filter</code>](#module_electron-builder/out/util/filter)  
 
 | Param | Type |
 | --- | --- |
@@ -2342,7 +2353,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/readPackageJson.doLoadConfig"></a>
 
 ### `electron-builder/out/util/readPackageJson.doLoadConfig(configFile, projectDir)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
+**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
 
 | Param | Type |
 | --- | --- |
@@ -2352,7 +2363,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/readPackageJson.getElectronVersion"></a>
 
 ### `electron-builder/out/util/readPackageJson.getElectronVersion(config, projectDir, projectMetadata)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
+**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
 
 | Param | Type |
 | --- | --- |
@@ -2363,7 +2374,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/readPackageJson.loadConfig"></a>
 
 ### `electron-builder/out/util/readPackageJson.loadConfig(projectDir)` ⇒ <code>Promise&lt; \| [Config](Options#Config)&gt;</code>
-**Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
+**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
 
 | Param | Type |
 | --- | --- |
@@ -2372,7 +2383,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/readPackageJson.readPackageJson"></a>
 
 ### `electron-builder/out/util/readPackageJson.readPackageJson(file)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
+**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
 
 | Param | Type |
 | --- | --- |
@@ -2381,7 +2392,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/util/readPackageJson.validateConfig"></a>
 
 ### `electron-builder/out/util/readPackageJson.validateConfig(config)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)</code>  
+**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
 
 | Param | Type |
 | --- | --- |
@@ -2401,7 +2412,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="FileCodeSigningInfo"></a>
 
 ### `FileCodeSigningInfo`
-**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Kind**: interface of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 **Properties**
 
 | Name | Type |
@@ -2414,7 +2425,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="SignOptions"></a>
 
 ### `SignOptions`
-**Kind**: interface of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Kind**: interface of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 **Properties**
 
 | Name | Type |
@@ -2429,15 +2440,15 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
 
 ### `electron-builder/out/windowsCodeSign.getSignVendorPath()` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 <a name="module_electron-builder/out/windowsCodeSign.getToolPath"></a>
 
 ### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 <a name="module_electron-builder/out/windowsCodeSign.sign"></a>
 
 ### `electron-builder/out/windowsCodeSign.sign(options)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)</code>  
+**Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 
 | Param | Type |
 | --- | --- |
@@ -2476,7 +2487,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="WinPackager"></a>
 
 ### WinPackager ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
-**Kind**: class of <code>[electron-builder/out/winPackager](#module_electron-builder/out/winPackager)</code>  
+**Kind**: class of [<code>electron-builder/out/winPackager</code>](#module_electron-builder/out/winPackager)  
 **Extends**: <code>[PlatformPackager](#PlatformPackager)</code>  
 **Properties**
 
@@ -2574,8 +2585,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/winPackager.WinPackager+createTargets"></a>
 
 #### `winPackager.createTargets(targets, mapper, cleanupTasks)`
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
-**Overrides**: <code>[createTargets](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+**Overrides**: [<code>createTargets</code>](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)  
 
 | Param | Type |
 | --- | --- |
@@ -2586,12 +2597,12 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/winPackager.WinPackager+getIconPath"></a>
 
 #### `winPackager.getIconPath()` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
-**Overrides**: <code>[getIconPath](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+**Overrides**: [<code>getIconPath</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)  
 <a name="module_electron-builder/out/winPackager.WinPackager+sign"></a>
 
 #### `winPackager.sign(file, logMessagePrefix)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2601,7 +2612,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/winPackager.WinPackager+signAndEditResources"></a>
 
 #### `winPackager.signAndEditResources(file)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2610,13 +2621,13 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/winPackager.WinPackager+doGetCscPassword"></a>
 
 #### `winPackager.doGetCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
-**Overrides**: <code>[doGetCscPassword](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+**Overrides**: [<code>doGetCscPassword</code>](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword)  
 **Access**: protected  
 <a name="module_electron-builder/out/winPackager.WinPackager+doSign"></a>
 
 #### `winPackager.doSign(options)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -2626,8 +2637,8 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/winPackager.WinPackager+postInitApp"></a>
 
 #### `winPackager.postInitApp(appOutDir)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
-**Overrides**: <code>[postInitApp](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+**Overrides**: [<code>postInitApp</code>](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)  
 **Access**: protected  
 
 | Param | Type |
@@ -2637,7 +2648,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2646,7 +2657,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
 #### `winPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)`
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2658,7 +2669,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
 #### `winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2670,7 +2681,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
 #### `winPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2681,7 +2692,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
 #### `winPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2693,7 +2704,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
 #### `winPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2704,7 +2715,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
 #### `winPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2713,7 +2724,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
 #### `winPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2725,7 +2736,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
 #### `winPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2735,7 +2746,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
 #### `winPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2744,7 +2755,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
 #### `winPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
@@ -2753,7 +2764,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
 
 #### `winPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -2764,12 +2775,12 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
 
 #### `winPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
 
 #### `winPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -2784,7 +2795,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
 
 #### `winPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -2797,7 +2808,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
 
 #### `winPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of <code>[WinPackager](#WinPackager)</code>  
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Access**: protected  
 
 | Param | Type |
@@ -2817,7 +2828,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="DesktopFrameworkInfo"></a>
 
 ### `DesktopFrameworkInfo`
-**Kind**: interface of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
+**Kind**: interface of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
 **Properties**
 
 | Name | Type |
@@ -2828,7 +2839,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/yarn.getGypEnv"></a>
 
 ### `electron-builder/out/yarn.getGypEnv(frameworkInfo, platform, arch, buildFromSource)` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
+**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
 
 | Param | Type |
 | --- | --- |
@@ -2840,7 +2851,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/yarn.installOrRebuild"></a>
 
 ### `electron-builder/out/yarn.installOrRebuild(config, appDir, frameworkInfo, platform, arch, forceInstall)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
+**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
 
 | Param | Type |
 | --- | --- |
@@ -2854,7 +2865,7 @@ Developer API only. See [[Options]] for user documentation.
 <a name="module_electron-builder/out/yarn.rebuild"></a>
 
 ### `electron-builder/out/yarn.rebuild(appDir, frameworkInfo, platform, arch, additionalArgs, buildFromSource)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of <code>[electron-builder/out/yarn](#module_electron-builder/out/yarn)</code>  
+**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
 
 | Param | Type |
 | --- | --- |

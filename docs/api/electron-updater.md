@@ -32,7 +32,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="BintrayProvider"></a>
 
 ### BintrayProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
-**Kind**: class of <code>[electron-updater/out/BintrayProvider](#module_electron-updater/out/BintrayProvider)</code>  
+**Kind**: class of [<code>electron-updater/out/BintrayProvider</code>](#module_electron-updater/out/BintrayProvider)  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
 
 * [.BintrayProvider](#BintrayProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
@@ -42,11 +42,11 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/BintrayProvider.BintrayProvider+getLatestVersion"></a>
 
 #### `bintrayProvider.getLatestVersion()` ⇒ <code>Promise&lt;[VersionInfo](Publishing-Artifacts#VersionInfo)&gt;</code>
-**Kind**: instance method of <code>[BintrayProvider](#BintrayProvider)</code>  
+**Kind**: instance method of [<code>BintrayProvider</code>](#BintrayProvider)  
 <a name="module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile"></a>
 
 #### `bintrayProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
-**Kind**: instance method of <code>[BintrayProvider](#BintrayProvider)</code>  
+**Kind**: instance method of [<code>BintrayProvider</code>](#BintrayProvider)  
 
 | Param | Type |
 | --- | --- |
@@ -65,7 +65,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="ElectronHttpExecutor"></a>
 
 ### ElectronHttpExecutor ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
-**Kind**: class of <code>[electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)</code>  
+**Kind**: class of [<code>electron-updater/out/electronHttpExecutor</code>](#module_electron-updater/out/electronHttpExecutor)  
 **Extends**: <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>  
 
 * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
@@ -76,7 +76,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
 
 #### `electronHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
@@ -88,7 +88,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download"></a>
 
 #### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
@@ -99,7 +99,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
 
 #### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[ElectronHttpExecutor](#ElectronHttpExecutor)</code>  
+**Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
 **Access**: protected  
 
 | Param | Type |
@@ -120,7 +120,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="GenericProvider"></a>
 
 ### GenericProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
-**Kind**: class of <code>[electron-updater/out/GenericProvider](#module_electron-updater/out/GenericProvider)</code>  
+**Kind**: class of [<code>electron-updater/out/GenericProvider</code>](#module_electron-updater/out/GenericProvider)  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
 
 * [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
@@ -130,11 +130,11 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion"></a>
 
 #### `genericProvider.getLatestVersion()` ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-**Kind**: instance method of <code>[GenericProvider](#GenericProvider)</code>  
+**Kind**: instance method of [<code>GenericProvider</code>](#GenericProvider)  
 <a name="module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile"></a>
 
 #### `genericProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
-**Kind**: instance method of <code>[GenericProvider](#GenericProvider)</code>  
+**Kind**: instance method of [<code>GenericProvider</code>](#GenericProvider)  
 
 | Param | Type |
 | --- | --- |
@@ -143,7 +143,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/GenericProvider.validateUpdateInfo"></a>
 
 ### `electron-updater/out/GenericProvider.validateUpdateInfo(info)`
-**Kind**: method of <code>[electron-updater/out/GenericProvider](#module_electron-updater/out/GenericProvider)</code>  
+**Kind**: method of [<code>electron-updater/out/GenericProvider</code>](#module_electron-updater/out/GenericProvider)  
 
 | Param | Type |
 | --- | --- |
@@ -162,7 +162,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="BaseGitHubProvider"></a>
 
 ### BaseGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
-**Kind**: class of <code>[electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)</code>  
+**Kind**: class of [<code>electron-updater/out/GitHubProvider</code>](#module_electron-updater/out/GitHubProvider)  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
 **Properties**
 
@@ -173,7 +173,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="GitHubProvider"></a>
 
 ### GitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
-**Kind**: class of <code>[electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)</code>  
+**Kind**: class of [<code>electron-updater/out/GitHubProvider</code>](#module_electron-updater/out/GitHubProvider)  
 **Extends**: <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>  
 
 * [.GitHubProvider](#GitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
@@ -183,11 +183,11 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion"></a>
 
 #### `gitHubProvider.getLatestVersion()` ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-**Kind**: instance method of <code>[GitHubProvider](#GitHubProvider)</code>  
+**Kind**: instance method of [<code>GitHubProvider</code>](#GitHubProvider)  
 <a name="module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile"></a>
 
 #### `gitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
-**Kind**: instance method of <code>[GitHubProvider](#GitHubProvider)</code>  
+**Kind**: instance method of [<code>GitHubProvider</code>](#GitHubProvider)  
 
 | Param | Type |
 | --- | --- |
@@ -206,7 +206,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="MacUpdater"></a>
 
 ### MacUpdater ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-**Kind**: class of <code>[electron-updater/out/MacUpdater](#module_electron-updater/out/MacUpdater)</code>  
+**Kind**: class of [<code>electron-updater/out/MacUpdater</code>](#module_electron-updater/out/MacUpdater)  
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
 
 * [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
@@ -217,11 +217,11 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall"></a>
 
 #### `macUpdater.quitAndInstall()`
-**Kind**: instance method of <code>[MacUpdater](#MacUpdater)</code>  
+**Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate"></a>
 
 #### `macUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
-**Kind**: instance method of <code>[MacUpdater](#MacUpdater)</code>  
+**Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
 **Access**: protected  
 
 | Param | Type |
@@ -233,7 +233,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable"></a>
 
 #### `macUpdater.onUpdateAvailable(versionInfo, fileInfo)`
-**Kind**: instance method of <code>[MacUpdater](#MacUpdater)</code>  
+**Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
 **Access**: protected  
 
 | Param | Type |
@@ -253,7 +253,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="NsisUpdater"></a>
 
 ### NsisUpdater ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-**Kind**: class of <code>[electron-updater/out/NsisUpdater](#module_electron-updater/out/NsisUpdater)</code>  
+**Kind**: class of [<code>electron-updater/out/NsisUpdater</code>](#module_electron-updater/out/NsisUpdater)  
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
 
 * [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
@@ -263,13 +263,13 @@ Developer API only. See [[Auto Update]] for user documentation.
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall"></a>
 
 #### `nsisUpdater.quitAndInstall()`
-**Kind**: instance method of <code>[NsisUpdater](#NsisUpdater)</code>  
+**Kind**: instance method of [<code>NsisUpdater</code>](#NsisUpdater)  
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate"></a>
 
 #### `nsisUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>Promise&lt;string&gt;</code>
 Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
 
-**Kind**: instance method of <code>[NsisUpdater](#NsisUpdater)</code>  
+**Kind**: instance method of [<code>NsisUpdater</code>](#NsisUpdater)  
 **Returns**: <code>Promise&lt;string&gt;</code> - Path to downloaded file.  
 **Access**: protected  
 
@@ -293,7 +293,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 <a name="Asset"></a>
 
 ### `Asset`
-**Kind**: interface of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
+**Kind**: interface of [<code>electron-updater/out/PrivateGitHubProvider</code>](#module_electron-updater/out/PrivateGitHubProvider)  
 **Properties**
 
 | Name | Type |
@@ -304,7 +304,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 <a name="PrivateGitHubUpdateInfo"></a>
 
 ### `PrivateGitHubUpdateInfo` ⇐ <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>
-**Kind**: interface of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
+**Kind**: interface of [<code>electron-updater/out/PrivateGitHubProvider</code>](#module_electron-updater/out/PrivateGitHubProvider)  
 **Extends**: <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>  
 **Properties**
 
@@ -315,7 +315,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 <a name="PrivateGitHubProvider"></a>
 
 ### PrivateGitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
-**Kind**: class of <code>[electron-updater/out/PrivateGitHubProvider](#module_electron-updater/out/PrivateGitHubProvider)</code>  
+**Kind**: class of [<code>electron-updater/out/PrivateGitHubProvider</code>](#module_electron-updater/out/PrivateGitHubProvider)  
 **Extends**: <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>  
 
 * [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
@@ -325,11 +325,11 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion"></a>
 
 #### `privateGitHubProvider.getLatestVersion()` ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
-**Kind**: instance method of <code>[PrivateGitHubProvider](#PrivateGitHubProvider)</code>  
+**Kind**: instance method of [<code>PrivateGitHubProvider</code>](#PrivateGitHubProvider)  
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile"></a>
 
 #### `privateGitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
-**Kind**: instance method of <code>[PrivateGitHubProvider](#PrivateGitHubProvider)</code>  
+**Kind**: instance method of [<code>PrivateGitHubProvider</code>](#PrivateGitHubProvider)  
 
 | Param | Type |
 | --- | --- |

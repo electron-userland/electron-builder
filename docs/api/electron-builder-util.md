@@ -30,7 +30,7 @@
 <a name="module_electron-builder-util/out/binDownload.getBin"></a>
 
 ### `electron-builder-util/out/binDownload.getBin(name, dirName, url, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)</code>  
+**Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
@@ -42,7 +42,7 @@
 <a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
 
 ### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)</code>  
+**Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
@@ -56,7 +56,7 @@
 <a name="module_electron-builder-util/out/deepAssign.deepAssign"></a>
 
 ### `electron-builder-util/out/deepAssign.deepAssign(target, objects)` ⇒ <code>any</code>
-**Kind**: method of <code>[electron-builder-util/out/deepAssign](#module_electron-builder-util/out/deepAssign)</code>  
+**Kind**: method of [<code>electron-builder-util/out/deepAssign</code>](#module_electron-builder-util/out/deepAssign)  
 
 | Param | Type |
 | --- | --- |
@@ -80,11 +80,11 @@
 <a name="FileCopier"></a>
 
 ### FileCopier
-**Kind**: class of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: class of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 <a name="module_electron-builder-util/out/fs.FileCopier+copy"></a>
 
 #### `fileCopier.copy(src, dest, stat)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of <code>[FileCopier](#FileCopier)</code>  
+**Kind**: instance method of [<code>FileCopier</code>](#FileCopier)  
 
 | Param | Type |
 | --- | --- |
@@ -98,7 +98,7 @@
 Empty directories is never created.
 Hard links is used if supported and allowed.
 
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -114,7 +114,7 @@ Hard links is used if supported and allowed.
 Hard links is used if supported and allowed.
 File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
 
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -126,7 +126,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/fs.exists"></a>
 
 ### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;boolean&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -135,7 +135,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/fs.statOrNull"></a>
 
 ### `electron-builder-util/out/fs.statOrNull(file)` ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -144,7 +144,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/fs.unlinkIfExists"></a>
 
 ### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;string \| void&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -153,7 +153,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/fs.walk"></a>
 
 ### `electron-builder-util/out/fs.walk(initialDirPath, filter, consumer)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/fs](#module_electron-builder-util/out/fs)</code>  
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
@@ -175,7 +175,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/log.log"></a>
 
 ### `electron-builder-util/out/log.log(message)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
+**Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
 | Param | Type |
 | --- | --- |
@@ -184,7 +184,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/log.setPrinter"></a>
 
 ### `electron-builder-util/out/log.setPrinter(value)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
+**Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
 | Param | Type |
 | --- | --- |
@@ -193,7 +193,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/log.subTask"></a>
 
 ### `electron-builder-util/out/log.subTask(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
+**Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
 | Param | Type |
 | --- | --- |
@@ -203,7 +203,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/log.task"></a>
 
 ### `electron-builder-util/out/log.task(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
+**Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
 | Param | Type |
 | --- | --- |
@@ -213,7 +213,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/log.warn"></a>
 
 ### `electron-builder-util/out/log.warn(message)`
-**Kind**: method of <code>[electron-builder-util/out/log](#module_electron-builder-util/out/log)</code>  
+**Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
 | Param | Type |
 | --- | --- |
@@ -233,7 +233,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="NodeHttpExecutor"></a>
 
 ### NodeHttpExecutor ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
-**Kind**: class of <code>[electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)</code>  
+**Kind**: class of [<code>electron-builder-util/out/nodeHttpExecutor</code>](#module_electron-builder-util/out/nodeHttpExecutor)  
 **Extends**: <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>  
 
 * [.NodeHttpExecutor](#NodeHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
@@ -244,7 +244,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest"></a>
 
 #### `nodeHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
+**Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
@@ -256,7 +256,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download"></a>
 
 #### `nodeHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
+**Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
@@ -267,7 +267,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest"></a>
 
 #### `nodeHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>  
+**Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 **Access**: protected  
 
 | Param | Type |
@@ -278,7 +278,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.httpExecutor"></a>
 
 ### `electron-builder-util/out/nodeHttpExecutor.httpExecutor` : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
-**Kind**: constant of <code>[electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)</code>  
+**Kind**: constant of [<code>electron-builder-util/out/nodeHttpExecutor</code>](#module_electron-builder-util/out/nodeHttpExecutor)  
 <a name="module_electron-builder-util/out/promise"></a>
 
 ## electron-builder-util/out/promise
@@ -294,12 +294,12 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="NestedError"></a>
 
 ### NestedError ⇐ <code>Error</code>
-**Kind**: class of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: class of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 **Extends**: <code>Error</code>  
 <a name="module_electron-builder-util/out/promise.all"></a>
 
 ### `electron-builder-util/out/promise.all(promises)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
 | Param | Type |
 | --- | --- |
@@ -308,7 +308,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/promise.asyncAll"></a>
 
 ### `electron-builder-util/out/promise.asyncAll(tasks)` ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
 | Param | Type |
 | --- | --- |
@@ -317,7 +317,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/promise.executeFinally"></a>
 
 ### `electron-builder-util/out/promise.executeFinally(promise, task)` ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
 | Param | Type |
 | --- | --- |
@@ -327,7 +327,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/promise.printErrorAndExit"></a>
 
 ### `electron-builder-util/out/promise.printErrorAndExit(error)`
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
 | Param | Type |
 | --- | --- |
@@ -336,7 +336,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/promise.throwError"></a>
 
 ### `electron-builder-util/out/promise.throwError(errors)`
-**Kind**: method of <code>[electron-builder-util/out/promise](#module_electron-builder-util/out/promise)</code>  
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
 | Param | Type |
 | --- | --- |
@@ -354,7 +354,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="TmpDir"></a>
 
 ### TmpDir
-**Kind**: class of <code>[electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)</code>  
+**Kind**: class of [<code>electron-builder-util/out/tmp</code>](#module_electron-builder-util/out/tmp)  
 
 * [.TmpDir](#TmpDir)
     * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise&lt;any&gt;</code>
@@ -363,11 +363,11 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util/out/tmp.TmpDir+cleanup"></a>
 
 #### `tmpDir.cleanup()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of <code>[TmpDir](#TmpDir)</code>  
+**Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 <a name="module_electron-builder-util/out/tmp.TmpDir+getTempFile"></a>
 
 #### `tmpDir.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: instance method of <code>[TmpDir](#TmpDir)</code>  
+**Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 
 | Param | Type |
 | --- | --- |
@@ -405,7 +405,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="BaseExecOptions"></a>
 
 ### `BaseExecOptions`
-**Kind**: interface of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: interface of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 **Properties**
 
 | Name | Type |
@@ -417,7 +417,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="ExecOptions"></a>
 
 ### `ExecOptions` ⇐ <code>[BaseExecOptions](#BaseExecOptions)</code>
-**Kind**: interface of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: interface of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 **Extends**: <code>[BaseExecOptions](#BaseExecOptions)</code>  
 **Properties**
 
@@ -432,11 +432,11 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="Lazy"></a>
 
 ### Lazy
-**Kind**: class of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: class of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.addValue"></a>
 
 ### `electron-builder-util.addValue(map, key, value)`
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -447,7 +447,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.asArray"></a>
 
 ### `electron-builder-util.asArray(v)` ⇒ <code>Array&lt;module:electron-builder-util.T&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -456,7 +456,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.computeDefaultAppDirectory"></a>
 
 ### `electron-builder-util.computeDefaultAppDirectory(projectDir, userAppDir)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -466,7 +466,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.debug7zArgs"></a>
 
 ### `electron-builder-util.debug7zArgs(command)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -475,7 +475,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.doSpawn"></a>
 
 ### `electron-builder-util.doSpawn(command, args, options, pipeInput)` ⇒ <code>module:child_process.ChildProcess</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -487,7 +487,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.exec"></a>
 
 ### `electron-builder-util.exec(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -498,7 +498,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.execWine"></a>
 
 ### `electron-builder-util.execWine(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -509,11 +509,11 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.getCacheDirectory"></a>
 
 ### `electron-builder-util.getCacheDirectory()` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.getPlatformIconFileName"></a>
 
 ### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -523,7 +523,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.getTempName"></a>
 
 ### `electron-builder-util.getTempName(prefix)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -532,7 +532,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.handleProcess"></a>
 
 ### `electron-builder-util.handleProcess(event, childProcess, command, resolve, reject)`
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -545,7 +545,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
 
 ### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>boolean</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -554,11 +554,11 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.isPullRequest"></a>
 
 ### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.prepareArgs"></a>
 
 ### `electron-builder-util.prepareArgs(args, exePath)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -568,7 +568,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.removePassword"></a>
 
 ### `electron-builder-util.removePassword(input)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -577,7 +577,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.replaceDefault"></a>
 
 ### `electron-builder-util.replaceDefault(inList, defaultList)` ⇒ <code>Array&lt;string&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -587,7 +587,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.safeStringifyJson"></a>
 
 ### `electron-builder-util.safeStringifyJson(data)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -596,7 +596,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.smarten"></a>
 
 ### `electron-builder-util.smarten(s)` ⇒ <code>string</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -605,7 +605,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.spawn"></a>
 
 ### `electron-builder-util.spawn(command, args, options)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
@@ -616,7 +616,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 <a name="module_electron-builder-util.use"></a>
 
 ### `electron-builder-util.use(value, task)` ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
-**Kind**: method of <code>[electron-builder-util](#module_electron-builder-util)</code>  
+**Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
