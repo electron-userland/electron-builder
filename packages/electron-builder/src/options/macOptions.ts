@@ -47,7 +47,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly entitlementsInherit?: string | null
 
   /**
-   * The `CFBundleVersion`. Do not use it unless [you need to](see (https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643)).
+   * The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
    */
   readonly bundleVersion?: string | null
 

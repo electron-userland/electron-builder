@@ -4,6 +4,14 @@ chooseInstallationOptions:
 chooseUninstallationOptions:
   en: Choose Uninstallation Options
   ru: Выберите опции удаления
+whichInstallationShouldBeRemoved:
+  en: Which installation should be removed?
+whoShouldThisApplicationBeInstalledFor:
+  en: Who should this application be installed for?
+selectUserMode:
+  en: Please select whether you wish to make this software available to all users or just yourself
+whichInstallationRemove:
+  en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
 freshInstallForAll:
   en: Fresh install for all users.
   ru: Новая установка для всех пользователей.
@@ -16,3 +24,5 @@ onlyForMe:
 forAll:
   en: Anyone who uses this computer (&all users)
   ru: Для &всех пользователей данного компьютера
+loginWithAdminAccount:
+  en: You need to login with an account that is a member of the admin group to continue...

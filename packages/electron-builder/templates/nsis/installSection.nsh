@@ -73,23 +73,26 @@
 
 InitPluginsDir
 
-!ifdef HEADER_ICO
-  File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
-!endif
-
 ${IfNot} ${Silent}
   SetDetailsPrint none
+${endif}
 
-  !ifdef ONE_CLICK
+!ifdef ONE_CLICK
+  !ifdef HEADER_ICO
+    File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
+  !endif
+  ${IfNot} ${Silent}
     !ifdef HEADER_ICO
       SpiderBanner::Show /MODERN /ICON "$PLUGINSDIR\installerHeaderico.ico"
     !else
       SpiderBanner::Show /MODERN
-   !endif
-  !endif
-${endif}
+    !endif
 
-!ifdef ONE_CLICK
+    FindWindow $0 "#32770" "" $hwndparent
+    FindWindow $0 "#32770" "" $hwndparent $0
+    GetDlgItem $0 $0 1000
+    SendMessage $0 ${WM_SETTEXT} 0 "$(installing)"
+  ${endif}
   !insertmacro CHECK_APP_RUNNING
 !else
   ${IfNot} ${UAC_IsInnerInstance}

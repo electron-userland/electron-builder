@@ -7,3 +7,9 @@ x64WinRequired:
 appRunning:
   en: "${PRODUCT_NAME} is running.\nClick OK to close it."
   ru: "Приложение ${PRODUCT_NAME} уже запущено.\nНажмите OK для закрытия."
+installing:
+  en: Installing, please wait...
+  ru: Установка, пожалуйста подождите...
+areYouSureToUninstall:
+  en: Are you sure you want to uninstall ${PRODUCT_NAME}?
+  ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?

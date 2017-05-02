@@ -8,6 +8,24 @@ import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
+test.ifNotCiMac("boring", app({
+  targets: nsisTarget,
+  config: {
+    nsis: {
+      oneClick: false,
+      language: "1031",
+    },
+    win: {
+      legalTrademarks: "My Trademark"
+    },
+  }
+}, {
+  signed: true,
+  projectDirCreated: projectDir => {
+    return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
+  },
+}))
+
 test.ifNotCiMac("boring, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
@@ -69,24 +87,6 @@ test.ifNotCiMac("boring, only perMachine", app({
       perMachine: true,
     }
   }
-}))
-
-test.ifNotCiMac("boring", app({
-  targets: nsisTarget,
-  config: {
-    nsis: {
-      oneClick: false,
-      language: "1031",
-    },
-    win: {
-      legalTrademarks: "My Trademark"
-    },
-  }
-}, {
-  signed: true,
-  projectDirCreated: projectDir => {
-    return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
-  },
 }))
 
 test.ifAll("allowToChangeInstallationDirectory", app({

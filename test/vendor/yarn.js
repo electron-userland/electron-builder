@@ -34834,7 +34834,7 @@ Identity._oldVersionDetect = function (obj) {
 module.exports = {
 	"name": "yarn",
 	"installationMethod": "unknown",
-	"version": "0.23.2",
+	"version": "0.23.3",
 	"license": "BSD-2-Clause",
 	"preferGlobal": true,
 	"description": "📦🐈 Fast, reliable, and secure dependency management.",
@@ -40902,7 +40902,7 @@ var _buildSubCommands = (0, (_buildSubCommands2 || _load_buildSubCommands()).def
       yield updateCwd(config);
 
       const updateBins = yield initUpdateBins(config, reporter, flags);
-      if (args.includes('yarn')) {
+      if (args.indexOf('yarn') !== -1) {
         reporter.warn(reporter.lang('packageContainsYarnAsGlobal'));
       }
 
