@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 
 const buildForge = require("electron-builder").buildForge
 
-exports.default = function (appDir, appName, targetArch) {
-  return buildForge(appDir, {linux: [`appimage:${targetArch}`]})
+exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
+
+exports.default = function (options) {
+  return buildForge(options, {linux: [`appimage:${options.targetArch}`]})
 }

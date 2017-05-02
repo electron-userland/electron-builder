@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 
 const buildForge = require("electron-builder").buildForge
 
-exports.default = function (appDir, appName, targetArch) {
-  return buildForge(appDir, {win: [`nsis-web:${targetArch}`]})
+exports.isSupportedOnCurrentPlatform = () => Promise.resolve(true)
+
+exports.default = function (options) {
+  return buildForge(options, {win: [`nsis-web:${options.targetArch}`]})
 }

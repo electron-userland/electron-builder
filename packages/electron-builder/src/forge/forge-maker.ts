@@ -1,7 +1,12 @@
 import * as path from "path"
 import { build, CliOptions } from "../builder"
 
-export function buildForge(appDir: string, options: CliOptions) {
+export interface ForgeOptions {
+  readonly dir: string
+}
+
+export function buildForge(forgeOptions: ForgeOptions, options: CliOptions) {
+  const appDir = forgeOptions.dir
   return build(Object.assign({
     prepackaged: appDir,
     config: {
