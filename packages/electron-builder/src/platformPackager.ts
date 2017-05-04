@@ -357,12 +357,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const appInfo = this.appInfo
     return pattern.replace(/\$\{([_a-zA-Z./*]+)\}/g, (match, p1): string => {
       switch (p1) {
-        case "name":
-          return appInfo.name
-
-        case "version":
-          return appInfo.version
-
         case "productName":
           return appInfo.productFilename
 
@@ -377,6 +371,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
           return this.platform.buildConfigurationKey
 
         default:
+          if (p1 in appInfo) {
+            return (<any>appInfo)[p1]
+          }
+
           if (p1.startsWith("env.")) {
             const envName = p1.substring("env.".length)
             const envValue = process.env[envName]

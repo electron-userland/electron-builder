@@ -55,6 +55,7 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `${productName}` — [Sanitized](https://www.npmjs.com/package/sanitize-filename) product name.
 * `${version}`
 * `${env.ENV_NAME}` — any environment variable.
+* Any property of [AppInfo](https://github.com/electron-userland/electron-builder/wiki/electron-builder#AppInfo) (e.g. `buildVersion`, `buildNumber`).
 
 ## Source and Destination Directories
 You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
