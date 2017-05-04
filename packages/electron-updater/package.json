@@ -19,7 +19,8 @@
     "source-map-support": "^0.4.15",
     "electron-builder-http": "~0.0.0-semantic-release",
     "electron-is-dev": "^0.1.2",
-    "xelement": "^1.0.14"
+    "xelement": "^1.0.14",
+    "debug": "^2.6.6"
   },
   "typings": "./out/electron-updater.d.ts"
 }

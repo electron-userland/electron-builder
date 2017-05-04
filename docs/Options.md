@@ -122,7 +122,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.buildForge(appDir, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
@@ -651,12 +651,12 @@ Windows Specific Options ([win](#Config-win)).
 
 <a name="module_electron-builder.buildForge"></a>
 
-### `electron-builder.buildForge(appDir, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
 
 | Param | Type |
 | --- | --- |
-| appDir | <code>string</code> | 
+| forgeOptions | <code>[ForgeOptions](electron-builder#ForgeOptions)</code> | 
 | options | <code>[CliOptions](#CliOptions)</code> | 
 
 <a name="module_electron-builder.createTargets"></a>

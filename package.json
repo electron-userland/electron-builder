@@ -61,7 +61,7 @@
     "update-notifier": "^2.1.0",
     "uuid-1345": "^0.99.6",
     "xelement": "^1.0.14",
-    "yargs": "^7.1.0"
+    "yargs": "^8.0.1"
   },
   "devDependencies": {
     "@types/electron": "^1.4.37",
@@ -90,7 +90,7 @@
     "path-sort": "^0.1.0",
     "source-map-support": "^0.4.15",
     "ts-babel": "^3.0.0",
-    "tslint": "^5.1.0",
+    "tslint": "^5.2.0",
     "typescript": "^2.3.2",
     "whitespace": "^2.1.0",
     "xml2js": "^0.4.17"

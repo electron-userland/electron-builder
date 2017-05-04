@@ -20,6 +20,8 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/fileTransformer">electron-builder/out/fileTransformer</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/forge/forge-maker">electron-builder/out/forge/forge-maker</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/linuxPackager">electron-builder/out/linuxPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/macPackager">electron-builder/out/macPackager</a></dt>
@@ -604,6 +606,19 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | info | <code>[BuildInfo](Options#BuildInfo)</code> | 
+
+<a name="module_electron-builder/out/forge/forge-maker"></a>
+
+## electron-builder/out/forge/forge-maker
+<a name="ForgeOptions"></a>
+
+### `ForgeOptions`
+**Kind**: interface of [<code>electron-builder/out/forge/forge-maker</code>](#module_electron-builder/out/forge/forge-maker)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **dir**| <code>string</code> | 
 
 <a name="module_electron-builder/out/linuxPackager"></a>
 
