@@ -115,8 +115,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       warn("macOS application code signing is supported only on macOS, skipping.")
       return
     }
-    if (isPullRequest()) {
-      log("Current build is a part of pull request, code signing will be skipped")
+    if (process.env.CSC_FOR_PULL_REQUEST !== "true" && isPullRequest()) {
+      // https://github.com/electron-userland/electron-builder/issues/1524
+      log("Current build is a part of pull request, code signing will be skipped. Set env CSC_FOR_PULL_REQUEST to true to force code signing.")
       return
     }
 
