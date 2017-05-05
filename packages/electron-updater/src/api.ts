@@ -60,6 +60,11 @@ export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {
   }
 
+  login(handler: (event: Event, request: Electron.LoginRequest, authInfo: Electron.LoginAuthInfo,
+        callback: (username: string, password: string) => void) => void) {
+    addHandler(this.emitter, "login", handler)
+  }
+
   progress(handler: (info: ProgressInfo) => void) {
     addHandler(this.emitter, DOWNLOAD_PROGRESS, handler)
   }
