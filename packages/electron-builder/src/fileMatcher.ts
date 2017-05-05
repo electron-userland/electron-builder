@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { FilePattern, PlatformSpecificBuildOptions } from "electron-builder-core"
-import { asArray } from "electron-builder-util"
+import { asArray, debug } from "electron-builder-util"
 import { copyDir, copyFile, Filter, statOrNull } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
@@ -79,6 +79,10 @@ export class FileMatcher {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
     return createFilter(this.from, parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
+  }
+
+  toString() {
+    return `from: ${this.from}, to: ${this.to}, patterns: ${this.patterns.join(", ")}`
   }
 }
 
@@ -189,6 +193,9 @@ export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
 
     if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
       pattern.addAllPattern()
+    }
+    if (debug.enabled) {
+      debug(`Copying files using pattern: ${pattern}`)
     }
     return await copyDir(pattern.from, pattern.to, pattern.createFilter())
   })

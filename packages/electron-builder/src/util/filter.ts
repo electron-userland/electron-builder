@@ -1,7 +1,7 @@
+import { Filter } from "electron-builder-util/out/fs"
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
-import { Filter } from "electron-builder-util/out/fs"
 
 export function hasMagic(pattern: Minimatch) {
   const set = pattern.set
@@ -38,7 +38,8 @@ export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFile
       relative = relative.replace(/\\/g, "/")
     }
 
-    return minimatchAll(relative, patterns, stat) && (excludePatterns == null || !minimatchAll(relative, excludePatterns, stat))
+    // https://github.com/electron-userland/electron-builder/issues/867
+    return minimatchAll(relative, patterns, stat) && (excludePatterns == null || stat.isDirectory() || !minimatchAll(relative, excludePatterns, stat))
   }
 }
 
