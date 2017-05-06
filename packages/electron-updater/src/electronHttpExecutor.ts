@@ -11,6 +11,11 @@ export const NET_SESSION_NAME = "electron-updater"
 const debug = _debug("electron-builder")
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
+  constructor(private proxyLoginCallback?: (authInfo: Electron.LoginAuthInfo,
+      callback: (username: string, password: string) => void) => void) {
+    super()
+  }
+
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
     if (options == null || !options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
@@ -40,6 +45,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }
+    options.session = options.session || session.fromPartition(NET_SESSION_NAME)
 
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, response => {
@@ -50,6 +56,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
           reject(e)
         }
       })
+      this.addProxyLoginHandler(request)
       this.addTimeOutHandler(request, reject)
       request.on("error", reject)
       requestProcessor(request, reject)
@@ -60,6 +67,13 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
   protected doRequest(options: any, callback: (response: any) => void): any {
     options.session = session.fromPartition(NET_SESSION_NAME)
-    return net.request(options, callback)
+    const request = net.request(options, callback)
+    this.addProxyLoginHandler(request)
+    return request
+  }
+
+  protected addProxyLoginHandler(request: Electron.ClientRequest) {
+    if (this.proxyLoginCallback !== undefined)
+      request.on("login", this.proxyLoginCallback)
   }
 }

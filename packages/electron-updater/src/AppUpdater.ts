@@ -94,7 +94,10 @@ export abstract class AppUpdater extends EventEmitter {
     }
     else {
       this.app = require("electron").app
-      executorHolder.httpExecutor = new ElectronHttpExecutor()
+      executorHolder.httpExecutor = new ElectronHttpExecutor((authInfo: Electron.LoginAuthInfo,
+        callback: (username: string, password: string) => void) => {
+          this.emit("login", authInfo, callback)
+      })
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
           if (this.logger != null) {
