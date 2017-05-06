@@ -45,6 +45,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }
+    options.session = options.session || session.fromPartition(NET_SESSION_NAME)
 
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
       const request = net.request(options, response => {
