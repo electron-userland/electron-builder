@@ -116,6 +116,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.setRequestHeaders(value)`](#module_electron-updater/out/api.Provider+setRequestHeaders)
         * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/api.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
     * [.UpdaterSignal](#UpdaterSignal)
+        * [`.login(handler)`](#module_electron-updater/out/api.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater/out/api.UpdaterSignal+progress)
         * [`.updateCancelled(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateDownloaded)
@@ -195,9 +196,22 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Kind**: class of [<code>electron-updater/out/api</code>](#module_electron-updater/out/api)  
 
 * [.UpdaterSignal](#UpdaterSignal)
+    * [`.login(handler)`](#module_electron-updater/out/api.UpdaterSignal+login)
     * [`.progress(handler)`](#module_electron-updater/out/api.UpdaterSignal+progress)
     * [`.updateCancelled(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateCancelled)
     * [`.updateDownloaded(handler)`](#module_electron-updater/out/api.UpdaterSignal+updateDownloaded)
+
+<a name="module_electron-updater/out/api.UpdaterSignal+login"></a>
+
+#### `updaterSignal.login(handler)`
+Emitted when an authenticating proxy is asking for user credentials.
+
+**Kind**: instance method of [<code>UpdaterSignal</code>](#UpdaterSignal)  
+**See**: [Electron docs](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login)  
+
+| Param | Type |
+| --- | --- |
+| handler | <code>module:electron-updater/out/api.__type</code> | 
 
 <a name="module_electron-updater/out/api.UpdaterSignal+progress"></a>
 

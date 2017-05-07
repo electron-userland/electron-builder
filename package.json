@@ -83,7 +83,7 @@
     "depcheck": "^0.6.7",
     "develar-typescript-json-schema": "0.11.0",
     "globby": "^6.1.0",
-    "jest-cli": "^19.0.2",
+    "jest-cli": "^20.0.0",
     "jest-environment-node-debug": "^2.0.0",
     "jest-junit": "^1.5.1",
     "jsdoc-to-markdown": "^3.0.0",

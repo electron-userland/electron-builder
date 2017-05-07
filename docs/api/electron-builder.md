@@ -430,6 +430,7 @@ Developer API only. See [[Options]] for user documentation.
         * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
         * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
         * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
+        * [`.toString()`](#module_electron-builder/out/fileMatcher.FileMatcher+toString) ⇒ <code>string</code>
     * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, buildResourceDir)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
     * [`.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)`](#module_electron-builder/out/fileMatcher.getFileMatchers) ⇒ <code>null</code> \| <code>Array</code>
@@ -454,6 +455,7 @@ Developer API only. See [[Options]] for user documentation.
     * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
     * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
     * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
+    * [`.toString()`](#module_electron-builder/out/fileMatcher.FileMatcher+toString) ⇒ <code>string</code>
 
 <a name="module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern"></a>
 
@@ -506,6 +508,10 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | pattern | <code>string</code> | 
 
+<a name="module_electron-builder/out/fileMatcher.FileMatcher+toString"></a>
+
+#### `fileMatcher.toString()` ⇒ <code>string</code>
+**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
 <a name="module_electron-builder/out/fileMatcher.copyFiles"></a>
 
 ### `electron-builder/out/fileMatcher.copyFiles(patterns)` ⇒ <code>Promise&lt;any&gt;</code>

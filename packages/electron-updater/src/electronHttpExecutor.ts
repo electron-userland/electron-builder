@@ -10,7 +10,13 @@ export const NET_SESSION_NAME = "electron-updater"
 
 const debug = _debug("electron-builder")
 
+export type LoginCallback = (username: string, password: string) => void
+
 export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
+  constructor(private proxyLoginCallback?: (authInfo: Electron.LoginAuthInfo, callback: LoginCallback) => void) {
+    super()
+  }
+
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
     if (options == null || !options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
@@ -40,9 +46,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }
-
+    
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
-      const request = net.request(options, response => {
+      const request = net.request(Object.assign({session: session.fromPartition(NET_SESSION_NAME)}, options), response => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
@@ -50,6 +56,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
           reject(e)
         }
       })
+      this.addProxyLoginHandler(request)
       this.addTimeOutHandler(request, reject)
       request.on("error", reject)
       requestProcessor(request, reject)
@@ -59,7 +66,14 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
 
   protected doRequest(options: any, callback: (response: any) => void): any {
-    options.session = session.fromPartition(NET_SESSION_NAME)
-    return net.request(options, callback)
+    const request = net.request(Object.assign({session: session.fromPartition(NET_SESSION_NAME)}, options), callback)
+    this.addProxyLoginHandler(request)
+    return request
+  }
+
+  private addProxyLoginHandler(request: Electron.ClientRequest) {
+    if (this.proxyLoginCallback != null) {
+      request.on("login", this.proxyLoginCallback)
+    }
   }
 }

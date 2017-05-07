@@ -4,6 +4,7 @@ import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransfor
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
 import { format as buggyFormat, Url } from "url"
+import { LoginCallback } from "./electronHttpExecutor"
 
 export interface FileInfo {
   readonly name: string
@@ -56,8 +57,18 @@ export interface UpdateCheckResult {
 
 export const DOWNLOAD_PROGRESS = "download-progress"
 
+export type LoginHandler = (event: Event, request: Electron.LoginRequest, authInfo: Electron.LoginAuthInfo, callback: LoginCallback) => void
+
 export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {
+  }
+
+  /**
+   * Emitted when an authenticating proxy is asking for user credentials.
+   * @see [Electron docs](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login)
+   */
+  login(handler: LoginHandler) {
+    addHandler(this.emitter, "login", handler)
   }
 
   progress(handler: (info: ProgressInfo) => void) {

@@ -168,7 +168,7 @@ async function runTests() {
     config: config,
     runInBand: runInBand,
     testPathPattern: args.length > 0 ? args.join("|") : null,
-  }, rootDir, (result: any) => {
+  }, [rootDir], (result: any) => {
     const code = !result || result.success ? 0 : 1
     removeSync(TEST_DIR)
     process.exitCode = code
