@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { emptyDir, readdir, readJson, removeSync, unlink } from "fs-extra-p"
 import isCi from "is-ci"
-import { homedir } from "os"
 import * as path from "path"
 import { ELECTRON_VERSION, TEST_DIR } from "./config"
 
@@ -22,7 +21,7 @@ async function deleteOldElectronVersion(): Promise<any> {
     return
   }
 
-  const cacheDir = path.join(homedir(), ".electron")
+  const cacheDir = require("env-paths")("electron", {suffix: ""}).cache
   try {
     const deletePromises: Array<Promise<any>> = []
     for (const file of (await readdir(cacheDir))) {

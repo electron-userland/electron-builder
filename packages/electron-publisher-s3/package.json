@@ -11,7 +11,7 @@
     "out", "s3-client"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.1.0",
+    "fs-extra-p": "^4.3.0",
     "aws-sdk": "^2.49.0",
     "mime": "^1.3.4",
     "electron-publish": "~0.0.0-semantic-release",

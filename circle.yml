@@ -4,7 +4,7 @@ machine:
 
 dependencies:
   cache_directories:
-    - "~/.cache/.electron"
+    - "~/.cache/electron"
     - "~/.cache/electron-builder"
 
   # https://discuss.circleci.com/t/installing-git-lfs/867

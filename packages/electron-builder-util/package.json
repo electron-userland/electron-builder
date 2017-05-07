@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.1.0",
+    "fs-extra-p": "^4.3.0",
     "is-ci": "^1.0.10",
     "stat-mode": "^0.2.2",
     "bluebird-lst": "^1.0.2",

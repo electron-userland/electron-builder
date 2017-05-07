@@ -18,7 +18,7 @@ cache:
     - node_modules
     - packages/electron-builder/node_modules
     - packages/electron-builder-util/node_modules
-    - $HOME/.electron
+    - $HOME/Library/Caches/electron
     - /tmp/jest-electron-builder-tests
 
 before_install:
