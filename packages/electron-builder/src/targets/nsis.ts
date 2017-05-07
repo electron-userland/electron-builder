@@ -1,4 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
+import _debug from "debug"
 import { Arch, Target } from "electron-builder-core"
 import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
 import { getBinFromBintray } from "electron-builder-util/out/binDownload"
@@ -17,11 +18,13 @@ import { WinPackager } from "../winPackager"
 import { archive } from "./archive"
 import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
 
+const debugLang = _debug("electron-builder:lang")
+
 // noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 // noinspection SpellCheckingInspection
-const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.10", "302a8adebf0b553f74cddd494154a586719ff9d4767e94d8a76547a9bb06200c")
+const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.11", "f2489ee90a68f9dad28e724e58bc9d4289390db58359500107b4eabc7a12e846")
 // noinspection SpellCheckingInspection
 const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 
@@ -421,7 +424,9 @@ export class NsisTarget extends Target {
     let scriptHeader = `!addincludedir "${path.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
 
     const addCustomMessageFileInclude = async (input: string) => {
-      return '!include "' + await this.writeCustomLangFile(computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")) + '"\n'
+      const data = computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")
+      debugLang(data)
+      return '!include "' + await this.writeCustomLangFile(data) + '"\n'
     }
 
     const tasks: Array<() => Promise<any>> = [
