@@ -57,7 +57,7 @@ export interface UpdateCheckResult {
 
 export const DOWNLOAD_PROGRESS = "download-progress"
 
-export type LoginHandler = (event: Event, request: Electron.LoginRequest, authInfo: Electron.LoginAuthInfo, callback: LoginCallback) => void
+export type LoginHandler = (authInfo: Electron.LoginAuthInfo, callback: LoginCallback) => void
 
 export class UpdaterSignal {
   constructor(private emitter: EventEmitter) {

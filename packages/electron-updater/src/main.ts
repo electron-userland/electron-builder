@@ -1,5 +1,6 @@
 // autoUpdater to mimic electron bundled autoUpdater
 import { AppUpdater } from "./AppUpdater"
+export { NET_SESSION_NAME } from "./electronHttpExecutor"
 
 let impl
 if (process.platform === "win32") {
