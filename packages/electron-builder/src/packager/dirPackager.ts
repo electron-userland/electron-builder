@@ -2,7 +2,7 @@ import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { debug7zArgs, spawn } from "electron-builder-util"
 import { copyDir } from "electron-builder-util/out/fs"
-import { warn } from "electron-builder-util/out/log"
+import { log, warn } from "electron-builder-util/out/log"
 import { chmod, emptyDir } from "fs-extra-p"
 import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
@@ -55,8 +55,11 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
     await spawn(path7za, debug7zArgs("x").concat(zipPath, `-o${out}`))
   }
   else {
+    const source = packager.getElectronSrcDir(dist)
+    const destination = packager.getElectronDestDir(out)
+    log(`Copying Electron from "${source}" to "${destination}"`)
     await emptyDir(out)
-    await copyDir(path.resolve(packager.info.projectDir, dist, "Electron.app"), path.join(out, "Electron.app"))
+    await copyDir(source, destination)
   }
 
   if (platform === "linux") {

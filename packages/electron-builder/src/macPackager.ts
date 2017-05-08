@@ -245,4 +245,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     args.push(outFile)
     return await exec("productbuild", args)
   }
+
+  public getElectronSrcDir(dist: string) {
+    return path.resolve(this.projectDir, dist, this.electronDistMacOsAppName)
+  }
+
+  public getElectronDestDir(appOutDir: string) {
+    return path.join(appOutDir, this.electronDistMacOsAppName)
+  }
 }

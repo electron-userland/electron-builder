@@ -272,6 +272,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return deepAssign({}, result)
   }
   
+  public getElectronSrcDir(dist: string): string {
+    return path.resolve(this.projectDir, dist)
+  }
+
+  public getElectronDestDir(appOutDir: string): string {
+    return appOutDir
+  }
+
   public getResourcesDir(appOutDir: string): string {
     return this.platform === Platform.MAC ? this.getMacOsResourcesDir(appOutDir) : path.join(appOutDir, "resources")
   }
