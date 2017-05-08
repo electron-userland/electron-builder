@@ -1,4 +1,4 @@
-import { Platform } from "electron-builder"
+import { DIR_TARGET, Platform } from "electron-builder"
 import { rename, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -67,6 +67,13 @@ describe.ifAll("sign", () => {
     targets: windowsDirTarget,
     config: {
       forceCodeSigning: true,
+    }
+  }))
+
+  test.ifNotCiMac("electronDist", appThrows({
+    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+    config: {
+      electronDist: "foo",
     }
   }))
 })
