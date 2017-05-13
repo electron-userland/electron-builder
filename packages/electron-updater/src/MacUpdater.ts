@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { FileInfo } from "./api"
 import { AppUpdater } from "./AppUpdater"
+import { FileInfo } from "./main"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {

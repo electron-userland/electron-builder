@@ -4,9 +4,9 @@ import { GithubOptions, githubUrl, UpdateInfo } from "electron-builder-http/out/
 import { RequestOptions } from "http"
 import * as path from "path"
 import { parse as parseUrl } from "url"
-import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./api"
 import { AppUpdater } from "./AppUpdater"
 import { validateUpdateInfo } from "./GenericProvider"
+import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./main"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)

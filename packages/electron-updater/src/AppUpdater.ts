@@ -8,20 +8,12 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
-import { FileInfo, Provider, UpdateCheckResult, UpdaterSignal } from "./api"
 import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
+import { FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
-
-export interface Logger {
-  info(message?: any): void
-
-  warn(message?: any): void
-
-  error(message?: any): void
-}
 
 export abstract class AppUpdater extends EventEmitter {
   /**

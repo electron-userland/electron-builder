@@ -636,6 +636,8 @@ Developer API only. See [[Options]] for user documentation.
         * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -670,6 +672,8 @@ Developer API only. See [[Options]] for user documentation.
     * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -730,6 +734,24 @@ Developer API only. See [[Options]] for user documentation.
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
+
+#### `linuxPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
+
+#### `linuxPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
+
+| Param | Type |
+| --- | --- |
+| dist | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
@@ -896,6 +918,8 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/macPackager](#module_electron-builder/out/macPackager)
     * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>string</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>string</code>
         * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
@@ -932,6 +956,8 @@ Developer API only. See [[Options]] for user documentation.
 
 * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>string</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>string</code>
     * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
@@ -965,6 +991,26 @@ Developer API only. See [[Options]] for user documentation.
 | targets | <code>Array&lt;string&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/macPackager.__type&gt;</code> | 
+
+<a name="module_electron-builder/out/macPackager.MacPackager+getElectronDestDir"></a>
+
+#### `macPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>getElectronDestDir</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir)  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+
+<a name="module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir"></a>
+
+#### `macPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+**Overrides**: [<code>getElectronSrcDir</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir)  
+
+| Param | Type |
+| --- | --- |
+| dist | <code>string</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+getIconPath"></a>
 
@@ -1316,6 +1362,8 @@ Developer API only. See [[Options]] for user documentation.
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -1355,6 +1403,8 @@ Developer API only. See [[Options]] for user documentation.
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -1404,6 +1454,24 @@ Developer API only. See [[Options]] for user documentation.
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
+
+#### `platformPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
+
+#### `platformPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
+
+| Param | Type |
+| --- | --- |
+| dist | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
@@ -2490,6 +2558,8 @@ Developer API only. See [[Options]] for user documentation.
         * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -2588,6 +2658,8 @@ Developer API only. See [[Options]] for user documentation.
     * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
@@ -2686,6 +2758,24 @@ Developer API only. See [[Options]] for user documentation.
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
+
+#### `winPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+
+| Param | Type |
+| --- | --- |
+| appOutDir | <code>string</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
+
+#### `winPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+
+| Param | Type |
+| --- | --- |
+| dist | <code>string</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 

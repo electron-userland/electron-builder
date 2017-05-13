@@ -6,10 +6,10 @@ import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
-import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName } from "./api"
 import { NET_SESSION_NAME } from "./electronHttpExecutor"
 import { validateUpdateInfo } from "./GenericProvider"
 import { BaseGitHubProvider } from "./GitHubProvider"
+import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName } from "./main"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>

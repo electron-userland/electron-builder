@@ -6,8 +6,8 @@ import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
-import { DOWNLOAD_PROGRESS, FileInfo } from "./api"
 import { AppUpdater } from "./AppUpdater"
+import { DOWNLOAD_PROGRESS, FileInfo } from "./main"
 
 export class NsisUpdater extends AppUpdater {
   private setupPath: string | null
