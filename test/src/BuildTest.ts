@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, BuildOptions, createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { walk } from "electron-builder-util/out/fs"
 import { readAsarJson } from "electron-builder/out/asar"
 import { normalizeOptions } from "electron-builder/out/builder"
 import { createYargs } from "electron-builder/out/cli/cliOptions"
@@ -156,13 +157,18 @@ test.ifDevOrLinuxCi("smart unpack", app({
   projectDirCreated: packageJson(it => {
     it.dependencies = {
       "debug": "^2.2.0",
-      "edge-cs": "^1.0.0"
+      "edge-cs": "1.2.1",
+      "@electron-builder/test-smart-unpack": "1.0.0",
+      "@electron-builder/test-smart-unpack-empty": "1.0.0",
     }
   }),
   packed: async context => {
-    expect(await readAsarJson(path.join(context.getResources(Platform.LINUX), "app.asar"), "node_modules/debug/package.json")).toMatchObject({
+    const resourceDir = context.getResources(Platform.LINUX)
+    expect(await readAsarJson(path.join(resourceDir, "app.asar"), "node_modules/debug/package.json")).toMatchObject({
       name: "debug"
     })
+
+    expect((await walk(resourceDir, file => !path.basename(file).startsWith("."))).map(it => it.substring(resourceDir.length + 1))).toMatchSnapshot()
   }
 }))
 

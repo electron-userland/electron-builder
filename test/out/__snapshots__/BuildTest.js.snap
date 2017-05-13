@@ -272,6 +272,44 @@ Object {
 }
 `;
 
+exports[`smart unpack 2`] = `
+Array [
+  "app.asar",
+  "electron.asar",
+  "app.asar.unpacked",
+  "app.asar.unpacked/node_modules",
+  "app.asar.unpacked/node_modules/edge-cs",
+  "app.asar.unpacked/node_modules/edge-cs/LICENSE.txt",
+  "app.asar.unpacked/node_modules/edge-cs/package.json",
+  "app.asar.unpacked/node_modules/edge-cs/tools",
+  "app.asar.unpacked/node_modules/edge-cs/tools/install.js",
+  "app.asar.unpacked/node_modules/edge-cs/src",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/edge-cs.csproj",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/edge-cs.sln",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties",
+  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.sln",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.xproj",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
+  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
+  "app.asar.unpacked/node_modules/edge-cs/lib",
+  "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.dll",
+  "app.asar.unpacked/node_modules/edge-cs/lib/edge-cs.js",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/Dummy.cs",
+  "app.asar.unpacked/node_modules/edge-cs/lib/bootstrap/project.json",
+  "app.asar.unpacked/node_modules/@electron-builder",
+  "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack",
+  "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/foo.dll",
+  "app.asar.unpacked/node_modules/@electron-builder/test-smart-unpack/package.json",
+]
+`;
+
 exports[`www as default dir 1`] = `
 Object {
   "linux": Array [],

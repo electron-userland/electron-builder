@@ -143,21 +143,25 @@ export class AsarPackager {
         continue
       }
 
-      const nextSlashIndex = file.indexOf(path.sep, index + NODE_MODULES_PATTERN.length + 1)
+      let nextSlashIndex = file.indexOf(path.sep, index + NODE_MODULES_PATTERN.length + 1)
       if (nextSlashIndex < 0) {
         continue
+      }
+
+      if (file[index + NODE_MODULES_PATTERN.length] === "@") {
+        nextSlashIndex = file.indexOf(path.sep, nextSlashIndex + 1)
       }
 
       if (!metadata.get(file)!.isFile()) {
         continue
       }
 
-      const nodeModuleDir = file.substring(0, nextSlashIndex)
-      if (autoUnpackDirs.has(nodeModuleDir)) {
+      const packageDir = file.substring(0, nextSlashIndex)
+      if (autoUnpackDirs.has(packageDir)) {
         const fileParent = path.dirname(file)
-        if (fileParent !== nodeModuleDir && !autoUnpackDirs.has(fileParent)) {
+        if (fileParent !== packageDir && !autoUnpackDirs.has(fileParent)) {
           autoUnpackDirs.add(fileParent)
-          addValue(dirToCreate, path.relative(this.src, nodeModuleDir), path.relative(nodeModuleDir, fileParent))
+          addValue(dirToCreate, path.relative(this.src, packageDir), path.relative(packageDir, fileParent))
         }
         continue
       }
@@ -175,18 +179,18 @@ export class AsarPackager {
         continue
       }
 
-      debug(`${path.relative(this.src, nodeModuleDir)} is not packed into asar archive - contains executable code`)
+      debug(`${path.relative(this.src, packageDir)} is not packed into asar archive - contains executable code`)
 
       let fileParent = path.dirname(file)
 
       // create parent dir to be able to copy file later without directory existence check
-      addValue(dirToCreate, path.relative(this.src, nodeModuleDir), path.relative(nodeModuleDir, fileParent))
+      addValue(dirToCreate, path.relative(this.src, packageDir), path.relative(packageDir, fileParent))
 
-      while (fileParent !== nodeModuleDir) {
+      while (fileParent !== packageDir) {
         autoUnpackDirs.add(fileParent)
         fileParent = path.dirname(fileParent)
       }
-      autoUnpackDirs.add(nodeModuleDir)
+      autoUnpackDirs.add(packageDir)
     }
     
     if (dirToCreate.size > 0) {
