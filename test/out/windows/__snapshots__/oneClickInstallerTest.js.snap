@@ -113,6 +113,18 @@ Object {
 }
 `;
 
+exports[`string menuCategory 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": 0,
+      "file": "Test Menu Category CustomName 1.1.0.exe",
+      "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`web installer (default github) 1`] = `
 Object {
   "win": Array [

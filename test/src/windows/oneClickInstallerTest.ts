@@ -133,6 +133,28 @@ test.ifAll("menuCategory", app({
   }
 }))
 
+test.ifAll("string menuCategory", app({
+  targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
+  appMetadata: {
+    name: "test-menu-category",
+    productName: "Test Menu Category"
+  },
+  config: {
+    nsis: {
+      oneClick: false,
+      menuCategory: "Foo/Bar",
+      artifactName: "${productName} CustomName ${version}.${ext}"
+    },
+  }
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.name = "test-menu-category"
+  }),
+  packed: async(context) => {
+    await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+  }
+}))
+
 test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {

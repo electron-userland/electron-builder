@@ -339,7 +339,13 @@ export class NsisTarget extends Target {
     }
 
     if (options.menuCategory != null && options.menuCategory !== false) {
-      const menu = sanitizeFileName(options.menuCategory === true ? packager.appInfo.companyName : <string>options.menuCategory)
+      let menu: string
+      if (options.menuCategory === true) {
+        menu = sanitizeFileName(packager.appInfo.companyName)
+      }
+      else {
+        menu = (<string>options.menuCategory).split(/\/|\\/).map(it => sanitizeFileName(it)).join("\\")
+      }
       if (!isEmptyOrSpaces(menu)) {
         defines.MENU_FILENAME = menu
       }
