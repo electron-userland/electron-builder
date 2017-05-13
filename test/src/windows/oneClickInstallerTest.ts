@@ -36,6 +36,7 @@ test.ifAll("multi language license", app({
     return BluebirdPromise.all([
       writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
       writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+      writeFile(path.join(projectDir, "build", "license_ko.txt"), "Привет"),
     ])
   },
 }))
