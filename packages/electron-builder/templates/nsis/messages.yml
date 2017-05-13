@@ -3,6 +3,7 @@ win7Required:
   it: È necessario disporre del sistema operativo Windows 7 e successivi
   fr: Windows 7 (ou une version ultérieure) est requis
   en: Windows 7 and above is required
+  ja: Windows 7 以降が必要です
   ru: Требуется Windows 7 и выше
   hu: Windows 7 vagy újabb szükséges
   pl: Windows 7 lub nowszy jest wymagany
@@ -11,6 +12,7 @@ x64WinRequired:
   it: È necessario disporre di un sistema operativo Windows a 64 bit
   fr: Windows 64 bits est requis
   en: 64-bit Windows is required
+  ja: 64 ビット バージョンの Windows が必要です
   ru: Требуется Windows 64-bit
   hu: 64-bit Windows szükséges
   pl: Windows 64-bitowy jest wymagany
@@ -19,6 +21,7 @@ appRunning:
   it: "${PRODUCT_NAME} è in esecuzione. \nPremi OK per chiudere."
   fr: "${PRODUCT_NAME} est en cours d’utilisation. \nCliquez sur «OK» pour fermer ce programme."
   en: "${PRODUCT_NAME} is running.\nClick OK to close it."
+  ja: "${PRODUCT_NAME} が実行中です。\nOK をクリックすると終了します。"
   ru: "Приложение ${PRODUCT_NAME} уже запущено.\nНажмите OK для закрытия."
   hu: "${PRODUCT_NAME} éppen fut. \nKattiontson az «OK»-ra a bezárásához."
   pl: "${PRODUCT_NAME} jest otwarty. Aby zamknąć kliknij na OK."
@@ -27,6 +30,7 @@ installing:
   it: Attendere prego. Installazione in corso...
   fr: En cours d’installation... Veuillez patienter svp
   en: Installing, please wait...
+  ja: インストールしています。しばらくお待ちください...
   ru: Установка, пожалуйста подождите...
   hu: Telepítés, kérem várjon...
   pl: Zaczekaj na ukończenie instalacji...
@@ -35,6 +39,7 @@ areYouSureToUninstall:
   it: Sicuro di voler procedere alla disinstallazione di ${PRODUCT_NAME}?
   fr: Etes-vous sûr(e) de vouloir désinstaller ${PRODUCT_NAME}?
   en: Are you sure you want to uninstall ${PRODUCT_NAME}?
+  ja: ${PRODUCT_NAME} をアンインストールしてもよろしいですか？
   ru: Вы уверены, что хотите удалить ${PRODUCT_NAME}?
   hu: Biztos benne, hogy szeretné eltávolítani a ${PRODUCT_NAME} alkalmazást?
   pl: Czy na pewno chcesz odinstalować ${PRODUCT_NAME}?
