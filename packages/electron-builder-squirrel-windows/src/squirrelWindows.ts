@@ -6,9 +6,9 @@ import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 
-const SW_VERSION = "1.5.2.0"
+const SW_VERSION = "1.6.0.0"
 //noinspection SpellCheckingInspection
-const SW_SHA2 = "e96a109d4641ebb85d163eaefe7770b165ebc25d1cc77c5179f021b232fc3730"
+const SW_SHA2 = "551b17d1f183f2c15bde47f2b2064e628329229e12bfd532a0998ea1c3f3567c"
 
 export default class SquirrelWindowsTarget extends Target {
   readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
