@@ -97,9 +97,9 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-ajv@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.0.1.tgz#5fd1a8f5cc92b371aa86445b1152fd4dec844ac9"
+ajv@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.1.1.tgz#6d9495b78eec4f2930536b2778ea40aa8645647a"
   dependencies:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
@@ -972,7 +972,7 @@ default-require-extensions@^1.0.0:
   dependencies:
     strip-bom "^2.0.0"
 
-defer-promise@^1.0.0:
+defer-promise@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/defer-promise/-/defer-promise-1.0.1.tgz#1ca6ffeddbcef1715dd7aae25c7616f9ae22932f"
 
@@ -1493,7 +1493,7 @@ home-or-tmp@^2.0.0:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.1"
 
-home-path@^1.0.3:
+home-path@^1.0.3, home-path@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/home-path/-/home-path-1.0.5.tgz#788b29815b12d53bacf575648476e6f9041d133f"
 
@@ -2338,6 +2338,10 @@ minimist@^1.1.0, minimist@^1.1.1, minimist@^1.1.3, minimist@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
 
+mkdirp2@^1.0.2:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/mkdirp2/-/mkdirp2-1.0.3.tgz#cc8dd8265f1f06e2d8f5b10b6e52f4e050bed21b"
+
 mkdirp@^0.5.1, mkdirp@~0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
@@ -2844,13 +2848,12 @@ repeating@^2.0.0:
   dependencies:
     is-finite "^1.0.0"
 
-req-then@^0.5.1:
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/req-then/-/req-then-0.5.1.tgz#31c6e0b56f4ddd2acd6de0ba1bcea77b6079dfdf"
+req-then@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/req-then/-/req-then-0.6.1.tgz#e85af6b939ffcc4b4f145b7e51cae73e8f8052c9"
   dependencies:
-    array-back "^1.0.3"
-    defer-promise "^1.0.0"
-    feature-detect-es6 "^1.3.1"
+    array-back "^1.0.4"
+    defer-promise "^1.0.1"
     lodash.pick "^4.4.0"
     typical "^2.6.0"
 
@@ -3330,8 +3333,8 @@ tslint@^5.2.0:
     tsutils "^1.8.0"
 
 tsutils@^1.8.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-1.8.0.tgz#bf8118ed8e80cd5c9fc7d75728c7963d44ed2f52"
+  version "1.9.1"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-1.9.1.tgz#b9f9ab44e55af9681831d5f28d0aeeaf5c750cb0"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
@@ -3437,13 +3440,13 @@ url@0.10.3:
     querystring "0.2.0"
 
 usage-stats@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/usage-stats/-/usage-stats-0.9.0.tgz#a763f6116859f769925e75b5f92e4e3b47a374fd"
+  version "0.9.1"
+  resolved "https://registry.yarnpkg.com/usage-stats/-/usage-stats-0.9.1.tgz#3b34997dbef1e151f48a118a93a5c595e1d4269a"
   dependencies:
     array-back "^1.0.4"
-    home-path "^1.0.3"
-    mkdirp "^0.5.1"
-    req-then "^0.5.1"
+    home-path "^1.0.5"
+    mkdirp2 "^1.0.2"
+    req-then "^0.6.1"
     typical "^2.6.0"
     uuid "^3.0.1"
 

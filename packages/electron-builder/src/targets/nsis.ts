@@ -24,7 +24,7 @@ const debugLang = _debug("electron-builder:lang")
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 // noinspection SpellCheckingInspection
-const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.12", "9217687d1710ff23f20d17fe4766df7dd4ef492711ece6e6dae4e40e1e580e90")
+const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057")
 // noinspection SpellCheckingInspection
 const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 

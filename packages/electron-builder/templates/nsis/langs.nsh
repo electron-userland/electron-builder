@@ -13,7 +13,7 @@
 !insertmacro MUI_LANGUAGE "Swedish"
 !insertmacro MUI_LANGUAGE "Norwegian"
 #!insertmacro MUI_LANGUAGE "NorwegianNynorsk"
-#!insertmacro MUI_LANGUAGE "Finnish"
+!insertmacro MUI_LANGUAGE "Finnish"
 #!insertmacro MUI_LANGUAGE "Greek"
 !insertmacro MUI_LANGUAGE "Russian"
 !insertmacro MUI_LANGUAGE "Portuguese"

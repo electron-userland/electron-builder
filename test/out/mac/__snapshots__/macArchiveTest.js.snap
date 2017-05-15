@@ -7,8 +7,8 @@ exports[`invalid target 1`] = `
     {
       \\"target\\": [
         \\"Should be object\\",
-        \\"Should be equal to one of the allowed values\\",
         \\"Should be string\\",
+        \\"Should be equal to one of the allowed values\\",
         \\"Invalid option object\\"
       ],
       \\"target[0]\\": [
