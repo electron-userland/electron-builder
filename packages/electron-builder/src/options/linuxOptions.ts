@@ -21,9 +21,9 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions, CommonL
 
   /**
    * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
-   * 
+   *
    * electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
-   * 
+   *
    * @see [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
    * @default AppImage
    */
@@ -147,9 +147,14 @@ export interface SnapOptions extends LinuxBuildOptions {
   readonly assumes?: Array<string> | null
 
   /**
+   * The list of debian packages needs to be installed for building this snap.
+   */
+  readonly buildPackages?: Array<string> | null
+
+  /**
    * The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`.
    * Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]`.
-   * 
+   *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
    */
   readonly stagePackages?: Array<string> | null
@@ -157,10 +162,18 @@ export interface SnapOptions extends LinuxBuildOptions {
   /**
    * The list of [plugs](https://snapcraft.io/docs/reference/interfaces).
    * Defaults to `["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
-   * 
+   *
    * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
    */
   readonly plugs?: Array<string> | null
+
+  /**
+   * Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part.
+   * Defaults to `["desktop-only""]`.
+   *
+   * If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
+   */
+  readonly after?: Array<string> | null
 
   /**
    * Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/).
