@@ -261,8 +261,10 @@ export abstract class AppUpdater extends EventEmitter {
    * 
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
+   *
+   * @param isSilent *windows-only* Runs the installer in silent mode.
    */
-  abstract quitAndInstall(): void
+  abstract quitAndInstall(isSilent: boolean): void
 
   async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {

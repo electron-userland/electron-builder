@@ -103,6 +103,16 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.warn(message)`](#module_electron-updater.Logger+warn)
     * [`.UpdateCheckResult`](#UpdateCheckResult)
     * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
+        * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+        * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+        * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
+        * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
+        * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
+        * [`.dispatchError(e)`](#module_electron-updater.AppUpdater+dispatchError)
+        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater.AppUpdater+onUpdateAvailable)
     * [.Provider](#Provider)
         * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
         * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
@@ -200,6 +210,114 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 | updateAvailable| <code>boolean</code> | <a name="AppUpdater-updateAvailable"></a> |
 | app| <code>Electron:App</code> | <a name="AppUpdater-app"></a> |
 | versionInfo| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> \| <code>null</code> | <a name="AppUpdater-versionInfo"></a> |
+
+
+* [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
+    * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+    * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+    * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
+    * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
+    * [`.computeRequestHeaders(fileInfo)`](#module_electron-updater.AppUpdater+computeRequestHeaders) ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
+    * [`.dispatchError(e)`](#module_electron-updater.AppUpdater+dispatchError)
+    * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater.AppUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater.AppUpdater+onUpdateAvailable)
+
+<a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
+
+#### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+Asks the server whether there is an update.
+
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+<a name="module_electron-updater.AppUpdater+downloadUpdate"></a>
+
+#### `appUpdater.downloadUpdate(cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
+Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
+
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+**Returns**: <code>Promise&lt;any&gt;</code> - Path to downloaded file.  
+
+| Param | Type |
+| --- | --- |
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+
+<a name="module_electron-updater.AppUpdater+getFeedURL"></a>
+
+#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+<a name="module_electron-updater.AppUpdater+setFeedURL"></a>
+
+#### `appUpdater.setFeedURL(options)`
+Configure update provider. If value is `string`, [module:electron-builder-http/out/publishOptions.GenericServerOptions](module:electron-builder-http/out/publishOptions.GenericServerOptions) will be set with value as `url`.
+
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>string</code> | If you want to override configuration in the `app-update.yml`. |
+
+<a name="module_electron-updater.AppUpdater+loadUpdateConfig"></a>
+
+#### `appUpdater.loadUpdateConfig()` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+<a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
+
+#### `appUpdater.quitAndInstall(isSilent)`
+Restarts the app and installs the update after it has been downloaded.
+It should only be called after `update-downloaded` has been emitted.
+
+**Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
+This is different from the normal quit event sequence.
+
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| isSilent | <code>boolean</code> | *windows-only* Runs the installer in silent mode. |
+
+<a name="module_electron-updater.AppUpdater+computeRequestHeaders"></a>
+
+#### `appUpdater.computeRequestHeaders(fileInfo)` ⇒ <code>null</code> \| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code>
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| fileInfo | <code>[FileInfo](#FileInfo)</code> | 
+
+<a name="module_electron-updater.AppUpdater+dispatchError"></a>
+
+#### `appUpdater.dispatchError(e)`
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| e | <code>Error</code> | 
+
+<a name="module_electron-updater.AppUpdater+doDownloadUpdate"></a>
+
+#### `appUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
+| fileInfo | <code>[FileInfo](#FileInfo)</code> | 
+| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+
+<a name="module_electron-updater.AppUpdater+onUpdateAvailable"></a>
+
+#### `appUpdater.onUpdateAvailable(versionInfo, fileInfo)`
+**Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
+**Access**: protected  
+
+| Param | Type |
+| --- | --- |
+| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
+| fileInfo | <code>[FileInfo](#FileInfo)</code> | 
 
 <a name="Provider"></a>
 

@@ -101,6 +101,8 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.AppXOptions`](#AppXOptions)
     * [`.ArtifactCreated`](#ArtifactCreated)
     * [`.BuildInfo`](#BuildInfo)
+        * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
     * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
     * [`.BuildResult`](#BuildResult)
     * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
@@ -122,6 +124,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+        * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
+        * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
+        * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
     * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
@@ -196,6 +203,29 @@ AppX Options ([appx](#Config-appx)).
 | **isPrepackedAppAsar**| <code>boolean</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
 | **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+
+
+* [`.BuildInfo`](#BuildInfo)
+    * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
+
+<a name="module_electron-builder.BuildInfo+afterPack"></a>
+
+#### `buildInfo.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
+
+| Param | Type |
+| --- | --- |
+| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
+
+<a name="module_electron-builder.BuildInfo+dispatchArtifactCreated"></a>
+
+#### `buildInfo.dispatchArtifactCreated(event)`
+**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
+
+| Param | Type |
+| --- | --- |
+| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
 
 <a name="BuildOptions"></a>
 
@@ -640,6 +670,56 @@ Windows Specific Options ([win](#Config-win)).
 | **appInfo**| <code>[AppInfo](electron-builder#AppInfo)</code> | 
 | tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | prepackaged| <code>string</code> \| <code>null</code> | 
+
+
+* [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+    * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
+    * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
+    * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
+
+<a name="module_electron-builder.Packager+addAfterPackHandler"></a>
+
+#### `packager.addAfterPackHandler(handler)`
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+
+| Param | Type |
+| --- | --- |
+| handler | <code>callback</code> | 
+
+<a name="module_electron-builder.Packager+afterPack"></a>
+
+#### `packager.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+**Overrides**: [<code>afterPack</code>](#module_electron-builder.BuildInfo+afterPack)  
+
+| Param | Type |
+| --- | --- |
+| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
+
+<a name="module_electron-builder.Packager+artifactCreated"></a>
+
+#### `packager.artifactCreated(handler)` ⇒ <code>[Packager](#Packager)</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+
+| Param | Type |
+| --- | --- |
+| handler | <code>callback</code> | 
+
+<a name="module_electron-builder.Packager+build"></a>
+
+#### `packager.build()` ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+<a name="module_electron-builder.Packager+dispatchArtifactCreated"></a>
+
+#### `packager.dispatchArtifactCreated(event)`
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+**Overrides**: [<code>dispatchArtifactCreated</code>](#module_electron-builder.BuildInfo+dispatchArtifactCreated)  
+
+| Param | Type |
+| --- | --- |
+| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
 
 <a name="module_electron-builder.build"></a>
 

@@ -247,7 +247,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 * [electron-updater/out/NsisUpdater](#module_electron-updater/out/NsisUpdater)
     * [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-        * [`.quitAndInstall()`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
+        * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
         * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="NsisUpdater"></a>
@@ -257,13 +257,18 @@ Developer API only. See [[Auto Update]] for user documentation.
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
 
 * [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-    * [`.quitAndInstall()`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
+    * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
     * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall"></a>
 
-#### `nsisUpdater.quitAndInstall()`
+#### `nsisUpdater.quitAndInstall(isSilent)`
 **Kind**: instance method of [<code>NsisUpdater</code>](#NsisUpdater)  
+
+| Param | Type |
+| --- | --- |
+| isSilent | <code>boolean</code> | 
+
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate"></a>
 
 #### `nsisUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>Promise&lt;string&gt;</code>

@@ -12,7 +12,7 @@
   ],
   "//": "client can also install js-yaml to load yaml",
   "dependencies": {
-    "debug": "2.6.6",
+    "debug": "2.6.8",
     "fs-extra-p": "^4.3.0"
   },
   "typings": "./out/electron-builder-http.d.ts"

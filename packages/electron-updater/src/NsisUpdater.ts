@@ -82,8 +82,8 @@ export class NsisUpdater extends AppUpdater {
     })
   }
 
-  quitAndInstall(): void {
-    if (this.install(false)) {
+  quitAndInstall(isSilent: boolean = false): void {
+    if (this.install(isSilent)) {
       this.app.quit()
     }
   }

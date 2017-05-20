@@ -17,8 +17,6 @@ async function main() {
     "!updater/electron-updater-out-electronHttpExecutor.js",
     "!updater/electron-updater-out-*Updater.js",
     "!updater/electron-updater-out-*Provider.js",
-    "updater/electron-updater-out-AppUpdater.js",
-    "",
   ], {cwd: source})
   
   const publishOptionsFiles = await globby([
