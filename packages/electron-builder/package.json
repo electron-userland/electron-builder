@@ -71,7 +71,8 @@
     "semver": "^5.3.0",
     "update-notifier": "^2.1.0",
     "uuid-1345": "^0.99.6",
-    "yargs": "^8.0.1"
+    "yargs": "^8.0.1",
+    "debug": "2.6.8"
   },
   "typings": "./out/electron-builder.d.ts",
   "publishConfig": {
