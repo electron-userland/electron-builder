@@ -130,6 +130,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly installerIcon?: string | null
 
   /**
+   * The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * Defaults to `build/uninstallerIcon.ico` or application icon.
+   */
+  readonly uninstallerIcon?: string | null
+
+  /**
    * *boring installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
    * @default build/installerHeader.bmp
    */

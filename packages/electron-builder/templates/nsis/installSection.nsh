@@ -61,7 +61,12 @@
   WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
 
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+	!ifdef UNINSTALLER_ICON
+	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\uninstallerIcon.ico"
+	!else
+	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+	!endif
+
 	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
@@ -106,6 +111,10 @@ ${if} $installMode == "all"
 ${endif}
 
 SetOutPath $INSTDIR
+
+!ifdef UNINSTALLER_ICON
+  File /oname=uninstallerIcon.ico "${UNINSTALLER_ICON}"
+!endif
 
 !ifdef APP_BUILD_DIR
   File /r "${APP_BUILD_DIR}/*.*"

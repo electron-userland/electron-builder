@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder) [![downloads per month](http://img.shields.io/npm/dm/electron-builder.svg)](https://www.npmjs.org/package/electron-builder) [![donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder) [![downloads per month](http://img.shields.io/npm/dm/electron-builder.svg)](https://www.npmjs.org/package/electron-builder) [![donate](https://img.shields.io/badge/Donate-Donorbox-green.svg)](https://donorbox.org/electron-builder)
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
@@ -24,7 +24,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](http://electron-builder-slack.herokuapp.com) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to donate” | [Donate with PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) or [Bitcoin](https://cex.io/#/modal/donation/pid/DP100018863) |
+| “I want to donate” | [Donate with Donorbox](https://donorbox.org/electron-builder) or [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 

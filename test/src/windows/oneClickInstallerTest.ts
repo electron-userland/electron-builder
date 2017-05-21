@@ -93,7 +93,7 @@ test.ifNotCiMac("installerHeaderIcon", () => {
     }, {
       projectDirCreated: projectDir => {
         headerIconPath = path.join(projectDir, "build", "installerHeaderIcon.ico")
-        return copyTestAsset("headerIcon.ico", headerIconPath)
+        return BluebirdPromise.all([copyTestAsset("headerIcon.ico", headerIconPath), copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "uninstallerIcon.ico"))])
       }
     }
   )

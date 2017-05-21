@@ -358,6 +358,11 @@ export class NsisTarget extends Target {
     if (options.deleteAppDataOnUninstall) {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
+
+    const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
+    if (uninstallerIcon != null) {
+      defines.UNINSTALLER_ICON = uninstallerIcon
+    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: any) {
