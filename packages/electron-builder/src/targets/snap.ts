@@ -82,8 +82,8 @@ export default class SnapTarget extends Target {
     const isUseDocker = process.platform !== "linux"
 
     const defaultStagePackages = (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"])
-    const defaultAfter = isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"];
-    const after = replaceDefault(options.after, defaultAfter);
+    const defaultAfter = isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
+    const after = replaceDefault(options.after, defaultAfter)
     snap.parts = {
       app: {
         plugin: "dump",
@@ -112,10 +112,10 @@ export default class SnapTarget extends Target {
 
     function mayInstallBuildPackagesCmd() {
       if (options.buildPackages && options.buildPackages.length > 0) {
-        return `apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`;
+        return `apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`
       }
       else {
-        return "";
+        return ""
       }
     }
 
@@ -133,8 +133,8 @@ export default class SnapTarget extends Target {
     }
     else {
       if (options.buildPackages && options.buildPackages.length > 0) {
-        await spawn("apt-get", ["update"]);
-        await spawn("apt-get", ["install", "-y"].concat(options.buildPackages));
+        await spawn("apt-get", ["update"])
+        await spawn("apt-get", ["install", "-y"].concat(options.buildPackages))
       }
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], {
         cwd: stageDir,
