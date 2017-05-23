@@ -4,6 +4,10 @@ exports[`allowToChangeInstallationDirectory 1`] = `
 Object {
   "win": Array [
     Object {
+      "arch": null,
+      "file": "latest.yml",
+    },
+    Object {
       "arch": 1,
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",

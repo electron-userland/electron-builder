@@ -221,14 +221,16 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 
   for (const publishConfig of publishConfigs) {
-    const isGitHub = publishConfig.provider === "github"
-    if (!(publishConfig.provider === "generic" || publishConfig.provider === "s3" || isGitHub)) {
+    if (publishConfig.provider === "bintray") {
       continue
     }
 
     const version = packager.appInfo.version
     const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+
     if (packager.platform === Platform.MAC) {
+      const isGitHub = publishConfig.provider === "github"
+      // backward compatibility - write json file
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
       await (<any>outputJson)(updateInfoFile, <VersionInfo>{
         version: version,
@@ -243,52 +245,29 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
         target: null,
         publishConfig: publishConfig,
       })
+
+      continue
     }
-    else {
-      await writeWindowsUpdateInfo(event, version, outDir, channel, publishConfigs)
-      break
-    }
-  }
-}
 
-async function writeWindowsUpdateInfo(event: ArtifactCreated, version: string, outDir: any, channel: string, publishConfigs: Array<PublishConfiguration>): Promise<void> {
-  const packager = event.packager
-  const sha2 = await sha256(event.file!)
-  const updateInfoFile = path.join(outDir, `${channel}.yml`)
-  await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
-    version: version,
-    releaseDate: new Date().toISOString(),
-    githubArtifactName: event.safeArtifactName,
-    path: path.basename(event.file!),
-    sha2: sha2,
-  }))
+    const sha2 = await sha256(event.file!)
+    const updateInfoFile = path.join(outDir, `${channel}${packager.platform === Platform.MAC ? "-mac" : ""}.yml`)
+    await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
+      version: version,
+      releaseDate: new Date().toISOString(),
+      githubArtifactName: event.safeArtifactName,
+      path: path.basename(event.file!),
+      sha2: sha2,
+    }))
 
-  const githubPublishConfig = publishConfigs.find(it => it.provider === "github")
-  if (githubPublishConfig != null) {
-    // to preserve compatibility with old electron-updater (< 0.10.0), we upload file with path specific for GitHub
-    packager.info.dispatchArtifactCreated({
-      data: new Buffer(safeDump(<UpdateInfo>{
-        version: version,
-        path: event.safeArtifactName,
-        sha2: sha2,
-      })),
-      safeArtifactName: `${channel}.yml`,
-      packager: packager,
-      target: null,
-      publishConfig: githubPublishConfig,
-      arch: null,
-    })
-  }
-
-  const genericPublishConfig = publishConfigs.find(it => it.provider === "generic" || it.provider === "s3")
-  if (genericPublishConfig != null) {
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,
       arch: null,
       packager: packager,
       target: null,
-      publishConfig: genericPublishConfig,
+      publishConfig: publishConfig,
     })
+
+    break
   }
 }
 

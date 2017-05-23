@@ -25,7 +25,7 @@ Object {
 
 exports[`one-package 2`] = `
 Object {
-  "BuildMachineOSBuild": "15G31",
+  "BuildMachineOSBuild": "16E195",
   "CFBundleDisplayName": "Test App ßW",
   "CFBundleDocumentTypes": Array [
     Object {

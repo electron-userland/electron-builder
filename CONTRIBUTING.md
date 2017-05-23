@@ -13,9 +13,6 @@ If you get strange compilation errors, try to remove all `node_modules` in the p
 ### Git Commit Guidelines
 We use [semantic-release](https://github.com/semantic-release/semantic-release), so we have very precise rules over how our git commit messages can be formatted.
 
-The commit message formatting can be added using a typical git workflow or through the use of a CLI wizard ([Commitizen](https://github.com/commitizen/cz-cli)).
-To use the wizard, run `npm run commit` in your terminal after staging your changes in git.
-
 ### Commit Message Format
 Each commit message consists of a **header**, a **body** and a **footer**.  The header has a special
 format that includes a **type**, a **scope** and a **subject**:

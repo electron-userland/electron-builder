@@ -4,7 +4,7 @@
   "author": "true",
   "name": "Foo",
   "build": {
-    "electronVersion": "1.6.6",
+    "electronVersion": "1.7.1",
     "appId": "org.electron-builder.testApp",
     "compression": "store",
     "npmRebuild": false,

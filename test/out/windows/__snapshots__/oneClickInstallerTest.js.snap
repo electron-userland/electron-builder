@@ -130,6 +130,10 @@ Object {
   "win": Array [
     Object {
       "arch": null,
+      "file": "latest.yml",
+    },
+    Object {
+      "arch": null,
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
