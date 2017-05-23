@@ -9,6 +9,8 @@ import { Config } from "../metadata"
 import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
 import ErrorObject = ajv.ErrorObject
 import TypeParams = ajv.TypeParams
+//import JSON5 from "json5" // throws "Could not find a declaration file for module"
+const JSON5 = require("json5")
 
 const normalizeData = require("normalize-package-data")
 
@@ -45,7 +47,11 @@ function getConfigFromPackageData(metadata: any) {
 }
 
 export async function doLoadConfig(configFile: string, projectDir: string) {
-  const result = safeLoad(await readFile(configFile, "utf8"))
+  let result = null
+  if (configFile.endsWith(".json5"))
+    result = JSON5.parse(await readFile(configFile, "utf8"))
+  else
+    result = safeLoad(await readFile(configFile, "utf8"))
   const relativePath = path.relative(projectDir, configFile)
   log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
   return result
