@@ -1,6 +1,6 @@
 import { PlatformSpecificBuildOptions, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
 
-export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
+export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
 /**
  * macOS Options ([mac](#Config-mac)).
@@ -8,9 +8,9 @@ export type MacOsTargetName = "default" | "dmg" | "mas" | "pkg" | "7z" | "zip" |
 export interface MacOptions extends PlatformSpecificBuildOptions {
   /**
    * The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
-   * 
+   *
    * For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
-   * 
+   *
    * Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
    */
   readonly category?: string | null
@@ -41,7 +41,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   /**
    * The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set).
    * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
-   * 
+   *
    * This option only applies when signing with `entitlements` provided.
    */
   readonly entitlementsInherit?: string | null
@@ -67,6 +67,16 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
    * The extra entries for `Info.plist`.
    */
   readonly extendInfo?: any
+
+  /**
+   * Paths of any extra binaries that need to be signed
+   */
+  readonly binaries?: Array<string> | null
+
+  /**
+   * Path of requirements file used in signing
+   */
+  readonly requirements?: string | null
 }
 
 /**
@@ -136,7 +146,7 @@ export interface DmgOptions extends TargetSpecificOptions {
 
   /**
    * The title of the produced DMG, which will be shown when mounted (volume name).
-   * 
+   *
    * Macro `${productName}`, `${version}` and `${name}` are supported.
    * @default ${productName} ${version}
    */
@@ -168,18 +178,18 @@ export interface DmgWindow {
    * @default 400
    */
   x?: number
-  
+
   /**
    * The Y position relative to top of the screen.
    * @default 100
    */
   y?: number
-  
+
   /**
    * The width. Defaults to background image width or 540.
    */
   width?: number
-  
+
   /**
    * The height. Defaults to background image height or 380.
    */
@@ -190,12 +200,12 @@ export interface DmgContent {
   x: number
   y: number
   type?: "link" | "file"
-  
+
   /**
    * The name of the file within the DMG. Defaults to basename of `path`.
    */
   name?: string
-  
+
   path?: string
 }
 
@@ -214,4 +224,9 @@ export interface MasBuildOptions extends MacOptions {
    * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
    */
   readonly entitlementsInherit?: string | null
+
+  /**
+   * Paths of any extra binaries that need to be signed
+   */
+  readonly binaries?: Array<string> | null
 }

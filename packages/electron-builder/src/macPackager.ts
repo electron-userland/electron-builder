@@ -174,7 +174,16 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         }
       }
     }
-
+    let requirements
+    if (!isMas) {
+      requirements = this.platformSpecificBuildOptions.requirements
+    }
+    let binaries
+    if (isMas && masOptions) {
+      binaries = masOptions.binaries
+    } else if (!isMas && this.platformSpecificBuildOptions) {
+      binaries = this.platformSpecificBuildOptions.binaries
+    }
     const signOptions: any = {
       skipIdentityValidation: true,
       identity: name!,
@@ -183,6 +192,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       version: this.info.electronVersion,
       app: appPath,
       keychain: keychainName || undefined,
+      binaries:  binaries || undefined,
+      requirements: requirements || undefined,
       "gatekeeper-assess": appleCertificatePrefixes.find(it => name!.startsWith(it)) != null
     }
 
