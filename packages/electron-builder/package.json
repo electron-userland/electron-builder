@@ -62,6 +62,7 @@
     "is-ci": "^1.0.10",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.8.4",
+    "json5": "^0.5.1",
     "minimatch": "^3.0.4",
     "node-forge": "^0.7.1",
     "normalize-package-data": "^2.3.8",

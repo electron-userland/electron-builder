@@ -3,6 +3,7 @@ import { debug } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
+import JSON5 from "json5"
 import * as path from "path"
 import { readAsarJson } from "../asar"
 import { Config } from "../metadata"
@@ -45,7 +46,8 @@ function getConfigFromPackageData(metadata: any) {
 }
 
 export async function doLoadConfig(configFile: string, projectDir: string) {
-  const result = safeLoad(await readFile(configFile, "utf8"))
+  const data = await readFile(configFile, "utf8")
+  const result = configFile.endsWith(".json5") ? JSON5.parse(data) : safeLoad(data)
   const relativePath = path.relative(projectDir, configFile)
   log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
   return result
