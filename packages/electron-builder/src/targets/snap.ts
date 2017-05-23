@@ -82,12 +82,14 @@ export default class SnapTarget extends Target {
     const isUseDocker = process.platform !== "linux"
 
     const defaultStagePackages = (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"])
+    const defaultAfter = isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
+    const after = replaceDefault(options.after, defaultAfter)
     snap.parts = {
       app: {
         plugin: "dump",
         "stage-packages": replaceDefault(options.stagePackages, defaultStagePackages),
         source: isUseDocker ? `/out/${path.basename(appOutDir)}` : appOutDir,
-        after: isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
+        after: after
       }
     }
 
@@ -108,6 +110,15 @@ export default class SnapTarget extends Target {
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapFileName)
 
+    function mayInstallBuildPackagesCmd() {
+      if (options.buildPackages && options.buildPackages.length > 0) {
+        return `apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`
+      }
+      else {
+        return ""
+      }
+    }
+
     if (isUseDocker) {
       await spawn("docker", ["run", "--rm",
         "-v", `${packager.info.projectDir}:/project`,
@@ -115,12 +126,16 @@ export default class SnapTarget extends Target {
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
         "electronuserland/electron-builder:latest",
-        "/bin/bash", "-c", `snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`], {
+        "/bin/bash", "-c", `${mayInstallBuildPackagesCmd()} && snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`], {
         cwd: packager.info.projectDir,
         stdio: ["ignore", "inherit", "inherit"],
       })
     }
     else {
+      if (options.buildPackages && options.buildPackages.length > 0) {
+        await spawn("apt-get", ["update"])
+        await spawn("apt-get", ["install", "-y"].concat(options.buildPackages))
+      }
       await spawn("snapcraft", ["snap", "--target-arch", toLinuxArchString(arch), "-o", resultFile], {
         cwd: stageDir,
         stdio: ["ignore", "inherit", "pipe"],
