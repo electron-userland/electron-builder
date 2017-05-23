@@ -134,7 +134,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const keychainName = (await this.codeSigningInfo).keychainName
     const isMas = masOptions != null
-    const qualifier = this.platformSpecificBuildOptions.identity
+    const macOptions = this.platformSpecificBuildOptions
+    const qualifier = macOptions.identity
 
     if (!isMas && qualifier === null) {
       if (this.forceCodeSigning) {
@@ -146,7 +147,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const masQualifier = isMas ? (masOptions!!.identity || qualifier) : null
 
-    const explicitType = masOptions == null ? this.platformSpecificBuildOptions.type : masOptions.type
+    const explicitType = masOptions == null ? macOptions.type : masOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
     let name = await findIdentity(isDevelopment ? "Mac Developer" : (isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"), isMas ? masQualifier : qualifier, keychainName)
@@ -183,6 +184,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       version: this.info.electronVersion,
       app: appPath,
       keychain: keychainName || undefined,
+      binaries:  (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
+      requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
       "gatekeeper-assess": appleCertificatePrefixes.find(it => name!.startsWith(it)) != null
     }
 
@@ -194,7 +197,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       throw new Error("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
     }
 
-    const customSignOptions = masOptions || this.platformSpecificBuildOptions
+    const customSignOptions = masOptions || macOptions
     if (customSignOptions.entitlements == null) {
       const p = `entitlements.${isMas ? "mas" : "mac"}.plist`
       if (resourceList.includes(p)) {
