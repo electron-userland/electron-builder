@@ -1,5 +1,5 @@
 import { exec } from "electron-builder-util"
-import { getBinFromBintray } from "electron-builder-util/out/binDownload"
+import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"
 import { release } from "os"
@@ -10,7 +10,7 @@ const TOOLS_VERSION = "1.7.0"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromBintray("winCodeSign", TOOLS_VERSION, "a34a60e74d02b81d0303e498f03c70ce0133f908b671f62ec32896db5cd0a716")
+  return getBinFromGithub("winCodeSign", TOOLS_VERSION, "a34a60e74d02b81d0303e498f03c70ce0133f908b671f62ec32896db5cd0a716")
 }
 
 export interface FileCodeSigningInfo {

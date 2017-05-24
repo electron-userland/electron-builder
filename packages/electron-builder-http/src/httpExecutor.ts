@@ -153,7 +153,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
     const request = this.doRequest(requestOptions, (response: Electron.IncomingMessage) => {
       if (response.statusCode >= 400) {
-        callback(new Error(`Cannot download "${requestOptions.protocol || "https"}://${requestOptions.hostname}/${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
+        callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
         return
       }
 
@@ -298,7 +298,8 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     headers["Cache-Control"] = "no-cache"
   }
 
-  if (options.protocol == null) {
+  // do not specify for node (in any case we use https module)
+  if (options.protocol == null && process.versions["electron"] != null) {
     options.protocol = "https:"
   }
   return options

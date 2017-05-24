@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
 import { Arch, Target } from "electron-builder-core"
 import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
-import { getBinFromBintray } from "electron-builder-util/out/binDownload"
+import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { log, subTask, warn } from "electron-builder-util/out/log"
 import { asyncAll } from "electron-builder-util/out/promise"
@@ -24,9 +24,9 @@ const debugLang = _debug("electron-builder:lang")
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 // noinspection SpellCheckingInspection
-const nsisPathPromise = getBinFromBintray("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057")
+const nsisPathPromise = getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057")
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = getBinFromBintray("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
+const nsisResourcePathPromise = getBinFromGithub("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -344,7 +344,7 @@ export class NsisTarget extends Target {
         menu = sanitizeFileName(packager.appInfo.companyName)
       }
       else {
-        menu = (<string>options.menuCategory).split(/\/|\\/).map(it => sanitizeFileName(it)).join("\\")
+        menu = (<string>options.menuCategory).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")
       }
       if (!isEmptyOrSpaces(menu)) {
         defines.MENU_FILENAME = menu

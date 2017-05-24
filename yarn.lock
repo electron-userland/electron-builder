@@ -83,8 +83,8 @@ acorn@^3.0.4, acorn@^3.3.0:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-3.3.0.tgz#45e37fb39e8da3f25baee3ff5369e2bb5f22017a"
 
 acorn@^4.0.4:
-  version "4.0.11"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-4.0.11.tgz#edcda3bd937e7556410d42ed5860f67399c794c0"
+  version "4.0.13"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-4.0.13.tgz#105495ae5361d697bd195c825192e1ad7f253787"
 
 ajv-keywords@^2.0.0:
   version "2.0.0"
@@ -271,9 +271,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.55.0:
-  version "2.55.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.55.0.tgz#7528f3729ecbc8e5aea42ac89e1ff2537086f7c2"
+aws-sdk@^2.56.0:
+  version "2.56.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.56.0.tgz#a18c3005c7adb1c6edc86b95f2833aedd4f86493"
   dependencies:
     buffer "5.0.6"
     crypto-browserify "1.0.9"
@@ -688,7 +688,7 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
 
-catharsis@^0.8.8, catharsis@~0.8.8:
+catharsis@~0.8.8:
   version "0.8.8"
   resolved "https://registry.yarnpkg.com/catharsis/-/catharsis-0.8.8.tgz#693479f43aac549d806bd73e924cd0d944951a06"
   dependencies:

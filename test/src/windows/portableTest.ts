@@ -5,6 +5,7 @@ import { app } from "../helpers/packTester"
 test.ifAll.ifNotCiMac("portable", app({
   targets: Platform.WINDOWS.createTarget(["portable", "nsis"]),
   config: {
+    publish: null,
     nsis: {
     }
   }
