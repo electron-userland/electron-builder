@@ -22,7 +22,7 @@ Development dependencies are never copied in any case. You don't need to ignore 
 
 [Multiple patterns](#multiple-glob-patterns) are supported. If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
-Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
+Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). If you have production dependencies, you need to ensure you add `node_modules/**/*`.
  `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
 
 May be specified in the platform options (e.g. in the [mac](#MacOptions)).
