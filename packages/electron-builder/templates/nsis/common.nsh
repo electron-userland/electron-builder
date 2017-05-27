@@ -3,6 +3,7 @@
 
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow
+SpaceTexts none
 !ifdef BUILD_UNINSTALLER
   ShowUninstDetails nevershow
 !endif

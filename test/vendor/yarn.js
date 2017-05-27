@@ -40805,46 +40805,55 @@ class InstallationIntegrityChecker {
     this.config = config;
   }
 
+  _getModuleLocation(usedRegistries) {
+    var _this = this;
+
+    return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
+      // build up possible folders
+      let registries = (_index || _load_index()).registryNames;
+      if (usedRegistries && usedRegistries.size > 0) {
+        registries = usedRegistries;
+      }
+      const possibleFolders = [];
+      if (_this.config.modulesFolder) {
+        possibleFolders.push(_this.config.modulesFolder);
+      }
+
+      // ensure we only write to a registry folder that was used
+      for (const name of registries) {
+        const loc = path.join(_this.config.cwd, _this.config.registries[name].folder);
+        possibleFolders.push(loc);
+      }
+
+      // if we already have an integrity hash in one of these folders then use it's location otherwise use the
+      // first folder
+      let loc;
+      for (const possibleLoc of possibleFolders) {
+        if (yield (_fs || _load_fs()).exists(path.join(possibleLoc, (_constants || _load_constants()).INTEGRITY_FILENAME))) {
+          loc = possibleLoc;
+          break;
+        }
+      }
+
+      return loc || possibleFolders[0];
+    })();
+  }
+
   /**
    * Get the location of an existing integrity hash. If none exists then return the location where we should
    * write a new one.
    */
 
   _getIntegrityHashLocation(usedRegistries) {
-    var _this = this;
+    var _this2 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
       let locationFolder;
 
-      if (_this.config.enableMetaFolder) {
-        locationFolder = path.join(_this.config.cwd, (_constants || _load_constants()).META_FOLDER);
+      if (_this2.config.enableMetaFolder) {
+        locationFolder = path.join(_this2.config.cwd, (_constants || _load_constants()).META_FOLDER);
       } else {
-        // build up possible folders
-        let registries = (_index || _load_index()).registryNames;
-        if (usedRegistries && usedRegistries.size > 0) {
-          registries = usedRegistries;
-        }
-        const possibleFolders = [];
-        if (_this.config.modulesFolder) {
-          possibleFolders.push(_this.config.modulesFolder);
-        }
-
-        // ensure we only write to a registry folder that was used
-        for (const name of registries) {
-          const loc = path.join(_this.config.cwd, _this.config.registries[name].folder);
-          possibleFolders.push(loc);
-        }
-
-        // if we already have an integrity hash in one of these folders then use it's location otherwise use the
-        // first folder
-        let loc;
-        for (const possibleLoc of possibleFolders) {
-          if (yield (_fs || _load_fs()).exists(path.join(possibleLoc, (_constants || _load_constants()).INTEGRITY_FILENAME))) {
-            loc = possibleLoc;
-            break;
-          }
-        }
-        locationFolder = loc || possibleFolders[0];
+        locationFolder = yield _this2._getModuleLocation(usedRegistries);
       }
 
       const locationPath = path.join(locationFolder, (_constants || _load_constants()).INTEGRITY_FILENAME);
@@ -40894,7 +40903,7 @@ class InstallationIntegrityChecker {
    */
 
   _generateIntegrityFile(lockfile, patterns, flags, modulesFolder, artifacts) {
-    var _this2 = this;
+    var _this3 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
 
@@ -40916,11 +40925,11 @@ class InstallationIntegrityChecker {
         result.flags.push('ignoreScripts');
       }
 
-      if (_this2.config.production) {
+      if (_this3.config.production) {
         result.flags.push('production');
       }
 
-      const linkedModules = _this2.config.linkedModules;
+      const linkedModules = _this3.config.linkedModules;
       if (linkedModules.length) {
         result.linkedModules = linkedModules.sort((_misc || _load_misc()).sortAlpha);
       }
@@ -40930,7 +40939,7 @@ class InstallationIntegrityChecker {
       });
 
       if (flags.checkFiles) {
-        result.files = yield _this2._getFilesDeep(modulesFolder);
+        result.files = yield _this3._getFilesDeep(modulesFolder);
       }
 
       return result;
@@ -40950,7 +40959,7 @@ class InstallationIntegrityChecker {
   }
 
   _compareIntegrityFiles(actual, expected, checkFiles, locationFolder) {
-    var _this3 = this;
+    var _this4 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
       if (!expected) {
@@ -40976,7 +40985,7 @@ class InstallationIntegrityChecker {
         if (expected.files.length === 0) {
           // edge case handling - --check-fies is passed but .yarn-integrity does not contain any files
           // check and fail if there are file in node_modules after all.
-          const actualFiles = yield _this3._getFilesDeep(locationFolder);
+          const actualFiles = yield _this4._getFilesDeep(locationFolder);
           if (actualFiles.length > 0) {
             return 'FILES_MISSING';
           }
@@ -40994,14 +41003,15 @@ class InstallationIntegrityChecker {
   }
 
   check(patterns, lockfile, flags) {
-    var _this4 = this;
+    var _this5 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
       // check if patterns exist in lockfile
       const missingPatterns = patterns.filter(function (p) {
         return !lockfile[p];
       });
-      const loc = yield _this4._getIntegrityHashLocation();
+
+      const loc = yield _this5._getIntegrityHashLocation();
       if (missingPatterns.length || !loc.exists) {
         return {
           integrityFileMissing: !loc.exists,
@@ -41009,10 +41019,10 @@ class InstallationIntegrityChecker {
         };
       }
 
-      const actual = yield _this4._generateIntegrityFile(lockfile, patterns, Object.assign({}, { checkFiles: false }, flags), // don't generate files when checking, we check the files below
-      loc.locationFolder);
-      const expected = yield _this4._getIntegrityFile(loc.locationPath);
-      const integrityMatches = yield _this4._compareIntegrityFiles(actual, expected, flags.checkFiles, loc.locationFolder);
+      const actual = yield _this5._generateIntegrityFile(lockfile, patterns, Object.assign({}, flags, { checkFiles: false }), ( // don't generate files when checking, we check the files below
+      yield _this5._getModuleLocation()));
+      const expected = yield _this5._getIntegrityFile(loc.locationPath);
+      const integrityMatches = yield _this5._compareIntegrityFiles(actual, expected, flags.checkFiles, loc.locationFolder);
 
       return {
         integrityFileMissing: false,
@@ -41027,10 +41037,10 @@ class InstallationIntegrityChecker {
    * Get artifacts from integrity file if it exists.
    */
   getArtifacts() {
-    var _this5 = this;
+    var _this6 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
-      const loc = yield _this5._getIntegrityHashLocation();
+      const loc = yield _this6._getIntegrityHashLocation();
       if (!loc.exists) {
         return null;
       }
@@ -41051,22 +41061,25 @@ class InstallationIntegrityChecker {
    * Write the integrity hash of the current install to disk.
    */
   save(patterns, lockfile, flags, usedRegistries, artifacts) {
-    var _this6 = this;
+    var _this7 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
-      const loc = yield _this6._getIntegrityHashLocation(usedRegistries);
+      const moduleFolder = yield _this7._getModuleLocation(usedRegistries);
+      const integrityFile = yield _this7._generateIntegrityFile(lockfile, patterns, flags, moduleFolder, artifacts);
+
+      const loc = yield _this7._getIntegrityHashLocation(usedRegistries);
       invariant(loc.locationPath, 'expected integrity hash location');
+
       yield (_fs || _load_fs()).mkdirp(path.dirname(loc.locationPath));
-      const integrityFile = yield _this6._generateIntegrityFile(lockfile, patterns, flags, loc.locationFolder, artifacts);
       yield (_fs || _load_fs()).writeFile(loc.locationPath, JSON.stringify(integrityFile, null, 2));
     })();
   }
 
   removeIntegrityFile() {
-    var _this7 = this;
+    var _this8 = this;
 
     return (0, (_asyncToGenerator2 || _load_asyncToGenerator()).default)(function* () {
-      const loc = yield _this7._getIntegrityHashLocation();
+      const loc = yield _this8._getIntegrityHashLocation();
       if (loc.exists) {
         yield (_fs || _load_fs()).unlink(loc.locationPath);
       }
@@ -54896,7 +54909,7 @@ class TarballFetcher extends (_baseFetcher || _load_baseFetcher()).default {
         const cachedStream = fs.createReadStream(tarballPath);
 
         cachedStream.pipe(validateStream).pipe(extractorStream).on('error', function (err) {
-          reject(new (_errors || _load_errors()).MessageError(this.config.reporter.lang('fetchErrorCorrupt', err.message, tarballPath)));
+          reject(new (_errors || _load_errors()).MessageError(_this3.config.reporter.lang('fetchErrorCorrupt', err.message, tarballPath)));
         });
       });
     })();
@@ -65126,7 +65139,7 @@ function extend() {
 module.exports = {
 	"name": "yarn",
 	"installationMethod": "unknown",
-	"version": "0.25.1",
+	"version": "0.25.3",
 	"license": "BSD-2-Clause",
 	"preferGlobal": true,
 	"description": "📦🐈 Fast, reliable, and secure dependency management.",
@@ -75498,9 +75511,13 @@ class GitFetcher extends (_baseFetcher || _load_baseFetcher()).default {
 
         const cachedStream = fs.createReadStream(tarballPath);
         cachedStream.pipe(hashStream).pipe(untarStream).on('finish', function () {
+
           const expectHash = _this2.hash;
           const actualHash = hashStream.getHash();
-          if (!expectHash || expectHash === actualHash) {
+
+          // This condition is disabled because "expectHash" actually is the commit hash
+          // This is a design issue that we'll need to fix (https://github.com/yarnpkg/yarn/pull/3449)
+          if (true) {
             resolve({
               hash: actualHash
             });
