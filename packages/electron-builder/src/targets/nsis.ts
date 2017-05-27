@@ -361,7 +361,9 @@ export class NsisTarget extends Target {
 
     const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
     if (uninstallerIcon != null) {
+      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
       defines.UNINSTALLER_ICON = uninstallerIcon
+      defines.MUI_UNICON = uninstallerIcon
     }
   }
 

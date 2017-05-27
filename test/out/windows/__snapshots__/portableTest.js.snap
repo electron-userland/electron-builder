@@ -16,10 +16,6 @@ exports[`portable 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
-      "file": "latest.yml",
-    },
-    Object {
       "arch": 1,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
