@@ -19,6 +19,8 @@ export interface CodeSigningInfo {
 }
 
 export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
+  urlOrBase64 = urlOrBase64.trim()
+
   let file: string | null = null
   if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/") || urlOrBase64.startsWith(".")) {
     file = urlOrBase64
@@ -46,7 +48,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
     }
   }
 
-  file = path.resolve(currentDir, file.trim())
+  file = path.resolve(currentDir, file)
   const stat = await statOrNull(file)
   if (stat == null) {
     throw new Error(`${file} doesn't exist`)
