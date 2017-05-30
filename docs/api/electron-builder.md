@@ -352,9 +352,10 @@ Developer API only. See [[Options]] for user documentation.
 
 * [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
     * [`.CodeSigningInfo`](#CodeSigningInfo)
+    * [`.CreateKeychainOptions`](#CreateKeychainOptions)
     * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
-    * [`.createKeychain(tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
-    * [`.downloadCertificate(urlOrBase64, tmpDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.createKeychain(undefined)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
+    * [`.downloadCertificate(urlOrBase64, tmpDir, currentDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| string&gt;</code>
     * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
 
@@ -368,32 +369,44 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | keychainName| <code>string</code> \| <code>null</code> | 
 
+<a name="CreateKeychainOptions"></a>
+
+### `CreateKeychainOptions`
+**Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **tmpDir**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| **cscLink**| <code>string</code> | 
+| **cscKeyPassword**| <code>string</code> | 
+| cscILink| <code>string</code> \| <code>null</code> | 
+| cscIKeyPassword| <code>string</code> \| <code>null</code> | 
+| **currentDir**| <code>string</code> | 
+
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
 
 ### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
 **Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 <a name="module_electron-builder/out/codeSign.createKeychain"></a>
 
-### `electron-builder/out/codeSign.createKeychain(tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword)` ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
+### `electron-builder/out/codeSign.createKeychain(undefined)` ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
-| tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| cscLink | <code>string</code> | 
-| cscKeyPassword | <code>string</code> | 
-| cscILink | <code>string</code> \| <code>null</code> | 
-| cscIKeyPassword | <code>string</code> \| <code>null</code> | 
+| undefined | <code>[CreateKeychainOptions](#CreateKeychainOptions)</code> | 
 
 <a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
 
-### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir, currentDir)` ⇒ <code>Promise&lt;string&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
 | urlOrBase64 | <code>string</code> | 
 | tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| currentDir | <code>string</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
 
@@ -1658,7 +1671,6 @@ Developer API only. See [[Options]] for user documentation.
     * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-        * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
     * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
     * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
     * [`.getPublishConfigs(packager, targetSpecificOptions, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; \| Array&gt;</code>
@@ -1680,7 +1692,6 @@ Developer API only. See [[Options]] for user documentation.
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
     * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-    * [`.getOrCreatePublisher(publishConfig, buildInfo)`](#module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
 
@@ -1690,16 +1701,6 @@ Developer API only. See [[Options]] for user documentation.
 
 #### `publishManager.cancelTasks()`
 **Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
-<a name="module_electron-builder/out/publish/PublishManager.PublishManager+getOrCreatePublisher"></a>
-
-#### `publishManager.getOrCreatePublisher(publishConfig, buildInfo)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
-**Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
-
-| Param | Type |
-| --- | --- |
-| publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| buildInfo | <code>[BuildInfo](Options#BuildInfo)</code> | 
-
 <a name="module_electron-builder/out/publish/PublishManager.computeDownloadUrl"></a>
 
 ### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>string</code>
@@ -2607,7 +2608,7 @@ Developer API only. See [[Options]] for user documentation.
     else {
       const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
       if (cscLink != null) {
-        return downloadCertificate(cscLink, this.info.tempDirManager)
+        return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
           .then(path =&gt; {
             return {
               file: path,

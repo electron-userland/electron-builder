@@ -38,10 +38,6 @@ export class PublishManager implements PublishContext {
   constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
     if (!isPullRequest() || forcePublishForPr) {
-      if (forcePublishForPr) {
-        warn(publishForPrWarning)
-      }
-
       if (publishOptions.publish === undefined) {
         if (process.env.npm_lifecycle_event === "release") {
           publishOptions.publish = "always"
@@ -52,15 +48,20 @@ export class PublishManager implements PublishContext {
             log(`Tag ${tag} is defined, so artifacts will be published`)
             publishOptions.publish = "onTag"
           }
-          else if (isCi) {
+          else if (isCi && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
             log("CI detected, so artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
           }
         }
       }
 
-      if (publishOptions.publish != null && publishOptions.publish !== "never") {
-        this.isPublish = publishOptions.publish !== "onTag" || getCiTag() != null
+      const publishPolicy = publishOptions.publish
+      if (publishPolicy != null && (publishPolicy === "always" || (publishPolicy.startsWith("onTag") && getCiTag() != null))) {
+        if (forcePublishForPr) {
+          warn(publishForPrWarning)
+        }
+
+        this.isPublish = true
       }
     }
     else if (publishOptions.publish !== "never") {
@@ -153,7 +154,7 @@ export class PublishManager implements PublishContext {
       .catch(it => this.errors.push(it)))
   }
 
-  getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
     let publisher = this.nameToPublisher.get(publishConfig.provider)
     if (publisher == null) {
       publisher = createPublisher(this, buildInfo.metadata.version!, publishConfig, this.publishOptions)
