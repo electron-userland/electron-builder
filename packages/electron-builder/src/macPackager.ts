@@ -28,7 +28,14 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       this.codeSigningInfo = BluebirdPromise.resolve(Object.create(null))
     }
     else {
-      this.codeSigningInfo = createKeychain(info.tempDirManager, this.packagerOptions.cscLink!, this.getCscPassword(), this.packagerOptions.cscInstallerLink, this.packagerOptions.cscInstallerKeyPassword)
+      this.codeSigningInfo = createKeychain({
+        tmpDir: info.tempDirManager,
+        cscLink: this.packagerOptions.cscLink!,
+        cscKeyPassword: this.getCscPassword(),
+        cscILink: this.packagerOptions.cscInstallerLink,
+        cscIKeyPassword: this.packagerOptions.cscInstallerKeyPassword,
+        currentDir: this.projectDir
+      })
     }
   }
 

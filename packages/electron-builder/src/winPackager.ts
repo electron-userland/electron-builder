@@ -39,7 +39,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     else {
       const cscLink = process.env.WIN_CSC_LINK || this.packagerOptions.cscLink
       if (cscLink != null) {
-        return downloadCertificate(cscLink, this.info.tempDirManager)
+        return downloadCertificate(cscLink, this.info.tempDirManager, this.projectDir)
           .then(path => {
             return {
               file: path,

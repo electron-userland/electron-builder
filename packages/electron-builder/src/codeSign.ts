@@ -18,9 +18,9 @@ export interface CodeSigningInfo {
   keychainName?: string | null
 }
 
-export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): Promise<string> {
+export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
   let file: string | null = null
-  if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/")) {
+  if ((urlOrBase64.length > 3 && urlOrBase64[1] === ":") || urlOrBase64.startsWith("/") || urlOrBase64.startsWith(".")) {
     file = urlOrBase64
   }
   else if (urlOrBase64.startsWith("file://")) {
@@ -30,16 +30,23 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir): 
     file = path.join(homedir(), urlOrBase64.substring("~/".length))
   }
   else {
-    const tempFile = await tmpDir.getTempFile(".p12")
-    if (urlOrBase64.startsWith("https://")) {
-      await download(urlOrBase64, tempFile)
+    const isUrl = urlOrBase64.startsWith("https://")
+    if (isUrl || urlOrBase64.length > 4096 || urlOrBase64.endsWith("=")) {
+      const tempFile = await tmpDir.getTempFile(".p12")
+      if (isUrl) {
+        await download(urlOrBase64, tempFile)
+      }
+      else {
+        await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+      }
+      return tempFile
     }
     else {
-      await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+      file = urlOrBase64
     }
-    return tempFile
   }
 
+  file = path.resolve(currentDir, file.trim())
   const stat = await statOrNull(file)
   if (stat == null) {
     throw new Error(`${file} doesn't exist`)
@@ -80,7 +87,16 @@ async function createCustomCertKeychain() {
   }
 }
 
-export async function createKeychain(tmpDir: TmpDir, cscLink: string, cscKeyPassword: string, cscILink?: string | null, cscIKeyPassword?: string | null): Promise<CodeSigningInfo> {
+export interface CreateKeychainOptions {
+  tmpDir: TmpDir
+  cscLink: string
+  cscKeyPassword: string
+  cscILink?: string | null
+  cscIKeyPassword?: string | null
+  currentDir: string
+}
+
+export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
   if (bundledCertKeychainAdded == null) {
     bundledCertKeychainAdded = createCustomCertKeychain()
   }
@@ -96,7 +112,7 @@ export async function createKeychain(tmpDir: TmpDir, cscLink: string, cscKeyPass
   const certPaths = new Array(certLinks.length)
   const keychainPassword = randomBytes(8).toString("hex")
   return await executeFinally(BluebirdPromise.all([
-      BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir).then(it => certPaths[i] = it)),
+      BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
       BluebirdPromise.mapSeries([
         ["create-keychain", "-p", keychainPassword, keychainName],
         ["unlock-keychain", "-p", keychainPassword, keychainName],
