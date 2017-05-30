@@ -125,7 +125,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
       else {
         // https://github.com/electron-userland/electron-builder/issues/1524
-        log("Current build is a part of pull request, code signing will be skipped." +
+        warn("Current build is a part of pull request, code signing will be skipped." +
           "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
           `\n${buildForPrWarning}`)
         return

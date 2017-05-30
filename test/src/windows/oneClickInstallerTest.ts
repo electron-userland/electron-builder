@@ -31,6 +31,9 @@ test("one-click", app({
 
 test.ifAll("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
+  config: {
+    publish: null,
+  },
 }, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
@@ -120,6 +123,7 @@ test.ifAll("menuCategory", app({
     productName: "Test Menu Category"
   },
   config: {
+    publish: null,
     nsis: {
       oneClick: false,
       menuCategory: true,
@@ -142,6 +146,7 @@ test.ifAll("string menuCategory", app({
     productName: "Test Menu Category"
   },
   config: {
+    publish: null,
     nsis: {
       oneClick: false,
       menuCategory: "Foo/Bar",

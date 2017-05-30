@@ -26,6 +26,7 @@
 * [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
     * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getBinFromGithub(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="module_electron-builder-util/out/binDownload.getBin"></a>
 
@@ -42,6 +43,17 @@
 <a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
 
 ### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
+**Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
+
+| Param | Type |
+| --- | --- |
+| name | <code>string</code> | 
+| version | <code>string</code> | 
+| sha2 | <code>string</code> | 
+
+<a name="module_electron-builder-util/out/binDownload.getBinFromGithub"></a>
+
+### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |

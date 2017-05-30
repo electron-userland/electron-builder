@@ -22,6 +22,9 @@ import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
 
+const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+  "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
+
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
 
@@ -33,7 +36,12 @@ export class PublishManager implements PublishContext {
   readonly progress = (<TtyWriteStream>process.stdout).isTTY ? new MultiProgress() : null
 
   constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
-    if (!isPullRequest()) {
+    const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
+    if (!isPullRequest() || forcePublishForPr) {
+      if (forcePublishForPr) {
+        warn(publishForPrWarning)
+      }
+
       if (publishOptions.publish === undefined) {
         if (process.env.npm_lifecycle_event === "release") {
           publishOptions.publish = "always"
@@ -56,7 +64,9 @@ export class PublishManager implements PublishContext {
       }
     }
     else if (publishOptions.publish !== "never") {
-      log("Current build is a part of pull request, publishing will be skipped")
+      log("Current build is a part of pull request, publishing will be skipped" +
+        "\nSet env PUBLISH_FOR_PULL_REQUEST to true to force code signing." +
+        `\n${publishForPrWarning}`)
     }
 
     packager.addAfterPackHandler(async event => {
