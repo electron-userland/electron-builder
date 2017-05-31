@@ -109,7 +109,7 @@ export class LinuxTargetHelper {
     const desktopMeta: any = Object.assign({
       Name: appInfo.productName,
       Comment: this.getDescription(targetSpecificOptions),
-      Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}"` : exec,
+      Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}" %U` : exec,
       Terminal: "false",
       Type: "Application",
       Icon: this.packager.executableName,
