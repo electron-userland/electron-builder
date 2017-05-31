@@ -48,7 +48,7 @@ export class PublishManager implements PublishContext {
             log(`Tag ${tag} is defined, so artifacts will be published`)
             publishOptions.publish = "onTag"
           }
-          else if (isCi && !isEmptyOrSpaces(process.env.GH_TOKEN)) {
+          else if (isCi) {
             log("CI detected, so artifacts will be published if draft release exists")
             publishOptions.publish = "onTagOrDraft"
           }
@@ -110,6 +110,10 @@ export class PublishManager implements PublishContext {
     const packager = event.packager
     const target = event.target
     const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
+
+    if (debug.enabled) {
+      debug(`artifactCreated: ${safeStringifyJson(event)}, publishConfigs: ${safeStringifyJson(publishConfigs)}`)
+    }
 
     const eventFile = event.file
     if (publishConfigs == null) {
@@ -203,13 +207,15 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
   }
 
   if (publishConfigs.length === 0) {
-    debug("No publishConfigs, detect using repository info")
+    debug("getPublishConfigsForUpdateInfo: no publishConfigs, detect using repository info")
     // https://github.com/electron-userland/electron-builder/issues/925#issuecomment-261732378
     // default publish config is github, file should be generated regardless of publish state (user can test installer locally or manage the release process manually)
     const repositoryInfo = await packager.info.repositoryInfo
+    debug(`getPublishConfigsForUpdateInfo: ${safeStringifyJson(repositoryInfo)}`)
     if (repositoryInfo != null && repositoryInfo.type === "github") {
       const resolvedPublishConfig = await getResolvedPublishConfig(packager, {provider: repositoryInfo.type}, arch, false)
       if (resolvedPublishConfig != null) {
+        debug(`getPublishConfigsForUpdateInfo: resolve to publish config ${safeStringifyJson(resolvedPublishConfig)}`)
         return [resolvedPublishConfig]
       }
     }
@@ -231,13 +237,15 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     await ensureDir(outDir)
   }
 
+  const version = packager.appInfo.version
+
   for (const publishConfig of publishConfigs) {
     if (publishConfig.provider === "bintray") {
       continue
     }
 
-    const version = packager.appInfo.version
     const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+    const createdFiles = new Set<string>()
 
     if (packager.platform === Platform.MAC) {
       const isGitHub = publishConfig.provider === "github"
@@ -256,20 +264,22 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
         target: null,
         publishConfig: publishConfig,
       })
-
-      continue
     }
 
     const sha2 = await sha256(event.file!)
     const updateInfoFile = path.join(outDir, `${channel}${packager.platform === Platform.MAC ? "-mac" : ""}.yml`)
-    await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
-      version: version,
-      releaseDate: new Date().toISOString(),
-      githubArtifactName: event.safeArtifactName,
-      path: path.basename(event.file!),
-      sha2: sha2,
-    }))
+    if (!createdFiles.has(updateInfoFile)) {
+      createdFiles.add(updateInfoFile)
+      await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
+        version: version,
+        releaseDate: new Date().toISOString(),
+        githubArtifactName: event.safeArtifactName,
+        path: path.basename(event.file!),
+        sha2: sha2,
+      }))
+    }
 
+    // artifact should be uploaded only to designated publish provider
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,
       arch: null,
@@ -277,8 +287,6 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       target: null,
       publishConfig: publishConfig,
     })
-
-    break
   }
 }
 
