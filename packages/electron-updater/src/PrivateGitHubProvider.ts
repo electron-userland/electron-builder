@@ -16,7 +16,7 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  private readonly netSession = session.fromPartition(NET_SESSION_NAME)
+  private readonly netSession = (<any>session).fromPartition(NET_SESSION_NAME)
 
   constructor(options: GithubOptions, private readonly token: string) {
     super(options, "api.github.com")

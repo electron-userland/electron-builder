@@ -80,7 +80,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| options | <code>Electron:RequestOptions</code> | 
+| options | <code>any</code> | 
 | cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 | requestProcessor | <code>callback</code> | 
 | redirectCount | <code>number</code> | 

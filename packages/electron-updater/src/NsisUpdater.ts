@@ -125,7 +125,7 @@ export class NsisUpdater extends AppUpdater {
         }
 
         try {
-          spawn(path.join(process.resourcesPath, "elevate.exe"), [setupPath].concat(args), spawnOptions)
+          spawn(path.join(process.resourcesPath!, "elevate.exe"), [setupPath].concat(args), spawnOptions)
             .unref()
         }
         catch (e) {

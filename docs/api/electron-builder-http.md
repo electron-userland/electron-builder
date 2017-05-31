@@ -356,7 +356,7 @@
 
 | Param | Type |
 | --- | --- |
-| options | <code>module:electron-builder-http.REQUEST_OPTS</code> | 
+| options | <code>any</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
 | requestProcessor | <code>callback</code> | 
 | redirectCount | <code>number</code> | 

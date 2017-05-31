@@ -25,5 +25,8 @@
     "typings/*.d.ts",
     "src/**/*.ts",
     "../packages/*/out/*.d.ts"
+  ],
+  "exclude": [
+    "../typings/electron.d.ts"
   ]
 }

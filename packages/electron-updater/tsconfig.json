@@ -10,7 +10,8 @@
   },
   "files": [
     "../../typings/semver.d.ts",
-    "../../typings/debug.d.ts"
+    "../../typings/debug.d.ts",
+    "../../typings/electron.d.ts"
   ],
   "include": [
     "src/**/*.ts"

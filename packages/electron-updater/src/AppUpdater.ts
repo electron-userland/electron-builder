@@ -268,7 +268,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {
-      this._appUpdateConfigPath = require("electron-is-dev") ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath, "app-update.yml")
+      this._appUpdateConfigPath = require("electron-is-dev") ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!, "app-update.yml")
     }
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }

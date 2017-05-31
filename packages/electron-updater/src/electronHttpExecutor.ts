@@ -12,8 +12,8 @@ const debug = _debug("electron-builder")
 
 export type LoginCallback = (username: string, password: string) => void
 
-export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, Electron.ClientRequest> {
-  constructor(private proxyLoginCallback?: (authInfo: Electron.LoginAuthInfo, callback: LoginCallback) => void) {
+export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
+  constructor(private proxyLoginCallback?: (authInfo: any, callback: LoginCallback) => void) {
     super()
   }
 
@@ -42,13 +42,13 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
     })
   }
 
-  doApiRequest<T>(options: Electron.RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+  doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }
     
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
-      const request = net.request(Object.assign({session: session.fromPartition(NET_SESSION_NAME)}, options), response => {
+      const request = (<any>net).request(Object.assign({session: (<any>session).fromPartition(NET_SESSION_NAME)}, options), (response: any) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
@@ -66,7 +66,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.RequestOptions, 
 
 
   protected doRequest(options: any, callback: (response: any) => void): any {
-    const request = net.request(Object.assign({session: session.fromPartition(NET_SESSION_NAME)}, options), callback)
+    const request = (<any>net).request(Object.assign({session: (<any>session).fromPartition(NET_SESSION_NAME)}, options), callback)
     this.addProxyLoginHandler(request)
     return request
   }

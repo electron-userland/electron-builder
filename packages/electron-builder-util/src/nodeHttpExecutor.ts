@@ -12,7 +12,7 @@ import { parse as parseUrl } from "url"
 
 const debug = _debug("electron-builder")
 
-export class NodeHttpExecutor extends HttpExecutor<RequestOptions, ClientRequest> {
+export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null
 
   async download(url: string, destination: string, options: DownloadOptions): Promise<string> {

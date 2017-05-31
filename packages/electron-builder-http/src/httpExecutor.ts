@@ -2,7 +2,7 @@ import { createHash } from "crypto"
 import _debug from "debug"
 import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
-import { RequestOptions } from "http"
+import { IncomingMessage, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { parse as parseUrl } from "url"
@@ -35,16 +35,16 @@ export interface DownloadOptions {
 }
 
 export class HttpExecutorHolder {
-  private _httpExecutor: HttpExecutor<any, any>
+  private _httpExecutor: HttpExecutor<any>
 
-  get httpExecutor(): HttpExecutor<any, any> {
+  get httpExecutor(): HttpExecutor<any> {
     if (this._httpExecutor == null) {
       this._httpExecutor = new (require("electron-builder-util/out/nodeHttpExecutor").NodeHttpExecutor)()
     }
     return this._httpExecutor
   }
 
-  set httpExecutor(value: HttpExecutor<any, any>) {
+  set httpExecutor(value: HttpExecutor<any>) {
     this._httpExecutor = value
   }
 }
@@ -63,7 +63,7 @@ export class HttpError extends Error {
   }
 }
 
-export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
+export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
   
   request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: { [name: string]: any; } | null): Promise<T> {
@@ -74,10 +74,10 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(<REQUEST_OPTS>options, cancellationToken, it => (<any>it).end(encodedData), 0)
+    return this.doApiRequest<T>(options, cancellationToken, it => (<any>it).end(encodedData), 0)
   }
 
-  protected abstract doApiRequest<T>(options: REQUEST_OPTS, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
+  protected abstract doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
   abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
 
@@ -109,7 +109,7 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
       }
 
       const newUrl = parseUrl(redirectUrl)
-      this.doApiRequest(<REQUEST_OPTS>Object.assign({}, options, newUrl), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(Object.assign({}, options, newUrl), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -147,8 +147,8 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
   protected abstract doRequest(options: any, callback: (response: any) => void): any
 
   protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
-    const request = this.doRequest(requestOptions, (response: Electron.IncomingMessage) => {
-      if (response.statusCode >= 400) {
+    const request = this.doRequest(requestOptions, (response: IncomingMessage) => {
+      if (response.statusCode! >= 400) {
         callback(new Error(`Cannot download "${requestOptions.protocol || "https:"}//${requestOptions.hostname}${requestOptions.path}", status ${response.statusCode}: ${response.statusMessage}`))
         return
       }
@@ -295,7 +295,7 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   }
 
   // do not specify for node (in any case we use https module)
-  if (options.protocol == null && process.versions["electron"] != null) {
+  if (options.protocol == null && (<any>process.versions)["electron"] != null) {
     options.protocol = "https:"
   }
   return options

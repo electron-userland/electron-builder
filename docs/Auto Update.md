@@ -128,6 +128,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
     * [`.getCurrentPlatform()`](#module_electron-updater.getCurrentPlatform) ⇒ <code>any</code>
     * [`.getCustomChannelName(channel)`](#module_electron-updater.getCustomChannelName) ⇒ <code>string</code>
     * [`.getDefaultChannelName()`](#module_electron-updater.getDefaultChannelName) ⇒ <code>string</code>
+    * [`.isUseOldMacProvider()`](#module_electron-updater.isUseOldMacProvider) ⇒ <code>boolean</code>
 
 <a name="FileInfo"></a>
 
@@ -445,6 +446,10 @@ Emitted when an authenticating proxy is asking for user credentials.
 <a name="module_electron-updater.getDefaultChannelName"></a>
 
 ### `electron-updater.getDefaultChannelName()` ⇒ <code>string</code>
+**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
+<a name="module_electron-updater.isUseOldMacProvider"></a>
+
+### `electron-updater.isUseOldMacProvider()` ⇒ <code>boolean</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 <!-- end of generated block -->
