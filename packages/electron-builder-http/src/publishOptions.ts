@@ -184,7 +184,11 @@ export interface VersionInfo {
 export interface UpdateInfo extends VersionInfo {
   readonly path: string
   readonly githubArtifactName?: string | null
-  readonly sha2: string
+
+  // deprecated
+  readonly sha2?: string
+
+  readonly sha512?: string
 
   /**
    * The release name.

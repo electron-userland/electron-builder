@@ -115,7 +115,6 @@ Developer API only. See [[Auto Update]] for user documentation.
     * [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
         * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
-    * [`.validateUpdateInfo(info)`](#module_electron-updater/out/GenericProvider.validateUpdateInfo)
 
 <a name="GenericProvider"></a>
 
@@ -139,15 +138,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 | Param | Type |
 | --- | --- |
 | versionInfo | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
-
-<a name="module_electron-updater/out/GenericProvider.validateUpdateInfo"></a>
-
-### `electron-updater/out/GenericProvider.validateUpdateInfo(info)`
-**Kind**: method of [<code>electron-updater/out/GenericProvider</code>](#module_electron-updater/out/GenericProvider)  
-
-| Param | Type |
-| --- | --- |
-| info | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
 
 <a name="module_electron-updater/out/GitHubProvider"></a>
 

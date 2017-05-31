@@ -38,7 +38,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       throw e
     }
 
-    validateUpdateInfo(result)
+    Provider.validateUpdateInfo(result)
     if (isUseOldMacProvider()) {
       (<any>result).releaseJsonUrl = url.format(Object.assign({}, this.baseUrl, {pathname: pathname}))
     }
@@ -54,23 +54,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       name: path.posix.basename(versionInfo.path),
       url: url.format(Object.assign({}, this.baseUrl, {pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)})),
       sha2: versionInfo.sha2,
+      sha512: versionInfo.sha512,
     }
-  }
-}
-
-// sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
-export function validateUpdateInfo(info: UpdateInfo) {
-  if (isUseOldMacProvider()) {
-    if ((<any>info).url == null) {
-      throw new Error("Update info doesn't contain url")
-    }
-    return
-  }
-
-  if (info.sha2 == null ) {
-    throw new Error(`Update info doesn't contain sha2 checksum: ${JSON.stringify(info, null, 2)}`)
-  }
-  if (info.path == null) {
-    throw new Error(`Update info doesn't contain file path: ${JSON.stringify(info, null, 2)}`)
   }
 }

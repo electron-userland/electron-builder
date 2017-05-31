@@ -1,7 +1,7 @@
 import { RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
-import { VersionInfo } from "electron-builder-http/out/publishOptions"
+import { UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
 import { format as buggyFormat, Url } from "url"
 import { AppUpdater } from "./AppUpdater"
@@ -40,6 +40,7 @@ export interface FileInfo {
   readonly name: string
   readonly url: string
   readonly sha2?: string
+  readonly sha512?: string
   readonly headers?: Object
 }
 
@@ -53,6 +54,22 @@ export abstract class Provider<T extends VersionInfo> {
   abstract getLatestVersion(): Promise<T>
 
   abstract getUpdateFile(versionInfo: T): Promise<FileInfo>
+
+  static validateUpdateInfo(info: UpdateInfo) {
+    if (isUseOldMacProvider()) {
+      if ((<any>info).url == null) {
+        throw new Error("Update info doesn't contain url")
+      }
+      return
+    }
+
+    if (info.sha2 == null && info.sha512 == null) {
+      throw new Error(`Update info doesn't contain sha2 or sha512 checksum: ${JSON.stringify(info, null, 2)}`)
+    }
+    if (info.path == null) {
+      throw new Error(`Update info doesn't contain file path: ${JSON.stringify(info, null, 2)}`)
+    }
+  }
 }
 
 // due to historical reasons for windows we use channel name without platform specifier

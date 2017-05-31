@@ -190,7 +190,8 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 | --- | --- | --- |
 | **path**| <code>string</code> | <a name="UpdateInfo-path"></a> |
 | githubArtifactName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-githubArtifactName"></a> |
-| **sha2**| <code>string</code> | <a name="UpdateInfo-sha2"></a> |
+| sha2| <code>string</code> | <a name="UpdateInfo-sha2"></a> |
+| sha512| <code>string</code> | <a name="UpdateInfo-sha512"></a> |
 | releaseName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseName"></a>The release name. |
 | releaseNotes| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseNotes"></a>The release notes. |
 | **releaseDate**| <code>string</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |

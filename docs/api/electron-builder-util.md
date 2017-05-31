@@ -409,7 +409,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
     * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;string&gt;</code>
     * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
     * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.safeStringifyJson(data)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>string</code>
+    * [`.safeStringifyJson(data, skippedNames)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>string</code>
     * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>string</code>
     * [`.spawn(command, args, options)`](#module_electron-builder-util.spawn) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
@@ -598,12 +598,13 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.safeStringifyJson"></a>
 
-### `electron-builder-util.safeStringifyJson(data)` ⇒ <code>string</code>
+### `electron-builder-util.safeStringifyJson(data, skippedNames)` ⇒ <code>string</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
+| skippedNames | <code>Set&lt;string&gt;</code> | 
 
 <a name="module_electron-builder-util.smarten"></a>
 

@@ -7,9 +7,8 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 import { NET_SESSION_NAME } from "./electronHttpExecutor"
-import { validateUpdateInfo } from "./GenericProvider"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName } from "./main"
+import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName, Provider } from "./main"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -45,7 +44,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       throw e
     }
 
-    validateUpdateInfo(result);
+    Provider.validateUpdateInfo(result);
     (<PrivateGitHubUpdateInfo>result).assets = assets
     return result
   }
@@ -99,6 +98,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       name: name,
       url: versionInfo.assets.find(it => it.name == name)!.url,
       sha2: versionInfo.sha2,
+      sha512: versionInfo.sha512,
       headers: headers,
       session: this.netSession
     }

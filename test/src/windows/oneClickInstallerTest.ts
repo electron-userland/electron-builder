@@ -75,9 +75,10 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   packed: async(context) => {
     await expectUpdateMetadata(context)
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    expect(updateInfo.sha2).not.toEqual("")
+    expect(updateInfo.sha512).not.toEqual("")
     expect(updateInfo.releaseDate).not.toEqual("")
     delete updateInfo.sha2
+    delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
     await doTest(context.outDir, false)
@@ -199,9 +200,10 @@ test.ifAll.ifNotCiMac("web installer (default github)", app({
   packed: async context => {
     const data = safeLoad(await readFile(path.join(context.outDir, "nsis-web", "latest.yml"), "utf-8"))
     expect(data.releaseDate).toBeDefined()
-    expect(data.sha2).toBeDefined()
+    expect(data.sha512).toBeDefined()
     delete data.releaseDate
     delete data.sha2
+    delete data.sha512
     expect(data).toMatchSnapshot()
   },
 }))

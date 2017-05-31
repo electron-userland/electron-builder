@@ -3,7 +3,7 @@ import { createHash } from "crypto"
 import { Arch, Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
-import { asArray, debug, isEmptyOrSpaces, isPullRequest, safeStringifyJson } from "electron-builder-util"
+import { asArray, debug, isEmptyOrSpaces, isPullRequest, Lazy, safeStringifyJson } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
@@ -112,7 +112,7 @@ export class PublishManager implements PublishContext {
     const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
 
     if (debug.enabled) {
-      debug(`artifactCreated: ${safeStringifyJson(event)}, publishConfigs: ${safeStringifyJson(publishConfigs)}`)
+      debug(`artifactCreated: ${safeStringifyJson(event, new Set(["packager"]))}, publishConfigs: ${safeStringifyJson(publishConfigs)}`)
     }
 
     const eventFile = event.file
@@ -238,6 +238,9 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 
   const version = packager.appInfo.version
+  let sha2 = new Lazy(() => hash(event.file!, "sha256"))
+  let sha512 = new Lazy(() => hash(event.file!, "sha512"))
+  const isMac = packager.platform === Platform.MAC
 
   for (const publishConfig of publishConfigs) {
     if (publishConfig.provider === "bintray") {
@@ -247,7 +250,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     const channel = (<GenericServerOptions>publishConfig).channel || "latest"
     const createdFiles = new Set<string>()
 
-    if (packager.platform === Platform.MAC) {
+    if (isMac) {
       const isGitHub = publishConfig.provider === "github"
       // backward compatibility - write json file
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
@@ -266,17 +269,22 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       })
     }
 
-    const sha2 = await sha256(event.file!)
-    const updateInfoFile = path.join(outDir, `${channel}${packager.platform === Platform.MAC ? "-mac" : ""}.yml`)
+    const updateInfoFile = path.join(outDir, `${channel}${isMac ? "-mac" : ""}.yml`)
     if (!createdFiles.has(updateInfoFile)) {
       createdFiles.add(updateInfoFile)
-      await writeFile(updateInfoFile, safeDump(<UpdateInfo>{
+      const info = <UpdateInfo>{
         version: version,
         releaseDate: new Date().toISOString(),
         githubArtifactName: event.safeArtifactName,
         path: path.basename(event.file!),
-        sha2: sha2,
-      }))
+        sha512: await sha512.value,
+      }
+
+      if (packager.platform === Platform.WINDOWS) {
+        // backward compatibility
+        (<any>info).sha2 = await sha2.value
+      }
+      await writeFile(updateInfoFile, safeDump(info))
     }
 
     // artifact should be uploaded only to designated publish provider
@@ -400,9 +408,9 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)))
 }
 
-function sha256(file: string) {
+function hash(file: string, algorithm: string) {
   return new BluebirdPromise<string>((resolve, reject) => {
-    const hash = createHash("sha256")
+    const hash = createHash(algorithm)
     hash
       .on("error", reject)
       .setEncoding("hex")

@@ -15,6 +15,10 @@ Object {
       "file": "latest-mac.json",
     },
     Object {
+      "arch": null,
+      "file": "latest-mac.yml",
+    },
+    Object {
       "arch": 1,
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
@@ -94,6 +98,10 @@ Object {
     Object {
       "arch": null,
       "file": "latest-mac.json",
+    },
+    Object {
+      "arch": null,
+      "file": "latest-mac.yml",
     },
     Object {
       "arch": 1,

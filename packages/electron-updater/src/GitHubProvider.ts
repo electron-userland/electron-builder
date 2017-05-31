@@ -6,7 +6,6 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 import { AppUpdater } from "./AppUpdater"
-import { validateUpdateInfo } from "./GenericProvider"
 import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, Provider } from "./main"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
@@ -74,7 +73,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw e
     }
 
-    validateUpdateInfo(result)
+    Provider.validateUpdateInfo(result)
     if (isUseOldMacProvider()) {
       (<any>result).releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
     }
@@ -118,6 +117,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       name: name,
       url: formatUrl(Object.assign({path: this.getBaseDownloadPath(versionInfo.version, name)}, this.baseUrl)),
       sha2: versionInfo.sha2,
+      sha512: versionInfo.sha512,
     }
   }
   

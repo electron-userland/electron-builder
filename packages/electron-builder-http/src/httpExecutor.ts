@@ -1,4 +1,4 @@
-import { createHash } from "crypto"
+import { createHash, Hash } from "crypto"
 import _debug from "debug"
 import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
@@ -28,6 +28,7 @@ export interface DownloadOptions {
   readonly headers?: RequestHeaders | null
   readonly skipDirCreation?: boolean
   readonly sha2?: string | null
+  readonly sha512?: string | null
 
   readonly cancellationToken: CancellationToken
 
@@ -188,10 +189,12 @@ export abstract class HttpExecutor<REQUEST> {
 }
 
 class DigestTransform extends Transform {
-  private readonly digester = createHash("sha256")
+  private readonly digester: Hash
 
-  constructor(private expected: string) {
+  constructor(private expected: string, algorithm: string) {
     super()
+
+    this.digester = createHash(algorithm)
   }
 
   _transform(chunk: any, encoding: string, callback: Function) {
@@ -251,8 +254,11 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
     }
   }
 
-  if (options.sha2 != null) {
-    streams.push(new DigestTransform(options.sha2))
+  if (options.sha512 != null) {
+    streams.push(new DigestTransform(options.sha512, "sha512"))
+  }
+  else if (options.sha2 != null) {
+    streams.push(new DigestTransform(options.sha2, "sha256"))
   }
 
   const fileOut = createWriteStream(destination)

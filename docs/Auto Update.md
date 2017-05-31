@@ -117,6 +117,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
         * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
         * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
+        * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
@@ -335,6 +336,7 @@ This is different from the normal quit event sequence.
     * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
     * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
     * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
+    * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
 
 <a name="module_electron-updater.Provider+getLatestVersion"></a>
 
@@ -357,6 +359,15 @@ This is different from the normal quit event sequence.
 | Param | Type |
 | --- | --- |
 | versionInfo | <code>module:electron-updater.T</code> | 
+
+<a name="module_electron-updater.Provider+validateUpdateInfo"></a>
+
+#### `provider.validateUpdateInfo(info)`
+**Kind**: instance method of [<code>Provider</code>](#Provider)  
+
+| Param | Type |
+| --- | --- |
+| info | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
 
 <a name="UpdaterSignal"></a>
 

@@ -106,9 +106,10 @@ test.ifAll("allowToChangeInstallationDirectory", app({
   packed: async(context) => {
     await expectUpdateMetadata(context, archFromString(process.arch))
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
-    expect(updateInfo.sha2).not.toEqual("")
+    expect(updateInfo.sha512).not.toEqual("")
     expect(updateInfo.releaseDate).not.toEqual("")
     delete updateInfo.sha2
+    delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
     await doTest(context.outDir, false)

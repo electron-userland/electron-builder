@@ -28,6 +28,7 @@ export class NsisUpdater extends AppUpdater {
       headers: this.computeRequestHeaders(fileInfo),
       cancellationToken: cancellationToken,
       sha2: fileInfo == null ? null : fileInfo.sha2,
+      sha512: fileInfo == null ? null : fileInfo.sha512,
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {

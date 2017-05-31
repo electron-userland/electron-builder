@@ -8,6 +8,7 @@ exports[`checkForUpdates several times 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -44,6 +45,7 @@ exports[`file url generic - manual download 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -59,6 +61,7 @@ exports[`file url generic 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -75,6 +78,7 @@ exports[`file url github 1`] = `
 Object {
   "name": "TestApp-Setup-1.1.0.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
   "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe",
 }
 `;
@@ -83,6 +87,7 @@ exports[`file url github pre-release 1`] = `
 Object {
   "name": "TestApp-Setup-1.5.2-beta.3.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
   "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.5.2-beta.3/TestApp-Setup-1.5.2-beta.3.exe",
 }
 `;
@@ -109,17 +114,18 @@ Object {
 }
 `;
 
-exports[`sha2 mismatch error event 1`] = `
+exports[`sha512 mismatch error event 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1",
+  "sha512": undefined,
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
 
-exports[`sha2 mismatch error event 2`] = `"SHA2 checksum mismatch, expected f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1, got f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2"`;
+exports[`sha512 mismatch error event 2`] = `"SHA2 checksum mismatch, expected f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1, got f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2"`;
 
-exports[`sha2 mismatch error event 3`] = `
+exports[`sha512 mismatch error event 3`] = `
 Array [
   "checking-for-update",
   "update-available",

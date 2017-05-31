@@ -107,6 +107,7 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     expect(updateInfo.sha2).not.toEqual("")
     expect(updateInfo.releaseDate).not.toEqual("")
     delete updateInfo.sha2
+    delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
   },
