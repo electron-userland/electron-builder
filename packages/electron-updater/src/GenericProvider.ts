@@ -2,9 +2,10 @@ import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
-import { FileInfo, getChannelFilename, getCurrentPlatform, getCustomChannelName, getDefaultChannelName, Provider } from "./main"
+import { FileInfo, getChannelFilename, getCustomChannelName, getDefaultChannelName, isUseOldMacProvider, Provider } from "./main"
 
 export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
@@ -15,7 +16,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
-    let result: UpdateInfo | null = null
+    let result: UpdateInfo
     const channelFile = getChannelFilename(this.channel)
     const pathname = path.posix.resolve(this.baseUrl.pathname || "/", channelFile)
     try {
@@ -28,7 +29,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
       }
-      result = await request<UpdateInfo>(options, new CancellationToken())
+      result = safeLoad(await request<string>(options, new CancellationToken()))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -38,14 +39,14 @@ export class GenericProvider extends Provider<UpdateInfo> {
     }
 
     validateUpdateInfo(result)
-    if (getCurrentPlatform() === "darwin") {
+    if (isUseOldMacProvider()) {
       (<any>result).releaseJsonUrl = url.format(Object.assign({}, this.baseUrl, {pathname: pathname}))
     }
     return result
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
-    if (getCurrentPlatform() === "darwin") {
+    if (isUseOldMacProvider()) {
       return <any>versionInfo
     }
 
@@ -59,7 +60,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
 
 // sha2 is required only for windows because on macOS update is verified by Squirrel.Mac
 export function validateUpdateInfo(info: UpdateInfo) {
-  if (getCurrentPlatform() === "darwin") {
+  if (isUseOldMacProvider()) {
     if ((<any>info).url == null) {
       throw new Error("Update info doesn't contain url")
     }

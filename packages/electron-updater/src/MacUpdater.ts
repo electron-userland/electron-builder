@@ -1,12 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { createServer, IncomingMessage, Server, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
 import { FileInfo } from "./main"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
+
+  private server: Server | null
 
   constructor(options?: PublishConfiguration) {
     super(options)
@@ -26,8 +29,29 @@ export class MacUpdater extends AppUpdater {
   }
 
   protected onUpdateAvailable(versionInfo: VersionInfo, fileInfo: FileInfo) {
-    this.nativeUpdater.setFeedURL((<any>versionInfo).releaseJsonUrl, Object.assign({"Cache-Control": "no-cache"}, this.computeRequestHeaders(fileInfo)))
     super.onUpdateAvailable(versionInfo, fileInfo)
+
+    let server = this.server
+    if (server != null) {
+      return
+    }
+
+    server = createServer()
+    this.server = server
+    server.on("request", (request: IncomingMessage, response: ServerResponse) => {
+      if (request.url!.endsWith("/update.json")) {
+        response.writeHead(200, {"Content-Type": "application/json"})
+        response.end(`{ "url": "${this.getServerUrl()}/app.zip" }`)
+      }
+      else {
+        response.writeHead(404)
+        response.end()
+
+      }
+    })
+    server.listen(0, "127.0.0.1", 16, () => {
+      this.nativeUpdater.setFeedURL(`${this.getServerUrl()}`, Object.assign({"Cache-Control": "no-cache"}, this.computeRequestHeaders(fileInfo)))
+    })
   }
 
   protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
@@ -37,5 +61,10 @@ export class MacUpdater extends AppUpdater {
 
   quitAndInstall(): void {
     this.nativeUpdater.quitAndInstall()
+  }
+
+  private getServerUrl() {
+    const address = this.server!.address()
+    return `http://${address.address}:${address.port}`
   }
 }

@@ -2,11 +2,12 @@ import { HttpError, request } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GithubOptions, githubUrl, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { validateUpdateInfo } from "./GenericProvider"
-import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName, Provider } from "./main"
+import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, Provider } from "./main"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
@@ -58,11 +59,11 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw new Error(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`)
     }
 
-    let result: any
+    let result: UpdateInfo
     const channelFile = getChannelFilename(getDefaultChannelName())
     const requestOptions = Object.assign({path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined}, this.baseUrl)
     try {
-      result = await request<UpdateInfo>(requestOptions, cancellationToken)
+      result = safeLoad(await request<string>(requestOptions, cancellationToken))
     }
     catch (e) {
       if (!this.updater.allowPrerelease) {
@@ -74,15 +75,15 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
 
     validateUpdateInfo(result)
-    if (getCurrentPlatform() === "darwin") {
-      result.releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
+    if (isUseOldMacProvider()) {
+      (<any>result).releaseJsonUrl = `${githubUrl(this.options)}/${requestOptions.path}`
     }
 
     if (result.releaseName == null) {
-      result.releaseName = latestRelease.getElementValue("title")
+      (<any>result).releaseName = latestRelease.getElementValue("title")
     }
     if (result.releaseNotes == null) {
-      result.releaseNotes = latestRelease.getElementValue("content")
+      (<any>result).releaseNotes = latestRelease.getElementValue("content")
     }
     return result
   }
@@ -107,7 +108,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
-    if (getCurrentPlatform() === "darwin") {
+    if (isUseOldMacProvider()) {
       return <any>versionInfo
     }
 

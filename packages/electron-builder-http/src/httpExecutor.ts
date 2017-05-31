@@ -3,7 +3,6 @@ import _debug from "debug"
 import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
 import { RequestOptions } from "http"
-import { safeLoad } from "js-yaml"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { parse as parseUrl } from "url"
@@ -133,9 +132,6 @@ export abstract class HttpExecutor<REQUEST_OPTS, REQUEST> {
           const pathname = (<any>options).pathname || options.path
           if (data.length === 0) {
             resolve()
-          }
-          else if (pathname != null && pathname.endsWith(".yml")) {
-            resolve(safeLoad(data))
           }
           else {
             resolve(isJson || (pathname != null && pathname.endsWith(".json")) ? JSON.parse(data) : data)

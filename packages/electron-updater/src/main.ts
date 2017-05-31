@@ -4,14 +4,17 @@ import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransfor
 import { VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
 import { format as buggyFormat, Url } from "url"
-// autoUpdater to mimic electron bundled autoUpdater
 import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
 export { NET_SESSION_NAME } from "./electronHttpExecutor"
 export { AppUpdater } from "./AppUpdater"
 
+// autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
+
+// required for jsdoc
+export declare const autoUpdater: AppUpdater
 
 function _load_autoUpdater(): AppUpdater {
   if (process.platform === "win32") {
@@ -25,9 +28,6 @@ function _load_autoUpdater(): AppUpdater {
   }
   return _autoUpdater
 }
-
-// required for jsdoc
-export declare const autoUpdater: AppUpdater
 
 Object.defineProperty(exports, "autoUpdater", {
   enumerable: true,
@@ -72,8 +72,13 @@ export function getCurrentPlatform () {
   return process.env.TEST_UPDATER_PLATFORM || process.platform
 }
 
+export function isUseOldMacProvider() {
+  // getCurrentPlatform() === "darwin"
+  return false
+}
+
 export function getChannelFilename(channel: string) {
-  return `${channel}.${getCurrentPlatform() === "darwin" ? "json" : "yml"}`
+  return `${channel}.yml`
 }
 
 export interface UpdateCheckResult {

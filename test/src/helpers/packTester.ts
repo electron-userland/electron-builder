@@ -323,7 +323,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
 }
 
 async function getContents(path: string) {
-  const result = await exec("dpkg", ["--contents", path])
+  // without LC_CTYPE dpkg can returns encoded unicode symbols
+  const result = await exec("dpkg", ["--contents", path], {env: Object.assign({}, process.env, {LANG: "en_US.UTF-8", LC_CTYPE: "UTF-8"})})
   return pathSorter(parseFileList(result, true)
     .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
   )

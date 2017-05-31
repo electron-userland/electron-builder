@@ -9,7 +9,7 @@ import { parse as parseUrl } from "url"
 import { NET_SESSION_NAME } from "./electronHttpExecutor"
 import { validateUpdateInfo } from "./GenericProvider"
 import { BaseGitHubProvider } from "./GitHubProvider"
-import { FileInfo, formatUrl, getChannelFilename, getCurrentPlatform, getDefaultChannelName } from "./main"
+import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName } from "./main"
 
 export interface PrivateGitHubUpdateInfo extends UpdateInfo {
   assets: Array<Asset>
@@ -36,16 +36,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }, parseUrl(assets.find(it => it.name == channelFile)!.url))
     let result: any
     try {
-      result = await request<UpdateInfo>(requestOptions, cancellationToken)
-
-      if (typeof result === "string") {
-        if (getCurrentPlatform() === "darwin") {
-          result = JSON.parse(result)
-        }
-        else {
-          result = safeLoad(result)
-        }
-      }
+      result = safeLoad(await request<string>(requestOptions, cancellationToken))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -54,10 +45,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       throw e
     }
 
-    validateUpdateInfo(result)
-    if (getCurrentPlatform() === "darwin") {
-      result.releaseJsonUrl = `${this.options.protocol || "https"}://${this.options.host || "api.github.com"}${requestOptions.path}`
-    }
+    validateUpdateInfo(result);
     (<PrivateGitHubUpdateInfo>result).assets = assets
     return result
   }
@@ -106,24 +94,13 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       Authorization: `token ${this.token}`
     }
     
-    // space is not supported on GitHub
-    if (getCurrentPlatform() === "darwin") {
-      const info = <any>versionInfo
-      const name = info.url.split("/").pop()
-      const assetPath = parseUrl(versionInfo.assets.find(it => it.name == name)!.url).path
-      info.url = formatUrl(Object.assign({path: `${assetPath}`}, this.baseUrl))
-      info.headers = headers
-      return info
-    }
-    else {
-      const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
-      return <any>{
-        name: name,
-        url: versionInfo.assets.find(it => it.name == name)!.url,
-        sha2: versionInfo.sha2,
-        headers: headers,
-        session: this.netSession
-      }
+    const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    return <any>{
+      name: name,
+      url: versionInfo.assets.find(it => it.name == name)!.url,
+      sha2: versionInfo.sha2,
+      headers: headers,
+      session: this.netSession
     }
   }
 }

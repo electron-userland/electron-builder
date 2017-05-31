@@ -17,7 +17,7 @@ test.ifNotWindows("custom depends", app({
     },
   },
   effectiveOptionComputed: async (it) => {
-    const content = await readFile(it[1], "utf-8")
+    const content = await readFile(it[1], "utf8")
     expect(content).toMatchSnapshot()
     return false
   }
