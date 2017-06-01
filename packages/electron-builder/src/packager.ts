@@ -26,6 +26,8 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
 }
 
+declare const PACKAGE_VERSION: string
+
 export class Packager implements BuildInfo {
   readonly projectDir: string
   appDir: string
@@ -72,6 +74,8 @@ export class Packager implements BuildInfo {
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
 
     this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
+
+    log("electron-builder " + PACKAGE_VERSION)
   }
 
   addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
@@ -155,8 +159,11 @@ export class Packager implements BuildInfo {
     }
 
     this.checkMetadata(appPackageFile, devPackageFile)
-    
-    debug(`Effective config: ${safeStringifyJson(this.config)}`)
+
+    if (debug.enabled) {
+      debug(`Effective config: ${safeStringifyJson(this.config)}`)
+    }
+
     checkConflictingOptions(this.config)
 
     this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)

@@ -14,7 +14,7 @@
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/7zip-bin-win/-/7zip-bin-win-2.1.0.tgz#ce632da797ec282c5d2a8d07b60e8df7ca7f164d"
 
-"7zip-bin@^2.1.0":
+"7zip-bin@^2.0.4":
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.1.0.tgz#d728d3f950895cfcfee1a166fe93afc07dfe35a9"
   optionalDependencies:
@@ -265,7 +265,7 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.60.0:
+aws-sdk@^2.59.0:
   version "2.60.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.60.0.tgz#5c1e678bd087753339d756ef7da0a4f5fa3393c9"
   dependencies:
@@ -3305,7 +3305,7 @@ tslib@^1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.7.1.tgz#bc8004164691923a79fe8378bbeb3da2017538ec"
 
-tslint@^5.4.1:
+tslint@^5.3.2:
   version "5.4.1"
   resolved "https://registry.yarnpkg.com/tslint/-/tslint-5.4.1.tgz#4b6768f26e5efb14cf34ac0714465e62bebb795b"
   dependencies:

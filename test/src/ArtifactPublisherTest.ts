@@ -34,10 +34,22 @@ function versionNumber() {
 const token = new Buffer("Y2Y5NDdhZDJhYzJlMzg1OGNiNzQzYzcwOWZhNGI0OTk2NWQ4ZDg3Yg==", "base64").toString()
 const iconPath = join(__dirname, "..", "fixtures", "test-app", "build", "icon.icns")
 
-//test("GitHub unauthorized", async (t) => {
-//  t.throws(await new GitHubPublisher("github-releases-test", "test-repo", versionNumber(), "incorrect token")
-//    .releasePromise, /(Bad credentials|Unauthorized|API rate limit exceeded)/)
-//})
+const publishContext: PublishContext = {
+  cancellationToken: new CancellationToken(),
+  progress: null,
+}
+
+test("GitHub unauthorized", async () => {
+  try {
+    await new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber()).releasePromise
+  }
+  catch (e) {
+    expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
+    return
+  }
+
+  throw new Error("must be error")
+})
 
 function isApiRateError(e: Error): boolean {
   if (e.name === "HttpError") {
@@ -63,11 +75,6 @@ function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
       }
     }
   })
-}
-
-const publishContext: PublishContext = {
-  cancellationToken: new CancellationToken(),
-  progress: null,
 }
 
 test("Bintray upload", async () => {

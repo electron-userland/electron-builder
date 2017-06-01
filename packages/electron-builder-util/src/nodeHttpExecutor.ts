@@ -9,6 +9,7 @@ import { parse as parseIni } from "ini"
 import { homedir } from "os"
 import * as path from "path"
 import { parse as parseUrl } from "url"
+import { safeStringifyJson } from "./util"
 
 const debug = _debug("electron-builder")
 
@@ -45,7 +46,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
 
   doApiRequest<T>(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     if (debug.enabled) {
-      debug(`HTTPS request: ${JSON.stringify(options, null, 2)}`)
+      debug(`HTTPS request: ${safeStringifyJson(options)}`)
     }
 
     return cancellationToken.createPromise((resolve, reject, onCancel) => {

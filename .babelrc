@@ -19,6 +19,7 @@
             excludeModules: ["path"]
           }
         ],
+        "./packages/babel-plugin-version-transform.js",
       ],
     },
     test: {

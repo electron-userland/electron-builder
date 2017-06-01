@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec } from "electron-builder-util"
+import { exec, safeStringifyJson } from "electron-builder-util"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 import { emptyDir, ensureDir, readFile, writeFile } from "fs-extra-p"
 import { homedir } from "os"
@@ -24,7 +24,7 @@ export class WineManager {
     const env = process.env
     const user = env.SUDO_USER || env.LOGNAME || env.USER || env.LNAME || env.USERNAME || (env.HOME === "/root" ? "root" : null)
     if (user == null) {
-      throw new Error(`Cannot determinate user name: ${JSON.stringify(env, null, 2)}`)
+      throw new Error(`Cannot determinate user name: ${safeStringifyJson(env)}`)
     }
 
     this.userDir = path.join(this.wineDir, "drive_c", "users", user)

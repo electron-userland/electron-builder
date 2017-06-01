@@ -156,7 +156,10 @@ export class PublishManager implements PublishContext {
     }
 
     this.publishTasks.push(promise
-      .catch(it => this.errors.push(it)))
+      .catch(it => {
+        debug(`Publish error: ${it.toString()}`)
+        this.errors.push(it)
+      }))
   }
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
@@ -180,17 +183,22 @@ export class PublishManager implements PublishContext {
   }
 
   async awaitTasks() {
-    if (this.errors.length > 0) {
-      this.cancelTasks()
-      throwError(this.errors)
-      return
+    const checkErrors = () => {
+      if (this.errors.length > 0) {
+        this.cancelTasks()
+        throwError(this.errors)
+        return
+      }
     }
+
+    checkErrors()
 
     const publishTasks = this.publishTasks
     let list = publishTasks.slice()
     publishTasks.length = 0
     while (list.length > 0) {
       await BluebirdPromise.all(list)
+      checkErrors()
       if (publishTasks.length === 0) {
         break
       }
@@ -301,7 +309,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
 export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
   if (debug.enabled) {
-    debug(`create publisher: ${safeStringifyJson(publishConfig)} is not published: cancelled`)
+    debug(`create publisher: ${safeStringifyJson(publishConfig)}`)
   }
 
   const provider = publishConfig.provider

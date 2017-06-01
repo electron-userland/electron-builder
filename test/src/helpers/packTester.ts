@@ -295,7 +295,6 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
   const files = pathSorter(fileDescriptors.map(it => it.path.replace(/\\/g, "/")).filter(it => (!it.startsWith("lib/net45/locales/") || it === "lib/net45/locales/en-US.pak") && !it.endsWith(".psmdcp") && !it.endsWith("app-update.yml")))
 
-  // console.log(JSON.stringify(files, null, 2))
   expect(files).toMatchSnapshot()
 
   if (checkOptions == null) {
