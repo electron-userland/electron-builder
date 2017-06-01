@@ -31,7 +31,7 @@ export class PublishManager implements PublishContext {
   readonly publishTasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
 
-  private isPublish = false
+  private readonly isPublish: boolean
 
   readonly progress = (<TtyWriteStream>process.stdout).isTTY ? new MultiProgress() : null
 
@@ -56,12 +56,9 @@ export class PublishManager implements PublishContext {
       }
 
       const publishPolicy = publishOptions.publish
-      if (publishPolicy != null && (publishPolicy === "always" || (publishPolicy.startsWith("onTag") && getCiTag() != null))) {
-        if (forcePublishForPr) {
-          warn(publishForPrWarning)
-        }
-
-        this.isPublish = true
+      this.isPublish = publishPolicy != null && publishOptions.publish !== "never" && (publishPolicy !== "onTag" || getCiTag() != null)
+      if (this.isPublish && forcePublishForPr) {
+        warn(publishForPrWarning)
       }
     }
     else if (publishOptions.publish !== "never") {
@@ -112,7 +109,7 @@ export class PublishManager implements PublishContext {
     const publishConfigs = event.publishConfig == null ? await getPublishConfigs(packager, target == null ? null : target.options, event.arch) : [event.publishConfig]
 
     if (debug.enabled) {
-      debug(`artifactCreated: ${safeStringifyJson(event, new Set(["packager"]))}, publishConfigs: ${safeStringifyJson(publishConfigs)}`)
+      debug(`artifactCreated: ${safeStringifyJson(event, new Set(["packager"]))},\npublishConfigs: ${safeStringifyJson(publishConfigs)},\nisPublish: ${this.isPublish}`)
     }
 
     const eventFile = event.file
@@ -126,17 +123,21 @@ export class PublishManager implements PublishContext {
     if (this.isPublish) {
       for (const publishConfig of publishConfigs) {
         if (this.cancellationToken.cancelled) {
+          debug(`${eventFile} is not published: cancelled`)
           break
         }
 
         const publisher = this.getOrCreatePublisher(publishConfig, packager.info)
-        if (publisher != null) {
-          if (eventFile == null) {
-            this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
-          }
-          else {
-            this.addTask(publisher.upload(eventFile!, event.safeArtifactName))
-          }
+        if (publisher == null) {
+          debug(`${eventFile} is not published: publisher is null, ${safeStringifyJson(publishConfig)}`)
+          continue
+        }
+
+        if (eventFile == null) {
+          this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
+        }
+        else {
+          this.addTask(publisher.upload(eventFile!, event.safeArtifactName))
         }
       }
     }
@@ -299,6 +300,10 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 }
 
 export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
+  if (debug.enabled) {
+    debug(`create publisher: ${safeStringifyJson(publishConfig)} is not published: cancelled`)
+  }
+
   const provider = publishConfig.provider
   switch (provider) {
     case "github":
@@ -430,7 +435,7 @@ function isSuitableWindowsTarget(target: Target) {
 }
 
 function getCiTag() {
-  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.CI_BUILD_TAG
+  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG
   return tag != null && tag.length > 0 ? tag : null
 }
 
@@ -511,7 +516,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   }
 
   if (!owner || !project) {
-    debug(`No owner or project for ${provider}, call getInfo: owner: ${owner}, project: ${project}`)
+    debug(`Owner or project is not specified explicitly for ${provider}, call getInfo: owner: ${owner}, project: ${project}`)
     const info = await getInfo()
     if (info == null) {
       return null
