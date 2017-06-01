@@ -26,7 +26,7 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
 }
 
-const PACKAGE_VERSION = "dev"
+declare const PACKAGE_VERSION: string
 
 export class Packager implements BuildInfo {
   readonly projectDir: string
@@ -75,7 +75,15 @@ export class Packager implements BuildInfo {
 
     this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
 
-    log("electron-builder " + PACKAGE_VERSION)
+    try {
+      log("electron-builder " + PACKAGE_VERSION)
+    }
+    catch (e) {
+      // error in dev mode without babel
+      if (!(e instanceof ReferenceError)) {
+        throw e
+      }
+    }
   }
 
   addAfterPackHandler(handler: (context: AfterPackContext) => Promise<any> | null) {
