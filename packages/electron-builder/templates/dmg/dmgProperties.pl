@@ -35,10 +35,10 @@ if (defined($ENV{'volumeIcon'})) {
 }
 
 &writeDSDBEntries("$ENV{'volumePath'}/.DS_Store",
-    &makeEntries(".background", Iloc_xy => [ 560, 170 ]),
-    &makeEntries(".DS_Store", Iloc_xy => [ 610, 170 ]),
-    &makeEntries(".fseventsd", Iloc_xy => [ 660, 170 ]),
-    &makeEntries(".Trashes", Iloc_xy => [ 710, 170 ]),
+    &makeEntries(".background", Iloc_xy => [ 2560, 170 ]),
+    &makeEntries(".DS_Store", Iloc_xy => [ 2610, 170 ]),
+    &makeEntries(".fseventsd", Iloc_xy => [ 2660, 170 ]),
+    &makeEntries(".Trashes", Iloc_xy => [ 2710, 170 ]),
     &makeEntries(".",
         (defined($ENV{'backgroundColor'}) ? BKGD_color : BKGD_alias) => (defined($ENV{'backgroundColor'}) ? "$ENV{'backgroundColor'}" : NewAliasMinimal("$ENV{'volumePath'}/.background/$ENV{'backgroundFilename'}")),
         ICVO => 1,

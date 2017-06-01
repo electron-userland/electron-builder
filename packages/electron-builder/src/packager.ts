@@ -26,7 +26,7 @@ function addHandler(emitter: EventEmitter, event: string, handler: Function) {
   emitter.on(event, handler)
 }
 
-declare const PACKAGE_VERSION: string
+const PACKAGE_VERSION = "dev"
 
 export class Packager implements BuildInfo {
   readonly projectDir: string
