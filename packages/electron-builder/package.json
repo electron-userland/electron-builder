@@ -39,7 +39,8 @@
     "Mac",
     "appx"
   ],
-  "author": "Stefan Judis",
+  "author": "Vladimir Krivosheev",
+  "contributors": ["Stefan Judis"],
   "license": "MIT",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",

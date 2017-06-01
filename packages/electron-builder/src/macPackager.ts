@@ -184,7 +184,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
 
     const signOptions: any = {
-      skipIdentityValidation: true,
+      "identity-validation": false,
       identity: name!,
       type: type,
       platform: isMas ? "mas" : "darwin",
