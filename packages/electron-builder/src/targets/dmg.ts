@@ -188,9 +188,9 @@ export class DmgTarget extends Target {
     }
 
     return custom
-      .replace(/\$\{version}/g, appInfo.version)
-      .replace(/\$\{name}/g, appInfo.name)
-      .replace(/\$\{productName}/g, appInfo.productName)
+      .replace(/\${version}/g, appInfo.version)
+      .replace(/\${name}/g, appInfo.name)
+      .replace(/\${productName}/g, appInfo.productName)
   }
 
   // public to test

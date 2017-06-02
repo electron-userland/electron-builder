@@ -10,6 +10,7 @@
       <w>amazonaws</w>
       <w>andif</w>
       <w>appdir</w>
+      <w>appdmg</w>
       <w>appimage</w>
       <w>appleid</w>
       <w>appveyor</w>
@@ -30,6 +31,7 @@
       <w>bitcoin</w>
       <w>bootstrapper</w>
       <w>buildpack</w>
+      <w>checksums</w>
       <w>chown</w>
       <w>circleci</w>
       <w>clcerts</w>
@@ -138,6 +140,7 @@
       <w>makedeb</w>
       <w>makedmg</w>
       <w>makensis</w>
+      <w>matchers</w>
       <w>minami</w>
       <w>minimatch</w>
       <w>mkdirp</w>
@@ -171,6 +174,7 @@
       <w>postinstall</w>
       <w>powerrequired</w>
       <w>powershell</w>
+      <w>preallocated</w>
       <w>precompilation</w>
       <w>preinstall</w>
       <w>prerelease</w>
@@ -207,6 +211,7 @@
       <w>udif</w>
       <w>udro</w>
       <w>udrw</w>
+      <w>udzo</w>
       <w>uitk</w>
       <w>ulfo</w>
       <w>unassociate</w>
@@ -236,6 +241,7 @@
       <w>yargs</w>
       <w>zenity</w>
       <w>zisofs</w>
+      <w>zlib</w>
     </words>
   </dictionary>
 </component>
