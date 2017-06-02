@@ -1,15 +1,16 @@
 import { config as awsConfig, S3 } from "aws-sdk"
 import BluebirdPromise from "bluebird-lst"
+import { createHash } from "crypto"
 import { EventEmitter } from "events"
-import { createReadStream, fstat, open } from "fs-extra-p"
+import { createReadStream, open, stat } from "fs-extra-p"
 import mime from "mime"
 import { FdSlicer, SlicedReadStream } from "./fdSlicer"
-
-const MultipartETag = require("../s3-client/multipart_etag")
+import { MultipartETag } from "./multipartEtag"
 
 const MAX_PUT_OBJECT_SIZE = 5 * 1024 * 1024 * 1024
 const MAX_MULTIPART_COUNT = 10000
 const MIN_MULTIPART_SIZE = 5 * 1024 * 1024
+const commonUploadSize = 15 * 1024 * 1024
 
 awsConfig.setPromisesDependency(require("bluebird-lst"))
 
@@ -28,9 +29,9 @@ export class S3Client {
     this.s3RetryDelay = options.s3RetryDelay || 1000
 
     this.multipartUploadThreshold = options.multipartUploadThreshold || (20 * 1024 * 1024)
-    this.multipartUploadSize = options.multipartUploadSize || (15 * 1024 * 1024)
+    this.multipartUploadSize = options.multipartUploadSize || commonUploadSize
     this.multipartDownloadThreshold = options.multipartDownloadThreshold || (20 * 1024 * 1024)
-    this.multipartDownloadSize = options.multipartDownloadSize || (15 * 1024 * 1024)
+    this.multipartDownloadSize = options.multipartDownloadSize || commonUploadSize
 
     if (this.multipartUploadThreshold < MIN_MULTIPART_SIZE) {
       throw new Error("Minimum multipartUploadThreshold is 5MB.")
@@ -60,32 +61,23 @@ export class Uploader extends EventEmitter {
   private cancelled = false
 
   private fileSlicer: FdSlicer | null
-  private fileStat: any
 
   private readonly parts: Array<any> = []
 
   private slicerError: Error | null
+  private contentLength: number
 
   constructor(private readonly client: S3Client, private readonly s3Options: any, private readonly localFile: string) {
     super()
   }
 
   private async openFile() {
-    const fd = await open(this.localFile, "r")
-    this.fileStat = await fstat(fd)
-    this.progressTotal = this.fileStat.size
-
-    this.fileSlicer = new FdSlicer(fd)
-    const localFileSlicer = this.fileSlicer
-    localFileSlicer.on("error", (error: Error) => {
+    this.progressTotal = this.contentLength
+    this.fileSlicer = new FdSlicer(await open(this.localFile, "r"))
+    this.fileSlicer.on("error", (error: Error) => {
       this.cancelled = true
       this.slicerError = error
     })
-    localFileSlicer.on("close", () => {
-      this.emit("fileClosed")
-    })
-
-    this.emit("fileOpened", localFileSlicer)
   }
 
   private async closeFile() {
@@ -116,14 +108,17 @@ export class Uploader extends EventEmitter {
   }
 
   private async _upload() {
-    await this.openFile()
-
     const client = this.client
-    if (this.fileStat.size >= client.multipartUploadThreshold) {
+
+    this.contentLength = (await stat(this.localFile)).size
+    this.progressTotal = this.contentLength
+
+    if (this.contentLength >= client.multipartUploadThreshold) {
+      await this.openFile()
       let multipartUploadSize = client.multipartUploadSize
-      const partsRequiredCount = Math.ceil(this.fileStat.size / multipartUploadSize)
+      const partsRequiredCount = Math.ceil(this.contentLength / multipartUploadSize)
       if (partsRequiredCount > MAX_MULTIPART_COUNT) {
-        multipartUploadSize = smallestPartSizeFromFileSize(this.fileStat.size)
+        multipartUploadSize = smallestPartSizeFromFileSize(this.contentLength)
       }
 
       if (multipartUploadSize > MAX_PUT_OBJECT_SIZE) {
@@ -143,39 +138,36 @@ export class Uploader extends EventEmitter {
   }
 
   private async putObject() {
-    const multipartETag = new MultipartETag({size: this.fileStat.size, count: 1})
-    const multipartPromise = new BluebirdPromise((resolve, reject) => {
-      multipartETag.on("end", resolve)
-
-      const inStream = createReadStream(this.localFile, {fd: this.fileSlicer!.fd, autoClose: false})
-      inStream.on("error", reject)
-      inStream.pipe(multipartETag)
-    })
-      .then(() => {
-        this.progressAmount = multipartETag.bytes
-        this.progressTotal = multipartETag.bytes
-        this.fileStat.size = multipartETag.bytes
-        this.fileStat.multipartETag = multipartETag
-        this.emit("progress")
-      })
-
-    multipartETag.on("progress", () => {
-      if (!this.cancelled) {
-        this.progressAmount = multipartETag.bytes
-        this.emit("progress")
-      }
-    })
-
     this.progressAmount = 0
-    const data = (await BluebirdPromise.all([multipartPromise, this.client.s3.putObject(Object.assign({
-      ContentType: mime.lookup(this.localFile),
-      ContentLength: this.fileStat.size,
-      Body: multipartETag,
-    }, this.s3Options)).promise()]))[1]
 
-    if (!compareMultipartETag(data.ETag, this.fileStat.multipartETag)) {
-      throw new Error("ETag does not match MD5 checksum")
-    }
+    const md5 = await hashFile(this.localFile, "md5", "base64")
+
+    await new BluebirdPromise<any>((resolve, reject) => {
+      const inStream = createReadStream(this.localFile)
+      inStream.on("error", reject)
+
+      this.client.s3.putObject(Object.assign({
+        ContentType: mime.lookup(this.localFile),
+        ContentLength: this.contentLength,
+        Body: inStream,
+        ContentMD5: md5,
+      }, this.s3Options))
+        .on("httpUploadProgress", progress => {
+          this.progressAmount = progress.loaded
+          this.progressTotal = progress.total
+          if (!this.cancelled) {
+            this.emit("progress")
+          }
+        })
+        .send((error, data) => {
+          if (error == null) {
+            resolve(data)
+          }
+          else {
+            reject(error)
+          }
+        })
+    })
   }
 
   private async multipartUpload(uploadId: string, multipartUploadSize: number): Promise<any> {
@@ -183,11 +175,11 @@ export class Uploader extends EventEmitter {
     let nextPartNumber = 1
 
     const parts: Array<Part> = []
-    while (cursor < this.fileStat.size) {
+    while (cursor < this.contentLength) {
       const start = cursor
       let end = cursor + multipartUploadSize
-      if (end > this.fileStat.size) {
-        end = this.fileStat.size
+      if (end > this.contentLength) {
+        end = this.contentLength
       }
       cursor = end
       const part = {
@@ -217,7 +209,7 @@ export class Uploader extends EventEmitter {
 
       const contentLength = p.end - p.start
 
-      const multipartETag = new MultipartETag({size: contentLength, count: 1})
+      const multipartETag = new MultipartETag()
       let prevBytes = 0
       let overallDelta = 0
       multipartETag.on("progress", () => {
@@ -317,4 +309,21 @@ function compareMultipartETag(eTag: string | null | undefined, multipartETag: an
 function smallestPartSizeFromFileSize(fileSize: number) {
   const partSize = Math.ceil(fileSize / MAX_MULTIPART_COUNT)
   return partSize < MIN_MULTIPART_SIZE ? MIN_MULTIPART_SIZE : partSize
+}
+
+function hashFile(file: string, algorithm: string, encoding: string = "hex") {
+  return new BluebirdPromise<string>((resolve, reject) => {
+    const hash = createHash(algorithm)
+    hash
+      .on("error", reject)
+      .setEncoding(encoding)
+
+    createReadStream(file)
+      .on("error", reject)
+      .on("end", () => {
+        hash.end()
+        resolve(<string>hash.read())
+      })
+      .pipe(hash, {end: false})
+  })
 }

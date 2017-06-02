@@ -39,8 +39,8 @@
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.9.tgz#38e0e00de8e6f3ff0bb1f4cddcad43e7b580733a"
 
 "@types/node@*":
-  version "7.0.25"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.25.tgz#1a26bd505fc0480e9cc9fd18eddb7a8b77057832"
+  version "7.0.26"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.26.tgz#e34bf70eb578d3bd962e081f4996c82b7194dddc"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
