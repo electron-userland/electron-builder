@@ -1,5 +1,4 @@
 import BluebirdPromise from "bluebird-lst"
-import { createHash } from "crypto"
 import { Arch, Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
@@ -10,7 +9,7 @@ import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electr
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { createReadStream, ensureDir, outputJson, writeFile } from "fs-extra-p"
+import { ensureDir, outputJson, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
@@ -21,6 +20,7 @@ import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
+import { hashFile } from "asar-integrity"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -247,8 +247,8 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 
   const version = packager.appInfo.version
-  let sha2 = new Lazy(() => hash(event.file!, "sha256"))
-  let sha512 = new Lazy(() => hash(event.file!, "sha512"))
+  let sha2 = new Lazy(() => hashFile(event.file!, "sha256"))
+  let sha512 = new Lazy(() => hashFile(event.file!, "sha512"))
   const isMac = packager.platform === Platform.MAC
 
   for (const publishConfig of publishConfigs) {
@@ -419,23 +419,6 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
   return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)))
-}
-
-function hash(file: string, algorithm: string) {
-  return new BluebirdPromise<string>((resolve, reject) => {
-    const hash = createHash(algorithm)
-    hash
-      .on("error", reject)
-      .setEncoding("hex")
-
-    createReadStream(file)
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(<string>hash.read())
-      })
-      .pipe(hash, {end: false})
-  })
 }
 
 function isSuitableWindowsTarget(target: Target) {

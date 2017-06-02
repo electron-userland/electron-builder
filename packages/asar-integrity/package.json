@@ -1,21 +1,18 @@
 {
-  "name": "electron-publisher-s3",
+  "name": "asar-integrity",
   "version": "0.0.0-semantic-release",
-  "main": "out/s3Publisher.js",
+  "main": "out/asarIntegrity.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out", "s3-client"
+    "out"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.3.0",
-    "aws-sdk": "^2.61.0",
-    "mime": "^1.3.6",
-    "electron-publish": "~0.0.0-semantic-release",
-    "electron-builder-util": "~0.0.0-semantic-release"
+    "bluebird-lst": "^1.0.2",
+    "fs-extra-p": "^4.3.0"
   },
-  "typings": "./out/electron-publisher-s3.d.ts"
+  "typings": "./out/asar-integrity.d.ts"
 }

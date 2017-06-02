@@ -15,6 +15,7 @@ import { Config } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { readInstalled } from "./readInstalled"
+import { computeData } from "asar-integrity"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions
@@ -208,7 +209,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await BluebirdPromise.all(promises)
 
     if (platformName === "darwin" || platformName === "mas") {
-      await (<any>require("./packager/mac")).createApp(this, appOutDir)
+      await (<any>require("./packager/mac")).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath))
     }
 
     await copyFiles(extraResourceMatchers)
@@ -363,7 +364,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const appInfo = this.appInfo
-    return pattern.replace(/\$\{([_a-zA-Z./*]+)\}/g, (match, p1): string => {
+    return pattern.replace(/\${([_a-zA-Z./*]+)}/g, (match, p1): string => {
       switch (p1) {
         case "productName":
           return appInfo.productFilename

@@ -25,7 +25,7 @@ export function filterCFBundleIdentifier(identifier: string) {
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
-export async function createApp(packager: PlatformPackager<any>, appOutDir: string) {
+export async function createApp(packager: PlatformPackager<any>, appOutDir: string, checksums: { [key: string]: string; }) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
@@ -134,6 +134,10 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   use(packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category, it => appPlist.LSApplicationCategoryType = it)
   appPlist.NSHumanReadableCopyright = appInfo.copyright
+
+  if (checksums != null) {
+    appPlist.AsarChecksums = JSON.stringify(checksums)
+  }
 
   const promises: Array<Promise<any | n>> = [
     writeFile(appPlistFilename, buildPlist(appPlist)),

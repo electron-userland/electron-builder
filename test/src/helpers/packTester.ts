@@ -265,6 +265,16 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   // checked manually, remove to avoid mismatch on CI server (where TRAVIS_BUILD_NUMBER is defined and different on each test run)
   delete info.CFBundleVersion
   delete info.NSHumanReadableCopyright
+
+  const checksumData = info.AsarChecksums
+  if (checksumData != null) {
+    const checksums = JSON.parse(checksumData)
+    for (const name of Object.keys(checksums)) {
+      checksums[name] = "hash"
+    }
+    info.AsarChecksums = JSON.stringify(checksums)
+  }
+
   if (checkOptions.checkMacApp != null) {
     await checkOptions.checkMacApp(packedAppDir, info)
   }
