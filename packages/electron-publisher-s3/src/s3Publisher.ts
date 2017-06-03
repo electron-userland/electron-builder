@@ -51,7 +51,7 @@ export default class S3Publisher extends Publisher {
       const callback = new ProgressCallback(progressBar)
       uploader.on("progress", () => {
         if (!cancellationToken.cancelled) {
-          callback.update(uploader.progressAmount, uploader.progressTotal)
+          callback.update(uploader.loaded, uploader.contentLength)
         }
       })
     }

@@ -2,10 +2,9 @@ import { config as awsConfig, S3 } from "aws-sdk"
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
 import { EventEmitter } from "events"
-import { createReadStream, open, stat } from "fs-extra-p"
+import { createReadStream, stat } from "fs-extra-p"
 import mime from "mime"
-import { FdSlicer, SlicedReadStream } from "./fdSlicer"
-import { MultipartETag } from "./multipartEtag"
+import { cpus } from "os"
 
 const MAX_PUT_OBJECT_SIZE = 5 * 1024 * 1024 * 1024
 const MAX_MULTIPART_COUNT = 10000
@@ -54,110 +53,56 @@ export class S3Client {
 
 export class Uploader extends EventEmitter {
   /** @readonly */
-  progressAmount = 0
-  /** @readonly */
-  progressTotal = 0
+  loaded = 0
 
   private cancelled = false
 
-  private fileSlicer: FdSlicer | null
-
-  private readonly parts: Array<any> = []
-
-  private slicerError: Error | null
-  private contentLength: number
+  /** @readonly */
+  contentLength: number
 
   constructor(private readonly client: S3Client, private readonly s3Options: any, private readonly localFile: string) {
     super()
   }
 
-  private async openFile() {
-    this.progressTotal = this.contentLength
-    this.fileSlicer = new FdSlicer(await open(this.localFile, "r"))
-    this.fileSlicer.on("error", (error: Error) => {
-      this.cancelled = true
-      this.slicerError = error
-    })
-  }
-
-  private async closeFile() {
-    this.cancelled = true
-    if (this.fileSlicer != null) {
-      this.fileSlicer.close()
-      this.fileSlicer = null
-    }
-  }
-
-  upload() {
-    return (<BluebirdPromise<any>>this._upload())
-      .then(async it => {
-        if (this.slicerError != null) {
-          throw this.slicerError
-        }
-        await this.closeFile()
-        return it
-      })
-      .catch(async error => {
-        try {
-          await this.closeFile()
-        }
-        catch (ignored) {
-        }
-        throw error
-      })
-  }
-
-  private async _upload() {
-    const client = this.client
-
+  async upload() {
     this.contentLength = (await stat(this.localFile)).size
-    this.progressTotal = this.contentLength
 
-    if (this.contentLength >= client.multipartUploadThreshold) {
-      await this.openFile()
-      let multipartUploadSize = client.multipartUploadSize
-      const partsRequiredCount = Math.ceil(this.contentLength / multipartUploadSize)
-      if (partsRequiredCount > MAX_MULTIPART_COUNT) {
-        multipartUploadSize = smallestPartSizeFromFileSize(this.contentLength)
-      }
-
-      if (multipartUploadSize > MAX_PUT_OBJECT_SIZE) {
-        throw new Error(`File size exceeds maximum object size: ${this.localFile}`)
-      }
-
-      const data = await this.runOrRetry(() => client.s3.createMultipartUpload(Object.assign({ContentType: mime.lookup(this.localFile)}, this.s3Options)).promise())
-      await this.multipartUpload(data.UploadId!, multipartUploadSize)
+    const client = this.client
+    if (this.contentLength < client.multipartUploadThreshold) {
+      const md5 = await hashFile(this.localFile, "md5", "base64")
+      await this.runOrRetry(this.putObject.bind(this, md5))
+      return
     }
-    else {
-      await this.runOrRetry(this.putObject.bind(this))
+
+    let multipartUploadSize = client.multipartUploadSize
+    if (Math.ceil(this.contentLength / multipartUploadSize) > MAX_MULTIPART_COUNT) {
+      multipartUploadSize = smallestPartSizeFromFileSize(this.contentLength)
     }
+
+    if (multipartUploadSize > MAX_PUT_OBJECT_SIZE) {
+      throw new Error(`File size exceeds maximum object size: ${this.localFile}`)
+    }
+
+    const data = await this.runOrRetry(() => client.s3.createMultipartUpload(Object.assign({ContentType: mime.lookup(this.localFile)}, this.s3Options)).promise())
+    await this.multipartUpload(data.UploadId!, multipartUploadSize)
   }
 
   abort() {
     this.cancelled = true
   }
 
-  private async putObject() {
-    this.progressAmount = 0
-
-    const md5 = await hashFile(this.localFile, "md5", "base64")
-
-    await new BluebirdPromise<any>((resolve, reject) => {
-      const inStream = createReadStream(this.localFile)
-      inStream.on("error", reject)
-
+  private putObject(md5: string) {
+    this.loaded = 0
+    return new BluebirdPromise<any>((resolve, reject) => {
       this.client.s3.putObject(Object.assign({
         ContentType: mime.lookup(this.localFile),
         ContentLength: this.contentLength,
-        Body: inStream,
+        Body: createReadStream(this.localFile),
         ContentMD5: md5,
       }, this.s3Options))
         .on("httpUploadProgress", progress => {
-          this.progressAmount = progress.loaded
-          this.progressTotal = progress.total
-          if (!this.cancelled) {
-            this.emit("progress")
-          }
+          this.loaded = progress.loaded
+          this.emit("progress")
         })
         .send((error, data) => {
           if (error == null) {
@@ -174,6 +119,8 @@ export class Uploader extends EventEmitter {
     let cursor = 0
     let nextPartNumber = 1
 
+    const partsA: Array<any> = []
+
     const parts: Array<Part> = []
     while (cursor < this.contentLength) {
       const start = cursor
@@ -183,12 +130,16 @@ export class Uploader extends EventEmitter {
       }
       cursor = end
       const part = {
-        ETag: null,
         PartNumber: nextPartNumber++,
       }
-      this.parts.push(part)
-      parts.push({start, end, part})
+      partsA.push(part)
+      parts.push({start, end, part, md5: ""})
     }
+
+    await BluebirdPromise.map(parts, async it => {
+      // hashFile - both start and end are inclusive
+      it.md5 = await hashFile(this.localFile, "md5", "base64", {start: it.start, end: it.end - 1})
+    }, {concurrency: cpus().length})
 
     await BluebirdPromise.map(parts, it => this.makeUploadPart(it, uploadId), {concurrency: 4})
     return await this.runOrRetry(() => this.client.s3.completeMultipartUpload({
@@ -196,71 +147,43 @@ export class Uploader extends EventEmitter {
         Key: this.s3Options.Key,
         UploadId: uploadId,
         MultipartUpload: {
-          Parts: this.parts,
+          Parts: partsA,
         },
       }).promise()
     )
   }
 
-  private makeUploadPart(p: Part, uploadId: string): Promise<any> {
-    return this.runOrRetry(async () => {
-      const client = this.client
-      let errorOccurred = false
-
-      const contentLength = p.end - p.start
-
-      const multipartETag = new MultipartETag()
-      let prevBytes = 0
-      let overallDelta = 0
-      multipartETag.on("progress", () => {
-        if (this.cancelled || errorOccurred) {
-          return
-        }
-
-        const delta = multipartETag.bytes - prevBytes
-        prevBytes = multipartETag.bytes
-        this.progressAmount += delta
-        overallDelta += delta
-        this.emit("progress")
-      })
-
-      const inStream = new SlicedReadStream(this.fileSlicer!, p.start, p.end)
-      const multipartPromise = new BluebirdPromise((resolve, reject) => {
-        inStream.on("error", reject)
-        multipartETag.on("end", resolve)
-      })
-        .then(() => {
-          if (this.cancelled || errorOccurred) {
-            return
-          }
-
-          this.progressAmount += multipartETag.bytes - prevBytes
-          this.progressTotal += (p.end - p.start) - multipartETag.bytes
-          this.emit("progress")
+  private makeUploadPart(part: Part, uploadId: string): Promise<any> {
+    const contentLength = part.end - part.start
+    const client = this.client
+    return this.runOrRetry(() => {
+      let partLoaded = 0
+      return new BluebirdPromise((resolve, reject) => {
+        client.s3.uploadPart({
+          ContentLength: contentLength,
+          PartNumber: part.part.PartNumber,
+          UploadId: uploadId,
+          Body: createReadStream(this.localFile, {start: part.start, end: part.end - 1}),
+          Bucket: this.s3Options.Bucket,
+          Key: this.s3Options.Key,
+          ContentMD5: part.md5,
         })
-
-      inStream.pipe(multipartETag)
-
-      const data = (await BluebirdPromise.all([multipartPromise, client.s3.uploadPart({
-        ContentLength: contentLength,
-        PartNumber: p.part.PartNumber,
-        UploadId: uploadId,
-        Body: multipartETag,
-        Bucket: this.s3Options.Bucket,
-        Key: this.s3Options.Key,
-      }).promise()
-        .catch(error => {
-          errorOccurred = true
-          this.progressAmount -= overallDelta
-          throw error
-        })]))[1]
-
-      if (!compareMultipartETag(data.ETag, multipartETag)) {
-        this.progressAmount -= overallDelta
-        throw new Error("ETag does not match MD5 checksum")
-      }
-      p.part.ETag = data.ETag
-      return data
+          .on("httpUploadProgress", progress => {
+            partLoaded = progress.loaded
+            this.loaded += progress.loaded
+            this.emit("progress")
+          })
+          .send((error, data) => {
+            if (error == null) {
+              part.part.ETag = data.ETag
+              resolve(data)
+            }
+            else {
+              this.loaded -= partLoaded
+              reject(error)
+            }
+          })
+      })
     })
   }
 
@@ -296,14 +219,7 @@ interface Part {
   start: number
   end: number
   part: any
-}
-
-function cleanETag(eTag: string | null | undefined) {
-  return eTag == null ? "" : eTag.replace(/^\s*'?\s*"?\s*(.*?)\s*"?\s*'?\s*$/, "$1")
-}
-
-function compareMultipartETag(eTag: string | null | undefined, multipartETag: any) {
-  return multipartETag.anyMatch(cleanETag(eTag))
+  md5: string
 }
 
 function smallestPartSizeFromFileSize(fileSize: number) {
@@ -311,14 +227,14 @@ function smallestPartSizeFromFileSize(fileSize: number) {
   return partSize < MIN_MULTIPART_SIZE ? MIN_MULTIPART_SIZE : partSize
 }
 
-function hashFile(file: string, algorithm: string, encoding: string = "hex") {
+function hashFile(file: string, algorithm: string, encoding: string = "hex", options: any = undefined) {
   return new BluebirdPromise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
       .on("error", reject)
       .setEncoding(encoding)
 
-    createReadStream(file)
+    createReadStream(file, options)
       .on("error", reject)
       .on("end", () => {
         hash.end()

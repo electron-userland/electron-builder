@@ -39,8 +39,8 @@
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.9.tgz#38e0e00de8e6f3ff0bb1f4cddcad43e7b580733a"
 
 "@types/node@*":
-  version "7.0.26"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.26.tgz#e34bf70eb578d3bd962e081f4996c82b7194dddc"
+  version "7.0.27"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.27.tgz#ba5e1a87aca2b4f5817289615ffe56472927687e"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -265,9 +265,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.61.0:
-  version "2.61.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.61.0.tgz#2c104788e1696e7060c6ffaa1c6560d6f9c884af"
+aws-sdk@^2.62.0:
+  version "2.62.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.62.0.tgz#98508d3f93aaf3f74f18ca3b8cfe3a11bdad1a5f"
   dependencies:
     buffer "5.0.6"
     crypto-browserify "1.0.9"
@@ -2909,8 +2909,8 @@ rimraf@^2.6.1:
     glob "^7.0.5"
 
 safe-buffer@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.0.1.tgz#d263ca54696cd8a306b5ca6551e92de57918fbe7"
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.0.tgz#fe4c8460397f9eaaaa58e73be46273408a45e223"
 
 sane@~1.6.0:
   version "1.6.0"
