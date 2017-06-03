@@ -4,24 +4,37 @@ import { createReadStream } from "fs"
 import { readdir } from "fs-extra-p"
 import * as path from "path"
 
-export async function computeData(resourcesPath: string): Promise<{ [key: string]: string; }> {
+export interface AsarIntegrityOptions {
+  /**
+   * Allows external asar files.
+   *
+   * @default false
+   */
+  readonly externalAllowed: Boolean
+}
+
+export interface AsarIntegrity extends AsarIntegrityOptions {
+  checksums: { [key: string]: string; }
+}
+
+export async function computeData(resourcesPath: string, options?: AsarIntegrityOptions): Promise<AsarIntegrity> {
   // sort to produce constant result
   const names = (await readdir(resourcesPath)).filter(it => it.endsWith(".asar")).sort()
-  const checksums = await BluebirdPromise.map(names, it => hashFile(path.join(resourcesPath, it), "sha512"))
+  const checksums = await BluebirdPromise.map(names, it => hashFile(path.join(resourcesPath, it), "sha512", "base64"))
 
   const result: { [key: string]: string; } = {}
   for (let i = 0; i < names.length; i++) {
     result[names[i]] = checksums[i]
   }
-  return result
+  return <AsarIntegrity>Object.assign({checksums: result}, options)
 }
 
-export function hashFile(file: string, algorithm: string) {
+export function hashFile(file: string, algorithm: string, encoding: "hex" | "base64" | "latin1" = "hex") {
   return new BluebirdPromise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
       .on("error", reject)
-      .setEncoding("hex")
+      .setEncoding(encoding)
 
     createReadStream(file)
       .on("error", reject)

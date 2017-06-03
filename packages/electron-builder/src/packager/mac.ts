@@ -1,3 +1,4 @@
+import { AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, use } from "electron-builder-util"
 import { copyFile, unlinkIfExists } from "electron-builder-util/out/fs"
@@ -25,7 +26,7 @@ export function filterCFBundleIdentifier(identifier: string) {
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
-export async function createApp(packager: PlatformPackager<any>, appOutDir: string, checksums: { [key: string]: string; }) {
+export async function createApp(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 
@@ -135,8 +136,8 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   use(packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category, it => appPlist.LSApplicationCategoryType = it)
   appPlist.NSHumanReadableCopyright = appInfo.copyright
 
-  if (checksums != null) {
-    appPlist.AsarChecksums = JSON.stringify(checksums)
+  if (asarIntegrity != null) {
+    appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
 
   const promises: Array<Promise<any | n>> = [

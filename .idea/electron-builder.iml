@@ -5,6 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/asar-integrity/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-builder-core/out" />

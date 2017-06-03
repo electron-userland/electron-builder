@@ -266,13 +266,14 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   delete info.CFBundleVersion
   delete info.NSHumanReadableCopyright
 
-  const checksumData = info.AsarChecksums
+  const checksumData = info.AsarIntegrity
   if (checksumData != null) {
-    const checksums = JSON.parse(checksumData)
+    const data = JSON.parse(checksumData)
+    const checksums = data.checksums
     for (const name of Object.keys(checksums)) {
       checksums[name] = "hash"
     }
-    info.AsarChecksums = JSON.stringify(checksums)
+    info.AsarIntegrity = JSON.stringify(data)
   }
 
   if (checkOptions.checkMacApp != null) {
