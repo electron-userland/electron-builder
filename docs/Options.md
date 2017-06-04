@@ -97,14 +97,8 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 ## API
 
 * [electron-builder](#module_electron-builder)
-    * [`.AfterPackContext`](#AfterPackContext)
     * [`.AppXOptions`](#AppXOptions)
-    * [`.ArtifactCreated`](#ArtifactCreated)
-    * [`.BuildInfo`](#BuildInfo)
-        * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
     * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-    * [`.BuildResult`](#BuildResult)
     * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
     * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
@@ -115,6 +109,7 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
     * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
     * [`.Metadata`](#Metadata)
+    * [`.MetadataDirectories`](#MetadataDirectories)
     * [`.NsisOptions`](#NsisOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
     * [`.PackagerOptions`](#PackagerOptions)
@@ -123,29 +118,6 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
     * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
     * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
     * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-    * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
-        * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
-        * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
-        * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
-        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
-    * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-
-<a name="AfterPackContext"></a>
-
-### `AfterPackContext`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **appOutDir**| <code>string</code> | 
-| **packager**| <code>[PlatformPackager](electron-builder#PlatformPackager)&lt;any&gt;</code> | 
-| **electronPlatformName**| <code>string</code> | 
-| **arch**| <code>[Arch](electron-builder-core#Arch)</code> | 
-| **targets**| <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
 <a name="AppXOptions"></a>
 
@@ -164,85 +136,11 @@ AppX Options ([appx](#Config-appx)).
 | publisherDisplayName| <code>string</code> \| <code>null</code> | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx). |
 | identityName| <code>string</code> \| <code>null</code> | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). |
 
-<a name="ArtifactCreated"></a>
-
-### `ArtifactCreated`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **packager**| <code>[PlatformPackager](electron-builder#PlatformPackager)&lt;any&gt;</code> | 
-| target| <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
-| arch| <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| file| <code>string</code> | 
-| data| <code>Buffer</code> | 
-| safeArtifactName| <code>string</code> | 
-| publishConfig| <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-
-<a name="BuildInfo"></a>
-
-### `BuildInfo`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **options**| <code>[PackagerOptions](#PackagerOptions)</code> | 
-| **metadata**| <code>[Metadata](#Metadata)</code> | 
-| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
-| **config**| <code>[Config](#Config)</code> | 
-| **projectDir**| <code>string</code> | 
-| **appDir**| <code>string</code> | 
-| **electronVersion**| <code>string</code> | 
-| muonVersion| <code>string</code> \| <code>null</code> | 
-| **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
-| **appInfo**| <code>[AppInfo](electron-builder#AppInfo)</code> | 
-| **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
-| **isPrepackedAppAsar**| <code>boolean</code> | 
-| prepackaged| <code>string</code> \| <code>null</code> | 
-| **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
-
-
-* [`.BuildInfo`](#BuildInfo)
-    * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
-
-<a name="module_electron-builder.BuildInfo+afterPack"></a>
-
-#### `buildInfo.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
-
-| Param | Type |
-| --- | --- |
-| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
-
-<a name="module_electron-builder.BuildInfo+dispatchArtifactCreated"></a>
-
-#### `buildInfo.dispatchArtifactCreated(event)`
-**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
-
-| Param | Type |
-| --- | --- |
-| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
-
 <a name="BuildOptions"></a>
 
 ### `BuildOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
-<a name="BuildResult"></a>
-
-### `BuildResult`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **outDir**| <code>string</code> | 
-| **platformToTargets**| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;String \| [Target](electron-builder-core#Target)&gt;&gt;</code> | 
-
 <a name="CliOptions"></a>
 
 ### `CliOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
@@ -295,7 +193,7 @@ Configuration Options
 | electronDownload| <code>any</code> | <a name="Config-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options. |
 | publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="Config-publish"></a>Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). |
 | forceCodeSigning| <code>boolean</code> | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct). |
-| directories| <code>[MetadataDirectories](electron-builder-core#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
+| directories| <code>[MetadataDirectories](#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
 | electronVersion| <code>string</code> \| <code>null</code> | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency. |
 | muonVersion| <code>string</code> \| <code>null</code> | <a name="Config-muonVersion"></a>The version of muon you are packaging for. |
 | artifactName| <code>string</code> \| <code>null</code> | <a name="Config-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).<br><br>Currently supported only for `mas`, `pkg`, `dmg` and `nsis`. |
@@ -491,6 +389,20 @@ Some standard fields should be defined in the `package.json`.
 | license| <code>string</code> \| <code>null</code> | <a name="Metadata-license"></a>linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name. |
 | build| <code>[Config](#Config)</code> | <a name="Metadata-build"></a> |
 
+<a name="MetadataDirectories"></a>
+
+### `MetadataDirectories`
+`directories`
+
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| buildResources = <code>&quot;build&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-buildResources"></a>The path to build resources. |
+| output = <code>&quot;dist&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-output"></a>The output directory. |
+| app| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory. |
+
 <a name="NsisOptions"></a>
 
 ### `NsisOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
@@ -655,107 +567,6 @@ Windows Specific Options ([win](#Config-win)).
 | rfc3161TimeStampServer| <code>string</code> | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`. |
 | timeStampServer| <code>string</code> | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`. |
 | publisherName| <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-publisherName"></a>[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate. |
-
-<a name="Packager"></a>
-
-### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
-**Kind**: class of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[BuildInfo](#BuildInfo)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| projectDir| <code>string</code> | 
-| **appDir**| <code>string</code> | 
-| **metadata**| <code>[Metadata](#Metadata)</code> | 
-| **devMetadata**| <code>[Metadata](#Metadata)</code> | 
-| isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>boolean</code> | 
-| **electronVersion**| <code>string</code> | 
-| muonVersion| <code>string</code> \| <code>null</code> | 
-| eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
-| **appInfo**| <code>[AppInfo](electron-builder#AppInfo)</code> | 
-| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| prepackaged| <code>string</code> \| <code>null</code> | 
-
-
-* [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
-    * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
-    * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
-    * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
-    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
-
-<a name="module_electron-builder.Packager+addAfterPackHandler"></a>
-
-#### `packager.addAfterPackHandler(handler)`
-**Kind**: instance method of [<code>Packager</code>](#Packager)  
-
-| Param | Type |
-| --- | --- |
-| handler | <code>callback</code> | 
-
-<a name="module_electron-builder.Packager+afterPack"></a>
-
-#### `packager.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>Packager</code>](#Packager)  
-**Overrides**: [<code>afterPack</code>](#module_electron-builder.BuildInfo+afterPack)  
-
-| Param | Type |
-| --- | --- |
-| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
-
-<a name="module_electron-builder.Packager+artifactCreated"></a>
-
-#### `packager.artifactCreated(handler)` ⇒ <code>[Packager](#Packager)</code>
-**Kind**: instance method of [<code>Packager</code>](#Packager)  
-
-| Param | Type |
-| --- | --- |
-| handler | <code>callback</code> | 
-
-<a name="module_electron-builder.Packager+build"></a>
-
-#### `packager.build()` ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
-**Kind**: instance method of [<code>Packager</code>](#Packager)  
-<a name="module_electron-builder.Packager+dispatchArtifactCreated"></a>
-
-#### `packager.dispatchArtifactCreated(event)`
-**Kind**: instance method of [<code>Packager</code>](#Packager)  
-**Overrides**: [<code>dispatchArtifactCreated</code>](#module_electron-builder.BuildInfo+dispatchArtifactCreated)  
-
-| Param | Type |
-| --- | --- |
-| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
-
-<a name="module_electron-builder.build"></a>
-
-### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
-
-| Param | Type |
-| --- | --- |
-| rawOptions | <code>[CliOptions](#CliOptions)</code> | 
-
-<a name="module_electron-builder.buildForge"></a>
-
-### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
-
-| Param | Type |
-| --- | --- |
-| forgeOptions | <code>[ForgeOptions](electron-builder#ForgeOptions)</code> | 
-| options | <code>[CliOptions](#CliOptions)</code> | 
-
-<a name="module_electron-builder.createTargets"></a>
-
-### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
-**Kind**: method of [<code>electron-builder</code>](#module_electron-builder)  
-
-| Param | Type |
-| --- | --- |
-| platforms | <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code> | 
-| type | <code>string</code> \| <code>null</code> | 
-| arch | <code>string</code> \| <code>null</code> | 
 
 
 <!-- end of generated block -->

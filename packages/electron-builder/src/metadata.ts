@@ -1,4 +1,4 @@
-import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FileAssociation, FilePattern, MetadataDirectories, PlatformSpecificBuildOptions, Protocol, RepositoryInfo, Target } from "electron-builder-core"
+import { Arch, AsarOptions, AuthorMetadata, BeforeBuildContext, CompressionLevel, FileAssociation, FilePattern, PlatformSpecificBuildOptions, Protocol, RepositoryInfo, Target } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -242,4 +242,28 @@ export interface AfterPackContext {
   readonly electronPlatformName: string
   readonly arch: Arch
   readonly targets: Array<Target>
+}
+
+/**
+ * `directories`
+ *
+ * @typicalname directories
+ */
+export interface MetadataDirectories {
+  /**
+   * The path to build resources.
+   * @default build
+   */
+  readonly buildResources?: string | null
+
+  /**
+   * The output directory.
+   * @default dist
+   */
+  readonly output?: string | null
+
+  /**
+   * The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
+   */
+  readonly app?: string | null
 }

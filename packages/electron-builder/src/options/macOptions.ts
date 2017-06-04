@@ -112,6 +112,8 @@ export interface PkgOptions extends TargetSpecificOptions {
  *
  * To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
  * If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+ *
+ * @typicalname dmg
  */
 export interface DmgOptions extends TargetSpecificOptions {
   /**

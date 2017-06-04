@@ -4,21 +4,13 @@ Developer API only. See [[Options]] for user documentation.
 ## Modules
 
 <dl>
+<dt><a href="#module_electron-builder">electron-builder</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/appInfo">electron-builder/out/appInfo</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/asar">electron-builder/out/asar</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/asarUtil">electron-builder/out/asarUtil</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/builder">electron-builder/out/builder</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/cli/cliOptions">electron-builder/out/cli/cliOptions</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/codeSign">electron-builder/out/codeSign</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/fileMatcher">electron-builder/out/fileMatcher</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/fileTransformer">electron-builder/out/fileTransformer</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/forge/forge-maker">electron-builder/out/forge/forge-maker</a></dt>
 <dd></dd>
@@ -30,8 +22,6 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/options/winOptions">electron-builder/out/options/winOptions</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/packager/dirPackager">electron-builder/out/packager/dirPackager</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/packager/mac">electron-builder/out/packager/mac</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/packager">electron-builder/out/packager</a></dt>
@@ -40,15 +30,11 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/readInstalled">electron-builder/out/readInstalled</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/repositoryInfo">electron-builder/out/repositoryInfo</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/appImage">electron-builder/out/targets/appImage</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/appx">electron-builder/out/targets/appx</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/archive">electron-builder/out/targets/archive</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/ArchiveTarget">electron-builder/out/targets/ArchiveTarget</a></dt>
 <dd></dd>
@@ -57,8 +43,6 @@ Developer API only. See [[Options]] for user documentation.
 <dt><a href="#module_electron-builder/out/targets/dmgLicense">electron-builder/out/targets/dmgLicense</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/fpm">electron-builder/out/targets/fpm</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/license">electron-builder/out/targets/license</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/LinuxTargetHelper">electron-builder/out/targets/LinuxTargetHelper</a></dt>
 <dd></dd>
@@ -72,8 +56,6 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/WebInstallerTarget">electron-builder/out/targets/WebInstallerTarget</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/util/filter">electron-builder/out/util/filter</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/util/readPackageJson">electron-builder/out/util/readPackageJson</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
@@ -83,6 +65,216 @@ Developer API only. See [[Options]] for user documentation.
 <dt><a href="#module_electron-builder/out/yarn">electron-builder/out/yarn</a></dt>
 <dd></dd>
 </dl>
+
+<a name="module_electron-builder"></a>
+
+## electron-builder
+
+* [electron-builder](#module_electron-builder)
+    * [`.AfterPackContext`](#AfterPackContext)
+    * [`.ArtifactCreated`](#ArtifactCreated)
+    * [`.BuildInfo`](#BuildInfo)
+        * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
+    * [`.BuildResult`](#BuildResult)
+    * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+        * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
+        * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
+        * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
+    * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+
+<a name="AfterPackContext"></a>
+
+### `AfterPackContext`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **appOutDir**| <code>string</code> | 
+| **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+| **electronPlatformName**| <code>string</code> | 
+| **arch**| <code>[Arch](electron-builder-core#Arch)</code> | 
+| **targets**| <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
+
+<a name="ArtifactCreated"></a>
+
+### `ArtifactCreated`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
+| target| <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
+| arch| <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
+| file| <code>string</code> | 
+| data| <code>Buffer</code> | 
+| safeArtifactName| <code>string</code> | 
+| publishConfig| <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
+
+<a name="BuildInfo"></a>
+
+### `BuildInfo`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **options**| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
+| **metadata**| <code>[Metadata](Options#Metadata)</code> | 
+| **devMetadata**| <code>[Metadata](Options#Metadata)</code> | 
+| **config**| <code>[Config](Options#Config)</code> | 
+| **projectDir**| <code>string</code> | 
+| **appDir**| <code>string</code> | 
+| **electronVersion**| <code>string</code> | 
+| muonVersion| <code>string</code> \| <code>null</code> | 
+| **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
+| **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
+| **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
+| **isPrepackedAppAsar**| <code>boolean</code> | 
+| prepackaged| <code>string</code> \| <code>null</code> | 
+| **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+
+
+* [`.BuildInfo`](#BuildInfo)
+    * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
+
+<a name="module_electron-builder.BuildInfo+afterPack"></a>
+
+#### `buildInfo.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
+
+| Param | Type |
+| --- | --- |
+| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
+
+<a name="module_electron-builder.BuildInfo+dispatchArtifactCreated"></a>
+
+#### `buildInfo.dispatchArtifactCreated(event)`
+**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
+
+| Param | Type |
+| --- | --- |
+| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
+
+<a name="BuildResult"></a>
+
+### `BuildResult`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **outDir**| <code>string</code> | 
+| **platformToTargets**| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;String \| [Target](electron-builder-core#Target)&gt;&gt;</code> | 
+
+<a name="Packager"></a>
+
+### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
+**Kind**: class of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Extends**: <code>[BuildInfo](#BuildInfo)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| projectDir| <code>string</code> | 
+| **appDir**| <code>string</code> | 
+| **metadata**| <code>[Metadata](Options#Metadata)</code> | 
+| **devMetadata**| <code>[Metadata](Options#Metadata)</code> | 
+| isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>boolean</code> | 
+| **electronVersion**| <code>string</code> | 
+| muonVersion| <code>string</code> \| <code>null</code> | 
+| eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
+| **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
+| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| prepackaged| <code>string</code> \| <code>null</code> | 
+
+
+* [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+    * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
+    * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
+    * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
+
+<a name="module_electron-builder.Packager+addAfterPackHandler"></a>
+
+#### `packager.addAfterPackHandler(handler)`
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+
+| Param | Type |
+| --- | --- |
+| handler | <code>callback</code> | 
+
+<a name="module_electron-builder.Packager+afterPack"></a>
+
+#### `packager.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+**Overrides**: [<code>afterPack</code>](#module_electron-builder.BuildInfo+afterPack)  
+
+| Param | Type |
+| --- | --- |
+| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
+
+<a name="module_electron-builder.Packager+artifactCreated"></a>
+
+#### `packager.artifactCreated(handler)` ⇒ <code>[Packager](#Packager)</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+
+| Param | Type |
+| --- | --- |
+| handler | <code>callback</code> | 
+
+<a name="module_electron-builder.Packager+build"></a>
+
+#### `packager.build()` ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+<a name="module_electron-builder.Packager+dispatchArtifactCreated"></a>
+
+#### `packager.dispatchArtifactCreated(event)`
+**Kind**: instance method of [<code>Packager</code>](#Packager)  
+**Overrides**: [<code>dispatchArtifactCreated</code>](#module_electron-builder.BuildInfo+dispatchArtifactCreated)  
+
+| Param | Type |
+| --- | --- |
+| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
+
+<a name="module_electron-builder.build"></a>
+
+### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+**Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
+
+| Param | Type |
+| --- | --- |
+| rawOptions | <code>[CliOptions](Options#CliOptions)</code> | 
+
+<a name="module_electron-builder.buildForge"></a>
+
+### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+**Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
+
+| Param | Type |
+| --- | --- |
+| forgeOptions | <code>[ForgeOptions](#ForgeOptions)</code> | 
+| options | <code>[CliOptions](Options#CliOptions)</code> | 
+
+<a name="module_electron-builder.createTargets"></a>
+
+### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+**Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
+
+| Param | Type |
+| --- | --- |
+| platforms | <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code> | 
+| type | <code>string</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/appInfo"></a>
 
@@ -111,222 +303,6 @@ Developer API only. See [[Options]] for user documentation.
 
 #### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| string&gt;</code>
 **Kind**: instance method of [<code>AppInfo</code>](#AppInfo)  
-<a name="module_electron-builder/out/asar"></a>
-
-## electron-builder/out/asar
-
-* [electron-builder/out/asar](#module_electron-builder/out/asar)
-    * [.AsarFilesystem](#AsarFilesystem)
-        * [`.getFile(p, followLinks)`](#module_electron-builder/out/asar.AsarFilesystem+getFile) ⇒ <code>[Node](#Node)</code>
-        * [`.insertDirectory(p, unpacked)`](#module_electron-builder/out/asar.AsarFilesystem+insertDirectory) ⇒ <code>module:electron-builder/out/asar.__type</code>
-        * [`.insertFileNode(node, stat, file)`](#module_electron-builder/out/asar.AsarFilesystem+insertFileNode)
-        * [`.getNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getNode) ⇒ <code>[Node](#Node)</code>
-        * [`.getOrCreateNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getOrCreateNode) ⇒ <code>[Node](#Node)</code>
-        * [`.readFile(file)`](#module_electron-builder/out/asar.AsarFilesystem+readFile) ⇒ <code>Promise&lt;Buffer&gt;</code>
-        * [`.readJson(file)`](#module_electron-builder/out/asar.AsarFilesystem+readJson) ⇒ <code>Promise&lt;Buffer&gt;</code>
-        * [`.searchNodeFromDirectory(p)`](#module_electron-builder/out/asar.AsarFilesystem+searchNodeFromDirectory) ⇒ <code>[Node](#Node)</code>
-    * [.Node](#Node)
-    * [`.readAsar(archive)`](#module_electron-builder/out/asar.readAsar) ⇒ <code>Promise&lt;[AsarFilesystem](#AsarFilesystem)&gt;</code>
-    * [`.readAsarJson(archive, file)`](#module_electron-builder/out/asar.readAsarJson) ⇒ <code>Promise&lt;Buffer&gt;</code>
-
-<a name="AsarFilesystem"></a>
-
-### AsarFilesystem
-**Kind**: class of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
-
-* [.AsarFilesystem](#AsarFilesystem)
-    * [`.getFile(p, followLinks)`](#module_electron-builder/out/asar.AsarFilesystem+getFile) ⇒ <code>[Node](#Node)</code>
-    * [`.insertDirectory(p, unpacked)`](#module_electron-builder/out/asar.AsarFilesystem+insertDirectory) ⇒ <code>module:electron-builder/out/asar.__type</code>
-    * [`.insertFileNode(node, stat, file)`](#module_electron-builder/out/asar.AsarFilesystem+insertFileNode)
-    * [`.getNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getNode) ⇒ <code>[Node](#Node)</code>
-    * [`.getOrCreateNode(p)`](#module_electron-builder/out/asar.AsarFilesystem+getOrCreateNode) ⇒ <code>[Node](#Node)</code>
-    * [`.readFile(file)`](#module_electron-builder/out/asar.AsarFilesystem+readFile) ⇒ <code>Promise&lt;Buffer&gt;</code>
-    * [`.readJson(file)`](#module_electron-builder/out/asar.AsarFilesystem+readJson) ⇒ <code>Promise&lt;Buffer&gt;</code>
-    * [`.searchNodeFromDirectory(p)`](#module_electron-builder/out/asar.AsarFilesystem+searchNodeFromDirectory) ⇒ <code>[Node](#Node)</code>
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+getFile"></a>
-
-#### `asarFilesystem.getFile(p, followLinks)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| p | <code>string</code> | 
-| followLinks | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+insertDirectory"></a>
-
-#### `asarFilesystem.insertDirectory(p, unpacked)` ⇒ <code>module:electron-builder/out/asar.__type</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| p | <code>string</code> | 
-| unpacked | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+insertFileNode"></a>
-
-#### `asarFilesystem.insertFileNode(node, stat, file)`
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| node | <code>[Node](#Node)</code> | 
-| stat | <code>module:fs.Stats</code> | 
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+getNode"></a>
-
-#### `asarFilesystem.getNode(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| p | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+getOrCreateNode"></a>
-
-#### `asarFilesystem.getOrCreateNode(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| p | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+readFile"></a>
-
-#### `asarFilesystem.readFile(file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+readJson"></a>
-
-#### `asarFilesystem.readJson(file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.AsarFilesystem+searchNodeFromDirectory"></a>
-
-#### `asarFilesystem.searchNodeFromDirectory(p)` ⇒ <code>[Node](#Node)</code>
-**Kind**: instance method of [<code>AsarFilesystem</code>](#AsarFilesystem)  
-
-| Param | Type |
-| --- | --- |
-| p | <code>string</code> | 
-
-<a name="Node"></a>
-
-### Node
-**Kind**: class of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| files| <code>Object&lt;string, any&gt;</code> | 
-| unpacked| <code>boolean</code> | 
-| **size**| <code>number</code> | 
-| **offset**| <code>number</code> | 
-| executable| <code>boolean</code> | 
-| link| <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.readAsar"></a>
-
-### `electron-builder/out/asar.readAsar(archive)` ⇒ <code>Promise&lt;[AsarFilesystem](#AsarFilesystem)&gt;</code>
-**Kind**: method of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
-
-| Param | Type |
-| --- | --- |
-| archive | <code>string</code> | 
-
-<a name="module_electron-builder/out/asar.readAsarJson"></a>
-
-### `electron-builder/out/asar.readAsarJson(archive, file)` ⇒ <code>Promise&lt;Buffer&gt;</code>
-**Kind**: method of [<code>electron-builder/out/asar</code>](#module_electron-builder/out/asar)  
-
-| Param | Type |
-| --- | --- |
-| archive | <code>string</code> | 
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/asarUtil"></a>
-
-## electron-builder/out/asarUtil
-
-* [electron-builder/out/asarUtil](#module_electron-builder/out/asarUtil)
-    * [.AsarPackager](#AsarPackager)
-        * [`.compileUsingElectronCompile(files)`](#module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-        * [`.createPackageFromFiles(files)`](#module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.pack(filter, isElectronCompile)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.checkFileInArchive(asarFile, relativeFile, messagePrefix)`](#module_electron-builder/out/asarUtil.checkFileInArchive) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="AsarPackager"></a>
-
-### AsarPackager
-**Kind**: class of [<code>electron-builder/out/asarUtil</code>](#module_electron-builder/out/asarUtil)  
-
-* [.AsarPackager](#AsarPackager)
-    * [`.compileUsingElectronCompile(files)`](#module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.createPackageFromFiles(files)`](#module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)`](#module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.pack(filter, isElectronCompile)`](#module_electron-builder/out/asarUtil.AsarPackager+pack) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="module_electron-builder/out/asarUtil.AsarPackager+compileUsingElectronCompile"></a>
-
-#### `asarPackager.compileUsingElectronCompile(files)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
-
-| Param | Type |
-| --- | --- |
-| files | <code>Array&lt;string&gt;</code> | 
-
-<a name="module_electron-builder/out/asarUtil.AsarPackager+createPackageFromFiles"></a>
-
-#### `asarPackager.createPackageFromFiles(files)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
-
-| Param | Type |
-| --- | --- |
-| files | <code>Array&lt;string&gt;</code> | 
-
-<a name="module_electron-builder/out/asarUtil.AsarPackager+detectUnpackedDirs"></a>
-
-#### `asarPackager.detectUnpackedDirs(files, autoUnpackDirs, unpackedDest)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
-
-| Param | Type |
-| --- | --- |
-| files | <code>Array&lt;string&gt;</code> | 
-| autoUnpackDirs | <code>Set&lt;string&gt;</code> | 
-| unpackedDest | <code>string</code> | 
-
-<a name="module_electron-builder/out/asarUtil.AsarPackager+pack"></a>
-
-#### `asarPackager.pack(filter, isElectronCompile)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>AsarPackager</code>](#AsarPackager)  
-
-| Param | Type |
-| --- | --- |
-| filter | <code>module:electron-builder-util/out/fs.__type</code> | 
-| isElectronCompile | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/asarUtil.checkFileInArchive"></a>
-
-### `electron-builder/out/asarUtil.checkFileInArchive(asarFile, relativeFile, messagePrefix)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/asarUtil</code>](#module_electron-builder/out/asarUtil)  
-
-| Param | Type |
-| --- | --- |
-| asarFile | <code>string</code> | 
-| relativeFile | <code>string</code> | 
-| messagePrefix | <code>string</code> | 
-
 <a name="module_electron-builder/out/builder"></a>
 
 ## electron-builder/out/builder
@@ -339,13 +315,6 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | args | <code>[CliOptions](Options#CliOptions)</code> | 
 
-<a name="module_electron-builder/out/cli/cliOptions"></a>
-
-## electron-builder/out/cli/cliOptions
-<a name="module_electron-builder/out/cli/cliOptions.createYargs"></a>
-
-### `electron-builder/out/cli/cliOptions.createYargs()` ⇒ <code>any</code>
-**Kind**: method of [<code>electron-builder/out/cli/cliOptions</code>](#module_electron-builder/out/cli/cliOptions)  
 <a name="module_electron-builder/out/codeSign"></a>
 
 ## electron-builder/out/codeSign
@@ -429,202 +398,6 @@ Developer API only. See [[Options]] for user documentation.
 | path | <code>string</code> | 
 | name | <code>string</code> | 
 | keychain | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileMatcher"></a>
-
-## electron-builder/out/fileMatcher
-
-* [electron-builder/out/fileMatcher](#module_electron-builder/out/fileMatcher)
-    * [.FileMatcher](#FileMatcher)
-        * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
-        * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
-        * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-        * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
-        * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-        * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
-        * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
-        * [`.toString()`](#module_electron-builder/out/fileMatcher.FileMatcher+toString) ⇒ <code>string</code>
-    * [`.copyFiles(patterns)`](#module_electron-builder/out/fileMatcher.copyFiles) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, buildResourceDir)`](#module_electron-builder/out/fileMatcher.createFileMatcher) ⇒ <code>[FileMatcher](#FileMatcher)</code>
-    * [`.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)`](#module_electron-builder/out/fileMatcher.getFileMatchers) ⇒ <code>null</code> \| <code>Array</code>
-
-<a name="FileMatcher"></a>
-
-### FileMatcher
-**Kind**: class of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| from| <code>string</code> | 
-| to| <code>string</code> | 
-
-
-* [.FileMatcher](#FileMatcher)
-    * [`.addAllPattern()`](#module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern)
-    * [`.addPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+addPattern)
-    * [`.computeParsedPatterns(result, fromDir)`](#module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns)
-    * [`.containsOnlyIgnore()`](#module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore) ⇒ <code>boolean</code>
-    * [`.createFilter(ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/fileMatcher.FileMatcher+createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.isEmpty()`](#module_electron-builder/out/fileMatcher.FileMatcher+isEmpty) ⇒ <code>boolean</code>
-    * [`.prependPattern(pattern)`](#module_electron-builder/out/fileMatcher.FileMatcher+prependPattern)
-    * [`.toString()`](#module_electron-builder/out/fileMatcher.FileMatcher+toString) ⇒ <code>string</code>
-
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+addAllPattern"></a>
-
-#### `fileMatcher.addAllPattern()`
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+addPattern"></a>
-
-#### `fileMatcher.addPattern(pattern)`
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| pattern | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+computeParsedPatterns"></a>
-
-#### `fileMatcher.computeParsedPatterns(result, fromDir)`
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| result | <code>Array&lt;minimatch:Minimatch&gt;</code> | 
-| fromDir | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+containsOnlyIgnore"></a>
-
-#### `fileMatcher.containsOnlyIgnore()` ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+createFilter"></a>
-
-#### `fileMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns)` ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| ignoreFiles | <code>Set&lt;string&gt;</code> | 
-| rawFilter | <code>callback</code> | 
-| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> \| <code>undefined</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+isEmpty"></a>
-
-#### `fileMatcher.isEmpty()` ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+prependPattern"></a>
-
-#### `fileMatcher.prependPattern(pattern)`
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| pattern | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.FileMatcher+toString"></a>
-
-#### `fileMatcher.toString()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>FileMatcher</code>](#FileMatcher)  
-<a name="module_electron-builder/out/fileMatcher.copyFiles"></a>
-
-### `electron-builder/out/fileMatcher.copyFiles(patterns)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| patterns | <code>Array&lt;[FileMatcher](#FileMatcher)&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.createFileMatcher"></a>
-
-### `electron-builder/out/fileMatcher.createFileMatcher(info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, buildResourceDir)` ⇒ <code>[FileMatcher](#FileMatcher)</code>
-**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| info | <code>[BuildInfo](Options#BuildInfo)</code> | 
-| appDir | <code>string</code> | 
-| resourcesPath | <code>string</code> | 
-| macroExpander | <code>callback</code> | 
-| platformSpecificBuildOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
-| buildResourceDir | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileMatcher.getFileMatchers"></a>
-
-### `electron-builder/out/fileMatcher.getFileMatchers(config, name, defaultSrc, defaultDest, allowAdvancedMatching, macroExpander, customBuildOptions)` ⇒ <code>null</code> \| <code>Array</code>
-**Kind**: method of [<code>electron-builder/out/fileMatcher</code>](#module_electron-builder/out/fileMatcher)  
-
-| Param | Type |
-| --- | --- |
-| config | <code>[Config](Options#Config)</code> | 
-| name | <code>"files"</code> \| <code>"extraFiles"</code> \| <code>"extraResources"</code> \| <code>"asarUnpack"</code> | 
-| defaultSrc | <code>string</code> | 
-| defaultDest | <code>string</code> | 
-| allowAdvancedMatching | <code>boolean</code> | 
-| macroExpander | <code>callback</code> | 
-| customBuildOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
-
-<a name="module_electron-builder/out/fileTransformer"></a>
-
-## electron-builder/out/fileTransformer
-
-* [electron-builder/out/fileTransformer](#module_electron-builder/out/fileTransformer)
-    * [`.CompilerHost`](#CompilerHost)
-        * [`.compile(file)`](#module_electron-builder/out/fileTransformer.CompilerHost+compile) ⇒ <code>any</code>
-        * [`.saveConfiguration()`](#module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createElectronCompilerHost(projectDir, cacheDir)`](#module_electron-builder/out/fileTransformer.createElectronCompilerHost) ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
-    * [`.createTransformer(srcDir, extraMetadata)`](#module_electron-builder/out/fileTransformer.createTransformer) ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
-    * [`.isElectronCompileUsed(info)`](#module_electron-builder/out/fileTransformer.isElectronCompileUsed) ⇒ <code>boolean</code>
-
-<a name="CompilerHost"></a>
-
-### `CompilerHost`
-**Kind**: interface of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
-
-* [`.CompilerHost`](#CompilerHost)
-    * [`.compile(file)`](#module_electron-builder/out/fileTransformer.CompilerHost+compile) ⇒ <code>any</code>
-    * [`.saveConfiguration()`](#module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration) ⇒ <code>Promise&lt;any&gt;</code>
-
-<a name="module_electron-builder/out/fileTransformer.CompilerHost+compile"></a>
-
-#### `compilerHost.compile(file)` ⇒ <code>any</code>
-**Kind**: instance method of [<code>CompilerHost</code>](#CompilerHost)  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileTransformer.CompilerHost+saveConfiguration"></a>
-
-#### `compilerHost.saveConfiguration()` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>CompilerHost</code>](#CompilerHost)  
-<a name="module_electron-builder/out/fileTransformer.createElectronCompilerHost"></a>
-
-### `electron-builder/out/fileTransformer.createElectronCompilerHost(projectDir, cacheDir)` ⇒ <code>Promise&lt;[CompilerHost](#CompilerHost)&gt;</code>
-**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
-
-| Param | Type |
-| --- | --- |
-| projectDir | <code>string</code> | 
-| cacheDir | <code>string</code> | 
-
-<a name="module_electron-builder/out/fileTransformer.createTransformer"></a>
-
-### `electron-builder/out/fileTransformer.createTransformer(srcDir, extraMetadata)` ⇒ <code>Promise&lt;module:electron-builder-util/out/fs.__type&gt;</code>
-**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
-
-| Param | Type |
-| --- | --- |
-| srcDir | <code>string</code> | 
-| extraMetadata | <code>any</code> | 
-
-<a name="module_electron-builder/out/fileTransformer.isElectronCompileUsed"></a>
-
-### `electron-builder/out/fileTransformer.isElectronCompileUsed(info)` ⇒ <code>boolean</code>
-**Kind**: method of [<code>electron-builder/out/fileTransformer</code>](#module_electron-builder/out/fileTransformer)  
-
-| Param | Type |
-| --- | --- |
-| info | <code>[BuildInfo](Options#BuildInfo)</code> | 
 
 <a name="module_electron-builder/out/forge/forge-maker"></a>
 
@@ -1293,57 +1066,24 @@ Developer API only. See [[Options]] for user documentation.
 | guid| <code>string</code> \| <code>null</code> | 
 | warningsAsErrors| <code>boolean</code> | 
 
-<a name="module_electron-builder/out/packager/dirPackager"></a>
-
-## electron-builder/out/packager/dirPackager
-
-* [electron-builder/out/packager/dirPackager](#module_electron-builder/out/packager/dirPackager)
-    * [`.unpackElectron(packager, out, platform, arch, version)`](#module_electron-builder/out/packager/dirPackager.unpackElectron) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.unpackMuon(packager, out, platform, arch, version)`](#module_electron-builder/out/packager/dirPackager.unpackMuon) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="module_electron-builder/out/packager/dirPackager.unpackElectron"></a>
-
-### `electron-builder/out/packager/dirPackager.unpackElectron(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/packager/dirPackager</code>](#module_electron-builder/out/packager/dirPackager)  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| out | <code>string</code> | 
-| platform | <code>string</code> | 
-| arch | <code>string</code> | 
-| version | <code>string</code> | 
-
-<a name="module_electron-builder/out/packager/dirPackager.unpackMuon"></a>
-
-### `electron-builder/out/packager/dirPackager.unpackMuon(packager, out, platform, arch, version)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/packager/dirPackager</code>](#module_electron-builder/out/packager/dirPackager)  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| out | <code>string</code> | 
-| platform | <code>string</code> | 
-| arch | <code>string</code> | 
-| version | <code>string</code> | 
-
 <a name="module_electron-builder/out/packager/mac"></a>
 
 ## electron-builder/out/packager/mac
 
 * [electron-builder/out/packager/mac](#module_electron-builder/out/packager/mac)
-    * [`.createApp(packager, appOutDir)`](#module_electron-builder/out/packager/mac.createApp) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.createApp(packager, appOutDir, asarIntegrity)`](#module_electron-builder/out/packager/mac.createApp) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.filterCFBundleIdentifier(identifier)`](#module_electron-builder/out/packager/mac.filterCFBundleIdentifier) ⇒ <code>string</code>
 
 <a name="module_electron-builder/out/packager/mac.createApp"></a>
 
-### `electron-builder/out/packager/mac.createApp(packager, appOutDir)` ⇒ <code>Promise&lt;void&gt;</code>
+### `electron-builder/out/packager/mac.createApp(packager, appOutDir, asarIntegrity)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: method of [<code>electron-builder/out/packager/mac</code>](#module_electron-builder/out/packager/mac)  
 
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | appOutDir | <code>string</code> | 
+| asarIntegrity | <code>module:asar-integrity.AsarIntegrity</code> | 
 
 <a name="module_electron-builder/out/packager/mac.filterCFBundleIdentifier"></a>
 
@@ -1746,37 +1486,6 @@ Developer API only. See [[Options]] for user documentation.
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 
-<a name="module_electron-builder/out/readInstalled"></a>
-
-## electron-builder/out/readInstalled
-
-* [electron-builder/out/readInstalled](#module_electron-builder/out/readInstalled)
-    * [`.Dependency`](#Dependency)
-    * [`.readInstalled(folder)`](#module_electron-builder/out/readInstalled.readInstalled) ⇒ <code>Promise&lt;Map&lt;string \| [Dependency](#Dependency)&gt;&gt;</code>
-
-<a name="Dependency"></a>
-
-### `Dependency`
-**Kind**: interface of [<code>electron-builder/out/readInstalled</code>](#module_electron-builder/out/readInstalled)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **name**| <code>string</code> | 
-| **path**| <code>string</code> | 
-| **extraneous**| <code>boolean</code> | 
-| **optional**| <code>boolean</code> | 
-| **dependencies**| <code>Object&lt;string, any&gt;</code> | 
-
-<a name="module_electron-builder/out/readInstalled.readInstalled"></a>
-
-### `electron-builder/out/readInstalled.readInstalled(folder)` ⇒ <code>Promise&lt;Map&lt;string \| [Dependency](#Dependency)&gt;&gt;</code>
-**Kind**: method of [<code>electron-builder/out/readInstalled</code>](#module_electron-builder/out/readInstalled)  
-
-| Param | Type |
-| --- | --- |
-| folder | <code>string</code> | 
-
 <a name="module_electron-builder/out/repositoryInfo"></a>
 
 ## electron-builder/out/repositoryInfo
@@ -1864,40 +1573,6 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | appOutDir | <code>string</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/targets/archive"></a>
-
-## electron-builder/out/targets/archive
-
-* [electron-builder/out/targets/archive](#module_electron-builder/out/targets/archive)
-    * [`.archive(compression, format, outFile, dirToArchive, withoutDir)`](#module_electron-builder/out/targets/archive.archive) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.tar(compression, format, outFile, dirToArchive, isMacApp)`](#module_electron-builder/out/targets/archive.tar) ⇒ <code>Promise&lt;string&gt;</code>
-
-<a name="module_electron-builder/out/targets/archive.archive"></a>
-
-### `electron-builder/out/targets/archive.archive(compression, format, outFile, dirToArchive, withoutDir)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of [<code>electron-builder/out/targets/archive</code>](#module_electron-builder/out/targets/archive)  
-
-| Param | Type |
-| --- | --- |
-| compression | <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>undefined</code> \| <code>null</code> | 
-| format | <code>string</code> | 
-| outFile | <code>string</code> | 
-| dirToArchive | <code>string</code> | 
-| withoutDir | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/targets/archive.tar"></a>
-
-### `electron-builder/out/targets/archive.tar(compression, format, outFile, dirToArchive, isMacApp)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of [<code>electron-builder/out/targets/archive</code>](#module_electron-builder/out/targets/archive)  
-
-| Param | Type |
-| --- | --- |
-| compression | <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>undefined</code> \| <code>null</code> | 
-| format | <code>string</code> | 
-| outFile | <code>string</code> | 
-| dirToArchive | <code>string</code> | 
-| isMacApp | <code>boolean</code> | 
 
 <a name="module_electron-builder/out/targets/ArchiveTarget"></a>
 
@@ -2031,51 +1706,6 @@ Developer API only. See [[Options]] for user documentation.
 | --- | --- |
 | appOutDir | <code>string</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/targets/license"></a>
-
-## electron-builder/out/targets/license
-
-* [electron-builder/out/targets/license](#module_electron-builder/out/targets/license)
-    * [`.LicenseFile`](#LicenseFile)
-    * [`.lcid`](#module_electron-builder/out/targets/license.lcid) : <code>any</code>
-    * [`.getLicenseFiles(packager)`](#module_electron-builder/out/targets/license.getLicenseFiles) ⇒ <code>Promise&lt;Array&lt;[LicenseFile](#LicenseFile)&gt;&gt;</code>
-    * [`.toLangWithRegion(lang)`](#module_electron-builder/out/targets/license.toLangWithRegion) ⇒ <code>string</code>
-
-<a name="LicenseFile"></a>
-
-### `LicenseFile`
-**Kind**: interface of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **file**| <code>string</code> | 
-| **lang**| <code>string</code> | 
-| **langWithRegion**| <code>string</code> | 
-| **langName**| <code>string</code> | 
-
-<a name="module_electron-builder/out/targets/license.lcid"></a>
-
-### `electron-builder/out/targets/license.lcid` : <code>any</code>
-**Kind**: constant of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
-<a name="module_electron-builder/out/targets/license.getLicenseFiles"></a>
-
-### `electron-builder/out/targets/license.getLicenseFiles(packager)` ⇒ <code>Promise&lt;Array&lt;[LicenseFile](#LicenseFile)&gt;&gt;</code>
-**Kind**: method of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-
-<a name="module_electron-builder/out/targets/license.toLangWithRegion"></a>
-
-### `electron-builder/out/targets/license.toLangWithRegion(lang)` ⇒ <code>string</code>
-**Kind**: method of [<code>electron-builder/out/targets/license</code>](#module_electron-builder/out/targets/license)  
-
-| Param | Type |
-| --- | --- |
-| lang | <code>string</code> | 
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
 
@@ -2399,36 +2029,6 @@ Developer API only. See [[Options]] for user documentation.
 
 #### `webInstallerTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
-<a name="module_electron-builder/out/util/filter"></a>
-
-## electron-builder/out/util/filter
-
-* [electron-builder/out/util/filter](#module_electron-builder/out/util/filter)
-    * [`.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)`](#module_electron-builder/out/util/filter.createFilter) ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-    * [`.hasMagic(pattern)`](#module_electron-builder/out/util/filter.hasMagic) ⇒ <code>boolean</code>
-
-<a name="module_electron-builder/out/util/filter.createFilter"></a>
-
-### `electron-builder/out/util/filter.createFilter(src, patterns, ignoreFiles, rawFilter, excludePatterns)` ⇒ <code>module:electron-builder-util/out/fs.__type</code>
-**Kind**: method of [<code>electron-builder/out/util/filter</code>](#module_electron-builder/out/util/filter)  
-
-| Param | Type |
-| --- | --- |
-| src | <code>string</code> | 
-| patterns | <code>Array&lt;minimatch:Minimatch&gt;</code> | 
-| ignoreFiles | <code>Set&lt;string&gt;</code> | 
-| rawFilter | <code>callback</code> | 
-| excludePatterns | <code>Array&lt;minimatch:Minimatch&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/util/filter.hasMagic"></a>
-
-### `electron-builder/out/util/filter.hasMagic(pattern)` ⇒ <code>boolean</code>
-**Kind**: method of [<code>electron-builder/out/util/filter</code>](#module_electron-builder/out/util/filter)  
-
-| Param | Type |
-| --- | --- |
-| pattern | <code>minimatch:Minimatch</code> | 
-
 <a name="module_electron-builder/out/util/readPackageJson"></a>
 
 ## electron-builder/out/util/readPackageJson

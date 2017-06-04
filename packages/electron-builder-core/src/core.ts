@@ -237,28 +237,6 @@ export interface Protocol {
   readonly schemes: Array<string>
 }
 
-/**
- * `directories`
- */
-export interface MetadataDirectories {
-  /**
-   * The path to build resources.
-   * @default build
-   */
-  readonly buildResources?: string | null
-
-  /**
-   * The output directory.
-   * @default dist
-   */
-  readonly output?: string | null
-
-  /**
-   * The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
-   */
-  readonly app?: string | null
-}
-
 export interface SourceRepositoryInfo {
   type: string
   domain: string

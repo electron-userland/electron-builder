@@ -3,12 +3,11 @@
 ## electron-builder-core
 
 * [electron-builder-core](#module_electron-builder-core)
-    * [`.AsarOptions`](#AsarOptions)
+    * [`.AsarOptions`](#AsarOptions) ⇐ <code>module:asar-integrity.AsarIntegrityOptions</code>
     * [`.AuthorMetadata`](#AuthorMetadata)
     * [`.BeforeBuildContext`](#BeforeBuildContext)
     * [`.FileAssociation`](#FileAssociation)
     * [`.FilePattern`](#FilePattern)
-    * [`.MetadataDirectories`](#MetadataDirectories)
     * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
     * [`.Protocol`](#Protocol)
     * [`.RepositoryInfo`](#RepositoryInfo)
@@ -30,8 +29,9 @@
 
 <a name="AsarOptions"></a>
 
-### `AsarOptions`
+### `AsarOptions` ⇐ <code>module:asar-integrity.AsarIntegrityOptions</code>
 **Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
+**Extends**: <code>module:asar-integrity.AsarIntegrityOptions</code>  
 **Properties**
 
 | Name | Type |
@@ -95,20 +95,6 @@ On Windows works only if [nsis.perMachine](https://github.com/electron-userland/
 | from| <code>string</code> | 
 | to| <code>string</code> | 
 | filter| <code>Array&lt;string&gt;</code> \| <code>string</code> | 
-
-<a name="MetadataDirectories"></a>
-
-### `MetadataDirectories`
-`directories`
-
-**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| buildResources = <code>&quot;build&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-buildResources"></a>The path to build resources. |
-| output = <code>&quot;dist&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-output"></a>The output directory. |
-| app| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory. |
 
 <a name="PlatformSpecificBuildOptions"></a>
 

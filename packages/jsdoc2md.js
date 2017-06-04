@@ -49,6 +49,16 @@ async function main() {
 
   const developerFiles = (await globby([
     "builder/**/*.js",
+    "!**/*-dirPackager.js",
+    "!***/*-asarUtil.js",
+    "!***/*-fileMatcher.js",
+    "!***/*-fileTransformer.js",
+    "!***/*-asar.js",
+    "!***/*-archive.js",
+    "!***/*-readInstalled.js",
+    "!***/*-cliOptions.js",
+    "!***/*-license.js",
+    "!***/*-util-filter.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -57,9 +67,9 @@ async function main() {
 
   const pages = [
     {page: "Options.md", pageUrl: "Options", mainHeader: "API", files: userFiles},
+    {page: "api/electron-builder.md", pageUrl: "electron-builder", files: developerFiles},
     {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
-    {page: "api/electron-builder.md", pageUrl: "electron-builder", files: developerFiles},
     {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
     {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
@@ -91,6 +101,22 @@ async function render(pages, jsdoc2MdOptions) {
 
     page.dataMap = map
   }
+
+  const filtered = []
+  pages[0].data = pages[0].data.filter(member => {
+    if (member.name.endsWith("Options") || member.kind === "module" || member.name === "Config" || member.name.startsWith("Metadata") || member.name.startsWith("Dmg")) {
+      return true
+    }
+
+    pages[0].dataMap.delete(member.id)
+    pages[1].dataMap.set(member.id, member)
+
+    filtered.push(member)
+    return false
+  })
+
+  pages[1].data = filtered.concat(pages[1].data)
+  pages[1].data.unshift(pages[0].data[0])
 
   for (const page of pages) {
     let content = await jsdoc2md.render(Object.assign({

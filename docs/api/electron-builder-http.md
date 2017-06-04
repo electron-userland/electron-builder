@@ -253,6 +253,7 @@
 | headers| <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
 | skipDirCreation| <code>boolean</code> | 
 | sha2| <code>string</code> \| <code>null</code> | 
+| sha512| <code>string</code> \| <code>null</code> | 
 | **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
 
 <a name="module_electron-builder-http.DownloadOptions+onProgress"></a>

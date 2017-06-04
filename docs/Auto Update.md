@@ -142,6 +142,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 | **name**| <code>string</code> | 
 | **url**| <code>string</code> | 
 | sha2| <code>string</code> | 
+| sha512| <code>string</code> | 
 | headers| <code>Object</code> | 
 
 <a name="Logger"></a>

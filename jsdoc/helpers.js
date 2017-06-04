@@ -66,25 +66,15 @@ function _link(input, options) {
     }
   }
   else {
-    let isOnCurrentPage = false
-    const firstMember = options.data.root[0]
-    function isOurPage(otherRoot) {
-      return firstMember.id === otherRoot[0].id
-    }
-    
-    for (const page of exports.pages) {
-      if (isOurPage(page.data)) {
-        isOnCurrentPage = page.dataMap.has(linked.id)
-        break
-      }
-    }
-    
     let pageUrl = ""
-    if (!isOnCurrentPage) {
-      for (const page of exports.pages) {
-        if (!isOurPage(page.data) && page.dataMap.has(linked.id)) {
+    for (const page of exports.pages) {
+      if (page.dataMap.has(linked.id)) {
+        const a = page.data
+        const b = options.data.root
+        if (a.length !== b.length && a[a.length - 1] !== b[a.length - 1]) {
           pageUrl = page.pageUrl
         }
+        break
       }
     }
     output.url = `${pageUrl}#${anchorName.call(linked, options)}`
@@ -150,27 +140,16 @@ function identifierToLink(id, root) {
     }
     return output
   }
-  
-  let isOnCurrentPage = false
-  const firstMember = root[0]
-
-  function isOurPage(otherRoot) {
-    return firstMember.id === otherRoot[0].id
-  }
-
-  for (const page of exports.pages) {
-    if (isOurPage(page.data)) {
-      isOnCurrentPage = page.dataMap.has(linked.id)
-      break
-    }
-  }
 
   let pageUrl = ""
-  if (!isOnCurrentPage) {
-    for (const page of exports.pages) {
-      if (!isOurPage(page.data) && page.dataMap.has(linked.id)) {
+  for (const page of exports.pages) {
+    if (page.dataMap.has(linked.id)) {
+      const a = page.data
+      const b = root
+      if (a.length !== b.length && a[a.length - 1] !== b[a.length - 1]) {
         pageUrl = page.pageUrl
       }
+      break
     }
   }
   return `[${linked.name}](${pageUrl}#${anchorName.call(linked)})`
