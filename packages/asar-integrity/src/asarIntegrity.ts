@@ -10,14 +10,14 @@ export interface AsarIntegrityOptions {
    *
    * @default false
    */
-  readonly externalAllowed: Boolean
+  readonly externalAllowed?: Boolean
 }
 
 export interface AsarIntegrity extends AsarIntegrityOptions {
   checksums: { [key: string]: string; }
 }
 
-export async function computeData(resourcesPath: string, options?: AsarIntegrityOptions): Promise<AsarIntegrity> {
+export async function computeData(resourcesPath: string, options?: AsarIntegrityOptions | null): Promise<AsarIntegrity> {
   // sort to produce constant result
   const names = (await readdir(resourcesPath)).filter(it => it.endsWith(".asar")).sort()
   const checksums = await BluebirdPromise.map(names, it => hashFile(path.join(resourcesPath, it), "sha512", "base64"))

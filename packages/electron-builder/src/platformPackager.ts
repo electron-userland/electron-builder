@@ -1,3 +1,4 @@
+import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, AsarOptions, FileAssociation, getArchSuffix, Platform, PlatformSpecificBuildOptions, Target, TargetSpecificOptions } from "electron-builder-core"
 import { asArray, debug, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
@@ -15,7 +16,6 @@ import { Config } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { readInstalled } from "./readInstalled"
-import { computeData } from "asar-integrity"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions
@@ -209,7 +209,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await BluebirdPromise.all(promises)
 
     if (platformName === "darwin" || platformName === "mas") {
-      await (<any>require("./packager/mac")).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath))
+      await (<any>require("./packager/mac")).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
     }
 
     await copyFiles(extraResourceMatchers)

@@ -1,3 +1,4 @@
+import { AsarIntegrityOptions } from "asar-integrity"
 import { Publish } from "electron-builder-http/out/publishOptions"
 
 export enum Arch {
@@ -160,7 +161,7 @@ export interface FilePattern {
   filter?: Array<string> | string
 }
 
-export interface AsarOptions {
+export interface AsarOptions extends AsarIntegrityOptions {
   smartUnpack?: boolean
 
   ordering?: string | null
