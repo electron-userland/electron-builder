@@ -33,7 +33,7 @@ export async function tar(compression: CompressionLevel | n, format: string, out
 
   const args = [info.flag, "-cf", outFile]
   if (!isMacApp) {
-    args.push("--transform", `s,^\.,${path.basename(outFile, "." + format)},`)
+    args.push("--transform", `s,^\\.,${path.basename(outFile, "." + format)},`)
   }
   args.push(isMacApp ? path.basename(dirToArchive) : ".")
   await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
