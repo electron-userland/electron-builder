@@ -21,7 +21,7 @@
 !insertmacro MUI_LANGUAGE "Polish"
 !insertmacro MUI_LANGUAGE "Ukrainian"
 !insertmacro MUI_LANGUAGE "Czech"
-#!insertmacro MUI_LANGUAGE "Slovak"
+!insertmacro MUI_LANGUAGE "Slovak"
 #!insertmacro MUI_LANGUAGE "Croatian"
 #!insertmacro MUI_LANGUAGE "Bulgarian"
 !insertmacro MUI_LANGUAGE "Hungarian"

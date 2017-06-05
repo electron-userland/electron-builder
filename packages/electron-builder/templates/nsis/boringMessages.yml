@@ -1,3 +1,4 @@
+# boring installer messages, see messages.yml for one-click installer messages
 chooseInstallationOptions:
   en: Choose Installation Options
   ru: Выберите опции установки
