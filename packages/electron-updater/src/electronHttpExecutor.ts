@@ -65,7 +65,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
   }
 
 
-  protected doRequest(options: any, callback: (response: any) => void): any {
+  public doRequest(options: any, callback: (response: any) => void): any {
     const request = (<any>net).request(Object.assign({session: (<any>session).fromPartition(NET_SESSION_NAME)}, options), callback)
     this.addProxyLoginHandler(request)
     return request

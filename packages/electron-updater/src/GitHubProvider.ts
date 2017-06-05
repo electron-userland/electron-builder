@@ -61,8 +61,9 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     let result: UpdateInfo
     const channelFile = getChannelFilename(getDefaultChannelName())
     const requestOptions = Object.assign({path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined}, this.baseUrl)
+    let rawData: string
     try {
-      result = safeLoad(await request<string>(requestOptions, cancellationToken))
+      rawData = await request<string>(requestOptions, cancellationToken)
     }
     catch (e) {
       if (!this.updater.allowPrerelease) {
@@ -71,6 +72,13 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
         }
       }
       throw e
+    }
+
+    try {
+      result = safeLoad(rawData)
+    }
+    catch (e) {
+      throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${formatUrl(<any>requestOptions)}): ${e.stack || e.message}, rawData: ${rawData}`)
     }
 
     Provider.validateUpdateInfo(result)

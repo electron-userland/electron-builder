@@ -188,10 +188,10 @@ export abstract class HttpExecutor<REQUEST> {
   }
 }
 
-class DigestTransform extends Transform {
+export class DigestTransform extends Transform {
   private readonly digester: Hash
 
-  constructor(private readonly expected: string, algorithm: string, private readonly encoding: "hex" | "base64" | "latin1") {
+  constructor(private readonly expected: string, private readonly algorithm: string, private readonly encoding: "hex" | "base64" | "latin1") {
     super()
 
     this.digester = createHash(algorithm)
@@ -204,7 +204,7 @@ class DigestTransform extends Transform {
 
   _flush(callback: Function): void {
     const hash = this.digester.digest(this.encoding)
-    callback(hash === this.expected ? null : new Error(`SHA2 checksum mismatch, expected ${this.expected}, got ${hash}`))
+    callback(hash === this.expected ? null : new Error(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${hash}`))
   }
 }
 
@@ -227,7 +227,7 @@ function checkSha2(sha2Header: string | null | undefined, sha2: string | null | 
   return true
 }
 
-function safeGetHeader(response: any, headerKey: string) {
+export function safeGetHeader(response: any, headerKey: string) {
   const value = response.headers[headerKey]
   if (value == null) {
     return null

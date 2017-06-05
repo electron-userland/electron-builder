@@ -71,6 +71,8 @@ export abstract class AppUpdater extends EventEmitter {
 
   private currentVersion: string
 
+  protected httpExecutor: ElectronHttpExecutor
+
   constructor(options: PublishConfiguration | null | undefined, app?: any) {
     super()
 
@@ -86,7 +88,8 @@ export abstract class AppUpdater extends EventEmitter {
     }
     else {
       this.app = require("electron").app
-      executorHolder.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
+      executorHolder.httpExecutor = this.httpExecutor
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
           if (this.logger != null) {
