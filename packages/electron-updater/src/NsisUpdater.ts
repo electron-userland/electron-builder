@@ -44,7 +44,7 @@ export class NsisUpdater extends AppUpdater {
     }
     catch (e) {
       try {
-        //await remove(tempDir)
+        await remove(tempDir)
       }
       catch (ignored) {
         // ignored
@@ -56,7 +56,7 @@ export class NsisUpdater extends AppUpdater {
           logger.info("Cancelled")
         }
       }
-      //throw e
+      throw e
     }
 
     let hasValidSignature = await this.spawnVerifySignature(tempFile)
