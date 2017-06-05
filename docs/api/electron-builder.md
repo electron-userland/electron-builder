@@ -30,8 +30,6 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/repositoryInfo">electron-builder/out/repositoryInfo</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/targets/appImage">electron-builder/out/targets/appImage</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/appx">electron-builder/out/targets/appx</a></dt>
@@ -39,8 +37,6 @@ Developer API only. See [[Options]] for user documentation.
 <dt><a href="#module_electron-builder/out/targets/ArchiveTarget">electron-builder/out/targets/ArchiveTarget</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/dmg">electron-builder/out/targets/dmg</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/targets/dmgLicense">electron-builder/out/targets/dmgLicense</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/fpm">electron-builder/out/targets/fpm</a></dt>
 <dd></dd>
@@ -61,8 +57,6 @@ Developer API only. See [[Options]] for user documentation.
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/winPackager">electron-builder/out/winPackager</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/yarn">electron-builder/out/yarn</a></dt>
 <dd></dd>
 </dl>
 
@@ -1486,36 +1480,6 @@ Developer API only. See [[Options]] for user documentation.
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 
-<a name="module_electron-builder/out/repositoryInfo"></a>
-
-## electron-builder/out/repositoryInfo
-
-* [electron-builder/out/repositoryInfo](#module_electron-builder/out/repositoryInfo)
-    * [`.RepositorySlug`](#RepositorySlug)
-    * [`.getRepositoryInfo(projectDir, metadata, devMetadata)`](#module_electron-builder/out/repositoryInfo.getRepositoryInfo) ⇒ <code>Promise&lt; \| module:hosted-git-info.Info&gt;</code>
-
-<a name="RepositorySlug"></a>
-
-### `RepositorySlug`
-**Kind**: interface of [<code>electron-builder/out/repositoryInfo</code>](#module_electron-builder/out/repositoryInfo)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **user**| <code>string</code> | 
-| **project**| <code>string</code> | 
-
-<a name="module_electron-builder/out/repositoryInfo.getRepositoryInfo"></a>
-
-### `electron-builder/out/repositoryInfo.getRepositoryInfo(projectDir, metadata, devMetadata)` ⇒ <code>Promise&lt; \| module:hosted-git-info.Info&gt;</code>
-**Kind**: method of [<code>electron-builder/out/repositoryInfo</code>](#module_electron-builder/out/repositoryInfo)  
-
-| Param | Type |
-| --- | --- |
-| projectDir | <code>string</code> | 
-| metadata | <code>[Metadata](Options#Metadata)</code> | 
-| devMetadata | <code>[Metadata](Options#Metadata)</code> | 
-
 <a name="module_electron-builder/out/targets/appImage"></a>
 
 ## electron-builder/out/targets/appImage
@@ -1664,19 +1628,6 @@ Developer API only. See [[Options]] for user documentation.
 | dmgPath | <code>string</code> | 
 | readWrite | <code>boolean</code> | 
 | task | <code>callback</code> | 
-
-<a name="module_electron-builder/out/targets/dmgLicense"></a>
-
-## electron-builder/out/targets/dmgLicense
-<a name="module_electron-builder/out/targets/dmgLicense.addLicenseToDmg"></a>
-
-### `electron-builder/out/targets/dmgLicense.addLicenseToDmg(packager, dmgPath)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/targets/dmgLicense</code>](#module_electron-builder/out/targets/dmgLicense)  
-
-| Param | Type |
-| --- | --- |
-| packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| dmgPath | <code>string</code> | 
 
 <a name="module_electron-builder/out/targets/fpm"></a>
 
@@ -2526,67 +2477,6 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | appInfo | <code>[AppInfo](#AppInfo)</code> | 
-
-<a name="module_electron-builder/out/yarn"></a>
-
-## electron-builder/out/yarn
-
-* [electron-builder/out/yarn](#module_electron-builder/out/yarn)
-    * [`.DesktopFrameworkInfo`](#DesktopFrameworkInfo)
-    * [`.getGypEnv(frameworkInfo, platform, arch, buildFromSource)`](#module_electron-builder/out/yarn.getGypEnv) ⇒ <code>any</code>
-    * [`.installOrRebuild(config, appDir, frameworkInfo, platform, arch, forceInstall)`](#module_electron-builder/out/yarn.installOrRebuild) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.rebuild(appDir, frameworkInfo, platform, arch, additionalArgs, buildFromSource)`](#module_electron-builder/out/yarn.rebuild) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="DesktopFrameworkInfo"></a>
-
-### `DesktopFrameworkInfo`
-**Kind**: interface of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **version**| <code>string</code> | 
-| **useCustomDist**| <code>boolean</code> | 
-
-<a name="module_electron-builder/out/yarn.getGypEnv"></a>
-
-### `electron-builder/out/yarn.getGypEnv(frameworkInfo, platform, arch, buildFromSource)` ⇒ <code>any</code>
-**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
-
-| Param | Type |
-| --- | --- |
-| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
-| platform | <code>string</code> | 
-| arch | <code>string</code> | 
-| buildFromSource | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/yarn.installOrRebuild"></a>
-
-### `electron-builder/out/yarn.installOrRebuild(config, appDir, frameworkInfo, platform, arch, forceInstall)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
-
-| Param | Type |
-| --- | --- |
-| config | <code>[Config](Options#Config)</code> | 
-| appDir | <code>string</code> | 
-| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
-| platform | <code>string</code> | 
-| arch | <code>string</code> | 
-| forceInstall | <code>boolean</code> | 
-
-<a name="module_electron-builder/out/yarn.rebuild"></a>
-
-### `electron-builder/out/yarn.rebuild(appDir, frameworkInfo, platform, arch, additionalArgs, buildFromSource)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/yarn</code>](#module_electron-builder/out/yarn)  
-
-| Param | Type |
-| --- | --- |
-| appDir | <code>string</code> | 
-| frameworkInfo | <code>[DesktopFrameworkInfo](#DesktopFrameworkInfo)</code> | 
-| platform | <code>string</code> | 
-| arch | <code>string</code> | 
-| additionalArgs | <code>Array&lt;string&gt;</code> | 
-| buildFromSource | <code>boolean</code> | 
 
 
 <!-- end of generated block -->

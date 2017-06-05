@@ -59,6 +59,9 @@ async function main() {
     "!***/*-cliOptions.js",
     "!***/*-license.js",
     "!***/*-util-filter.js",
+    "!***/*-yarn.js",
+    "!***/*-dmgLicense.js",
+    "!***/*-repositoryInfo.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

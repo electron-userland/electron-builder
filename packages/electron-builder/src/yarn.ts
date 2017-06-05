@@ -22,6 +22,10 @@ export interface DesktopFrameworkInfo {
   useCustomDist: boolean
 }
 
+function getElectronGypCacheDir() {
+  return path.join(homedir(), ".electron-gyp")
+}
+
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
   if (!frameworkInfo.useCustomDist) {
     return Object.assign({}, process.env, {
@@ -32,7 +36,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
     })
   }
 
-  const gypHome = path.join(homedir(), ".electron-gyp")
+  // https://github.com/nodejs/node-gyp/issues/21
   return Object.assign({}, process.env, {
     npm_config_disturl: "https://atom.io/download/electron",
     npm_config_target: frameworkInfo.version,
@@ -41,8 +45,8 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
     npm_config_target_arch: arch,
     npm_config_platform: platform,
     npm_config_build_from_source: buildFromSource,
-    HOME: gypHome,
-    USERPROFILE: gypHome,
+    npm_config_devdir: getElectronGypCacheDir(),
+
   })
 }
 
@@ -58,6 +62,8 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
     }
     execArgs.push("--cache-min", "999999999")
   }
+
+  execArgs.push("--devdir", getElectronGypCacheDir())
 
   if (execPath == null) {
     execPath = getPackageToolPath()
