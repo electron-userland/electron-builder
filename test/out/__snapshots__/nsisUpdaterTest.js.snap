@@ -141,3 +141,11 @@ Array [
   "error",
 ]
 `;
+
+exports[`test update invalid signature 1`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
+`;

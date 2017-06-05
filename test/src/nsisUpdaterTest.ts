@@ -320,14 +320,12 @@ test("test update invalid signature", async () => {
   })
   updater.autoDownload = false
 
-  const progressEvents: Array<any> = []
-
-  updater.signals.progress(it => progressEvents.push(it))
+  const actualEvents = trackEvents(updater)
 
   await updater.checkForUpdates()
   await updater.downloadUpdate()
 
-  expect(progressEvents.length).toBe(0)
+  expect(actualEvents).toMatchSnapshot()
 })
 
 test("cancel download with progress", async () => {
