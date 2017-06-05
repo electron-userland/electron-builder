@@ -70,10 +70,10 @@ export class NsisUpdater extends AppUpdater {
       return tempFile
     } else {
       const message = `New version ${this.versionInfo!.version} is not signed by the application owner`
+      this.emit("error", new Error(message), message)
       if (logger != null) {
         logger.error(message)
       }
-      this.emit("error", new Error(message), message)
       return await remove(tempDir)
     }
   }
