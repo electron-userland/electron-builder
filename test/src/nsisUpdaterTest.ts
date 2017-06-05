@@ -273,8 +273,16 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    url: "https://develar.s3.amazonaws.com/test"
   })
+  /*
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/testUpdateValidSignature",
+    publisherName: "Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)",
+    forceCodeSigningVerification: true
+  })
+  */
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -291,6 +299,25 @@ test("test download progress", async () => {
   expect(lastEvent.percent).toBe(100)
   expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
   expect(lastEvent.transferred).toBe(lastEvent.total)
+})
+
+test("test update invalid signature", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "generic",
+    url: "https://develar.s3.amazonaws.com/test",
+    forceCodeSigningVerification: true
+  })
+  updater.autoDownload = false
+
+  const progressEvents: Array<any> = []
+
+  updater.signals.progress(it => progressEvents.push(it))
+
+  await updater.checkForUpdates()
+  await updater.downloadUpdate()
+
+  expect(progressEvents.length).toBe(0)
 })
 
 test("cancel download with progress", async () => {
@@ -322,7 +349,7 @@ test("cancel download with progress", async () => {
   expect(cancelled).toBe(true)
 })
 
-async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions): Promise<string> {
+async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions | any): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempFile("update-config"), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))
   return updateConfigPath
