@@ -1,28 +1,38 @@
 chooseInstallationOptions:
   en: Choose Installation Options
   ru: Выберите опции установки
+  sk: Vyberte možnosti inštalácie
 chooseUninstallationOptions:
   en: Choose Uninstallation Options
   ru: Выберите опции удаления
+  sk: Vyberte možnosti odinštalovania
 whichInstallationShouldBeRemoved:
   en: Which installation should be removed?
+  sk: Ktorá inštalácia by mala byt odstránená?
 whoShouldThisApplicationBeInstalledFor:
   en: Who should this application be installed for?
+  sk: Pre koho sa ma táto aplikacia inštalovať?
 selectUserMode:
   en: Please select whether you wish to make this software available to all users or just yourself
+  sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
 whichInstallationRemove:
   en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
+  sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť? 
 freshInstallForAll:
   en: Fresh install for all users.
   ru: Новая установка для всех пользователей.
+  sk: Nová inštalácia pre všetkých uživateľov.
 freshInstallForCurrent:
   en: Fresh install for current user only.
   ru: Новая установка только для текущего пользователя.
 onlyForMe:
   en: Only for &me
   ru: Только для &меня
+  sk: Iba pre mňa
 forAll:
   en: Anyone who uses this computer (&all users)
   ru: Для &всех пользователей данного компьютера
+  sk: Pre každého kto použiva tento počitač (všetci uživatelia)
 loginWithAdminAccount:
   en: You need to login with an account that is a member of the admin group to continue...
+  sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
