@@ -1,5 +1,4 @@
 import { spawn } from "child_process"
-import { Platform } from "electron-builder"
 import { download, DownloadOptions } from "electron-builder-http"
 import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
@@ -70,9 +69,11 @@ export class NsisUpdater extends AppUpdater {
       this.emit("update-downloaded", this.versionInfo)
       return tempFile
     } else {
+      const message = `New version ${this.versionInfo!.version} is not signed by the application owner`
       if (logger != null) {
-        logger.error(`New version ${this.versionInfo!.version} is not signed by the application owner`)
+        logger.error(message)
       }
+      this.emit("error", new Error(message), message)
       return await remove(tempDir)
     }
   }
@@ -80,8 +81,8 @@ export class NsisUpdater extends AppUpdater {
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=circuitdev.siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
-  private async spawnVerifySignature(tempUpdateFile: string) : Promise<boolean> {
-    const isWin = Platform.WINDOWS === Platform.fromString(process.platform)
+  private async spawnVerifySignature(tempUpdateFile: string): Promise<boolean> {
+    const isWin = process.platform === "win32"
     if (!isWin) {
       return Promise.resolve(true)
     }
@@ -89,8 +90,8 @@ export class NsisUpdater extends AppUpdater {
     var signVerificationOptions = await this.loadUpdateConfig().then(it => {
       return { publisherName: it.publisherName, forceCodeSigningVerification: it.forceCodeSigningVerification }
     })
-    var publisherName = (signVerificationOptions && signVerificationOptions.publisherName) || ''
-    var forceCodeSigningVerification = (signVerificationOptions && signVerificationOptions.forceCodeSigningVerification)
+    var publisherName = (signVerificationOptions && signVerificationOptions.publisherName) || ""
+    var forceCodeSigningVerification = signVerificationOptions.forceCodeSigningVerification == null ? true : signVerificationOptions.forceCodeSigningVerification
 
     if (!forceCodeSigningVerification) {
       return Promise.resolve(true)
@@ -101,23 +102,23 @@ export class NsisUpdater extends AppUpdater {
         const getSignatureCommand = "Get-AuthenticodeSignature '" + tempUpdateFile + "'"
         const commonNameConstraint = "$_.SignerCertificate.Subject.Contains(\"CN=" + publisherName + "\")"
         const statusConstraint = "$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid)"
-        const constraintCommand = "where {"+ statusConstraint + " -and "+ commonNameConstraint + "}"
+        const constraintCommand = "where {" + statusConstraint + " -and " + commonNameConstraint + "}"
         const verifySignatureCommand = getSignatureCommand + " | " + constraintCommand
         const command = "$certificateInfo = (" + verifySignatureCommand + ") | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }"
         const terminal = "powershell.exe"
 
         var powershellChild = spawn(terminal, [command])
 
-        powershellChild.on('uncaughtException', (error: string) => {
+        powershellChild.on("uncaughtException", (error: string) => {
           if (this.logger) {
-            this.logger.error("uncaughtException: " + error);
+            this.logger.error("uncaughtException: " + error)
           }
           resolve(false)
         })
 
-        powershellChild.on('exit', (code) => {
+        powershellChild.on("exit", (code) => {
           if (this.logger != null) {
-            this.logger.error(`Sign verification finished with code ` + code)
+            this.logger.error("Sign verification finished with code: " + code)
           }
           if (code === 0) {
             resolve(true)

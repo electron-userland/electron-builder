@@ -50,6 +50,7 @@ async function testUpdateFromBintray(app: any) {
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
+    forceCodeSigningVerification: false
   })
 
   const actualEvents: Array<string> = []
@@ -74,6 +75,7 @@ test("downgrade (disallowed)", async () => {
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
+    forceCodeSigningVerification: false
   })
 
   const actualEvents: Array<string> = []
@@ -97,6 +99,7 @@ test("downgrade (disallowed, beta)", async () => {
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
+    forceCodeSigningVerification: false
   })
 
   const actualEvents: Array<string> = []
@@ -121,6 +124,7 @@ test("file url generic", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
+    forceCodeSigningVerification: false
   })
 
   const actualEvents = trackEvents(updater)
@@ -138,6 +142,7 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
+    forceCodeSigningVerification: false
   })
   updater.logger = console
 
@@ -155,6 +160,7 @@ test("file url generic - manual download", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
+    forceCodeSigningVerification: false
   })
   updater.autoDownload = false
 
@@ -174,6 +180,7 @@ test("checkForUpdates several times", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
+    forceCodeSigningVerification: false
   })
 
   const actualEvents = trackEvents(updater)
@@ -194,7 +201,8 @@ test("file url github", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
       owner: "develar",
-        repo: "__test_nsis_release",
+      repo: "__test_nsis_release",
+      forceCodeSigningVerification: false
     })
 
   const actualEvents: Array<string> = []
@@ -217,7 +225,8 @@ test("file url github pre-release", async () => {
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
       provider: "github",
       owner: "develar",
-        repo: "__test_nsis_release",
+      repo: "__test_nsis_release",
+      forceCodeSigningVerification: false
     })
 
   const actualEvents: Array<string> = []
@@ -243,6 +252,7 @@ test.skip("file url github private", async () => {
       provider: "github",
       owner: "develar",
       repo: "__test_nsis_release_private",
+      forceCodeSigningVerification: false
     })
 
   const actualEvents: Array<string> = []
@@ -273,16 +283,17 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test"
+    url: "https://develar.s3.amazonaws.com/test",
+    forceCodeSigningVerification: false
   })
   /*
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/testUpdateValidSignature",
-    publisherName: "Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)",
-    forceCodeSigningVerification: true
+    publisherName: "Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)"
   })
   */
+
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -305,8 +316,7 @@ test("test update invalid signature", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
-    forceCodeSigningVerification: true
+    url: "https://develar.s3.amazonaws.com/test"
   })
   updater.autoDownload = false
 
@@ -325,6 +335,7 @@ test("cancel download with progress", async () => {
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/full-test",
+    forceCodeSigningVerification: false
   })
 
   const progressEvents: Array<any> = []

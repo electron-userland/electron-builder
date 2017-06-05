@@ -97,7 +97,7 @@ export class PublishManager implements PublishContext {
         }
 
         const forceCodeSigningVerification = (<WinPackager>packager).forceCodeSigningVerification
-        if (forceCodeSigningVerification) {
+        if (!forceCodeSigningVerification) {
           publishConfig = Object.assign({forceCodeSigningVerification: forceCodeSigningVerification}, publishConfig)
         }
       }
