@@ -316,6 +316,7 @@ test("test update invalid signature", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
+    publisherName: "",
     url: "https://develar.s3.amazonaws.com/test"
   })
   updater.autoDownload = false
