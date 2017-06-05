@@ -59,8 +59,8 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [electron-updater/out/electronHttpExecutor](#module_electron-updater/out/electronHttpExecutor)
     * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
         * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
         * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
+        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="ElectronHttpExecutor"></a>
 
@@ -70,8 +70,8 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
     * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
-    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
+    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
 
@@ -85,6 +85,16 @@ Developer API only. See [[Auto Update]] for user documentation.
 | requestProcessor | <code>callback</code> | 
 | redirectCount | <code>number</code> | 
 
+<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
+
+#### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
+**Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
+
+| Param | Type |
+| --- | --- |
+| options | <code>any</code> | 
+| callback | <code>callback</code> | 
+
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download"></a>
 
 #### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
@@ -95,17 +105,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 | url | <code>string</code> | 
 | destination | <code>string</code> | 
 | options | <code>[DownloadOptions](electron-builder-http#DownloadOptions)</code> | 
-
-<a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
-
-#### `electronHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
 
 <a name="module_electron-updater/out/GenericProvider"></a>
 
@@ -191,7 +190,6 @@ Developer API only. See [[Auto Update]] for user documentation.
     * [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
         * [`.quitAndInstall()`](#module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall)
         * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate) ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
-        * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable)
 
 <a name="MacUpdater"></a>
 
@@ -202,7 +200,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
     * [`.quitAndInstall()`](#module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall)
     * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate) ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
-    * [`.onUpdateAvailable(versionInfo, fileInfo)`](#module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable)
 
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall"></a>
 
@@ -219,17 +216,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 | versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
 | fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
 | cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
-
-<a name="module_electron-updater/out/MacUpdater.MacUpdater+onUpdateAvailable"></a>
-
-#### `macUpdater.onUpdateAvailable(versionInfo, fileInfo)`
-**Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
-| fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
 
 <a name="module_electron-updater/out/NsisUpdater"></a>
 

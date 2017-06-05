@@ -227,6 +227,9 @@
     * [`.RequestHeaders`](#RequestHeaders)
     * [`.Response`](#Response) ⇐ <code>internal:EventEmitter</code>
         * [`.setEncoding(encoding)`](#module_electron-builder-http.Response+setEncoding)
+    * [.DigestTransform](#DigestTransform) ⇐ <code>internal:Transform</code>
+        * [`._flush(callback)`](#module_electron-builder-http.DigestTransform+_flush)
+        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
         * [`.download(url, destination, options)`](#module_electron-builder-http.HttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
@@ -241,6 +244,7 @@
     * [`.download(url, destination, options)`](#module_electron-builder-http.download) ⇒ <code>Promise&lt;string&gt;</code>
     * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>string</code>
     * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+    * [`.safeGetHeader(response, headerKey)`](#module_electron-builder-http.safeGetHeader) ⇒ <code>any</code>
 
 <a name="DownloadOptions"></a>
 
@@ -290,6 +294,36 @@
 | Param | Type |
 | --- | --- |
 | encoding | <code>string</code> | 
+
+<a name="DigestTransform"></a>
+
+### DigestTransform ⇐ <code>internal:Transform</code>
+**Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Extends**: <code>internal:Transform</code>  
+
+* [.DigestTransform](#DigestTransform) ⇐ <code>internal:Transform</code>
+    * [`._flush(callback)`](#module_electron-builder-http.DigestTransform+_flush)
+    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
+
+<a name="module_electron-builder-http.DigestTransform+_flush"></a>
+
+#### `digestTransform._flush(callback)`
+**Kind**: instance method of [<code>DigestTransform</code>](#DigestTransform)  
+
+| Param | Type |
+| --- | --- |
+| callback | <code>function</code> | 
+
+<a name="module_electron-builder-http.DigestTransform+_transform"></a>
+
+#### `digestTransform._transform(chunk, encoding, callback)`
+**Kind**: instance method of [<code>DigestTransform</code>](#DigestTransform)  
+
+| Param | Type |
+| --- | --- |
+| chunk | <code>any</code> | 
+| encoding | <code>string</code> | 
+| callback | <code>function</code> | 
 
 <a name="HttpError"></a>
 
@@ -449,4 +483,14 @@
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
 | data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
+
+<a name="module_electron-builder-http.safeGetHeader"></a>
+
+### `electron-builder-http.safeGetHeader(response, headerKey)` ⇒ <code>any</code>
+**Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+
+| Param | Type |
+| --- | --- |
+| response | <code>any</code> | 
+| headerKey | <code>string</code> | 
 

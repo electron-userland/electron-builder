@@ -42,7 +42,7 @@ export class MacUpdater extends AppUpdater {
       return `http://${address.address}:${address.port}`
     }
 
-    return new BluebirdPromise((resolve, reject) => {
+    return new BluebirdPromise<void>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         if (requestUrl === "/") {

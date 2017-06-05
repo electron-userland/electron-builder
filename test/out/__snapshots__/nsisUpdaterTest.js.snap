@@ -117,13 +117,13 @@ Object {
 exports[`sha512 mismatch error event 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
 
-exports[`sha512 mismatch error event 2`] = `"SHA2 checksum mismatch, expected f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd1, got f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2"`;
+exports[`sha512 mismatch error event 2`] = `"sha512 checksum mismatch, expected Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==, got Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw=="`;
 
 exports[`sha512 mismatch error event 3`] = `
 Array [
