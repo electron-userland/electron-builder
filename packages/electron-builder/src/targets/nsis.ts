@@ -106,10 +106,13 @@ export class NsisTarget extends Target {
 
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch) {
-    await BluebirdPromise.all([
-      copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
-      copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
-    ])
+    var filesToCopy = [];
+    if (this.options.allowElevation === undefined || this.options.allowElevation) {
+      filesToCopy.push(copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false));
+    }
+    filesToCopy.push(copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false));
+
+    await BluebirdPromise.all(filesToCopy)
 
     const packager = this.packager
     const format = this.options.useZip ? "zip" : "7z"

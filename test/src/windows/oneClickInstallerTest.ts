@@ -19,13 +19,14 @@ test("one-click", app({
     },
     nsis: {
       deleteAppDataOnUninstall: true,
+      allowElevation: false
     },
   }
 }, {
   signed: true,
   packed: async (context) => {
     await doTest(context.outDir, true)
-    await expectUpdateMetadata(context, Arch.ia32, true)
+    await expectUpdateMetadata(context, Arch.ia32, true, false)
   }
 }))
 
