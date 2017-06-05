@@ -191,7 +191,7 @@ export abstract class HttpExecutor<REQUEST> {
 class DigestTransform extends Transform {
   private readonly digester: Hash
 
-  constructor(private expected: string, algorithm: string) {
+  constructor(private readonly expected: string, algorithm: string, private readonly encoding: "hex" | "base64" | "latin1") {
     super()
 
     this.digester = createHash(algorithm)
@@ -203,7 +203,7 @@ class DigestTransform extends Transform {
   }
 
   _flush(callback: Function): void {
-    const hash = this.digester.digest("hex")
+    const hash = this.digester.digest(this.encoding)
     callback(hash === this.expected ? null : new Error(`SHA2 checksum mismatch, expected ${this.expected}, got ${hash}`))
   }
 }
@@ -255,10 +255,10 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
   }
 
   if (options.sha512 != null) {
-    streams.push(new DigestTransform(options.sha512, "sha512"))
+    streams.push(new DigestTransform(options.sha512, "sha512", "base64"))
   }
   else if (options.sha2 != null) {
-    streams.push(new DigestTransform(options.sha2, "sha256"))
+    streams.push(new DigestTransform(options.sha2, "sha256", "hex"))
   }
 
   const fileOut = createWriteStream(destination)

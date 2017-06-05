@@ -1,3 +1,4 @@
+import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
@@ -20,7 +21,6 @@ import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { WinPackager } from "../winPackager"
-import { hashFile } from "asar-integrity"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -247,8 +247,8 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 
   const version = packager.appInfo.version
-  let sha2 = new Lazy(() => hashFile(event.file!, "sha256"))
-  let sha512 = new Lazy(() => hashFile(event.file!, "sha512"))
+  const sha2 = new Lazy(() => hashFile(event.file!, "sha256", "hex"))
+  const sha512 = new Lazy(() => hashFile(event.file!, "sha512", "base64"))
   const isMac = packager.platform === Platform.MAC
 
   for (const publishConfig of publishConfigs) {

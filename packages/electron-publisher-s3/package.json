@@ -8,7 +8,7 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out", "s3-client"
+    "out"
   ],
   "dependencies": {
     "fs-extra-p": "^4.3.0",
