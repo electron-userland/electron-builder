@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { executorHolder, RequestHeaders } from "electron-builder-http"
+import { RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
@@ -75,7 +75,7 @@ export abstract class AppUpdater extends EventEmitter {
   private currentVersion: string
 
   /*** @private */
-  protected httpExecutor: ElectronHttpExecutor
+  protected readonly httpExecutor: ElectronHttpExecutor
 
   constructor(options: PublishConfiguration | null | undefined, app?: any) {
     super()
@@ -93,7 +93,6 @@ export abstract class AppUpdater extends EventEmitter {
     else {
       this.app = require("electron").app
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
-      executorHolder.httpExecutor = this.httpExecutor
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
           if (this.logger != null) {
@@ -136,7 +135,7 @@ export abstract class AppUpdater extends EventEmitter {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let client: Provider<any>
     if (typeof options === "string") {
-      client = new GenericProvider({provider: "generic", url: options})
+      client = new GenericProvider({provider: "generic", url: options}, this.httpExecutor)
     }
     else {
       client = this.createClient(options)
@@ -303,10 +302,10 @@ export abstract class AppUpdater extends EventEmitter {
         const githubOptions = <GithubOptions>data
         const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
         if (token == null) {
-          return new GitHubProvider(githubOptions, this)
+          return new GitHubProvider(githubOptions, this, this.httpExecutor)
         }
         else {
-          return new PrivateGitHubProvider(githubOptions, token)
+          return new PrivateGitHubProvider(githubOptions, token, this.httpExecutor)
         }
 
       case "s3": {
@@ -315,14 +314,14 @@ export abstract class AppUpdater extends EventEmitter {
           provider: "generic",
           url: s3Url(s3),
           channel: s3.channel || ""
-        })
+        }, this.httpExecutor)
       }
 
       case "generic":
-        return new GenericProvider(<GenericServerOptions>data)
+        return new GenericProvider(<GenericServerOptions>data, this.httpExecutor)
 
       case "bintray":
-        return new BintrayProvider(<BintrayOptions>data)
+        return new BintrayProvider(<BintrayOptions>data, this.httpExecutor)
 
       default:
         throw new Error(`Unsupported provider: ${provider}`)

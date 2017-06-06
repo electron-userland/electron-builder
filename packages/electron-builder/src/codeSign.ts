@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { download } from "electron-builder-http"
 import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { copy, deleteFile, outputFile, rename } from "fs-extra-p"
@@ -36,7 +36,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
     if (isUrl || urlOrBase64.length > 4096 || urlOrBase64.endsWith("=")) {
       const tempFile = await tmpDir.getTempFile(".p12")
       if (isUrl) {
-        await download(urlOrBase64, tempFile)
+        await httpExecutor.download(urlOrBase64, tempFile)
       }
       else {
         await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))

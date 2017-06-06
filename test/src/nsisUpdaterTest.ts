@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
@@ -33,8 +34,14 @@ g.__test_app = createTestApp("0.0.1")
 
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
+function tuneNsisUpdater(updater: NsisUpdater) {
+  (<any>updater).httpExecutor = httpExecutor
+}
+
 test("check updates - no versions at all", async () => {
-  const updater = new NsisUpdater(<BintrayOptions>{
+  const updater = new NsisUpdater()
+  tuneNsisUpdater(updater)
+  updater.setFeedURL(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "no-versions",
@@ -51,6 +58,7 @@ async function testUpdateFromBintray(app: any) {
     owner: "actperepo",
     package: "TestApp",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -75,6 +83,7 @@ test("downgrade (disallowed)", async () => {
     owner: "actperepo",
     package: "TestApp",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -98,6 +107,7 @@ test("downgrade (disallowed, beta)", async () => {
     owner: "develar",
     repo: "__test_nsis_release",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -122,6 +132,7 @@ test("file url generic", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -139,6 +150,7 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
   })
+  tuneNsisUpdater(updater)
   updater.logger = console
 
   const actualEvents = trackEvents(updater)
@@ -156,6 +168,7 @@ test("file url generic - manual download", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -175,6 +188,7 @@ test("checkForUpdates several times", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -196,6 +210,7 @@ test("file url github", async () => {
       owner: "develar",
         repo: "__test_nsis_release",
     })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -219,6 +234,7 @@ test("file url github pre-release", async () => {
       owner: "develar",
         repo: "__test_nsis_release",
     })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -244,6 +260,7 @@ test.skip("file url github private", async () => {
       owner: "develar",
       repo: "__test_nsis_release_private",
     })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -262,7 +279,7 @@ test.skip("file url github private", async () => {
 
 test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdater()
-
+  tuneNsisUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   await assertThat(updater.checkForUpdates()).throws()
@@ -275,6 +292,7 @@ test("test download progress", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -299,6 +317,7 @@ test("cancel download with progress", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/full-test",
   })
+  tuneNsisUpdater(updater)
 
   const progressEvents: Array<any> = []
   updater.signals.progress(it => progressEvents.push(it))

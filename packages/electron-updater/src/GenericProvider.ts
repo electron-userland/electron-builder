@@ -1,5 +1,4 @@
-import { HttpError, request } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { HttpError, HttpExecutor } from "electron-builder-http"
 import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
@@ -11,7 +10,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
   private readonly baseUrl = url.parse(this.configuration.url)
   private readonly channel = this.configuration.channel ? getCustomChannelName(this.configuration.channel) : getDefaultChannelName()
 
-  constructor(private readonly configuration: GenericServerOptions) {
+  constructor(private readonly configuration: GenericServerOptions, private readonly executor: HttpExecutor<any>) {
     super()
   }
 
@@ -29,7 +28,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
       }
-      result = safeLoad(await request<string>(options, new CancellationToken()))
+      result = safeLoad(await this.executor.request<string>(options))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

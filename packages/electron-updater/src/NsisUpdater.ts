@@ -1,5 +1,5 @@
 import { spawn } from "child_process"
-import { download, DownloadOptions } from "electron-builder-http"
+import { DownloadOptions } from "electron-builder-http"
 import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { mkdtemp, remove } from "fs-extra-p"
@@ -39,14 +39,13 @@ export class NsisUpdater extends AppUpdater {
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
     try {
-      await download(fileInfo.url, tempFile, downloadOptions)
+      await this.httpExecutor.download(fileInfo.url, tempFile, downloadOptions)
     }
     catch (e) {
       try {
         await remove(tempDir)
       }
       catch (ignored) {
-        // ignored
       }
 
       if (e instanceof CancellationError) {

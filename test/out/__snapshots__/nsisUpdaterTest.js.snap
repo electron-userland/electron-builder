@@ -7,8 +7,8 @@ exports[`check updates - no versions at all 1`] = `"No latest version, please en
 exports[`checkForUpdates several times 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -44,8 +44,8 @@ Object {
 exports[`file url generic - manual download 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -60,8 +60,8 @@ Array [
 exports[`file url generic 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
