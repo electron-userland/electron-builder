@@ -91,9 +91,12 @@ export class PublishManager implements PublishContext {
       let publishConfig = publishConfigs[0]
 
       if (packager.platform === Platform.WINDOWS) {
-        const publisherName = await (<WinPackager>packager).computedPublisherName.value
-        if (publisherName != null) {
-          publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+        const winPackager = <WinPackager>packager
+        if (winPackager.isForceCodeSigningVerification) {
+          const publisherName = await winPackager.computedPublisherName.value
+          if (publisherName != null) {
+            publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+          }
         }
       }
 

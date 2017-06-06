@@ -224,18 +224,12 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [electron-updater/out/NsisUpdater](#module_electron-updater/out/NsisUpdater)
     * [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
         * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="NsisUpdater"></a>
 
 ### NsisUpdater ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
 **Kind**: class of [<code>electron-updater/out/NsisUpdater</code>](#module_electron-updater/out/NsisUpdater)  
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
-
-* [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-    * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
-    * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
-
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall"></a>
 
 #### `nsisUpdater.quitAndInstall(isSilent)`
@@ -244,21 +238,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 | Param | Type |
 | --- | --- |
 | isSilent | <code>boolean</code> | 
-
-<a name="module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate"></a>
-
-#### `nsisUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>Promise&lt;string&gt;</code>
-Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-
-**Kind**: instance method of [<code>NsisUpdater</code>](#NsisUpdater)  
-**Returns**: <code>Promise&lt;string&gt;</code> - Path to downloaded file.  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
-| fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="module_electron-updater/out/PrivateGitHubProvider"></a>
 

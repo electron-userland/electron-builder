@@ -82,6 +82,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return publisherName == null ? null : asArray(publisherName)
   })
 
+  get isForceCodeSigningVerification(): boolean {
+    return this.platformSpecificBuildOptions.forceCodeSigningVerification !== false
+  }
+
   constructor(info: BuildInfo) {
     super(info)
   }

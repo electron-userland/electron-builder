@@ -229,8 +229,9 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
     }
   }
 
-  if (options.sha512 != null) {
-    streams.push(new DigestTransform(options.sha512, "sha512", "base64"))
+  const sha512 = options.sha512
+  if (sha512 != null) {
+    streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))
   }
   else if (options.sha2 != null) {
     streams.push(new DigestTransform(options.sha2, "sha256", "hex"))

@@ -72,6 +72,14 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    * Defaults to common name from your code signing certificate.
    */
   readonly publisherName?: string | Array<string> | null
+
+  /**
+   * Whether to verify the signature of an available update before installation.
+   * The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification.
+   *
+   * @default true
+   */
+  readonly forceCodeSigningVerification?: boolean
 }
 
 export interface CommonNsisOptions {

@@ -206,76 +206,46 @@ test("checkForUpdates several times", async () => {
 test("file url github", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-        repo: "__test_nsis_release",
-    })
-  tuneNsisUpdater(updater)
-
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
-
-  expect(actualEvents).toEqual(expectedEvents)
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
+  await validateDownload(updater)
 })
 
 test("file url github pre-release", async () => {
   const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-        repo: "__test_nsis_release",
-    })
-  tuneNsisUpdater(updater)
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
 
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  const updateCheckResult = await validateDownload(updater)
   expect(updateCheckResult.versionInfo).toMatchSnapshot()
-
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
-
-  expect(actualEvents).toEqual(expectedEvents)
 })
 
 test.skip("file url github private", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-      repo: "__test_nsis_release_private",
-    })
-  tuneNsisUpdater(updater)
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release_private",
+  })
+  await validateDownload(updater)
+})
 
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
+async function validateDownload(updater: NsisUpdater) {
+  tuneNsisUpdater(updater)
+  const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  expect(actualEvents).toEqual(expectedEvents)
-})
+  expect(actualEvents).toMatchSnapshot()
+  return updateCheckResult
+}
 
 test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdater()
@@ -290,7 +260,7 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    url: "https://develar.s3.amazonaws.com/test"
   })
   tuneNsisUpdater(updater)
   updater.autoDownload = false
@@ -309,6 +279,31 @@ test("test download progress", async () => {
   expect(lastEvent.percent).toBe(100)
   expect(lastEvent.bytesPerSecond).toBeGreaterThan(1)
   expect(lastEvent.transferred).toBe(lastEvent.total)
+})
+
+test.ifAll.ifWindows("valid signature", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Vladimir Krivosheev"],
+  })
+  await validateDownload(updater)
+})
+
+test.ifAll.ifWindows("invalid signature", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Foo Bar"],
+  })
+  tuneNsisUpdater(updater)
+  const actualEvents = trackEvents(updater)
+  await assertThat(updater.checkForUpdates().then(it => it.downloadPromise)).throws()
+  expect(actualEvents).toMatchSnapshot()
 })
 
 test("cancel download with progress", async () => {
@@ -341,7 +336,7 @@ test("cancel download with progress", async () => {
   expect(cancelled).toBe(true)
 })
 
-async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions): Promise<string> {
+async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions | any): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempFile("update-config"), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))
   return updateConfigPath

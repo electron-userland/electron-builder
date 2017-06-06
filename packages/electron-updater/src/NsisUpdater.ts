@@ -1,4 +1,5 @@
-import { spawn } from "child_process"
+import BluebirdPromise from "bluebird-lst"
+import { execFile, spawn } from "child_process"
 import { DownloadOptions } from "electron-builder-http"
 import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/publishOptions"
@@ -18,10 +19,7 @@ export class NsisUpdater extends AppUpdater {
     super(options, app)
   }
 
-  /**
-   * Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-   * @returns {Promise<string>} Path to downloaded file.
-   */
+  /*** @private */
   protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
@@ -57,6 +55,17 @@ export class NsisUpdater extends AppUpdater {
       throw e
     }
 
+    const signatureVerificationStatus = await this.verifySignature(tempFile)
+    if (signatureVerificationStatus != null) {
+      try {
+        await remove(tempDir)
+      }
+      finally {
+        // noinspection ThrowInsideFinallyBlockJS
+        throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
+      }
+    }
+
     if (logger != null) {
       logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
     }
@@ -65,6 +74,62 @@ export class NsisUpdater extends AppUpdater {
     this.addQuitHandler()
     this.emit("update-downloaded", this.versionInfo)
     return tempFile
+  }
+
+  // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
+  // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
+  // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
+  private async verifySignature(tempUpdateFile: string): Promise<string | null> {
+    const updateConfig = await this.loadUpdateConfig()
+    const publisherName = updateConfig.publisherName
+    if (publisherName == null) {
+      return null
+    }
+
+    return await new BluebirdPromise<string | null>((resolve, reject) => {
+      const commonNameConstraint = (Array.isArray(publisherName) ? <Array<string>>publisherName : [publisherName]).map(it => `$_.SignerCertificate.Subject.Contains('CN=${it},')`).join(" -or ")
+      const constraintCommand = `where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and (${commonNameConstraint})}`
+      const verifySignatureCommand = `Get-AuthenticodeSignature '${tempUpdateFile}' | ${constraintCommand}`
+      const powershellChild = spawn("powershell.exe", [(`$certificateInfo = (${verifySignatureCommand}) | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }`)])
+      powershellChild.on("error", reject)
+      powershellChild.on("exit", code => {
+        if (code !== 1) {
+          resolve(null)
+          return
+        }
+
+        execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {maxBuffer: 4 * 1024000}, (error, stdout, stderr) => {
+          if (error != null) {
+            reject(error)
+            return
+          }
+
+          if (stderr) {
+            reject(new Error(`Cannot execute Get-AuthenticodeSignature: ${stderr}`))
+            return
+          }
+
+          const data = JSON.parse(stdout)
+          delete data.PrivateKey
+          delete data.IsOSBinary
+          delete data.SignatureType
+          const signerCertificate = data.SignerCertificate
+          if (signerCertificate != null) {
+            delete signerCertificate.Archived
+            delete signerCertificate.Extensions
+            delete signerCertificate.Handle
+            delete signerCertificate.HasPrivateKey
+          }
+          delete data.Path
+
+          const result = JSON.stringify(data, (name, value) => name === "RawData" ? undefined : value, 2)
+          if (this.logger != null) {
+            this.logger.info(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
+          }
+          resolve(result)
+        })
+      })
+    })
   }
 
   private addQuitHandler() {
