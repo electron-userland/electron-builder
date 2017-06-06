@@ -4,7 +4,7 @@ import { move, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack } from "./helpers/packTester"
+import { app, appThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
 function createBuildResourcesTest(platform: Platform) {
@@ -54,6 +54,14 @@ test.ifAll.ifLinuxOrDevMac("prepackaged", app({
     })
     await assertThat(path.join(context.projectDir, "dist", "TestApp_1.1.0_i386.deb")).isFile()
   }
+}))
+
+test.ifAll.ifLinuxOrDevMac("retrieve latest electron version", app({
+  targets: linuxDirTarget,
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    delete data.build.electronVersion
+  }),
 }))
 
 test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
