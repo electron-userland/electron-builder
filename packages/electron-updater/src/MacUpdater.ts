@@ -52,8 +52,13 @@ export class MacUpdater extends AppUpdater {
         else if (requestUrl === "/app.zip") {
           let errorOccurred = false
           response.on("finish", () => {
-            if (!errorOccurred) {
-              resolve()
+            try {
+              setImmediate(() => server.close())
+            }
+            finally {
+              if (!errorOccurred) {
+                resolve()
+              }
             }
           })
           this.proxyUpdateFile(response, fileInfo, error => {
