@@ -88,11 +88,10 @@ export class NsisTarget extends Target {
 
     this.packageHelper.refCount++
 
-    let options = Object.assign({}, this.packager.config.nsis) || Object.create(null)
+    this.options = Object.assign(Object.create(null), this.packager.config.nsis)
     if (targetName !== "nsis") {
-      options = Object.assign(options, (<any>this.packager.config)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      Object.assign(this.options, (<any>this.packager.config)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
-    this.options = options
 
     const deps = packager.info.metadata.dependencies
     if (deps != null && deps["electron-squirrel-startup"] != null) {
