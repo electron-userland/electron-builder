@@ -72,6 +72,12 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    * Defaults to common name from your code signing certificate.
    */
   readonly publisherName?: string | Array<string> | null
+
+  /**
+   * Whether to verify the signature of an available update before installation.
+   * The publisher name as defined under [WinBuildOptions](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions) will be used for the signature verification.
+   */
+  readonly forceCodeSigningVerification?: boolean
 }
 
 export interface CommonNsisOptions {

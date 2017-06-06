@@ -58,14 +58,81 @@ export class NsisUpdater extends AppUpdater {
       throw e
     }
 
-    if (logger != null) {
-      logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
+    let hasValidSignature = await this.spawnVerifySignature(tempFile)
+    if (hasValidSignature) {
+      if (logger != null) {
+        logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
+      }
+
+      this.setupPath = tempFile
+      this.addQuitHandler()
+      this.emit("update-downloaded", this.versionInfo)
+      return tempFile
+    } else {
+      const message = `New version ${this.versionInfo!.version} is not signed by the application owner`
+      this.emit("error", new Error(message), message)
+      if (logger != null) {
+        logger.error(message)
+      }
+      return await remove(tempDir)
+    }
+  }
+
+  // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
+  // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=circuitdev.siemens.com")})
+  // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
+  private async spawnVerifySignature(tempUpdateFile: string): Promise<boolean> {
+    const isWin = process.platform === "win32"
+    if (!isWin) {
+      return Promise.resolve(true)
     }
 
-    this.setupPath = tempFile
-    this.addQuitHandler()
-    this.emit("update-downloaded", this.versionInfo)
-    return tempFile
+    var signVerificationOptions = await this.loadUpdateConfig().then(it => {
+      return { publisherName: it.publisherName, forceCodeSigningVerification: it.forceCodeSigningVerification }
+    })
+    var publisherName = (signVerificationOptions && signVerificationOptions.publisherName) || ""
+    var forceCodeSigningVerification = signVerificationOptions.forceCodeSigningVerification == null ? true : signVerificationOptions.forceCodeSigningVerification
+
+    if (!forceCodeSigningVerification) {
+      return Promise.resolve(true)
+    }
+
+    return new Promise<boolean>((resolve) => {
+      try {
+        const getSignatureCommand = "Get-AuthenticodeSignature '" + tempUpdateFile + "'"
+        const commonNameConstraint = "$_.SignerCertificate.Subject.Contains(\"CN=" + publisherName + "\")"
+        const statusConstraint = "$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid)"
+        const constraintCommand = "where {" + statusConstraint + " -and " + commonNameConstraint + "}"
+        const verifySignatureCommand = getSignatureCommand + " | " + constraintCommand
+        const command = "$certificateInfo = (" + verifySignatureCommand + ") | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }"
+        const terminal = "powershell.exe"
+
+        var powershellChild = spawn(terminal, [command])
+
+        powershellChild.on("uncaughtException", (error: string) => {
+          if (this.logger) {
+            this.logger.error("uncaughtException: " + error)
+          }
+          resolve(false)
+        })
+
+        powershellChild.on("exit", (code) => {
+          if (this.logger != null) {
+            this.logger.error("Sign verification finished with code: " + code)
+          }
+          if (code === 0) {
+            resolve(true)
+          } else {
+            resolve(false)
+          }
+        })
+      } catch (e) {
+        if (this.logger != null) {
+          this.logger.error("Sign Verification exception: " + e)
+        }
+        this.dispatchError(e)
+      }
+    })
   }
 
   private addQuitHandler() {

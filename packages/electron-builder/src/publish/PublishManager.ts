@@ -95,6 +95,11 @@ export class PublishManager implements PublishContext {
         if (publisherName != null) {
           publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
         }
+
+        const forceCodeSigningVerification = (<WinPackager>packager).forceCodeSigningVerification
+        if (!forceCodeSigningVerification) {
+          publishConfig = Object.assign({forceCodeSigningVerification: forceCodeSigningVerification}, publishConfig)
+        }
       }
 
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))

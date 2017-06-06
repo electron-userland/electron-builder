@@ -567,6 +567,7 @@ Windows Specific Options ([win](#Config-win)).
 | rfc3161TimeStampServer| <code>string</code> | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`. |
 | timeStampServer| <code>string</code> | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`. |
 | publisherName| <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-publisherName"></a>[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate. |
+| forceCodeSigningVerification = <code>true</code>| <code>boolean</code> | <a name="WinBuildOptions-forceCodeSigningVerification"></a>Whether to verify the signature of an available update before installation. The publisher name as defined under [WinBuildOptions](https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions) will be used for the signature verification. |
 
 
 <!-- end of generated block -->

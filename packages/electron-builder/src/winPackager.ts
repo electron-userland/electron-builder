@@ -82,6 +82,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return publisherName == null ? null : asArray(publisherName)
   })
 
+  get forceCodeSigningVerification(): boolean {
+    const codeSigningVerification = (<WinBuildOptions>this.platformSpecificBuildOptions).forceCodeSigningVerification
+    return codeSigningVerification == null ? true : codeSigningVerification
+  }
+
   constructor(info: BuildInfo) {
     super(info)
   }
