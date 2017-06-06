@@ -67,7 +67,18 @@ export default class FpmTarget extends Target {
 
     log(`Building ${target}`)
 
-    const destination = path.join(this.outDir, this.packager.generateName(target, arch, true /* on Linux we use safe name — without space */))
+    let nameFormat = "${name}-${version}-${arch}.${ext}"
+    let isUseArchIfX64 = false
+    if (target === "deb") {
+      nameFormat = "${name}_${version}_${arch}.${ext}"
+      isUseArchIfX64 = true
+    }
+    else if (target === "rpm") {
+      nameFormat = "${name}-${version}.${arch}.${ext}"
+      isUseArchIfX64 = true
+    }
+
+    const destination = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch !== Arch.x64 || isUseArchIfX64 ? arch : null, nameFormat))
     await unlinkIfExists(destination)
     if (this.packager.info.prepackaged != null) {
       await ensureDir(this.outDir)

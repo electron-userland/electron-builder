@@ -186,8 +186,6 @@ export interface Config extends PlatformSpecificBuildOptions {
 
   /**
    * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
-   * 
-   * Currently supported only for `mas`, `pkg`, `dmg` and `nsis`.
    */
   readonly artifactName?: string | null
 

@@ -21,8 +21,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS setup
 **NOTICE**: 
 
 1. Do not call [setFeedURL](#module_electron-updater/out/AppUpdater.AppUpdater+setFeedURL). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
-2. Bintray provider doesn't support [macOS auto-update](https://github.com/electron-userland/electron-builder/issues/1172) currently.
-3. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error. Default [target](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
+2. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error. Default [target](https://github.com/electron-userland/electron-builder/wiki/Options#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
 
 ### Examples
 
@@ -32,14 +31,14 @@ Simplified auto-update is supported on Windows if you use the default NSIS setup
 
 ## File Generated and Uploaded in Addition
 
-`latest.yml` (or `latest-mac.json` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
+`latest.yml` (or `latest-mac.yml` for macOS) will be generated and uploaded for all providers except `bintray` (because not required, `bintray` doesn't use `latest.yml`).
 
 ## Private GitHub Update Repo
 
 You can use a private repository for updates with electron-updater by setting the `GH_TOKEN` environment variable (on user machine) and `private` option.
 If `GH_TOKEN` is set, electron-updater will use the GitHub API for updates allowing private repositories to work.
 
-Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users. Doesn't work [on macOs](https://github.com/electron-userland/electron-builder/issues/1370).
+Only for [very special](https://github.com/electron-userland/electron-builder/issues/1393#issuecomment-288191885) cases — not intended and not suitable for all users.
 
 **Note:** The GitHub API currently has a rate limit of 5000 requests per user per hour. An update check uses up to 3 requests per check.
 

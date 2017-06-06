@@ -131,7 +131,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
-    const macroExpander = (it: string) => this.expandMacro(it, arch, {"/*": "{,/**/*}"})
+    const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
     const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
     const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
 
@@ -349,12 +349,31 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     if (pattern == null) {
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}.${ext}"
     }
-    return this.expandMacro(pattern, arch, {
+
+    let archName: string | null = arch == null ? null : Arch[arch]
+    if (arch === Arch.x64) {
+      if (ext === "AppImage" || ext === "rpm") {
+        archName = "x86_64"
+      }
+      else if (ext === "deb") {
+        archName = "amd64"
+      }
+    }
+    else if (arch === Arch.ia32) {
+      if (ext === "deb" || ext === "AppImage") {
+        archName = "i386"
+      }
+      else if (ext === "pacman" || ext === "rpm") {
+        archName = "i686"
+      }
+    }
+
+    return this.expandMacro(pattern, this.platform === Platform.MAC ? null : archName, {
       ext: ext
     })
   }
 
-  expandMacro(pattern: string, arch: Arch | n, extra: any = {}): string {
+  expandMacro(pattern: string, arch: string | n, extra: any = {}): string {
     if (arch == null) {
       pattern = pattern
         .replace("-${arch}", "")
@@ -374,7 +393,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
             // see above, we remove macro if no arch
             return ""
           }
-          return Arch[arch]
+          return arch
 
         case "os":
           return this.platform.buildConfigurationKey

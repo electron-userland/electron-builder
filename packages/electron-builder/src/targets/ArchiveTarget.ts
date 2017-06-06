@@ -14,25 +14,11 @@ export class ArchiveTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
     const isMac = packager.platform === Platform.MAC
-    const outDir = this.outDir
-
     const format = this.name
     log(`Building ${isMac ? "macOS " : ""}${format}`)
 
-    // we use app name here - see https://github.com/electron-userland/electron-builder/pull/204
-    const outFile = (() => {
-      switch (packager.platform) {
-        case Platform.MAC:
-          return path.join(outDir, packager.expandArtifactNamePattern(this.options, format, arch, "${productName}-${version}-${os}.${ext}"))
-        case Platform.WINDOWS:
-          return path.join(outDir, packager.generateName(format, arch, false, "win"))
-        case Platform.LINUX:
-          return path.join(outDir, packager.generateName(format, arch, true))
-        default:
-          throw new Error(`Unknown platform: ${packager.platform}`)
-      }
-    })()
-
+    // do not specify arch if x64
+    const outFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch === Arch.x64 ? null : arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
     if (format.startsWith("tar.")) {
       await tar(packager.config.compression, format, outFile, appOutDir, isMac)
     }

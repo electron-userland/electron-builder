@@ -63,7 +63,7 @@ export default class AppXTarget extends Target {
       this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
     ])
 
-    const destination = path.join(this.outDir, packager.generateName("appx", arch, false))
+    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
     const args = ["pack", "/o", "/d", preAppx, "/p", destination]
     use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
@@ -71,7 +71,7 @@ export default class AppXTarget extends Target {
     await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
 
     await packager.sign(destination)
-    packager.dispatchArtifactCreated(destination, this, arch, packager.generateName("appx", arch, true))
+    packager.dispatchArtifactCreated(destination, this, arch, packager.expandArtifactNamePattern(this.options, "appx", arch, "${name}-${version}-${arch}.${ext}"))
   }
 
   private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {

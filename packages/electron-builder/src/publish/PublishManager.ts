@@ -437,7 +437,7 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
-      const expanded = packager.expandMacro(value, arch)
+      const expanded = packager.expandMacro(value, arch == null ? null : Arch[arch])
       if (expanded !== value) {
         options[name] = expanded
       }
