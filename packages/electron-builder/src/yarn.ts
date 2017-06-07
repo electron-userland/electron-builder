@@ -56,8 +56,6 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
   const execArgs = ["install", "--production"]
 
   const isYarn = isYarnPath(execPath)
-  // must be first https://github.com/electron-userland/electron-builder/issues/1626
-  execArgs.push("--devdir", getElectronGypCacheDir())
   if (!isYarn) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
