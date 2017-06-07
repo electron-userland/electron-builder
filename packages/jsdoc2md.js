@@ -62,6 +62,7 @@ async function main() {
     "!***/*-yarn.js",
     "!***/*-dmgLicense.js",
     "!***/*-repositoryInfo.js",
+    "!***/*-readPackageJson.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -69,7 +70,7 @@ async function main() {
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
   const pages = [
-    {page: "Options.md", pageUrl: "Options", mainHeader: "API", files: userFiles},
+    {page: "Options.md", pageUrl: "Options", mainHeader: null, files: userFiles},
     {page: "api/electron-builder.md", pageUrl: "electron-builder", files: developerFiles},
     {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
@@ -105,9 +106,14 @@ async function render(pages, jsdoc2MdOptions) {
     page.dataMap = map
   }
 
+  function isOptionMember(member) {
+    return member.name.endsWith("Options") || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo"
+  }
+
   const filtered = []
   pages[0].data = pages[0].data.filter(member => {
-    if (member.name.endsWith("Options") || member.kind === "module" || member.name === "Config" || member.name.startsWith("Metadata") || member.name.startsWith("Dmg")) {
+    const excluded = new Set(["CommonLinuxOptions", "CommonNsisOptions", "LinuxTargetSpecificOptions", "PlatformSpecificBuildOptions", "ForgeOptions"])
+    if (!excluded.has(member.name) && (isOptionMember(member) || member.kind === "module" || member.name === "Config" || member.name.startsWith("Metadata") || member.name.startsWith("Dmg"))) {
       return true
     }
 
@@ -118,19 +124,34 @@ async function render(pages, jsdoc2MdOptions) {
     return false
   })
 
+  pages[0].data = pages[0].data.filter(member => {
+    const isInlined = member.name.endsWith("MetadataDirectories") || member.id.includes(".Dmg") || isOptionMember(member)
+    if (isInlined) {
+      member.inlined = true
+    }
+    return !isInlined
+  })
+
   pages[1].data = filtered.concat(pages[1].data)
   pages[1].data.unshift(pages[0].data[0])
 
   for (const page of pages) {
-    let content = await jsdoc2md.render(Object.assign({
-      data: page.data,
-    }, jsdoc2MdOptions))
+    const finalOptions = Object.assign({data: page.data, "property-list-format": page === pages[0] ? "list" : "table"}, jsdoc2MdOptions)
+
+    if (page === pages[0]) {
+      finalOptions["heading-depth"] = 1
+    }
+
+    let content = await jsdoc2md.render(finalOptions)
 
     if (page.mainHeader != null && content.startsWith("## Modules")) {
       content = "## API" + content.substring("## Modules".length)
     }
     if (page.mainHeader != null) {
       content = "## API" + content.substring(content.indexOf("\n", content.indexOf("##")))
+    }
+    if (page.mainHeader === null) {
+      content = content.substring(content.indexOf("<a name=\"Config\"></a>"))
     }
 
     await writeDocFile(path.join(__dirname, "..", "docs", page.page), content)

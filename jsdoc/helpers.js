@@ -1,6 +1,7 @@
 "use strict"
 
 const dmdHelpers = require("dmd/helpers/ddata")
+const dmdHelper = require("dmd/helpers/helpers")
 const catharsis = require("catharsis")
 
 exports.propertyAnchor = function (propertyName, parentName) {
@@ -11,8 +12,104 @@ exports.exampleAnchor = function (caption, parentName) {
   return `<a name="${parentName}-${caption.toLowerCase().replace(/ /g, "-")}"></a>`
 }
 
-exports.listTypes = function (types, delimiter, root) {
-  return types == null ? "" : types.map(it => "<code>" + link2(catharsis.parse(it, {jsdoc: true}), delimiter, root) + "</code>").join(delimiter)
+function renderTypeNames(types, delimiter, root, isTypeAsCode, isSkipNull) {
+  if (types == null) {
+    return ""
+  }
+
+  const tagOpen = isTypeAsCode ? "<code>" : ""
+  const tagClose = isTypeAsCode ? "</code>" : ""
+
+  if (isSkipNull) {
+    types = types.filter(it => !isSkipNull || it !== "null")
+  }
+  return types
+    .map(it => tagOpen + link2(catharsis.parse(it, {jsdoc: true}), delimiter, root, isSkipNull) + tagClose)
+    .join(delimiter)
+}
+
+exports.listTypes = renderTypeNames
+exports.renderProperties = function (properties, root) {
+  return renderProperties(properties, root, 0)
+}
+
+function renderMemberListDescription(text, indent) {
+  return dmdHelper.inlineLinks(text)
+    .replace(/<br>/g, "\n")
+    .replace(/\n/g, "\n" + indent)
+}
+
+function getInlinedChild(types) {
+  if (types == null) {
+    return null
+  }
+
+  const arrayTypePrefix = "Array.<"
+  types = types.filter(it => it !== "null" && !isPrimitiveType(it) && !(it.startsWith(arrayTypePrefix) && types.includes(it.substring(arrayTypePrefix.length, it.indexOf(">")))))
+  return types.length === 1 ? resolveById(types[0]) : null
+}
+
+function isPrimitiveType(name) {
+  return name === "string" || name === "boolean"
+}
+
+function renderProperties(object, root, level) {
+  let result = ""
+  const first = object.properties[0]
+  for (const member of object.properties) {
+    if (member !== first) {
+      result += "\n"
+    }
+
+    let indent = ""
+    for (let d = 0; d < level; d++) {
+      indent += "  "
+    }
+    result += indent + "*"
+
+    result += " " + renderMemberName(member, object)
+
+    const types = member.type.names
+    let child = getInlinedChild(types)
+    if (child != null && !child.inlined) {
+      child = null
+    }
+
+    if (child == null || types.some(it => it.startsWith("Array.<") || isPrimitiveType(it))) {
+      result += " " + renderTypeNames(types, " \| ", root, false, true)
+    }
+
+    if (child != null) {
+      result += `<a name="${child.name}"></a>`
+    }
+
+    let description = member.description
+    if (child != null && !description) {
+      description = child.description
+    }
+
+    if (description) {
+      result += " - " + renderMemberListDescription(description, indent + "  ")
+    }
+
+    if (child != null) {
+      child.inlined = true
+      result += "\n"
+      result += renderProperties(child, root, level + 1)
+    }
+  }
+  return result
+}
+
+function renderMemberName(member, object) {
+  let result = `<a name="${object.name}-${member.name}"></a>`
+
+  const wrap = member.optional ? "" : "**"
+  result += wrap + "`" + member.name + "`" + wrap
+  if (member.defaultvalue != null) {
+    result += " = `" + member.defaultvalue + "`"
+  }
+  return result
 }
 
 function link(longname, options) {
@@ -83,7 +180,7 @@ function _link(input, options) {
 }
 
 
-function link2(type, delimiter, root) {
+function link2(type, delimiter, root, isSkipNull) {
   switch (type.type) {
     case "NameExpression":
       return identifierToLink(type.name, root)
@@ -98,6 +195,7 @@ function link2(type, delimiter, root) {
     case "TypeUnion":
       return type.elements
         .map(it => link2(it, delimiter, root))
+        .filter(it => !isSkipNull || it !== "null")
         .join(delimiter)
     
     case "TypeApplication":
@@ -109,6 +207,16 @@ function link2(type, delimiter, root) {
 }
 
 function identifierToLink(id, root) {
+  if (id === "string") {
+    return "String"
+  }
+  if (id === "boolean") {
+    return "Boolean"
+  }
+  if (id === "number") {
+    return "Number"
+  }
+
   let linked = resolveById(id)
   if (!linked) {
     if (id.startsWith("module") && 

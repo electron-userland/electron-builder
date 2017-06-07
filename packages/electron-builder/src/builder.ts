@@ -30,6 +30,7 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   project?: string
 }
 
+/** @private */
 export function normalizeOptions(args: CliOptions): BuildOptions {
   if (args.targets != null) {
     return args

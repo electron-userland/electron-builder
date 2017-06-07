@@ -6,7 +6,8 @@
   "declaration": true,
   "jsdoc": {
     "out": "../../jsdoc/out/http",
-    "examples": "../../jsdoc/examples"
+    "examples": "../../jsdoc/examples",
+    "access": "public"
   },
   "include": [
     "src/**/*.ts"

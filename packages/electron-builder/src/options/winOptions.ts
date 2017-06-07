@@ -1,21 +1,20 @@
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
+import { TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
+import { PlatformSpecificBuildOptions } from "../metadata"
 
-/**
- * Windows Specific Options ([win](#Config-win)).
- */
 export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   /**
-   * Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`.
+   * Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX package can be built only on Windows 10.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+   *
+   * @default nsis
   */
   readonly target?: TargetConfigType
 
   /**
-   * Array of signing algorithms used. Defaults to `['sha1', 'sha256']`
-   *
-   * For AppX `sha256` is always used.
+   * Array of signing algorithms used. For AppX `sha256` is always used.
+   * @default ['sha1', 'sha256']
    */
   readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
 
@@ -58,12 +57,14 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
   readonly additionalCertificateFile?: string
 
   /**
-   * The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`.
+   * The URL of the RFC 3161 time stamp server.
+   * @default http://timestamp.comodoca.com/rfc3161
    */
   readonly rfc3161TimeStampServer?: string
 
   /**
-   * The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`.
+   * The URL of the time stamp server.
+   * @default http://timestamp.verisign.com/scripts/timstamp.dll
    */
   readonly timeStampServer?: string
 
@@ -89,9 +90,7 @@ export interface CommonNsisOptions {
 }
 
 /**
- * NSIS specific options ([nsis](#Config-nsis)).
- *
- * See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
+ * NSIS options. See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
  */
 export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   /**
@@ -235,7 +234,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
 }
 
 /**
- * Portable Specific Options ([portable](#Config-portable)).
+ * Portable specific options.
  */
 export interface PortableOptions extends TargetSpecificOptions, CommonNsisOptions {
   /**
@@ -246,7 +245,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
 }
 
 /**
- * Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
+ * Web Installer specific options.
  */
 export interface NsisWebOptions extends NsisOptions {
   /**
@@ -265,7 +264,7 @@ export interface NsisWebOptions extends NsisOptions {
 }
 
 /**
- * Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows)).
+ * Squirrel.Windows options.
  *
  * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
  */
@@ -308,8 +307,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 }
 
 /**
- * AppX Options ([appx](#Config-appx)).
- * @see [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
+ * AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */
 export interface AppXOptions {
   /**

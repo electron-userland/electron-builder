@@ -114,7 +114,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
     * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
         * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+        * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
@@ -129,12 +129,12 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
     * [`.autoUpdater`](#module_electron-updater.autoUpdater) : <code>[AppUpdater](#AppUpdater)</code>
-    * [`.formatUrl(url)`](#module_electron-updater.formatUrl) ⇒ <code>string</code>
-    * [`.getChannelFilename(channel)`](#module_electron-updater.getChannelFilename) ⇒ <code>string</code>
+    * [`.formatUrl(url)`](#module_electron-updater.formatUrl) ⇒ <code>String</code>
+    * [`.getChannelFilename(channel)`](#module_electron-updater.getChannelFilename) ⇒ <code>String</code>
     * [`.getCurrentPlatform()`](#module_electron-updater.getCurrentPlatform) ⇒ <code>any</code>
-    * [`.getCustomChannelName(channel)`](#module_electron-updater.getCustomChannelName) ⇒ <code>string</code>
-    * [`.getDefaultChannelName()`](#module_electron-updater.getDefaultChannelName) ⇒ <code>string</code>
-    * [`.isUseOldMacProvider()`](#module_electron-updater.isUseOldMacProvider) ⇒ <code>boolean</code>
+    * [`.getCustomChannelName(channel)`](#module_electron-updater.getCustomChannelName) ⇒ <code>String</code>
+    * [`.getDefaultChannelName()`](#module_electron-updater.getDefaultChannelName) ⇒ <code>String</code>
+    * [`.isUseOldMacProvider()`](#module_electron-updater.isUseOldMacProvider) ⇒ <code>Boolean</code>
 
 <a name="FileInfo"></a>
 
@@ -144,10 +144,10 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **url**| <code>string</code> | 
-| sha2| <code>string</code> | 
-| sha512| <code>string</code> | 
+| **name**| <code>String</code> | 
+| **url**| <code>String</code> | 
+| sha2| <code>String</code> | 
+| sha512| <code>String</code> | 
 | headers| <code>Object</code> | 
 
 <a name="Logger"></a>
@@ -209,9 +209,9 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 | Name | Type | Description |
 | --- | --- | --- |
-| autoDownload = <code>true</code>| <code>boolean</code> | <a name="AppUpdater-autoDownload"></a>Whether to automatically download an update when it is found. |
-| allowPrerelease| <code>boolean</code> | <a name="AppUpdater-allowPrerelease"></a>*GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.<br><br>If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`). |
-| allowDowngrade| <code>boolean</code> | <a name="AppUpdater-allowDowngrade"></a>Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel). |
+| autoDownload = <code>true</code>| <code>Boolean</code> | <a name="AppUpdater-autoDownload"></a>Whether to automatically download an update when it is found. |
+| allowPrerelease| <code>Boolean</code> | <a name="AppUpdater-allowPrerelease"></a>*GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.<br><br>If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`). |
+| allowDowngrade| <code>Boolean</code> | <a name="AppUpdater-allowDowngrade"></a>Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel). |
 | requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
 | logger = <code>(&lt;any&gt;global).__test_app ? null : console</code>| <code>[Logger](#Logger)</code> \| <code>null</code> | <a name="AppUpdater-logger"></a>The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature. |
 | signals = <code>new UpdaterSignal(this)</code>| <code>[UpdaterSignal](#UpdaterSignal)</code> | <a name="AppUpdater-signals"></a>For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})` |
@@ -220,7 +220,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+    * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
     * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
@@ -245,7 +245,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 <a name="module_electron-updater.AppUpdater+getFeedURL"></a>
 
-#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+#### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
 **Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
 <a name="module_electron-updater.AppUpdater+setFeedURL"></a>
 
@@ -256,7 +256,7 @@ Configure update provider. If value is `string`, [module:electron-builder-http/o
 
 | Param | Type | Description |
 | --- | --- | --- |
-| options | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>string</code> | If you want to override configuration in the `app-update.yml`. |
+| options | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>String</code> | If you want to override configuration in the `app-update.yml`. |
 
 <a name="module_electron-updater.AppUpdater+loadUpdateConfig"></a>
 
@@ -275,18 +275,12 @@ This is different from the normal quit event sequence.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| isSilent | <code>boolean</code> | *windows-only* Runs the installer in silent mode. |
+| isSilent | <code>Boolean</code> | *windows-only* Runs the installer in silent mode. |
 
 <a name="Provider"></a>
 
 ### Provider
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | 
-
 
 * [.Provider](#Provider)
     * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
@@ -381,7 +375,7 @@ Emitted when an authenticating proxy is asking for user credentials.
 **Kind**: constant of [<code>electron-updater</code>](#module_electron-updater)  
 <a name="module_electron-updater.formatUrl"></a>
 
-### `electron-updater.formatUrl(url)` ⇒ <code>string</code>
+### `electron-updater.formatUrl(url)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 | Param | Type |
@@ -390,12 +384,12 @@ Emitted when an authenticating proxy is asking for user credentials.
 
 <a name="module_electron-updater.getChannelFilename"></a>
 
-### `electron-updater.getChannelFilename(channel)` ⇒ <code>string</code>
+### `electron-updater.getChannelFilename(channel)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 | Param | Type |
 | --- | --- |
-| channel | <code>string</code> | 
+| channel | <code>String</code> | 
 
 <a name="module_electron-updater.getCurrentPlatform"></a>
 
@@ -403,20 +397,20 @@ Emitted when an authenticating proxy is asking for user credentials.
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 <a name="module_electron-updater.getCustomChannelName"></a>
 
-### `electron-updater.getCustomChannelName(channel)` ⇒ <code>string</code>
+### `electron-updater.getCustomChannelName(channel)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 | Param | Type |
 | --- | --- |
-| channel | <code>string</code> | 
+| channel | <code>String</code> | 
 
 <a name="module_electron-updater.getDefaultChannelName"></a>
 
-### `electron-updater.getDefaultChannelName()` ⇒ <code>string</code>
+### `electron-updater.getDefaultChannelName()` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 <a name="module_electron-updater.isUseOldMacProvider"></a>
 
-### `electron-updater.isUseOldMacProvider()` ⇒ <code>boolean</code>
+### `electron-updater.isUseOldMacProvider()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 <!-- end of generated block -->

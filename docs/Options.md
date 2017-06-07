@@ -16,6 +16,24 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 ## File Patterns
 
+* `*` Matches 0 or more characters in a single path portion
+* `?` Matches 1 character
+* `[...]` Matches a range of characters, similar to a RegExp range.
+  If the first character of the range is `!` or `^` then it matches
+  any character not in the range.
+* `!(pattern|pattern|pattern)` Matches anything that does not match
+  any of the patterns provided.
+* `?(pattern|pattern|pattern)` Matches zero or one occurrence of the
+  patterns provided.
+* `+(pattern|pattern|pattern)` Matches one or more occurrences of the
+  patterns provided.
+* `*(a|b|c)` Matches zero or more occurrences of the patterns provided
+* `@(pattern|pat*|pat?erN)` Matches exactly one of the patterns
+  provided
+* `**` If a "globstar" is alone in a path portion, then it matches
+  zero or more directories and subdirectories searching for matches.
+  It does not crawl symlinked directories.
+
 Hidden files are not ignored by default, but all files that should be ignored, are [ignored by default](#default-file-pattern).
 
 Development dependencies are never copied in any case. You don't need to ignore it explicitly.
@@ -59,7 +77,7 @@ You can use macros in the file patterns, artifact file name patterns and publish
 
 ## Source and Destination Directories
 You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
-Note this only works for `extraFiles` and `extraResources`.
+Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
  ```js
  [
    {
@@ -90,484 +108,237 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 
 `${ext}` macro is supported in addition to [file macros](#file-macros).
 
-## Build Version Management
-`CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
-
 <!-- do not edit. start of generated block -->
-## API
-
-* [electron-builder](#module_electron-builder)
-    * [`.AppXOptions`](#AppXOptions)
-    * [`.BuildOptions`](#BuildOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-    * [`.CliOptions`](#CliOptions) ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-    * [`.Config`](#Config) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-    * [`.DebOptions`](#DebOptions) ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
-    * [`.DmgContent`](#DmgContent)
-    * [`.DmgOptions`](#DmgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-    * [`.DmgWindow`](#DmgWindow)
-    * [`.LinuxBuildOptions`](#LinuxBuildOptions) ⇐ <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>
-    * [`.MacOptions`](#MacOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-    * [`.MasBuildOptions`](#MasBuildOptions) ⇐ <code>[MacOptions](#MacOptions)</code>
-    * [`.Metadata`](#Metadata)
-    * [`.MetadataDirectories`](#MetadataDirectories)
-    * [`.NsisOptions`](#NsisOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-    * [`.NsisWebOptions`](#NsisWebOptions) ⇐ <code>[NsisOptions](#NsisOptions)</code>
-    * [`.PackagerOptions`](#PackagerOptions)
-    * [`.PkgOptions`](#PkgOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-    * [`.PortableOptions`](#PortableOptions) ⇐ <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>
-    * [`.SnapOptions`](#SnapOptions) ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
-    * [`.SquirrelWindowsOptions`](#SquirrelWindowsOptions) ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-    * [`.WinBuildOptions`](#WinBuildOptions) ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-
-<a name="AppXOptions"></a>
-
-### `AppXOptions`
-AppX Options ([appx](#Config-appx)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**See**: [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| backgroundColor| <code>string</code> \| <code>null</code> | <a name="AppXOptions-backgroundColor"></a>The background color of the app tile. See: [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx). |
-| publisher| <code>string</code> \| <code>null</code> | <a name="AppXOptions-publisher"></a>Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. By default will be extracted from code sign certificate. |
-| displayName| <code>string</code> \| <code>null</code> | <a name="AppXOptions-displayName"></a>A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx). |
-| publisherDisplayName| <code>string</code> \| <code>null</code> | <a name="AppXOptions-publisherDisplayName"></a>A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx). |
-| identityName| <code>string</code> \| <code>null</code> | <a name="AppXOptions-identityName"></a>Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). |
-
-<a name="BuildOptions"></a>
-
-### `BuildOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
-<a name="CliOptions"></a>
-
-### `CliOptions` ⇐ <code>[PublishOptions](electron-publish#PublishOptions)</code>
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[PublishOptions](electron-publish#PublishOptions)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| mac| <code>Array&lt;string&gt;</code> | 
-| linux| <code>Array&lt;string&gt;</code> | 
-| win| <code>Array&lt;string&gt;</code> | 
-| arch| <code>string</code> | 
-| x64| <code>boolean</code> | 
-| ia32| <code>boolean</code> | 
-| armv7l| <code>boolean</code> | 
-| dir| <code>boolean</code> | 
-| platform| <code>string</code> | 
-| project| <code>string</code> | 
-
 <a name="Config"></a>
 
-### `Config` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
+## `Config` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder#PlatformSpecificBuildOptions)</code>
 Configuration Options
 
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
+**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder#PlatformSpecificBuildOptions)</code>  
 **Properties**
+* <a name="Config-appId"></a>`appId` = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID be set.
+* <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
+* <a name="Config-productName"></a>`productName` String - As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
+* <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+* <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](electron-builder-core#FilePattern)&gt; | [FilePattern](electron-builder-core#FilePattern) | String - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
+  
+  Glob rules the same as for [files](#multiple-glob-patterns).
+* <a name="Config-extraFiles"></a>`extraFiles` Array&lt;String | [FilePattern](electron-builder-core#FilePattern)&gt; | [FilePattern](electron-builder-core#FilePattern) | String - The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+* <a name="Config-asar"></a>`asar` = `true` Boolean | [AsarOptions](#AsarOptions)<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
+  
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.
+  * <a name="AsarOptions-smartUnpack"></a>`smartUnpack` = `true` Boolean - Whether to automatically unpack executables files.
+  * <a name="AsarOptions-ordering"></a>`ordering` String
+* <a name="Config-asarUnpack"></a>`asarUnpack` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+* <a name="Config-fileAssociations"></a>`fileAssociations` Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)<a name="FileAssociation"></a> - File associations.
+  * <a name="FileAssociation-ext"></a>**`ext`** String | Array&lt;String&gt; - The extension (minus the leading period). e.g. `png`.
+  * <a name="FileAssociation-name"></a>`name` String - The name. e.g. `PNG`. Defaults to `ext`.
+  * <a name="FileAssociation-description"></a>`description` String - *windows-only.* The description.
+  * <a name="FileAssociation-icon"></a>`icon` String - The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
+  * <a name="FileAssociation-role"></a>`role` = `Editor` String - *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.
+  * <a name="FileAssociation-isPackage"></a>`isPackage` Boolean - *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
+* <a name="Config-protocols"></a>`protocols` Array&lt;[Protocol](#Protocol)&gt; | [Protocol](#Protocol)<a name="Protocol"></a> - URL protocol schemes.
+  * <a name="Protocol-name"></a>**`name`** String - The name. e.g. `IRC server URL`.
+  * <a name="Protocol-schemes"></a>**`schemes`** Array&lt;String&gt; - The schemes. e.g. `["irc", "ircs"]`.
+  * <a name="Protocol-role"></a>`role` = `Editor` "Editor" | "Viewer" | "Shell" | "None" - *macOS-only* The app’s role with respect to the type.
+* <a name="Config-compression"></a>`compression` = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
+* <a name="Config-afterPack"></a>`afterPack` callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+* <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
+* <a name="Config-npmRebuild"></a>`npmRebuild` = `true` Boolean - Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app.
+* <a name="Config-npmSkipBuildFromSource"></a>`npmSkipBuildFromSource` = `false` Boolean - Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps.
+* <a name="Config-npmArgs"></a>`npmArgs` Array&lt;String&gt; | String - Additional command line arguments to use when installing app native deps.
+* <a name="Config-nodeGypRebuild"></a>`nodeGypRebuild` = `false` Boolean - Whether to execute `node-gyp rebuild` before starting to package the app.
+* <a name="Config-electronDist"></a>`electronDist` String - The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
+* <a name="Config-electronDownload"></a>`electronDownload` any - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+* <a name="Config-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array - Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
+* <a name="Config-forceCodeSigning"></a>`forceCodeSigning` = `false` Boolean - Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+* <a name="Config-directories"></a>`directories`<a name="MetadataDirectories"></a>
+  * <a name="MetadataDirectories-buildResources"></a>`buildResources` = `build` String - The path to build resources.
+  * <a name="MetadataDirectories-output"></a>`output` = `dist` String - The output directory.
+  * <a name="MetadataDirectories-app"></a>`app` String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
+* <a name="Config-electronVersion"></a>`electronVersion` String - The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
+* <a name="Config-muonVersion"></a>`muonVersion` String - The version of muon you are packaging for.
+* <a name="Config-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+* <a name="Config-buildVersion"></a>`buildVersion` String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
+* <a name="Config-electronCompile"></a>`electronCompile` Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
+* <a name="Config-detectUpdateChannel"></a>`detectUpdateChannel` = `true` Boolean - Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+* <a name="Config-mac"></a>`mac`<a name="MacOptions"></a> - macOS options.
+  * <a name="MacOptions-category"></a>`category` String - The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
+    
+    For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
+    
+    Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
+  * <a name="MacOptions-target"></a>`target` Array&lt;[TargetConfig](electron-builder-core#TargetConfig) | "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"&gt; | "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir" | [TargetConfig](electron-builder-core#TargetConfig) - The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+  * <a name="MacOptions-identity"></a>`identity` String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [mas](#MasBuildOptions-identity).
+  * <a name="MacOptions-icon"></a>`icon` = `build/icon.icns` String - The path to application icon.
+  * <a name="MacOptions-entitlements"></a>`entitlements` String - The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements).
+  * <a name="MacOptions-entitlementsInherit"></a>`entitlementsInherit` String - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).
+    
+    This option only applies when signing with `entitlements` provided.
+  * <a name="MacOptions-bundleVersion"></a>`bundleVersion` String - The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
+  * <a name="MacOptions-helperBundleId"></a>`helperBundleId` = `${appBundleIdentifier}.helper` String - The bundle identifier to use in the application helper's plist.
+  * <a name="MacOptions-type"></a>`type` = `distribution` "distribution" | "development" - Whether to sign app for development or for distribution.
+  * <a name="MacOptions-extendInfo"></a>`extendInfo` any - The extra entries for `Info.plist`.
+  * <a name="MacOptions-binaries"></a>`binaries` Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
+  * <a name="MacOptions-requirements"></a>`requirements` String - Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
+* <a name="Config-mas"></a>`mas`<a name="MasBuildOptions"></a> - MAS (Mac Application Store) options.
+  * <a name="MasBuildOptions-entitlements"></a>`entitlements` String - The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
+  * <a name="MasBuildOptions-entitlementsInherit"></a>`entitlementsInherit` String - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
+  * <a name="MasBuildOptions-binaries"></a>`binaries` Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
+* <a name="Config-dmg"></a>`dmg`<a name="DmgOptions"></a> - macOS DMG options.
+  
+  To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+  * <a name="DmgOptions-background"></a>`background` String - The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use `window.size`. Default locations expected background size to be 540x380. See: [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).
+  * <a name="DmgOptions-backgroundColor"></a>`backgroundColor` String - The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
+  * <a name="DmgOptions-icon"></a>`icon` String - The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to the application icon (`build/icon.icns`).
+  * <a name="DmgOptions-iconSize"></a>`iconSize` = `80` Number - The size of all the icons inside the DMG.
+  * <a name="DmgOptions-iconTextSize"></a>`iconTextSize` = `12` Number - The size of all the icon texts inside the DMG.
+  * <a name="DmgOptions-title"></a>`title` = `${productName} ${version}` String - The title of the produced DMG, which will be shown when mounted (volume name).
+    
+    Macro `${productName}`, `${version}` and `${name}` are supported.
+  * <a name="DmgOptions-contents"></a>`contents` Array&lt;[DmgContent](#DmgContent)&gt; - The content — to customize icon locations.
+  * <a name="DmgOptions-format"></a>`format` = `UDZO` "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" - The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
+  * <a name="DmgOptions-window"></a>`window`<a name="DmgWindow"></a> - The DMG windows position and size.
+    * <a name="DmgWindow-x"></a>`x` = `400` Number - The X position relative to left of the screen.
+    * <a name="DmgWindow-y"></a>`y` = `100` Number - The Y position relative to top of the screen.
+    * <a name="DmgWindow-width"></a>`width` Number - The width. Defaults to background image width or 540.
+    * <a name="DmgWindow-height"></a>`height` Number - The height. Defaults to background image height or 380.
+* <a name="Config-pkg"></a>`pkg`<a name="PkgOptions"></a> - macOS product archive options.
+  * <a name="PkgOptions-scripts"></a>`scripts` = `build/pkg-scripts` String - The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).
+  * <a name="PkgOptions-installLocation"></a>`installLocation` = `/Applications` String - The install location.
+  * <a name="PkgOptions-identity"></a>`identity` String
+* <a name="Config-win"></a>`win`<a name="WinBuildOptions"></a> - Windows options.
+  * <a name="WinBuildOptions-target"></a>`target` = `nsis` String | [TargetConfig](electron-builder-core#TargetConfig) | Array - Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
+    
+    To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+  * <a name="WinBuildOptions-signingHashAlgorithms"></a>`signingHashAlgorithms` = `['sha1', 'sha256']` Array&lt;"sha1" | "sha256"&gt; - Array of signing algorithms used. For AppX `sha256` is always used.
+  * <a name="WinBuildOptions-icon"></a>`icon` = `build/icon.ico` String - The path to application icon.
+  * <a name="WinBuildOptions-legalTrademarks"></a>`legalTrademarks` String - The trademarks and registered trademarks.
+  * <a name="WinBuildOptions-certificateFile"></a>`certificateFile` String - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+  * <a name="WinBuildOptions-certificatePassword"></a>`certificatePassword` String - The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+  * <a name="WinBuildOptions-certificateSubjectName"></a>`certificateSubjectName` String - The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
+  * <a name="WinBuildOptions-certificateSha1"></a>`certificateSha1` String - The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows.
+  * <a name="WinBuildOptions-additionalCertificateFile"></a>`additionalCertificateFile` String - The path to an additional certificate file you want to add to the signature block.
+  * <a name="WinBuildOptions-rfc3161TimeStampServer"></a>`rfc3161TimeStampServer` = `http://timestamp.comodoca.com/rfc3161` String - The URL of the RFC 3161 time stamp server.
+  * <a name="WinBuildOptions-timeStampServer"></a>`timeStampServer` = `http://timestamp.verisign.com/scripts/timstamp.dll` String - The URL of the time stamp server.
+  * <a name="WinBuildOptions-publisherName"></a>`publisherName` String | Array&lt;String&gt; - [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.
+  * <a name="WinBuildOptions-forceCodeSigningVerification"></a>`forceCodeSigningVerification` = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification.
+* <a name="Config-nsis"></a>`nsis`<a name="NsisOptions"></a> - NSIS options. See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
+  * <a name="NsisOptions-oneClick"></a>`oneClick` = `true` Boolean - One-click installation.
+  * <a name="NsisOptions-perMachine"></a>`perMachine` = `false` Boolean - If `oneClick` is `true` (default): Install per all users (per-machine).
+    
+    If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
+  * <a name="NsisOptions-allowElevation"></a>`allowElevation` = `true` Boolean - *boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
+  * <a name="NsisOptions-allowToChangeInstallationDirectory"></a>`allowToChangeInstallationDirectory` = `false` Boolean - *boring installer only.* Whether to allow user to change installation directory.
+  * <a name="NsisOptions-runAfterFinish"></a>`runAfterFinish` = `true` Boolean - *one-click installer only.* Run application after finish.
+  * <a name="NsisOptions-guid"></a>`guid` String - See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+  * <a name="NsisOptions-installerIcon"></a>`installerIcon` String - The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.
+  * <a name="NsisOptions-uninstallerIcon"></a>`uninstallerIcon` String - The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.
+  * <a name="NsisOptions-installerHeader"></a>`installerHeader` = `build/installerHeader.bmp` String - *boring installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+  * <a name="NsisOptions-installerSidebar"></a>`installerSidebar` String - *boring installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+  * <a name="NsisOptions-uninstallerSidebar"></a>`uninstallerSidebar` String - *boring installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+  * <a name="NsisOptions-installerHeaderIcon"></a>`installerHeaderIcon` String - *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
+  * <a name="NsisOptions-include"></a>`include` String - The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+  * <a name="NsisOptions-script"></a>`script` String - The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+  * <a name="NsisOptions-license"></a>`license` String - The path to EULA license file. Defaults to `license.rtf` or `license.txt` or `eula.rtf` or `eula.txt` (or uppercase variants, e.g. `EULA.txt` or `LICENSE.TXT`).
+    
+    Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+    
+    Appropriate license file will be selected by user OS language.
+  * <a name="NsisOptions-language"></a>`language` String - [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
+  * <a name="NsisOptions-multiLanguageInstaller"></a>`multiLanguageInstaller` Boolean - *boring installer only.* Whether to create multi-language installer. Defaults to `unicode` option value. [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800).
+  * <a name="NsisOptions-warningsAsErrors"></a>`warningsAsErrors` = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
+  * <a name="NsisOptions-menuCategory"></a>`menuCategory` = `false` Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
+  * <a name="NsisOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
+  * <a name="NsisOptions-unicode"></a>`unicode` = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
+  * <a name="NsisOptions-deleteAppDataOnUninstall"></a>`deleteAppDataOnUninstall` = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
+* <a name="Config-nsisWeb"></a>`nsisWeb`<a name="NsisWebOptions"></a> - Web Installer specific options.
+  * <a name="NsisWebOptions-appPackageUrl"></a>`appPackageUrl` String - The application package download URL. Optional — by default computed using publish configuration.
+    
+    URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).
+    
+    Custom `X-Arch` http header is set to `32` or `64`.
+  * <a name="NsisWebOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
+* <a name="Config-portable"></a>`portable`<a name="PortableOptions"></a> - Portable specific options.
+  * <a name="PortableOptions-requestExecutionLevel"></a>`requestExecutionLevel` = `user` "user" | "highest" | "admin" - The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.
+* <a name="Config-appx"></a>`appx`<a name="AppXOptions"></a> - AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
+  * <a name="AppXOptions-backgroundColor"></a>`backgroundColor` String - The background color of the app tile. See: [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+  * <a name="AppXOptions-publisher"></a>`publisher` String - Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. By default will be extracted from code sign certificate.
+  * <a name="AppXOptions-displayName"></a>`displayName` String - A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
+  * <a name="AppXOptions-publisherDisplayName"></a>`publisherDisplayName` String - A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
+  * <a name="AppXOptions-identityName"></a>`identityName` String - Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+* <a name="Config-squirrelWindows"></a>`squirrelWindows`<a name="SquirrelWindowsOptions"></a> - Squirrel.Windows options.
+  
+  To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
+  * <a name="SquirrelWindowsOptions-iconUrl"></a>`iconUrl` String - A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
+    
+    Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
+    
+    If you don't plan to build windows installer, you can omit it. If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
+  * <a name="SquirrelWindowsOptions-loadingGif"></a>`loadingGif` String - The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
+  * <a name="SquirrelWindowsOptions-msi"></a>`msi` Boolean - Whether to create an MSI installer. Defaults to `false` (MSI is not created).
+  * <a name="SquirrelWindowsOptions-remoteReleases"></a>`remoteReleases` String | Boolean - A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
+  * <a name="SquirrelWindowsOptions-remoteToken"></a>`remoteToken` String - Authentication token for remote updates
+  * <a name="SquirrelWindowsOptions-useAppIdAsId"></a>`useAppIdAsId` Boolean - Use `appId` to identify package instead of `name`.
+* <a name="Config-linux"></a>`linux`<a name="LinuxBuildOptions"></a> - Linux options.
+  * <a name="LinuxBuildOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+  * <a name="LinuxBuildOptions-packageCategory"></a>`packageCategory` String - The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
+  * <a name="LinuxBuildOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
+  * <a name="LinuxBuildOptions-target"></a>`target` = `AppImage` String | [TargetConfig](electron-builder-core#TargetConfig) | Array - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+    
+    electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
+  * <a name="LinuxBuildOptions-maintainer"></a>`maintainer` String - The maintainer. Defaults to [author](#Metadata-author).
+  * <a name="LinuxBuildOptions-vendor"></a>`vendor` String - The vendor. Defaults to [author](#Metadata-author).
+  * <a name="LinuxBuildOptions-desktop"></a>`desktop` Object&lt;String, any&gt; - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+  * <a name="LinuxBuildOptions-executableName"></a>`executableName` String - The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`.
+  * <a name="LinuxBuildOptions-icon"></a>`icon` String - The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.
+  * <a name="LinuxBuildOptions-synopsis"></a>`synopsis` String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+* <a name="Config-deb"></a>`deb`<a name="DebOptions"></a> - Debian package specific options.
+  * <a name="DebOptions-compression"></a>`compression` = `xz` "gz" | "bzip2" | "xz" - The compression type.
+  * <a name="DebOptions-priority"></a>`priority` String - The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
+  * <a name="DebOptions-depends"></a>`depends` Array&lt;String&gt; - Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
+* <a name="Config-snap"></a>`snap`<a name="SnapOptions"></a> - [Snap](http://snapcraft.io) options.
+  * <a name="SnapOptions-confinement"></a>`confinement` = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
+  * <a name="SnapOptions-summary"></a>`summary` String - The 78 character long summary. Defaults to [productName](#Config-productName).
+  * <a name="SnapOptions-grade"></a>`grade` = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).
+  * <a name="SnapOptions-assumes"></a>`assumes` Array&lt;String&gt; - The list of features that must be supported by the core in order for this snap to install.
+  * <a name="SnapOptions-buildPackages"></a>`buildPackages` Array&lt;String&gt; - The list of debian packages needs to be installed for building this snap.
+  * <a name="SnapOptions-stagePackages"></a>`stagePackages` Array&lt;String&gt; - The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`. Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]`.
+    
+    If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults.
+  * <a name="SnapOptions-plugs"></a>`plugs` Array&lt;String&gt; - The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.
+    
+    If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults.
+  * <a name="SnapOptions-after"></a>`after` Array&lt;String&gt; - Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part. Defaults to `["desktop-only""]`.
+    
+    If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
+  * <a name="SnapOptions-ubuntuAppPlatformContent"></a>`ubuntuAppPlatformContent` String - Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
+* <a name="Config-appimage"></a>`appimage` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-pacman"></a>`pacman` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-rpm"></a>`rpm` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-freebsd"></a>`freebsd` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-p5p"></a>`p5p` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-apk"></a>`apk` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)<a name="Metadata"></a>
 
-| Name | Type | Description |
-| --- | --- | --- |
-| appId| <code>string</code> \| <code>null</code> | <a name="Config-appId"></a>The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported).<br><br>Defaults to `com.electron.${name}`. It is strongly recommended that an explicit ID be set. |
-| copyright| <code>string</code> \| <code>null</code> | <a name="Config-copyright"></a>The human-readable copyright line for the app. Defaults to `Copyright © year author`. |
-| productName| <code>string</code> \| <code>null</code> | <a name="Config-productName"></a>As [name](#AppMetadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}). |
-| files| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-files"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package. See: [File Patterns](#file-patterns). |
-| extraResources| <code>Array&lt;string \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraResources"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).<br><br>Glob rules the same as for [files](#multiple-glob-patterns). |
-| extraFiles| <code>Array&lt;string \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>string</code> \| <code>null</code> | <a name="Config-extraFiles"></a>The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows). |
-| asar = <code>true</code>| <code>[AsarOptions](electron-builder-core#AsarOptions)</code> \| <code>boolean</code> \| <code>null</code> | <a name="Config-asar"></a>Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).<br><br>Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work. |
-| asarUnpack| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-asarUnpack"></a>A [glob patterns](https://www.npmjs.com/package/glob#glob-primer) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive. |
-| fileAssociations| <code>Array&lt;[FileAssociation](electron-builder-core#FileAssociation)&gt;</code> \| <code>[FileAssociation](electron-builder-core#FileAssociation)</code> | <a name="Config-fileAssociations"></a>File associations. |
-| protocols| <code>Array&lt;[Protocol](electron-builder-core#Protocol)&gt;</code> \| <code>[Protocol](electron-builder-core#Protocol)</code> | <a name="Config-protocols"></a>URL protocol schemes. |
-| compression = <code>normal</code>| <code>"store"</code> \| <code>"normal"</code> \| <code>"maximum"</code> \| <code>null</code> | <a name="Config-compression"></a>The compression level. If you want to rapidly test build, `store` can reduce build time significantly. |
-| afterPack| <code>callback</code> | <a name="Config-afterPack"></a>*programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned. |
-| beforeBuild| <code>callback</code> | <a name="Config-beforeBuild"></a>*programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild. |
-| npmRebuild = <code>true</code>| <code>boolean</code> | <a name="Config-npmRebuild"></a>Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app. |
-| npmSkipBuildFromSource| <code>boolean</code> | <a name="Config-npmSkipBuildFromSource"></a>Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps. |
-| npmArgs| <code>Array&lt;string&gt;</code> \| <code>string</code> \| <code>null</code> | <a name="Config-npmArgs"></a>Additional command line arguments to use when installing app native deps. |
-| nodeGypRebuild| <code>boolean</code> | <a name="Config-nodeGypRebuild"></a>Whether to execute `node-gyp rebuild` before starting to package the app. |
-| electronDist| <code>string</code> | <a name="Config-electronDist"></a>The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows. |
-| electronDownload| <code>any</code> | <a name="Config-electronDownload"></a>The [electron-download](https://github.com/electron-userland/electron-download#usage) options. |
-| publish| <code>null</code> \| <code>string</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="Config-publish"></a>Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). |
-| forceCodeSigning| <code>boolean</code> | <a name="Config-forceCodeSigning"></a>Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct). |
-| directories| <code>[MetadataDirectories](#MetadataDirectories)</code> \| <code>null</code> | <a name="Config-directories"></a> |
-| electronVersion| <code>string</code> \| <code>null</code> | <a name="Config-electronVersion"></a>The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency. |
-| muonVersion| <code>string</code> \| <code>null</code> | <a name="Config-muonVersion"></a>The version of muon you are packaging for. |
-| artifactName| <code>string</code> \| <code>null</code> | <a name="Config-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options). |
-| buildVersion| <code>string</code> \| <code>null</code> | <a name="Config-buildVersion"></a>The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`). |
-| electronCompile| <code>boolean</code> | <a name="Config-electronCompile"></a>Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified. |
-| detectUpdateChannel = <code>true</code>| <code>boolean</code> | <a name="Config-detectUpdateChannel"></a>Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`. |
-| mac| <code>[MacOptions](#MacOptions)</code> \| <code>null</code> | <a name="Config-mac"></a> |
-| mas| <code>[MasBuildOptions](#MasBuildOptions)</code> \| <code>null</code> | <a name="Config-mas"></a> |
-| dmg| <code>[DmgOptions](#DmgOptions)</code> \| <code>null</code> | <a name="Config-dmg"></a> |
-| pkg| <code>[PkgOptions](#PkgOptions)</code> \| <code>null</code> | <a name="Config-pkg"></a> |
-| win| <code>[WinBuildOptions](#WinBuildOptions)</code> \| <code>null</code> | <a name="Config-win"></a> |
-| nsis| <code>[NsisOptions](#NsisOptions)</code> \| <code>null</code> | <a name="Config-nsis"></a> |
-| nsisWeb| <code>[NsisWebOptions](#NsisWebOptions)</code> \| <code>null</code> | <a name="Config-nsisWeb"></a> |
-| portable| <code>[PortableOptions](#PortableOptions)</code> \| <code>null</code> | <a name="Config-portable"></a> |
-| appx| <code>[AppXOptions](#AppXOptions)</code> \| <code>null</code> | <a name="Config-appx"></a> |
-| squirrelWindows| <code>[SquirrelWindowsOptions](#SquirrelWindowsOptions)</code> \| <code>null</code> | <a name="Config-squirrelWindows"></a> |
-| linux| <code>[LinuxBuildOptions](#LinuxBuildOptions)</code> \| <code>null</code> | <a name="Config-linux"></a> |
-| deb| <code>[DebOptions](#DebOptions)</code> \| <code>null</code> | <a name="Config-deb"></a> |
-| snap| <code>[SnapOptions](#SnapOptions)</code> \| <code>null</code> | <a name="Config-snap"></a> |
-| appimage| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-appimage"></a> |
-| pacman| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-pacman"></a> |
-| rpm| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-rpm"></a> |
-| freebsd| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-freebsd"></a> |
-| p5p| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-p5p"></a> |
-| apk| <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code> \| <code>null</code> | <a name="Config-apk"></a> |
-
-<a name="DebOptions"></a>
-
-### `DebOptions` ⇐ <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>
-Debian Package Specific Options
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| compression = <code>xz</code>| <code>"gz"</code> \| <code>"bzip2"</code> \| <code>"xz"</code> \| <code>null</code> | <a name="DebOptions-compression"></a>The compression type. |
-| priority| <code>string</code> \| <code>null</code> | <a name="DebOptions-priority"></a>The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute. |
-| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="DebOptions-depends"></a>Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`. |
-
-<a name="DmgContent"></a>
-
-### `DmgContent`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **x**| <code>number</code> | <a name="DmgContent-x"></a> |
-| **y**| <code>number</code> | <a name="DmgContent-y"></a> |
-| type| <code>"link"</code> \| <code>"file"</code> | <a name="DmgContent-type"></a> |
-| name| <code>string</code> | <a name="DmgContent-name"></a>The name of the file within the DMG. Defaults to basename of `path`. |
-| path| <code>string</code> | <a name="DmgContent-path"></a> |
-
-<a name="DmgOptions"></a>
-
-### `DmgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-macOS DMG Options ([dmg](#Config-dmg)).
-
-To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
-If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| background| <code>string</code> \| <code>null</code> | <a name="DmgOptions-background"></a>The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use `window.size`. Default locations expected background size to be 540x380. See: [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191). |
-| backgroundColor| <code>string</code> \| <code>null</code> | <a name="DmgOptions-backgroundColor"></a>The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image. |
-| icon| <code>string</code> \| <code>null</code> | <a name="DmgOptions-icon"></a>The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to the application icon (`build/icon.icns`). |
-| iconSize = <code>80</code>| <code>number</code> \| <code>null</code> | <a name="DmgOptions-iconSize"></a>The size of all the icons inside the DMG. |
-| iconTextSize = <code>12</code>| <code>number</code> \| <code>null</code> | <a name="DmgOptions-iconTextSize"></a>The size of all the icon texts inside the DMG. |
-| title = <code>&quot;${productName} ${version}&quot;</code>| <code>string</code> \| <code>null</code> | <a name="DmgOptions-title"></a>The title of the produced DMG, which will be shown when mounted (volume name).<br><br>Macro `${productName}`, `${version}` and `${name}` are supported. |
-| contents| <code>Array&lt;[DmgContent](#DmgContent)&gt;</code> | <a name="DmgOptions-contents"></a>The content — to customize icon locations. |
-| format = <code>UDZO</code>| <code>"UDRW"</code> \| <code>"UDRO"</code> \| <code>"UDCO"</code> \| <code>"UDZO"</code> \| <code>"UDBZ"</code> \| <code>"ULFO"</code> | <a name="DmgOptions-format"></a>The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)). |
-| window| <code>[DmgWindow](#DmgWindow)</code> | <a name="DmgOptions-window"></a>The DMG windows position and size. See [dmg.window](#DmgWindow). |
-
-<a name="DmgOptions-change-file-icons-location-for-dmg"></a>**Example** *(change file icons location for DMG)*  
-```js
-{
-  "contents": [
-    {
-      "x": 130,
-      "y": 220
-    },
-    {
-      "x": 410,
-      "y": 220,
-      "type": "link",
-      "path": "/Applications"
-    }
-  ]
-}
-```
-<a name="DmgWindow"></a>
-
-### `DmgWindow`
-DMG Windows Position and Size
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| x = <code>400</code>| <code>number</code> | <a name="DmgWindow-x"></a>The X position relative to left of the screen. |
-| y = <code>100</code>| <code>number</code> | <a name="DmgWindow-y"></a>The Y position relative to top of the screen. |
-| width| <code>number</code> | <a name="DmgWindow-width"></a>The width. Defaults to background image width or 540. |
-| height| <code>number</code> | <a name="DmgWindow-height"></a>The height. Defaults to background image height or 380. |
-
-<a name="LinuxBuildOptions"></a>
-
-### `LinuxBuildOptions` ⇐ <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>
-Linux Options
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[CommonLinuxOptions](electron-builder#CommonLinuxOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| category| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry). |
-| packageCategory| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-packageCategory"></a>The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage. |
-| description| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-description"></a>As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux. |
-| target = <code>AppImage</code>| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>Array</code> | <a name="LinuxBuildOptions-target"></a>Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.<br><br>electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) |
-| maintainer| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-maintainer"></a>The maintainer. Defaults to [author](#AppMetadata-author). |
-| vendor| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-vendor"></a>The vendor. Defaults to [author](#AppMetadata-author). |
-| desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | <a name="LinuxBuildOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value). |
-| executableName| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-executableName"></a>The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`. |
-| icon| <code>string</code> | <a name="LinuxBuildOptions-icon"></a>The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file. |
-| synopsis| <code>string</code> \| <code>null</code> | <a name="LinuxBuildOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description). |
-
-<a name="MacOptions"></a>
-
-### `MacOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-macOS Options ([mac](#Config-mac)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| category| <code>string</code> \| <code>null</code> | <a name="MacOptions-category"></a>The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.<br><br>For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.<br><br>Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8). |
-| target| <code>Array&lt;[TargetConfig](electron-builder-core#TargetConfig) \| "default" \| "dmg" \| "mas" \| "mas-dev" \| "pkg" \| "7z" \| "zip" \| "tar.xz" \| "tar.lz" \| "tar.gz" \| "tar.bz2" \| "dir"&gt;</code> \| <code>"default"</code> \| <code>"dmg"</code> \| <code>"mas"</code> \| <code>"mas-dev"</code> \| <code>"pkg"</code> \| <code>"7z"</code> \| <code>"zip"</code> \| <code>"tar.xz"</code> \| <code>"tar.lz"</code> \| <code>"tar.gz"</code> \| <code>"tar.bz2"</code> \| <code>"dir"</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>null</code> | <a name="MacOptions-target"></a>The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac). |
-| identity| <code>string</code> \| <code>null</code> | <a name="MacOptions-identity"></a>The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [mas](#MasBuildOptions-identity). |
-| icon = <code>&quot;build/icon.icns&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MacOptions-icon"></a>The path to application icon. |
-| entitlements| <code>string</code> \| <code>null</code> | <a name="MacOptions-entitlements"></a>The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements). |
-| entitlementsInherit| <code>string</code> \| <code>null</code> | <a name="MacOptions-entitlementsInherit"></a>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mac.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.darwin.inherit.plist).<br><br>This option only applies when signing with `entitlements` provided. |
-| bundleVersion| <code>string</code> \| <code>null</code> | <a name="MacOptions-bundleVersion"></a>The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643). |
-| helperBundleId = <code>&quot;${appBundleIdentifier}.helper&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MacOptions-helperBundleId"></a>The bundle identifier to use in the application helper's plist. |
-| type = <code>distribution</code>| <code>"distribution"</code> \| <code>"development"</code> \| <code>null</code> | <a name="MacOptions-type"></a>Whether to sign app for development or for distribution. |
-| extendInfo| <code>any</code> | <a name="MacOptions-extendInfo"></a>The extra entries for `Info.plist`. |
-| binaries| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="MacOptions-binaries"></a>Paths of any extra binaries that need to be signed. |
-| requirements| <code>string</code> \| <code>null</code> | <a name="MacOptions-requirements"></a>Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS. |
-
-<a name="MasBuildOptions"></a>
-
-### `MasBuildOptions` ⇐ <code>[MacOptions](#MacOptions)</code>
-MAS (Mac Application Store) Options ([mas](#Config-mas)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[MacOptions](#MacOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| entitlements| <code>string</code> \| <code>null</code> | <a name="MasBuildOptions-entitlements"></a>The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist). |
-| entitlementsInherit| <code>string</code> \| <code>null</code> | <a name="MasBuildOptions-entitlementsInherit"></a>The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist). |
-| binaries| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="MasBuildOptions-binaries"></a>Paths of any extra binaries that need to be signed. |
-
-<a name="Metadata"></a>
-
-### `Metadata`
-Fields in the package.json
+## `Metadata`
 Some standard fields should be defined in the `package.json`.
 
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| repository| <code>string</code> \| <code>[RepositoryInfo](electron-builder-core#RepositoryInfo)</code> \| <code>null</code> | <a name="Metadata-repository"></a> |
-| dependencies| <code>Object&lt;string, any&gt;</code> | <a name="Metadata-dependencies"></a> |
-| version| <code>string</code> | <a name="Metadata-version"></a> |
-| **name**| <code>string</code> | <a name="Metadata-name"></a>The application name. |
-| productName| <code>string</code> \| <code>null</code> | <a name="Metadata-productName"></a> |
-| description| <code>string</code> | <a name="Metadata-description"></a>The application description. |
-| main| <code>string</code> \| <code>null</code> | <a name="Metadata-main"></a> |
-| author| <code>[AuthorMetadata](electron-builder-core#AuthorMetadata)</code> | <a name="Metadata-author"></a> |
-| homepage| <code>string</code> \| <code>null</code> | <a name="Metadata-homepage"></a>The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).<br><br>If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default. |
-| license| <code>string</code> \| <code>null</code> | <a name="Metadata-license"></a>linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name. |
-| build| <code>[Config](#Config)</code> | <a name="Metadata-build"></a> |
-
-<a name="MetadataDirectories"></a>
-
-### `MetadataDirectories`
-`directories`
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| buildResources = <code>&quot;build&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-buildResources"></a>The path to build resources. |
-| output = <code>&quot;dist&quot;</code>| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-output"></a>The output directory. |
-| app| <code>string</code> \| <code>null</code> | <a name="MetadataDirectories-app"></a>The application directory (containing the application package.json), defaults to `app`, `www` or working directory. |
-
-<a name="NsisOptions"></a>
-
-### `NsisOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-NSIS specific options ([nsis](#Config-nsis)).
-
-See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| oneClick = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-oneClick"></a>One-click installation. |
-| perMachine| <code>boolean</code> | <a name="NsisOptions-perMachine"></a>If `oneClick` is `true` (default): Install per all users (per-machine).<br><br>If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine. |
-| allowElevation = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-allowElevation"></a>*boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions. |
-| allowToChangeInstallationDirectory| <code>boolean</code> | <a name="NsisOptions-allowToChangeInstallationDirectory"></a>*boring installer only.* Whether to allow user to change installation directory. |
-| runAfterFinish = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-runAfterFinish"></a>*one-click installer only.* Run application after finish. |
-| guid| <code>string</code> \| <code>null</code> | <a name="NsisOptions-guid"></a>See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name). |
-| installerIcon| <code>string</code> \| <code>null</code> | <a name="NsisOptions-installerIcon"></a>The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon. |
-| uninstallerIcon| <code>string</code> \| <code>null</code> | <a name="NsisOptions-uninstallerIcon"></a>The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon. |
-| installerHeader = <code>&quot;build/installerHeader.bmp&quot;</code>| <code>string</code> \| <code>null</code> | <a name="NsisOptions-installerHeader"></a>*boring installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. |
-| installerSidebar| <code>string</code> \| <code>null</code> | <a name="NsisOptions-installerSidebar"></a>*boring installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp` |
-| uninstallerSidebar| <code>string</code> \| <code>null</code> | <a name="NsisOptions-uninstallerSidebar"></a>*boring installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp` |
-| installerHeaderIcon| <code>string</code> \| <code>null</code> | <a name="NsisOptions-installerHeaderIcon"></a>*one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon. |
-| include| <code>string</code> \| <code>null</code> | <a name="NsisOptions-include"></a>The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script). |
-| script| <code>string</code> \| <code>null</code> | <a name="NsisOptions-script"></a>The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script). |
-| license| <code>string</code> \| <code>null</code> | <a name="NsisOptions-license"></a>The path to EULA license file. Defaults to `license.rtf` or `license.txt` or `eula.rtf` or `eula.txt` (or uppercase variants, e.g. `EULA.txt` or `LICENSE.TXT`).<br><br>Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).<br><br>Appropriate license file will be selected by user OS language. |
-| language| <code>string</code> \| <code>null</code> | <a name="NsisOptions-language"></a>[LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`). |
-| multiLanguageInstaller| <code>boolean</code> | <a name="NsisOptions-multiLanguageInstaller"></a>*boring installer only.* Whether to create multi-language installer. Defaults to `unicode` option value. [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800). |
-| warningsAsErrors = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-warningsAsErrors"></a>If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings. |
-| menuCategory| <code>boolean</code> \| <code>string</code> | <a name="NsisOptions-menuCategory"></a>Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value. |
-| artifactName| <code>string</code> \| <code>null</code> | <a name="NsisOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`. |
-| unicode = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-unicode"></a>Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). |
-| deleteAppDataOnUninstall| <code>boolean</code> | <a name="NsisOptions-deleteAppDataOnUninstall"></a>*one-click installer only.* Whether to delete app data on uninstall. |
-
-<a name="NsisWebOptions"></a>
-
-### `NsisWebOptions` ⇐ <code>[NsisOptions](#NsisOptions)</code>
-Web Installer Specific Options ([nsisWeb](#Config-nsisWeb)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[NsisOptions](#NsisOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| appPackageUrl| <code>string</code> \| <code>null</code> | <a name="NsisWebOptions-appPackageUrl"></a>The application package download URL. Optional — by default computed using publish configuration.<br><br>URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).<br><br>Custom `X-Arch` http header is set to `32` or `64`. |
-| artifactName| <code>string</code> \| <code>null</code> | <a name="NsisWebOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`. |
-
-<a name="PackagerOptions"></a>
-
-### `PackagerOptions`
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| targets| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code> | <a name="PackagerOptions-targets"></a> |
-| projectDir| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-projectDir"></a> |
-| cscLink| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscLink"></a> |
-| cscKeyPassword| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscKeyPassword"></a> |
-| cscInstallerLink| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscInstallerLink"></a> |
-| cscInstallerKeyPassword| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-cscInstallerKeyPassword"></a> |
-| platformPackagerFactory| <code>module:electron-builder/out/packagerApi.__type</code> \| <code>null</code> | <a name="PackagerOptions-platformPackagerFactory"></a> |
-| devMetadata| <code>[Metadata](#Metadata)</code> | <a name="PackagerOptions-devMetadata"></a>Deprecated: {tag.description} |
-| config| <code>[Config](#Config)</code> \| <code>string</code> \| <code>null</code> | <a name="PackagerOptions-config"></a> |
-| appMetadata| <code>[Metadata](#Metadata)</code> | <a name="PackagerOptions-appMetadata"></a>The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).<br><br>Application `package.json` will be still read, but options specified in this object will override. |
-| effectiveOptionComputed| <code>callback</code> | <a name="PackagerOptions-effectiveOptionComputed"></a> |
-| extraMetadata| <code>any</code> | <a name="PackagerOptions-extraMetadata"></a> |
-| prepackaged| <code>string</code> | <a name="PackagerOptions-prepackaged"></a> |
-
-<a name="PkgOptions"></a>
-
-### `PkgOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
-macOS Product Archive Options ([pkg](#Config-pkg)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| scripts = <code>&quot;build/pkg-scripts&quot;</code>| <code>string</code> \| <code>null</code> | <a name="PkgOptions-scripts"></a>The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html). |
-| installLocation = <code>&quot;/Applications&quot;</code>| <code>string</code> \| <code>null</code> | <a name="PkgOptions-installLocation"></a>The install location. |
-| identity| <code>string</code> \| <code>null</code> | <a name="PkgOptions-identity"></a> |
-
-<a name="PortableOptions"></a>
-
-### `PortableOptions` ⇐ <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>
-Portable Specific Options ([portable](#Config-portable)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[CommonNsisOptions](electron-builder#CommonNsisOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| requestExecutionLevel = <code>user</code>| <code>"user"</code> \| <code>"highest"</code> \| <code>"admin"</code> | <a name="PortableOptions-requestExecutionLevel"></a>The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows. |
-
-<a name="SnapOptions"></a>
-
-### `SnapOptions` ⇐ <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>
-[Snap](http://snapcraft.io) Options
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[LinuxBuildOptions](#LinuxBuildOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| confinement = <code>strict</code>| <code>"devmode"</code> \| <code>"strict"</code> \| <code>"classic"</code> \| <code>null</code> | <a name="SnapOptions-confinement"></a>The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap. |
-| summary| <code>string</code> \| <code>null</code> | <a name="SnapOptions-summary"></a>The 78 character long summary. Defaults to [productName](#AppMetadata-productName). |
-| grade = <code>stable</code>| <code>"devel"</code> \| <code>"stable"</code> \| <code>null</code> | <a name="SnapOptions-grade"></a>The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels). |
-| assumes| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="SnapOptions-assumes"></a>The list of features that must be supported by the core in order for this snap to install. |
-| buildPackages| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="SnapOptions-buildPackages"></a>The list of debian packages needs to be installed for building this snap. |
-| stagePackages| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="SnapOptions-stagePackages"></a>The list of Ubuntu packages to use that are needed to support the `app` part creation. Like `depends` for `deb`. Defaults to `["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"]`.<br><br>If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom package `foo` in addition to defaults. |
-| plugs| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="SnapOptions-plugs"></a>The list of [plugs](https://snapcraft.io/docs/reference/interfaces). Defaults to `["home", "x11", "unity7", "browser-support", "network", "gsettings", "pulseaudio", "opengl"]`.<br><br>If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom plug `foo` in addition to defaults. |
-| after| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="SnapOptions-after"></a>Specifies any [parts](https://snapcraft.io/docs/reference/parts) that should be built before this part. Defaults to `["desktop-only""]`.<br><br>If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults. |
-| ubuntuAppPlatformContent| <code>string</code> \| <code>null</code> | <a name="SnapOptions-ubuntuAppPlatformContent"></a>Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time". |
-
-<a name="SquirrelWindowsOptions"></a>
-
-### `SquirrelWindowsOptions` ⇐ <code>[WinBuildOptions](#WinBuildOptions)</code>
-Squirrel.Windows Options ([squirrelWindows](#Config-squirrelWindows)).
-
-To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[WinBuildOptions](#WinBuildOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| iconUrl| <code>string</code> \| <code>null</code> | <a name="SquirrelWindowsOptions-iconUrl"></a>A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.<br><br>Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.<br><br>If you don't plan to build windows installer, you can omit it. If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default. |
-| loadingGif| <code>string</code> \| <code>null</code> | <a name="SquirrelWindowsOptions-loadingGif"></a>The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set) (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)). |
-| msi| <code>boolean</code> | <a name="SquirrelWindowsOptions-msi"></a>Whether to create an MSI installer. Defaults to `false` (MSI is not created). |
-| remoteReleases| <code>string</code> \| <code>boolean</code> \| <code>null</code> | <a name="SquirrelWindowsOptions-remoteReleases"></a>A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates. |
-| remoteToken| <code>string</code> \| <code>null</code> | <a name="SquirrelWindowsOptions-remoteToken"></a>Authentication token for remote updates |
-| useAppIdAsId| <code>boolean</code> | <a name="SquirrelWindowsOptions-useAppIdAsId"></a>Use `appId` to identify package instead of `name`. |
-
-<a name="WinBuildOptions"></a>
-
-### `WinBuildOptions` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>
-Windows Specific Options ([win](#Config-win)).
-
-**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
-**Extends**: <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| target| <code>null</code> \| <code>string</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>Array</code> | <a name="WinBuildOptions-target"></a>Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `nsis`. AppX package can be built only on Windows 10.<br><br>To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. |
-| signingHashAlgorithms| <code>Array&lt;"sha1" \| "sha256"&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-signingHashAlgorithms"></a>Array of signing algorithms used. Defaults to `['sha1', 'sha256']`<br><br>For AppX `sha256` is always used. |
-| icon = <code>&quot;build/icon.ico&quot;</code>| <code>string</code> \| <code>null</code> | <a name="WinBuildOptions-icon"></a>The path to application icon. |
-| legalTrademarks| <code>string</code> \| <code>null</code> | <a name="WinBuildOptions-legalTrademarks"></a>The trademarks and registered trademarks. |
-| certificateFile| <code>string</code> | <a name="WinBuildOptions-certificateFile"></a>The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). |
-| certificatePassword| <code>string</code> | <a name="WinBuildOptions-certificatePassword"></a>The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing). |
-| certificateSubjectName| <code>string</code> | <a name="WinBuildOptions-certificateSubjectName"></a>The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows. |
-| certificateSha1| <code>string</code> | <a name="WinBuildOptions-certificateSha1"></a>The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows. |
-| additionalCertificateFile| <code>string</code> | <a name="WinBuildOptions-additionalCertificateFile"></a>The path to an additional certificate file you want to add to the signature block. |
-| rfc3161TimeStampServer| <code>string</code> | <a name="WinBuildOptions-rfc3161TimeStampServer"></a>The URL of the RFC 3161 time stamp server. Defaults to `http://timestamp.comodoca.com/rfc3161`. |
-| timeStampServer| <code>string</code> | <a name="WinBuildOptions-timeStampServer"></a>The URL of the time stamp server. Defaults to `http://timestamp.verisign.com/scripts/timstamp.dll`. |
-| publisherName| <code>string</code> \| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="WinBuildOptions-publisherName"></a>[The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate. |
-| forceCodeSigningVerification = <code>true</code>| <code>boolean</code> | <a name="WinBuildOptions-forceCodeSigningVerification"></a>Whether to verify the signature of an available update before installation. The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification. |
-
-
+* <a name="Metadata-name"></a>**`name`** String - The application name.
+* <a name="Metadata-description"></a>`description` String - The application description.
+* <a name="Metadata-homepage"></a>`homepage` String - The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
+  
+  If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
+* <a name="Metadata-license"></a>`license` String - *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
+* <a name="Metadata-author"></a>`author`<a name="AuthorMetadata"></a>
+  * <a name="AuthorMetadata-name"></a>**`name`** String
+  * <a name="AuthorMetadata-email"></a>`email` String
+* <a name="Metadata-repository"></a>`repository` String | [RepositoryInfo](#RepositoryInfo)<a name="RepositoryInfo"></a> - The [repository](https://docs.npmjs.com/files/package.json#repository).
+  * <a name="RepositoryInfo-url"></a>**`url`** String
+* <a name="Metadata-build"></a>`build` [Config](#Config)
 <!-- end of generated block -->
+
+## Build Version Management
+`CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).

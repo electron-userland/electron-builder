@@ -57,7 +57,6 @@ export abstract class AppUpdater extends EventEmitter {
     this._appUpdateConfigPath =  value
   }
 
-  /*** @private */
   protected updateAvailable = false
 
   private clientPromise: Promise<Provider<any>> | null
@@ -65,16 +64,13 @@ export abstract class AppUpdater extends EventEmitter {
   private readonly untilAppReady: Promise<boolean>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
 
-  /*** @private */
   protected readonly app: Electron.App
 
-  /*** @private */
   protected versionInfo: VersionInfo | null
   private fileInfo: FileInfo | null
 
   private currentVersion: string
 
-  /*** @private */
   protected readonly httpExecutor: ElectronHttpExecutor
 
   constructor(options: PublishConfiguration | null | undefined, app?: any) {
@@ -221,7 +217,6 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  /*** @private */
   protected onUpdateAvailable(versionInfo: VersionInfo, fileInfo: FileInfo) {
     if (this.logger != null) {
       this.logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
@@ -256,12 +251,10 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  /*** @private */
   protected dispatchError(e: Error) {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  /*** @private */
   protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<any>
 
   /**
@@ -271,7 +264,7 @@ export abstract class AppUpdater extends EventEmitter {
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
    *
-   * @param [isSilent] *windows-only* Runs the installer in silent mode.
+   * @param isSilent *windows-only* Runs the installer in silent mode.
    */
   abstract quitAndInstall(isSilent?: boolean): void
 

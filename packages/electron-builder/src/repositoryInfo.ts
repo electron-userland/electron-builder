@@ -1,8 +1,7 @@
-import { RepositoryInfo } from "electron-builder-core"
 import { readFile } from "fs-extra-p"
 import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
 import * as path from "path"
-import { Metadata } from "./metadata"
+import { Metadata, RepositoryInfo } from "./metadata"
 
 export interface RepositorySlug {
   user: string

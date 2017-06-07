@@ -1,6 +1,6 @@
-Developer API only. See [[Options]] for user documentation.
-
-<!-- do not edit. start of generated block -->
+  Developer API only. See [[Options]] for user documentation.
+  
+  <!-- do not edit. start of generated block -->
 ## Modules
 
 <dl>
@@ -12,15 +12,9 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/codeSign">electron-builder/out/codeSign</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/forge/forge-maker">electron-builder/out/forge/forge-maker</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/linuxPackager">electron-builder/out/linuxPackager</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/macPackager">electron-builder/out/macPackager</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/options/linuxOptions">electron-builder/out/options/linuxOptions</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder/out/options/winOptions">electron-builder/out/options/winOptions</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/packager/mac">electron-builder/out/packager/mac</a></dt>
 <dd></dd>
@@ -52,8 +46,6 @@ Developer API only. See [[Options]] for user documentation.
 <dd></dd>
 <dt><a href="#module_electron-builder/out/targets/WebInstallerTarget">electron-builder/out/targets/WebInstallerTarget</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/util/readPackageJson">electron-builder/out/util/readPackageJson</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/winPackager">electron-builder/out/winPackager</a></dt>
@@ -71,15 +63,20 @@ Developer API only. See [[Options]] for user documentation.
         * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
     * [`.BuildResult`](#BuildResult)
+    * [`.CommonLinuxOptions`](#CommonLinuxOptions)
+    * [`.CommonNsisOptions`](#CommonNsisOptions)
+    * [`.ForgeOptions`](#ForgeOptions)
+    * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
+    * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
     * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
         * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
         * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
         * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
         * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
-    * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+    * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
+    * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
+    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
 
@@ -89,9 +86,9 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| **appOutDir**| <code>string</code> | 
+| **appOutDir**| <code>String</code> | 
 | **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| **electronPlatformName**| <code>string</code> | 
+| **electronPlatformName**| <code>String</code> | 
 | **arch**| <code>[Arch](electron-builder-core#Arch)</code> | 
 | **targets**| <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 
@@ -106,9 +103,9 @@ Developer API only. See [[Options]] for user documentation.
 | **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | target| <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch| <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| file| <code>string</code> | 
+| file| <code>String</code> | 
 | data| <code>Buffer</code> | 
-| safeArtifactName| <code>string</code> | 
+| safeArtifactName| <code>String</code> | 
 | publishConfig| <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
 
 <a name="BuildInfo"></a>
@@ -123,16 +120,16 @@ Developer API only. See [[Options]] for user documentation.
 | **metadata**| <code>[Metadata](Options#Metadata)</code> | 
 | **devMetadata**| <code>[Metadata](Options#Metadata)</code> | 
 | **config**| <code>[Config](Options#Config)</code> | 
-| **projectDir**| <code>string</code> | 
-| **appDir**| <code>string</code> | 
-| **electronVersion**| <code>string</code> | 
-| muonVersion| <code>string</code> \| <code>null</code> | 
-| **isTwoPackageJsonProjectLayoutUsed**| <code>boolean</code> | 
+| **projectDir**| <code>String</code> | 
+| **appDir**| <code>String</code> | 
+| **electronVersion**| <code>String</code> | 
+| muonVersion| <code>String</code> \| <code>null</code> | 
+| **isTwoPackageJsonProjectLayoutUsed**| <code>Boolean</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
 | **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
-| **isPrepackedAppAsar**| <code>boolean</code> | 
-| prepackaged| <code>string</code> \| <code>null</code> | 
+| **isPrepackedAppAsar**| <code>Boolean</code> | 
+| prepackaged| <code>String</code> \| <code>null</code> | 
 | **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 
@@ -166,8 +163,79 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| **outDir**| <code>string</code> | 
+| **outDir**| <code>String</code> | 
 | **platformToTargets**| <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;String \| [Target](electron-builder-core#Target)&gt;&gt;</code> | 
+
+<a name="CommonLinuxOptions"></a>
+
+### `CommonLinuxOptions`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| synopsis| <code>String</code> \| <code>null</code> | 
+| description| <code>String</code> \| <code>null</code> | 
+| category| <code>String</code> \| <code>null</code> | 
+| packageCategory| <code>String</code> \| <code>null</code> | 
+| desktop| <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
+| vendor| <code>String</code> \| <code>null</code> | 
+| maintainer| <code>String</code> \| <code>null</code> | 
+| afterInstall| <code>String</code> \| <code>null</code> | 
+| afterRemove| <code>String</code> \| <code>null</code> | 
+
+<a name="CommonNsisOptions"></a>
+
+### `CommonNsisOptions`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| unicode| <code>Boolean</code> | 
+| guid| <code>String</code> \| <code>null</code> | 
+| warningsAsErrors| <code>Boolean</code> | 
+
+<a name="ForgeOptions"></a>
+
+### `ForgeOptions`
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **dir**| <code>String</code> | 
+
+<a name="LinuxTargetSpecificOptions"></a>
+
+### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| depends| <code>Array&lt;String&gt;</code> \| <code>null</code> | <a name="LinuxTargetSpecificOptions-depends"></a>Package dependencies. |
+| icon| <code>String</code> | <a name="LinuxTargetSpecificOptions-icon"></a> |
+
+<a name="PlatformSpecificBuildOptions"></a>
+
+### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>
+**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
+**Extends**: <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| files| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
+| extraFiles| <code>Array&lt;String \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
+| extraResources| <code>Array&lt;String \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
+| asarUnpack| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
+| asar| <code>[AsarOptions](Options#AsarOptions)</code> \| <code>Boolean</code> \| <code>null</code> | 
+| target| <code>Array&lt;String \| [TargetConfig](electron-builder-core#TargetConfig)&gt;</code> \| <code>String</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>null</code> | 
+| icon| <code>String</code> \| <code>null</code> | 
+| fileAssociations| <code>Array&lt;[FileAssociation](Options#FileAssociation)&gt;</code> \| <code>[FileAssociation](Options#FileAssociation)</code> | 
+| forceCodeSigning| <code>Boolean</code> | 
 
 <a name="Packager"></a>
 
@@ -178,17 +246,17 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| projectDir| <code>string</code> | 
-| **appDir**| <code>string</code> | 
+| projectDir| <code>String</code> | 
+| **appDir**| <code>String</code> | 
 | **metadata**| <code>[Metadata](Options#Metadata)</code> | 
 | **devMetadata**| <code>[Metadata](Options#Metadata)</code> | 
-| isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>boolean</code> | 
-| **electronVersion**| <code>string</code> | 
-| muonVersion| <code>string</code> \| <code>null</code> | 
+| isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>Boolean</code> | 
+| **electronVersion**| <code>String</code> | 
+| muonVersion| <code>String</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
 | tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| prepackaged| <code>string</code> \| <code>null</code> | 
+| prepackaged| <code>String</code> \| <code>null</code> | 
 
 
 * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
@@ -242,7 +310,7 @@ Developer API only. See [[Options]] for user documentation.
 
 <a name="module_electron-builder.build"></a>
 
-### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
 | Param | Type |
@@ -251,7 +319,7 @@ Developer API only. See [[Options]] for user documentation.
 
 <a name="module_electron-builder.buildForge"></a>
 
-### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
 | Param | Type |
@@ -261,14 +329,14 @@ Developer API only. See [[Options]] for user documentation.
 
 <a name="module_electron-builder.createTargets"></a>
 
-### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;&gt;</code>
+### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](electron-builder-core#Platform) \| Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
 | Param | Type |
 | --- | --- |
 | platforms | <code>Array&lt;[Platform](electron-builder-core#Platform)&gt;</code> | 
-| type | <code>string</code> \| <code>null</code> | 
-| arch | <code>string</code> \| <code>null</code> | 
+| type | <code>String</code> \| <code>null</code> | 
+| arch | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/appInfo"></a>
 
@@ -276,7 +344,7 @@ Developer API only. See [[Options]] for user documentation.
 
 * [electron-builder/out/appInfo](#module_electron-builder/out/appInfo)
     * [.AppInfo](#AppInfo)
-        * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; \| String&gt;</code>
 
 <a name="AppInfo"></a>
 
@@ -286,29 +354,20 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| description = <code>&quot;smarten(this.metadata.description || \&quot;\&quot;)&quot;</code>| <code>string</code> | 
-| version| <code>string</code> | 
-| buildNumber| <code>string</code> | 
-| buildVersion| <code>string</code> | 
-| productName| <code>string</code> | 
-| productFilename| <code>string</code> | 
+| description = <code>&quot;smarten(this.metadata.description || \&quot;\&quot;)&quot;</code>| <code>String</code> | 
+| version| <code>String</code> | 
+| buildNumber| <code>String</code> | 
+| buildVersion| <code>String</code> | 
+| productName| <code>String</code> | 
+| productFilename| <code>String</code> | 
 
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 
-#### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>AppInfo</code>](#AppInfo)  
 <a name="module_electron-builder/out/builder"></a>
 
 ## electron-builder/out/builder
-<a name="module_electron-builder/out/builder.normalizeOptions"></a>
-
-### `electron-builder/out/builder.normalizeOptions(args)` ⇒ <code>[BuildOptions](Options#BuildOptions)</code>
-**Kind**: method of [<code>electron-builder/out/builder</code>](#module_electron-builder/out/builder)  
-
-| Param | Type |
-| --- | --- |
-| args | <code>[CliOptions](Options#CliOptions)</code> | 
-
 <a name="module_electron-builder/out/codeSign"></a>
 
 ## electron-builder/out/codeSign
@@ -316,10 +375,10 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
     * [`.CodeSigningInfo`](#CodeSigningInfo)
     * [`.CreateKeychainOptions`](#CreateKeychainOptions)
-    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
+    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
     * [`.createKeychain(undefined)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
-    * [`.downloadCertificate(urlOrBase64, tmpDir, currentDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.downloadCertificate(urlOrBase64, tmpDir, currentDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="CodeSigningInfo"></a>
@@ -330,7 +389,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| keychainName| <code>string</code> \| <code>null</code> | 
+| keychainName| <code>String</code> \| <code>null</code> | 
 
 <a name="CreateKeychainOptions"></a>
 
@@ -341,15 +400,15 @@ Developer API only. See [[Options]] for user documentation.
 | Name | Type |
 | --- | --- |
 | **tmpDir**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| **cscLink**| <code>string</code> | 
-| **cscKeyPassword**| <code>string</code> | 
-| cscILink| <code>string</code> \| <code>null</code> | 
-| cscIKeyPassword| <code>string</code> \| <code>null</code> | 
-| **currentDir**| <code>string</code> | 
+| **cscLink**| <code>String</code> | 
+| **cscKeyPassword**| <code>String</code> | 
+| cscILink| <code>String</code> \| <code>null</code> | 
+| cscIKeyPassword| <code>String</code> \| <code>null</code> | 
+| **currentDir**| <code>String</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
 
-### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;string&gt;&gt;</code> \| <code>null</code>
+### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
 **Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 <a name="module_electron-builder/out/codeSign.createKeychain"></a>
 
@@ -362,25 +421,25 @@ Developer API only. See [[Options]] for user documentation.
 
 <a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
 
-### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir, currentDir)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir, currentDir)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
-| urlOrBase64 | <code>string</code> | 
+| urlOrBase64 | <code>String</code> | 
 | tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| currentDir | <code>string</code> | 
+| currentDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
 
-### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| string&gt;</code>
+### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |
 | --- | --- |
 | certType | <code>"Developer ID Application"</code> \| <code>"Developer ID Installer"</code> \| <code>"3rd Party Mac Developer Application"</code> \| <code>"3rd Party Mac Developer Installer"</code> \| <code>"Mac Developer"</code> | 
-| qualifier | <code>string</code> \| <code>null</code> | 
-| keychain | <code>string</code> \| <code>null</code> | 
+| qualifier | <code>String</code> \| <code>null</code> | 
+| keychain | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/codeSign.sign"></a>
 
@@ -389,22 +448,9 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| path | <code>string</code> | 
-| name | <code>string</code> | 
-| keychain | <code>string</code> | 
-
-<a name="module_electron-builder/out/forge/forge-maker"></a>
-
-## electron-builder/out/forge/forge-maker
-<a name="ForgeOptions"></a>
-
-### `ForgeOptions`
-**Kind**: interface of [<code>electron-builder/out/forge/forge-maker</code>](#module_electron-builder/out/forge/forge-maker)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **dir**| <code>string</code> | 
+| path | <code>String</code> | 
+| name | <code>String</code> | 
+| keychain | <code>String</code> | 
 
 <a name="module_electron-builder/out/linuxPackager"></a>
 
@@ -413,27 +459,20 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/linuxPackager](#module_electron-builder/out/linuxPackager)
     * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
-        * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="LinuxPackager"></a>
 
@@ -444,32 +483,25 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| executableName| <code>string</code> | 
+| executableName| <code>String</code> | 
 
 
 * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
-    * [`.postInitApp(appOutDir)`](#module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-    * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-    * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-    * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-    * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/linuxPackager.LinuxPackager+createTargets"></a>
 
@@ -479,29 +511,18 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| targets | <code>Array&lt;string&gt;</code> | 
+| targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/linuxPackager.__type&gt;</code> | 
 
-<a name="module_electron-builder/out/linuxPackager.LinuxPackager+postInitApp"></a>
-
-#### `linuxPackager.postInitApp(appOutDir)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Overrides**: [<code>postInitApp</code>](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `linuxPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `linuxPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
@@ -510,87 +531,87 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| safeArtifactName | <code>string</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
 
-#### `linuxPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+#### `linuxPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
 
-#### `linuxPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+#### `linuxPackager.getElectronSrcDir(dist)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| dist | <code>string</code> | 
+| dist | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
+#### `linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
 | targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| defaultPattern | <code>string</code> | 
+| defaultPattern | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
-#### `linuxPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
+#### `linuxPackager.expandMacro(pattern, arch, extra)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| pattern | <code>string</code> | 
-| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| pattern | <code>String</code> | 
+| arch | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
-#### `linuxPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
+#### `linuxPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| deployment | <code>boolean</code> | 
-| classifier | <code>string</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
+| classifier | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
-#### `linuxPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
+#### `linuxPackager.generateName2(ext, classifier, deployment)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
-| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| deployment | <code>boolean</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
+| classifier | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
-#### `linuxPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `linuxPackager.getIconPath()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
-#### `linuxPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `linuxPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
@@ -599,97 +620,38 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| outDir | <code>string</code> | 
+| outDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `linuxPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `linuxPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| names | <code>Array&lt;string&gt;</code> | 
+| custom | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| names | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
-#### `linuxPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `linuxPackager.getResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
-#### `linuxPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `linuxPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
 | --- | --- |
-| suffix | <code>string</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
-
-#### `linuxPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
-
-#### `linuxPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
-
-#### `linuxPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
-
-#### `linuxPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| appOutDir | <code>string</code> | 
-| platformName | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
-
-#### `linuxPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-| postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
-
-#### `linuxPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appInfo | <code>[AppInfo](#AppInfo)</code> | 
+| suffix | <code>String</code> | 
 
 <a name="module_electron-builder/out/macPackager"></a>
 
@@ -698,29 +660,20 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/macPackager](#module_electron-builder/out/macPackager)
     * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
-        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>string</code>
-        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>String</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>String</code>
+        * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.doSign(opts)`](#module_electron-builder/out/macPackager.MacPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/macPackager.MacPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="MacPackager"></a>
 
@@ -736,29 +689,20 @@ Developer API only. See [[Options]] for user documentation.
 
 * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/macPackager.MacPackager+createTargets)
-    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>string</code>
-    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>string</code>
-    * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/macPackager.MacPackager+getElectronDestDir) ⇒ <code>String</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>String</code>
+    * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.doFlat(appPath, outFile, identity, keychain)`](#module_electron-builder/out/macPackager.MacPackager+doFlat) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.doSign(opts)`](#module_electron-builder/out/macPackager.MacPackager+doSign) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/macPackager.MacPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-    * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-    * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-    * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-    * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/macPackager.MacPackager+createTargets"></a>
 
@@ -768,33 +712,33 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| targets | <code>Array&lt;string&gt;</code> | 
+| targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/macPackager.__type&gt;</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+getElectronDestDir"></a>
 
-#### `macPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+#### `macPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Overrides**: [<code>getElectronDestDir</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir"></a>
 
-#### `macPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+#### `macPackager.getElectronSrcDir(dist)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Overrides**: [<code>getElectronSrcDir</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir)  
 
 | Param | Type |
 | --- | --- |
-| dist | <code>string</code> | 
+| dist | <code>String</code> | 
 
 <a name="module_electron-builder/out/macPackager.MacPackager+getIconPath"></a>
 
-#### `macPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `macPackager.getIconPath()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 **Overrides**: [<code>getIconPath</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)  
 <a name="module_electron-builder/out/macPackager.MacPackager+pack"></a>
@@ -805,53 +749,19 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| outDir | <code>string</code> | 
+| outDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
-<a name="module_electron-builder/out/macPackager.MacPackager+doFlat"></a>
-
-#### `macPackager.doFlat(appPath, outFile, identity, keychain)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appPath | <code>string</code> | 
-| outFile | <code>string</code> | 
-| identity | <code>string</code> | 
-| keychain | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/macPackager.MacPackager+doSign"></a>
-
-#### `macPackager.doSign(opts)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| opts | <code>module:electron-osx-sign.SignOptions</code> | 
-
-<a name="module_electron-builder/out/macPackager.MacPackager+prepareAppInfo"></a>
-
-#### `macPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Overrides**: [<code>prepareAppInfo</code>](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appInfo | <code>[AppInfo](#AppInfo)</code> | 
-
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
@@ -860,205 +770,93 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| safeArtifactName | <code>string</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
+#### `macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
 | targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| defaultPattern | <code>string</code> | 
+| defaultPattern | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
-#### `macPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
+#### `macPackager.expandMacro(pattern, arch, extra)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| pattern | <code>string</code> | 
-| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| pattern | <code>String</code> | 
+| arch | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
-#### `macPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
+#### `macPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| deployment | <code>boolean</code> | 
-| classifier | <code>string</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
+| classifier | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
-#### `macPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
+#### `macPackager.generateName2(ext, classifier, deployment)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
-| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| deployment | <code>boolean</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
+| classifier | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
-#### `macPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `macPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `macPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `macPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| names | <code>Array&lt;string&gt;</code> | 
+| custom | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| names | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
-#### `macPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `macPackager.getResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
-#### `macPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `macPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
 | --- | --- |
-| suffix | <code>string</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
-
-#### `macPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
-
-#### `macPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
-
-#### `macPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
-
-#### `macPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| appOutDir | <code>string</code> | 
-| platformName | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
-
-#### `macPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-| postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
-
-#### `macPackager.postInitApp(executableFile)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| executableFile | <code>string</code> | 
-
-<a name="module_electron-builder/out/options/linuxOptions"></a>
-
-## electron-builder/out/options/linuxOptions
-
-* [electron-builder/out/options/linuxOptions](#module_electron-builder/out/options/linuxOptions)
-    * [`.CommonLinuxOptions`](#CommonLinuxOptions)
-    * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
-
-<a name="CommonLinuxOptions"></a>
-
-### `CommonLinuxOptions`
-**Kind**: interface of [<code>electron-builder/out/options/linuxOptions</code>](#module_electron-builder/out/options/linuxOptions)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| synopsis| <code>string</code> \| <code>null</code> | 
-| description| <code>string</code> \| <code>null</code> | 
-| category| <code>string</code> \| <code>null</code> | 
-| packageCategory| <code>string</code> \| <code>null</code> | 
-| desktop| <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-| vendor| <code>string</code> \| <code>null</code> | 
-| maintainer| <code>string</code> \| <code>null</code> | 
-| afterInstall| <code>string</code> \| <code>null</code> | 
-| afterRemove| <code>string</code> \| <code>null</code> | 
-
-<a name="LinuxTargetSpecificOptions"></a>
-
-### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
-**Kind**: interface of [<code>electron-builder/out/options/linuxOptions</code>](#module_electron-builder/out/options/linuxOptions)  
-**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| depends| <code>Array&lt;string&gt;</code> \| <code>null</code> | <a name="LinuxTargetSpecificOptions-depends"></a>Package dependencies. |
-| icon| <code>string</code> | <a name="LinuxTargetSpecificOptions-icon"></a> |
-
-<a name="module_electron-builder/out/options/winOptions"></a>
-
-## electron-builder/out/options/winOptions
-<a name="CommonNsisOptions"></a>
-
-### `CommonNsisOptions`
-**Kind**: interface of [<code>electron-builder/out/options/winOptions</code>](#module_electron-builder/out/options/winOptions)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| unicode| <code>boolean</code> | 
-| guid| <code>string</code> \| <code>null</code> | 
-| warningsAsErrors| <code>boolean</code> | 
+| suffix | <code>String</code> | 
 
 <a name="module_electron-builder/out/packager/mac"></a>
 
@@ -1066,7 +864,7 @@ Developer API only. See [[Options]] for user documentation.
 
 * [electron-builder/out/packager/mac](#module_electron-builder/out/packager/mac)
     * [`.createApp(packager, appOutDir, asarIntegrity)`](#module_electron-builder/out/packager/mac.createApp) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.filterCFBundleIdentifier(identifier)`](#module_electron-builder/out/packager/mac.filterCFBundleIdentifier) ⇒ <code>string</code>
+    * [`.filterCFBundleIdentifier(identifier)`](#module_electron-builder/out/packager/mac.filterCFBundleIdentifier) ⇒ <code>String</code>
 
 <a name="module_electron-builder/out/packager/mac.createApp"></a>
 
@@ -1076,17 +874,17 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | asarIntegrity | <code>module:asar-integrity.AsarIntegrity</code> | 
 
 <a name="module_electron-builder/out/packager/mac.filterCFBundleIdentifier"></a>
 
-### `electron-builder/out/packager/mac.filterCFBundleIdentifier(identifier)` ⇒ <code>string</code>
+### `electron-builder/out/packager/mac.filterCFBundleIdentifier(identifier)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder/out/packager/mac</code>](#module_electron-builder/out/packager/mac)  
 
 | Param | Type |
 | --- | --- |
-| identifier | <code>string</code> | 
+| identifier | <code>String</code> | 
 
 <a name="module_electron-builder/out/packager"></a>
 
@@ -1098,7 +896,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| rawPlatforms | <code>Array&lt;string \| [Platform](electron-builder-core#Platform)&gt;</code> \| <code>string</code> \| <code>[Platform](electron-builder-core#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
+| rawPlatforms | <code>Array&lt;String \| [Platform](electron-builder-core#Platform)&gt;</code> \| <code>String</code> \| <code>[Platform](electron-builder-core#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager"></a>
 
@@ -1107,28 +905,21 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
     * [.PlatformPackager](#PlatformPackager)
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+        * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
-    * [`.normalizeExt(ext)`](#module_electron-builder/out/platformPackager.normalizeExt) ⇒ <code>string</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.normalizeExt(ext)`](#module_electron-builder/out/platformPackager.normalizeExt) ⇒ <code>String</code>
 
 <a name="PlatformPackager"></a>
 
@@ -1139,8 +930,8 @@ Developer API only. See [[Options]] for user documentation.
 | Name | Type |
 | --- | --- |
 | packagerOptions| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
-| projectDir| <code>string</code> | 
-| buildResourcesDir| <code>string</code> | 
+| projectDir| <code>String</code> | 
+| buildResourcesDir| <code>String</code> | 
 | config| <code>[Config](Options#Config)</code> | 
 | platformSpecificBuildOptions| <code>module:electron-builder/out/platformPackager.DC</code> | 
 | appInfo| <code>[AppInfo](#AppInfo)</code> | 
@@ -1148,27 +939,20 @@ Developer API only. See [[Options]] for user documentation.
 
 * [.PlatformPackager](#PlatformPackager)
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+    * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-    * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-    * [`.doGetCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword) ⇒ <code>any</code>
-    * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-    * [`.postInitApp(executableFile)`](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
 
@@ -1177,18 +961,18 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| targets | <code>Array&lt;string&gt;</code> | 
+| targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/platformPackager.__type&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
@@ -1197,87 +981,87 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| safeArtifactName | <code>string</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
 
-#### `platformPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+#### `platformPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
 
-#### `platformPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+#### `platformPackager.getElectronSrcDir(dist)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| dist | <code>string</code> | 
+| dist | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
+#### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
 | targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| defaultPattern | <code>string</code> | 
+| defaultPattern | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
-#### `platformPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
+#### `platformPackager.expandMacro(pattern, arch, extra)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| pattern | <code>string</code> | 
-| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| pattern | <code>String</code> | 
+| arch | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
-#### `platformPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
+#### `platformPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| deployment | <code>boolean</code> | 
-| classifier | <code>string</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
+| classifier | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
-#### `platformPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
+#### `platformPackager.generateName2(ext, classifier, deployment)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
-| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| deployment | <code>boolean</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
+| classifier | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
 
-#### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
-#### `platformPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `platformPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
@@ -1286,116 +1070,47 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| outDir | <code>string</code> | 
+| outDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| names | <code>Array&lt;string&gt;</code> | 
+| custom | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| names | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
-#### `platformPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `platformPackager.getResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
-#### `platformPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `platformPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
-| suffix | <code>string</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
-
-#### `platformPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
-
-#### `platformPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword"></a>
-
-#### `platformPackager.doGetCscPassword()` ⇒ <code>any</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
-
-#### `platformPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| appOutDir | <code>string</code> | 
-| platformName | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
-
-#### `platformPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-| postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+postInitApp"></a>
-
-#### `platformPackager.postInitApp(executableFile)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| executableFile | <code>string</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
-
-#### `platformPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appInfo | <code>[AppInfo](#AppInfo)</code> | 
+| suffix | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.normalizeExt"></a>
 
-### `electron-builder/out/platformPackager.normalizeExt(ext)` ⇒ <code>string</code>
+### `electron-builder/out/platformPackager.normalizeExt(ext)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder/out/platformPackager</code>](#module_electron-builder/out/platformPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager"></a>
 
@@ -1405,7 +1120,7 @@ Developer API only. See [[Options]] for user documentation.
     * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
         * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
-    * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>string</code>
+    * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>String</code>
     * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
     * [`.getPublishConfigs(packager, targetSpecificOptions, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigs) ⇒ <code>Promise&lt; \| Array&gt;</code>
     * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; \| Array&gt;</code>
@@ -1437,13 +1152,13 @@ Developer API only. See [[Options]] for user documentation.
 **Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.computeDownloadUrl"></a>
 
-### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>string</code>
+### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
 | Param | Type |
 | --- | --- |
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-| fileName | <code>string</code> \| <code>null</code> | 
+| fileName | <code>String</code> \| <code>null</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
@@ -1454,7 +1169,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | context | <code>[PublishContext](electron-publish#PublishContext)</code> | 
-| version | <code>string</code> | 
+| version | <code>String</code> | 
 | publishConfig | <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
 | options | <code>[PublishOptions](electron-publish#PublishOptions)</code> | 
 
@@ -1466,7 +1181,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
-| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
+| targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
@@ -1506,7 +1221,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/appx"></a>
@@ -1535,7 +1250,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/ArchiveTarget"></a>
@@ -1564,7 +1279,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/dmg"></a>
@@ -1575,7 +1290,7 @@ Developer API only. See [[Options]] for user documentation.
     * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.computeDmgOptions()`](#module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions) ⇒ <code>Promise&lt;[DmgOptions](Options#DmgOptions)&gt;</code>
-        * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>string</code>
+        * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>String</code>
     * [`.attachAndExecute(dmgPath, readWrite, task)`](#module_electron-builder/out/targets/dmg.attachAndExecute) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="DmgTarget"></a>
@@ -1593,7 +1308,7 @@ Developer API only. See [[Options]] for user documentation.
 * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
     * [`.build(appPath, arch)`](#module_electron-builder/out/targets/dmg.DmgTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.computeDmgOptions()`](#module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions) ⇒ <code>Promise&lt;[DmgOptions](Options#DmgOptions)&gt;</code>
-    * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>string</code>
+    * [`.computeVolumeName(custom)`](#module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName) ⇒ <code>String</code>
 
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+build"></a>
 
@@ -1602,7 +1317,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appPath | <code>string</code> | 
+| appPath | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+computeDmgOptions"></a>
@@ -1611,12 +1326,12 @@ Developer API only. See [[Options]] for user documentation.
 **Kind**: instance method of [<code>DmgTarget</code>](#DmgTarget)  
 <a name="module_electron-builder/out/targets/dmg.DmgTarget+computeVolumeName"></a>
 
-#### `dmgTarget.computeVolumeName(custom)` ⇒ <code>string</code>
+#### `dmgTarget.computeVolumeName(custom)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>DmgTarget</code>](#DmgTarget)  
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> \| <code>null</code> | 
+| custom | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/targets/dmg.attachAndExecute"></a>
 
@@ -1625,8 +1340,8 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| dmgPath | <code>string</code> | 
-| readWrite | <code>boolean</code> | 
+| dmgPath | <code>String</code> | 
+| readWrite | <code>Boolean</code> | 
 | task | <code>callback</code> | 
 
 <a name="module_electron-builder/out/targets/fpm"></a>
@@ -1655,7 +1370,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper"></a>
@@ -1664,8 +1379,8 @@ Developer API only. See [[Options]] for user documentation.
 
 * [electron-builder/out/targets/LinuxTargetHelper](#module_electron-builder/out/targets/LinuxTargetHelper)
     * [.LinuxTargetHelper](#LinuxTargetHelper)
-        * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
+        * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;String&gt;</code>
+        * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>String</code>
 
 <a name="LinuxTargetHelper"></a>
 
@@ -1675,29 +1390,29 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| icons| <code>Promise&lt;Array&lt;Array&lt;string&gt;&gt;&gt;</code> | 
-| maxIconPath| <code>string</code> \| <code>null</code> | 
+| icons| <code>Promise&lt;Array&lt;Array&lt;String&gt;&gt;&gt;</code> | 
+| maxIconPath| <code>String</code> \| <code>null</code> | 
 
 
 * [.LinuxTargetHelper](#LinuxTargetHelper)
-    * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>string</code>
+    * [`.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getDescription(options)`](#module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription) ⇒ <code>String</code>
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+computeDesktopEntry"></a>
 
-#### `linuxTargetHelper.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `linuxTargetHelper.computeDesktopEntry(targetSpecificOptions, exec, destination, extra)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>LinuxTargetHelper</code>](#LinuxTargetHelper)  
 
 | Param | Type |
 | --- | --- |
 | targetSpecificOptions | <code>[LinuxTargetSpecificOptions](#LinuxTargetSpecificOptions)</code> | 
-| exec | <code>string</code> | 
-| destination | <code>string</code> \| <code>null</code> | 
-| extra | <code>Object&lt;string, any&gt;</code> | 
+| exec | <code>String</code> | 
+| destination | <code>String</code> \| <code>null</code> | 
+| extra | <code>Object&lt;String, any&gt;</code> | 
 
 <a name="module_electron-builder/out/targets/LinuxTargetHelper.LinuxTargetHelper+getDescription"></a>
 
-#### `linuxTargetHelper.getDescription(options)` ⇒ <code>string</code>
+#### `linuxTargetHelper.getDescription(options)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxTargetHelper</code>](#LinuxTargetHelper)  
 
 | Param | Type |
@@ -1711,12 +1426,10 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/targets/nsis](#module_electron-builder/out/targets/nsis)
     * [.AppPackageHelper](#AppPackageHelper)
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;String&gt;</code>
     * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName) ⇒ <code>string</code>
 
 <a name="AppPackageHelper"></a>
 
@@ -1725,7 +1438,7 @@ Developer API only. See [[Options]] for user documentation.
 
 * [.AppPackageHelper](#AppPackageHelper)
     * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.packArch(arch, target)`](#module_electron-builder/out/targets/nsis.AppPackageHelper+packArch) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/targets/nsis.AppPackageHelper+finishBuild"></a>
 
@@ -1733,7 +1446,7 @@ Developer API only. See [[Options]] for user documentation.
 **Kind**: instance method of [<code>AppPackageHelper</code>](#AppPackageHelper)  
 <a name="module_electron-builder/out/targets/nsis.AppPackageHelper+packArch"></a>
 
-#### `appPackageHelper.packArch(arch, target)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `appPackageHelper.packArch(arch, target)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>AppPackageHelper</code>](#AppPackageHelper)  
 
 | Param | Type |
@@ -1756,8 +1469,6 @@ Developer API only. See [[Options]] for user documentation.
 * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName) ⇒ <code>string</code>
 
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+build"></a>
 
@@ -1766,29 +1477,13 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
 #### `nsisTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
-<a name="module_electron-builder/out/targets/nsis.NsisTarget+configureDefines"></a>
-
-#### `nsisTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| oneClick | <code>boolean</code> | 
-| defines | <code>any</code> | 
-
-<a name="module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName"></a>
-
-#### `nsisTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>NsisTarget</code>](#NsisTarget)  
-**Access**: protected  
 <a name="module_electron-builder/out/targets/pkg"></a>
 
 ## electron-builder/out/targets/pkg
@@ -1796,7 +1491,7 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/targets/pkg](#module_electron-builder/out/targets/pkg)
     * [.PkgTarget](#PkgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appPath, arch)`](#module_electron-builder/out/targets/pkg.PkgTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.prepareProductBuildArgs(identity, keychain)`](#module_electron-builder/out/targets/pkg.prepareProductBuildArgs) ⇒ <code>Array&lt;string&gt;</code>
+    * [`.prepareProductBuildArgs(identity, keychain)`](#module_electron-builder/out/targets/pkg.prepareProductBuildArgs) ⇒ <code>Array&lt;String&gt;</code>
 
 <a name="PkgTarget"></a>
 
@@ -1816,18 +1511,18 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appPath | <code>string</code> | 
+| appPath | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/pkg.prepareProductBuildArgs"></a>
 
-### `electron-builder/out/targets/pkg.prepareProductBuildArgs(identity, keychain)` ⇒ <code>Array&lt;string&gt;</code>
+### `electron-builder/out/targets/pkg.prepareProductBuildArgs(identity, keychain)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/targets/pkg</code>](#module_electron-builder/out/targets/pkg)  
 
 | Param | Type |
 | --- | --- |
-| identity | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| keychain | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| identity | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| keychain | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/targets/snap"></a>
 
@@ -1855,7 +1550,7 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory"></a>
@@ -1865,7 +1560,7 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/targets/targetFactory](#module_electron-builder/out/targets/targetFactory)
     * [.NoOpTarget](#NoOpTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/targetFactory.NoOpTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code>
+    * [`.computeArchToTargetNamesMap(raw, options, platform)`](#module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap) ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;String&gt;&gt;</code>
     * [`.createCommonTarget(target, outDir, packager)`](#module_electron-builder/out/targets/targetFactory.createCommonTarget) ⇒ <code>[Target](electron-builder-core#Target)</code>
     * [`.createTargets(nameToTarget, rawList, outDir, packager, cleanupTasks)`](#module_electron-builder/out/targets/targetFactory.createTargets) ⇒ <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code>
 
@@ -1887,18 +1582,18 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap"></a>
 
-### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code>
+### `electron-builder/out/targets/targetFactory.computeArchToTargetNamesMap(raw, options, platform)` ⇒ <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder/out/targets/targetFactory</code>](#module_electron-builder/out/targets/targetFactory)  
 
 | Param | Type |
 | --- | --- |
-| raw | <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;string&gt;&gt;</code> | 
-| options | <code>[PlatformSpecificBuildOptions](electron-builder-core#PlatformSpecificBuildOptions)</code> | 
+| raw | <code>Map&lt;[Arch](electron-builder-core#Arch) \| Array&lt;String&gt;&gt;</code> | 
+| options | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> | 
 | platform | <code>[Platform](electron-builder-core#Platform)</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.createCommonTarget"></a>
@@ -1908,8 +1603,8 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| target | <code>string</code> | 
-| outDir | <code>string</code> | 
+| target | <code>String</code> | 
+| outDir | <code>String</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.createTargets"></a>
@@ -1920,8 +1615,8 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | nameToTarget | <code>Map&lt;String \| [Target](electron-builder-core#Target)&gt;</code> | 
-| rawList | <code>Array&lt;string&gt;</code> | 
-| outDir | <code>string</code> | 
+| rawList | <code>Array&lt;String&gt;</code> | 
+| outDir | <code>String</code> | 
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/targets/targetFactory.__type&gt;</code> | 
 
@@ -1931,8 +1626,6 @@ Developer API only. See [[Options]] for user documentation.
 
 * [electron-builder/out/targets/WebInstallerTarget](#module_electron-builder/out/targets/WebInstallerTarget)
     * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
-        * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
@@ -1943,29 +1636,9 @@ Developer API only. See [[Options]] for user documentation.
 **Extends**: <code>[NsisTarget](#NsisTarget)</code>  
 
 * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
-    * [`.configureDefines(oneClick, defines)`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.generateGitHubInstallerName()`](#module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName) ⇒ <code>string</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.finishBuild()`](#module_electron-builder/out/targets/nsis.NsisTarget+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
-<a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+configureDefines"></a>
-
-#### `webInstallerTarget.configureDefines(oneClick, defines)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
-**Overrides**: [<code>configureDefines</code>](#module_electron-builder/out/targets/nsis.NsisTarget+configureDefines)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| oneClick | <code>boolean</code> | 
-| defines | <code>any</code> | 
-
-<a name="module_electron-builder/out/targets/WebInstallerTarget.WebInstallerTarget+generateGitHubInstallerName"></a>
-
-#### `webInstallerTarget.generateGitHubInstallerName()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
-**Overrides**: [<code>generateGitHubInstallerName</code>](#module_electron-builder/out/targets/nsis.NsisTarget+generateGitHubInstallerName)  
-**Access**: protected  
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+build"></a>
 
 #### `webInstallerTarget.build(appOutDir, arch)` ⇒ <code>Promise&lt;void&gt;</code>
@@ -1973,72 +1646,13 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 
 <a name="module_electron-builder/out/targets/nsis.NsisTarget+finishBuild"></a>
 
 #### `webInstallerTarget.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>WebInstallerTarget</code>](#WebInstallerTarget)  
-<a name="module_electron-builder/out/util/readPackageJson"></a>
-
-## electron-builder/out/util/readPackageJson
-
-* [electron-builder/out/util/readPackageJson](#module_electron-builder/out/util/readPackageJson)
-    * [`.doLoadConfig(configFile, projectDir)`](#module_electron-builder/out/util/readPackageJson.doLoadConfig) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getElectronVersion(config, projectDir, projectMetadata)`](#module_electron-builder/out/util/readPackageJson.getElectronVersion) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.loadConfig(projectDir)`](#module_electron-builder/out/util/readPackageJson.loadConfig) ⇒ <code>Promise&lt; \| [Config](Options#Config)&gt;</code>
-    * [`.readPackageJson(file)`](#module_electron-builder/out/util/readPackageJson.readPackageJson) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.validateConfig(config)`](#module_electron-builder/out/util/readPackageJson.validateConfig) ⇒ <code>Promise&lt;void&gt;</code>
-
-<a name="module_electron-builder/out/util/readPackageJson.doLoadConfig"></a>
-
-### `electron-builder/out/util/readPackageJson.doLoadConfig(configFile, projectDir)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
-
-| Param | Type |
-| --- | --- |
-| configFile | <code>string</code> | 
-| projectDir | <code>string</code> | 
-
-<a name="module_electron-builder/out/util/readPackageJson.getElectronVersion"></a>
-
-### `electron-builder/out/util/readPackageJson.getElectronVersion(config, projectDir, projectMetadata)` ⇒ <code>Promise&lt;string&gt;</code>
-**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
-
-| Param | Type |
-| --- | --- |
-| config | <code>[Config](Options#Config)</code> \| <code>null</code> \| <code>undefined</code> | 
-| projectDir | <code>string</code> | 
-| projectMetadata | <code>any</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/util/readPackageJson.loadConfig"></a>
-
-### `electron-builder/out/util/readPackageJson.loadConfig(projectDir)` ⇒ <code>Promise&lt; \| [Config](Options#Config)&gt;</code>
-**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
-
-| Param | Type |
-| --- | --- |
-| projectDir | <code>string</code> | 
-
-<a name="module_electron-builder/out/util/readPackageJson.readPackageJson"></a>
-
-### `electron-builder/out/util/readPackageJson.readPackageJson(file)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/util/readPackageJson.validateConfig"></a>
-
-### `electron-builder/out/util/readPackageJson.validateConfig(config)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: method of [<code>electron-builder/out/util/readPackageJson</code>](#module_electron-builder/out/util/readPackageJson)  
-
-| Param | Type |
-| --- | --- |
-| config | <code>[Config](Options#Config)</code> | 
-
 <a name="module_electron-builder/out/windowsCodeSign"></a>
 
 ## electron-builder/out/windowsCodeSign
@@ -2046,8 +1660,8 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/windowsCodeSign](#module_electron-builder/out/windowsCodeSign)
     * [`.FileCodeSigningInfo`](#FileCodeSigningInfo)
     * [`.SignOptions`](#SignOptions)
-    * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.sign(options)`](#module_electron-builder/out/windowsCodeSign.sign) ⇒ <code>Promise&lt;void&gt;</code>
 
 <a name="FileCodeSigningInfo"></a>
@@ -2058,10 +1672,10 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| file| <code>string</code> \| <code>null</code> | 
-| password| <code>string</code> \| <code>null</code> | 
-| subjectName| <code>string</code> \| <code>null</code> | 
-| certificateSha1| <code>string</code> \| <code>null</code> | 
+| file| <code>String</code> \| <code>null</code> | 
+| password| <code>String</code> \| <code>null</code> | 
+| subjectName| <code>String</code> \| <code>null</code> | 
+| certificateSha1| <code>String</code> \| <code>null</code> | 
 
 <a name="SignOptions"></a>
 
@@ -2071,20 +1685,20 @@ Developer API only. See [[Options]] for user documentation.
 
 | Name | Type |
 | --- | --- |
-| **path**| <code>string</code> | 
-| cert| <code>string</code> \| <code>null</code> | 
-| name| <code>string</code> \| <code>null</code> | 
-| password| <code>string</code> \| <code>null</code> | 
-| site| <code>string</code> \| <code>null</code> | 
+| **path**| <code>String</code> | 
+| cert| <code>String</code> \| <code>null</code> | 
+| name| <code>String</code> \| <code>null</code> | 
+| password| <code>String</code> \| <code>null</code> | 
+| site| <code>String</code> \| <code>null</code> | 
 | **options**| <code>[WinBuildOptions](Options#WinBuildOptions)</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign.getSignVendorPath"></a>
 
-### `electron-builder/out/windowsCodeSign.getSignVendorPath()` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder/out/windowsCodeSign.getSignVendorPath()` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 <a name="module_electron-builder/out/windowsCodeSign.getToolPath"></a>
 
-### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 <a name="module_electron-builder/out/windowsCodeSign.sign"></a>
 
@@ -2102,30 +1716,22 @@ Developer API only. See [[Options]] for user documentation.
 * [electron-builder/out/winPackager](#module_electron-builder/out/winPackager)
     * [.WinPackager](#WinPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/winPackager.WinPackager+createTargets)
-        * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;String&gt;</code>
         * [`.sign(file, logMessagePrefix)`](#module_electron-builder/out/winPackager.WinPackager+sign) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.signAndEditResources(file)`](#module_electron-builder/out/winPackager.WinPackager+signAndEditResources) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.doGetCscPassword()`](#module_electron-builder/out/winPackager.WinPackager+doGetCscPassword) ⇒ <code>string</code>
-        * [`.doSign(options)`](#module_electron-builder/out/winPackager.WinPackager+doSign) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+        * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+        * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+        * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+        * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+        * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-        * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-        * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-        * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
+        * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+        * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+        * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="WinPackager"></a>
 
@@ -2202,30 +1808,22 @@ Developer API only. See [[Options]] for user documentation.
 
 * [.WinPackager](#WinPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/winPackager.WinPackager+createTargets)
-    * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.sign(file, logMessagePrefix)`](#module_electron-builder/out/winPackager.WinPackager+sign) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.signAndEditResources(file)`](#module_electron-builder/out/winPackager.WinPackager+signAndEditResources) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.doGetCscPassword()`](#module_electron-builder/out/winPackager.WinPackager+doGetCscPassword) ⇒ <code>string</code>
-    * [`.doSign(options)`](#module_electron-builder/out/winPackager.WinPackager+doSign) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.postInitApp(appOutDir)`](#module_electron-builder/out/winPackager.WinPackager+postInitApp) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| string&gt;</code>
+    * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>string</code>
-    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>string</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>string</code>
-    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>string</code>
-    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>string</code>
-    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>string</code>
-    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>string</code>
+    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+    * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
+    * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
+    * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
+    * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| string&gt;</code>
-    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>string</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.computeAppOutDir(outDir, arch)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir) ⇒ <code>string</code>
-    * [`.getCscPassword()`](#module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword) ⇒ <code>string</code>
-    * [`.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)`](#module_electron-builder/out/platformPackager.PlatformPackager+doPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat)
-    * [`.prepareAppInfo(appInfo)`](#module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo) ⇒ <code>[AppInfo](#AppInfo)</code>
+    * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
+    * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/winPackager.WinPackager+createTargets"></a>
 
@@ -2235,13 +1833,13 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| targets | <code>Array&lt;string&gt;</code> | 
+| targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/winPackager.__type&gt;</code> | 
 
 <a name="module_electron-builder/out/winPackager.WinPackager+getIconPath"></a>
 
-#### `winPackager.getIconPath()` ⇒ <code>Promise&lt;string&gt;</code>
+#### `winPackager.getIconPath()` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 **Overrides**: [<code>getIconPath</code>](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath)  
 <a name="module_electron-builder/out/winPackager.WinPackager+sign"></a>
@@ -2251,8 +1849,8 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| logMessagePrefix | <code>string</code> | 
+| file | <code>String</code> | 
+| logMessagePrefix | <code>String</code> | 
 
 <a name="module_electron-builder/out/winPackager.WinPackager+signAndEditResources"></a>
 
@@ -2261,43 +1859,16 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-
-<a name="module_electron-builder/out/winPackager.WinPackager+doGetCscPassword"></a>
-
-#### `winPackager.doGetCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Overrides**: [<code>doGetCscPassword</code>](#module_electron-builder/out/platformPackager.PlatformPackager+doGetCscPassword)  
-**Access**: protected  
-<a name="module_electron-builder/out/winPackager.WinPackager+doSign"></a>
-
-#### `winPackager.doSign(options)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>[SignOptions](#SignOptions)</code> | 
-
-<a name="module_electron-builder/out/winPackager.WinPackager+postInitApp"></a>
-
-#### `winPackager.postInitApp(appOutDir)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Overrides**: [<code>postInitApp</code>](#module_electron-builder/out/platformPackager.PlatformPackager+postInitApp)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
+| file | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
-#### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
 
@@ -2306,83 +1877,83 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 | target | <code>[Target](electron-builder-core#Target)</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| safeArtifactName | <code>string</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
 
-#### `winPackager.getElectronDestDir(appOutDir)` ⇒ <code>string</code>
+#### `winPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
 
-#### `winPackager.getElectronSrcDir(dist)` ⇒ <code>string</code>
+#### `winPackager.getElectronSrcDir(dist)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| dist | <code>string</code> | 
+| dist | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>string</code>
+#### `winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
 | targetSpecificOptions | <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
-| ext | <code>string</code> | 
+| ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
-| defaultPattern | <code>string</code> | 
+| defaultPattern | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
-#### `winPackager.expandMacro(pattern, arch, extra)` ⇒ <code>string</code>
+#### `winPackager.expandMacro(pattern, arch, extra)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| pattern | <code>string</code> | 
-| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
+| pattern | <code>String</code> | 
+| arch | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
 
-#### `winPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>string</code>
+#### `winPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| deployment | <code>boolean</code> | 
-| classifier | <code>string</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
+| classifier | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
 
-#### `winPackager.generateName2(ext, classifier, deployment)` ⇒ <code>string</code>
+#### `winPackager.generateName2(ext, classifier, deployment)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| ext | <code>string</code> \| <code>null</code> | 
-| classifier | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| deployment | <code>boolean</code> | 
+| ext | <code>String</code> \| <code>null</code> | 
+| classifier | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| deployment | <code>Boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
 
-#### `winPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `winPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
 
@@ -2391,92 +1962,38 @@ Developer API only. See [[Options]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| outDir | <code>string</code> | 
+| outDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
 | targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 
-#### `winPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| string&gt;</code>
+#### `winPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| custom | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
-| names | <code>Array&lt;string&gt;</code> | 
+| custom | <code>String</code> \| <code>undefined</code> \| <code>null</code> | 
+| names | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
 
-#### `winPackager.getResourcesDir(appOutDir)` ⇒ <code>string</code>
+#### `winPackager.getResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| appOutDir | <code>string</code> | 
+| appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
 
-#### `winPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `winPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
 | --- | --- |
-| suffix | <code>string</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeAppOutDir"></a>
-
-#### `winPackager.computeAppOutDir(outDir, arch)` ⇒ <code>string</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+getCscPassword"></a>
-
-#### `winPackager.getCscPassword()` ⇒ <code>string</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+doPack"></a>
-
-#### `winPackager.doPack(outDir, appOutDir, platformName, arch, platformSpecificBuildOptions, targets)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| outDir | <code>string</code> | 
-| appOutDir | <code>string</code> | 
-| platformName | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| platformSpecificBuildOptions | <code>module:electron-builder/out/platformPackager.DC</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+packageInDistributableFormat"></a>
-
-#### `winPackager.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)`
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appOutDir | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> | 
-| targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
-| postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
-
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+prepareAppInfo"></a>
-
-#### `winPackager.prepareAppInfo(appInfo)` ⇒ <code>[AppInfo](#AppInfo)</code>
-**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| appInfo | <code>[AppInfo](#AppInfo)</code> | 
+| suffix | <code>String</code> | 
 
 
 <!-- end of generated block -->

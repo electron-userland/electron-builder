@@ -32,10 +32,10 @@
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **path**| <code>string</code> | 
-| **sha1**| <code>string</code> | 
-| **sha256**| <code>string</code> | 
+| **name**| <code>String</code> | 
+| **path**| <code>String</code> | 
+| **sha1**| <code>String</code> | 
+| **sha256**| <code>String</code> | 
 
 <a name="Version"></a>
 
@@ -45,8 +45,8 @@
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **package**| <code>string</code> | 
+| **name**| <code>String</code> | 
+| **package**| <code>String</code> | 
 
 <a name="BintrayClient"></a>
 
@@ -56,11 +56,11 @@
 
 | Name | Type |
 | --- | --- |
-| auth| <code>string</code> \| <code>null</code> | 
-| repo| <code>string</code> | 
-| owner| <code>string</code> | 
-| user| <code>string</code> | 
-| packageName| <code>string</code> | 
+| auth| <code>String</code> \| <code>null</code> | 
+| repo| <code>String</code> | 
+| owner| <code>String</code> | 
+| user| <code>String</code> | 
+| packageName| <code>String</code> | 
 
 
 * [.BintrayClient](#BintrayClient)
@@ -76,7 +76,7 @@
 
 | Param | Type |
 | --- | --- |
-| version | <code>string</code> | 
+| version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+deleteVersion"></a>
 
@@ -85,7 +85,7 @@
 
 | Param | Type |
 | --- | --- |
-| version | <code>string</code> | 
+| version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+getVersion"></a>
 
@@ -94,7 +94,7 @@
 
 | Param | Type |
 | --- | --- |
-| version | <code>string</code> | 
+| version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles"></a>
 
@@ -103,7 +103,7 @@
 
 | Param | Type |
 | --- | --- |
-| version | <code>string</code> | 
+| version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/CancellationToken"></a>
 
@@ -167,11 +167,11 @@
 
 | Name | Type |
 | --- | --- |
-| **total**| <code>number</code> | 
-| **delta**| <code>number</code> | 
-| **transferred**| <code>number</code> | 
-| **percent**| <code>number</code> | 
-| **bytesPerSecond**| <code>number</code> | 
+| **total**| <code>Number</code> | 
+| **delta**| <code>Number</code> | 
+| **transferred**| <code>Number</code> | 
+| **percent**| <code>Number</code> | 
+| **bytesPerSecond**| <code>Number</code> | 
 
 <a name="ProgressCallbackTransform"></a>
 
@@ -200,7 +200,7 @@
 | Param | Type |
 | --- | --- |
 | chunk | <code>any</code> | 
-| encoding | <code>string</code> | 
+| encoding | <code>String</code> | 
 | callback | <code>function</code> | 
 
 <a name="module_electron-builder-http"></a>
@@ -219,13 +219,8 @@
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
         * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-        * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-http.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-        * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-        * [`.doRequest(options, callback)`](#module_electron-builder-http.HttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
     * [`.configureRequestOptions(options, token, method)`](#module_electron-builder-http.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
-    * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>string</code>
+    * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>String</code>
     * [`.safeGetHeader(response, headerKey)`](#module_electron-builder-http.safeGetHeader) ⇒ <code>any</code>
 
 <a name="DownloadOptions"></a>
@@ -237,9 +232,9 @@
 | Name | Type |
 | --- | --- |
 | headers| <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
-| skipDirCreation| <code>boolean</code> | 
-| sha2| <code>string</code> \| <code>null</code> | 
-| sha512| <code>string</code> \| <code>null</code> | 
+| skipDirCreation| <code>Boolean</code> | 
+| sha2| <code>String</code> \| <code>null</code> | 
+| sha512| <code>String</code> \| <code>null</code> | 
 | **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
 
 <a name="module_electron-builder-http.DownloadOptions+onProgress"></a>
@@ -264,8 +259,8 @@
 
 | Name | Type |
 | --- | --- |
-| statusCode| <code>number</code> | 
-| statusMessage| <code>string</code> | 
+| statusCode| <code>Number</code> | 
+| statusMessage| <code>String</code> | 
 | **headers**| <code>any</code> | 
 
 <a name="module_electron-builder-http.Response+setEncoding"></a>
@@ -275,7 +270,7 @@
 
 | Param | Type |
 | --- | --- |
-| encoding | <code>string</code> | 
+| encoding | <code>String</code> | 
 
 <a name="DigestTransform"></a>
 
@@ -304,7 +299,7 @@
 | Param | Type |
 | --- | --- |
 | chunk | <code>any</code> | 
-| encoding | <code>string</code> | 
+| encoding | <code>String</code> | 
 | callback | <code>function</code> | 
 
 <a name="HttpError"></a>
@@ -316,21 +311,6 @@
 
 ### HttpExecutor
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| maxRedirects = <code>10</code>| <code>"10"</code> | 
-
-
-* [.HttpExecutor](#HttpExecutor)
-    * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.addTimeOutHandler(request, callback)`](#module_electron-builder-http.HttpExecutor+addTimeOutHandler)
-    * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-http.HttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-    * [`.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`](#module_electron-builder-http.HttpExecutor+doDownload)
-    * [`.doRequest(options, callback)`](#module_electron-builder-http.HttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`](#module_electron-builder-http.HttpExecutor+handleResponse)
-
 <a name="module_electron-builder-http.HttpExecutor+request"></a>
 
 #### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
@@ -340,73 +320,7 @@
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| data | <code>Object&lt;string, any&gt;</code> \| <code>null</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+addTimeOutHandler"></a>
-
-#### `httpExecutor.addTimeOutHandler(request, callback)`
-**Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| request | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doApiRequest"></a>
-
-#### `httpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
-**Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doDownload"></a>
-
-#### `httpExecutor.doDownload(requestOptions, destination, redirectCount, options, callback, onCancel)`
-**Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| requestOptions | <code>any</code> | 
-| destination | <code>string</code> | 
-| redirectCount | <code>number</code> | 
-| options | <code>[DownloadOptions](#DownloadOptions)</code> | 
-| callback | <code>callback</code> | 
-| onCancel | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+doRequest"></a>
-
-#### `httpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http.HttpExecutor+handleResponse"></a>
-
-#### `httpExecutor.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)`
-**Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| response | <code>[Response](#Response)</code> | 
-| options | <code>module:http.RequestOptions</code> | 
-| cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
-| resolve | <code>callback</code> | 
-| reject | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
+| data | <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.configureRequestOptions"></a>
 
@@ -416,12 +330,12 @@
 | Param | Type |
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
-| token | <code>string</code> \| <code>null</code> | 
+| token | <code>String</code> \| <code>null</code> | 
 | method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
 
 <a name="module_electron-builder-http.dumpRequestOptions"></a>
 
-### `electron-builder-http.dumpRequestOptions(options)` ⇒ <code>string</code>
+### `electron-builder-http.dumpRequestOptions(options)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 
 | Param | Type |
@@ -436,5 +350,5 @@
 | Param | Type |
 | --- | --- |
 | response | <code>any</code> | 
-| headerKey | <code>string</code> | 
+| headerKey | <code>String</code> | 
 

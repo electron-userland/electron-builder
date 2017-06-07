@@ -1,10 +1,8 @@
-import { PlatformSpecificBuildOptions, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { PlatformSpecificBuildOptions } from "../metadata"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
-/**
- * macOS Options ([mac](#Config-mac)).
- */
 export interface MacOptions extends PlatformSpecificBuildOptions {
   /**
    * The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
@@ -79,9 +77,6 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly requirements?: string | null
 }
 
-/**
- * macOS Product Archive Options ([pkg](#Config-pkg)).
- */
 export interface PkgOptions extends TargetSpecificOptions {
   /**
    * The scripts directory, relative to `build` (build resources directory).
@@ -107,14 +102,6 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly identity?: string | null
 }
 
-/**
- * macOS DMG Options ([dmg](#Config-dmg)).
- *
- * To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
- * If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
- *
- * @typicalname dmg
- */
 export interface DmgOptions extends TargetSpecificOptions {
   /**
    * The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window.
@@ -166,14 +153,11 @@ export interface DmgOptions extends TargetSpecificOptions {
   readonly format?: "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO"
 
   /**
-   * The DMG windows position and size. See [dmg.window](#DmgWindow).
+   * The DMG windows position and size.
    */
   window?: DmgWindow
 }
 
-/**
- * DMG Windows Position and Size
- */
 export interface DmgWindow {
   /**
    * The X position relative to left of the screen.
@@ -211,9 +195,6 @@ export interface DmgContent {
   path?: string
 }
 
-/**
- * MAS (Mac Application Store) Options ([mas](#Config-mas)).
- */
 export interface MasBuildOptions extends MacOptions {
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).

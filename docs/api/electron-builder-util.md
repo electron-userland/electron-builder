@@ -24,43 +24,43 @@
 ## electron-builder-util/out/binDownload
 
 * [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
-    * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getBinFromGithub(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getBinFromGithub(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/binDownload.getBin"></a>
 
-### `electron-builder-util/out/binDownload.getBin(name, dirName, url, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util/out/binDownload.getBin(name, dirName, url, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
-| name | <code>string</code> | 
-| dirName | <code>string</code> | 
-| url | <code>string</code> | 
-| sha2 | <code>string</code> | 
+| name | <code>String</code> | 
+| dirName | <code>String</code> | 
+| url | <code>String</code> | 
+| sha2 | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
 
-### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
-| name | <code>string</code> | 
-| version | <code>string</code> | 
-| sha2 | <code>string</code> | 
+| name | <code>String</code> | 
+| version | <code>String</code> | 
+| sha2 | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromGithub"></a>
 
-### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, sha2)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
-| name | <code>string</code> | 
-| version | <code>string</code> | 
-| sha2 | <code>string</code> | 
+| name | <code>String</code> | 
+| version | <code>String</code> | 
+| sha2 | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/deepAssign"></a>
 
@@ -84,10 +84,10 @@
         * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.copyDir(src, destination, filter, transformer, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;boolean&gt;</code>
+    * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;Boolean&gt;</code>
     * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
-    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;string \| void&gt;</code>
-    * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+    * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;String \| void&gt;</code>
+    * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 
 <a name="FileCopier"></a>
 
@@ -100,8 +100,8 @@
 
 | Param | Type |
 | --- | --- |
-| src | <code>string</code> | 
-| dest | <code>string</code> | 
+| src | <code>String</code> | 
+| dest | <code>String</code> | 
 | stat | <code>module:fs.Stats</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyDir"></a>
@@ -114,8 +114,8 @@ Hard links is used if supported and allowed.
 
 | Param | Type |
 | --- | --- |
-| src | <code>string</code> | 
-| destination | <code>string</code> | 
+| src | <code>String</code> | 
+| destination | <code>String</code> | 
 | filter | <code>module:electron-builder-util/out/fs.__type</code> | 
 | transformer | <code>module:electron-builder-util/out/fs.__type</code> | 
 | isUseHardLink | <code>callback</code> | 
@@ -130,19 +130,19 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| src | <code>string</code> | 
-| dest | <code>string</code> | 
+| src | <code>String</code> | 
+| dest | <code>String</code> | 
 | stats | <code>module:fs.Stats</code> \| <code>null</code> | 
 | isUseHardLink |  | 
 
 <a name="module_electron-builder-util/out/fs.exists"></a>
 
-### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;boolean&gt;</code>
+### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;Boolean&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.statOrNull"></a>
 
@@ -151,25 +151,25 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.unlinkIfExists"></a>
 
-### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;string \| void&gt;</code>
+### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;String \| void&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
+| file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.walk"></a>
 
-### `electron-builder-util/out/fs.walk(initialDirPath, filter, consumer)` ⇒ <code>Promise&lt;Array&lt;string&gt;&gt;</code>
+### `electron-builder-util/out/fs.walk(initialDirPath, filter, consumer)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
 | Param | Type |
 | --- | --- |
-| initialDirPath | <code>string</code> | 
+| initialDirPath | <code>String</code> | 
 | filter | <code>module:electron-builder-util/out/fs.__type</code> \| <code>null</code> | 
 | consumer | <code>callback</code> | 
 
@@ -191,7 +191,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| message | <code>string</code> | 
+| message | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/log.setPrinter"></a>
 
@@ -209,7 +209,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| title | <code>string</code> | 
+| title | <code>String</code> | 
 | promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.task"></a>
@@ -219,7 +219,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| title | <code>string</code> | 
+| title | <code>String</code> | 
 | promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.warn"></a>
@@ -229,7 +229,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| message | <code>string</code> | 
+| message | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor"></a>
 
@@ -238,8 +238,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 * [electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)
     * [.NodeHttpExecutor](#NodeHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
         * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-        * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-        * [`.doRequest(options, callback)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest) ⇒ <code>any</code>
+        * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.httpExecutor`](#module_electron-builder-util/out/nodeHttpExecutor.httpExecutor) : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
 
 <a name="NodeHttpExecutor"></a>
@@ -250,8 +249,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 * [.NodeHttpExecutor](#NodeHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
     * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
-    * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.doRequest(options, callback)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest) ⇒ <code>any</code>
+    * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest"></a>
 
@@ -263,29 +261,18 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | options | <code>module:https.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 | requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
+| redirectCount | <code>Number</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download"></a>
 
-#### `nodeHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `nodeHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
+| url | <code>String</code> | 
+| destination | <code>String</code> | 
 | options | <code>[DownloadOptions](electron-builder-http#DownloadOptions)</code> | 
-
-<a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doRequest"></a>
-
-#### `nodeHttpExecutor.doRequest(options, callback)` ⇒ <code>any</code>
-**Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| options | <code>any</code> | 
-| callback | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.httpExecutor"></a>
 
@@ -361,7 +348,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 * [electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)
     * [.TmpDir](#TmpDir)
         * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="TmpDir"></a>
 
@@ -370,7 +357,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 * [.TmpDir](#TmpDir)
     * [`.cleanup()`](#module_electron-builder-util/out/tmp.TmpDir+cleanup) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/tmp.TmpDir+cleanup"></a>
 
@@ -378,12 +365,12 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 **Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 <a name="module_electron-builder-util/out/tmp.TmpDir+getTempFile"></a>
 
-#### `tmpDir.getTempFile(suffix)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `tmpDir.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 
 | Param | Type |
 | --- | --- |
-| suffix | <code>string</code> | 
+| suffix | <code>String</code> | 
 
 <a name="module_electron-builder-util"></a>
 
@@ -395,22 +382,22 @@ File permission is fixed — allow execute for all if owner can, allow read for 
     * [.Lazy](#Lazy)
     * [`.addValue(map, key, value)`](#module_electron-builder-util.addValue)
     * [`.asArray(v)`](#module_electron-builder-util.asArray) ⇒ <code>Array&lt;module:electron-builder-util.T&gt;</code>
-    * [`.computeDefaultAppDirectory(projectDir, userAppDir)`](#module_electron-builder-util.computeDefaultAppDirectory) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.debug7zArgs(command)`](#module_electron-builder-util.debug7zArgs) ⇒ <code>Array&lt;string&gt;</code>
+    * [`.computeDefaultAppDirectory(projectDir, userAppDir)`](#module_electron-builder-util.computeDefaultAppDirectory) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.debug7zArgs(command)`](#module_electron-builder-util.debug7zArgs) ⇒ <code>Array&lt;String&gt;</code>
     * [`.doSpawn(command, args, options, pipeInput)`](#module_electron-builder-util.doSpawn) ⇒ <code>module:child_process.ChildProcess</code>
-    * [`.exec(file, args, options)`](#module_electron-builder-util.exec) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.execWine(file, args, options)`](#module_electron-builder-util.execWine) ⇒ <code>Promise&lt;string&gt;</code>
-    * [`.getCacheDirectory()`](#module_electron-builder-util.getCacheDirectory) ⇒ <code>string</code>
-    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
-    * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>string</code>
+    * [`.exec(file, args, options)`](#module_electron-builder-util.exec) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.execWine(file, args, options)`](#module_electron-builder-util.execWine) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getCacheDirectory()`](#module_electron-builder-util.getCacheDirectory) ⇒ <code>String</code>
+    * [`.getPlatformIconFileName(value, isMac)`](#module_electron-builder-util.getPlatformIconFileName) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
+    * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>String</code>
     * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
-    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>boolean</code>
+    * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>Boolean</code>
     * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
-    * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>string</code>
-    * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;string&gt;</code>
-    * [`.safeStringifyJson(data, skippedNames)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>string</code>
-    * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>string</code>
+    * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;String&gt;</code>
+    * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>String</code>
+    * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;String&gt;</code>
+    * [`.safeStringifyJson(data, skippedNames)`](#module_electron-builder-util.safeStringifyJson) ⇒ <code>String</code>
+    * [`.smarten(s)`](#module_electron-builder-util.smarten) ⇒ <code>String</code>
     * [`.spawn(command, args, options)`](#module_electron-builder-util.spawn) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
 
@@ -422,7 +409,7 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Name | Type |
 | --- | --- |
-| cwd| <code>string</code> | 
+| cwd| <code>String</code> | 
 | env| <code>any</code> | 
 | stdio| <code>any</code> | 
 
@@ -436,10 +423,10 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 | Name | Type |
 | --- | --- |
 | customFds| <code>any</code> | 
-| encoding| <code>string</code> | 
-| timeout| <code>number</code> | 
-| maxBuffer| <code>number</code> | 
-| killSignal| <code>string</code> | 
+| encoding| <code>String</code> | 
+| timeout| <code>Number</code> | 
+| maxBuffer| <code>Number</code> | 
+| killSignal| <code>String</code> | 
 
 <a name="Lazy"></a>
 
@@ -467,17 +454,17 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 <a name="module_electron-builder-util.computeDefaultAppDirectory"></a>
 
-### `electron-builder-util.computeDefaultAppDirectory(projectDir, userAppDir)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util.computeDefaultAppDirectory(projectDir, userAppDir)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| projectDir | <code>string</code> | 
-| userAppDir | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
+| projectDir | <code>String</code> | 
+| userAppDir | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.debug7zArgs"></a>
 
-### `electron-builder-util.debug7zArgs(command)` ⇒ <code>Array&lt;string&gt;</code>
+### `electron-builder-util.debug7zArgs(command)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
@@ -491,55 +478,55 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| command | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> | 
+| command | <code>String</code> | 
+| args | <code>Array&lt;String&gt;</code> | 
 | options | <code>module:child_process.SpawnOptions</code> | 
 | pipeInput | <code>Boolean</code> | 
 
 <a name="module_electron-builder-util.exec"></a>
 
-### `electron-builder-util.exec(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util.exec(file, args, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
+| file | <code>String</code> | 
+| args | <code>Array&lt;String&gt;</code> \| <code>null</code> | 
 | options | <code>[ExecOptions](#ExecOptions)</code> | 
 
 <a name="module_electron-builder-util.execWine"></a>
 
-### `electron-builder-util.execWine(file, args, options)` ⇒ <code>Promise&lt;string&gt;</code>
+### `electron-builder-util.execWine(file, args, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> | 
+| file | <code>String</code> | 
+| args | <code>Array&lt;String&gt;</code> | 
 | options | <code>[ExecOptions](#ExecOptions)</code> | 
 
 <a name="module_electron-builder-util.getCacheDirectory"></a>
 
-### `electron-builder-util.getCacheDirectory()` ⇒ <code>string</code>
+### `electron-builder-util.getCacheDirectory()` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.getPlatformIconFileName"></a>
 
-### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>string</code>
+### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| value | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
-| isMac | <code>boolean</code> | 
+| value | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
+| isMac | <code>Boolean</code> | 
 
 <a name="module_electron-builder-util.getTempName"></a>
 
-### `electron-builder-util.getTempName(prefix)` ⇒ <code>string</code>
+### `electron-builder-util.getTempName(prefix)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| prefix | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
+| prefix | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.handleProcess"></a>
 
@@ -548,20 +535,20 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| event | <code>string</code> | 
+| event | <code>String</code> | 
 | childProcess | <code>module:child_process.ChildProcess</code> | 
-| command | <code>string</code> | 
+| command | <code>String</code> | 
 | resolve | <code>module:electron-builder-util.__type</code> \| <code>null</code> | 
 | reject | <code>callback</code> | 
 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
 
-### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>boolean</code>
+### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| s | <code>string</code> \| <code>null</code> \| <code>undefined</code> | 
+| s | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.isPullRequest"></a>
 
@@ -569,51 +556,51 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.prepareArgs"></a>
 
-### `electron-builder-util.prepareArgs(args, exePath)` ⇒ <code>Array&lt;string&gt;</code>
+### `electron-builder-util.prepareArgs(args, exePath)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| args | <code>Array&lt;string&gt;</code> | 
-| exePath | <code>string</code> | 
+| args | <code>Array&lt;String&gt;</code> | 
+| exePath | <code>String</code> | 
 
 <a name="module_electron-builder-util.removePassword"></a>
 
-### `electron-builder-util.removePassword(input)` ⇒ <code>string</code>
+### `electron-builder-util.removePassword(input)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| input | <code>string</code> | 
+| input | <code>String</code> | 
 
 <a name="module_electron-builder-util.replaceDefault"></a>
 
-### `electron-builder-util.replaceDefault(inList, defaultList)` ⇒ <code>Array&lt;string&gt;</code>
+### `electron-builder-util.replaceDefault(inList, defaultList)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| inList | <code>Array&lt;string&gt;</code> \| <code>null</code> \| <code>undefined</code> | 
-| defaultList | <code>Array&lt;string&gt;</code> | 
+| inList | <code>Array&lt;String&gt;</code> \| <code>null</code> \| <code>undefined</code> | 
+| defaultList | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder-util.safeStringifyJson"></a>
 
-### `electron-builder-util.safeStringifyJson(data, skippedNames)` ⇒ <code>string</code>
+### `electron-builder-util.safeStringifyJson(data, skippedNames)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>any</code> | 
-| skippedNames | <code>Set&lt;string&gt;</code> | 
+| skippedNames | <code>Set&lt;String&gt;</code> | 
 
 <a name="module_electron-builder-util.smarten"></a>
 
-### `electron-builder-util.smarten(s)` ⇒ <code>string</code>
+### `electron-builder-util.smarten(s)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
 | Param | Type |
 | --- | --- |
-| s | <code>string</code> | 
+| s | <code>String</code> | 
 
 <a name="module_electron-builder-util.spawn"></a>
 
@@ -622,8 +609,8 @@ File permission is fixed — allow execute for all if owner can, allow read for 
 
 | Param | Type |
 | --- | --- |
-| command | <code>string</code> | 
-| args | <code>Array&lt;string&gt;</code> \| <code>null</code> | 
+| command | <code>String</code> | 
+| args | <code>Array&lt;String&gt;</code> \| <code>null</code> | 
 | options | <code>module:child_process.SpawnOptions</code> | 
 
 <a name="module_electron-builder-util.use"></a>
