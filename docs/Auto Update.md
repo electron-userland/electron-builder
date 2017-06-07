@@ -2,6 +2,16 @@ See the [Publishing Artifacts](https://github.com/electron-userland/electron-bui
 
 Simplified auto-update is supported on Windows if you use the default NSIS setup, but is not supported for Squirrel.Windows.
 
+## Differences between electron-updater and built-in autoUpdater
+
+* It doesn't require a dedicated release server.
+* Code signature validation not only on macOS, but also on Windows.
+* electron-builder produces and publishes all required metadata files and artifacts.
+* Download progress supported on all platforms, including macOS.
+* Actually, built-in autoUpdater is used inside on macOS.
+* Different providers supported out of the box (GitHub, Bintray, Amazon S3, generic HTTP(s) server).
+* You need only 2 lines of code to make it work.
+
 ## Quick Setup Guide
 
 1. Install [electron-updater](https://www.npmjs.com/package/electron-updater) as an app dependency.

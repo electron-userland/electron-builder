@@ -14,10 +14,13 @@ Linux support is [planned](https://github.com/electron-userland/electron-builder
  
 ## Differences between electron-updater and built-in autoUpdater
 
-* Actually, autoUpdater is used inside (on macOS).
 * It doesn't require a dedicated release server.
+* Code signature validation on Windows.
+* [electron-builder](https://github.com/electron-userland/electron-builder) produces and publishes all required metadata files and artifacts.
+* Download progress supported on all platforms, including macOS.
+* Actually, built-in autoUpdater is used inside on macOS.
+* Different providers supported out of the box (GitHub, Bintray, Amazon S3, generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
-* [electron-builder](https://github.com/electron-userland/electron-builder) produces and published all required metadata files and artifacts.
 
 ## Credits
 
