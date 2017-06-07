@@ -553,7 +553,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -885,7 +885,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -1240,7 +1240,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
@@ -2349,7 +2349,7 @@ Developer API only. See [[Options]] for user documentation.
 | Param | Type |
 | --- | --- |
 | pattern | <code>string</code> | 
-| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>undefined</code> \| <code>null</code> | 
+| arch | <code>string</code> \| <code>undefined</code> \| <code>null</code> | 
 | extra | <code>any</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>

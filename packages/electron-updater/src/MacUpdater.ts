@@ -6,7 +6,7 @@ import { PublishConfiguration, VersionInfo } from "electron-builder-http/out/pub
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { parse as parseUrl } from "url"
 import { AppUpdater } from "./AppUpdater"
-import { DOWNLOAD_PROGRESS, FileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 import AutoUpdater = Electron.AutoUpdater
 
 export class MacUpdater extends AppUpdater {
@@ -25,7 +25,7 @@ export class MacUpdater extends AppUpdater {
       if (this.logger != null) {
         this.logger.info(`New version ${this.versionInfo!.version} has been downloaded`)
       }
-      this.emit("update-downloaded", this.versionInfo)
+      this.emit(UPDATE_DOWNLOADED, this.versionInfo)
     })
   }
 

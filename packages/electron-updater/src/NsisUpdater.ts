@@ -8,7 +8,7 @@ import { tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
-import { DOWNLOAD_PROGRESS, FileInfo } from "./main"
+import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 
 export class NsisUpdater extends AppUpdater {
   private setupPath: string | null
@@ -72,7 +72,7 @@ export class NsisUpdater extends AppUpdater {
 
     this.setupPath = tempFile
     this.addQuitHandler()
-    this.emit("update-downloaded", this.versionInfo)
+    this.emit(UPDATE_DOWNLOADED, this.versionInfo)
     return tempFile
   }
 
