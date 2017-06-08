@@ -2,9 +2,8 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Target } from "electron-builder-core"
 import { exec, spawn, use } from "electron-builder-util"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
-import { emptyDir, readFile, writeFile } from "fs-extra-p"
+import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 import { AppXOptions } from "../options/winOptions"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
@@ -42,43 +41,72 @@ export default class AppXTarget extends Target {
       }
     }
 
-    const appInfo = packager.appInfo
-
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
+    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
     const vendorPath = await getSignVendorPath()
 
     const templatePath = path.join(__dirname, "..", "..", "templates", "appx")
-    const safeName = sanitizeFileName(appInfo.name)
+    
     const resourceList = await packager.resourceList
-    await BluebirdPromise.all([
-      BluebirdPromise.map(["44x44", "50x50", "150x150", "310x150"], size => {
-        const target = path.join(preAppx, "assets", `${safeName}.${size}.png`)
-        if (resourceList.includes(`${size}.png`)) {
-          return copyFile(path.join(packager.buildResourcesDir, `${size}.png`), target)
-        }
-        return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
-      }),
-      copyDir(appOutDir, path.join(preAppx, "app")),
-      this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
-    ])
+    if (resourceList.includes("appx_assets")) {
+      await copyDir(path.join(packager.buildResourcesDir, "appx_assets"), path.join(preAppx, "assets"))
+    }
 
-    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
-    const args = ["pack", "/o", "/d", preAppx, "/p", destination]
-    use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
+    const userAssets = await readdir(path.join(packager.buildResourcesDir, "appx_assets"))
+      .catch(e => {
+        if (e.code === "ENOENT") {
+            return []
+        } else {
+            throw e
+        }
+      })
+      
+    const vendorAssetsForDefaultAssets: any = {
+      "StoreLogo.png": "SampleAppx.50x50.png",
+      "Square150x150Logo.png": "SampleAppx.150x150.png",
+      "Square44x44Logo.png": "SampleAppx.44x44.png",
+      "Wide310x150Logo.png": "SampleAppx.310x150.png",
+    }
+    const defaultAssets = Object.keys(vendorAssetsForDefaultAssets)
+
+    await BluebirdPromise.map(defaultAssets, defaultAsset => {
+      if (!this.defaultAssetIncluded(userAssets, defaultAsset)) {
+        return copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
+      }
+      return
+    })
+
+    this.writeManifest(templatePath, preAppx, arch, publisher, userAssets)
+
+    await copyDir(appOutDir, path.join(preAppx, "app"))
+
+    const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", destination]
+
+    if (this.scaledAssetsProvided(userAssets)) {
+      const priConfigPath = path.join(preAppx, "priconfig.xml")
+      const makePriCreateConfigArgs = ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"]
+      await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makePriCreateConfigArgs)
+      const makrPriNewArgs = ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx]
+      await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makrPriNewArgs)
+
+      makeAppXArgs.push("/l")
+    }
+
+    use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
-    // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
+    // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), makeAppXArgs)
+    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), makeAppXArgs)
 
     await packager.sign(destination)
     packager.dispatchArtifactCreated(destination, this, arch, packager.computeSafeArtifactName("appx"))
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {
+  private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
-      .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+      .replace(/\$\{([a-zA-Z0-9]+)\}/g, (match, p1): string => {
         switch (p1) {
           case "publisher":
             return publisher
@@ -111,8 +139,23 @@ export default class AppXTarget extends Target {
           case "backgroundColor":
             return this.options.backgroundColor || "#464646"
 
-          case "safeName":
-            return safeName
+          case "logo":
+            return "assets\\StoreLogo.png"
+
+          case "square150x150Logo":
+            return "assets\\Square150x150Logo.png"
+
+          case "square44x44Logo":
+            return "assets\\Square44x44Logo.png"
+
+          case "lockScreen":
+            return this.lockScreenTag(userAssets)
+
+          case "defaultTile":
+            return this.defaultTileTag(userAssets)
+
+          case "splashScreen":
+            return this.splashScreenTag(userAssets)
             
           case "arch":
             return arch === Arch.ia32 ? "x86" : "x64"
@@ -122,6 +165,59 @@ export default class AppXTarget extends Target {
         }
       })
     await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
+  }
+
+  private lockScreenTag(userAssets: Array<string>): string {
+    if (this.defaultAssetIncluded(userAssets, "BadgeLogo.png")) {
+      return '<uap:LockScreen Notification="badgeAndTileText" BadgeLogo="assets\\BadgeLogo.png" />'
+    } else {
+      return ""
+    }
+  }
+
+  private defaultTileTag(userAssets: Array<string>): string {
+    const defaultTiles: Array<string> = ["<uap:DefaultTile", 'Wide310x150Logo="assets\\Wide310x150Logo.png"']
+
+    if (this.defaultAssetIncluded(userAssets, "LargeTile.png")) {
+      defaultTiles.push('Square310x310Logo="assets\\LargeTile.png"')
+    }
+    if (this.defaultAssetIncluded(userAssets, "SmallTile.png")) {
+      defaultTiles.push('Square71x71Logo="assets\\SmallTile.png"')
+    }
+
+    defaultTiles.push("/>")
+
+    return defaultTiles.join(" ")
+  }
+
+  private splashScreenTag(userAssets: Array<string>): string {
+    if (this.defaultAssetIncluded(userAssets, "SplashScreen.png")) {
+      return '<uap:SplashScreen Image="assets\\SplashScreen.png" />'
+    } else {
+      return ""
+    }
+  }
+
+  private defaultAssetIncluded(userAssets: Array<string>, defaultAsset: string): boolean {
+    const defaultAssetName = defaultAsset.split(".")[0]
+
+    for (let i = 0; i < userAssets.length; i++) {
+      if (userAssets[i].includes(defaultAssetName)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  private scaledAssetsProvided(userAssets: Array<string>): boolean {
+    for (let i = 0; i < userAssets.length; i++) {
+      if (userAssets[i].includes(".scale-") || userAssets[i].includes(".targetsize-")) {
+        return true
+      }
+    }
+
+    return false
   }
 }
 
