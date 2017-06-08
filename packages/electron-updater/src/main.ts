@@ -108,6 +108,7 @@ export interface UpdateCheckResult {
 }
 
 export const DOWNLOAD_PROGRESS = "download-progress"
+export const UPDATE_DOWNLOADED = "update-downloaded"
 
 export type LoginHandler = (authInfo: any, callback: LoginCallback) => void
 
@@ -128,7 +129,7 @@ export class UpdaterSignal {
   }
 
   updateDownloaded(handler: (info: VersionInfo) => void) {
-    addHandler(this.emitter, "update-downloaded", handler)
+    addHandler(this.emitter, UPDATE_DOWNLOADED, handler)
   }
 
   updateCancelled(handler: (info: VersionInfo) => void) {

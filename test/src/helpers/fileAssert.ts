@@ -77,6 +77,11 @@ class Assertions {
       m = m.replace(/"(C:)?(\/|\\)[^"]+(\/|\\)([^"\/\\]+)"/g, `"<path>/$4"`)
       m = m.replace(/'(C:)?(\/|\\)[^']+(\/|\\)([^'\/\\]+)'/g, `'<path>/$4'`)
     }
-    expect(m).toMatchSnapshot()
+    try {
+      expect(m).toMatchSnapshot()
+    }
+    catch (matchError) {
+      throw new Error(matchError + " " + actualError)
+    }
   }
 }

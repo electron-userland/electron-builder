@@ -6,7 +6,8 @@
   "declaration": true,
   "jsdoc": {
     "out": "../../jsdoc/out/updater",
-    "examples": "../../jsdoc/examples"
+    "examples": "../../jsdoc/examples",
+    "access": "public"
   },
   "files": [
     "../../typings/semver.d.ts",

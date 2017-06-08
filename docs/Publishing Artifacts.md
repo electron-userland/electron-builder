@@ -79,8 +79,8 @@ Can be specified in the [configuration options](https://github.com/electron-user
     * [`.S3Options`](#S3Options) ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
     * [`.UpdateInfo`](#UpdateInfo) ⇐ <code>[VersionInfo](#VersionInfo)</code>
     * [`.VersionInfo`](#VersionInfo)
-    * [`.githubUrl(options)`](#module_electron-builder-http/out/publishOptions.githubUrl) ⇒ <code>string</code>
-    * [`.s3Url(options)`](#module_electron-builder-http/out/publishOptions.s3Url) ⇒ <code>string</code>
+    * [`.githubUrl(options)`](#module_electron-builder-http/out/publishOptions.githubUrl) ⇒ <code>String</code>
+    * [`.s3Url(options)`](#module_electron-builder-http/out/publishOptions.s3Url) ⇒ <code>String</code>
 
 <a name="BintrayOptions"></a>
 
@@ -93,10 +93,10 @@ Bintray options.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| package| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-package"></a>The Bintray package name. |
-| repo = <code>&quot;generic&quot;</code>| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-repo"></a>The Bintray repository name. |
-| user| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization. |
-| token| <code>string</code> \| <code>null</code> | <a name="BintrayOptions-token"></a> |
+| package| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-package"></a>The Bintray package name. |
+| repo = <code>&quot;generic&quot;</code>| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-repo"></a>The Bintray repository name. |
+| user| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization. |
+| token| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-token"></a> |
 
 <a name="GenericServerOptions"></a>
 
@@ -109,8 +109,8 @@ Generic (any HTTP(S) server) options.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **url**| <code>string</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
-| channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
+| **url**| <code>String</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
+| channel = <code>&quot;latest&quot;</code>| <code>String</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
 
 <a name="GithubOptions"></a>
 
@@ -126,12 +126,12 @@ Define `GH_TOKEN` environment variable.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| repo| <code>string</code> \| <code>null</code> | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](#github-repository-and-bintray-package). |
-| vPrefixedTagName = <code>true</code>| <code>boolean</code> | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. |
-| host = <code>&quot;github.com&quot;</code>| <code>string</code> \| <code>null</code> | <a name="GithubOptions-host"></a>The host (including the port if need). |
+| repo| <code>String</code> \| <code>null</code> | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](#github-repository-and-bintray-package). |
+| vPrefixedTagName = <code>true</code>| <code>Boolean</code> | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. |
+| host = <code>&quot;github.com&quot;</code>| <code>String</code> \| <code>null</code> | <a name="GithubOptions-host"></a>The host (including the port if need). |
 | protocol = <code>https</code>| <code>"https"</code> \| <code>"http"</code> \| <code>null</code> | <a name="GithubOptions-protocol"></a>The protocol. GitHub Publisher supports only `https`. |
-| token| <code>string</code> \| <code>null</code> | <a name="GithubOptions-token"></a>The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL). |
-| private| <code>boolean</code> \| <code>null</code> | <a name="GithubOptions-private"></a>Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo |
+| token| <code>String</code> \| <code>null</code> | <a name="GithubOptions-token"></a>The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL). |
+| private| <code>Boolean</code> \| <code>null</code> | <a name="GithubOptions-private"></a>Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo |
 
 <a name="PublishConfiguration"></a>
 
@@ -148,7 +148,7 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 | Name | Type | Description |
 | --- | --- | --- |
 | **provider**| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
-| owner| <code>string</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
+| owner| <code>String</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
 
 <a name="S3Options"></a>
 
@@ -165,10 +165,10 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **bucket**| <code>string</code> | <a name="S3Options-bucket"></a>The bucket name. |
-| path = <code>&quot;/&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-path"></a>The directory path. |
-| region| <code>string</code> \| <code>null</code> | <a name="S3Options-region"></a>The region. Is determined and set automatically when publishing. |
-| channel = <code>&quot;latest&quot;</code>| <code>string</code> \| <code>null</code> | <a name="S3Options-channel"></a>The channel. |
+| **bucket**| <code>String</code> | <a name="S3Options-bucket"></a>The bucket name. |
+| path = <code>&quot;/&quot;</code>| <code>String</code> \| <code>null</code> | <a name="S3Options-path"></a>The directory path. |
+| region| <code>String</code> \| <code>null</code> | <a name="S3Options-region"></a>The region. Is determined and set automatically when publishing. |
+| channel = <code>&quot;latest&quot;</code>| <code>String</code> \| <code>null</code> | <a name="S3Options-channel"></a>The channel. |
 | acl = <code>public-read</code>| <code>"private"</code> \| <code>"public-read"</code> \| <code>null</code> | <a name="S3Options-acl"></a>The ACL. |
 | storageClass = <code>STANDARD</code>| <code>"STANDARD"</code> \| <code>"REDUCED_REDUNDANCY"</code> \| <code>"STANDARD_IA"</code> \| <code>null</code> | <a name="S3Options-storageClass"></a>The type of storage to use for the object. |
 
@@ -188,13 +188,13 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **path**| <code>string</code> | <a name="UpdateInfo-path"></a> |
-| githubArtifactName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-githubArtifactName"></a> |
-| sha2| <code>string</code> | <a name="UpdateInfo-sha2"></a> |
-| sha512| <code>string</code> | <a name="UpdateInfo-sha512"></a> |
-| releaseName| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseName"></a>The release name. |
-| releaseNotes| <code>string</code> \| <code>null</code> | <a name="UpdateInfo-releaseNotes"></a>The release notes. |
-| **releaseDate**| <code>string</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |
+| **path**| <code>String</code> | <a name="UpdateInfo-path"></a> |
+| githubArtifactName| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-githubArtifactName"></a> |
+| sha2| <code>String</code> | <a name="UpdateInfo-sha2"></a> |
+| sha512| <code>String</code> | <a name="UpdateInfo-sha512"></a> |
+| releaseName| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-releaseName"></a>The release name. |
+| releaseNotes| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-releaseNotes"></a>The release notes. |
+| **releaseDate**| <code>String</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |
 
 <a name="VersionInfo"></a>
 
@@ -204,11 +204,11 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **version**| <code>string</code> | <a name="VersionInfo-version"></a>The version. |
+| **version**| <code>String</code> | <a name="VersionInfo-version"></a>The version. |
 
 <a name="module_electron-builder-http/out/publishOptions.githubUrl"></a>
 
-### `electron-builder-http/out/publishOptions.githubUrl(options)` ⇒ <code>string</code>
+### `electron-builder-http/out/publishOptions.githubUrl(options)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 
 | Param | Type |
@@ -217,7 +217,7 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 <a name="module_electron-builder-http/out/publishOptions.s3Url"></a>
 
-### `electron-builder-http/out/publishOptions.s3Url(options)` ⇒ <code>string</code>
+### `electron-builder-http/out/publishOptions.s3Url(options)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 
 | Param | Type |

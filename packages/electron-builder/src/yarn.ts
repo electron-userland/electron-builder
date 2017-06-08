@@ -63,8 +63,6 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
     execArgs.push("--cache-min", "999999999")
   }
 
-  execArgs.push("--devdir", getElectronGypCacheDir())
-
   if (execPath == null) {
     execPath = getPackageToolPath()
   }

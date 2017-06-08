@@ -35,27 +35,6 @@ export interface DownloadOptions {
   onProgress?(progress: ProgressInfo): void
 }
 
-export class HttpExecutorHolder {
-  private _httpExecutor: HttpExecutor<any>
-
-  get httpExecutor(): HttpExecutor<any> {
-    if (this._httpExecutor == null) {
-      this._httpExecutor = new (require("electron-builder-util/out/nodeHttpExecutor").NodeHttpExecutor)()
-    }
-    return this._httpExecutor
-  }
-
-  set httpExecutor(value: HttpExecutor<any>) {
-    this._httpExecutor = value
-  }
-}
-
-export const executorHolder = new HttpExecutorHolder()
-
-export function download(url: string, destination: string, options?: DownloadOptions | null): Promise<string> {
-  return executorHolder.httpExecutor.download(url, destination, options || {cancellationToken: new CancellationToken()})
-}
-
 export class HttpError extends Error {
   constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: string[]; } | undefined}, public description: any | null = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
@@ -67,7 +46,7 @@ export class HttpError extends Error {
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
   
-  request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: { [name: string]: any; } | null): Promise<T> {
+  request<T>(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<T> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
@@ -80,7 +59,7 @@ export abstract class HttpExecutor<REQUEST> {
 
   protected abstract doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
 
-  abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
+  // abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
 
   protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
@@ -208,10 +187,6 @@ export class DigestTransform extends Transform {
   }
 }
 
-export function request<T>(options: RequestOptions, cancellationToken: CancellationToken, data?: {[name: string]: any; } | null): Promise<T> {
-  return executorHolder.httpExecutor.request(options, cancellationToken, data)
-}
-
 function checkSha2(sha2Header: string | null | undefined, sha2: string | null | undefined, callback: (error: Error | null) => void): boolean {
   if (sha2Header != null && sha2 != null) {
     // todo why bintray doesn't send this header always
@@ -254,8 +229,9 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
     }
   }
 
-  if (options.sha512 != null) {
-    streams.push(new DigestTransform(options.sha512, "sha512", "base64"))
+  const sha512 = options.sha512
+  if (sha512 != null) {
+    streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))
   }
   else if (options.sha2 != null) {
     streams.push(new DigestTransform(options.sha2, "sha256", "hex"))

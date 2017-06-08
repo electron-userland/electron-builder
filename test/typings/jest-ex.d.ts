@@ -2,6 +2,7 @@ declare module jest {
   interface It {
     ifNotWindows: jest.It
     ifMac: jest.It
+    ifWindows: jest.It
     ifNotCi: jest.It
     ifCi: jest.It
     ifNotCiMac: jest.It

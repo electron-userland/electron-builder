@@ -60,7 +60,7 @@ Developer API only. See [[Auto Update]] for user documentation.
     * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
         * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
         * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
+        * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="ElectronHttpExecutor"></a>
 
@@ -71,7 +71,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [.ElectronHttpExecutor](#ElectronHttpExecutor) ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
     * [`.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest) ⇒ <code>Promise&lt;module:electron-updater/out/electronHttpExecutor.T&gt;</code>
     * [`.doRequest(options, callback)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest) ⇒ <code>any</code>
-    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;string&gt;</code>
+    * [`.download(url, destination, options)`](#module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doApiRequest"></a>
 
@@ -83,7 +83,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 | options | <code>any</code> | 
 | cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 | requestProcessor | <code>callback</code> | 
-| redirectCount | <code>number</code> | 
+| redirectCount | <code>Number</code> | 
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+doRequest"></a>
 
@@ -97,13 +97,13 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 <a name="module_electron-updater/out/electronHttpExecutor.ElectronHttpExecutor+download"></a>
 
-#### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;string&gt;</code>
+#### `electronHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>ElectronHttpExecutor</code>](#ElectronHttpExecutor)  
 
 | Param | Type |
 | --- | --- |
-| url | <code>string</code> | 
-| destination | <code>string</code> | 
+| url | <code>String</code> | 
+| destination | <code>String</code> | 
 | options | <code>[DownloadOptions](electron-builder-http#DownloadOptions)</code> | 
 
 <a name="module_electron-updater/out/GenericProvider"></a>
@@ -153,12 +153,6 @@ Developer API only. See [[Auto Update]] for user documentation.
 ### BaseGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
 **Kind**: class of [<code>electron-updater/out/GitHubProvider</code>](#module_electron-updater/out/GitHubProvider)  
 **Extends**: <code>[Provider](Auto-Update#Provider)</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| baseUrl| <code>module:http.RequestOptions</code> | 
-
 <a name="GitHubProvider"></a>
 
 ### GitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
@@ -189,34 +183,16 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [electron-updater/out/MacUpdater](#module_electron-updater/out/MacUpdater)
     * [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
         * [`.quitAndInstall()`](#module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate) ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
 
 <a name="MacUpdater"></a>
 
 ### MacUpdater ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
 **Kind**: class of [<code>electron-updater/out/MacUpdater</code>](#module_electron-updater/out/MacUpdater)  
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
-
-* [.MacUpdater](#MacUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-    * [`.quitAndInstall()`](#module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall)
-    * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate) ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
-
 <a name="module_electron-updater/out/MacUpdater.MacUpdater+quitAndInstall"></a>
 
 #### `macUpdater.quitAndInstall()`
 **Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
-<a name="module_electron-updater/out/MacUpdater.MacUpdater+doDownloadUpdate"></a>
-
-#### `macUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>module:bluebird-lst.Bluebird&lt;void&gt;</code>
-**Kind**: instance method of [<code>MacUpdater</code>](#MacUpdater)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
-| fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
-
 <a name="module_electron-updater/out/NsisUpdater"></a>
 
 ## electron-updater/out/NsisUpdater
@@ -224,18 +200,12 @@ Developer API only. See [[Auto Update]] for user documentation.
 * [electron-updater/out/NsisUpdater](#module_electron-updater/out/NsisUpdater)
     * [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
         * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
-        * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
 
 <a name="NsisUpdater"></a>
 
 ### NsisUpdater ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
 **Kind**: class of [<code>electron-updater/out/NsisUpdater</code>](#module_electron-updater/out/NsisUpdater)  
 **Extends**: <code>[AppUpdater](Auto-Update#AppUpdater)</code>  
-
-* [.NsisUpdater](#NsisUpdater) ⇐ <code>[AppUpdater](Auto-Update#AppUpdater)</code>
-    * [`.quitAndInstall(isSilent)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall)
-    * [`.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)`](#module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate) ⇒ <code>Promise&lt;string&gt;</code>
-
 <a name="module_electron-updater/out/NsisUpdater.NsisUpdater+quitAndInstall"></a>
 
 #### `nsisUpdater.quitAndInstall(isSilent)`
@@ -243,22 +213,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 | Param | Type |
 | --- | --- |
-| isSilent | <code>boolean</code> | 
-
-<a name="module_electron-updater/out/NsisUpdater.NsisUpdater+doDownloadUpdate"></a>
-
-#### `nsisUpdater.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)` ⇒ <code>Promise&lt;string&gt;</code>
-Start downloading update manually. You can use this method if `autoDownload` option is set to `false`.
-
-**Kind**: instance method of [<code>NsisUpdater</code>](#NsisUpdater)  
-**Returns**: <code>Promise&lt;string&gt;</code> - Path to downloaded file.  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| versionInfo | <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
-| fileInfo | <code>[FileInfo](Auto-Update#FileInfo)</code> | 
-| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+| isSilent | <code>Boolean</code> | 
 
 <a name="module_electron-updater/out/PrivateGitHubProvider"></a>
 
@@ -279,8 +234,8 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 | Name | Type |
 | --- | --- |
-| **name**| <code>string</code> | 
-| **url**| <code>string</code> | 
+| **name**| <code>String</code> | 
+| **url**| <code>String</code> | 
 
 <a name="PrivateGitHubUpdateInfo"></a>
 

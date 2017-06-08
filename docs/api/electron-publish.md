@@ -20,12 +20,9 @@
 * [electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)
     * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
         * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>String</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="BintrayPublisher"></a>
 
@@ -41,12 +38,9 @@
 
 * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>string</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>String</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
 
@@ -54,22 +48,9 @@
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString"></a>
 
-#### `bintrayPublisher.toString()` ⇒ <code>string</code>
+#### `bintrayPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
-<a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+doUpload"></a>
-
-#### `bintrayPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
-**Overrides**: [<code>doUpload</code>](#module_electron-publish.HttpPublisher+doUpload)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
 <a name="module_electron-publish.HttpPublisher+upload"></a>
 
 #### `bintrayPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
@@ -77,8 +58,8 @@
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
+| file | <code>String</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
 
@@ -88,31 +69,7 @@
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `bintrayPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `bintrayPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
+| fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/gitHubPublisher"></a>
 
@@ -123,12 +80,9 @@
     * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
         * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>String</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="Release"></a>
 
@@ -138,12 +92,12 @@
 
 | Name | Type |
 | --- | --- |
-| **id**| <code>number</code> | 
-| **tag_name**| <code>string</code> | 
-| **draft**| <code>boolean</code> | 
-| **prerelease**| <code>boolean</code> | 
-| **published_at**| <code>string</code> | 
-| **upload_url**| <code>string</code> | 
+| **id**| <code>Number</code> | 
+| **tag_name**| <code>String</code> | 
+| **draft**| <code>Boolean</code> | 
+| **prerelease**| <code>Boolean</code> | 
+| **published_at**| <code>String</code> | 
+| **upload_url**| <code>String</code> | 
 
 <a name="GitHubPublisher"></a>
 
@@ -160,12 +114,9 @@
 * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>string</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor)`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>String</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
 
@@ -177,22 +128,9 @@
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString"></a>
 
-#### `gitHubPublisher.toString()` ⇒ <code>string</code>
+#### `gitHubPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
-<a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+doUpload"></a>
-
-#### `gitHubPublisher.doUpload(fileName, dataLength, requestProcessor)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
-**Overrides**: [<code>doUpload</code>](#module_electron-publish.HttpPublisher+doUpload)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-
 <a name="module_electron-publish.HttpPublisher+upload"></a>
 
 #### `gitHubPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
@@ -200,8 +138,8 @@
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
+| file | <code>String</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
 
@@ -211,31 +149,7 @@
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `gitHubPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `gitHubPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
+| fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
 
@@ -262,7 +176,7 @@
 
 | Param | Type |
 | --- | --- |
-| format | <code>string</code> | 
+| format | <code>String</code> | 
 | options | <code>any</code> | 
 
 <a name="module_electron-publish/out/multiProgress.MultiProgress+terminate"></a>
@@ -291,7 +205,7 @@
 
 | Name | Type |
 | --- | --- |
-| total| <code>number</code> | 
+| total| <code>Number</code> | 
 
 
 * [.ProgressBar](#ProgressBar)
@@ -310,7 +224,7 @@
 
 | Param | Type |
 | --- | --- |
-| message | <code>string</code> | 
+| message | <code>String</code> | 
 
 <a name="module_electron-publish/out/progress.ProgressBar+render"></a>
 
@@ -329,7 +243,7 @@
 
 | Param | Type |
 | --- | --- |
-| delta | <code>number</code> | 
+| delta | <code>Number</code> | 
 
 <a name="module_electron-publish/out/progress.ProgressBar+update"></a>
 
@@ -346,7 +260,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 | Param | Type |
 | --- | --- |
-| ratio | <code>number</code> | 
+| ratio | <code>Number</code> | 
 
 <a name="ProgressCallback"></a>
 
@@ -359,8 +273,8 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 | Param | Type |
 | --- | --- |
-| transferred | <code>number</code> | 
-| total | <code>number</code> | 
+| transferred | <code>Number</code> | 
+| total | <code>Number</code> | 
 
 <a name="module_electron-publish"></a>
 
@@ -372,15 +286,10 @@ A ratio of 0.5 will attempt to set the progress to halfway.
     * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
     * [.Publisher](#Publisher)
-        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+        * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-        * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="PublishContext"></a>
 
@@ -402,8 +311,8 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | Name | Type |
 | --- | --- |
 | publish| <code>"onTag"</code> \| <code>"onTagOrDraft"</code> \| <code>"always"</code> \| <code>"never"</code> \| <code>null</code> | 
-| draft| <code>boolean</code> | 
-| prerelease| <code>boolean</code> | 
+| draft| <code>Boolean</code> | 
+| prerelease| <code>Boolean</code> | 
 
 <a name="HttpPublisher"></a>
 
@@ -414,10 +323,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.doUpload(fileName, dataLength, requestProcessor, file)`](#module_electron-publish.HttpPublisher+doUpload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
+    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
 
 <a name="module_electron-publish.HttpPublisher+upload"></a>
 
@@ -427,8 +333,8 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
+| file | <code>String</code> | 
+| safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
 
@@ -438,63 +344,24 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| fileName | <code>string</code> | 
-
-<a name="module_electron-publish.HttpPublisher+doUpload"></a>
-
-#### `httpPublisher.doUpload(fileName, dataLength, requestProcessor, file)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| dataLength | <code>number</code> | 
-| requestProcessor | <code>callback</code> | 
-| file | <code>string</code> | 
+| fileName | <code>String</code> | 
 
 <a name="module_electron-publish.Publisher+toString"></a>
 
-#### `httpPublisher.toString()` ⇒ <code>string</code>
+#### `httpPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `httpPublisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `httpPublisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
-
 <a name="Publisher"></a>
 
 ### Publisher
 **Kind**: class of [<code>electron-publish</code>](#module_electron-publish)  
 
 * [.Publisher](#Publisher)
-    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>string</code>
+    * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.createProgressBar(fileName, fileStat)`](#module_electron-publish.Publisher+createProgressBar) ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-    * [`.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)`](#module_electron-publish.Publisher+createReadStreamAndProgressBar) ⇒ <code>NodeJS:ReadableStream</code>
 
 <a name="module_electron-publish.Publisher+toString"></a>
 
-#### `publisher.toString()` ⇒ <code>string</code>
+#### `publisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>Publisher</code>](#Publisher)  
 <a name="module_electron-publish.Publisher+upload"></a>
 
@@ -503,30 +370,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 | Param | Type |
 | --- | --- |
-| file | <code>string</code> | 
-| safeArtifactName | <code>string</code> | 
-
-<a name="module_electron-publish.Publisher+createProgressBar"></a>
-
-#### `publisher.createProgressBar(fileName, fileStat)` ⇒ <code>null</code> \| <code>[ProgressBar](#ProgressBar)</code>
-**Kind**: instance method of [<code>Publisher</code>](#Publisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| fileName | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-
-<a name="module_electron-publish.Publisher+createReadStreamAndProgressBar"></a>
-
-#### `publisher.createReadStreamAndProgressBar(file, fileStat, progressBar, reject)` ⇒ <code>NodeJS:ReadableStream</code>
-**Kind**: instance method of [<code>Publisher</code>](#Publisher)  
-**Access**: protected  
-
-| Param | Type |
-| --- | --- |
-| file | <code>string</code> | 
-| fileStat | <code>module:fs.Stats</code> | 
-| progressBar | <code>[ProgressBar](#ProgressBar)</code> \| <code>null</code> | 
-| reject | <code>callback</code> | 
+| file | <code>String</code> | 
+| safeArtifactName | <code>String</code> | 
 

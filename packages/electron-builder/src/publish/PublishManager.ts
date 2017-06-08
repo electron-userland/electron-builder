@@ -1,6 +1,6 @@
 import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, Platform, PlatformSpecificBuildOptions, Target } from "electron-builder-core"
+import { Arch, Platform, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest, Lazy, safeStringifyJson } from "electron-builder-util"
@@ -17,6 +17,7 @@ import * as path from "path"
 import { prerelease } from "semver"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
+import { PlatformSpecificBuildOptions } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
@@ -91,9 +92,12 @@ export class PublishManager implements PublishContext {
       let publishConfig = publishConfigs[0]
 
       if (packager.platform === Platform.WINDOWS) {
-        const publisherName = await (<WinPackager>packager).computedPublisherName.value
-        if (publisherName != null) {
-          publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+        const winPackager = <WinPackager>packager
+        if (winPackager.isForceCodeSigningVerification) {
+          const publisherName = await winPackager.computedPublisherName.value
+          if (publisherName != null) {
+            publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+          }
         }
       }
 
@@ -434,7 +438,7 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
   for (const name of Object.keys(options)) {
     const value = options[name]
     if (typeof value === "string") {
-      const expanded = packager.expandMacro(value, arch)
+      const expanded = packager.expandMacro(value, arch == null ? null : Arch[arch])
       if (expanded !== value) {
         options[name] = expanded
       }

@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
@@ -33,8 +34,14 @@ g.__test_app = createTestApp("0.0.1")
 
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
+function tuneNsisUpdater(updater: NsisUpdater) {
+  (<any>updater).httpExecutor = httpExecutor
+}
+
 test("check updates - no versions at all", async () => {
-  const updater = new NsisUpdater(<BintrayOptions>{
+  const updater = new NsisUpdater()
+  tuneNsisUpdater(updater)
+  updater.setFeedURL(<BintrayOptions>{
     provider: "bintray",
     owner: "actperepo",
     package: "no-versions",
@@ -51,6 +58,7 @@ async function testUpdateFromBintray(app: any) {
     owner: "actperepo",
     package: "TestApp",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
@@ -75,6 +83,7 @@ test("downgrade (disallowed)", async () => {
     owner: "actperepo",
     package: "TestApp",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -98,6 +107,7 @@ test("downgrade (disallowed, beta)", async () => {
     owner: "develar",
     repo: "__test_nsis_release",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
   const expectedEvents = ["checking-for-update", "update-not-available"]
@@ -122,6 +132,7 @@ test("file url generic", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -139,6 +150,7 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
   })
+  tuneNsisUpdater(updater)
   updater.logger = console
 
   const actualEvents = trackEvents(updater)
@@ -156,6 +168,7 @@ test("file url generic - manual download", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
   updater.autoDownload = false
 
   const actualEvents = trackEvents(updater)
@@ -175,6 +188,7 @@ test("checkForUpdates several times", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
+  tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
 
@@ -192,77 +206,50 @@ test("checkForUpdates several times", async () => {
 test("file url github", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-        repo: "__test_nsis_release",
-    })
-
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
-
-  expect(actualEvents).toEqual(expectedEvents)
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
+  await validateDownload(updater)
 })
 
 test("file url github pre-release", async () => {
   const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-        repo: "__test_nsis_release",
-    })
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+  })
 
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
+  const updateCheckResult = await validateDownload(updater)
   expect(updateCheckResult.versionInfo).toMatchSnapshot()
-
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
-
-  expect(actualEvents).toEqual(expectedEvents)
 })
 
 test.skip("file url github private", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
-      provider: "github",
-      owner: "develar",
-      repo: "__test_nsis_release_private",
-    })
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release_private",
+  })
+  await validateDownload(updater)
+})
 
-  const actualEvents: Array<string> = []
-  const expectedEvents = ["checking-for-update", "update-available", "update-downloaded"]
-  for (const eventName of expectedEvents) {
-    updater.addListener(eventName, () => {
-      actualEvents.push(eventName)
-    })
-  }
+async function validateDownload(updater: NsisUpdater) {
+  tuneNsisUpdater(updater)
+  const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
   await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
 
-  expect(actualEvents).toEqual(expectedEvents)
-})
+  expect(actualEvents).toMatchSnapshot()
+  return updateCheckResult
+}
 
 test("test error", async () => {
   const updater: NsisUpdater = new NsisUpdater()
-
+  tuneNsisUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   await assertThat(updater.checkForUpdates()).throws()
@@ -273,8 +260,9 @@ test("test download progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
-    url: "https://develar.s3.amazonaws.com/test",
+    url: "https://develar.s3.amazonaws.com/test"
   })
+  tuneNsisUpdater(updater)
   updater.autoDownload = false
 
   const progressEvents: Array<any> = []
@@ -293,12 +281,38 @@ test("test download progress", async () => {
   expect(lastEvent.transferred).toBe(lastEvent.total)
 })
 
+test.ifAll.ifWindows("valid signature", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Vladimir Krivosheev"],
+  })
+  await validateDownload(updater)
+})
+
+test.ifAll.ifWindows("invalid signature", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "github",
+    owner: "develar",
+    repo: "__test_nsis_release",
+    publisherName: ["Foo Bar"],
+  })
+  tuneNsisUpdater(updater)
+  const actualEvents = trackEvents(updater)
+  await assertThat(updater.checkForUpdates().then(it => it.downloadPromise)).throws()
+  expect(actualEvents).toMatchSnapshot()
+})
+
 test("cancel download with progress", async () => {
   const updater = new NsisUpdater()
   updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/full-test",
   })
+  tuneNsisUpdater(updater)
 
   const progressEvents: Array<any> = []
   updater.signals.progress(it => progressEvents.push(it))
@@ -322,7 +336,7 @@ test("cancel download with progress", async () => {
   expect(cancelled).toBe(true)
 })
 
-async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions): Promise<string> {
+async function writeUpdateConfig(data: GenericServerOptions | GithubOptions | BintrayOptions | any): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempFile("update-config"), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))
   return updateConfigPath

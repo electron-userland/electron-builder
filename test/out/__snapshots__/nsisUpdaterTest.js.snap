@@ -7,8 +7,8 @@ exports[`check updates - no versions at all 1`] = `"No latest version, please en
 exports[`checkForUpdates several times 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -44,8 +44,8 @@ Object {
 exports[`file url generic - manual download 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -60,8 +60,8 @@ Array [
 exports[`file url generic 1`] = `
 Object {
   "name": "TestApp Setup 1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
   "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
 }
 `;
@@ -77,10 +77,18 @@ Array [
 exports[`file url github 1`] = `
 Object {
   "name": "TestApp-Setup-1.1.0.exe",
-  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
-  "sha512": undefined,
+  "sha2": undefined,
+  "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
   "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe",
 }
+`;
+
+exports[`file url github 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
 `;
 
 exports[`file url github pre-release 1`] = `
@@ -93,6 +101,14 @@ Object {
 `;
 
 exports[`file url github pre-release 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github pre-release 3`] = `
 Object {
   "path": "TestApp Setup 1.5.2-beta.3.exe",
   "releaseName": "v1.5.2-beta.3",
@@ -112,6 +128,51 @@ Object {
   "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
   "url": "https://api.github.com/repos/develar/__test_nsis_release_private/releases/assets/3403081",
 }
+`;
+
+exports[`invalid signature 1`] = `
+"New version 1.1.0 is not signed by the application owner: {
+  \\"SignerCertificate\\": {
+    \\"FriendlyName\\": \\"\\",
+    \\"IssuerName\\": {
+      \\"Name\\": \\"CN=StartCom Class 2 Object CA, OU=StartCom Certification Authority, O=StartCom Ltd., C=IL\\",
+      \\"Oid\\": \\"System.Security.Cryptography.Oid\\"
+    },
+    \\"NotAfter\\": \\"/Date(1516526235000)/\\",
+    \\"NotBefore\\": \\"/Date(1453367835000)/\\",
+    \\"PrivateKey\\": null,
+    \\"PublicKey\\": {
+      \\"Key\\": \\"System.Security.Cryptography.RSACryptoServiceProvider\\",
+      \\"Oid\\": \\"System.Security.Cryptography.Oid\\",
+      \\"EncodedKeyValue\\": \\"System.Security.Cryptography.AsnEncodedData\\",
+      \\"EncodedParameters\\": \\"System.Security.Cryptography.AsnEncodedData\\"
+    },
+    \\"SerialNumber\\": \\"18CB5EC53FB14EC2DBB44BD1518AF901\\",
+    \\"SubjectName\\": {
+      \\"Name\\": \\"CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE\\",
+      \\"Oid\\": \\"System.Security.Cryptography.Oid\\"
+    },
+    \\"SignatureAlgorithm\\": {
+      \\"Value\\": \\"1.2.840.113549.1.1.11\\",
+      \\"FriendlyName\\": \\"sha256RSA\\"
+    },
+    \\"Thumbprint\\": \\"32F67D8F957E740C692ADD8CD5A5E463992193DD\\",
+    \\"Version\\": 3,
+    \\"Issuer\\": \\"CN=StartCom Class 2 Object CA, OU=StartCom Certification Authority, O=StartCom Ltd., C=IL\\",
+    \\"Subject\\": \\"CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE\\"
+  },
+  \\"TimeStamperCertificate\\": null,
+  \\"Status\\": 0,
+  \\"StatusMessage\\": \\"Signature verified.\\"
+}"
+`;
+
+exports[`invalid signature 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
 `;
 
 exports[`sha512 mismatch error event 1`] = `

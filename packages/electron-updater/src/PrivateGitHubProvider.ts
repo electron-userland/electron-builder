@@ -1,5 +1,5 @@
 import { session } from "electron"
-import { HttpError, request } from "electron-builder-http"
+import { HttpError, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GithubOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
@@ -17,7 +17,7 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
   private readonly netSession = (<any>session).fromPartition(NET_SESSION_NAME)
 
-  constructor(options: GithubOptions, private readonly token: string) {
+  constructor(options: GithubOptions, private readonly token: string, private readonly executor: HttpExecutor<any>) {
     super(options, "api.github.com")
 
     this.registerHeaderRemovalListener()
@@ -35,7 +35,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }, parseUrl(assets.find(it => it.name == channelFile)!.url))
     let result: any
     try {
-      result = safeLoad(await request<string>(requestOptions, cancellationToken))
+      result = safeLoad(await this.executor.request<string>(requestOptions, cancellationToken))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -76,7 +76,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       headers: this.configureHeaders("application/vnd.github.v3+json"),
     }, this.baseUrl)
     try {
-      return (await request<any>(requestOptions, cancellationToken)).assets
+      return (await this.executor.request<any>(requestOptions, cancellationToken)).assets
     }
     catch (e) {
       throw new Error(`Unable to find latest version on GitHub (${formatUrl(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)

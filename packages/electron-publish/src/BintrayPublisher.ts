@@ -26,7 +26,7 @@ export class BintrayPublisher extends HttpPublisher {
       }
     }
 
-    this.client = new BintrayClient(info, this.context.cancellationToken, token)
+    this.client = new BintrayClient(info, httpExecutor, this.context.cancellationToken, token)
     this._versionPromise = <BluebirdPromise<Version>>this.init()
   }
 

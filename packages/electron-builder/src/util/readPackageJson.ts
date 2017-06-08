@@ -1,6 +1,8 @@
 import Ajv from "ajv"
+import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { debug } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
+import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import JSON5 from "json5"
@@ -112,6 +114,20 @@ export async function getElectronVersion(config: Config | null | undefined, proj
   const packageJsonPath = path.join(projectDir, "package.json")
   const electronPrebuiltDep = findFromElectronPrebuilt(projectMetadata || await readJson(packageJsonPath))
   if (electronPrebuiltDep == null) {
+    try {
+      const releaseInfo = await httpExecutor.request<any>({
+        hostname: "github.com",
+        path: "/electron/electron/releases/latest",
+        headers: {
+          Accept: "application/json",
+        },
+      }, new CancellationToken())
+      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
+    }
+    catch (e) {
+      warn(e)
+    }
+
     throw new Error(`Cannot find electron dependency to get electron version in the '${packageJsonPath}'`)
   }
 

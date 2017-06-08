@@ -27,7 +27,7 @@ export interface PackagerOptions {
   readonly config?: Config | string | null
 
   /**
-   * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#AppMetadata).
+   * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#Metadata).
    *
    * Application `package.json` will be still read, but options specified in this object will override.
    */

@@ -16,7 +16,7 @@ const debug = _debug("electron-builder")
 export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   private httpsAgentPromise: Promise<Agent> | null
 
-  async download(url: string, destination: string, options: DownloadOptions): Promise<string> {
+  async download(url: string, destination: string, options: DownloadOptions = {cancellationToken: new CancellationToken()}): Promise<string> {
     if (!options.skipDirCreation) {
       await ensureDir(path.dirname(destination))
     }

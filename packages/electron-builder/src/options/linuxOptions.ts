@@ -1,9 +1,7 @@
-import { PlatformSpecificBuildOptions, TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
+import { TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
+import { PlatformSpecificBuildOptions } from "../metadata"
 
-/**
- * Linux Options
- */
-export interface LinuxBuildOptions extends PlatformSpecificBuildOptions, CommonLinuxOptions {
+export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**
    * The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
    */
@@ -15,7 +13,7 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions, CommonL
   readonly packageCategory?: string | null
 
   /**
-   * As [description](#AppMetadata-description) from application package.json, but allows you to specify different for Linux.
+   * As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 
@@ -30,12 +28,12 @@ export interface LinuxBuildOptions extends PlatformSpecificBuildOptions, CommonL
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](#AppMetadata-author).
+   * The maintainer. Defaults to [author](#Metadata-author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](#AppMetadata-author).
+   * The vendor. Defaults to [author](#Metadata-author).
    */
   readonly vendor?: string | null
 
@@ -99,9 +97,6 @@ export interface LinuxTargetSpecificOptions extends TargetSpecificOptions, Commo
   readonly icon?: string
 }
 
-/**
- * Debian Package Specific Options
- */
 export interface DebOptions extends LinuxTargetSpecificOptions {
   /**
    * The compression type.
@@ -120,9 +115,6 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
   readonly depends?: string[] | null
 }
 
-/**
- * [Snap](http://snapcraft.io) Options
- */
 export interface SnapOptions extends LinuxBuildOptions {
   /**
    * The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
@@ -131,7 +123,7 @@ export interface SnapOptions extends LinuxBuildOptions {
   readonly confinement?: "devmode" | "strict" | "classic" | null
 
   /**
-   * The 78 character long summary. Defaults to [productName](#AppMetadata-productName).
+   * The 78 character long summary. Defaults to [productName](#Config-productName).
    */
   readonly summary?: string | null
 

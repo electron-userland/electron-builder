@@ -1,4 +1,4 @@
-import { HttpError } from "electron-builder-http"
+import { HttpError, HttpExecutor } from "electron-builder-http"
 import { BintrayClient } from "electron-builder-http/out/bintray"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
@@ -7,10 +7,10 @@ import { FileInfo, Provider } from "./main"
 export class BintrayProvider extends Provider<VersionInfo> {
   private client: BintrayClient
 
-  constructor(configuration: BintrayOptions) {
+  constructor(configuration: BintrayOptions, httpExecutor: HttpExecutor<any>) {
     super()
 
-    this.client = new BintrayClient(configuration, new CancellationToken())
+    this.client = new BintrayClient(configuration, httpExecutor, new CancellationToken())
   }
 
   async getLatestVersion(): Promise<VersionInfo> {

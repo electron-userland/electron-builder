@@ -4,7 +4,10 @@
     "outDir": "out"
   },
   "declaration": true,
-  "jsdoc": "../../jsdoc/out/publisher",
+  "jsdoc": {
+    "out": "../../jsdoc/out/publisher",
+    "access": "public"
+  },
   "include": [
     "src/**/*.ts"
   ],

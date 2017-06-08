@@ -5,7 +5,7 @@ Object {
   "linux": Array [
     Object {
       "arch": 1,
-      "file": "TestApp-1.1.0.rpm",
+      "file": "TestApp-1.1.0.x86_64.rpm",
     },
     Object {
       "arch": 1,

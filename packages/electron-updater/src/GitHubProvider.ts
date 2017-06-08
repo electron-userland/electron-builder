@@ -1,4 +1,4 @@
-import { HttpError, request } from "electron-builder-http"
+import { HttpError, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { GithubOptions, githubUrl, UpdateInfo } from "electron-builder-http/out/publishOptions"
 import { RequestOptions } from "http"
@@ -25,7 +25,7 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
 }
 
 export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
-  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater) {
+  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, private readonly executor: HttpExecutor<any>) {
     super(options, "github.com")
   }
 
@@ -34,7 +34,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const cancellationToken = new CancellationToken()
 
     const xElement = require("xelement")
-    const feedXml = await request(Object.assign({
+    const feedXml = await this.executor.request(Object.assign({
       path: `${basePath}.atom`,
       headers: Object.assign({}, this.requestHeaders, {Accept: "application/xml"})
     }, this.baseUrl), cancellationToken)
@@ -63,7 +63,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const requestOptions = Object.assign({path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined}, this.baseUrl)
     let rawData: string
     try {
-      rawData = await request<string>(requestOptions, cancellationToken)
+      rawData = await this.executor.request<string>(requestOptions, cancellationToken)
     }
     catch (e) {
       if (!this.updater.allowPrerelease) {
@@ -102,7 +102,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }, this.baseUrl)
     try {
       // do not use API to avoid limit
-      const releaseInfo = (await request<GithubReleaseInfo>(requestOptions, cancellationToken))
+      const releaseInfo = (await this.executor.request<GithubReleaseInfo>(requestOptions, cancellationToken))
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {

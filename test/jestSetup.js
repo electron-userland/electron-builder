@@ -20,9 +20,11 @@ skip.ifAll = skip
 const isMac = process.platform === "darwin"
 test.ifMac = isMac ? test : skip
 test.ifNotWindows = isWindows ? skip : test
+test.ifWindows = isWindows ? test : skip
 
 skip.ifMac = skip
 skip.ifLinux = skip
+skip.ifWindows = skip
 skip.ifNotWindows = skip
 skip.ifCi = skip
 skip.ifNotCi = skip

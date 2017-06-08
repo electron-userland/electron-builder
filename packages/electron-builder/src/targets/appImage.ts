@@ -37,8 +37,8 @@ export default class AppImageTarget extends Target {
 
     const packager = this.packager
 
-    // avoid spaces in the file name
-    const resultFile = path.join(this.outDir, packager.generateName("AppImage", arch, true))
+    // https://github.com/electron-userland/electron-builder/issues/775
+    const resultFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "AppImage", arch, "${name}-${version}-${arch}.${ext}"))
     await unlinkIfExists(resultFile)
 
     const appImagePath = await appImagePathPromise
@@ -64,6 +64,7 @@ export default class AppImageTarget extends Target {
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
     if (arch === Arch.x64) {
+      // noinspection SpellCheckingInspection
       const libDir = await getBin("AppImage-packages", "10.03.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-10.03.17-x64.7z", "172f9977fe9b24d35091d26ecbfebe2a14d96516a9c903e109e12b2a929042fe")
       args.push("-map", libDir, "/usr/lib")
     }

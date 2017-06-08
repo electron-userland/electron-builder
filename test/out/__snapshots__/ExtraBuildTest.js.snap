@@ -79,6 +79,12 @@ Object {
 }
 `;
 
+exports[`retrieve latest electron version 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`scheme validation 1`] = `
 "Config is invalid:
 {
