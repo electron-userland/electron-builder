@@ -312,6 +312,16 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
   readonly useAppIdAsId?: boolean
 }
 
+export interface AppXVisualAssetsNames {
+  readonly logo: string
+  readonly square150x150Logo: string
+  readonly square44x44Logo: string
+  readonly wide310x150Logo?: string
+  readonly square310x310Logo?: string
+  readonly square71x71Logo?: string
+  readonly splashScreen?: string
+}
+
 /**
  * AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */
@@ -347,4 +357,19 @@ export interface AppXOptions {
    * Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
    */
   readonly identityName?: string | null
+
+  /**
+   * Runs makepri on the folder before running makeappx
+   */
+  readonly makePri?: boolean | null
+
+  /**
+   * Specify a custom assets folder to use for the assets.
+   */
+  readonly assetsFolder?: string | null
+
+  /**
+   * Specify custom asset names that are used to build the appx manifest. 
+   */
+  readonly assetNames?: AppXVisualAssetsNames
 }

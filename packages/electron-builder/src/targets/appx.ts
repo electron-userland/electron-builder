@@ -50,18 +50,25 @@ export default class AppXTarget extends Target {
 
     const templatePath = path.join(__dirname, "..", "..", "templates", "appx")
     const safeName = sanitizeFileName(appInfo.name)
-    const resourceList = await packager.resourceList
-    await BluebirdPromise.all([
-      BluebirdPromise.map(["44x44", "50x50", "150x150", "310x150"], size => {
-        const target = path.join(preAppx, "assets", `${safeName}.${size}.png`)
-        if (resourceList.includes(`${size}.png`)) {
-          return copyFile(path.join(packager.buildResourcesDir, `${size}.png`), target)
-        }
-        return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
-      }),
-      copyDir(appOutDir, path.join(preAppx, "app")),
-      this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
-    ])
+    
+    const customAssetsFolder = this.options.assetsFolder
+    if (customAssetsFolder) {
+      const customAssetsPath = path.resolve(this.projectDir, customAssetsFolder)
+      copyDir(customAssetsPath, path.join(preAppx, 'assets'))
+    } else {
+      const resourceList = await packager.resourceList
+      await BluebirdPromise.all([
+        BluebirdPromise.map(["44x44", "50x50", "150x150", "310x150"], size => {
+          const target = path.join(preAppx, "assets", `${safeName}.${size}.png`)
+          if (resourceList.includes(`${size}.png`)) {
+            return copyFile(path.join(packager.buildResourcesDir, `${size}.png`), target)
+          }
+          return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
+        }),
+        copyDir(appOutDir, path.join(preAppx, "app")),
+        this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
+      ])
+    }
 
     const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
     const args = ["pack", "/o", "/d", preAppx, "/p", destination]
@@ -112,6 +119,13 @@ export default class AppXTarget extends Target {
 
           case "safeName":
             return safeName
+
+          case "logo":
+            return this.options.
+
+          case "square150x150Logo":
+          case "square44x44Logo":
+          case "wide310x150Logo":
             
           case "arch":
             return arch === Arch.ia32 ? "x86" : "x64"
