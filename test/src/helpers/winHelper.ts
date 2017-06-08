@@ -11,6 +11,7 @@ import { diff, WineManager } from "./wine"
 
 export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))
+
   if (requireCodeSign && process.env.CSC_KEY_PASSWORD != null) {
     expect(data.publisherName).toEqual(["Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)"])
     delete data.publisherName
@@ -19,7 +20,7 @@ export async function expectUpdateMetadata(context: PackedContext, arch: Arch = 
   expect(data).toMatchSnapshot()
 }
 
-export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null) {
+export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null, doNotPackElevateHelper = false) {
   if (process.env.DO_WINE !== "true") {
     return BluebirdPromise.resolve()
   }
@@ -57,6 +58,12 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
       startMenuDir = path.join(startMenuDir, menuCategory)
     }
     await assertThat(path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+  }
+
+  if (doNotPackElevateHelper) {
+    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
+  } else {
+    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).isFile()
   }
 
   let fsAfter = await listFiles()

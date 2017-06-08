@@ -258,6 +258,7 @@ Configuration Options
   * <a name="NsisOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
   * <a name="NsisOptions-unicode"></a>`unicode` = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
   * <a name="NsisOptions-deleteAppDataOnUninstall"></a>`deleteAppDataOnUninstall` = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
+  * <a name="NsisOptions-doNotPackElevateHelper"></a>`doNotPackElevateHelper` = `false` Boolean - Whether to pack the elevate executable.
 * <a name="Config-nsisWeb"></a>`nsisWeb`<a name="NsisWebOptions"></a> - Web Installer specific options.
   * <a name="NsisWebOptions-appPackageUrl"></a>`appPackageUrl` String - The application package download URL. Optional — by default computed using publish configuration.
     
