@@ -327,7 +327,6 @@ Some standard fields should be defined in the `package.json`.
 
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)  
 **Properties**
-
 * <a name="Metadata-name"></a>**`name`** String - The application name.
 * <a name="Metadata-description"></a>`description` String - The application description.
 * <a name="Metadata-homepage"></a>`homepage` String - The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
@@ -340,6 +339,7 @@ Some standard fields should be defined in the `package.json`.
 * <a name="Metadata-repository"></a>`repository` String | [RepositoryInfo](#RepositoryInfo)<a name="RepositoryInfo"></a> - The [repository](https://docs.npmjs.com/files/package.json#repository).
   * <a name="RepositoryInfo-url"></a>**`url`** String
 * <a name="Metadata-build"></a>`build` [Config](#Config)
+<!-- end of generated block -->
 
 ## Build Version Management
 `CFBundleVersion` (macOS) and `FileVersion` (Windows) will be set automatically to `version.build_number` on CI server (Travis, AppVeyor, CircleCI and Bamboo supported).
