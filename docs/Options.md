@@ -75,25 +75,6 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `${env.ENV_NAME}` — any environment variable.
 * Any property of [AppInfo](https://github.com/electron-userland/electron-builder/wiki/electron-builder#AppInfo) (e.g. `buildVersion`, `buildNumber`).
 
-## Source and Destination Directories
-You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
-Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
- ```js
- [
-   {
-     "from": "path/to/source",
-     "to": "path/to/destination",
-     "filter": ["**/*", "!foo/*.js"]
-   }
- ]
- ```
-If `from` is given as a relative path, it is relative to the project directory.
-If `to` is given as a relative path, it is relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
-
-`from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
-
-You can use [file macros](#file-macros) in the `from` and `to` fields as well.
-
 ### Default File Pattern
 
 [files](#Config-files) defaults to:
@@ -108,6 +89,11 @@ You can use [file macros](#file-macros) in the `from` and `to` fields as well.
 
 `${ext}` macro is supported in addition to [file macros](#file-macros).
 
+## How to Read Docs
+
+* Name of optional property is normal, **required** is bold.
+* Type is specified after property name: `Array<String> | String`. Union like this means that you can specify or string (`**/*`), or array of strings (`["**/*", "!foo.js"]`).
+
 <!-- do not edit. start of generated block -->
 <a name="Config"></a>
 
@@ -121,10 +107,29 @@ Configuration Options
 * <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
 * <a name="Config-productName"></a>`productName` String - As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
 * <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
-* <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](electron-builder-core#FilePattern)&gt; | [FilePattern](electron-builder-core#FilePattern) | String - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
+* <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String<a name="FilePattern"></a> - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
   
   Glob rules the same as for [files](#multiple-glob-patterns).
-* <a name="Config-extraFiles"></a>`extraFiles` Array&lt;String | [FilePattern](electron-builder-core#FilePattern)&gt; | [FilePattern](electron-builder-core#FilePattern) | String - The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+  
+  You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns. Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
+  
+  ```json
+   [
+     {
+       "from": "path/to/source",
+       "to": "path/to/destination",
+       "filter": ["**/*", "!foo/*.js"]
+     }
+   ]
+   ```
+  
+  `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+  
+  You can use [file macros](#file-macros) in the `from` and `to` fields as well.
+  * <a name="FilePattern-from"></a>`from` String - The source path relative to the project directory.
+  * <a name="FilePattern-to"></a>`to` String - The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+  * <a name="FilePattern-filter"></a>`filter` Array&lt;String&gt; | String - The [glob patterns](#file-patterns).
+* <a name="Config-extraFiles"></a>`extraFiles` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String - The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
 * <a name="Config-asar"></a>`asar` = `true` Boolean | [AsarOptions](#AsarOptions)<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
   
   Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.

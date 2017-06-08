@@ -107,7 +107,7 @@ async function render(pages, jsdoc2MdOptions) {
   }
 
   function isOptionMember(member) {
-    return member.name.endsWith("Options") || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo"
+    return member.name.endsWith("Options") || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo" || member.name === "FilePattern"
   }
 
   const filtered = []

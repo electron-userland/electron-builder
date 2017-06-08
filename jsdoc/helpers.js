@@ -37,6 +37,7 @@ function renderMemberListDescription(text, indent) {
   return dmdHelper.inlineLinks(text)
     .replace(/<br>/g, "\n")
     .replace(/\n/g, "\n" + indent)
+    .replace('"**\\/*"', '"**/*"')
 }
 
 function getInlinedChild(types) {
@@ -45,7 +46,16 @@ function getInlinedChild(types) {
   }
 
   const arrayTypePrefix = "Array.<"
-  types = types.filter(it => it !== "null" && !isPrimitiveType(it) && !(it.startsWith(arrayTypePrefix) && types.includes(it.substring(arrayTypePrefix.length, it.indexOf(">")))))
+  types = types.filter(it => {
+    if (it === "null" || isPrimitiveType(it)) {
+      return false
+    }
+    if (it.startsWith(arrayTypePrefix)) {
+      it = it.replace("string|", "").replace("<(", "<").replace(")>", ">")
+      return !types.includes(it.substring(arrayTypePrefix.length, it.indexOf(">")))
+    }
+    return true
+  })
   return types.length === 1 ? resolveById(types[0]) : null
 }
 
@@ -71,7 +81,7 @@ function renderProperties(object, root, level) {
 
     const types = member.type.names
     let child = getInlinedChild(types)
-    if (child != null && !child.inlined) {
+    if (child != null && (!child.inlined || child.rendered)) {
       child = null
     }
 
@@ -93,7 +103,7 @@ function renderProperties(object, root, level) {
     }
 
     if (child != null) {
-      child.inlined = true
+      child.rendered = true
       result += "\n"
       result += renderProperties(child, root, level + 1)
     }

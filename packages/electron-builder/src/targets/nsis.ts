@@ -148,6 +148,7 @@ export class NsisTarget extends Target {
 
     const installerPath = path.join(this.outDir, installerFilename)
     const guid = options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
+    const companyName = appInfo.companyName
     const defines: any = {
       APP_ID: appInfo.id,
       APP_GUID: guid,
@@ -157,10 +158,12 @@ export class NsisTarget extends Target {
       APP_DESCRIPTION: appInfo.description,
       VERSION: version,
 
-      COMPANY_NAME: appInfo.companyName,
-
       PROJECT_DIR: packager.projectDir,
       BUILD_RESOURCES_DIR: packager.buildResourcesDir,
+    }
+
+    if (companyName != null) {
+      defines.COMPANY_NAME = companyName
     }
 
     // electron uses product file name as app data, define it as well to remove on uninstall
@@ -279,12 +282,12 @@ export class NsisTarget extends Target {
     const versionKey = [
       `/LANG=${localeId} ProductName "${appInfo.productName}"`,
       `/LANG=${localeId} ProductVersion "${appInfo.version}"`,
-      `/LANG=${localeId} CompanyName "${appInfo.companyName}"`,
       `/LANG=${localeId} LegalCopyright "${appInfo.copyright}"`,
       `/LANG=${localeId} FileDescription "${appInfo.description}"`,
       `/LANG=${localeId} FileVersion "${appInfo.buildVersion}"`,
     ]
     use(this.packager.platformSpecificBuildOptions.legalTrademarks, it => versionKey.push(`/LANG=${localeId} LegalTrademarks "${it}"`))
+    use(appInfo.companyName, it => versionKey.push(`/LANG=${localeId} CompanyName "${it}"`))
     return versionKey
   }
 
@@ -340,7 +343,11 @@ export class NsisTarget extends Target {
     if (options.menuCategory != null && options.menuCategory !== false) {
       let menu: string
       if (options.menuCategory === true) {
-        menu = sanitizeFileName(packager.appInfo.companyName)
+        const companyName = packager.appInfo.companyName
+        if (companyName == null) {
+          throw new Error(`Please specify "author" in the application package.json — it is required because "menuCategory" is set to true.`)
+        }
+        menu = sanitizeFileName(companyName)
       }
       else {
         menu = (<string>options.menuCategory).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")

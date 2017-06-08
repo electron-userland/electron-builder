@@ -1,5 +1,5 @@
 import { AsarIntegrityOptions } from "asar-integrity"
-import { Arch, BeforeBuildContext, CompressionLevel, FilePattern, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { Arch, BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "electron-builder-core"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -92,6 +92,23 @@ export interface Config extends PlatformSpecificBuildOptions {
    * A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
    *
    * Glob rules the same as for [files](#multiple-glob-patterns).
+   *
+   * You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
+   * Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
+   *
+   *```json<br>
+   * [<br>
+   *   {<br>
+   *     "from": "path/to/source",<br>
+   *     "to": "path/to/destination",<br>
+   *     "filter": ["**\/*", "!foo/*.js"]<br>
+   *   }<br>
+   * ]<br>
+   * ```
+   *
+   * `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+   *
+   * You can use [file macros](#file-macros) in the `from` and `to` fields as well.
    */
   readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 
@@ -392,4 +409,19 @@ export interface AsarOptions extends AsarIntegrityOptions {
   smartUnpack?: boolean
 
   ordering?: string | null
+}
+
+export interface FilePattern {
+  /**
+   * The source path relative to the project directory.
+   */
+  from?: string
+  /**
+   * The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+   */
+  to?: string
+  /**
+   * The [glob patterns](#file-patterns).
+   */
+  filter?: Array<string> | string
 }

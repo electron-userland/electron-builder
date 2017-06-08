@@ -62,7 +62,7 @@ function isApiRateError(e: Error): boolean {
 }
 
 function testAndIgnoreApiRate(name: string, testFunction: () => Promise<any>) {
-  test(name, async () => {
+  test.skip(name, async () => {
     try {
       await testFunction()
     }

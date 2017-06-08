@@ -43,8 +43,9 @@ export class AppInfo {
     return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${this.buildNumber || "0"}`
   }
 
-  get companyName() {
-    return this.metadata.author!.name
+  get companyName(): string | null {
+    const author = this.metadata.author
+    return author == null ? null : author.name
   }
 
   get id(): string {

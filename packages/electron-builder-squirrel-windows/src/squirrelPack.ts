@@ -40,7 +40,6 @@ export interface SquirrelOptions {
   version: string
   msi?: any
 
-  owners?: string
   description?: string
   iconUrl?: string
   authors?: string
@@ -112,7 +111,7 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   })
   archive.pipe(archiveOut)
 
-  const author = options.authors || options.owners
+  const author = options.authors
   const copyright = options.copyright || `Copyright © ${new Date().getFullYear()} ${author}`
   const nuspecContent = `<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
@@ -121,7 +120,6 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
     <version>${version}</version>
     <title>${options.productName}</title>
     <authors>${author}</authors>
-    <owners>${options.owners || options.authors}</owners>
     <iconUrl>${options.iconUrl}</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>${options.description}</description>

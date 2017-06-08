@@ -228,8 +228,8 @@
 | Name | Type |
 | --- | --- |
 | files| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
-| extraFiles| <code>Array&lt;String \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
-| extraResources| <code>Array&lt;String \| [FilePattern](electron-builder-core#FilePattern)&gt;</code> \| <code>[FilePattern](electron-builder-core#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
+| extraFiles| <code>Array&lt;String \| [FilePattern](Options#FilePattern)&gt;</code> \| <code>[FilePattern](Options#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
+| extraResources| <code>Array&lt;String \| [FilePattern](Options#FilePattern)&gt;</code> \| <code>[FilePattern](Options#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
 | asarUnpack| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
 | asar| <code>[AsarOptions](Options#AsarOptions)</code> \| <code>Boolean</code> \| <code>null</code> | 
 | target| <code>Array&lt;String \| [TargetConfig](electron-builder-core#TargetConfig)&gt;</code> \| <code>String</code> \| <code>[TargetConfig](electron-builder-core#TargetConfig)</code> \| <code>null</code> | 

@@ -172,8 +172,6 @@ export class Packager implements BuildInfo {
       debug(`Effective config: ${safeStringifyJson(this.config)}`)
     }
 
-    checkConflictingOptions(this.config)
-
     this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
     this.muonVersion = this.config.muonVersion
 
@@ -332,49 +330,25 @@ export class Packager implements BuildInfo {
       }
     }
 
-    const appMetadata = this.metadata
+    const metadata = this.metadata
 
-    checkNotEmpty("name", appMetadata.name)
+    checkNotEmpty("name", metadata.name)
 
-    if (isEmptyOrSpaces(appMetadata.description)) {
+    if (isEmptyOrSpaces(metadata.description)) {
       warn(`description is missed in the package.json (${appPackageFile})`)
     }
-    checkNotEmpty("version", appMetadata.version)
+    if (!metadata.author) {
+      warn(`author is missed in the package.json (${appPackageFile})`)
+    }
+    checkNotEmpty("version", metadata.version)
 
     checkDependencies(this.devMetadata.dependencies, errors)
-    if ((<any>appMetadata) !== this.devMetadata) {
-      checkDependencies(appMetadata.dependencies, errors)
+    if ((<any>metadata) !== this.devMetadata) {
+      checkDependencies(metadata.dependencies, errors)
 
-      if ((<any>appMetadata).build != null) {
+      if ((<any>metadata).build != null) {
         errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
       }
-    }
-
-    const config = <any>this.config
-    if (config["osx-sign"] != null) {
-      errors.push("osx-sign is deprecated and not supported — please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
-    }
-    if (config["osx"] != null) {
-      errors.push(`osx is deprecated and not supported — please use mac instead`)
-    }
-    if (config["app-copyright"] != null) {
-      errors.push(`app-copyright is deprecated and not supported — please use copyright instead`)
-    }
-    if (config["app-category-type"] != null) {
-      errors.push(`app-category-type is deprecated and not supported — please use mac.category instead`)
-    }
-
-    const author = appMetadata.author
-    if (author == null) {
-      errors.push(`Please specify "author" in the application package.json (${appPackageFile}) — it is used as company name and copyright owner.`)
-    }
-
-    if (config.name != null) {
-      errors.push(`'name' in the config is forbidden. Please move 'name' into the package.json (${appPackageFile})`)
-    }
-
-    if (config.prune != null) {
-      errors.push("prune is deprecated — development dependencies are never copied in any case")
     }
 
     if (errors.length > 0) {
@@ -450,14 +424,6 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
   }
   else {
     return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
-  }
-}
-
-function checkConflictingOptions(options: any) {
-  for (const name of ["all", "out", "tmpdir", "version", "platform", "dir", "arch", "name", "extra-resource"]) {
-    if (name in options) {
-      throw new Error(`Option ${name} is ignored, do not specify it.`)
-    }
   }
 }
 

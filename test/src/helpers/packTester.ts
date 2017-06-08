@@ -31,7 +31,7 @@ interface AssertPackOptions {
   readonly useTempDir?: boolean
   readonly signed?: boolean
 
-  readonly npmInstallBefore?: boolean
+  readonly installDepsBefore?: boolean
 }
 
 export interface PackedContext {
@@ -95,9 +95,9 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   try {
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir)
-      if (checkOptions.npmInstallBefore) {
-        await spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["install", "--production", "--cache-min", "999999999", "--no-bin-links"], {
-          cwd: projectDir
+      if (checkOptions.installDepsBefore) {
+        await spawn("node", [path.join(__dirname, "..", "..", "vendor", "yarn.js"), "install", "--production", "--no-bin-links"], {
+          cwd: projectDir,
         })
       }
     }

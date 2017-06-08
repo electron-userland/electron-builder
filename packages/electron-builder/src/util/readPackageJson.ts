@@ -168,7 +168,15 @@ export async function validateConfig(config: Config) {
   const validator = await validatorPromise
   if (!validator(config)) {
     debug(JSON.stringify(validator.errors, null, 2))
-    throw new Error("Config is invalid:\n" + JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2))
+    throw new Error(`Config is invalid:
+${JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2)}
+
+How to fix:
+  1. Open https://github.com/electron-userland/electron-builder/wiki/Options
+  2. Search the option name on the page.
+    * Not found? The option was deprecated or not exists (check spelling).
+    * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.
+`)
   }
 }
 

@@ -83,7 +83,11 @@ export default class AppXTarget extends Target {
             return publisher
 
           case "publisherDisplayName":
-            return this.options.publisherDisplayName || appInfo.companyName
+            const name = this.options.publisherDisplayName || appInfo.companyName
+            if (name == null) {
+              throw new Error(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
+            }
+            return name
 
           case "version":
             return appInfo.versionInWeirdWindowsForm

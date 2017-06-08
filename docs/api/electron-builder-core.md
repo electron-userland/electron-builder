@@ -4,7 +4,6 @@
 
 * [electron-builder-core](#module_electron-builder-core)
     * [`.BeforeBuildContext`](#BeforeBuildContext)
-    * [`.FilePattern`](#FilePattern)
     * [`.SourceRepositoryInfo`](#SourceRepositoryInfo)
     * [`.TargetConfig`](#TargetConfig)
     * [`.TargetSpecificOptions`](#TargetSpecificOptions)
@@ -33,18 +32,6 @@
 | **electronVersion**| <code>String</code> | 
 | **platform**| <code>[Platform](#Platform)</code> | 
 | **arch**| <code>String</code> | 
-
-<a name="FilePattern"></a>
-
-### `FilePattern`
-**Kind**: interface of [<code>electron-builder-core</code>](#module_electron-builder-core)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| from| <code>String</code> | 
-| to| <code>String</code> | 
-| filter| <code>Array&lt;String&gt;</code> \| <code>String</code> | 
 
 <a name="SourceRepositoryInfo"></a>
 

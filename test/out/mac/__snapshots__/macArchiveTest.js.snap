@@ -19,7 +19,14 @@ exports[`invalid target 1`] = `
     },
     \\"Invalid option object\\"
   ]
-}"
+}
+
+How to fix:
+  1. Open https://github.com/electron-userland/electron-builder/wiki/Options
+  2. Search the option name on the page.
+    * Not found? The option was deprecated or not exists (check spelling).
+    * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
+"
 `;
 
 exports[`only zip 1`] = `

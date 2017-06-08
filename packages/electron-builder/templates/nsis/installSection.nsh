@@ -67,7 +67,9 @@
 	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
 	!endif
 
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
+  !ifdef COMPANY_NAME
+	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
+	!endif
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
 	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
 

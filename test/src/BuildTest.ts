@@ -153,7 +153,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 test.ifDevOrLinuxCi("smart unpack", app({
   targets: linuxDirTarget,
 }, {
-  npmInstallBefore: true,
+  installDepsBefore: true,
   projectDirCreated: packageJson(it => {
     it.dependencies = {
       "debug": "^2.2.0",

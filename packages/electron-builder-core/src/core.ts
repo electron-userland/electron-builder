@@ -127,12 +127,6 @@ export const DIR_TARGET = "dir"
 
 export type CompressionLevel = "store" | "normal" | "maximum"
 
-export interface FilePattern {
-  from?: string
-  to?: string
-  filter?: Array<string> | string
-}
-
 export interface BeforeBuildContext {
   readonly appDir: string
   readonly electronVersion: string

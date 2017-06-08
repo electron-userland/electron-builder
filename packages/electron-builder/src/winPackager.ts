@@ -234,7 +234,6 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     const args = [
       file,
-      "--set-version-string", "CompanyName", appInfo.companyName,
       "--set-version-string", "FileDescription", appInfo.productName,
       "--set-version-string", "ProductName", appInfo.productName,
       "--set-version-string", "InternalName", path.basename(appInfo.productFilename, ".exe"),
@@ -244,6 +243,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       "--set-product-version", appInfo.versionInWeirdWindowsForm,
     ]
 
+    use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
     use(await this.getIconPath(), it => args.push("--set-icon", it))
 

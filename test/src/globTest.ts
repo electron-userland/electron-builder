@@ -79,7 +79,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
   return assertPack("test-app-one", {
     targets: Platform.LINUX.createTarget(DIR_TARGET),
   }, {
-    npmInstallBefore: true,
+    installDepsBefore: true,
     projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
       //noinspection SpellCheckingInspection
       data.dependencies = {
