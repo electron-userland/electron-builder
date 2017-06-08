@@ -13,7 +13,6 @@ import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
 import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
-import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 import { archive } from "./archive"
 import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
@@ -105,10 +104,15 @@ export class NsisTarget extends Target {
 
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch) {
-    await BluebirdPromise.all([
-      copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
-      copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
-    ])
+    let isPackElevateHelper = this.options.packElevateHelper
+    if (isPackElevateHelper === false && this.options.perMachine === true) {
+      isPackElevateHelper = true
+      warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
+    }
+
+    if (isPackElevateHelper !== false) {
+      await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false)
+    }
 
     const packager = this.packager
     const format = this.options.useZip ? "zip" : "7z"

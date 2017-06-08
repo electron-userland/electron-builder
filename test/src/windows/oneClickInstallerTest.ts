@@ -5,7 +5,7 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
-import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -19,12 +19,14 @@ test("one-click", app({
     },
     nsis: {
       deleteAppDataOnUninstall: true,
+      packElevateHelper: false
     },
   }
 }, {
   signed: true,
   packed: async (context) => {
-    await doTest(context.outDir, true)
+    await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), false)
+    await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)
     await expectUpdateMetadata(context, Arch.ia32, true)
   }
 }))
@@ -81,6 +83,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
+    await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), true)
     await doTest(context.outDir, false)
   },
 }))

@@ -231,6 +231,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default false
    */
   readonly deleteAppDataOnUninstall?: boolean
+
+  /**
+   * Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
+   * @default true
+   */
+  readonly packElevateHelper?: boolean
 }
 
 /**

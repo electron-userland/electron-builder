@@ -4,7 +4,7 @@ import { readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
-import { doTest, expectUpdateMetadata } from "../helpers/winHelper"
+import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper"
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
@@ -112,6 +112,7 @@ test.ifAll("allowToChangeInstallationDirectory", app({
     delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
+    await checkHelpers(context.getResources(Platform.WINDOWS), true)
     await doTest(context.outDir, false)
   }
 }))

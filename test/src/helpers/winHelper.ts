@@ -19,7 +19,17 @@ export async function expectUpdateMetadata(context: PackedContext, arch: Arch = 
   expect(data).toMatchSnapshot()
 }
 
-export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null) {
+export async function checkHelpers(resourceDir: string, packElevateHelper: boolean) {
+  const elevateHelperExecutable = path.join(resourceDir, "elevate.exe")
+  if (packElevateHelper) {
+    await assertThat(elevateHelperExecutable).isFile()
+  }
+  else {
+    await assertThat(elevateHelperExecutable).doesNotExist()
+  }
+}
+
+export async function doTest(outDir: string, perUser: boolean, productFilename = "TestApp Setup", name = "TestApp", menuCategory: string | null = null, packElevateHelper = true) {
   if (process.env.DO_WINE !== "true") {
     return BluebirdPromise.resolve()
   }
@@ -57,6 +67,13 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
       startMenuDir = path.join(startMenuDir, menuCategory)
     }
     await assertThat(path.join(startMenuDir, `${productFilename}.lnk`)).isFile()
+  }
+
+  if (packElevateHelper) {
+    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).isFile()
+  }
+  else {
+    await assertThat(path.join(instDir, name, "resources", "elevate.exe")).doesNotExist()
   }
 
   let fsAfter = await listFiles()
