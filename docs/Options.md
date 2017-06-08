@@ -438,6 +438,7 @@ See [NSIS target notes](https://github.com/electron-userland/electron-builder/wi
 | artifactName| <code>string</code> \| <code>null</code> | <a name="NsisOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`. |
 | unicode = <code>true</code>| <code>boolean</code> | <a name="NsisOptions-unicode"></a>Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). |
 | deleteAppDataOnUninstall| <code>boolean</code> | <a name="NsisOptions-deleteAppDataOnUninstall"></a>*one-click installer only.* Whether to delete app data on uninstall. |
+| deleteSupportingFilesAfterInstall = <code>false</code>| <code>boolean</code> | <a name="NsisOptions-deleteSupportingFilesAfterInstall"></a> Whether to delete the files that are packed to support the installation. |
 
 <a name="NsisWebOptions"></a>
 

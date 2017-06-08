@@ -224,6 +224,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default false
    */
   readonly deleteAppDataOnUninstall?: boolean
+
+  /**
+   * Whether to delete the files that are packed to support the installation.
+   * @default false
+   */
+  readonly deleteSupportingFilesAfterInstall?: boolean
 }
 
 /**

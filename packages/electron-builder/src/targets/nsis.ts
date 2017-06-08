@@ -106,13 +106,10 @@ export class NsisTarget extends Target {
 
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch) {
-    var filesToCopy = [];
-    if (this.options.allowElevation === undefined || this.options.allowElevation) {
-      filesToCopy.push(copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false));
-    }
-    filesToCopy.push(copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false));
-
-    await BluebirdPromise.all(filesToCopy)
+    await BluebirdPromise.all([
+      copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false),
+      copyFile(path.join(await getSignVendorPath(), "windows-10", Arch[arch], "signtool.exe"), path.join(appOutDir, "resources", "signtool.exe"), null, false),
+    ])
 
     const packager = this.packager
     const format = this.options.useZip ? "zip" : "7z"
@@ -367,6 +364,10 @@ export class NsisTarget extends Target {
       // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
       defines.UNINSTALLER_ICON = uninstallerIcon
       defines.MUI_UNICON = uninstallerIcon
+    }
+
+    if (options.deleteSupportingFilesAfterInstall) {
+      defines.DELETE_SUPPORTING_FILES_AFTER_INSTALL = null
     }
   }
 
