@@ -24,12 +24,6 @@ Object {
 }
 `;
 
-exports[`delete supporting files after install 1`] = `
-Object {
-  "win": Array [],
-}
-`;
-
 exports[`file associations only perMachine 1`] = `"Please set perMachine to true — file associations works on Windows only if installed for all users"`;
 
 exports[`installerHeaderIcon 1`] = `

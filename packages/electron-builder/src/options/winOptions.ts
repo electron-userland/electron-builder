@@ -226,10 +226,10 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * Whether to delete the files that are packed to support the installation.
+   * Whether to pack the elevate executable
    * @default false
    */
-  readonly deleteSupportingFilesAfterInstall?: boolean
+  readonly doNotPackElevateHelper?: boolean
 }
 
 /**

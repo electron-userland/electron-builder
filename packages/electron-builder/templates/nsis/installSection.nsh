@@ -196,11 +196,6 @@ WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
   !insertmacro customInstall
 !endif
 
-!ifdef DELETE_SUPPORTING_FILES_AFTER_INSTALL
-  Delete $INSTDIR\resources\elevate.exe
-  Delete $INSTDIR\resources\signtool.exe
-!endif
-
 !ifdef ONE_CLICK
   !ifdef RUN_AFTER_FINISH
     ${IfNot} ${Silent}

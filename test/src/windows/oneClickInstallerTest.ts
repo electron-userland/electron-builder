@@ -18,19 +18,15 @@ test("one-click", app({
       package: "TestApp",
     },
     nsis: {
-      deleteAppDataOnUninstall: true
+      deleteAppDataOnUninstall: true,
+      doNotPackElevateHelper: true
     },
-  },
-  effectiveOptionComputed: async (it) => {
-    const defines = it[0]
-    expect(defines.DELETE_SUPPORTING_FILES_AFTER_INSTALL).not.toBeDefined()
-    return false
   }
 }, {
   signed: true,
   packed: async (context) => {
-    await doTest(context.outDir, true)
-    await expectUpdateMetadata(context, Arch.ia32, true, false)
+    await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, true)
+    await expectUpdateMetadata(context, Arch.ia32, true)
   }
 }))
 
@@ -211,18 +207,4 @@ test.ifAll.ifNotCiMac("web installer (default github)", app({
     delete data.sha512
     expect(data).toMatchSnapshot()
   },
-}))
-
-test("delete supporting files after install", app({
-  targets: nsisTarget,
-  config: {
-    nsis: {
-      deleteSupportingFilesAfterInstall: true
-    }
-  },
-  effectiveOptionComputed: async (it) => {
-    const defines = it[0]
-    expect(defines.DELETE_SUPPORTING_FILES_AFTER_INSTALL).toBeDefined()
-    return true
-  }
 }))
