@@ -184,9 +184,9 @@ export class NsisUpdater extends AppUpdater {
     catch (e) {
       // yes, such errors dispatched not as error event
       // https://github.com/electron-userland/electron-builder/issues/1129
-      if ((<any>e).code === "UNKNOWN") {
+      if ((<any>e).code === "UNKNOWN" || (<any>e).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         if (this.logger != null) {
-          this.logger.info("UNKNOWN error code on spawn, will be executed again using elevate")
+          this.logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         }
 
         try {
