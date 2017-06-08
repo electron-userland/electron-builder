@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { copyFile } from "electron-builder-util/out/fs"
+import { copyOrLinkFile } from "electron-builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -54,8 +54,8 @@ test.ifMac("one-package", app({
 }, {
   signed: true,
   projectDirCreated: projectDir => BluebirdPromise.all([
-    copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
-    copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),
+    copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "foo.icns")),
+    copyOrLinkFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "someFoo.icns")),
   ]),
   checkMacApp: async (appDir, info) => {
     expect(info).toMatchSnapshot()

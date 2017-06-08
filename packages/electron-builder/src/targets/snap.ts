@@ -1,7 +1,8 @@
 import { Arch, Target, toLinuxArchString } from "electron-builder-core"
 import { replaceDefault, spawn } from "electron-builder-util"
+import { copyFile } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
-import { copy, emptyDir, outputFile } from "fs-extra-p"
+import { emptyDir, outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { homedir } from "os"
 import * as path from "path"
@@ -45,7 +46,7 @@ export default class SnapTarget extends Target {
     await this.helper.icons
     if (this.helper.maxIconPath != null) {
       snap.icon = "snap/gui/icon.png"
-      await copy(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
+      await copyFile(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
     }
 
     const desktopFile = await this.helper.computeDesktopEntry(this.options, `${packager.executableName}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {

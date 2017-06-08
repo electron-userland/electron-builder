@@ -1,12 +1,12 @@
 import { HttpError } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { S3Options } from "electron-builder-http/out/publishOptions"
+import { copyFile } from "electron-builder-util/out/fs"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
-import { copy } from "fs-extra-p"
 import isCi from "is-ci"
 import { join } from "path"
 
@@ -82,7 +82,7 @@ test("Bintray upload", async () => {
 
   const tmpDir = new TmpDir()
   const artifactPath = await tmpDir.getTempFile(`icon-${version}.icns`)
-  await copy(iconPath, artifactPath)
+  await copyFile(iconPath, artifactPath)
 
   //noinspection SpellCheckingInspection
   const publisher = new BintrayPublisher(publishContext, {provider: "bintray", owner: "actperepo", package: "test", repo: "generic", token: "5df2cadec86dff91392e4c419540785813c3db15"}, version)

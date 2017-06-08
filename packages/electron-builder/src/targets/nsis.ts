@@ -111,7 +111,7 @@ export class NsisTarget extends Target {
     }
 
     if (isPackElevateHelper !== false) {
-      await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), null, false)
+      await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
     }
 
     const packager = this.packager

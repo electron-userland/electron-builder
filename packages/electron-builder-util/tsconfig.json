@@ -18,6 +18,7 @@
     "../../typings/debug.d.ts",
     "../../typings/node-emoji.d.ts",
     "../../typings/pretty-ms.d.ts",
-    "../../typings/ansi-escapes.d.ts"
+    "../../typings/ansi-escapes.d.ts",
+    "../../typings/fcopy-pre-bundled.d.ts"
   ]
 }

@@ -1,9 +1,9 @@
 import { AsarIntegrity } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, use } from "electron-builder-util"
-import { copyFile, unlinkIfExists } from "electron-builder-util/out/fs"
+import { copyFile, copyOrLinkFile, unlinkIfExists } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
-import { copy, readFile, rename, unlink, utimes, writeFile } from "fs-extra-p"
+import { readFile, rename, unlink, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
@@ -116,7 +116,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
       let iconFile = appPlist.CFBundleIconFile
       if (customIcon != null) {
         iconFile = path.basename(customIcon)
-        await copyFile(customIcon, path.join(resourcesPath, iconFile))
+        await copyOrLinkFile(customIcon, path.join(resourcesPath, iconFile))
       }
 
       const result = <any>{
@@ -152,7 +152,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   if (icon != null) {
     promises.push(unlink(path.join(resourcesPath, oldIcon)))
-    promises.push(copy(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
+    promises.push(copyFile(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
   }
 
   await BluebirdPromise.all(promises)

@@ -2,10 +2,10 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, Target } from "electron-builder-core"
 import { debug, exec, isEmptyOrSpaces, spawn, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { exists, statOrNull } from "electron-builder-util/out/fs"
+import { copyFile, exists, statOrNull } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
 import { executeFinally } from "electron-builder-util/out/promise"
-import { copy, outputFile, readFile, remove, unlink } from "fs-extra-p"
+import { outputFile, readFile, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { DmgOptions, MacOptions } from "../options/macOptions"
@@ -33,7 +33,7 @@ export class DmgTarget extends Target {
     const backgroundDir = path.join(tempDir, ".background")
     const backgroundFilename = specification.background == null ? null : path.basename(specification.background)
     if (backgroundFilename != null) {
-      await copy(path.resolve(packager.info.projectDir, specification.background!), path.join(backgroundDir, backgroundFilename))
+      await copyFile(path.resolve(packager.info.projectDir, specification.background!), path.join(backgroundDir, backgroundFilename))
     }
 
     let preallocatedSize = 32 * 1024
@@ -98,7 +98,7 @@ export class DmgTarget extends Target {
       }
       else {
         const volumeIcon = `${volumePath}/.VolumeIcon.icns`
-        promises.push(copy((await packager.getResource(specification.icon))!, volumeIcon))
+        promises.push(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
         env.volumeIcon = volumeIcon
       }
 

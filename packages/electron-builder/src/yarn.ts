@@ -55,8 +55,7 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
 
-  const isYarn = isYarnPath(execPath)
-  if (!isYarn) {
+  if (!isYarnPath(execPath)) {
     if (process.env.NPM_NO_BIN_LINKS === "true") {
       execArgs.push("--no-bin-links")
     }

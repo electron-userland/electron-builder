@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Target } from "electron-builder-core"
 import { spawn, use } from "electron-builder-util"
-import { copyDir } from "electron-builder-util/out/fs"
-import { copy, emptyDir, readFile, writeFile } from "fs-extra-p"
+import { copyDir, copyFile } from "electron-builder-util/out/fs"
+import { emptyDir, readFile, writeFile } from "fs-extra-p"
 import { release } from "os"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -55,9 +55,9 @@ export default class AppXTarget extends Target {
       BluebirdPromise.map(["44x44", "50x50", "150x150", "310x150"], size => {
         const target = path.join(preAppx, "assets", `${safeName}.${size}.png`)
         if (resourceList.includes(`${size}.png`)) {
-          return copy(path.join(packager.buildResourcesDir, `${size}.png`), target)
+          return copyFile(path.join(packager.buildResourcesDir, `${size}.png`), target)
         }
-        return copy(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
+        return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
       }),
       copyDir(appOutDir, path.join(preAppx, "app")),
       this.writeManifest(templatePath, preAppx, safeName, arch, publisher)

@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
 import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces } from "electron-builder-util"
-import { statOrNull } from "electron-builder-util/out/fs"
+import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { all, executeFinally } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
-import { copy, deleteFile, outputFile, rename } from "fs-extra-p"
+import { deleteFile, outputFile, rename } from "fs-extra-p"
 import isCi from "is-ci"
 import { homedir } from "os"
 import * as path from "path"
@@ -73,7 +73,7 @@ async function createCustomCertKeychain() {
   const keychainPath = path.join(getCacheDirectory(), "electron-builder-root-certs.keychain")
   const results = await BluebirdPromise.all<string>([
     exec("security", ["list-keychains"]),
-    copy(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
+    copyFile(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
       .then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]

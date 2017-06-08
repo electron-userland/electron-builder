@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { access, createReadStream, createWriteStream, link, lstat, mkdirs, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
+import fcopy from "fcopy-pre-bundled"
+import { access, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
@@ -109,11 +110,17 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
 
 const _isUseHardLink = process.platform != "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
 
+export function copyFile(src: string, dest: string, isEnsureDir = true) {
+  return (isEnsureDir ? ensureDir(path.dirname(dest)) : BluebirdPromise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
+}
+
 /**
  * Hard links is used if supported and allowed.
  * File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
+ *
+ * ensureDir is not called, dest parent dir must exists
  */
-export function copyFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink): Promise<any> {
+export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, isUseHardLink = _isUseHardLink): Promise<any> {
   if (stats != null) {
     const originalModeNumber = stats.mode
     const mode = new Mode(stats)
@@ -146,17 +153,7 @@ export function copyFile(src: string, dest: string, stats?: Stats | null, isUseH
   }
 
   return new BluebirdPromise(function (resolve, reject) {
-    const readStream = createReadStream(src)
-    const writeStream = createWriteStream(dest, stats == null ? undefined : {mode: stats.mode})
-
-    readStream.on("error", reject)
-    writeStream.on("error", reject)
-
-    writeStream.on("open", function () {
-      readStream.pipe(writeStream)
-    })
-
-    writeStream.once("close", resolve)
+    fcopy(src, dest, stats == null ? undefined : {mode: stats.mode}, error => error == null ? resolve() : reject(error))
   })
 }
 
@@ -181,7 +178,7 @@ export class FileCopier {
           }
         }
       }
-      await copyFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
+      await copyOrLinkFile(src, dest, stat, (!this.isUseHardLink || this.isUseHardLinkFunction == null) ? this.isUseHardLink : this.isUseHardLinkFunction(dest))
     }
     catch (e) {
       // files are copied concurrently, so, we must not check here currentIsUseHardLink — our code can be executed after that other handler will set currentIsUseHardLink to false
@@ -192,7 +189,7 @@ export class FileCopier {
           this.isUseHardLink = false
         }
 
-        await copyFile(src, dest, stat, false)
+        await copyOrLinkFile(src, dest, stat, false)
       }
       else {
         throw e
@@ -219,7 +216,7 @@ export function copyDir(src: string, destination: string, filter?: Filter, trans
     }
 
     if (!createdSourceDirs.has(parent)) {
-      await mkdirs(parent.replace(src, destination))
+      await ensureDir(parent.replace(src, destination))
       createdSourceDirs.add(parent)
     }
 

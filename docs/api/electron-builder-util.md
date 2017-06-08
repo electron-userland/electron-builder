@@ -83,7 +83,8 @@
     * [.FileCopier](#FileCopier)
         * [`.copy(src, dest, stat)`](#module_electron-builder-util/out/fs.FileCopier+copy) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.copyDir(src, destination, filter, transformer, isUseHardLink)`](#module_electron-builder-util/out/fs.copyDir) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.copyFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.copyFile(src, dest, isEnsureDir)`](#module_electron-builder-util/out/fs.copyFile) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.copyOrLinkFile(src, dest, stats, isUseHardLink)`](#module_electron-builder-util/out/fs.copyOrLinkFile) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.exists(file)`](#module_electron-builder-util/out/fs.exists) ⇒ <code>Promise&lt;Boolean&gt;</code>
     * [`.statOrNull(file)`](#module_electron-builder-util/out/fs.statOrNull) ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
     * [`.unlinkIfExists(file)`](#module_electron-builder-util/out/fs.unlinkIfExists) ⇒ <code>Promise&lt;String \| void&gt;</code>
@@ -122,9 +123,22 @@ Hard links is used if supported and allowed.
 
 <a name="module_electron-builder-util/out/fs.copyFile"></a>
 
-### `electron-builder-util/out/fs.copyFile(src, dest, stats, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
+### `electron-builder-util/out/fs.copyFile(src, dest, isEnsureDir)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
+
+| Param | Type |
+| --- | --- |
+| src | <code>String</code> | 
+| dest | <code>String</code> | 
+| isEnsureDir |  | 
+
+<a name="module_electron-builder-util/out/fs.copyOrLinkFile"></a>
+
+### `electron-builder-util/out/fs.copyOrLinkFile(src, dest, stats, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
 Hard links is used if supported and allowed.
 File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
+
+ensureDir is not called, dest parent dir must exists
 
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 

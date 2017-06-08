@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { asArray, debug } from "electron-builder-util"
-import { copyDir, copyFile, Filter, statOrNull } from "electron-builder-util/out/fs"
+import { copyDir, copyOrLinkFile, Filter, statOrNull } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
@@ -183,11 +183,11 @@ export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
       const toStat = await statOrNull(pattern.to)
       // https://github.com/electron-userland/electron-builder/issues/1245
       if (toStat != null && toStat.isDirectory()) {
-        return await copyFile(pattern.from, path.join(pattern.to, path.basename(pattern.from)), fromStat)
+        return await copyOrLinkFile(pattern.from, path.join(pattern.to, path.basename(pattern.from)), fromStat)
       }
 
       await mkdirs(path.dirname(pattern.to))
-      return await copyFile(pattern.from, pattern.to, fromStat)
+      return await copyOrLinkFile(pattern.from, pattern.to, fromStat)
     }
 
     if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {

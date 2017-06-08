@@ -3,7 +3,7 @@ import { debug, exec, execWine, prepareArgs, spawn } from "electron-builder-util
 import { copyFile, walk } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
 import { WinPackager } from "electron-builder/out/winPackager"
-import { copy, createWriteStream, ensureDir, remove, stat, unlink } from "fs-extra-p"
+import { createWriteStream, ensureDir, remove, stat, unlink } from "fs-extra-p"
 import * as path from "path"
 
 const archiver = require("archiver")
@@ -50,7 +50,7 @@ export interface SquirrelOptions {
 export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string) {
   const appUpdate = await packager.getTempFile("Update.exe")
   await BluebirdPromise.all([
-    copy(path.join(options.vendorPath, "Update.exe"), appUpdate)
+    copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
       .then(() => packager.sign(appUpdate)),
     BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
       .then(() => ensureDir(outputDirectory))
@@ -79,7 +79,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
 
   await BluebirdPromise.all<any>([
     pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
-    copy(path.join(options.vendorPath, "Setup.exe"), setupPath),
+    copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
   ])
 
   embeddedArchive.file(nupkgPath, {name: packageName})
@@ -233,7 +233,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
     // createExecutableStubForExe
     if (file.endsWith(".exe") && !file.includes("squirrel.exe")) {
       const tempFile = await packager.getTempFile("stub.exe")
-      await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile, null, false)
+      await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile)
       await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])
       await packager.sign(tempFile)
 
