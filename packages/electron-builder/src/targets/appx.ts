@@ -54,7 +54,7 @@ export default class AppXTarget extends Target {
     
     const customAssetsFolder = this.options.assetsFolder
     if (customAssetsFolder) {
-      const customAssetsPath = path.resolve(this.projectDir, customAssetsFolder)
+      const customAssetsPath = path.resolve(this.packager.projectDir, customAssetsFolder)
       copyDir(customAssetsPath, path.join(preAppx, 'assets'))
     } else {
       const resourceList = await packager.resourceList
@@ -127,13 +127,13 @@ export default class AppXTarget extends Target {
             return this.options.backgroundColor || "#464646"
 
           case "logo":
-            return `assets\${this.assetPath(assetNames, 'logo') || safeName + '.50x50.png'}`
+            return `assets\\${this.assetPath(assetNames, 'logo') || safeName + '.50x50.png'}`
 
           case "square150x150Logo":
-            return `assets\${this.assetPath(assetNames, 'square150x150Logo') || safeName + '.150x150.png'}`
+            return `assets\\${this.assetPath(assetNames, 'square150x150Logo') || safeName + '.150x150.png'}`
 
           case "square44x44Logo":
-            return `assets\${this.assetPath(assetNames, 'square44x44Logo') || safeName + '.44x44.png'}`
+            return `assets\\${this.assetPath(assetNames, 'square44x44Logo') || safeName + '.44x44.png'}`
 
           case "defaultTile":
             return this.defaultTileTagContents(safeName, assetNames)
@@ -161,19 +161,19 @@ export default class AppXTarget extends Target {
 
   private defaultTileTagContents(safeName: string, assetNames: AppXVisualAssetsNames | undefined): string {
     if (!assetNames) {
-      return `Wide310x150Logo="assets\${safeName}.310x150.png"`
+      return `Wide310x150Logo="assets\\${safeName}.310x150.png"`
     }
 
     const defaultTiles: Array<string> = []
 
     if (assetNames["wide310x150Logo"]) {
-      defaultTiles.push(`Wide310x150Logo="assets\${assetNames["wide310x150Logo"]}"`)
+      defaultTiles.push(`Wide310x150Logo="assets\\${assetNames["wide310x150Logo"]}"`)
     }
     if (assetNames["square310x310Logo"]) {
-      defaultTiles.push(`Square310x310Logo="assets\${assetNames["square310x310Logo"]}"`)
+      defaultTiles.push(`Square310x310Logo="assets\\${assetNames["square310x310Logo"]}"`)
     }
     if (assetNames["square71x71Logo"]) {
-      defaultTiles.push(`Square71x71Logo="assets\${assetNames["square71x71Logo"]}"`)
+      defaultTiles.push(`Square71x71Logo="assets\\${assetNames["square71x71Logo"]}"`)
     }
 
     return defaultTiles.join(" ")
@@ -181,7 +181,7 @@ export default class AppXTarget extends Target {
 
   private splashScreenTag(assetNames: AppXVisualAssetsNames | undefined): string {
     if (assetNames && assetNames["splashScreen"]) {
-      return `<uap:SplashScreen Image="assets\${assetNames["splashScreen"]}" />`
+      return `<uap:SplashScreen Image="assets\\${assetNames["splashScreen"]}" />`
     } else {
       return '';
     }
