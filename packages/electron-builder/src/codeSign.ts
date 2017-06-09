@@ -33,7 +33,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   }
   else {
     const isUrl = urlOrBase64.startsWith("https://")
-    if (isUrl || urlOrBase64.length > 4096 || urlOrBase64.endsWith("=")) {
+    if (isUrl || urlOrBase64.length > 2048 || urlOrBase64.endsWith("=")) {
       const tempFile = await tmpDir.getTempFile(".p12")
       if (isUrl) {
         await httpExecutor.download(urlOrBase64, tempFile)

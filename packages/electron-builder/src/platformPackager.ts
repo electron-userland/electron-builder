@@ -79,7 +79,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected doGetCscPassword() {
-    return this.packagerOptions.cscKeyPassword || process.env.CSC_KEY_PASSWORD
+    const cscKeyPassword = this.packagerOptions.cscKeyPassword
+    // allow to specify as empty string
+    return cscKeyPassword == null ? process.env.CSC_KEY_PASSWORD : cscKeyPassword
   }
 
   get relativeBuildResourcesDirname() {

@@ -6,11 +6,9 @@ import { release } from "os"
 import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 
-const TOOLS_VERSION = "1.7.0"
-
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("winCodeSign", TOOLS_VERSION, "a34a60e74d02b81d0303e498f03c70ce0133f908b671f62ec32896db5cd0a716")
+  return getBinFromGithub("winCodeSign", "1.8.0", "NWd9hH9MuAgJFzhVzW1bpPplDTBwwYfPUg2skeEri2zp4PFcibbUWPvqUTv+Xnyg0MCdpsrVF1GMIHZGT8wMRw==")
 }
 
 export interface FileCodeSigningInfo {
@@ -145,6 +143,11 @@ function getOutputPath(inputPath: string, hash: string) {
   return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
 }
 
+export function isOldWin6() {
+  const winVersion = release()
+  return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
+}
+
 export async function getToolPath(): Promise<string> {
   if (process.env.USE_SYSTEM_SIGNCODE) {
     return "osslsigncode"
@@ -157,7 +160,8 @@ export async function getToolPath(): Promise<string> {
 
   const vendorPath = await getSignVendorPath()
   if (process.platform === "win32") {
-    if (release().startsWith("6.")) {
+    // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
+    if (isOldWin6()) {
       return path.join(vendorPath, "windows-6", "signtool.exe")
     }
     else {

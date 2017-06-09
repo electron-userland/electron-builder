@@ -1,3 +1,5 @@
+image: Visual Studio 2017
+
 platform:
   - x64
 
@@ -7,7 +9,7 @@ cache:
   - '%LOCALAPPDATA%\electron-builder\cache'
 
 environment:
-  TEST_FILES: ExtraBuildTest,BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest,oneClickInstallerTest,installerTest
+  TEST_FILES: ExtraBuildTest,BuildTest,extraMetadataTest,filesTest,globTest,nsisUpdaterTest,oneClickInstallerTest,installerTest,appxTest
 
 install:
   - ps: Install-Product node 6 x64

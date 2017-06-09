@@ -1,5 +1,5 @@
 import { Arch, getArchSuffix, Target } from "electron-builder-core"
-import { getBinFromBintray } from "electron-builder-util/out/binDownload"
+import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { log, warn } from "electron-builder-util/out/log"
 import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
 import { WinPackager } from "electron-builder/out/winPackager"
@@ -8,7 +8,7 @@ import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 
 const SW_VERSION = "1.6.0.0"
 //noinspection SpellCheckingInspection
-const SW_SHA2 = "551b17d1f183f2c15bde47f2b2064e628329229e12bfd532a0998ea1c3f3567c"
+const SW_SHA2 = "ipd/ZQXyCe2+CYmNiUa9+nzVuO2PsRfF6DT8Y2mbIzkc8SVH8tJ6uS4rdhwAI1rPsYkmsPe1AcJGqv8ZDZcFww=="
 
 export default class SquirrelWindowsTarget extends Target {
   readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
@@ -77,7 +77,7 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL) || (packager.config.compression === "store" ? 0 : 9),
-      vendorPath: await getBinFromBintray("Squirrel.Windows", SW_VERSION, SW_SHA2)
+      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, this.options)
 
     if (options.remoteToken == null) {

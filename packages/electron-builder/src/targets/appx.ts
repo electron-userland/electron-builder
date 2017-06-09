@@ -3,11 +3,10 @@ import { Arch, getArchSuffix, Target } from "electron-builder-core"
 import { spawn, use } from "electron-builder-util"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
 import { emptyDir, readFile, writeFile } from "fs-extra-p"
-import { release } from "os"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { AppXOptions } from "../options/winOptions"
-import { getSignVendorPath } from "../windowsCodeSign"
+import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
 export default class AppXTarget extends Target {
@@ -16,9 +15,8 @@ export default class AppXTarget extends Target {
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("appx")
 
-    const osVersion = release()
-    if (process.platform !== "win32" || parseInt(osVersion.substring(0, osVersion.indexOf(".")), 10) < 10) {
-      throw new Error("AppX is supported only on Windows 10")
+    if (process.platform !== "win32" || isOldWin6()) {
+      throw new Error("AppX is supported only on Windows 10 or Windows Server 2012 R2 (version number 6.3+)")
     }
   }
 
@@ -27,7 +25,7 @@ export default class AppXTarget extends Target {
     const packager = this.packager
 
     if ((await packager.cscInfo.value) == null) {
-      throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing")
+      throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing\n\nYou can use `./node_modules/.bin/create-self-signed-cert -p YourName` to create self-signed certificate")
     }
 
     let publisher = this.options.publisher
