@@ -6,7 +6,7 @@ import { emptyDir, readFile, writeFile } from "fs-extra-p"
 import { release } from "os"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { AppXOptions } from "../options/winOptions"
+import { AppXOptions, AppXVisualAssetsNames } from "../options/winOptions"
 import { getSignVendorPath } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
@@ -46,6 +46,7 @@ export default class AppXTarget extends Target {
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
+    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
     const vendorPath = await getSignVendorPath()
 
     const templatePath = path.join(__dirname, "..", "..", "templates", "appx")
@@ -66,11 +67,19 @@ export default class AppXTarget extends Target {
           return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
         }),
         copyDir(appOutDir, path.join(preAppx, "app")),
-        this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
       ])
     }
 
-    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
+    this.writeManifest(templatePath, preAppx, safeName, arch, publisher, this.options.assetNames)
+
+    if (this.options.makePri || customAssetsFolder) {
+      const priConfigPath = path.join(preAppx, "priconfig.xml")
+      const makePriCreateConfigArgs = ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"]
+      await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makePriCreateConfigArgs)
+      const makrPriNewArgs = ["new", "/pr", preAppx, "/cf", priConfigPath]
+      await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makrPriNewArgs)
+    }
+
     const args = ["pack", "/o", "/d", preAppx, "/p", destination]
     use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
@@ -81,7 +90,7 @@ export default class AppXTarget extends Target {
     packager.dispatchArtifactCreated(destination, this, arch, packager.expandArtifactNamePattern(this.options, "appx", arch, "${name}-${version}-${arch}.${ext}"))
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {
+  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string, assetNames: AppXVisualAssetsNames | undefined) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
       .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
@@ -117,15 +126,20 @@ export default class AppXTarget extends Target {
           case "backgroundColor":
             return this.options.backgroundColor || "#464646"
 
-          case "safeName":
-            return safeName
-
           case "logo":
-            return this.options.
+            return `assets\${this.assetPath(assetNames, 'logo') || safeName + '.50x50.png'}`
 
           case "square150x150Logo":
+            return `assets\${this.assetPath(assetNames, 'square150x150Logo') || safeName + '.150x150.png'}`
+
           case "square44x44Logo":
-          case "wide310x150Logo":
+            return `assets\${this.assetPath(assetNames, 'square44x44Logo') || safeName + '.44x44.png'}`
+
+          case "defaultTile":
+            return this.defaultTileTagContents(safeName, assetNames)
+
+          case "splashScreen":
+            return this.splashScreenTag(assetNames)
             
           case "arch":
             return arch === Arch.ia32 ? "x86" : "x64"
@@ -135,5 +149,41 @@ export default class AppXTarget extends Target {
         }
       })
     await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
+  }
+
+  private assetPath(assetNames: AppXVisualAssetsNames | undefined, assetType: ('logo' | 'square150x150Logo' | 'square44x44Logo')): string | undefined {
+      if (!assetNames) {
+        return
+      }
+
+      return assetNames[assetType]
+  }
+
+  private defaultTileTagContents(safeName: string, assetNames: AppXVisualAssetsNames | undefined): string {
+    if (!assetNames) {
+      return `Wide310x150Logo="assets\${safeName}.310x150.png"`
+    }
+
+    const defaultTiles: Array<string> = []
+
+    if (assetNames["wide310x150Logo"]) {
+      defaultTiles.push(`Wide310x150Logo="assets\${assetNames["wide310x150Logo"]}"`)
+    }
+    if (assetNames["square310x310Logo"]) {
+      defaultTiles.push(`Square310x310Logo="assets\${assetNames["square310x310Logo"]}"`)
+    }
+    if (assetNames["square71x71Logo"]) {
+      defaultTiles.push(`Square71x71Logo="assets\${assetNames["square71x71Logo"]}"`)
+    }
+
+    return defaultTiles.join(" ")
+  }
+
+  private splashScreenTag(assetNames: AppXVisualAssetsNames | undefined): string {
+    if (assetNames && assetNames["splashScreen"]) {
+      return `<uap:SplashScreen Image="assets\${assetNames["splashScreen"]}" />`
+    } else {
+      return '';
+    }
   }
 }

@@ -359,7 +359,7 @@ export interface AppXOptions {
   readonly identityName?: string | null
 
   /**
-   * Runs makepri on the folder before running makeappx
+   * Runs makepri on the folder before running makeappx.
    */
   readonly makePri?: boolean | null
 

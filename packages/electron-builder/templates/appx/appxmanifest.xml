@@ -30,7 +30,8 @@
        Square150x150Logo="${square150x150Logo}"
        Square44x44Logo="${square44x44Logo}"
        Description="${description}">
-        <uap:DefaultTile Wide310x150Logo="${wide310x150Logo}" />
+        <uap:DefaultTile ${defaultTile} />
+        ${splashScreen}
       </uap:VisualElements>
     </Application>
   </Applications>
