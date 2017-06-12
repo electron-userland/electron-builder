@@ -3,7 +3,7 @@ import BluebirdPromise from "bluebird-lst"
 import { asArray, getPlatformIconFileName, use } from "electron-builder-util"
 import { copyFile, copyOrLinkFile, unlinkIfExists } from "electron-builder-util/out/fs"
 import { warn } from "electron-builder-util/out/log"
-import { readFile, rename, unlink, utimes, writeFile } from "fs-extra-p"
+import { readFile, rename, deleteFile, utimes, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { build as buildPlist, parse as parsePlist } from "plist"
 import { normalizeExt, PlatformPackager } from "../platformPackager"
@@ -151,7 +151,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   ]
 
   if (icon != null) {
-    promises.push(unlink(path.join(resourcesPath, oldIcon)))
+    promises.push(deleteFile(path.join(resourcesPath, oldIcon), true))
     promises.push(copyFile(icon, path.join(resourcesPath, appPlist.CFBundleIconFile)))
   }
 
