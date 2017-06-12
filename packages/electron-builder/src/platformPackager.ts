@@ -1,7 +1,7 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
-import { asArray, debug, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
+import { asArray, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
@@ -15,7 +15,7 @@ import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
-import { readInstalled } from "./readInstalled"
+import { dependencies } from "./readInstalled"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions
@@ -152,15 +152,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion)
     }
     else {
-      // prune dev or not listed dependencies
-      await BluebirdPromise.all([
-        dependencies(appDir, ignoreFiles),
-        isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!),
-      ])
+      await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
 
-      if (debug.enabled) {
-        const nodeModulesDir = path.join(appDir, "node_modules")
-        debug(`Dev or extraneous dependencies: ${Array.from(ignoreFiles).slice(2).map(it => path.relative(nodeModulesDir, it)).join(", ")}`)
+      if (asarOptions == null) {
+        await dependencies(appDir, ignoreFiles)
       }
     }
 
@@ -523,13 +518,4 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
-}
-
-async function dependencies(dir: string, result: Set<string>): Promise<void> {
-  const pathToDep = await readInstalled(dir)
-  for (const dep of pathToDep.values()) {
-    if (dep.extraneous) {
-      result.add(dep.path)
-    }
-  }
 }

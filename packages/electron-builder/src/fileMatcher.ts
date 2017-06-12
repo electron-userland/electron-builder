@@ -91,17 +91,18 @@ export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath
 
   const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
   const ignoreBuildResourceDirPattern = (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) ? `!${relativeBuildResourceDir}{,/**/*}` : null
-
   if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
-    matcher.addAllPattern()
     if (ignoreBuildResourceDirPattern != null) {
       matcher.addPattern(ignoreBuildResourceDirPattern)
     }
+    matcher.prependPattern("**/*")
   }
   else {
     if (ignoreBuildResourceDirPattern != null) {
       matcher.prependPattern(ignoreBuildResourceDirPattern)
     }
+    // prependPattern - user pattern should be after to be able to override
+    matcher.prependPattern("**/node_modules/**/*")
     matcher.addPattern("package.json")
   }
   matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
@@ -191,7 +192,7 @@ export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
     }
 
     if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
-      pattern.addAllPattern()
+      pattern.prependPattern("**/*")
     }
     if (debug.enabled) {
       debug(`Copying files using pattern: ${pattern}`)

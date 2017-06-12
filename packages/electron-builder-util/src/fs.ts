@@ -41,10 +41,11 @@ export async function exists(file: string): Promise<boolean> {
   }
 }
 
-export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string) => any): Promise<Array<string>> {
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string, extraIgnoredFiles: Set<string>) => any): Promise<Array<string>> {
   const result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
+  const extraIgnoredFiles = new Set<string>()
   while (queue.length > 0) {
     const dirPath = queue.pop()!
     if (addDirToResult) {
@@ -63,11 +64,11 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
       const filePath = dirPath + path.sep + name
       return lstat(filePath)
         .then(stat => {
-          if (filter != null && !filter(filePath, stat)) {
+          if (extraIgnoredFiles.has(filePath) || (filter != null && !filter(filePath, stat))) {
             return null
           }
 
-          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath)
+          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath, extraIgnoredFiles)
           if (consumerResult == null || !("then" in consumerResult)) {
             if (stat.isDirectory()) {
               dirs.push(name)

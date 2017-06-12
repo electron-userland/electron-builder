@@ -7,6 +7,7 @@ import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "./asar"
 import { createElectronCompilerHost } from "./fileTransformer"
 import { AsarOptions } from "./metadata"
+import { dependencies } from "./readInstalled"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
@@ -56,29 +57,44 @@ export class AsarPackager {
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
   async pack(filter: Filter, isElectronCompile: boolean) {
     const metadata = this.metadata
-    let files = await walk(this.src, filter, (file, fileStat) => {
+    const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
+    let files = await walk(this.src, filter, (file, fileStat, parent, extraIgnoredFiles) => {
       metadata.set(file, fileStat)
-      if (fileStat.isSymbolicLink()) {
-        return readlink(file)
-          .then((linkTarget): any => {
-            // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
-            const resolved = path.resolve(path.dirname(file), linkTarget)
-            const link = path.relative(this.src, linkTarget)
-            if (link.startsWith("..")) {
-              // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
-              return stat(resolved)
-                .then(targetFileStat => {
-                  metadata.set(file, targetFileStat)
-                  return targetFileStat
-                })
-            }
-            else {
-              (<any>fileStat).relativeLink = link
+
+      // https://github.com/electron-userland/electron-builder/issues/1539
+      // but do not filter if we inside node_modules dir
+      if (fileStat.isDirectory() && file.endsWith(nodeModulesSystemDependentSuffix) && !parent.includes("node_modules")) {
+        return dependencies(parent, extraIgnoredFiles)
+          .then(it => {
+            if (debug.enabled) {
+              debug(`Dev or extraneous dependencies in the ${parent}: ${Array.from(extraIgnoredFiles).filter(it => it.startsWith(file)).map(it => path.relative(file, it)).join(", ")}`)
             }
             return null
           })
       }
-      return null
+
+      if (!fileStat.isSymbolicLink()) {
+        return null
+      }
+
+      return readlink(file)
+        .then((linkTarget): any => {
+          // http://unix.stackexchange.com/questions/105637/is-symlinks-target-relative-to-the-destinations-parent-directory-and-if-so-wh
+          const resolved = path.resolve(path.dirname(file), linkTarget)
+          const link = path.relative(this.src, linkTarget)
+          if (link.startsWith("..")) {
+            // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
+            return stat(resolved)
+              .then(targetFileStat => {
+                metadata.set(file, targetFileStat)
+                return targetFileStat
+              })
+          }
+          else {
+            (<any>fileStat).relativeLink = link
+          }
+          return null
+        })
     })
     
     // transform before electron-compile to avoid filtering (cache files in any case should be not transformed)

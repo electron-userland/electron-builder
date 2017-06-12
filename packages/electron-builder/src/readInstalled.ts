@@ -179,3 +179,12 @@ async function readScopedDir(dir: string) {
   result.sort()
   return result
 }
+
+export async function dependencies(dir: string, result: Set<string>): Promise<void> {
+  const pathToDep = await readInstalled(dir)
+  for (const dep of pathToDep.values()) {
+    if (dep.extraneous) {
+      result.add(dep.path)
+    }
+  }
+}

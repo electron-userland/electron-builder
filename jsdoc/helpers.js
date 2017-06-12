@@ -37,7 +37,7 @@ function renderMemberListDescription(text, indent) {
   return dmdHelper.inlineLinks(text)
     .replace(/<br>/g, "\n")
     .replace(/\n/g, "\n" + indent)
-    .replace('"**\\/*"', '"**/*"')
+    .replace(new RegExp("\\*{2}\\\\/", "g"), "**/")
 }
 
 function getInlinedChild(types) {

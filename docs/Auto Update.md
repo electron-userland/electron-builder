@@ -124,14 +124,17 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)  
 **Extends**: <code>internal:EventEmitter</code>  
 **Properties**
-* <a name="AppUpdater-autoDownload"></a>`autoDownload` = `true` Boolean - Whether to automatically download an update when it is found.
-* <a name="AppUpdater-allowPrerelease"></a>`allowPrerelease` = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
-  
-  If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
-* <a name="AppUpdater-allowDowngrade"></a>`allowDowngrade` = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
-* <a name="AppUpdater-requestHeaders"></a>`requestHeaders` [RequestHeaders](electron-builder-http#RequestHeaders) - The request headers.
-* <a name="AppUpdater-logger"></a>`logger` [Logger](electron-updater#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
-* <a name="AppUpdater-signals"></a>`signals` = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal) - For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
+
+| Name | Type | Description |
+| --- | --- | --- |
+| autoDownload = <code>true</code>| <code>Boolean</code> | <a name="AppUpdater-autoDownload"></a>Whether to automatically download an update when it is found. |
+| allowPrerelease| <code>Boolean</code> | <a name="AppUpdater-allowPrerelease"></a>*GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.<br><br>If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`). |
+| allowDowngrade| <code>Boolean</code> | <a name="AppUpdater-allowDowngrade"></a>Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel). |
+| requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
+| logger| <code>[Logger](electron-updater#Logger)</code> \| <code>null</code> | <a name="AppUpdater-logger"></a>The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature. |
+| signals = <code>new UpdaterSignal(this)</code>| <code>[UpdaterSignal](#UpdaterSignal)</code> | <a name="AppUpdater-signals"></a>For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})` |
+
+
 * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
     * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](electron-updater#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>

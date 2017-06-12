@@ -36,14 +36,7 @@ Most of the options accept `null` — for example, to explicitly set that DMG ic
 
 Hidden files are not ignored by default, but all files that should be ignored, are [ignored by default](#default-file-pattern).
 
-Development dependencies are never copied in any case. You don't need to ignore it explicitly.
-
-[Multiple patterns](#multiple-glob-patterns) are supported. If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
-
-Remember that default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). If you have production dependencies, you need to ensure you add `node_modules/**/*`.
- `package.json` is added to your custom in any case. All default ignores are added in any case — you don't need to repeat it if you configure own patterns.
-
-May be specified in the platform options (e.g. in the [mac](#MacOptions)).
+If directory matched, all contents are copied. So, you can just specify `foo` to copy `foo` directory.
 
 ### Multiple Glob Patterns
  ```js
@@ -59,7 +52,7 @@ May be specified in the platform options (e.g. in the [mac](#MacOptions)).
  ]
  ```
  
-### Excluding directories
+### Excluding Directories
  
 Remember that `!doNotCopyMe/**/*` would match the files *in* the `doNotCopyMe` directory, but not the directory itself, so the [empty directory](https://github.com/gulpjs/gulp/issues/165#issuecomment-32613179) would be created.
 Solution — use macro `${/*}`, e.g. `!doNotCopyMe${/*}`.
@@ -107,6 +100,12 @@ Configuration Options
 * <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
 * <a name="Config-productName"></a>`productName` String - As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
 * <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+  
+  Development dependencies are never copied in any case. You don't need to ignore it explicitly.
+  
+  Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All [default ignores](#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
+  
+  May be specified in the platform options (e.g. in the [mac](#MacOptions)).
 * <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String<a name="FilePattern"></a> - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
   
   Glob rules the same as for [files](#multiple-glob-patterns).

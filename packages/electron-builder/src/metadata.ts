@@ -85,6 +85,14 @@ export interface Config extends PlatformSpecificBuildOptions {
 
   /**
    * A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+   *
+   * Development dependencies are never copied in any case. You don't need to ignore it explicitly.
+   *
+   * Default pattern `**\/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
+   * `package.json` and `**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case.
+   * All [default ignores](#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
+   *
+   * May be specified in the platform options (e.g. in the [mac](#MacOptions)).
    */
   readonly files?: Array<string> | string | null
 

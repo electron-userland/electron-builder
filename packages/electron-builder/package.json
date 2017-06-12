@@ -13,8 +13,7 @@
   "bin": {
     "build": "./out/cli/build-cli.js",
     "install-app-deps": "./out/cli/install-app-deps.js",
-    "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js",
-    "create-self-signed-cert": "./out/cli/create-self-signed-cert"
+    "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },
   "repository": "electron-userland/electron-builder",
   "engines": {
