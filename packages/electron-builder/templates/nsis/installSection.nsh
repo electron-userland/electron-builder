@@ -88,7 +88,7 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 Var /GLOBAL shortcuts
 StrCpy $shortcuts "--recreate-shortcuts"
 !ifndef allowToChangeInstallationDirectory
-  ${If} ${FileExists} `$appExe`
+  ${If} ${FileExists} "$appExe"
     StrCpy $shortcuts "--keep-shortcuts"
   ${EndIf}
 !endif
