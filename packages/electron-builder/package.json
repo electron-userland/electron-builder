@@ -11,7 +11,9 @@
     "certs/root_certs.keychain"
   ],
   "bin": {
-    "build": "./out/cli/cliOptions.js",
+    "electron-builder": "./out/cli/cli.js",
+    "elb": "./out/cli/cli.js",
+    "build": "./out/cli/cli.js",
     "install-app-deps": "./out/cli/install-app-deps.js",
     "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },
@@ -30,6 +32,7 @@
     "nsis",
     "app",
     "dmg",
+    "pkg",
     "msi",
     "exe",
     "setup",
@@ -37,7 +40,9 @@
     "OS X",
     "MacOS",
     "Mac",
-    "appx"
+    "appx",
+    "snap",
+    "portable"
   ],
   "author": "Vladimir Krivosheev",
   "contributors": ["Stefan Judis"],

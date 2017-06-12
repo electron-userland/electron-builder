@@ -268,7 +268,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       group: publishGroup,
       alias: "p",
       describe: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
-      choices: ["onTag", "onTagOrDraft", "always", "never"],
+      choices: ["onTag", "onTagOrDraft", "always", "never", <any>undefined],
     })
     .option("draft", {
       group: publishGroup,
@@ -285,12 +285,12 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("platform", {
       group: deprecated,
       describe: "The target platform (preferred to use --mac, --win or --linux)",
-      choices: ["mac", "win", "linux", "darwin", "win32", "all"],
+      choices: ["mac", "win", "linux", "darwin", "win32", "all", <any>undefined],
     })
     .option("arch", {
       group: deprecated,
       describe: "The target arch (preferred to use --x64 or --ia32)",
-      choices: ["ia32", "x64", "all"],
+      choices: ["ia32", "x64", "all", <any>undefined],
     })
     .option("extraMetadata", {
       alias: ["em"],
@@ -313,11 +313,11 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       describe: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + underline("https://goo.gl/YFRJOM"),
     })
     .group(["help", "version"], "Other:")
-    .example("build -mwl", "build for macOS, Windows and Linux")
-    .example("build --linux deb tar.xz", "build deb and tar.xz for Linux")
-    .example("build --win --ia32", "build for Windows ia32")
-    .example("build --em.foo=bar", "set package.json property `foo` to `bar`")
-    .example("build --config.nsis.unicode=false", "configure unicode options for NSIS")
+    .example("electron-builder -mwl", "build for macOS, Windows and Linux")
+    .example("electron-builder --linux deb tar.xz", "build deb and tar.xz for Linux")
+    .example("electron-builder --win --ia32", "build for Windows ia32")
+    .example("electron-builder --em.foo=bar", "set package.json property `foo` to `bar`")
+    .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
 }
 
 /** @private */
