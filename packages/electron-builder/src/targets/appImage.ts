@@ -38,7 +38,7 @@ export default class AppImageTarget extends Target {
     const packager = this.packager
 
     // https://github.com/electron-userland/electron-builder/issues/775
-    const resultFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "AppImage", arch, "${name}-${version}-${arch}.${ext}"))
+    const resultFile = path.join(this.outDir, packager.computeSafeArtifactName("AppImage", arch, false))
     await unlinkIfExists(resultFile)
 
     const appImagePath = await appImagePathPromise

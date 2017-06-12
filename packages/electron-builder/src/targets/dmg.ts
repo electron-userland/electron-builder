@@ -23,7 +23,6 @@ export class DmgTarget extends Target {
 
   async build(appPath: string, arch: Arch) {
     const packager = this.packager
-    const appInfo = packager.appInfo
     log("Building DMG")
 
     const specification = await this.computeDmgOptions()
@@ -178,7 +177,7 @@ export class DmgTarget extends Target {
 
     await addLicenseToDmg(packager, artifactPath)
 
-    this.packager.dispatchArtifactCreated(artifactPath, this, arch, `${appInfo.name}-${appInfo.version}.dmg`)
+    this.packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName("dmg"))
   }
 
   computeVolumeName(custom?: string | null): string {

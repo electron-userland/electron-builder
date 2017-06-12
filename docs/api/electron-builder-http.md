@@ -7,6 +7,8 @@
 <dd></dd>
 <dt><a href="#module_electron-builder-http/out/ProgressCallbackTransform">electron-builder-http/out/ProgressCallbackTransform</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder-http/out/rfc2253Parser">electron-builder-http/out/rfc2253Parser</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder-http">electron-builder-http</a></dt>
 <dd></dd>
 </dl>
@@ -219,6 +221,18 @@
 | chunk | <code>any</code> | 
 | encoding | <code>String</code> | 
 | callback | <code>function</code> | 
+
+<a name="module_electron-builder-http/out/rfc2253Parser"></a>
+
+## electron-builder-http/out/rfc2253Parser
+<a name="module_electron-builder-http/out/rfc2253Parser.parseDn"></a>
+
+### `electron-builder-http/out/rfc2253Parser.parseDn(seq)` ⇒ <code>Map&lt;String \| String&gt;</code>
+**Kind**: method of [<code>electron-builder-http/out/rfc2253Parser</code>](#module_electron-builder-http/out/rfc2253Parser)  
+
+| Param | Type |
+| --- | --- |
+| seq | <code>String</code> | 
 
 <a name="module_electron-builder-http"></a>
 

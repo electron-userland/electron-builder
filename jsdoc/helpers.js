@@ -20,6 +20,12 @@ function renderTypeNames(types, delimiter, root, isTypeAsCode, isSkipNull) {
   const tagOpen = isTypeAsCode ? "<code>" : ""
   const tagClose = isTypeAsCode ? "</code>" : ""
 
+  for (let obj of types) {
+    if (obj.includes("CancellationToken")) {
+      break
+    }
+  }
+
   if (isSkipNull) {
     types = types.filter(it => !isSkipNull || it !== "null")
   }
@@ -173,18 +179,7 @@ function _link(input, options) {
     }
   }
   else {
-    let pageUrl = ""
-    for (const page of exports.pages) {
-      if (page.dataMap.has(linked.id)) {
-        const a = page.data
-        const b = options.data.root
-        if (a.length !== b.length && a[a.length - 1] !== b[a.length - 1]) {
-          pageUrl = page.pageUrl
-        }
-        break
-      }
-    }
-    output.url = `${pageUrl}#${anchorName.call(linked, options)}`
+    output.url = fullLink(linked, options.data.root)
   }
   return output
 }
@@ -258,19 +253,23 @@ function identifierToLink(id, root) {
     }
     return output
   }
+  return `[${linked.name}](${fullLink(linked, root)})`
+}
 
+function fullLink(linked, root) {
+  const relativeName = anchorName.call(linked)
   let pageUrl = ""
   for (const page of exports.pages) {
     if (page.dataMap.has(linked.id)) {
       const a = page.data
       const b = root
-      if (a.length !== b.length && a[a.length - 1] !== b[a.length - 1]) {
+      if (a.length !== b.length || a[a.length - 1] !== b[a.length - 1]) {
         pageUrl = page.pageUrl
       }
       break
     }
   }
-  return `[${linked.name}](${pageUrl}#${anchorName.call(linked)})`
+  return `${pageUrl}#${relativeName}`
 }
 
 function resolveById(id) {

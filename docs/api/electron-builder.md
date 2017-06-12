@@ -467,11 +467,12 @@
 * [electron-builder/out/linuxPackager](#module_electron-builder/out/linuxPackager)
     * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
+        * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
         * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -498,11 +499,12 @@
 
 * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/linuxPackager.LinuxPackager+createTargets)
+    * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
     * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -524,6 +526,17 @@
 | targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/linuxPackager.__type&gt;</code> | 
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName"></a>
+
+#### `linuxPackager.computeSafeArtifactName(ext, arch, skipArchIfX64)` ⇒ <code>String</code>
+**Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
+
+| Param | Type |
+| --- | --- |
+| ext | <code>String</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
@@ -566,7 +579,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
+#### `linuxPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>LinuxPackager</code>](#LinuxPackager)  
 
 | Param | Type |
@@ -575,6 +588,7 @@
 | ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>String</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
@@ -674,9 +688,10 @@
         * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>String</code>
         * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -705,9 +720,10 @@
     * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/macPackager.MacPackager+getElectronSrcDir) ⇒ <code>String</code>
     * [`.getIconPath()`](#module_electron-builder/out/macPackager.MacPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/macPackager.MacPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -766,6 +782,17 @@
 | targets | <code>Array&lt;[Target](electron-builder-core#Target)&gt;</code> | 
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName"></a>
+
+#### `macPackager.computeSafeArtifactName(ext, arch, skipArchIfX64)` ⇒ <code>String</code>
+**Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
+
+| Param | Type |
+| --- | --- |
+| ext | <code>String</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
+| skipArchIfX64 |  | 
+
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `macPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
@@ -789,7 +816,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
+#### `macPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>MacPackager</code>](#MacPackager)  
 
 | Param | Type |
@@ -798,6 +825,7 @@
 | ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>String</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
@@ -916,12 +944,13 @@
 
 * [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
     * [.PlatformPackager](#PlatformPackager)
+        * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
         * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
         * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -959,12 +988,13 @@
 
 
 * [.PlatformPackager](#PlatformPackager)
+    * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
     * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
     * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -974,6 +1004,17 @@
     * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
+
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName"></a>
+
+#### `platformPackager.computeSafeArtifactName(ext, arch, skipArchIfX64)` ⇒ <code>String</code>
+**Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
+
+| Param | Type |
+| --- | --- |
+| ext | <code>String</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
 
@@ -1027,7 +1068,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
+#### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
@@ -1036,6 +1077,7 @@
 | ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>String</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 
@@ -1252,6 +1294,7 @@
 * [electron-builder/out/targets/appx](#module_electron-builder/out/targets/appx)
     * [.AppXTarget](#AppXTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
         * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/appx.AppXTarget+build) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.quoteString(s)`](#module_electron-builder/out/targets/appx.quoteString) ⇒ <code>String</code>
 
 <a name="AppXTarget"></a>
 
@@ -1273,6 +1316,15 @@
 | --- | --- |
 | appOutDir | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> | 
+
+<a name="module_electron-builder/out/targets/appx.quoteString"></a>
+
+### `electron-builder/out/targets/appx.quoteString(s)` ⇒ <code>String</code>
+**Kind**: method of [<code>electron-builder/out/targets/appx</code>](#module_electron-builder/out/targets/appx)  
+
+| Param | Type |
+| --- | --- |
+| s | <code>String</code> | 
 
 <a name="module_electron-builder/out/targets/ArchiveTarget"></a>
 
@@ -1753,11 +1805,12 @@
         * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;String&gt;</code>
         * [`.sign(file, logMessagePrefix)`](#module_electron-builder/out/winPackager.WinPackager+sign) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.signAndEditResources(file)`](#module_electron-builder/out/winPackager.WinPackager+signAndEditResources) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
         * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
         * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+        * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
         * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
         * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -1827,9 +1880,9 @@
     if (publisherName == null &amp;&amp; cscFile != null) {
       if (process.platform === &quot;win32&quot;) {
         try {
-          const subject = (await exec(&quot;powershell.exe&quot;, [&#x60;(Get-PfxCertificate &quot;${cscFile}&quot;).Subject&#x60;])).trim().match(/CN=([^,]+)/)
+          const subject = parseDn(await exec(&quot;powershell.exe&quot;, [&#x60;(Get-PfxCertificate &quot;${cscFile}&quot;).Subject&#x60;])).get(&quot;CN&quot;)
           if (subject) {
-            return asArray(subject[1])
+            return asArray(subject)
           }
         }
         catch (e) {
@@ -1861,11 +1914,12 @@
     * [`.getIconPath()`](#module_electron-builder/out/winPackager.WinPackager+getIconPath) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.sign(file, logMessagePrefix)`](#module_electron-builder/out/winPackager.WinPackager+sign) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.signAndEditResources(file)`](#module_electron-builder/out/winPackager.WinPackager+signAndEditResources) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
     * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
     * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
-    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
+    * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
     * [`.expandMacro(pattern, arch, extra)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
     * [`.generateName(ext, arch, deployment, classifier)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName) ⇒ <code>String</code>
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
@@ -1911,6 +1965,17 @@
 | --- | --- |
 | file | <code>String</code> | 
 
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName"></a>
+
+#### `winPackager.computeSafeArtifactName(ext, arch, skipArchIfX64)` ⇒ <code>String</code>
+**Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
+
+| Param | Type |
+| --- | --- |
+| ext | <code>String</code> | 
+| arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
+| skipArchIfX64 |  | 
+
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 
 #### `winPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
@@ -1952,7 +2017,7 @@
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
 
-#### `winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern)` ⇒ <code>String</code>
+#### `winPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>WinPackager</code>](#WinPackager)  
 
 | Param | Type |
@@ -1961,6 +2026,7 @@
 | ext | <code>String</code> | 
 | arch | <code>[Arch](electron-builder-core#Arch)</code> \| <code>null</code> | 
 | defaultPattern | <code>String</code> | 
+| skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
 

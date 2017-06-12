@@ -78,7 +78,7 @@ export default class FpmTarget extends Target {
       isUseArchIfX64 = true
     }
 
-    const destination = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch !== Arch.x64 || isUseArchIfX64 ? arch : null, nameFormat))
+    const destination = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
     await unlinkIfExists(destination)
     if (this.packager.info.prepackaged != null) {
       await ensureDir(this.outDir)

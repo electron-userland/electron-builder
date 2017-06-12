@@ -63,6 +63,7 @@ async function main() {
     "!***/*-dmgLicense.js",
     "!***/*-repositoryInfo.js",
     "!***/*-readPackageJson.js",
+    "!***/*-create-self-signed-cert.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -77,10 +78,11 @@ async function main() {
     {page: "api/electron-updater.md", pageUrl: "electron-updater", files: updaterFiles},
 
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
+    {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
+
     {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
     {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
-    {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
   ]
 
   await render(pages, {
@@ -169,7 +171,10 @@ async function render(pages, jsdoc2MdOptions) {
   sortAutoUpdate(pages)
 
   for (const page of pages) {
-    const finalOptions = Object.assign({data: page.data, "property-list-format": page === pages[0] ? "list" : "table"}, jsdoc2MdOptions)
+    const finalOptions = Object.assign({
+      data: page.data,
+      "property-list-format": page === pages[0] ? "list" : "table"
+    }, jsdoc2MdOptions)
 
     if (page === pages[0]) {
       finalOptions["heading-depth"] = 1
