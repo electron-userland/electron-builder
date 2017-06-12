@@ -72,19 +72,22 @@ export default class AppXTarget extends Target {
 
     this.writeManifest(templatePath, preAppx, safeName, arch, publisher, this.options.assetNames)
 
+    const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", destination]
+    
     if (this.options.makePri || customAssetsFolder) {
       const priConfigPath = path.join(preAppx, "priconfig.xml")
       const makePriCreateConfigArgs = ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"]
       await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makePriCreateConfigArgs)
-      const makrPriNewArgs = ["new", "/pr", preAppx, "/cf", priConfigPath]
+      const makrPriNewArgs = ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx]
       await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makepri.exe"), makrPriNewArgs)
+
+      makeAppXArgs.push("/l")
     }
 
-    const args = ["pack", "/o", "/d", preAppx, "/p", destination]
-    use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
+    use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
-    // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
+    // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), makeAppXArgs)
+    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), makeAppXArgs)
 
     await packager.sign(destination)
     packager.dispatchArtifactCreated(destination, this, arch, packager.expandArtifactNamePattern(this.options, "appx", arch, "${name}-${version}-${arch}.${ext}"))
@@ -93,7 +96,7 @@ export default class AppXTarget extends Target {
   private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string, assetNames: AppXVisualAssetsNames | undefined) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
-      .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+      .replace(/\$\{([a-zA-Z0-9]+)\}/g, (match, p1): string => {
         switch (p1) {
           case "publisher":
             return publisher
