@@ -36,8 +36,7 @@
         StrCpy $0 "$0 --delete-app-data"
       ${else}
         # always pass --updated flag - to ensure that if DELETE_APP_DATA_ON_UNINSTALL is defined, user data will be not removed
-        StrCpy $0 "$0 --updated"
-        StrCpy $0 "$0 $shortcuts"
+        StrCpy $0 "$0 --updated $shortcuts"
       ${endif}
 
       ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
