@@ -105,100 +105,18 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 ## API
 
 * [electron-updater](#module_electron-updater)
-    * [`.FileInfo`](#FileInfo)
-    * [`.Logger`](#Logger)
-        * [`.error(message)`](#module_electron-updater.Logger+error)
-        * [`.info(message)`](#module_electron-updater.Logger+info)
-        * [`.warn(message)`](#module_electron-updater.Logger+warn)
-    * [`.UpdateCheckResult`](#UpdateCheckResult)
     * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
-        * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+        * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](electron-updater#UpdateCheckResult)&gt;</code>
         * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
-    * [.Provider](#Provider)
-        * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
-        * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
-        * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
         * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
-    * [`.autoUpdater`](#module_electron-updater.autoUpdater) : <code>[AppUpdater](#AppUpdater)</code>
-    * [`.formatUrl(url)`](#module_electron-updater.formatUrl) ⇒ <code>String</code>
-    * [`.getChannelFilename(channel)`](#module_electron-updater.getChannelFilename) ⇒ <code>String</code>
-    * [`.getCurrentPlatform()`](#module_electron-updater.getCurrentPlatform) ⇒ <code>any</code>
-    * [`.getCustomChannelName(channel)`](#module_electron-updater.getCustomChannelName) ⇒ <code>String</code>
-    * [`.getDefaultChannelName()`](#module_electron-updater.getDefaultChannelName) ⇒ <code>String</code>
-    * [`.isUseOldMacProvider()`](#module_electron-updater.isUseOldMacProvider) ⇒ <code>Boolean</code>
-
-<a name="FileInfo"></a>
-
-### `FileInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **name**| <code>String</code> | 
-| **url**| <code>String</code> | 
-| sha2| <code>String</code> | 
-| sha512| <code>String</code> | 
-| headers| <code>Object</code> | 
-
-<a name="Logger"></a>
-
-### `Logger`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)  
-
-* [`.Logger`](#Logger)
-    * [`.error(message)`](#module_electron-updater.Logger+error)
-    * [`.info(message)`](#module_electron-updater.Logger+info)
-    * [`.warn(message)`](#module_electron-updater.Logger+warn)
-
-<a name="module_electron-updater.Logger+error"></a>
-
-#### `logger.error(message)`
-**Kind**: instance method of [<code>Logger</code>](#Logger)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>any</code> | 
-
-<a name="module_electron-updater.Logger+info"></a>
-
-#### `logger.info(message)`
-**Kind**: instance method of [<code>Logger</code>](#Logger)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>any</code> | 
-
-<a name="module_electron-updater.Logger+warn"></a>
-
-#### `logger.warn(message)`
-**Kind**: instance method of [<code>Logger</code>](#Logger)  
-
-| Param | Type |
-| --- | --- |
-| message | <code>any</code> | 
-
-<a name="UpdateCheckResult"></a>
-
-### `UpdateCheckResult`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **versionInfo**| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
-| fileInfo| <code>[FileInfo](#FileInfo)</code> | 
-| downloadPromise| <code>Promise&lt;any&gt;</code> \| <code>null</code> | 
-| cancellationToken| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
 
 <a name="AppUpdater"></a>
 
@@ -206,19 +124,16 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 **Kind**: class of [<code>electron-updater</code>](#module_electron-updater)  
 **Extends**: <code>internal:EventEmitter</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| autoDownload = <code>true</code>| <code>Boolean</code> | <a name="AppUpdater-autoDownload"></a>Whether to automatically download an update when it is found. |
-| allowPrerelease| <code>Boolean</code> | <a name="AppUpdater-allowPrerelease"></a>*GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.<br><br>If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`). |
-| allowDowngrade| <code>Boolean</code> | <a name="AppUpdater-allowDowngrade"></a>Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel). |
-| requestHeaders| <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | <a name="AppUpdater-requestHeaders"></a>The request headers. |
-| logger = <code>(&lt;any&gt;global).__test_app ? null : console</code>| <code>[Logger](#Logger)</code> \| <code>null</code> | <a name="AppUpdater-logger"></a>The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature. |
-| signals = <code>new UpdaterSignal(this)</code>| <code>[UpdaterSignal](#UpdaterSignal)</code> | <a name="AppUpdater-signals"></a>For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})` |
-
-
+* <a name="AppUpdater-autoDownload"></a>`autoDownload` = `true` Boolean - Whether to automatically download an update when it is found.
+* <a name="AppUpdater-allowPrerelease"></a>`allowPrerelease` = `false` Boolean - *GitHub provider only.* Whether to allow update to pre-release versions. Defaults to `true` if application version contains prerelease components (e.g. `0.12.1-alpha.1`, here `alpha` is a prerelease component), otherwise `false`.
+  
+  If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
+* <a name="AppUpdater-allowDowngrade"></a>`allowDowngrade` = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
+* <a name="AppUpdater-requestHeaders"></a>`requestHeaders` [RequestHeaders](electron-builder-http#RequestHeaders) - The request headers.
+* <a name="AppUpdater-logger"></a>`logger` [Logger](electron-updater#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
+* <a name="AppUpdater-signals"></a>`signals` = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal) - For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
 * [.AppUpdater](#AppUpdater) ⇐ <code>internal:EventEmitter</code>
-    * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+    * [`.checkForUpdates()`](#module_electron-updater.AppUpdater+checkForUpdates) ⇒ <code>Promise&lt;[UpdateCheckResult](electron-updater#UpdateCheckResult)&gt;</code>
     * [`.downloadUpdate(cancellationToken)`](#module_electron-updater.AppUpdater+downloadUpdate) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
@@ -227,7 +142,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 
 <a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
 
-#### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
+#### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](electron-updater#UpdateCheckResult)&gt;</code>
 Asks the server whether there is an update.
 
 **Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
@@ -276,48 +191,6 @@ This is different from the normal quit event sequence.
 | Param | Type | Description |
 | --- | --- | --- |
 | isSilent | <code>Boolean</code> | *windows-only* Runs the installer in silent mode. |
-
-<a name="Provider"></a>
-
-### Provider
-**Kind**: class of [<code>electron-updater</code>](#module_electron-updater)  
-
-* [.Provider](#Provider)
-    * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
-    * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
-    * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
-    * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
-
-<a name="module_electron-updater.Provider+getLatestVersion"></a>
-
-#### `provider.getLatestVersion()` ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
-**Kind**: instance method of [<code>Provider</code>](#Provider)  
-<a name="module_electron-updater.Provider+setRequestHeaders"></a>
-
-#### `provider.setRequestHeaders(value)`
-**Kind**: instance method of [<code>Provider</code>](#Provider)  
-
-| Param | Type |
-| --- | --- |
-| value | <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | 
-
-<a name="module_electron-updater.Provider+getUpdateFile"></a>
-
-#### `provider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
-**Kind**: instance method of [<code>Provider</code>](#Provider)  
-
-| Param | Type |
-| --- | --- |
-| versionInfo | <code>module:electron-updater.T</code> | 
-
-<a name="module_electron-updater.Provider+validateUpdateInfo"></a>
-
-#### `provider.validateUpdateInfo(info)`
-**Kind**: instance method of [<code>Provider</code>](#Provider)  
-
-| Param | Type |
-| --- | --- |
-| info | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
 
 <a name="UpdaterSignal"></a>
 
@@ -369,48 +242,5 @@ Emitted when an authenticating proxy is asking for user credentials.
 | --- | --- |
 | handler | <code>callback</code> | 
 
-<a name="module_electron-updater.autoUpdater"></a>
-
-### `electron-updater.autoUpdater` : <code>[AppUpdater](#AppUpdater)</code>
-**Kind**: constant of [<code>electron-updater</code>](#module_electron-updater)  
-<a name="module_electron-updater.formatUrl"></a>
-
-### `electron-updater.formatUrl(url)` ⇒ <code>String</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
-
-| Param | Type |
-| --- | --- |
-| url | <code>module:url.Url</code> | 
-
-<a name="module_electron-updater.getChannelFilename"></a>
-
-### `electron-updater.getChannelFilename(channel)` ⇒ <code>String</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
-
-| Param | Type |
-| --- | --- |
-| channel | <code>String</code> | 
-
-<a name="module_electron-updater.getCurrentPlatform"></a>
-
-### `electron-updater.getCurrentPlatform()` ⇒ <code>any</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
-<a name="module_electron-updater.getCustomChannelName"></a>
-
-### `electron-updater.getCustomChannelName(channel)` ⇒ <code>String</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
-
-| Param | Type |
-| --- | --- |
-| channel | <code>String</code> | 
-
-<a name="module_electron-updater.getDefaultChannelName"></a>
-
-### `electron-updater.getDefaultChannelName()` ⇒ <code>String</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
-<a name="module_electron-updater.isUseOldMacProvider"></a>
-
-### `electron-updater.isUseOldMacProvider()` ⇒ <code>Boolean</code>
-**Kind**: method of [<code>electron-updater</code>](#module_electron-updater)  
 
 <!-- end of generated block -->

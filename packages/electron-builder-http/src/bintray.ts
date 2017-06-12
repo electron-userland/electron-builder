@@ -1,5 +1,5 @@
 import { CancellationToken } from "./CancellationToken"
-import { configureRequestOptions, HttpExecutor } from "./httpExecutor"
+import { configureRequestOptions, HttpExecutor, RequestHeaders } from "./httpExecutor"
 import { BintrayOptions } from "./publishOptions"
 
 export interface Version {
@@ -25,6 +25,12 @@ export class BintrayClient {
   readonly user: string
   readonly packageName: string
 
+  private requestHeaders: RequestHeaders | null
+
+  setRequestHeaders(value: RequestHeaders | null) {
+    this.requestHeaders = value
+  }
+
   constructor(options: BintrayOptions, private readonly httpExecutor: HttpExecutor<any>, private readonly cancellationToken: CancellationToken, apiKey?: string | null) {
     if (options.owner == null) {
       throw new Error("owner is not specified")
@@ -42,7 +48,7 @@ export class BintrayClient {
   }
 
   private bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-    return this.httpExecutor.request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path}, auth, method), cancellationToken, data)
+    return this.httpExecutor.request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
   }
 
   getVersion(version: string): Promise<Version> {

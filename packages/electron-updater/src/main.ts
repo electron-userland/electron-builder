@@ -47,7 +47,7 @@ export interface FileInfo {
 export abstract class Provider<T extends VersionInfo> {
   protected requestHeaders: RequestHeaders | null
 
-  setRequestHeaders(value: RequestHeaders | null) {
+  setRequestHeaders(value: RequestHeaders | null): void {
     this.requestHeaders = value
   }
 

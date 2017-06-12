@@ -7,6 +7,11 @@ import { FileInfo, Provider } from "./main"
 export class BintrayProvider extends Provider<VersionInfo> {
   private client: BintrayClient
 
+  setRequestHeaders(value: any): void {
+    super.setRequestHeaders(value)
+    this.client.setRequestHeaders(value)
+  }
+
   constructor(configuration: BintrayOptions, httpExecutor: HttpExecutor<any>) {
     super()
 

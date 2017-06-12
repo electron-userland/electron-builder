@@ -2,9 +2,11 @@ import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { TmpDir } from "electron-builder-util/out/tmp"
+import { NoOpLogger } from "electron-updater/out/AppUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
+import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
 
@@ -23,6 +25,10 @@ function createTestApp(version: string) {
     getAppPath: function () {
     },
 
+    getPath: function (type: string) {
+      return path.join(tmpdir(), "electron-updater-test", type)
+    },
+
     on: function () {
       // ignored
     },
@@ -36,6 +42,7 @@ process.env.TEST_UPDATER_PLATFORM = "win32"
 
 function tuneNsisUpdater(updater: NsisUpdater) {
   (<any>updater).httpExecutor = httpExecutor
+  updater.logger = new NoOpLogger()
 }
 
 test("check updates - no versions at all", async () => {

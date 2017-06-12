@@ -354,6 +354,12 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 ### Publisher
 **Kind**: class of [<code>electron-publish</code>](#module_electron-publish)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **providerName**| <code>String</code> | 
+
 
 * [.Publisher](#Publisher)
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>

@@ -4,6 +4,8 @@ Developer API only. See [[Auto Update]] for user documentation.
 ## Modules
 
 <dl>
+<dt><a href="#module_electron-updater">electron-updater</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-updater/out/BintrayProvider">electron-updater/out/BintrayProvider</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-updater/out/electronHttpExecutor">electron-updater/out/electronHttpExecutor</a></dt>
@@ -20,32 +22,216 @@ Developer API only. See [[Auto Update]] for user documentation.
 <dd></dd>
 </dl>
 
+<a name="module_electron-updater"></a>
+
+## electron-updater
+
+* [electron-updater](#module_electron-updater)
+    * [`.FileInfo`](#FileInfo)
+    * [`.Logger`](#Logger)
+        * [`.error(message)`](#module_electron-updater.Logger+error)
+        * [`.info(message)`](#module_electron-updater.Logger+info)
+        * [`.warn(message)`](#module_electron-updater.Logger+warn)
+    * [`.UpdateCheckResult`](#UpdateCheckResult)
+    * [.Provider](#Provider)
+        * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
+        * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
+        * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
+        * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
+    * [`.autoUpdater`](#module_electron-updater.autoUpdater) : <code>[AppUpdater](Auto-Update#AppUpdater)</code>
+    * [`.formatUrl(url)`](#module_electron-updater.formatUrl) ⇒ <code>String</code>
+    * [`.getChannelFilename(channel)`](#module_electron-updater.getChannelFilename) ⇒ <code>String</code>
+    * [`.getCurrentPlatform()`](#module_electron-updater.getCurrentPlatform) ⇒ <code>any</code>
+    * [`.getCustomChannelName(channel)`](#module_electron-updater.getCustomChannelName) ⇒ <code>String</code>
+    * [`.getDefaultChannelName()`](#module_electron-updater.getDefaultChannelName) ⇒ <code>String</code>
+    * [`.isUseOldMacProvider()`](#module_electron-updater.isUseOldMacProvider) ⇒ <code>Boolean</code>
+
+<a name="FileInfo"></a>
+
+### `FileInfo`
+**Kind**: interface of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **name**| <code>String</code> | 
+| **url**| <code>String</code> | 
+| sha2| <code>String</code> | 
+| sha512| <code>String</code> | 
+| headers| <code>Object</code> | 
+
+<a name="Logger"></a>
+
+### `Logger`
+**Kind**: interface of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+
+* [`.Logger`](#Logger)
+    * [`.error(message)`](#module_electron-updater.Logger+error)
+    * [`.info(message)`](#module_electron-updater.Logger+info)
+    * [`.warn(message)`](#module_electron-updater.Logger+warn)
+
+<a name="module_electron-updater.Logger+error"></a>
+
+#### `logger.error(message)`
+**Kind**: instance method of [<code>Logger</code>](#Logger)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>any</code> | 
+
+<a name="module_electron-updater.Logger+info"></a>
+
+#### `logger.info(message)`
+**Kind**: instance method of [<code>Logger</code>](#Logger)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>any</code> | 
+
+<a name="module_electron-updater.Logger+warn"></a>
+
+#### `logger.warn(message)`
+**Kind**: instance method of [<code>Logger</code>](#Logger)  
+
+| Param | Type |
+| --- | --- |
+| message | <code>any</code> | 
+
+<a name="UpdateCheckResult"></a>
+
+### `UpdateCheckResult`
+**Kind**: interface of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **versionInfo**| <code>[VersionInfo](Publishing-Artifacts#VersionInfo)</code> | 
+| fileInfo| <code>[FileInfo](#FileInfo)</code> | 
+| downloadPromise| <code>Promise&lt;any&gt;</code> \| <code>null</code> | 
+| cancellationToken| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+
+<a name="Provider"></a>
+
+### Provider
+**Kind**: class of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+
+* [.Provider](#Provider)
+    * [`.getLatestVersion()`](#module_electron-updater.Provider+getLatestVersion) ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
+    * [`.setRequestHeaders(value)`](#module_electron-updater.Provider+setRequestHeaders)
+    * [`.getUpdateFile(versionInfo)`](#module_electron-updater.Provider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
+    * [`.validateUpdateInfo(info)`](#module_electron-updater.Provider+validateUpdateInfo)
+
+<a name="module_electron-updater.Provider+getLatestVersion"></a>
+
+#### `provider.getLatestVersion()` ⇒ <code>Promise&lt;module:electron-updater.T&gt;</code>
+**Kind**: instance method of [<code>Provider</code>](#Provider)  
+<a name="module_electron-updater.Provider+setRequestHeaders"></a>
+
+#### `provider.setRequestHeaders(value)`
+**Kind**: instance method of [<code>Provider</code>](#Provider)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>[RequestHeaders](electron-builder-http#RequestHeaders)</code> \| <code>null</code> | 
+
+<a name="module_electron-updater.Provider+getUpdateFile"></a>
+
+#### `provider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
+**Kind**: instance method of [<code>Provider</code>](#Provider)  
+
+| Param | Type |
+| --- | --- |
+| versionInfo | <code>module:electron-updater.T</code> | 
+
+<a name="module_electron-updater.Provider+validateUpdateInfo"></a>
+
+#### `provider.validateUpdateInfo(info)`
+**Kind**: instance method of [<code>Provider</code>](#Provider)  
+
+| Param | Type |
+| --- | --- |
+| info | <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code> | 
+
+<a name="module_electron-updater.autoUpdater"></a>
+
+### `electron-updater.autoUpdater` : <code>[AppUpdater](Auto-Update#AppUpdater)</code>
+**Kind**: constant of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+<a name="module_electron-updater.formatUrl"></a>
+
+### `electron-updater.formatUrl(url)` ⇒ <code>String</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+
+| Param | Type |
+| --- | --- |
+| url | <code>module:url.Url</code> | 
+
+<a name="module_electron-updater.getChannelFilename"></a>
+
+### `electron-updater.getChannelFilename(channel)` ⇒ <code>String</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+
+| Param | Type |
+| --- | --- |
+| channel | <code>String</code> | 
+
+<a name="module_electron-updater.getCurrentPlatform"></a>
+
+### `electron-updater.getCurrentPlatform()` ⇒ <code>any</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+<a name="module_electron-updater.getCustomChannelName"></a>
+
+### `electron-updater.getCustomChannelName(channel)` ⇒ <code>String</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+
+| Param | Type |
+| --- | --- |
+| channel | <code>String</code> | 
+
+<a name="module_electron-updater.getDefaultChannelName"></a>
+
+### `electron-updater.getDefaultChannelName()` ⇒ <code>String</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
+<a name="module_electron-updater.isUseOldMacProvider"></a>
+
+### `electron-updater.isUseOldMacProvider()` ⇒ <code>Boolean</code>
+**Kind**: method of [<code>electron-updater</code>](Auto-Update#module_electron-updater)  
 <a name="module_electron-updater/out/BintrayProvider"></a>
 
 ## electron-updater/out/BintrayProvider
 
 * [electron-updater/out/BintrayProvider](#module_electron-updater/out/BintrayProvider)
-    * [.BintrayProvider](#BintrayProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+    * [.BintrayProvider](#BintrayProvider) ⇐ <code>[Provider](#Provider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getLatestVersion) ⇒ <code>Promise&lt;[VersionInfo](Publishing-Artifacts#VersionInfo)&gt;</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+        * [`.setRequestHeaders(value)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+setRequestHeaders)
+        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="BintrayProvider"></a>
 
-### BintrayProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### BintrayProvider ⇐ <code>[Provider](#Provider)</code>
 **Kind**: class of [<code>electron-updater/out/BintrayProvider</code>](#module_electron-updater/out/BintrayProvider)  
-**Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+**Extends**: <code>[Provider](#Provider)</code>  
 
-* [.BintrayProvider](#BintrayProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+* [.BintrayProvider](#BintrayProvider) ⇐ <code>[Provider](#Provider)</code>
     * [`.getLatestVersion()`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getLatestVersion) ⇒ <code>Promise&lt;[VersionInfo](Publishing-Artifacts#VersionInfo)&gt;</code>
-    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+    * [`.setRequestHeaders(value)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+setRequestHeaders)
+    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="module_electron-updater/out/BintrayProvider.BintrayProvider+getLatestVersion"></a>
 
 #### `bintrayProvider.getLatestVersion()` ⇒ <code>Promise&lt;[VersionInfo](Publishing-Artifacts#VersionInfo)&gt;</code>
 **Kind**: instance method of [<code>BintrayProvider</code>](#BintrayProvider)  
+<a name="module_electron-updater/out/BintrayProvider.BintrayProvider+setRequestHeaders"></a>
+
+#### `bintrayProvider.setRequestHeaders(value)`
+**Kind**: instance method of [<code>BintrayProvider</code>](#BintrayProvider)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>any</code> | 
+
 <a name="module_electron-updater/out/BintrayProvider.BintrayProvider+getUpdateFile"></a>
 
-#### `bintrayProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+#### `bintrayProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 **Kind**: instance method of [<code>BintrayProvider</code>](#BintrayProvider)  
 
 | Param | Type |
@@ -111,19 +297,19 @@ Developer API only. See [[Auto Update]] for user documentation.
 ## electron-updater/out/GenericProvider
 
 * [electron-updater/out/GenericProvider](#module_electron-updater/out/GenericProvider)
-    * [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+    * [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](#Provider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="GenericProvider"></a>
 
-### GenericProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### GenericProvider ⇐ <code>[Provider](#Provider)</code>
 **Kind**: class of [<code>electron-updater/out/GenericProvider</code>](#module_electron-updater/out/GenericProvider)  
-**Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+**Extends**: <code>[Provider](#Provider)</code>  
 
-* [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+* [.GenericProvider](#GenericProvider) ⇐ <code>[Provider](#Provider)</code>
     * [`.getLatestVersion()`](#module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="module_electron-updater/out/GenericProvider.GenericProvider+getLatestVersion"></a>
 
@@ -131,7 +317,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 **Kind**: instance method of [<code>GenericProvider</code>](#GenericProvider)  
 <a name="module_electron-updater/out/GenericProvider.GenericProvider+getUpdateFile"></a>
 
-#### `genericProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+#### `genericProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 **Kind**: instance method of [<code>GenericProvider</code>](#GenericProvider)  
 
 | Param | Type |
@@ -143,16 +329,16 @@ Developer API only. See [[Auto Update]] for user documentation.
 ## electron-updater/out/GitHubProvider
 
 * [electron-updater/out/GitHubProvider](#module_electron-updater/out/GitHubProvider)
-    * [.BaseGitHubProvider](#BaseGitHubProvider) ⇐ <code>[Provider](Auto-Update#Provider)</code>
+    * [.BaseGitHubProvider](#BaseGitHubProvider) ⇐ <code>[Provider](#Provider)</code>
     * [.GitHubProvider](#GitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="BaseGitHubProvider"></a>
 
-### BaseGitHubProvider ⇐ <code>[Provider](Auto-Update#Provider)</code>
+### BaseGitHubProvider ⇐ <code>[Provider](#Provider)</code>
 **Kind**: class of [<code>electron-updater/out/GitHubProvider</code>](#module_electron-updater/out/GitHubProvider)  
-**Extends**: <code>[Provider](Auto-Update#Provider)</code>  
+**Extends**: <code>[Provider](#Provider)</code>  
 <a name="GitHubProvider"></a>
 
 ### GitHubProvider ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
@@ -161,7 +347,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 * [.GitHubProvider](#GitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
     * [`.getLatestVersion()`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[UpdateInfo](Publishing-Artifacts#UpdateInfo)&gt;</code>
-    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="module_electron-updater/out/GitHubProvider.GitHubProvider+getLatestVersion"></a>
 
@@ -169,7 +355,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 **Kind**: instance method of [<code>GitHubProvider</code>](#GitHubProvider)  
 <a name="module_electron-updater/out/GitHubProvider.GitHubProvider+getUpdateFile"></a>
 
-#### `gitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+#### `gitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 **Kind**: instance method of [<code>GitHubProvider</code>](#GitHubProvider)  
 
 | Param | Type |
@@ -224,7 +410,7 @@ Developer API only. See [[Auto Update]] for user documentation.
     * [`.PrivateGitHubUpdateInfo`](#PrivateGitHubUpdateInfo) ⇐ <code>[UpdateInfo](Publishing-Artifacts#UpdateInfo)</code>
     * [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
         * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
-        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+        * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="Asset"></a>
 
@@ -256,7 +442,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 
 * [.PrivateGitHubProvider](#PrivateGitHubProvider) ⇐ <code>[BaseGitHubProvider](#BaseGitHubProvider)</code>
     * [`.getLatestVersion()`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion) ⇒ <code>Promise&lt;[PrivateGitHubUpdateInfo](#PrivateGitHubUpdateInfo)&gt;</code>
-    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+    * [`.getUpdateFile(versionInfo)`](#module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile) ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getLatestVersion"></a>
 
@@ -264,7 +450,7 @@ Developer API only. See [[Auto Update]] for user documentation.
 **Kind**: instance method of [<code>PrivateGitHubProvider</code>](#PrivateGitHubProvider)  
 <a name="module_electron-updater/out/PrivateGitHubProvider.PrivateGitHubProvider+getUpdateFile"></a>
 
-#### `privateGitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](Auto-Update#FileInfo)&gt;</code>
+#### `privateGitHubProvider.getUpdateFile(versionInfo)` ⇒ <code>Promise&lt;[FileInfo](#FileInfo)&gt;</code>
 **Kind**: instance method of [<code>PrivateGitHubProvider</code>](#PrivateGitHubProvider)  
 
 | Param | Type |

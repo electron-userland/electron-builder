@@ -12,7 +12,8 @@
   "files": [
     "../../typings/semver.d.ts",
     "../../typings/debug.d.ts",
-    "../../typings/electron.d.ts"
+    "../../typings/electron.d.ts",
+    "../../typings/uuid-1345.d.ts"
   ],
   "include": [
     "src/**/*.ts"

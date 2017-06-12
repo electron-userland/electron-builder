@@ -34,6 +34,7 @@ export class GitHubPublisher extends HttpPublisher {
 
   readonly providerName = "GitHub"
 
+  /** @private */
   get releasePromise(): Promise<Release | null> {
     if (this._releasePromise == null) {
       this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : this.getOrCreateRelease()

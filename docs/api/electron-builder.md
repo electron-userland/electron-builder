@@ -249,13 +249,16 @@
 | projectDir| <code>String</code> | 
 | **appDir**| <code>String</code> | 
 | **metadata**| <code>[Metadata](Options#Metadata)</code> | 
+| **isPrepackedAppAsar**| <code>Boolean</code> | 
 | **devMetadata**| <code>[Metadata](Options#Metadata)</code> | 
+| **config**| <code>[Config](Options#Config)</code> | 
 | isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>Boolean</code> | 
 | **electronVersion**| <code>String</code> | 
 | muonVersion| <code>String</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
 | tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| **repositoryInfo**| <code>Promise&lt;[SourceRepositoryInfo](electron-builder-core#SourceRepositoryInfo)&gt;</code> | 
 | prepackaged| <code>String</code> \| <code>null</code> | 
 
 
@@ -360,6 +363,11 @@
 | buildVersion| <code>String</code> | 
 | productName| <code>String</code> | 
 | productFilename| <code>String</code> | 
+| **versionInWeirdWindowsForm**| <code>String</code> | 
+| companyName| <code>String</code> \| <code>null</code> | 
+| **id**| <code>String</code> | 
+| **name**| <code>String</code> | 
+| **copyright**| <code>String</code> | 
 
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 
@@ -484,6 +492,8 @@
 | Name | Type |
 | --- | --- |
 | executableName| <code>String</code> | 
+| **defaultTarget**| <code>Array&lt;String&gt;</code> | 
+| **platform**| <code>[Platform](electron-builder-core#Platform)</code> | 
 
 
 * [.LinuxPackager](#LinuxPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
@@ -685,6 +695,8 @@
 | Name | Type |
 | --- | --- |
 | codeSigningInfo| <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code> | 
+| **defaultTarget**| <code>Array&lt;String&gt;</code> | 
+| **platform**| <code>[Platform](electron-builder-core#Platform)</code> | 
 
 
 * [.MacPackager](#MacPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>
@@ -934,7 +946,16 @@
 | buildResourcesDir| <code>String</code> | 
 | config| <code>[Config](Options#Config)</code> | 
 | platformSpecificBuildOptions| <code>module:electron-builder/out/platformPackager.DC</code> | 
+| **resourceList**| <code>Promise&lt;Array&lt;String&gt;&gt;</code> | 
+| **platform**| <code>[Platform](electron-builder-core#Platform)</code> | 
 | appInfo| <code>[AppInfo](#AppInfo)</code> | 
+| **defaultTarget**| <code>Array&lt;String&gt;</code> | 
+| **relativeBuildResourcesDirname**| <code>String</code> | 
+| **electronDistMacOsAppName**| <code>"Electron.app"</code> \| <code>"Brave.app"</code> | 
+| **electronDistExecutableName**| <code>"electron"</code> \| <code>"brave"</code> | 
+| **electronDistMacOsExecutableName**| <code>"Electron"</code> \| <code>"Brave"</code> | 
+| **fileAssociations**| <code>Array&lt;[FileAssociation](Options#FileAssociation)&gt;</code> | 
+| **forceCodeSigning**| <code>Boolean</code> | 
 
 
 * [.PlatformPackager](#PlatformPackager)
@@ -1464,6 +1485,7 @@
 | Name | Type |
 | --- | --- |
 | options| <code>[NsisOptions](Options#NsisOptions)</code> | 
+| **isWebInstaller**| <code>Boolean</code> | 
 
 
 * [.NsisTarget](#NsisTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>
@@ -1574,6 +1596,7 @@
 | Name | Type |
 | --- | --- |
 | options| <code>null</code> | 
+| **outDir**| <code>String</code> | 
 
 <a name="module_electron-builder/out/targets/targetFactory.NoOpTarget+build"></a>
 
@@ -1634,6 +1657,12 @@
 ### WebInstallerTarget ⇐ <code>[NsisTarget](#NsisTarget)</code>
 **Kind**: class of [<code>electron-builder/out/targets/WebInstallerTarget</code>](#module_electron-builder/out/targets/WebInstallerTarget)  
 **Extends**: <code>[NsisTarget](#NsisTarget)</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **isWebInstaller**| <code>Boolean</code> | 
+
 
 * [.WebInstallerTarget](#WebInstallerTarget) ⇐ <code>[NsisTarget](#NsisTarget)</code>
     * [`.build(appOutDir, arch)`](#module_electron-builder/out/targets/nsis.NsisTarget+build) ⇒ <code>Promise&lt;void&gt;</code>
@@ -1662,6 +1691,7 @@
     * [`.SignOptions`](#SignOptions)
     * [`.getSignVendorPath()`](#module_electron-builder/out/windowsCodeSign.getSignVendorPath) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.getToolPath()`](#module_electron-builder/out/windowsCodeSign.getToolPath) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.isOldWin6()`](#module_electron-builder/out/windowsCodeSign.isOldWin6) ⇒ <code>Boolean</code>
     * [`.sign(options)`](#module_electron-builder/out/windowsCodeSign.sign) ⇒ <code>Promise&lt;void&gt;</code>
 
 <a name="FileCodeSigningInfo"></a>
@@ -1699,6 +1729,10 @@
 <a name="module_electron-builder/out/windowsCodeSign.getToolPath"></a>
 
 ### `electron-builder/out/windowsCodeSign.getToolPath()` ⇒ <code>Promise&lt;String&gt;</code>
+**Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
+<a name="module_electron-builder/out/windowsCodeSign.isOldWin6"></a>
+
+### `electron-builder/out/windowsCodeSign.isOldWin6()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 <a name="module_electron-builder/out/windowsCodeSign.sign"></a>
 
@@ -1789,10 +1823,23 @@
       return null
     }
 
-    if (publisherName == null &amp;&amp; cscInfo.file != null) {
+    const cscFile = cscInfo.file
+    if (publisherName == null &amp;&amp; cscFile != null) {
+      if (process.platform === &quot;win32&quot;) {
+        try {
+          const subject = (await exec(&quot;powershell.exe&quot;, [&#x60;(Get-PfxCertificate &quot;${cscFile}&quot;).Subject&#x60;])).trim().match(/CN=([^,]+)/)
+          if (subject) {
+            return asArray(subject[1])
+          }
+        }
+        catch (e) {
+          warn(&#x60;Cannot get publisher name using powershell: ${e.message}&#x60;)
+        }
+      }
+
       try {
         // https://github.com/digitalbazaar/forge/issues/338#issuecomment-164831585
-        const p12Asn1 = forge.asn1.fromDer(await readFile(cscInfo.file, &quot;binary&quot;), false)
+        const p12Asn1 = forge.asn1.fromDer(await readFile(cscFile, &quot;binary&quot;), false)
         const p12 = (&lt;any&gt;forge).pkcs12.pkcs12FromAsn1(p12Asn1, false, cscInfo.password)
         const bagType = (&lt;any&gt;forge.pki.oids).certBag
         publisherName = p12.getBags({bagType: bagType})[bagType][0].cert.subject.getField(&quot;CN&quot;).value
@@ -1804,6 +1851,9 @@
 
     return publisherName == null ? null : asArray(publisherName)
   })]**| <code>[Lazy](electron-builder-util#Lazy)&lt; \| Array&gt;</code> | 
+| **isForceCodeSigningVerification**| <code>Boolean</code> | 
+| **defaultTarget**| <code>Array&lt;String&gt;</code> | 
+| **platform**| <code>[Platform](electron-builder-core#Platform)</code> | 
 
 
 * [.WinPackager](#WinPackager) ⇐ <code>[PlatformPackager](#PlatformPackager)</code>

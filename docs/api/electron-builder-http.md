@@ -21,6 +21,7 @@
     * [.BintrayClient](#BintrayClient)
         * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.deleteVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+deleteVersion) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.setRequestHeaders(value)`](#module_electron-builder-http/out/bintray.BintrayClient+setRequestHeaders)
         * [`.getVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersion) ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
         * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
 
@@ -66,6 +67,7 @@
 * [.BintrayClient](#BintrayClient)
     * [`.createVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+createVersion) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.deleteVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+deleteVersion) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.setRequestHeaders(value)`](#module_electron-builder-http/out/bintray.BintrayClient+setRequestHeaders)
     * [`.getVersion(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersion) ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
     * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
 
@@ -86,6 +88,15 @@
 | Param | Type |
 | --- | --- |
 | version | <code>String</code> | 
+
+<a name="module_electron-builder-http/out/bintray.BintrayClient+setRequestHeaders"></a>
+
+#### `bintrayClient.setRequestHeaders(value)`
+**Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
+
+| Param | Type |
+| --- | --- |
+| value | <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+getVersion"></a>
 
@@ -126,6 +137,12 @@
 ### CancellationToken ⇐ <code>internal:EventEmitter</code>
 **Kind**: class of [<code>electron-builder-http/out/CancellationToken</code>](#module_electron-builder-http/out/CancellationToken)  
 **Extends**: <code>internal:EventEmitter</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **cancelled**| <code>Boolean</code> | 
+
 
 * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
     * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)

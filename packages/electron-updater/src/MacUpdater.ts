@@ -16,15 +16,11 @@ export class MacUpdater extends AppUpdater {
     super(options)
 
     this.nativeUpdater.on("error", it => {
-      if (this.logger != null) {
-        this.logger.warn(it)
-      }
+      this._logger.warn(it)
       this.emit("error", it)
     })
     this.nativeUpdater.on("update-downloaded", () => {
-      if (this.logger != null) {
-        this.logger.info(`New version ${this.versionInfo!.version} has been downloaded`)
-      }
+      this._logger.info(`New version ${this.versionInfo!.version} has been downloaded`)
       this.emit(UPDATE_DOWNLOADED, this.versionInfo)
     })
   }
@@ -32,9 +28,7 @@ export class MacUpdater extends AppUpdater {
   protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
     const server = createServer()
     server.on("close", () => {
-      if (this.logger != null) {
-        this.logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${fileInfo.url})`)
-      }
+      this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${fileInfo.url})`)
     })
 
     function getServerUrl() {

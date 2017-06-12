@@ -33,7 +33,6 @@ export class NsisUpdater extends AppUpdater {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
 
-    const logger = this.logger
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
     try {
@@ -48,9 +47,7 @@ export class NsisUpdater extends AppUpdater {
 
       if (e instanceof CancellationError) {
         this.emit("update-cancelled", this.versionInfo)
-        if (logger != null) {
-          logger.info("Cancelled")
-        }
+        this._logger.info("Cancelled")
       }
       throw e
     }
@@ -66,10 +63,7 @@ export class NsisUpdater extends AppUpdater {
       }
     }
 
-    if (logger != null) {
-      logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
-    }
-
+    this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
     this.setupPath = tempFile
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.versionInfo)
@@ -123,9 +117,7 @@ export class NsisUpdater extends AppUpdater {
           delete data.Path
 
           const result = JSON.stringify(data, (name, value) => name === "RawData" ? undefined : value, 2)
-          if (this.logger != null) {
-            this.logger.info(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-          }
+          this._logger.info(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
           resolve(result)
         })
       })
@@ -140,9 +132,7 @@ export class NsisUpdater extends AppUpdater {
     this.quitHandlerAdded = true
 
     this.app.on("quit", () => {
-      if (this.logger != null) {
-        this.logger.info("Auto install update on quit")
-      }
+      this._logger.info("Auto install update on quit")
       this.install(true)
     })
   }
@@ -185,10 +175,7 @@ export class NsisUpdater extends AppUpdater {
       // yes, such errors dispatched not as error event
       // https://github.com/electron-userland/electron-builder/issues/1129
       if ((<any>e).code === "UNKNOWN" || (<any>e).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
-        if (this.logger != null) {
-          this.logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
-        }
-
+        this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         try {
           spawn(path.join(process.resourcesPath!, "elevate.exe"), [setupPath].concat(args), spawnOptions)
             .unref()

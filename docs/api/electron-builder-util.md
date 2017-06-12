@@ -24,13 +24,13 @@
 ## electron-builder-util/out/binDownload
 
 * [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
-    * [`.getBin(name, dirName, url, sha2)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getBin(name, dirName, url, checksum)`](#module_electron-builder-util/out/binDownload.getBin) ⇒ <code>Promise&lt;String&gt;</code>
     * [`.getBinFromBintray(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromBintray) ⇒ <code>Promise&lt;String&gt;</code>
-    * [`.getBinFromGithub(name, version, sha2)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;String&gt;</code>
+    * [`.getBinFromGithub(name, version, checksum)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/binDownload.getBin"></a>
 
-### `electron-builder-util/out/binDownload.getBin(name, dirName, url, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
+### `electron-builder-util/out/binDownload.getBin(name, dirName, url, checksum)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
@@ -38,7 +38,7 @@
 | name | <code>String</code> | 
 | dirName | <code>String</code> | 
 | url | <code>String</code> | 
-| sha2 | <code>String</code> | 
+| checksum | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
 
@@ -53,14 +53,14 @@
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromGithub"></a>
 
-### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
+### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, checksum)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
 | Param | Type |
 | --- | --- |
 | name | <code>String</code> | 
 | version | <code>String</code> | 
-| sha2 | <code>String</code> | 
+| checksum | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/deepAssign"></a>
 
@@ -446,6 +446,12 @@ ensureDir is not called, dest parent dir must exists
 
 ### Lazy
 **Kind**: class of [<code>electron-builder-util</code>](#module_electron-builder-util)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **value**| <code>Promise&lt;module:electron-builder-util.T&gt;</code> | 
+
 <a name="module_electron-builder-util.addValue"></a>
 
 ### `electron-builder-util.addValue(map, key, value)`

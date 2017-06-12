@@ -1,13 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
+import { randomBytes } from "crypto"
 import { RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
-import { readFile } from "fs-extra-p"
+import { readFile, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
+import * as UUID from "uuid-1345"
 import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
@@ -39,11 +41,19 @@ export abstract class AppUpdater extends EventEmitter {
    */
   requestHeaders: RequestHeaders | null
 
+  protected _logger: Logger = console
+
   /**
    * The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`.
    * Set it to `null` if you would like to disable a logging feature.
    */
-  logger: Logger | null = (<any>global).__test_app ? null : console
+  get logger(): Logger | null {
+    return this._logger
+  }
+
+  set logger(value: Logger | null) {
+    this._logger = value == null ? new NoOpLogger() : value
+  }
 
   /**
    * For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
@@ -61,6 +71,17 @@ export abstract class AppUpdater extends EventEmitter {
 
   private clientPromise: Promise<Provider<any>> | null
 
+  private _stagingUserIdPromise: Promise<string> | null
+
+  protected get stagingUserIdPromise(): Promise<string> {
+    let result = this._stagingUserIdPromise
+    if (result == null) {
+      result = this.getOrCreateStagedUserId()
+      this._stagingUserIdPromise = result
+    }
+    return result
+  }
+
   private readonly untilAppReady: Promise<boolean>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
 
@@ -77,9 +98,7 @@ export abstract class AppUpdater extends EventEmitter {
     super()
 
     this.on("error", (error: Error) => {
-      if (this.logger != null) {
-        this.logger.error(`Error: ${error.stack || error.message}`)
-      }
+      this._logger.error(`Error: ${error.stack || error.message}`)
     })
 
     if (app != null || (<any>global).__test_app != null) {
@@ -91,15 +110,11 @@ export abstract class AppUpdater extends EventEmitter {
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
-          if (this.logger != null) {
-            this.logger.info("App is ready")
-          }
+          this._logger.info("App is ready")
           resolve()
         }
         else {
-          if (this.logger != null) {
-            this.logger.info("Wait for app ready")
-          }
+          this._logger.info("Wait for app ready")
           this.app.on("ready", resolve)
         }
       })
@@ -160,11 +175,7 @@ export abstract class AppUpdater extends EventEmitter {
   private async _checkForUpdates(): Promise<UpdateCheckResult> {
     try {
       await this.untilAppReady
-
-      if (this.logger != null) {
-        this.logger.info("Checking for update")
-      }
-
+      this._logger.info("Checking for update")
       this.emit("checking-for-update")
       return await this.doCheckForUpdates()
     }
@@ -180,7 +191,8 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const client = await this.clientPromise
-    client.setRequestHeaders(this.requestHeaders)
+    const stagingUserId = await this.stagingUserIdPromise
+    client.setRequestHeaders(Object.assign({"X-User-Staging-Id": stagingUserId}, this.requestHeaders))
     const versionInfo = await client.getLatestVersion()
 
     const latestVersion = parseVersion(versionInfo.version)
@@ -190,9 +202,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     if (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion)) {
       this.updateAvailable = false
-      if (this.logger != null) {
-        this.logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
-      }
+      this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
       this.emit("update-not-available", versionInfo)
       return {
         versionInfo: versionInfo,
@@ -218,9 +228,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   protected onUpdateAvailable(versionInfo: VersionInfo, fileInfo: FileInfo) {
-    if (this.logger != null) {
-      this.logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
-    }
+    this._logger.info(`Found version ${versionInfo.version} (url: ${fileInfo.url})`)
     this.emit("update-available", versionInfo)
   }
 
@@ -238,9 +246,7 @@ export abstract class AppUpdater extends EventEmitter {
       throw error
     }
 
-    if (this.logger != null) {
-      this.logger.info(`Downloading update from ${fileInfo.url}`)
-    }
+    this._logger.info(`Downloading update from ${fileInfo.url}`)
 
     try {
       return await this.doDownloadUpdate(versionInfo, fileInfo, cancellationToken)
@@ -320,9 +326,46 @@ export abstract class AppUpdater extends EventEmitter {
         throw new Error(`Unsupported provider: ${provider}`)
     }
   }
+
+  private async getOrCreateStagedUserId(): Promise<string> {
+    const file = path.join(this.app.getPath("userData"), ".updaterId")
+    try {
+      const id = await readFile(file, "utf-8")
+      if (UUID.check(id)) {
+        return id
+      }
+      else {
+        this._logger.warn(`Staging user id file exists, but content was invalid: ${id}`)
+      }
+    }
+    catch (e) {
+      if (e.code !== "ENOENT") {
+        this._logger.warn(`Couldn't read staging user ID, creating a blank one: ${e}`)
+      }
+    }
+
+    const id = UUID.v5({name: randomBytes(4096), namespace: UUID.namespace.oid})
+    this._logger.info(`Generated new staging user ID: ${id}`)
+    try {
+      await writeFile(file, id)
+    }
+    catch (e) {
+      this._logger.warn(`Couldn't write out staging user ID: ${e}`)
+    }
+    return id
+  }
 }
 
 function hasPrereleaseComponents(version: string) {
   const versionPrereleaseComponent = getVersionPreleaseComponents(version)
   return versionPrereleaseComponent != null && versionPrereleaseComponent.length > 0
+}
+
+/** @private */
+export class NoOpLogger implements Logger {
+  info(message?: any) {}
+
+  warn(message?: any) {}
+
+  error(message?: any) {}
 }
