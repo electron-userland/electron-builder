@@ -16,6 +16,7 @@ Section
 
 	!insertmacro extractEmbeddedAppPackage
 
+  System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
 	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
   SetOutPath $PLUGINSDIR
