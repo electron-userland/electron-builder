@@ -36,7 +36,7 @@
         StrCpy $0 "$0 --delete-app-data"
       ${else}
         # always pass --updated flag - to ensure that if DELETE_APP_DATA_ON_UNINSTALL is defined, user data will be not removed
-        StrCpy $0 "$0 --updated"
+        StrCpy $0 "$0 --updated $shortcuts"
       ${endif}
 
       ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
@@ -83,6 +83,15 @@ InitPluginsDir
 ${IfNot} ${Silent}
   SetDetailsPrint none
 ${endif}
+
+StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+Var /GLOBAL shortcuts
+StrCpy $shortcuts "--recreate-shortcuts"
+!ifndef allowToChangeInstallationDirectory
+  ${If} ${FileExists} "$appExe"
+    StrCpy $shortcuts "--keep-shortcuts"
+  ${EndIf}
+!endif
 
 !ifdef ONE_CLICK
   !ifdef HEADER_ICO
@@ -168,27 +177,27 @@ SetOutPath $INSTDIR
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
-StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 !insertmacro registryAddInstallInfo
-
 !insertmacro setLinkVars
 
 !ifdef MENU_FILENAME
   CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
 !endif
 
-# create shortcuts in the start menu and on the desktop
-# shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
-CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+${if} $shortcuts == "--recreate-shortcuts"
+  # create shortcuts in the start menu and on the desktop
+  # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
+  CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
 
-${GetParameters} $R0
-${GetOptions} $R0 "--no-desktop-shortcut" $R1
-${If} ${Errors}
-  CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-${EndIf}
-
-WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
-WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
+  ClearErrors
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "--no-desktop-shortcut" $R1
+  ${If} ${Errors}
+    CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+    WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
+  ${EndIf}
+${endif}
 
 !ifmacrodef registerFileAssociations
   !insertmacro registerFileAssociations
