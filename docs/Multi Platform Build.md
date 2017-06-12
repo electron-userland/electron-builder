@@ -48,6 +48,8 @@ To build rpm: `sudo apt-get install --no-install-recommends -y rpm`.
 
 To build pacman: `sudo apt-get install --no-install-recommends -y bsdtar`.
 
+To build snap: `sudo apt-get install --no-install-recommends -y snapcraft`.
+
 ### To build app for Windows on Linux:
 * Install Wine (1.8+ is required):
 
