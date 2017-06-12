@@ -3,9 +3,10 @@
    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <!-- use single quotes to avoid double quotes escaping in the publisher value  -->
   <Identity Name="${identityName}"
     ProcessorArchitecture="${arch}"
-    Publisher="${publisher}"
+    Publisher='${publisher}'
     Version="${version}" />
   <Properties>
     <DisplayName>${displayName}</DisplayName>

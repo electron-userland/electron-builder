@@ -148,10 +148,6 @@ exports[`invalid signature 1`] = `
       \\"EncodedParameters\\": \\"System.Security.Cryptography.AsnEncodedData\\"
     },
     \\"SerialNumber\\": \\"18CB5EC53FB14EC2DBB44BD1518AF901\\",
-    \\"SubjectName\\": {
-      \\"Name\\": \\"CN=Vladimir Krivosheev, O=Vladimir Krivosheev, L=Grunwald, S=Bayern, C=DE\\",
-      \\"Oid\\": \\"System.Security.Cryptography.Oid\\"
-    },
     \\"SignatureAlgorithm\\": {
       \\"Value\\": \\"1.2.840.113549.1.1.11\\",
       \\"FriendlyName\\": \\"sha256RSA\\"

@@ -2,8 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, BuildOptions, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { walk } from "electron-builder-util/out/fs"
 import { readAsarJson } from "electron-builder/out/asar"
-import { normalizeOptions } from "electron-builder/out/builder"
-import { createYargs } from "electron-builder/out/cli/cliOptions"
+import { configureBuildCommand, normalizeOptions } from "electron-builder/out/builder"
 import { checkWineVersion } from "electron-builder/out/packager"
 import { move, outputJson } from "fs-extra-p"
 import * as path from "path"
@@ -13,7 +12,8 @@ import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson }
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
 test("cli", async () => {
-  const yargs = createYargs()
+  const yargs = require("yargs")
+  configureBuildCommand(yargs)
 
   function parse(input: string): BuildOptions {
     return normalizeOptions(yargs.parse(input.split(" ")))

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Target } from "electron-builder-core"
-import { spawn, use } from "electron-builder-util"
+import { exec, spawn, use } from "electron-builder-util"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
 import { emptyDir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
@@ -24,18 +24,21 @@ export default class AppXTarget extends Target {
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
-    if ((await packager.cscInfo.value) == null) {
+    const cscInfo = await this.packager.cscInfo.value
+    if (cscInfo == null) {
       throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing\n\nYou can use `./node_modules/.bin/create-self-signed-cert -p YourName` to create self-signed certificate")
     }
 
     let publisher = this.options.publisher
     if (publisher == null) {
-      const computed = await packager.computedPublisherName.value
-      if (computed != null) {
-        publisher = `CN=${computed[0]}`
+      const cscFile = cscInfo.file
+      if (cscFile == null) {
+        throw new Error("Please specify appx.publisher: cannot get publisher from your code signing certificate if EV cert is used")
       }
-      if (publisher == null) {
-        throw new Error("Please specify appx.publisher")
+
+      publisher = (await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`])).trim()
+      if (!publisher) {
+        throw new Error("Please specify appx.publisher: Get-PfxCertificate returns empty string")
       }
     }
 
@@ -120,4 +123,12 @@ export default class AppXTarget extends Target {
       })
     await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
   }
+}
+
+export function quoteString(s: string): string {
+  if (!s.includes(",") && !s.includes('"')) {
+    return s
+  }
+
+  return `"${s.replace(/"/g, '\\"')}"`
 }

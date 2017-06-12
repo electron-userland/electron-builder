@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform, Target } from "electron-builder-core"
+import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { asArray, exec, Lazy, use } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { close, open, read, readFile, rename } from "fs-extra-p"
@@ -70,9 +71,9 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     if (publisherName == null && cscFile != null) {
       if (process.platform === "win32") {
         try {
-          const subject = (await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`])).trim().match(/CN=([^,]+)/)
+          const subject = parseDn(await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`])).get("CN")
           if (subject) {
-            return asArray(subject[1])
+            return asArray(subject)
           }
         }
         catch (e) {

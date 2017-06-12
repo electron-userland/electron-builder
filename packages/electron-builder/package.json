@@ -11,7 +11,7 @@
     "certs/root_certs.keychain"
   ],
   "bin": {
-    "build": "./out/cli/build-cli.js",
+    "build": "./out/cli/cliOptions.js",
     "install-app-deps": "./out/cli/install-app-deps.js",
     "node-gyp-rebuild": "./out/cli/node-gyp-rebuild.js"
   },

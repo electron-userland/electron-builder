@@ -2,24 +2,17 @@ import { bold } from "chalk"
 import { exec, spawn } from "electron-builder-util"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 import { log } from "electron-builder-util/out/log"
-import { printErrorAndExit } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import yargs from "yargs"
+import { quoteString } from "../targets/appx"
 import { getSignVendorPath } from "../windowsCodeSign"
 
-async function main() {
-  const args: any = yargs
-    .option("publisher", {
-      alias: ["p"],
-      requiresArg: true,
-    }).argv
-
+export async function createSelfSignedCert(publisher: string) {
   const tmpDir = new TmpDir()
   const targetDir = process.cwd()
-  const tempPrefix = path.join(await tmpDir.getTempFile(""), sanitizeFileName(args.publisher))
+  const tempPrefix = path.join(await tmpDir.getTempFile(""), sanitizeFileName(publisher))
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 
@@ -29,9 +22,9 @@ async function main() {
     await ensureDir(path.dirname(tempPrefix))
     const vendorPath = path.join(await getSignVendorPath(), "windows-10", process.arch)
     await exec(path.join(vendorPath, "makecert.exe"),
-      ["-r", "-h", "0", "-n", `CN=${args.publisher}`, "-eku", "1.3.6.1.5.5.7.3.3", "-pe", "-sv", pvk, cer])
+      ["-r", "-h", "0", "-n", `CN=${quoteString(publisher)}`, "-eku", "1.3.6.1.5.5.7.3.3", "-pe", "-sv", pvk, cer])
 
-    const pfx = path.join(targetDir, `${sanitizeFileName(args.publisher)}.pfx`)
+    const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
     await unlinkIfExists(pfx)
     await exec(path.join(vendorPath, "pvk2pfx.exe"), ["-pvk", pvk, "-spc", cer, "-pfx", pfx])
     log(`${pfx} created. Please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing how to use it to sign.`)
@@ -44,6 +37,3 @@ async function main() {
     await tmpDir.cleanup()
   }
 }
-
-main()
-  .catch(printErrorAndExit)
