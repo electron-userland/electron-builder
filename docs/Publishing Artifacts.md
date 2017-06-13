@@ -147,7 +147,7 @@ If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bin
 
 | Name | Type | Description |
 | --- | --- | --- |
-| **provider**| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
+| **provider**| <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
 | owner| <code>String</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
 
 <a name="S3Options"></a>

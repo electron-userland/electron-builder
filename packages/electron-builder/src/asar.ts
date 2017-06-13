@@ -1,6 +1,7 @@
 import { createFromBuffer } from "chromium-pickle-js"
 import { close, open, read, readFile, Stats } from "fs-extra-p"
 import * as path from "path"
+
 const UINT64 = require("cuint").UINT64
 
 export class Node {
@@ -88,7 +89,7 @@ export class AsarFilesystem {
     return followLinks && info.link != null ? this.getFile(info.link) : info
   }
 
-  async readJson(file: string): Promise<Buffer> {
+  async readJson(file: string): Promise<any> {
     return JSON.parse((await this.readFile(file)).toString())
   }
 
@@ -123,7 +124,7 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
   return new AsarFilesystem(archive, JSON.parse(header), size)
 }
 
-export async function readAsarJson(archive: string, file: string): Promise<Buffer> {
+export async function readAsarJson(archive: string, file: string): Promise<any> {
   const fs = await readAsar(archive)
   return await fs.readJson(file)
 }

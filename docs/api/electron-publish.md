@@ -33,7 +33,7 @@
 
 | Name | Type |
 | --- | --- |
-| providerName = <code>Bintray</code>| <code>"Bintray"</code> | 
+| providerName = <code>Bintray</code>| <code>"undefined"</code> | 
 
 
 * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
@@ -108,7 +108,7 @@
 
 | Name | Type |
 | --- | --- |
-| providerName = <code>GitHub</code>| <code>"GitHub"</code> | 
+| providerName = <code>GitHub</code>| <code>"undefined"</code> | 
 
 
 * [.GitHubPublisher](#GitHubPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
@@ -310,7 +310,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 | Name | Type |
 | --- | --- |
-| publish| <code>"onTag"</code> \| <code>"onTagOrDraft"</code> \| <code>"always"</code> \| <code>"never"</code> \| <code>null</code> | 
+| publish| <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> \| <code>null</code> | 
 | draft| <code>Boolean</code> | 
 | prerelease| <code>Boolean</code> | 
 

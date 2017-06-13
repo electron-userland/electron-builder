@@ -406,7 +406,7 @@ ensureDir is not called, dest parent dir must exists
     * [`.getTempName(prefix)`](#module_electron-builder-util.getTempName) ⇒ <code>String</code>
     * [`.handleProcess(event, childProcess, command, resolve, reject)`](#module_electron-builder-util.handleProcess)
     * [`.isEmptyOrSpaces(s)`](#module_electron-builder-util.isEmptyOrSpaces) ⇒ <code>Boolean</code>
-    * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
+    * [`.isPullRequest()`](#module_electron-builder-util.isPullRequest) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
     * [`.prepareArgs(args, exePath)`](#module_electron-builder-util.prepareArgs) ⇒ <code>Array&lt;String&gt;</code>
     * [`.removePassword(input)`](#module_electron-builder-util.removePassword) ⇒ <code>String</code>
     * [`.replaceDefault(inList, defaultList)`](#module_electron-builder-util.replaceDefault) ⇒ <code>Array&lt;String&gt;</code>
@@ -572,7 +572,7 @@ ensureDir is not called, dest parent dir must exists
 
 <a name="module_electron-builder-util.isPullRequest"></a>
 
-### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
+### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.prepareArgs"></a>
 
