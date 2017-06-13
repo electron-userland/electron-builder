@@ -1,15 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { cyan, dim, green, reset, underline } from "chalk"
+import { underline } from "chalk"
 import { Arch, archFromString, DIR_TARGET, Platform } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { addValue, isEmptyOrSpaces } from "electron-builder-util"
 import { warn } from "electron-builder-util/out/log"
-import { executeFinally, printErrorAndExit } from "electron-builder-util/out/promise"
+import { executeFinally } from "electron-builder-util/out/promise"
 import { PublishOptions } from "electron-publish"
-import { readJson } from "fs-extra-p"
-import isCi from "is-ci"
-import * as path from "path"
-import updateNotifier from "update-notifier"
 import { normalizePlatforms, Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
@@ -229,88 +225,88 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
-      describe: `Build for macOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
+      description: `Build for macOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
       type: "array",
     })
     .option("linux", {
       group: buildGroup,
       alias: "l",
-      describe: `Build for Linux, accepts target list (see ${underline("https://goo.gl/O80IL2")})`,
+      description: `Build for Linux, accepts target list (see ${underline("https://goo.gl/O80IL2")})`,
       type: "array",
     })
     .option("win", {
       group: buildGroup,
       alias: ["w", "windows"],
-      describe: `Build for Windows, accepts target list (see ${underline("https://goo.gl/dL4i8i")})`,
+      description: `Build for Windows, accepts target list (see ${underline("https://goo.gl/dL4i8i")})`,
       type: "array",
     })
     .option("x64", {
       group: buildGroup,
-      describe: "Build for x64",
+      description: "Build for x64",
       type: "boolean",
     })
     .option("ia32", {
       group: buildGroup,
-      describe: "Build for ia32",
+      description: "Build for ia32",
       type: "boolean",
     })
     .option("armv7l", {
       group: buildGroup,
-      describe: "Build for armv7l",
+      description: "Build for armv7l",
       type: "boolean",
     })
     .option("dir", {
       group: buildGroup,
-      describe: "Build unpacked dir. Useful to test.",
+      description: "Build unpacked dir. Useful to test.",
       type: "boolean",
     })
     .option("publish", {
       group: publishGroup,
       alias: "p",
-      describe: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
+      description: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", <any>undefined],
     })
     .option("draft", {
       group: publishGroup,
-      describe: "Create a draft (unpublished) release",
+      description: "Create a draft (unpublished) release",
       type: "boolean",
       default: undefined,
     })
     .option("prerelease", {
       group: publishGroup,
-      describe: "Identify the release as a prerelease",
+      description: "Identify the release as a prerelease",
       type: "boolean",
       default: undefined,
     })
     .option("platform", {
       group: deprecated,
-      describe: "The target platform (preferred to use --mac, --win or --linux)",
+      description: "The target platform (preferred to use --mac, --win or --linux)",
       choices: ["mac", "win", "linux", "darwin", "win32", "all", <any>undefined],
     })
     .option("arch", {
       group: deprecated,
-      describe: "The target arch (preferred to use --x64 or --ia32)",
+      description: "The target arch (preferred to use --x64 or --ia32)",
       choices: ["ia32", "x64", "all", <any>undefined],
     })
     .option("extraMetadata", {
       alias: ["em"],
       group: buildGroup,
-      describe: "Inject properties to package.json (asar only)",
+      description: "Inject properties to package.json (asar only)",
     })
     .option("prepackaged", {
       alias: ["pd"],
       group: buildGroup,
-      describe: "The path to prepackaged app (to pack in a distributable format)",
+      description: "The path to prepackaged app (to pack in a distributable format)",
     })
     .option("projectDir", {
       alias: ["project"],
       group: buildGroup,
-      describe: "The path to project directory. Defaults to current working directory.",
+      description: "The path to project directory. Defaults to current working directory.",
     })
     .option("config", {
       alias: ["c"],
       group: buildGroup,
-      describe: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + underline("https://goo.gl/YFRJOM"),
+      description: "The path to an electron-builder config. Defaults to `electron-builder.yml` (or `json`, or `json5`), see " + underline("https://goo.gl/YFRJOM"),
     })
     .group(["help", "version"], "Other:")
     .example("electron-builder -mwl", "build for macOS, Windows and Linux")
@@ -318,27 +314,4 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .example("electron-builder --win --ia32", "build for Windows ia32")
     .example("electron-builder --em.foo=bar", "set package.json property `foo` to `bar`")
     .example("electron-builder --config.nsis.unicode=false", "configure unicode options for NSIS")
-}
-
-/** @private */
-export function buildCommandHandler(args: CliOptions) {
-  if (!isCi && process.env.NO_UPDATE_NOTIFIER == null) {
-    readJson(path.join(__dirname, "..", "..", "package.json"))
-      .then(it => {
-        if (it.version === "0.0.0-semantic-release") {
-          return
-        }
-
-        const notifier = updateNotifier({pkg: it})
-        if (notifier.update != null) {
-          notifier.notify({
-            message: `Update available ${dim(notifier.update.current)}${reset(" → ")}${green(notifier.update.latest)} \nRun ${cyan("npm i electron-builder --save-dev")} to update`
-          })
-        }
-      })
-      .catch(e => warn(`Cannot check updates: ${e}`))
-  }
-
-  build(args)
-    .catch(printErrorAndExit)
 }

@@ -135,7 +135,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     args.push(inputPath)
   }
 
-  return await exec(await getToolPath(), args)
+  return await exec(await getToolPath(), args, {timeout: 120 * 1000})
 }
 
 function getOutputPath(inputPath: string, hash: string) {
