@@ -39,7 +39,7 @@
         StrCpy $0 "$0 --updated"
       ${endif}
 
-      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
+      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 $shortcuts _?=$R1'
     ${endif}
   ${endif}
 !macroend
@@ -84,6 +84,15 @@ ${IfNot} ${Silent}
   SetDetailsPrint none
 ${endif}
 
+StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+Var /GLOBAL shortcuts
+StrCpy $shortcuts ""
+!ifndef allowToChangeInstallationDirectory
+  ${if} ${FileExists} "$appExe"
+    StrCpy $shortcuts "--keep-shortcuts"
+  ${endIf}
+!endif
+
 !ifdef ONE_CLICK
   !ifdef HEADER_ICO
     File /oname=$PLUGINSDIR\installerHeaderico.ico "${HEADER_ICO}"
@@ -102,7 +111,7 @@ ${endif}
   ${endif}
   !insertmacro CHECK_APP_RUNNING
 !else
-  ${IfNot} ${UAC_IsInnerInstance}
+  ${ifNot} ${UAC_IsInnerInstance}
     !insertmacro CHECK_APP_RUNNING
   ${endif}
 !endif
@@ -168,27 +177,27 @@ SetOutPath $INSTDIR
 
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
-StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 !insertmacro registryAddInstallInfo
-
 !insertmacro setLinkVars
 
 !ifdef MENU_FILENAME
   CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
 !endif
 
-# create shortcuts in the start menu and on the desktop
-# shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
-CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+${if} $shortcuts == ""
+  # create shortcuts in the start menu and on the desktop
+  # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
+  CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
 
-${GetParameters} $R0
-${GetOptions} $R0 "--no-desktop-shortcut" $R1
-${If} ${Errors}
-  CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-${EndIf}
-
-WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
-WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
+  ClearErrors
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "--no-desktop-shortcut" $R1
+  ${If} ${Errors}
+    CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+    WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
+  ${endIf}
+${endif}
 
 !ifmacrodef registerFileAssociations
   !insertmacro registerFileAssociations

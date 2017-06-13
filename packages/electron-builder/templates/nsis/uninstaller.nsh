@@ -27,12 +27,21 @@ Section "un.install"
 
   !insertmacro setLinkVars
 
-  WinShell::UninstAppUserModelId "${APP_ID}"
-  WinShell::UninstShortcut "$startMenuLink"
-  WinShell::UninstShortcut "$desktopLink"
+  ClearErrors
+  ${GetParameters} $R0
+  DetailPrint $R0
+  ${GetOptions} $R0 "--keep-shortcuts" $R1
+  ${if} ${Errors}
+    WinShell::UninstAppUserModelId "${APP_ID}"
+    WinShell::UninstShortcut "$startMenuLink"
+    WinShell::UninstShortcut "$desktopLink"
 
-  Delete "$startMenuLink"
-  Delete "$desktopLink"
+    Delete "$startMenuLink"
+    Delete "$desktopLink"
+
+    # Refresh the desktop
+    System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
+  ${endif}
 
   !ifmacrodef unregisterFileAssociations
     !insertmacro unregisterFileAssociations
