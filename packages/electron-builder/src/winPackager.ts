@@ -54,7 +54,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   })
 
-  private iconPath: Promise<string> | null
+  private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
     let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
@@ -71,7 +71,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     if (publisherName == null && cscFile != null) {
       if (process.platform === "win32") {
         try {
-          const subject = parseDn(await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`])).get("CN")
+          const subject = parseDn(await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`], {timeout: 30 * 1000})).get("CN")
           if (subject) {
             return asArray(subject)
           }
@@ -161,10 +161,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   getIconPath() {
-    if (this.iconPath == null) {
-      this.iconPath = this.getValidIconPath()
-    }
-    return this.iconPath
+    return this._iconPath.value
   }
 
   private async getValidIconPath(): Promise<string | null> {

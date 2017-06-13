@@ -78,7 +78,7 @@
     "semver": "^5.3.0",
     "update-notifier": "^2.2.0",
     "uuid-1345": "^0.99.6",
-    "yargs": "^8.0.1",
+    "yargs": "^8.0.2",
     "debug": "2.6.8",
     "asar-integrity": "0.0.0-semantic-release"
   },

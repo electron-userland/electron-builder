@@ -1,14 +1,10 @@
+import { SourceRepositoryInfo } from "electron-builder-core"
 import { readFile } from "fs-extra-p"
-import { fromUrl as parseRepositoryUrl, Info } from "hosted-git-info"
+import { fromUrl as parseRepositoryUrl } from "hosted-git-info"
 import * as path from "path"
 import { Metadata, RepositoryInfo } from "./metadata"
 
-export interface RepositorySlug {
-  user: string
-  project: string
-}
-
-export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<Info | null> {
+export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, <RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 
@@ -40,7 +36,7 @@ async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null
   return null
 }
 
-async function _getInfo(projectDir: string, repo?: RepositoryInfo | null): Promise<RepositorySlug | null> {
+async function _getInfo(projectDir: string, repo?: RepositoryInfo | null): Promise<SourceRepositoryInfo | null> {
   if (repo != null) {
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }

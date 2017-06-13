@@ -28,7 +28,7 @@ interface Asset {
 
 export class GitHubPublisher extends HttpPublisher {
   private tag: string
-  private _releasePromise: Promise<Release>
+  private _releasePromise: Promise<Release | null>
 
   private readonly token: string
 
@@ -155,7 +155,7 @@ export class GitHubPublisher extends HttpPublisher {
   // test only
   //noinspection JSUnusedGlobalSymbols
   async getRelease(): Promise<any> {
-    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise).id}`, this.token)
+    return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases/${(await this._releasePromise)!.id}`, this.token)
   }
 
   //noinspection JSUnusedGlobalSymbols

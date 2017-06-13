@@ -39,8 +39,8 @@
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.9.tgz#38e0e00de8e6f3ff0bb1f4cddcad43e7b580733a"
 
 "@types/node@*":
-  version "7.0.29"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.29.tgz#ccfcec5b7135c7caf6c4ffb8c7f33102340d99df"
+  version "7.0.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-7.0.31.tgz#80ea4d175599b2a00149c29a10a4eb2dff592e86"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -135,8 +135,8 @@ ansi-styles@^2.2.1:
   resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-2.2.1.tgz#b432dd3358b634cf75e1e4664368240533c1ddbe"
 
 ansi-styles@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-3.0.0.tgz#5404e93a544c4fec7f048262977bebfe3155e0c1"
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-3.1.0.tgz#09c202d5c917ec23188caa5c9cb9179cd9547750"
   dependencies:
     color-convert "^1.0.0"
 
@@ -265,9 +265,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.67.0:
-  version "2.67.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.67.0.tgz#c0fc3a4343cfc631265d9dd6bc50ba709401f857"
+aws-sdk@^2.68.0:
+  version "2.68.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.68.0.tgz#9bad3135b31fa82be72a5985189a37aee70c6940"
   dependencies:
     buffer "5.0.6"
     crypto-browserify "1.0.9"
@@ -3356,8 +3356,8 @@ type-check@~0.3.2:
     prelude-ls "~1.1.2"
 
 typescript@^2.3.4:
-  version "2.3.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.3.4.tgz#3d38321828231e434f287514959c37a82b629f42"
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.4.0.tgz#aef5a8d404beba36ad339abf079ddddfffba86dd"
 
 typescript@~2.1.5:
   version "2.1.6"
@@ -3721,9 +3721,9 @@ yargs@^7.0.2:
     y18n "^3.2.1"
     yargs-parser "^5.0.0"
 
-yargs@^8.0.1:
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-8.0.1.tgz#420ef75e840c1457a80adcca9bc6fa3849de51aa"
+yargs@^8.0.2:
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-8.0.2.tgz#6299a9055b1cefc969ff7e79c1d918dceb22c360"
   dependencies:
     camelcase "^4.1.0"
     cliui "^3.2.0"

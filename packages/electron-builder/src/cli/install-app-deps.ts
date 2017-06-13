@@ -7,8 +7,8 @@ import yargs from "yargs"
 import { getElectronVersion, loadConfig } from "../util/readPackageJson"
 import { installOrRebuild } from "../yarn"
 
-async function main() {
-  const args: any = yargs
+export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs {
+  return yargs
     .option("platform", {
       choices: ["linux", "darwin", "win32"],
       default: process.platform,
@@ -17,8 +17,9 @@ async function main() {
       choices: ["ia32", "x64", "all"],
       default: process.arch,
     })
-    .argv
+}
 
+export async function installAppDeps(args: any) {
   const projectDir = process.cwd()
   const config = (await loadConfig(projectDir)) || {}
   const muonVersion = config.muonVersion
@@ -31,5 +32,11 @@ async function main() {
   await installOrRebuild(config, results[0], {version: results[1], useCustomDist: muonVersion == null}, args.platform, args.arch, results[0] !== projectDir)
 }
 
-main()
-  .catch(printErrorAndExit)
+function main() {
+  return installAppDeps(configureInstallAppDepsCommand(yargs).argv)
+}
+
+if (process.mainModule === module) {
+  main()
+    .catch(printErrorAndExit)
+}

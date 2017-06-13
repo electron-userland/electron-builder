@@ -57,7 +57,7 @@ test("cli", async () => {
   expect(parseExtraMetadata("--em.foo=bar"))
 })
 
-test("build in the app package.json", appTwoThrows(linuxDirTarget, {
+test("build in the app package.json", appTwoThrows({targets: linuxDirTarget}, {
   projectDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
       "productName": "bar",

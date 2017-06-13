@@ -82,7 +82,7 @@ export class NsisUpdater extends AppUpdater {
     }
 
     return await new BluebirdPromise<string | null>((resolve, reject) => {
-      execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {maxBuffer: 4 * 1024000}, (error, stdout, stderr) => {
+      execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {maxBuffer: 4 * 1024000, timeout: 60 * 1000}, (error, stdout, stderr) => {
         if (error != null) {
           reject(error)
           return

@@ -64,6 +64,7 @@ async function main() {
     "!***/*-repositoryInfo.js",
     "!***/*-readPackageJson.js",
     "!***/*-create-self-signed-cert.js",
+    "!***/*-install-app-deps.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

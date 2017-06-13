@@ -135,8 +135,8 @@ export interface BeforeBuildContext {
 }
 
 export interface SourceRepositoryInfo {
-  type: string
-  domain: string
+  type?: string
+  domain?: string
   user: string
   project: string
 }

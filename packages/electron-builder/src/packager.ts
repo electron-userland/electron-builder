@@ -59,11 +59,11 @@ export class Packager implements BuildInfo {
 
   readonly tempDirManager = new TmpDir()
 
-  private _repositoryInfo = new Lazy<SourceRepositoryInfo>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
+  private _repositoryInfo = new Lazy<SourceRepositoryInfo | null>(() => getRepositoryInfo(this.projectDir, this.metadata, this.devMetadata))
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
-  get repositoryInfo(): Promise<SourceRepositoryInfo> {
+  get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
     return this._repositoryInfo.value
   }
 

@@ -315,7 +315,7 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
 /**
  * AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
  */
-export interface AppXOptions {
+export interface AppXOptions extends TargetSpecificOptions {
   /**
    * The background color of the app tile.
    * @see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
