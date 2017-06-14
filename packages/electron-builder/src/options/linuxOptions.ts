@@ -28,11 +28,6 @@ export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificB
   readonly vendor?: string | null
 
   /**
-   * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
-   */
-  readonly desktop?: { [key: string]: string; } | null
-
-  /**
    * @deprecated
    * @private
    */
@@ -68,7 +63,10 @@ export interface CommonLinuxOptions {
   readonly category?: string | null
   readonly packageCategory?: string | null
 
-  readonly desktop?: { [key: string]: string; } | null
+  /**
+   * The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+   */
+  readonly desktop?: any | null
 
   readonly vendor?: string | null
   readonly maintainer?: string | null

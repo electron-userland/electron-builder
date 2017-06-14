@@ -174,7 +174,7 @@
 | description| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-description"></a>As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux. |
 | category| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry). |
 | packageCategory| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-packageCategory"></a> |
-| desktop| <code>Object&lt;String, any&gt;</code> \| <code>null</code> | <a name="CommonLinuxOptions-desktop"></a> |
+| desktop| <code>any</code> \| <code>null</code> | <a name="CommonLinuxOptions-desktop"></a>The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value). |
 | vendor| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-vendor"></a> |
 | maintainer| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-maintainer"></a> |
 | afterInstall| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-afterInstall"></a> |

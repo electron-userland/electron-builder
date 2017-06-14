@@ -45,7 +45,7 @@ export async function tar(compression: CompressionLevel | n, format: string, out
 }
 
 /** @internal */
-export async function archive(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir: boolean = false): Promise<string> {
+export async function archive(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir = false): Promise<string> {
   let storeOnly = compression === "store"
   const args = debug7zArgs("a")
   if (format === "7z" || format.endsWith(".7z")) {

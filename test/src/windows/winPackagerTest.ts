@@ -11,6 +11,10 @@ test.ifWinCi("beta version", app({
   }
 }))
 
+test.ifNotCiMac("win zip", app({
+  targets: Platform.WINDOWS.createTarget(["zip",]),
+}))
+
 test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
   projectDirCreated: projectDir => rename(path.join(projectDir, "build", "incorrect.ico"), path.join(projectDir, "build", "icon.ico"))
 }))

@@ -308,12 +308,12 @@ Configuration Options
     electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
   * <a name="LinuxBuildOptions-maintainer"></a>`maintainer` String - The maintainer. Defaults to [author](#Metadata-author).
   * <a name="LinuxBuildOptions-vendor"></a>`vendor` String - The vendor. Defaults to [author](#Metadata-author).
-  * <a name="LinuxBuildOptions-desktop"></a>`desktop` Object&lt;String, any&gt; - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
   * <a name="LinuxBuildOptions-executableName"></a>`executableName` String - The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`.
   * <a name="LinuxBuildOptions-icon"></a>`icon` String - The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.
   * <a name="LinuxBuildOptions-synopsis"></a>`synopsis` String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
   * <a name="LinuxBuildOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
   * <a name="LinuxBuildOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+  * <a name="LinuxBuildOptions-desktop"></a>`desktop` any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
   * <a name="LinuxBuildOptions-afterInstall"></a>`afterInstall` String
   * <a name="LinuxBuildOptions-afterRemove"></a>`afterRemove` String
 * <a name="Config-deb"></a>`deb`<a name="DebOptions"></a> - Debian package specific options.
