@@ -40,7 +40,6 @@ export class AsarFilesystem {
   }
 
   getOrCreateNode(p: string): Node {
-    p = path.relative(this.src, p)
     if (p == null || p.length === 0) {
       return this.header
     }

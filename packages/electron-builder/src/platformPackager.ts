@@ -9,7 +9,7 @@ import { readdir, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { AsarPackager, checkFileInArchive } from "./asarUtil"
+import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./asarUtil"
 import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
@@ -182,7 +182,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
       originalMain: this.info.metadata.main,
-      main: "es6-shim.js",
+      main: ELECTRON_COMPILE_SHIM_FILENAME,
     }, this.packagerOptions.extraMetadata) : this.packagerOptions.extraMetadata)
     let promise
     if (this.info.isPrepackedAppAsar) {
@@ -194,7 +194,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     else {
       const unpackPattern = getFileMatchers(this.config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile)
+      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this)
     }
 
     //noinspection ES6MissingAwait
