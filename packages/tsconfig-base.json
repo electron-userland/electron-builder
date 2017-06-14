@@ -2,18 +2,18 @@
   "compilerOptions": {
     "module": "es2015",
     "target": "es2017",
-    "noImplicitAny": true,
     "newLine": "LF",
     "noEmitOnError": true,
     "inlineSources": true,
     "sourceMap": true,
     "noImplicitReturns": true,
-    "strictNullChecks": true,
     "noEmitHelpers": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "moduleResolution": "Node",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "strict": true,
+    "stripInternal": true
   }
 }

@@ -146,7 +146,7 @@ Configuration Options
   * <a name="Protocol-name"></a>**`name`** String - The name. e.g. `IRC server URL`.
   * <a name="Protocol-schemes"></a>**`schemes`** Array&lt;String&gt; - The schemes. e.g. `["irc", "ircs"]`.
   * <a name="Protocol-role"></a>`role` = `Editor` "Editor" | "Viewer" | "Shell" | "None" - *macOS-only* The app’s role with respect to the type.
-* <a name="Config-compression"></a>`compression` = `normal` "undefined" | "undefined" | "undefined" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
+* <a name="Config-compression"></a>`compression` = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
 * <a name="Config-afterPack"></a>`afterPack` callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
 * <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
 * <a name="Config-npmRebuild"></a>`npmRebuild` = `true` Boolean - Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app.
@@ -173,7 +173,7 @@ Configuration Options
     For example, `"category": "public.app-category.developer-tools"` will set the application category to *Developer Tools*.
     
     Valid values are listed in [Apple's documentation](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/LaunchServicesKeys.html#//apple_ref/doc/uid/TP40009250-SW8).
-  * <a name="MacOptions-target"></a>`target` Array&lt;[TargetConfig](electron-builder-core#TargetConfig) | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined"&gt; | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | "undefined" | [TargetConfig](electron-builder-core#TargetConfig) - The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
+  * <a name="MacOptions-target"></a>`target` Array&lt;[TargetConfig](electron-builder-core#TargetConfig) | "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"&gt; | "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir" | [TargetConfig](electron-builder-core#TargetConfig) - The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   * <a name="MacOptions-identity"></a>`identity` String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option. MAS installer identity is specified in the [mas](#MasBuildOptions-identity).
   * <a name="MacOptions-icon"></a>`icon` = `build/icon.icns` String - The path to application icon.
   * <a name="MacOptions-entitlements"></a>`entitlements` String - The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set). MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements).
@@ -216,7 +216,7 @@ Configuration Options
   * <a name="WinBuildOptions-target"></a>`target` = `nsis` String | [TargetConfig](electron-builder-core#TargetConfig) | Array - Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
     
     To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
-  * <a name="WinBuildOptions-signingHashAlgorithms"></a>`signingHashAlgorithms` = `['sha1', 'sha256']` Array&lt;"undefined" | "undefined"&gt; - Array of signing algorithms used. For AppX `sha256` is always used.
+  * <a name="WinBuildOptions-signingHashAlgorithms"></a>`signingHashAlgorithms` = `['sha1', 'sha256']` Array&lt;"sha1" | "sha256"&gt; - Array of signing algorithms used. For AppX `sha256` is always used.
   * <a name="WinBuildOptions-icon"></a>`icon` = `build/icon.ico` String - The path to application icon.
   * <a name="WinBuildOptions-legalTrademarks"></a>`legalTrademarks` String - The trademarks and registered trademarks.
   * <a name="WinBuildOptions-certificateFile"></a>`certificateFile` String - The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason. Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).

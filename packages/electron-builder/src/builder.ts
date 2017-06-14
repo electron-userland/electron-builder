@@ -31,7 +31,10 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   project?: string
 }
 
-/** @private */
+/**
+ * @private
+ * @internal
+ */
 export function normalizeOptions(args: CliOptions): BuildOptions {
   if (args.targets != null) {
     return args
@@ -215,7 +218,10 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   })
 }
 
-/** @private */
+/**
+ * @private
+ * @internal
+ */
 export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
   const publishGroup = "Publishing:"
   const buildGroup = "Building:"

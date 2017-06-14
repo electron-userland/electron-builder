@@ -5,7 +5,7 @@ import * as path from "path"
 import { Metadata, RepositoryInfo } from "./metadata"
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<SourceRepositoryInfo | null> {
-  return _getInfo(projectDir, <RepositoryInfo>(devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
+  return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))
 }
 
 async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
@@ -36,7 +36,7 @@ async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null
   return null
 }
 
-async function _getInfo(projectDir: string, repo?: RepositoryInfo | null): Promise<SourceRepositoryInfo | null> {
+async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | null): Promise<SourceRepositoryInfo | null> {
   if (repo != null) {
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }

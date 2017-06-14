@@ -12,6 +12,7 @@ declare const PACKAGE_VERSION: string
 
 // https://github.com/yargs/yargs/issues/760
 // demandOption is required to be set
+/** @internal */
 export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs {
   return yargs
     .option("platform", {
@@ -26,6 +27,7 @@ export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs 
     })
 }
 
+/** @internal */
 export async function installAppDeps(args: any) {
   try {
     log("electron-builder " + PACKAGE_VERSION)

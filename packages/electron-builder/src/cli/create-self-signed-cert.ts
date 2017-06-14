@@ -9,6 +9,7 @@ import sanitizeFileName from "sanitize-filename"
 import { quoteString } from "../targets/appx"
 import { getSignVendorPath } from "../windowsCodeSign"
 
+/** @internal */
 export async function createSelfSignedCert(publisher: string) {
   const tmpDir = new TmpDir()
   const targetDir = process.cwd()

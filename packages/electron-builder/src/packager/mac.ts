@@ -20,12 +20,14 @@ function moveHelpers(frameworksPath: string, appName: string, prefix: string) {
   })
 }
 
+/** @internal */
 export function filterCFBundleIdentifier(identifier: string) {
   // Remove special characters and allow only alphanumeric (A-Z,a-z,0-9), hyphen (-), and period (.)
   // Apple documentation: https://developer.apple.com/library/mac/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
   return identifier.replace(/ /g, "-").replace(/[^a-zA-Z0-9.-]/g, "")
 }
 
+/** @internal */
 export async function createApp(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename

@@ -8,7 +8,7 @@
     * [`.TargetConfig`](#TargetConfig)
     * [`.TargetSpecificOptions`](#TargetSpecificOptions)
     * [.Platform](#Platform)
-        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;"undefined" \| "undefined" \| "undefined" \| Array&lt;String&gt;&gt;&gt;</code>
+        * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
         * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
         * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
         * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>String</code>
@@ -16,9 +16,9 @@
         * [`.build(appOutDir, arch)`](#module_electron-builder-core.Target+build) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.finishBuild()`](#module_electron-builder-core.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.Arch`](#Arch) : <code>enum</code>
-    * [`.archFromString(name)`](#module_electron-builder-core.archFromString) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.archFromString(name)`](#module_electron-builder-core.archFromString) ⇒ <code>[Arch](#Arch)</code>
     * [`.getArchSuffix(arch)`](#module_electron-builder-core.getArchSuffix) ⇒ <code>String</code>
-    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
+    * [`.toLinuxArchString(arch)`](#module_electron-builder-core.toLinuxArchString) ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 
 <a name="BeforeBuildContext"></a>
 
@@ -55,7 +55,7 @@
 | Name | Type | Description |
 | --- | --- | --- |
 | **target**| <code>String</code> | <a name="TargetConfig-target"></a>The target name. e.g. `snap`. |
-| arch| <code>Array&lt;"undefined" \| "undefined" \| "undefined"&gt;</code> \| <code>String</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
+| arch| <code>Array&lt;"x64" \| "ia32" \| "armv7l"&gt;</code> \| <code>String</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
 
 <a name="TargetSpecificOptions"></a>
 
@@ -83,20 +83,20 @@
 
 
 * [.Platform](#Platform)
-    * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;"undefined" \| "undefined" \| "undefined" \| Array&lt;String&gt;&gt;&gt;</code>
+    * [`.createTarget(type, archs)`](#module_electron-builder-core.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
     * [`.current()`](#module_electron-builder-core.Platform+current) ⇒ <code>[Platform](#Platform)</code>
     * [`.fromString(name)`](#module_electron-builder-core.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
     * [`.toString()`](#module_electron-builder-core.Platform+toString) ⇒ <code>String</code>
 
 <a name="module_electron-builder-core.Platform+createTarget"></a>
 
-#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;"undefined" \| "undefined" \| "undefined" \| Array&lt;String&gt;&gt;&gt;</code>
+#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 
 | Param | Type |
 | --- | --- |
 | type | <code>String</code> \| <code>Array&lt;String&gt;</code> \| <code>null</code> | 
-| archs | <code>Array&lt;"undefined" \| "undefined" \| "undefined"&gt;</code> | 
+| archs | <code>Array&lt;[Arch](#Arch)&gt;</code> | 
 
 <a name="module_electron-builder-core.Platform+current"></a>
 
@@ -139,7 +139,7 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>String</code> | 
-| arch | <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder-core.Target+finishBuild"></a>
 
@@ -159,7 +159,7 @@
 
 <a name="module_electron-builder-core.archFromString"></a>
 
-### `electron-builder-core.archFromString(name)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
+### `electron-builder-core.archFromString(name)` ⇒ <code>[Arch](#Arch)</code>
 **Kind**: method of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 
 | Param | Type |
@@ -173,14 +173,14 @@
 
 | Param | Type |
 | --- | --- |
-| arch | <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder-core.toLinuxArchString"></a>
 
-### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code>
+### `electron-builder-core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 **Kind**: method of [<code>electron-builder-core</code>](#module_electron-builder-core)  
 
 | Param | Type |
 | --- | --- |
-| arch | <code>"undefined"</code> \| <code>"undefined"</code> \| <code>"undefined"</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 

@@ -32,10 +32,12 @@ function subOptionWarning (properties: any, optionName: any, parameter: any, val
   properties[parameter] = value
 }
 
+/** @internal */
 export function unpackElectron(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
   return unpack(packager, out, platform, createDownloadOpts(packager.config, platform, arch, version))
 }
 
+/** @internal */
 export function unpackMuon(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
   return unpack(packager, out, platform, Object.assign({
     mirror: "https://github.com/brave/muon/releases/download/v",
