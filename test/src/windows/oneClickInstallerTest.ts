@@ -35,6 +35,9 @@ test.ifAll("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
   config: {
     publish: null,
+    nsis: {
+      uninstallDisplayName: "Hi!!!",
+    }
   },
 }, {
   projectDirCreated: projectDir => {

@@ -375,6 +375,8 @@ export class NsisTarget extends Target {
       defines.UNINSTALLER_ICON = uninstallerIcon
       defines.MUI_UNICON = uninstallerIcon
     }
+
+    defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(this.options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: any) {

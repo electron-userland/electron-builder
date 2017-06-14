@@ -127,7 +127,7 @@ Object {
       "file": "TestApp-1.1.0-x86_64.AppImage",
     },
     Object {
-      "arch": 1,
+      "arch": 0,
       "file": "TestApp-1.1.0-ia32.zip",
       "safeArtifactName": "TestApp-1.1.0-ia32.zip",
     },

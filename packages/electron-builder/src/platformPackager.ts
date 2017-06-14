@@ -377,7 +377,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  expandMacro(pattern: string, arch: string | n, extra: any = {}): string {
+  expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
     if (arch == null) {
       pattern = pattern
         .replace("-${arch}", "")
@@ -390,7 +390,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return pattern.replace(/\${([_a-zA-Z./*]+)}/g, (match, p1): string => {
       switch (p1) {
         case "productName":
-          return appInfo.productFilename
+          return isProductNameSanitized ? appInfo.productFilename : appInfo.productName
 
         case "arch":
           if (arch == null) {

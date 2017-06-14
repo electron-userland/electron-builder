@@ -212,6 +212,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly menuCategory?: boolean | string
 
   /**
+   * The uninstaller display name in the control panel.
+   * @default ${productName} ${version}
+   */
+  readonly uninstallDisplayName?: string
+
+  /**
    * @private
    * @default false
    */

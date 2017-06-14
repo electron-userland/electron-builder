@@ -6,7 +6,6 @@
 
 !define INSTALL_REGISTRY_KEY "Software\${APP_GUID}"
 !define UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_GUID}"
-!define UNINSTALL_DISPLAY_NAME "${PRODUCT_NAME} ${VERSION}"
 
 # current Install Mode ("all" or "CurrentUser")
 Var installMode
