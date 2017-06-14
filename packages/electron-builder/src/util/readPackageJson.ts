@@ -15,6 +15,7 @@ import TypeParams = ajv.TypeParams
 
 const normalizeData = require("normalize-package-data")
 
+/** @internal */
 export async function readPackageJson(file: string): Promise<any> {
   const data = await readJson(file)
   await authors(file, data)
@@ -47,6 +48,7 @@ function getConfigFromPackageData(metadata: any) {
   return metadata.build
 }
 
+/** @internal */
 export async function doLoadConfig(configFile: string, projectDir: string) {
   const data = await readFile(configFile, "utf8")
   const result = configFile.endsWith(".json5") ? JSON5.parse(data) : safeLoad(data)
@@ -55,6 +57,7 @@ export async function doLoadConfig(configFile: string, projectDir: string) {
   return result
 }
 
+/** @internal */
 export async function loadConfig(projectDir: string): Promise<Config | null> {
   for (const configFile of ["electron-builder.yml", "electron-builder.json", "electron-builder.json5"]) {
     try {
@@ -91,6 +94,7 @@ export async function loadConfig(projectDir: string): Promise<Config | null> {
   }
 }
 
+/** @internal */
 export async function getElectronVersion(config: Config | null | undefined, projectDir: string, projectMetadata?: any | null): Promise<string> {
   // build is required, but this check is performed later, so, we should check for null
   if (config != null && config.electronVersion != null) {
@@ -160,6 +164,7 @@ async function createConfigValidator() {
   return ajv.compile(schema)
 }
 
+/** @internal */
 export async function validateConfig(config: Config) {
   if (validatorPromise == null) {
     validatorPromise = createConfigValidator()

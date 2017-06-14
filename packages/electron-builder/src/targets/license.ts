@@ -1,12 +1,15 @@
 import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
 
+/** @internal */
 export const bundledLanguages = ["en_US", "de_DE", "fr_FR", "es_ES", "zh_CN", "zh_TW", "ja_JP", "it_IT", "nl_NL", "ru_RU", "pl_PL", "uk_UA", "cs_CZ", "sv_SE", "nb_NO", "da_DK", "pt_PT", "hu_HU", "ko_KR", "fi_FI", "sk_SK"]
+
 const langToLangWithRegion = new Map<string, string>()
 for (const id of bundledLanguages) {
   langToLangWithRegion.set(id.substring(0, id.indexOf("_")), id)
 }
 
+/** @internal */
 export function toLangWithRegion(lang: string): string {
   let langWithRegion = langToLangWithRegion.get(lang)
   if (langWithRegion == null) {
@@ -15,6 +18,7 @@ export function toLangWithRegion(lang: string): string {
   return langWithRegion
 }
 
+/** @internal */
 export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<Array<LicenseFile>> {
   const files = (await packager.resourceList)
     .filter(it => {
@@ -41,6 +45,7 @@ export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<
   })
 }
 
+/** @internal */
 export const lcid: any = {
 	"af_ZA": 1078,
 	"am_ET": 1118,
@@ -245,6 +250,7 @@ export const lcid: any = {
 	"zu_ZA": 1077
 }
 
+/** @internal */
 export interface LicenseFile {
   file: string
   lang: string

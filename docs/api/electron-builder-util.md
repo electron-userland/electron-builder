@@ -94,6 +94,12 @@
 
 ### FileCopier
 **Kind**: class of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **isUseHardLink**| <code>Boolean</code> | 
+
 <a name="module_electron-builder-util/out/fs.FileCopier+copy"></a>
 
 #### `fileCopier.copy(src, dest, stat)` ⇒ <code>Promise&lt;void&gt;</code>
@@ -117,8 +123,8 @@ Hard links is used if supported and allowed.
 | --- | --- |
 | src | <code>String</code> | 
 | destination | <code>String</code> | 
-| filter | <code>module:electron-builder-util/out/fs.__type</code> | 
-| transformer | <code>module:electron-builder-util/out/fs.__type</code> | 
+| filter | <code>module:electron-builder-util/out/fs.__type</code> \| <code>null</code> | 
+| transformer | <code>module:electron-builder-util/out/fs.__type</code> \| <code>null</code> | 
 | isUseHardLink | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyFile"></a>

@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { lstat, readdir, readJson, realpath } from "fs-extra-p"
 import * as path from "path"
 
+/** @internal */
 export interface Dependency {
   name: string
   path: string
@@ -11,6 +12,7 @@ export interface Dependency {
   dependencies: { [name: string]: Dependency }
 }
 
+/** @internal */
 export async function readInstalled(folder: string): Promise<Map<string, Dependency>> {
   const opts = {
     depth: Infinity,
@@ -180,6 +182,7 @@ async function readScopedDir(dir: string) {
   return result
 }
 
+/** @internal */
 export async function dependencies(dir: string, result: Set<string>): Promise<void> {
   const pathToDep = await readInstalled(dir)
   for (const dep of pathToDep.values()) {

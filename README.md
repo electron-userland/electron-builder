@@ -22,7 +22,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | Question | Answer |
 |--------|-------|
 | “I want to configure electron-builder” | [See options](https://github.com/electron-userland/electron-builder/wiki/Options) |
-| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](http://electron-builder-slack.herokuapp.com) |
+| “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://slackin.electron.build) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
 | “I want to donate” | [Donate with Donorbox](https://donorbox.org/electron-builder) or [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
 
@@ -172,7 +172,7 @@ and other distributable formats.
 
 ## Community
 
-[electron-builder](http://electron-builder-slack.herokuapp.com) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
+[electron-builder](https://slackin.electron.build) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
 Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading

@@ -7,6 +7,7 @@ import * as path from "path"
 import { Config } from "./metadata"
 import { readInstalled } from "./readInstalled"
 
+/** @internal */
 export async function installOrRebuild(config: Config, appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, forceInstall: boolean = false) {
   const args = asArray(config.npmArgs)
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
@@ -17,6 +18,7 @@ export async function installOrRebuild(config: Config, appDir: string, framework
   }
 }
 
+/** @internal */
 export interface DesktopFrameworkInfo {
   version: string
   useCustomDist: boolean
@@ -26,6 +28,7 @@ function getElectronGypCacheDir() {
   return path.join(homedir(), ".electron-gyp")
 }
 
+/** @internal */
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
   if (!frameworkInfo.useCustomDist) {
     return Object.assign({}, process.env, {
@@ -90,6 +93,7 @@ function isYarnPath(execPath: string | null) {
   return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn"))
 }
 
+/** @internal */
 export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean) {
   const pathToDep = await readInstalled(appDir)
   const nativeDeps = await BluebirdPromise.filter(pathToDep.values(), it => it.extraneous ? false : exists(path.join(it.path, "binding.gyp")), {concurrency: 8})

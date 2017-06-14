@@ -49,22 +49,8 @@ async function main() {
 
   const developerFiles = (await globby([
     "builder/**/*.js",
-    "!**/*-dirPackager.js",
-    "!***/*-asarUtil.js",
-    "!***/*-fileMatcher.js",
-    "!***/*-fileTransformer.js",
     "!***/*-asar.js",
-    "!***/*-archive.js",
-    "!***/*-readInstalled.js",
-    "!***/*-cliOptions.js",
-    "!***/*-license.js",
-    "!***/*-util-filter.js",
-    "!***/*-yarn.js",
-    "!***/*-dmgLicense.js",
     "!***/*-repositoryInfo.js",
-    "!***/*-readPackageJson.js",
-    "!***/*-create-self-signed-cert.js",
-    "!***/*-install-app-deps.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

@@ -9,6 +9,7 @@ import { Config, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { BuildInfo } from "./packagerApi"
 import { createFilter, hasMagic } from "./util/filter"
 
+/** @internal */
 export class FileMatcher {
   readonly from: string
   readonly to: string
@@ -85,6 +86,7 @@ export class FileMatcher {
   }
 }
 
+/** @internal */
 export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, buildResourceDir: string) {
   const patterns = info.isPrepackedAppAsar ? null : getFileMatchers(info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
   const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
@@ -122,6 +124,7 @@ export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath
   return matcher
 }
 
+/** @internal */
 export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
   const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>config)[name]
   const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
@@ -168,6 +171,7 @@ export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "
   return fileMatchers.length === 0 ? null : fileMatchers
 }
 
+/** @internal */
 export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
   if (patterns == null || patterns.length === 0) {
     return BluebirdPromise.resolve()

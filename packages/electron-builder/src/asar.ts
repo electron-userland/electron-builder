@@ -4,6 +4,7 @@ import * as path from "path"
 
 const UINT64 = require("cuint").UINT64
 
+/** @internal */
 export class Node {
   // we don't use Map because later it will be stringified
   files?: { [key: string]: Node }
@@ -18,6 +19,7 @@ export class Node {
   link?: string
 }
 
+/** @internal */
 export class AsarFilesystem {
   private offset = UINT64(0)
 

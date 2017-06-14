@@ -6,6 +6,7 @@ import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "./packagerApi"
 
+/** @internal */
 export function isElectronCompileUsed(info: BuildInfo): boolean {
   if (info.config.electronCompile != null) {
     return info.config.electronCompile
@@ -16,6 +17,7 @@ export function isElectronCompileUsed(info: BuildInfo): boolean {
   return deps != null && "electron-compile" in deps
 }
 
+/** @internal */
 export async function createTransformer(srcDir: string, extraMetadata: any): Promise<FileTransformer> {
   const mainPackageJson = path.join(srcDir, "package.json")
 
@@ -34,12 +36,14 @@ export async function createTransformer(srcDir: string, extraMetadata: any): Pro
   }
 }
 
+/** @internal */
 export interface CompilerHost {
   compile(file: string): any
   
   saveConfiguration(): Promise<any>
 }
 
+/** @internal */
 export function createElectronCompilerHost(projectDir: string, cacheDir: string): Promise<CompilerHost> {
   const electronCompilePath = path.join(projectDir, "node_modules", "electron-compile", "lib")
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)

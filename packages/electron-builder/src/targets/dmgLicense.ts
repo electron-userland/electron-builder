@@ -4,8 +4,9 @@ import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
 import { getLicenseFiles } from "./license"
 
-// http://www.owsiak.org/?p=700
+/** @internal */
 export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: string) {
+  // http://www.owsiak.org/?p=700
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return

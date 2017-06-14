@@ -255,8 +255,12 @@ export class Packager implements BuildInfo {
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager, cleanupTasks)
         const ourDirs = new Set<string>()
         for (const target of targetList) {
-          const outDir = target.outDir
-          if (!createdOutDirs.has(outDir) && !(target instanceof NoOpTarget)) {
+          if (target instanceof NoOpTarget) {
+            continue
+          }
+
+          const outDir = (<Target>target).outDir
+          if (createdOutDirs.has(outDir)) {
             ourDirs.add(outDir)
           }
         }

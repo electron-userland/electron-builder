@@ -3,6 +3,7 @@ import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 
+/** @internal */
 export function hasMagic(pattern: Minimatch) {
   const set = pattern.set
   if (set.length > 1) {
@@ -18,6 +19,7 @@ export function hasMagic(pattern: Minimatch) {
   return false
 }
 
+/** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
   return function (it, stat) {
     if (src === it) {

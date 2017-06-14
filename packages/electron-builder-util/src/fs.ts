@@ -159,9 +159,10 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 }
 
 export class FileCopier {
-  private isUseHardLink = _isUseHardLink
+  isUseHardLink: boolean
   
-  constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer) {
+  constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer | null) {
+    this.isUseHardLink = _isUseHardLink && isUseHardLinkFunction !== DO_NOT_USE_HARD_LINKS
   }
 
   async copy(src: string, dest: string, stat: Stats | undefined) {
@@ -203,13 +204,14 @@ export class FileCopier {
  * Empty directories is never created.
  * Hard links is used if supported and allowed.
  */
-export function copyDir(src: string, destination: string, filter?: Filter, transformer?: FileTransformer, isUseHardLink?: (file: string) => boolean): Promise<any> {
+export function copyDir(src: string, destination: string, filter?: Filter | null, transformer?: FileTransformer | null, isUseHardLink?: (file: string) => boolean): Promise<any> {
+  const fileCopier = new FileCopier(isUseHardLink, transformer)
+
   if (debug.enabled) {
-    debug(`Copying ${src} to ${destination}${_isUseHardLink ? " using hard links" : ""}`)
+    debug(`Copying ${src} to ${destination}${fileCopier.isUseHardLink ? " using hard links" : ""}`)
   }
 
   const createdSourceDirs = new Set<string>()
-  const fileCopier = new FileCopier(isUseHardLink, transformer)
   const links: Array<Link> = []
   return walk(src, filter, async(file, stat, parent) => {
     if (!stat.isFile() && !stat.isSymbolicLink()) {
@@ -231,6 +233,8 @@ export function copyDir(src: string, destination: string, filter?: Filter, trans
   })
     .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
 }
+
+export const DO_NOT_USE_HARD_LINKS = (file: string) => false
 
 interface Link {
   readonly link: string,

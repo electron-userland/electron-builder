@@ -43,6 +43,7 @@ function writeUnpackedFiles(filesToUnpack: Array<UnpackedFileTask>, fileCopier: 
   })
 }
 
+/** @internal */
 export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
@@ -391,6 +392,7 @@ export class AsarPackager {
   }
 }
 
+/** @internal */
 export async function checkFileInArchive(asarFile: string, relativeFile: string, messagePrefix: string) {
   function error(text: string) {
     return new Error(`${messagePrefix} "${relativeFile}" in the "${asarFile}" ${text}`)

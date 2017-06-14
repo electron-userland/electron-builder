@@ -10,10 +10,10 @@ import { installOrRebuild } from "../yarn"
 
 declare const PACKAGE_VERSION: string
 
-// https://github.com/yargs/yargs/issues/760
-// demandOption is required to be set
 /** @internal */
 export function configureInstallAppDepsCommand(yargs: yargs.Yargs): yargs.Yargs {
+  // https://github.com/yargs/yargs/issues/760
+  // demandOption is required to be set
   return yargs
     .option("platform", {
       choices: ["linux", "darwin", "win32"],

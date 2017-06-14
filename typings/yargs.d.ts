@@ -127,7 +127,7 @@ declare namespace yargs {
 
     completion(cmd: string, fn?: SyncCompletionFunction): Yargs;
 
-    completion(cmd: string, description?: string, fn?: AsyncCompletionFunction): Yargs;
+    completion(cmd: string | undefined, description?: string, fn?: AsyncCompletionFunction): Yargs;
 
     completion(cmd: string, description?: string, fn?: SyncCompletionFunction): Yargs;
 
