@@ -84,8 +84,21 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 }
 
 export interface CommonNsisOptions {
+  /**
+   * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
+   * @default true
+   */
   readonly unicode?: boolean
+
+  /**
+   * See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+   */
   readonly guid?: string | null
+
+  /**
+   * If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
+   * @default true
+   */
   readonly warningsAsErrors?: boolean
 }
 
@@ -124,11 +137,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default true
    */
   readonly runAfterFinish?: boolean
-
-  /**
-   * See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
-   */
-  readonly guid?: string | null
 
   /**
    * The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
@@ -198,12 +206,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly multiLanguageInstaller?: boolean
 
   /**
-   * If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
-   * @default true
-   */
-  readonly warningsAsErrors?: boolean
-
-  /**
    * Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
    * @default false
    */
@@ -219,12 +221,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
-
-  /**
-   * Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
-   * @default true
-   */
-  readonly unicode?: boolean
 
   /**
    * *one-click installer only.* Whether to delete app data on uninstall.

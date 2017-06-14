@@ -187,6 +187,7 @@ Configuration Options
   * <a name="MacOptions-binaries"></a>`binaries` Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
   * <a name="MacOptions-requirements"></a>`requirements` String - Path of [requirements file](https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html) used in signing. Not applicable for MAS.
 * <a name="Config-mas"></a>`mas`<a name="MasBuildOptions"></a> - MAS (Mac Application Store) options.
+  Inherits [MacOptions](#MacOptions) options.
   * <a name="MasBuildOptions-entitlements"></a>`entitlements` String - The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).
   * <a name="MasBuildOptions-entitlementsInherit"></a>`entitlementsInherit` String - The path to child entitlements which inherit the security settings for signing frameworks and bundles of a distribution. `build/entitlements.mas.inherit.plist` will be used if exists (it is a recommended way to set). Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.inherit.plist).
   * <a name="MasBuildOptions-binaries"></a>`binaries` Array&lt;String&gt; - Paths of any extra binaries that need to be signed.
@@ -208,10 +209,14 @@ Configuration Options
     * <a name="DmgWindow-y"></a>`y` = `100` Number - The Y position relative to top of the screen.
     * <a name="DmgWindow-width"></a>`width` Number - The width. Defaults to background image width or 540.
     * <a name="DmgWindow-height"></a>`height` Number - The height. Defaults to background image height or 380.
+  * <a name="DmgOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+  * <a name="DmgOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-pkg"></a>`pkg`<a name="PkgOptions"></a> - macOS product archive options.
   * <a name="PkgOptions-scripts"></a>`scripts` = `build/pkg-scripts` String - The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).
   * <a name="PkgOptions-installLocation"></a>`installLocation` = `/Applications` String - The install location.
   * <a name="PkgOptions-identity"></a>`identity` String
+  * <a name="PkgOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+  * <a name="PkgOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-win"></a>`win`<a name="WinBuildOptions"></a> - Windows options.
   * <a name="WinBuildOptions-target"></a>`target` = `nsis` String | [TargetConfig](electron-builder-core#TargetConfig) | Array - Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
     
@@ -236,7 +241,6 @@ Configuration Options
   * <a name="NsisOptions-allowElevation"></a>`allowElevation` = `true` Boolean - *boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
   * <a name="NsisOptions-allowToChangeInstallationDirectory"></a>`allowToChangeInstallationDirectory` = `false` Boolean - *boring installer only.* Whether to allow user to change installation directory.
   * <a name="NsisOptions-runAfterFinish"></a>`runAfterFinish` = `true` Boolean - *one-click installer only.* Run application after finish.
-  * <a name="NsisOptions-guid"></a>`guid` String - See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
   * <a name="NsisOptions-installerIcon"></a>`installerIcon` String - The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.
   * <a name="NsisOptions-uninstallerIcon"></a>`uninstallerIcon` String - The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.
   * <a name="NsisOptions-installerHeader"></a>`installerHeader` = `build/installerHeader.bmp` String - *boring installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
@@ -252,13 +256,16 @@ Configuration Options
     Appropriate license file will be selected by user OS language.
   * <a name="NsisOptions-language"></a>`language` String - [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
   * <a name="NsisOptions-multiLanguageInstaller"></a>`multiLanguageInstaller` Boolean - *boring installer only.* Whether to create multi-language installer. Defaults to `unicode` option value. [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800).
-  * <a name="NsisOptions-warningsAsErrors"></a>`warningsAsErrors` = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
   * <a name="NsisOptions-menuCategory"></a>`menuCategory` = `false` Boolean | String - Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
   * <a name="NsisOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
-  * <a name="NsisOptions-unicode"></a>`unicode` = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
   * <a name="NsisOptions-deleteAppDataOnUninstall"></a>`deleteAppDataOnUninstall` = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
   * <a name="NsisOptions-packElevateHelper"></a>`packElevateHelper` = `true` Boolean - Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
+  * <a name="NsisOptions-unicode"></a>`unicode` = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
+  * <a name="NsisOptions-guid"></a>`guid` String - See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+  * <a name="NsisOptions-warningsAsErrors"></a>`warningsAsErrors` = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
+  * <a name="NsisOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-nsisWeb"></a>`nsisWeb`<a name="NsisWebOptions"></a> - Web Installer specific options.
+  Inherits [NsisOptions](#NsisOptions) options.
   * <a name="NsisWebOptions-appPackageUrl"></a>`appPackageUrl` String - The application package download URL. Optional — by default computed using publish configuration.
     
     URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).
@@ -267,15 +274,23 @@ Configuration Options
   * <a name="NsisWebOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
 * <a name="Config-portable"></a>`portable`<a name="PortableOptions"></a> - Portable specific options.
   * <a name="PortableOptions-requestExecutionLevel"></a>`requestExecutionLevel` = `user` "user" | "highest" | "admin" - The [requested execution level](http://nsis.sourceforge.net/Reference/RequestExecutionLevel) for Windows.
+  * <a name="PortableOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+  * <a name="PortableOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
+  * <a name="PortableOptions-unicode"></a>`unicode` = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
+  * <a name="PortableOptions-guid"></a>`guid` String - See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+  * <a name="PortableOptions-warningsAsErrors"></a>`warningsAsErrors` = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 * <a name="Config-appx"></a>`appx`<a name="AppXOptions"></a> - AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
   * <a name="AppXOptions-backgroundColor"></a>`backgroundColor` String - The background color of the app tile. See: [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
   * <a name="AppXOptions-publisher"></a>`publisher` String - Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. By default will be extracted from code sign certificate.
   * <a name="AppXOptions-displayName"></a>`displayName` String - A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
   * <a name="AppXOptions-publisherDisplayName"></a>`publisherDisplayName` String - A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
   * <a name="AppXOptions-identityName"></a>`identityName` String - Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+  * <a name="AppXOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+  * <a name="AppXOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-squirrelWindows"></a>`squirrelWindows`<a name="SquirrelWindowsOptions"></a> - Squirrel.Windows options.
   
   To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
+  Inherits [WinBuildOptions](#WinBuildOptions) options.
   * <a name="SquirrelWindowsOptions-iconUrl"></a>`iconUrl` String - A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
     
     Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
@@ -287,9 +302,7 @@ Configuration Options
   * <a name="SquirrelWindowsOptions-remoteToken"></a>`remoteToken` String - Authentication token for remote updates
   * <a name="SquirrelWindowsOptions-useAppIdAsId"></a>`useAppIdAsId` Boolean - Use `appId` to identify package instead of `name`.
 * <a name="Config-linux"></a>`linux`<a name="LinuxBuildOptions"></a> - Linux options.
-  * <a name="LinuxBuildOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
   * <a name="LinuxBuildOptions-packageCategory"></a>`packageCategory` String - The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
-  * <a name="LinuxBuildOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
   * <a name="LinuxBuildOptions-target"></a>`target` = `AppImage` String | [TargetConfig](electron-builder-core#TargetConfig) | Array - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
     
     electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
@@ -299,11 +312,17 @@ Configuration Options
   * <a name="LinuxBuildOptions-executableName"></a>`executableName` String - The executable name. Defaults to `productName`. Cannot be specified per target, allowed only in the `linux`.
   * <a name="LinuxBuildOptions-icon"></a>`icon` String - The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon. By default will be generated automatically based on the macOS icns file.
   * <a name="LinuxBuildOptions-synopsis"></a>`synopsis` String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+  * <a name="LinuxBuildOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
+  * <a name="LinuxBuildOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+  * <a name="LinuxBuildOptions-afterInstall"></a>`afterInstall` String
+  * <a name="LinuxBuildOptions-afterRemove"></a>`afterRemove` String
 * <a name="Config-deb"></a>`deb`<a name="DebOptions"></a> - Debian package specific options.
   * <a name="DebOptions-compression"></a>`compression` = `xz` "gz" | "bzip2" | "xz" - The compression type.
   * <a name="DebOptions-priority"></a>`priority` String - The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
   * <a name="DebOptions-depends"></a>`depends` Array&lt;String&gt; - Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
+  * <a name="DebOptions-icon"></a>`icon` String
 * <a name="Config-snap"></a>`snap`<a name="SnapOptions"></a> - [Snap](http://snapcraft.io) options.
+  Inherits [LinuxBuildOptions](#LinuxBuildOptions) options.
   * <a name="SnapOptions-confinement"></a>`confinement` = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
   * <a name="SnapOptions-summary"></a>`summary` String - The 78 character long summary. Defaults to [productName](#Config-productName).
   * <a name="SnapOptions-grade"></a>`grade` = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).

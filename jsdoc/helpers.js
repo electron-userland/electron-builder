@@ -71,19 +71,43 @@ function isPrimitiveType(name) {
 
 function renderProperties(object, root, level) {
   let result = ""
-  const first = object.properties[0]
-  for (const member of object.properties) {
+
+  let properties = object.properties
+
+  let firstDocumentedParent = null
+  const parents = object.augments
+  if (parents != null) {
+    for (const parentId of parents) {
+      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions")) {
+        if (firstDocumentedParent == null && !parentId.endsWith("PlatformSpecificBuildOptions")) {
+          firstDocumentedParent = resolveById(parentId)
+        }
+        continue
+      }
+
+      const parent = resolveById(parentId)
+      if (parent != null) {
+        properties = properties.concat(parent.properties.filter(parentProperty => !properties.some(it => it.name === parentProperty.name)))
+      }
+    }
+  }
+
+  let indent = ""
+  for (let d = 0; d < level; d++) {
+    indent += "  "
+  }
+
+  if (firstDocumentedParent != null) {
+    result += `${indent}Inherits [${firstDocumentedParent.name}](#${anchorName.call(firstDocumentedParent)}) options.\n`
+  }
+
+  const first = properties[0]
+  for (const member of properties) {
     if (member !== first) {
       result += "\n"
     }
 
-    let indent = ""
-    for (let d = 0; d < level; d++) {
-      indent += "  "
-    }
-    result += indent + "*"
-
-    result += " " + renderMemberName(member, object)
+    result += indent + "* " + renderMemberName(member, object)
 
     const types = member.type.names
     let child = getInlinedChild(types)

@@ -168,17 +168,17 @@
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
 
-| Name | Type |
-| --- | --- |
-| synopsis| <code>String</code> \| <code>null</code> | 
-| description| <code>String</code> \| <code>null</code> | 
-| category| <code>String</code> \| <code>null</code> | 
-| packageCategory| <code>String</code> \| <code>null</code> | 
-| desktop| <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
-| vendor| <code>String</code> \| <code>null</code> | 
-| maintainer| <code>String</code> \| <code>null</code> | 
-| afterInstall| <code>String</code> \| <code>null</code> | 
-| afterRemove| <code>String</code> \| <code>null</code> | 
+| Name | Type | Description |
+| --- | --- | --- |
+| synopsis| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-synopsis"></a>The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description). |
+| description| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-description"></a>As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux. |
+| category| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-category"></a>The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry). |
+| packageCategory| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-packageCategory"></a> |
+| desktop| <code>Object&lt;String, any&gt;</code> \| <code>null</code> | <a name="CommonLinuxOptions-desktop"></a> |
+| vendor| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-vendor"></a> |
+| maintainer| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-maintainer"></a> |
+| afterInstall| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-afterInstall"></a> |
+| afterRemove| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-afterRemove"></a> |
 
 <a name="CommonNsisOptions"></a>
 
@@ -186,11 +186,11 @@
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
 
-| Name | Type |
-| --- | --- |
-| unicode| <code>Boolean</code> | 
-| guid| <code>String</code> \| <code>null</code> | 
-| warningsAsErrors| <code>Boolean</code> | 
+| Name | Type | Description |
+| --- | --- | --- |
+| unicode = <code>true</code>| <code>Boolean</code> | <a name="CommonNsisOptions-unicode"></a>Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode). |
+| guid| <code>String</code> \| <code>null</code> | <a name="CommonNsisOptions-guid"></a>See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name). |
+| warningsAsErrors = <code>true</code>| <code>Boolean</code> | <a name="CommonNsisOptions-warningsAsErrors"></a>If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings. |
 
 <a name="ForgeOptions"></a>
 
@@ -206,7 +206,7 @@
 
 ### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
-**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>  
+**Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>, <code>[TargetSpecificOptions](electron-builder-core#TargetSpecificOptions)</code>  
 **Properties**
 
 | Name | Type | Description |

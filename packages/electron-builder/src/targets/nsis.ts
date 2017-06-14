@@ -87,7 +87,7 @@ export class NsisTarget extends Target {
 
     this.packageHelper.refCount++
 
-    this.options = Object.assign(Object.create(null), this.packager.config.nsis)
+    this.options = targetName === "portable" ? Object.create(null) : Object.assign(Object.create(null), this.packager.config.nsis)
     if (targetName !== "nsis") {
       Object.assign(this.options, (<any>this.packager.config)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }

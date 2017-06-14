@@ -3,19 +3,9 @@ import { PlatformSpecificBuildOptions } from "../metadata"
 
 export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**
-   * The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
-   */
-  readonly category?: string | null
-
-  /**
    * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
    */
   readonly packageCategory?: string | null
-
-  /**
-   * As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
-   */
-  readonly description?: string | null
 
   /**
    * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
@@ -59,17 +49,22 @@ export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificB
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
+}
 
+export interface CommonLinuxOptions {
   /**
    * The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
    */
   readonly synopsis?: string | null
-}
 
-export interface CommonLinuxOptions {
-  readonly synopsis?: string | null
+  /**
+   * As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
+   */
   readonly description?: string | null
 
+  /**
+   * The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+   */
   readonly category?: string | null
   readonly packageCategory?: string | null
 
@@ -88,7 +83,7 @@ export interface CommonLinuxOptions {
   readonly fpm?: Array<string> | null
 }
 
-export interface LinuxTargetSpecificOptions extends TargetSpecificOptions, CommonLinuxOptions {
+export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Package dependencies.
    */

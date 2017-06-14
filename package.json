@@ -58,7 +58,7 @@
     "sanitize-filename": "^1.6.1",
     "semver": "^5.3.0",
     "stat-mode": "^0.2.2",
-    "ts-jsdoc": "^2.0.2",
+    "ts-jsdoc": "^2.0.3",
     "tunnel-agent": "^0.6.0",
     "update-notifier": "^2.2.0",
     "uuid-1345": "^0.99.6",
