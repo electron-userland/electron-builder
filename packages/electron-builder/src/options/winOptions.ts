@@ -80,7 +80,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    *
    * @default true
    */
-  readonly forceCodeSigningVerification?: boolean
+  readonly verifyUpdateCodeSignature?: boolean
 }
 
 export interface CommonNsisOptions {

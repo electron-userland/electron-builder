@@ -97,7 +97,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   })
 
   get isForceCodeSigningVerification(): boolean {
-    return this.platformSpecificBuildOptions.forceCodeSigningVerification !== false
+    return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
   }
 
   constructor(info: BuildInfo) {

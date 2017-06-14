@@ -232,7 +232,7 @@ Configuration Options
   * <a name="WinBuildOptions-rfc3161TimeStampServer"></a>`rfc3161TimeStampServer` = `http://timestamp.comodoca.com/rfc3161` String - The URL of the RFC 3161 time stamp server.
   * <a name="WinBuildOptions-timeStampServer"></a>`timeStampServer` = `http://timestamp.verisign.com/scripts/timstamp.dll` String - The URL of the time stamp server.
   * <a name="WinBuildOptions-publisherName"></a>`publisherName` String | Array&lt;String&gt; - [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided. Defaults to common name from your code signing certificate.
-  * <a name="WinBuildOptions-forceCodeSigningVerification"></a>`forceCodeSigningVerification` = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification.
+  * <a name="WinBuildOptions-verifyUpdateCodeSignature"></a>`verifyUpdateCodeSignature` = `true` Boolean - Whether to verify the signature of an available update before installation. The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification.
 * <a name="Config-nsis"></a>`nsis`<a name="NsisOptions"></a> - NSIS options. See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
   * <a name="NsisOptions-oneClick"></a>`oneClick` = `true` Boolean - One-click installation.
   * <a name="NsisOptions-perMachine"></a>`perMachine` = `false` Boolean - If `oneClick` is `true` (default): Install per all users (per-machine).
