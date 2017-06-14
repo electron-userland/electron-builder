@@ -41,7 +41,7 @@ export async function exists(file: string): Promise<boolean> {
   }
 }
 
-export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string, extraIgnoredFiles: Set<string>) => any): Promise<Array<string>> {
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string, extraIgnoredFiles: Set<string>, siblingNames: Array<string>) => any): Promise<Array<string>> {
   const result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
@@ -68,7 +68,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
             return null
           }
 
-          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath, extraIgnoredFiles)
+          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath, extraIgnoredFiles, childNames)
           if (consumerResult == null || !("then" in consumerResult)) {
             if (stat.isDirectory()) {
               dirs.push(name)

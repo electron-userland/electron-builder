@@ -40,7 +40,7 @@
     "electron-download-tf": "4.3.1",
     "electron-is-dev": "^0.1.2",
     "electron-osx-sign": "0.4.6",
-    "fcopy-pre-bundled": "0.3.1",
+    "fcopy-pre-bundled": "0.3.3",
     "fs-extra-p": "^4.3.0",
     "hosted-git-info": "^2.4.2",
     "ini": "^1.3.4",

@@ -59,12 +59,12 @@ export class AsarPackager {
   async pack(filter: Filter, isElectronCompile: boolean) {
     const metadata = this.metadata
     const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
-    let files = await walk(this.src, filter, (file, fileStat, parent, extraIgnoredFiles) => {
+    let files = await walk(this.src, filter, (file, fileStat, parent, extraIgnoredFiles, siblingNames) => {
       metadata.set(file, fileStat)
 
       // https://github.com/electron-userland/electron-builder/issues/1539
       // but do not filter if we inside node_modules dir
-      if (fileStat.isDirectory() && file.endsWith(nodeModulesSystemDependentSuffix) && !parent.includes("node_modules")) {
+      if (fileStat.isDirectory() && file.endsWith(nodeModulesSystemDependentSuffix) && !parent.includes("node_modules") && siblingNames.includes("package.json")) {
         return dependencies(parent, extraIgnoredFiles)
           .then(it => {
             if (debug.enabled) {
