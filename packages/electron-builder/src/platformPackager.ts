@@ -183,7 +183,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME,
-    }, this.packagerOptions.extraMetadata) : this.packagerOptions.extraMetadata)
+    }, this.config.extraMetadata) : this.config.extraMetadata)
     let promise
     if (this.info.isPrepackedAppAsar) {
       promise = copyDir(appDir, path.join(resourcesPath), filter, transformer)

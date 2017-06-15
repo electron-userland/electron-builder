@@ -10,6 +10,7 @@ import { normalizePlatforms, Packager } from "./packager"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
 
+/** @internal */
 export interface BuildOptions extends PackagerOptions, PublishOptions {
 }
 
@@ -29,12 +30,11 @@ export interface CliOptions extends PackagerOptions, PublishOptions {
   platform?: string
 
   project?: string
+
+  extraMetadata?: any
 }
 
-/**
- * @private
- * @internal
- */
+/** @internal */
 export function normalizeOptions(args: CliOptions): BuildOptions {
   if (args.targets != null) {
     return args
@@ -140,6 +140,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete r._
   delete r.version
   delete r.help
+  delete r.c
 
   delete result.ia32
   delete result.x64
@@ -149,6 +150,31 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     result.projectDir = result.project
   }
   delete result.project
+
+  let config = result.config
+  if (config != null && !(typeof config === "string")) {
+    if (typeof config.asar === "string") {
+      (<any>config).asar = config.asar === "true"
+    }
+  }
+
+  if (result.extraMetadata != null) {
+    if (typeof config === "string") {
+      // transform to object and specify path to config as extends
+      config = {
+        extends: config,
+        extraMetadata: result.extraMetadata,
+      };
+      (<any>result).config = config
+    }
+    else if (config == null) {
+      config = {};
+      (<any>result).config = config
+    }
+    (<any>config).extraMetadata = result.extraMetadata
+  }
+  delete result.extraMetadata
+
   return result
 }
 

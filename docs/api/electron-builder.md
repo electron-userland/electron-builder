@@ -1343,7 +1343,7 @@
 
 | Name | Type |
 | --- | --- |
-| options = <code>this.packager.config.dmg</code>| <code>undefined</code> \| <code>null</code> \| <code>[DmgOptions](Options#DmgOptions)</code> | 
+| options = <code>this.packager.config.dmg || Object.create(null)</code>| <code>[DmgOptions](Options#DmgOptions)</code> | 
 
 
 * [.DmgTarget](#DmgTarget) ⇐ <code>[Target](electron-builder-core#Target)</code>

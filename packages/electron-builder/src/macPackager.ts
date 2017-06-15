@@ -101,8 +101,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
       const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
       if (targetName === "mas-dev") {
-        deepAssign(masBuildOptions, (<any>this.config)[targetName])
-        masBuildOptions.type = "development"
+        deepAssign(masBuildOptions, (<any>this.config)[targetName], {
+          type: "development",
+        })
       }
 
       const targetOutDir = path.join(outDir, targetName)

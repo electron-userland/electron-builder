@@ -16,6 +16,7 @@ import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
+import { reactCra } from "./presets/rect-cra"
 import { getRepositoryInfo } from "./repositoryInfo"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson, validateConfig } from "./util/readPackageJson"
@@ -71,6 +72,13 @@ export class Packager implements BuildInfo {
 
   //noinspection JSUnusedGlobalSymbols
   constructor(readonly options: PackagerOptions, readonly cancellationToken: CancellationToken) {
+    if ("devMetadata" in options) {
+      throw new Error("devMetadata in the options is deprecated, please use config instead")
+    }
+    if ("extraMetadata" in options) {
+      throw new Error("extraMetadata in the options is deprecated, please use config.extraMetadata instead")
+    }
+
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
 
     this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
@@ -100,12 +108,6 @@ export class Packager implements BuildInfo {
   }
 
   async build(): Promise<BuildResult> {
-    //noinspection JSDeprecatedSymbols
-    const devMetadataFromOptions = this.options.devMetadata
-    if (devMetadataFromOptions != null) {
-      warn("devMetadata is deprecated, please use config instead")
-    }
-
     let configPath: string | null = null
     let configFromOptions = this.options.config
     if (typeof configFromOptions === "string") {
@@ -113,29 +115,21 @@ export class Packager implements BuildInfo {
       configPath = configFromOptions
       configFromOptions = null
     }
-
-    if (devMetadataFromOptions != null) {
-      if (configFromOptions != null) {
-        throw new Error("devMetadata and config cannot be used in conjunction")
-      }
-      configFromOptions = devMetadataFromOptions.build
+    else if (configFromOptions != null && configFromOptions.extends != null && configFromOptions.extends.includes(".")) {
+      configPath = configFromOptions.extends
     }
 
     const projectDir = this.projectDir
     const fileOrPackageConfig = await (configPath == null ? loadConfig(projectDir) : doLoadConfig(path.resolve(projectDir, configPath), projectDir))
-    const config = deepAssign({}, fileOrPackageConfig, configFromOptions)
+    const config: Config = deepAssign({}, fileOrPackageConfig, configFromOptions)
 
-    const extraMetadata = this.options.extraMetadata
+    const extraMetadata = config.extraMetadata
     if (extraMetadata != null) {
-      const extraBuildMetadata = extraMetadata.build
-      if (extraBuildMetadata != null) {
-        deepAssign(config, extraBuildMetadata)
-        delete extraMetadata.build
+      if (extraMetadata.build != null) {
+        throw new Error(`--em.build is deprecated, please specify as -c"`)
       }
       if (extraMetadata.directories != null) {
-        warn(`--em.directories is deprecated, please specify as --em.build.directories"`)
-        deepAssign(config, {directories: extraMetadata.directories})
-        delete extraMetadata.directories
+        throw new Error(`--em.directories is deprecated, please specify as -c.directories"`)
       }
     }
 
@@ -152,8 +146,7 @@ export class Packager implements BuildInfo {
     await this.readProjectMetadata(appPackageFile, extraMetadata)
 
     if (this.isTwoPackageJsonProjectLayoutUsed) {
-      this.devMetadata = deepAssign(await readPackageJson(devPackageFile), devMetadataFromOptions)
-
+      this.devMetadata = await readPackageJson(devPackageFile)
       debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
     }
     else {
@@ -163,6 +156,22 @@ export class Packager implements BuildInfo {
       }
       if (extraMetadata != null) {
         deepAssign(this.devMetadata, extraMetadata)
+      }
+    }
+
+    if (config.extends == null && config.extends !== null) {
+      const devDependencies = (<any>this.devMetadata).devDependencies
+      if (devDependencies != null && "react-scripts" in devDependencies) {
+        (<any>config).extends = "react-cra"
+      }
+    }
+
+    if (config.extends === "react-cra") {
+      await reactCra(config, this.projectDir)
+
+      // apply extraMetadata again to metadata because other code expects that appInfo.metadata it is effective metadata, not as on disk (e.g. application entry check)
+      if (config.extraMetadata != null) {
+        deepAssign(this.metadata, config.extraMetadata)
       }
     }
 

@@ -7,19 +7,24 @@ function isObject(x: any) {
   return type === "object" || type === "function"
 }
 
-function assignKey(to: any, from: any, key: string) {
+function assignKey(target: any, from: any, key: string) {
   const value = from[key]
   // https://github.com/electron-userland/electron-builder/pull/562
   if (value === undefined) {
     return
   }
 
-  const prevValue = to[key]
-  if (prevValue == null || value === null || !isObject(prevValue) || !isObject(value)) {
-    to[key] = value
+  const prevValue = target[key]
+  if (prevValue === null) {
+    // if explicitly set to null, it means that we want to not use default or inherited value
+    return
+  }
+
+  if (prevValue == null || value == null || !isObject(prevValue) || !isObject(value)) {
+    target[key] = value
   }
   else {
-    to[key] = assign(prevValue, value)
+    target[key] = assign(prevValue, value)
   }
 }
 
@@ -32,7 +37,7 @@ function assign(to: any, from: any) {
   return to
 }
 
-export function deepAssign(target: any, ...objects: Array<any>) {
+export function deepAssign<T>(target: T, ...objects: Array<any>): T {
   for (const o of objects) {
     if (o != null) {
       assign(target, o)

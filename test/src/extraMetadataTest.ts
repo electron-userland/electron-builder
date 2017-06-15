@@ -3,21 +3,21 @@ import { readAsarJson } from "electron-builder/out/asar"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appTwo, appTwoThrows, modifyPackageJson } from "./helpers/packTester"
+import { app, modifyPackageJson } from "./helpers/packTester"
 
 function createExtraMetadataTest(asar: boolean) {
   return app({
     targets: Platform.LINUX.createTarget(DIR_TARGET),
-    extraMetadata: {
-      foo: {
-        bar: 12,
+    config: {
+      asar: asar,
+      linux: {
+        executableName: "new-name",
       },
-      build: {
-        asar: asar,
-        linux: {
-          executableName: "new-name",
+      extraMetadata: {
+        foo: {
+          bar: 12,
         },
-      }
+      },
     },
   }, {
     projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
@@ -42,33 +42,3 @@ function createExtraMetadataTest(asar: boolean) {
 
 test.ifDevOrLinuxCi("extra metadata", createExtraMetadataTest(true))
 test.ifDevOrLinuxCi("extra metadata (no asar)", createExtraMetadataTest(false))
-
-test.ifDevOrLinuxCi("extra metadata - two", appTwo({
-    targets: Platform.LINUX.createTarget(DIR_TARGET),
-    extraMetadata: {
-    build: {
-      linux: {
-        executableName: "new-name"
-      }
-    }
-  },
-  }, {
-    packed: async context => {
-      await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
-    }
-}))
-
-test.ifMac("extra metadata - override icon", appTwoThrows({
-  targets: Platform.MAC.createTarget(DIR_TARGET),
-  extraMetadata: {
-    build: {
-      mac: {
-        icon: "dev"
-      }
-    },
-  },
-}, {
-  packed: async context => {
-    await assertThat(path.join(context.getContent(Platform.LINUX), "new-name")).isFile()
-  }
-}))

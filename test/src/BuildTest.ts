@@ -1,9 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, BuildOptions, createTargets, DIR_TARGET, Platform } from "electron-builder"
+import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { walk } from "electron-builder-util/out/fs"
 import { readAsarJson } from "electron-builder/out/asar"
 import { checkWineVersion } from "electron-builder/out/packager"
-import { move, outputJson } from "fs-extra-p"
+import { move, outputJson, readJson } from "fs-extra-p"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./helpers/config"
 import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson } from "./helpers/packTester"
@@ -16,16 +16,15 @@ test("cli", async () => {
   const yargs = require("yargs")
   configureBuildCommand(yargs)
 
-  function parse(input: string): BuildOptions {
+  function parse(input: string): any {
     return normalizeOptions(yargs.parse(input.split(" ")))
   }
 
-  function expected(opt: BuildOptions): object {
+  function expected(opt: any): object {
     return Object.assign({
       publish: undefined,
       draft: undefined,
       prerelease: undefined,
-      extraMetadata: undefined,
     }, opt)
   }
 
@@ -72,6 +71,26 @@ test("relative index", appTwo({
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.main = "./index.js"
   }, true)
+}))
+
+
+test("extraMetadata and config as path", app(Object.assign(require("electron-builder/out/builder").normalizeOptions({
+  extraMetadata: {
+    field: "bar.js"
+  },
+  config: "foo.json",
+}), {
+  targets: linuxDirTarget,
+}), {
+  projectDirCreated: projectDir => {
+    return outputJson(path.join(projectDir, "foo.json"), {
+      asar: false
+    })
+  },
+  packed: async context => {
+    const resourceDir = context.getResources(Platform.LINUX)
+    expect(await readJson(path.join(resourceDir, "app", "package.json"))).toMatchSnapshot()
+  }
 }))
 
 it.ifDevOrLinuxCi("electron version from electron-prebuilt dependency", app({

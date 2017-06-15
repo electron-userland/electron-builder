@@ -23,14 +23,6 @@ Object {
 }
 `;
 
-exports[`extra metadata - override icon 1`] = `"Cannot find specified resource \\"dev.icns\\""`;
-
-exports[`extra metadata - two 1`] = `
-Object {
-  "linux": Array [],
-}
-`;
-
 exports[`extra metadata 1`] = `
 Object {
   "linux": Array [],

@@ -344,7 +344,11 @@ Configuration Options
 * <a name="Config-rpm"></a>`rpm` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-freebsd"></a>`freebsd` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-p5p"></a>`p5p` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
-* <a name="Config-apk"></a>`apk` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)<a name="Metadata"></a>
+* <a name="Config-apk"></a>`apk` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-extends"></a>`extends` String - The name of a built-in configuration preset. Currently, only `react-cra` is supported.
+  
+  If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
+* <a name="Config-extraMetadata"></a>`extraMetadata` any<a name="Metadata"></a>
 
 ## `Metadata`
 Some standard fields should be defined in the `package.json`.

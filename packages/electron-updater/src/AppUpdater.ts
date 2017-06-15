@@ -4,7 +4,7 @@ import { RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, VersionInfo } from "electron-builder-http/out/publishOptions"
 import { EventEmitter } from "events"
-import { readFile, writeFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
@@ -347,7 +347,7 @@ export abstract class AppUpdater extends EventEmitter {
     const id = UUID.v5({name: randomBytes(4096), namespace: UUID.namespace.oid})
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
-      await writeFile(file, id)
+      await outputFile(file, id)
     }
     catch (e) {
       this._logger.warn(`Couldn't write out staging user ID: ${e}`)

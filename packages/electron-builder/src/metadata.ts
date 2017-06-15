@@ -299,6 +299,15 @@ export interface Config extends PlatformSpecificBuildOptions {
    * @private
    */
   readonly icon?: string | null
+
+  /**
+   * The name of a built-in configuration preset. Currently, only `react-cra` is supported.
+   *
+   * If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
+   */
+  readonly extends?: string | null
+
+  readonly extraMetadata?: any
 }
 
 export interface AfterPackContext {

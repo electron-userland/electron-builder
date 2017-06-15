@@ -19,11 +19,6 @@ export interface PackagerOptions {
 
   platformPackagerFactory?: ((info: BuildInfo, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | null
 
-  /**
-   * @deprecated Use {@link PackagerOptions#config} instead.
-   */
-  readonly devMetadata?: Metadata
-
   readonly config?: Config | string | null
 
   /**
@@ -34,8 +29,6 @@ export interface PackagerOptions {
   readonly appMetadata?: Metadata
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
-
-  readonly extraMetadata?: any
 
   readonly prepackaged?: string
 }

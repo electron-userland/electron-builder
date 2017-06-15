@@ -67,12 +67,12 @@
 ## electron-builder-util/out/deepAssign
 <a name="module_electron-builder-util/out/deepAssign.deepAssign"></a>
 
-### `electron-builder-util/out/deepAssign.deepAssign(target, objects)` ⇒ <code>any</code>
+### `electron-builder-util/out/deepAssign.deepAssign(target, objects)` ⇒ <code>module:electron-builder-util/out/deepAssign.T</code>
 **Kind**: method of [<code>electron-builder-util/out/deepAssign</code>](#module_electron-builder-util/out/deepAssign)  
 
 | Param | Type |
 | --- | --- |
-| target | <code>any</code> | 
+| target | <code>module:electron-builder-util/out/deepAssign.T</code> | 
 | objects | <code>Array&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/fs"></a>

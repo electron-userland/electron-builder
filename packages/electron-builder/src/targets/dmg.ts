@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Target } from "electron-builder-core"
-import { debug, exec, isEmptyOrSpaces, spawn, use } from "electron-builder-util"
+import { debug, exec, isEmptyOrSpaces, spawn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyFile, exists, statOrNull } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
@@ -13,7 +13,7 @@ import { PlatformPackager } from "../platformPackager"
 import { addLicenseToDmg } from "./dmgLicense"
 
 export class DmgTarget extends Target {
-  readonly options = this.packager.config.dmg
+  readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
   
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
@@ -194,49 +194,51 @@ export class DmgTarget extends Target {
 
   // public to test
   async computeDmgOptions(): Promise<DmgOptions> {
-    const specification: any = deepAssign({
-      window: {
-        x: 400,
-        y: 100,
-      },
-    }, this.options)
-
     // appdmg
-    const oldPosition = specification.window.position
+    const appdmgWindow = (<any>this.options.window) || {}
+    const oldPosition = appdmgWindow.position
+    const oldSize = appdmgWindow.size
+    const oldIconSize = (<any>this.options)["icon-size"]
+    const oldBackgroundColor = (<any>this.options)["background-color"]
     if (oldPosition != null) {
-      specification.window.x = oldPosition.x
-      specification.window.y = oldPosition.y
+      warn("dmg.window.position is deprecated, please use dmg.window instead")
     }
-
-    const oldSize = specification.window.size
     if (oldSize != null) {
-      specification.window.width = oldSize.width
-      specification.window.height = oldSize.height
+      warn("dmg.window.size is deprecated, please use dmg.window instead")
     }
-
-    if (specification["icon-size"] != null) {
-      if (specification.iconSize == null) {
-        specification.iconSize = specification["icon-size"]
-      }
+    if (oldIconSize != null) {
       warn("dmg.icon-size is deprecated, please use dmg.iconSize instead")
+    }
+    if (oldBackgroundColor != null) {
+      warn("dmg.background-color is deprecated, please use dmg.backgroundColor instead")
     }
 
     const packager = this.packager
-    if (!("icon" in specification)) {
-      use(await packager.getIconPath(), it => {
-        specification.icon = it
+    const specification = deepAssign(<DmgOptions>{
+        window: {
+          x: 400,
+          y: 100,
+        },
+        iconSize: oldIconSize,
+        backgroundColor: oldBackgroundColor,
+        icon: "icon" in this.options ? undefined : await packager.getIconPath()
+      },
+      this.options,
+      oldPosition == null ? null : {
+        window: {
+          x: oldPosition.x,
+          y: oldPosition.y,
+        }
+      },
+      oldSize == null ? null : {
+        window: {
+          width: oldSize.width,
+          height: oldSize.height,
+        }
       })
-    }
 
     if (specification.icon != null && isEmptyOrSpaces(specification.icon)) {
       throw new Error("dmg.icon cannot be specified as empty string")
-    }
-
-    if (specification["background-color"] != null) {
-      if (specification.backgroundColor == null) {
-        specification.backgroundColor = specification["background-color"]
-      }
-      warn("dmg.background-color is deprecated, please use dmg.backgroundColor instead")
     }
 
     if (specification.backgroundColor != null) {
@@ -244,31 +246,31 @@ export class DmgTarget extends Target {
         throw new Error("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
       }
 
-      specification.backgroundColor = require("parse-color")(specification.backgroundColor).hex
+      (<any>specification).backgroundColor = require("parse-color")(specification.backgroundColor).hex
     }
 
     if (specification.backgroundColor == null && !("background" in specification)) {
       const resourceList = await packager.resourceList
       if (resourceList.includes("background.tiff")) {
-        specification.background = path.join(packager.buildResourcesDir, "background.tiff")
+        (<any>specification).background = path.join(packager.buildResourcesDir, "background.tiff")
       }
       else if (resourceList.includes("background.png")) {
-        specification.background = path.join(packager.buildResourcesDir, "background.png")
+        (<any>specification).background = path.join(packager.buildResourcesDir, "background.png")
       }
       else {
-        specification.background = path.join(this.helperDir, "background.tiff")
+        (<any>specification).background = path.join(this.helperDir, "background.tiff")
       }
     }
 
     if (specification.format == null) {
       if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-        specification.format = "UDZO"
+        (<any>specification).format = "UDZO"
       }
       else if (packager.config.compression === "store") {
-        specification.format = "UDRO"
+        (<any>specification).format = "UDRO"
       }
       else {
-        specification.format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
+        (<any>specification).format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
       }
     }
 

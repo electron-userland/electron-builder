@@ -76,7 +76,7 @@ export class AppInfo {
     if (copyright != null) {
       return copyright
     }
-    return `Copyright © ${new Date().getFullYear()} ${this.metadata.author!.name || this.productName}`
+    return `Copyright © ${new Date().getFullYear()} ${this.companyName || this.productName}`
   }
 
   async computePackageUrl(): Promise<string | null> {
