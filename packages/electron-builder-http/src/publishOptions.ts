@@ -59,6 +59,7 @@ export interface GithubOptions extends PublishConfiguration {
   readonly private?: boolean | null
 }
 
+/** @private */
 export function githubUrl(options: GithubOptions) {
   return `${options.protocol || "https"}://${options.host || "github.com"}`
 }
@@ -122,6 +123,7 @@ export interface S3Options extends PublishConfiguration {
   readonly storageClass?: "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | null
 }
 
+/** @private */
 export function s3Url(options: S3Options) {
   let url: string
   if (!options.bucket.includes(".")) {
@@ -170,34 +172,4 @@ export interface BintrayOptions extends PublishConfiguration {
   readonly user?: string | null
 
   readonly token?: string | null
-}
-
-export interface VersionInfo {
-  /**
-   * The version.
-   */
-  readonly version: string
-}
-
-export interface UpdateInfo extends VersionInfo {
-  readonly path: string
-  readonly githubArtifactName?: string | null
-
-  // deprecated
-  readonly sha2?: string
-
-  readonly sha512?: string
-
-  /**
-   * The release name.
-   */
-  readonly releaseName?: string | null
-  /**
-   * The release notes.
-   */
-  readonly releaseNotes?: string | null
-  /**
-   * The release date.
-   */
-  readonly releaseDate: string
 }

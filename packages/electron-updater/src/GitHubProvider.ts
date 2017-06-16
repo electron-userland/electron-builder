@@ -1,6 +1,7 @@
 import { HttpError, HttpExecutor } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { GithubOptions, githubUrl, UpdateInfo } from "electron-builder-http/out/publishOptions"
+import { GithubOptions, githubUrl } from "electron-builder-http/out/publishOptions"
+import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"

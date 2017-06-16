@@ -14,6 +14,7 @@ async function main() {
   
   const appUpdateFiles = await globby([
     "updater/*.js",
+    "http/electron-builder-http-out-updateInfo.js",
     "!updater/electron-updater-out-electronHttpExecutor.js",
     "!updater/electron-updater-out-*Updater.js",
     "!updater/electron-updater-out-*Provider.js",
@@ -30,17 +31,11 @@ async function main() {
   const httpFiles = await globby([
     "http/**/*.js",
     "!http/electron-builder-http-out-publishOptions.js",
+    "!http/electron-builder-http-out-updateInfo.js",
   ], {cwd: source})
 
   const publishFiles = await globby([
     "publisher/**/*.js",
-  ], {cwd: source})
-
-  const updaterFiles = await globby([
-    "updater/electron-updater-out-electronHttpExecutor.js",
-    "updater/electron-updater-out-*Updater.js",
-    "updater/electron-updater-out-*Provider.js",
-    "!updater/electron-updater-out-AppUpdater.js",
   ], {cwd: source})
 
   const developerFiles = (await globby([
@@ -62,7 +57,6 @@ async function main() {
     {page: "api/electron-builder.md", pageUrl: "electron-builder", files: developerFiles},
 
     {page: "Auto Update.md", pageUrl: "Auto-Update", mainHeader: "API", files: appUpdateFiles},
-    {page: "api/electron-updater.md", pageUrl: "electron-updater", files: updaterFiles},
 
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
     {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
@@ -115,7 +109,7 @@ function sortAutoUpdate(pages) {
   const pageIndex = 2
 
   const filtered = []
-  const included = new Set(["AppUpdater", "UpdaterSignal"])
+  const included = new Set(["AppUpdater", "UpdaterSignal", "UpdateInfo", "VersionInfo", "UpdateCheckResult", "FileInfo", "Logger"])
   pages[pageIndex].data = pages[pageIndex].data.filter(member => {
     if (member.kind === "module" || included.has(member.name)) {
       return true
@@ -127,14 +121,10 @@ function sortAutoUpdate(pages) {
     }
 
     pages[pageIndex].dataMap.delete(member.id)
-    pages[pageIndex + 1].dataMap.set(member.id, member)
 
     filtered.push(member)
     return false
   })
-
-  pages[pageIndex + 1].data = filtered.concat(pages[pageIndex + 1].data)
-  pages[pageIndex + 1].data.unshift(pages[pageIndex].data[0])
 }
 
 async function render(pages, jsdoc2MdOptions) {
@@ -159,7 +149,7 @@ async function render(pages, jsdoc2MdOptions) {
   for (const page of pages) {
     const finalOptions = Object.assign({
       data: page.data,
-      "property-list-format": page === pages[0] || page === pages[4] ? "list" : "table"
+      "property-list-format": page === pages[0] || page === pages[3] || page === pages[2] ? "list" : "table"
     }, jsdoc2MdOptions)
 
     if (page === pages[0]) {

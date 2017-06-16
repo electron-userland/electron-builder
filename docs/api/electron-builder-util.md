@@ -20,7 +20,6 @@
 </dl>
 
 <a name="module_electron-builder-util/out/binDownload"></a>
-
 ## electron-builder-util/out/binDownload
 
 * [electron-builder-util/out/binDownload](#module_electron-builder-util/out/binDownload)
@@ -29,7 +28,6 @@
     * [`.getBinFromGithub(name, version, checksum)`](#module_electron-builder-util/out/binDownload.getBinFromGithub) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/binDownload.getBin"></a>
-
 ### `electron-builder-util/out/binDownload.getBin(name, dirName, url, checksum)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
@@ -41,7 +39,6 @@
 | checksum | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromBintray"></a>
-
 ### `electron-builder-util/out/binDownload.getBinFromBintray(name, version, sha2)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
@@ -52,7 +49,6 @@
 | sha2 | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/binDownload.getBinFromGithub"></a>
-
 ### `electron-builder-util/out/binDownload.getBinFromGithub(name, version, checksum)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/binDownload</code>](#module_electron-builder-util/out/binDownload)  
 
@@ -63,10 +59,8 @@
 | checksum | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/deepAssign"></a>
-
 ## electron-builder-util/out/deepAssign
 <a name="module_electron-builder-util/out/deepAssign.deepAssign"></a>
-
 ### `electron-builder-util/out/deepAssign.deepAssign(target, objects)` ⇒ <code>module:electron-builder-util/out/deepAssign.T</code>
 **Kind**: method of [<code>electron-builder-util/out/deepAssign</code>](#module_electron-builder-util/out/deepAssign)  
 
@@ -76,7 +70,6 @@
 | objects | <code>Array&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/fs"></a>
-
 ## electron-builder-util/out/fs
 
 * [electron-builder-util/out/fs](#module_electron-builder-util/out/fs)
@@ -91,7 +84,6 @@
     * [`.walk(initialDirPath, filter, consumer)`](#module_electron-builder-util/out/fs.walk) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 
 <a name="FileCopier"></a>
-
 ### FileCopier
 **Kind**: class of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 **Properties**
@@ -101,7 +93,6 @@
 | **isUseHardLink**| <code>Boolean</code> | 
 
 <a name="module_electron-builder-util/out/fs.FileCopier+copy"></a>
-
 #### `fileCopier.copy(src, dest, stat)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of [<code>FileCopier</code>](#FileCopier)  
 
@@ -112,7 +103,6 @@
 | stat | <code>module:fs.Stats</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyDir"></a>
-
 ### `electron-builder-util/out/fs.copyDir(src, destination, filter, transformer, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
 Empty directories is never created.
 Hard links is used if supported and allowed.
@@ -128,7 +118,6 @@ Hard links is used if supported and allowed.
 | isUseHardLink | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/fs.copyFile"></a>
-
 ### `electron-builder-util/out/fs.copyFile(src, dest, isEnsureDir)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
@@ -139,7 +128,6 @@ Hard links is used if supported and allowed.
 | isEnsureDir |  | 
 
 <a name="module_electron-builder-util/out/fs.copyOrLinkFile"></a>
-
 ### `electron-builder-util/out/fs.copyOrLinkFile(src, dest, stats, isUseHardLink)` ⇒ <code>Promise&lt;any&gt;</code>
 Hard links is used if supported and allowed.
 File permission is fixed — allow execute for all if owner can, allow read for all if owner can.
@@ -156,7 +144,6 @@ ensureDir is not called, dest parent dir must exists
 | isUseHardLink |  | 
 
 <a name="module_electron-builder-util/out/fs.exists"></a>
-
 ### `electron-builder-util/out/fs.exists(file)` ⇒ <code>Promise&lt;Boolean&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
@@ -165,7 +152,6 @@ ensureDir is not called, dest parent dir must exists
 | file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.statOrNull"></a>
-
 ### `electron-builder-util/out/fs.statOrNull(file)` ⇒ <code>Promise&lt; \| module:fs.Stats&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
@@ -174,7 +160,6 @@ ensureDir is not called, dest parent dir must exists
 | file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.unlinkIfExists"></a>
-
 ### `electron-builder-util/out/fs.unlinkIfExists(file)` ⇒ <code>Promise&lt;String \| void&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
@@ -183,7 +168,6 @@ ensureDir is not called, dest parent dir must exists
 | file | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/fs.walk"></a>
-
 ### `electron-builder-util/out/fs.walk(initialDirPath, filter, consumer)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/fs</code>](#module_electron-builder-util/out/fs)  
 
@@ -194,7 +178,6 @@ ensureDir is not called, dest parent dir must exists
 | consumer | <code>callback</code> | 
 
 <a name="module_electron-builder-util/out/log"></a>
-
 ## electron-builder-util/out/log
 
 * [electron-builder-util/out/log](#module_electron-builder-util/out/log)
@@ -205,7 +188,6 @@ ensureDir is not called, dest parent dir must exists
     * [`.warn(message)`](#module_electron-builder-util/out/log.warn)
 
 <a name="module_electron-builder-util/out/log.log"></a>
-
 ### `electron-builder-util/out/log.log(message)`
 **Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
@@ -214,7 +196,6 @@ ensureDir is not called, dest parent dir must exists
 | message | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/log.setPrinter"></a>
-
 ### `electron-builder-util/out/log.setPrinter(value)`
 **Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
@@ -223,7 +204,6 @@ ensureDir is not called, dest parent dir must exists
 | value | <code>module:electron-builder-util/out/log.__type</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-util/out/log.subTask"></a>
-
 ### `electron-builder-util/out/log.subTask(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
@@ -233,7 +213,6 @@ ensureDir is not called, dest parent dir must exists
 | promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.task"></a>
-
 ### `electron-builder-util/out/log.task(title, promise)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
@@ -243,7 +222,6 @@ ensureDir is not called, dest parent dir must exists
 | promise | <code>module:bluebird-lst.Bluebird&lt;any&gt;</code> \| <code>Promise&lt;any&gt;</code> | 
 
 <a name="module_electron-builder-util/out/log.warn"></a>
-
 ### `electron-builder-util/out/log.warn(message)`
 **Kind**: method of [<code>electron-builder-util/out/log</code>](#module_electron-builder-util/out/log)  
 
@@ -252,7 +230,6 @@ ensureDir is not called, dest parent dir must exists
 | message | <code>String</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor"></a>
-
 ## electron-builder-util/out/nodeHttpExecutor
 
 * [electron-builder-util/out/nodeHttpExecutor](#module_electron-builder-util/out/nodeHttpExecutor)
@@ -262,7 +239,6 @@ ensureDir is not called, dest parent dir must exists
     * [`.httpExecutor`](#module_electron-builder-util/out/nodeHttpExecutor.httpExecutor) : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
 
 <a name="NodeHttpExecutor"></a>
-
 ### NodeHttpExecutor ⇐ <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>
 **Kind**: class of [<code>electron-builder-util/out/nodeHttpExecutor</code>](#module_electron-builder-util/out/nodeHttpExecutor)  
 **Extends**: <code>[HttpExecutor](electron-builder-http#HttpExecutor)</code>  
@@ -272,7 +248,6 @@ ensureDir is not called, dest parent dir must exists
     * [`.download(url, destination, options)`](#module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+doApiRequest"></a>
-
 #### `nodeHttpExecutor.doApiRequest(options, cancellationToken, requestProcessor, redirectCount)` ⇒ <code>Promise&lt;module:electron-builder-util/out/nodeHttpExecutor.T&gt;</code>
 **Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 
@@ -284,7 +259,6 @@ ensureDir is not called, dest parent dir must exists
 | redirectCount | <code>Number</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.NodeHttpExecutor+download"></a>
-
 #### `nodeHttpExecutor.download(url, destination, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>NodeHttpExecutor</code>](#NodeHttpExecutor)  
 
@@ -295,11 +269,9 @@ ensureDir is not called, dest parent dir must exists
 | options | <code>[DownloadOptions](electron-builder-http#DownloadOptions)</code> | 
 
 <a name="module_electron-builder-util/out/nodeHttpExecutor.httpExecutor"></a>
-
 ### `electron-builder-util/out/nodeHttpExecutor.httpExecutor` : <code>[NodeHttpExecutor](#NodeHttpExecutor)</code>
 **Kind**: constant of [<code>electron-builder-util/out/nodeHttpExecutor</code>](#module_electron-builder-util/out/nodeHttpExecutor)  
 <a name="module_electron-builder-util/out/promise"></a>
-
 ## electron-builder-util/out/promise
 
 * [electron-builder-util/out/promise](#module_electron-builder-util/out/promise)
@@ -307,16 +279,16 @@ ensureDir is not called, dest parent dir must exists
     * [`.all(promises)`](#module_electron-builder-util/out/promise.all) ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
     * [`.asyncAll(tasks)`](#module_electron-builder-util/out/promise.asyncAll) ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
     * [`.executeFinally(promise, task)`](#module_electron-builder-util/out/promise.executeFinally) ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
+    * [`.orIfFileNotExist(promise, fallbackValue)`](#module_electron-builder-util/out/promise.orIfFileNotExist) ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
+    * [`.orNullIfFileNotExist(promise)`](#module_electron-builder-util/out/promise.orNullIfFileNotExist) ⇒ <code>Promise&lt; \| module:electron-builder-util/out/promise.T&gt;</code>
     * [`.printErrorAndExit(error)`](#module_electron-builder-util/out/promise.printErrorAndExit)
     * [`.throwError(errors)`](#module_electron-builder-util/out/promise.throwError)
 
 <a name="NestedError"></a>
-
 ### NestedError ⇐ <code>Error</code>
 **Kind**: class of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 **Extends**: <code>Error</code>  
 <a name="module_electron-builder-util/out/promise.all"></a>
-
 ### `electron-builder-util/out/promise.all(promises)` ⇒ <code>module:bluebird-lst.Bluebird&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
@@ -325,7 +297,6 @@ ensureDir is not called, dest parent dir must exists
 | promises | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder-util/out/promise.asyncAll"></a>
-
 ### `electron-builder-util/out/promise.asyncAll(tasks)` ⇒ <code>module:bluebird-lst.Bluebird&lt;Array&lt;any&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
@@ -334,7 +305,6 @@ ensureDir is not called, dest parent dir must exists
 | tasks | <code>Array&lt;module:electron-builder-util/out/promise.__type&gt;</code> | 
 
 <a name="module_electron-builder-util/out/promise.executeFinally"></a>
-
 ### `electron-builder-util/out/promise.executeFinally(promise, task)` ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
 **Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
@@ -343,8 +313,24 @@ ensureDir is not called, dest parent dir must exists
 | promise | <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code> | 
 | task | <code>callback</code> | 
 
-<a name="module_electron-builder-util/out/promise.printErrorAndExit"></a>
+<a name="module_electron-builder-util/out/promise.orIfFileNotExist"></a>
+### `electron-builder-util/out/promise.orIfFileNotExist(promise, fallbackValue)` ⇒ <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code>
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
+| Param | Type |
+| --- | --- |
+| promise | <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code> | 
+| fallbackValue | <code>module:electron-builder-util/out/promise.T</code> | 
+
+<a name="module_electron-builder-util/out/promise.orNullIfFileNotExist"></a>
+### `electron-builder-util/out/promise.orNullIfFileNotExist(promise)` ⇒ <code>Promise&lt; \| module:electron-builder-util/out/promise.T&gt;</code>
+**Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
+
+| Param | Type |
+| --- | --- |
+| promise | <code>Promise&lt;module:electron-builder-util/out/promise.T&gt;</code> | 
+
+<a name="module_electron-builder-util/out/promise.printErrorAndExit"></a>
 ### `electron-builder-util/out/promise.printErrorAndExit(error)`
 **Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
@@ -353,7 +339,6 @@ ensureDir is not called, dest parent dir must exists
 | error | <code>Error</code> | 
 
 <a name="module_electron-builder-util/out/promise.throwError"></a>
-
 ### `electron-builder-util/out/promise.throwError(errors)`
 **Kind**: method of [<code>electron-builder-util/out/promise</code>](#module_electron-builder-util/out/promise)  
 
@@ -362,7 +347,6 @@ ensureDir is not called, dest parent dir must exists
 | errors | <code>Array&lt;Error&gt;</code> | 
 
 <a name="module_electron-builder-util/out/tmp"></a>
-
 ## electron-builder-util/out/tmp
 
 * [electron-builder-util/out/tmp](#module_electron-builder-util/out/tmp)
@@ -371,7 +355,6 @@ ensureDir is not called, dest parent dir must exists
         * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="TmpDir"></a>
-
 ### TmpDir
 **Kind**: class of [<code>electron-builder-util/out/tmp</code>](#module_electron-builder-util/out/tmp)  
 
@@ -380,11 +363,9 @@ ensureDir is not called, dest parent dir must exists
     * [`.getTempFile(suffix)`](#module_electron-builder-util/out/tmp.TmpDir+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder-util/out/tmp.TmpDir+cleanup"></a>
-
 #### `tmpDir.cleanup()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 <a name="module_electron-builder-util/out/tmp.TmpDir+getTempFile"></a>
-
 #### `tmpDir.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>TmpDir</code>](#TmpDir)  
 
@@ -393,7 +374,6 @@ ensureDir is not called, dest parent dir must exists
 | suffix | <code>String</code> | 
 
 <a name="module_electron-builder-util"></a>
-
 ## electron-builder-util
 
 * [electron-builder-util](#module_electron-builder-util)
@@ -422,7 +402,6 @@ ensureDir is not called, dest parent dir must exists
     * [`.use(value, task)`](#module_electron-builder-util.use) ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
 
 <a name="BaseExecOptions"></a>
-
 ### `BaseExecOptions`
 **Kind**: interface of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 **Properties**
@@ -434,7 +413,6 @@ ensureDir is not called, dest parent dir must exists
 | stdio| <code>any</code> | 
 
 <a name="ExecOptions"></a>
-
 ### `ExecOptions` ⇐ <code>[BaseExecOptions](#BaseExecOptions)</code>
 **Kind**: interface of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 **Extends**: <code>[BaseExecOptions](#BaseExecOptions)</code>  
@@ -449,7 +427,6 @@ ensureDir is not called, dest parent dir must exists
 | killSignal| <code>String</code> | 
 
 <a name="Lazy"></a>
-
 ### Lazy
 **Kind**: class of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 **Properties**
@@ -459,7 +436,6 @@ ensureDir is not called, dest parent dir must exists
 | **value**| <code>Promise&lt;module:electron-builder-util.T&gt;</code> | 
 
 <a name="module_electron-builder-util.addValue"></a>
-
 ### `electron-builder-util.addValue(map, key, value)`
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -470,7 +446,6 @@ ensureDir is not called, dest parent dir must exists
 | value | <code>module:electron-builder-util.T</code> | 
 
 <a name="module_electron-builder-util.asArray"></a>
-
 ### `electron-builder-util.asArray(v)` ⇒ <code>Array&lt;module:electron-builder-util.T&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -479,7 +454,6 @@ ensureDir is not called, dest parent dir must exists
 | v | <code>null</code> \| <code>undefined</code> \| <code>module:electron-builder-util.T</code> \| <code>Array&lt;module:electron-builder-util.T&gt;</code> | 
 
 <a name="module_electron-builder-util.computeDefaultAppDirectory"></a>
-
 ### `electron-builder-util.computeDefaultAppDirectory(projectDir, userAppDir)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -489,7 +463,6 @@ ensureDir is not called, dest parent dir must exists
 | userAppDir | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.debug7zArgs"></a>
-
 ### `electron-builder-util.debug7zArgs(command)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -498,7 +471,6 @@ ensureDir is not called, dest parent dir must exists
 | command | <code>"a"</code> \| <code>"x"</code> | 
 
 <a name="module_electron-builder-util.doSpawn"></a>
-
 ### `electron-builder-util.doSpawn(command, args, options, pipeInput)` ⇒ <code>module:child_process.ChildProcess</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -510,7 +482,6 @@ ensureDir is not called, dest parent dir must exists
 | pipeInput | <code>Boolean</code> | 
 
 <a name="module_electron-builder-util.exec"></a>
-
 ### `electron-builder-util.exec(file, args, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -521,7 +492,6 @@ ensureDir is not called, dest parent dir must exists
 | options | <code>[ExecOptions](#ExecOptions)</code> | 
 
 <a name="module_electron-builder-util.execWine"></a>
-
 ### `electron-builder-util.execWine(file, args, options)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -532,11 +502,9 @@ ensureDir is not called, dest parent dir must exists
 | options | <code>[ExecOptions](#ExecOptions)</code> | 
 
 <a name="module_electron-builder-util.getCacheDirectory"></a>
-
 ### `electron-builder-util.getCacheDirectory()` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.getPlatformIconFileName"></a>
-
 ### `electron-builder-util.getPlatformIconFileName(value, isMac)` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -546,7 +514,6 @@ ensureDir is not called, dest parent dir must exists
 | isMac | <code>Boolean</code> | 
 
 <a name="module_electron-builder-util.getTempName"></a>
-
 ### `electron-builder-util.getTempName(prefix)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -555,7 +522,6 @@ ensureDir is not called, dest parent dir must exists
 | prefix | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.handleProcess"></a>
-
 ### `electron-builder-util.handleProcess(event, childProcess, command, resolve, reject)`
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -568,7 +534,6 @@ ensureDir is not called, dest parent dir must exists
 | reject | <code>callback</code> | 
 
 <a name="module_electron-builder-util.isEmptyOrSpaces"></a>
-
 ### `electron-builder-util.isEmptyOrSpaces(s)` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -577,11 +542,9 @@ ensureDir is not called, dest parent dir must exists
 | s | <code>String</code> \| <code>null</code> \| <code>undefined</code> | 
 
 <a name="module_electron-builder-util.isPullRequest"></a>
-
 ### `electron-builder-util.isPullRequest()` ⇒ <code>"undefined"</code> \| <code>"undefined"</code> \| <code>""</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 <a name="module_electron-builder-util.prepareArgs"></a>
-
 ### `electron-builder-util.prepareArgs(args, exePath)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -591,7 +554,6 @@ ensureDir is not called, dest parent dir must exists
 | exePath | <code>String</code> | 
 
 <a name="module_electron-builder-util.removePassword"></a>
-
 ### `electron-builder-util.removePassword(input)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -600,7 +562,6 @@ ensureDir is not called, dest parent dir must exists
 | input | <code>String</code> | 
 
 <a name="module_electron-builder-util.replaceDefault"></a>
-
 ### `electron-builder-util.replaceDefault(inList, defaultList)` ⇒ <code>Array&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -610,7 +571,6 @@ ensureDir is not called, dest parent dir must exists
 | defaultList | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder-util.safeStringifyJson"></a>
-
 ### `electron-builder-util.safeStringifyJson(data, skippedNames)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -620,7 +580,6 @@ ensureDir is not called, dest parent dir must exists
 | skippedNames | <code>Set&lt;String&gt;</code> | 
 
 <a name="module_electron-builder-util.smarten"></a>
-
 ### `electron-builder-util.smarten(s)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -629,7 +588,6 @@ ensureDir is not called, dest parent dir must exists
 | s | <code>String</code> | 
 
 <a name="module_electron-builder-util.spawn"></a>
-
 ### `electron-builder-util.spawn(command, args, options)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 
@@ -640,7 +598,6 @@ ensureDir is not called, dest parent dir must exists
 | options | <code>module:child_process.SpawnOptions</code> | 
 
 <a name="module_electron-builder-util.use"></a>
-
 ### `electron-builder-util.use(value, task)` ⇒ <code>null</code> \| <code>module:electron-builder-util.R</code>
 **Kind**: method of [<code>electron-builder-util</code>](#module_electron-builder-util)  
 

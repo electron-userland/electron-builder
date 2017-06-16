@@ -14,7 +14,6 @@
 </dl>
 
 <a name="module_electron-builder-http/out/bintray"></a>
-
 ## electron-builder-http/out/bintray
 
 * [electron-builder-http/out/bintray](#module_electron-builder-http/out/bintray)
@@ -28,7 +27,6 @@
         * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
 
 <a name="File"></a>
-
 ### `File`
 **Kind**: interface of [<code>electron-builder-http/out/bintray</code>](#module_electron-builder-http/out/bintray)  
 **Properties**
@@ -41,7 +39,6 @@
 | **sha256**| <code>String</code> | 
 
 <a name="Version"></a>
-
 ### `Version`
 **Kind**: interface of [<code>electron-builder-http/out/bintray</code>](#module_electron-builder-http/out/bintray)  
 **Properties**
@@ -52,7 +49,6 @@
 | **package**| <code>String</code> | 
 
 <a name="BintrayClient"></a>
-
 ### BintrayClient
 **Kind**: class of [<code>electron-builder-http/out/bintray</code>](#module_electron-builder-http/out/bintray)  
 **Properties**
@@ -74,7 +70,6 @@
     * [`.getVersionFiles(version)`](#module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles) ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+createVersion"></a>
-
 #### `bintrayClient.createVersion(version)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
 
@@ -83,7 +78,6 @@
 | version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+deleteVersion"></a>
-
 #### `bintrayClient.deleteVersion(version)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
 
@@ -92,7 +86,6 @@
 | version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+setRequestHeaders"></a>
-
 #### `bintrayClient.setRequestHeaders(value)`
 **Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
 
@@ -101,7 +94,6 @@
 | value | <code>[RequestHeaders](#RequestHeaders)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+getVersion"></a>
-
 #### `bintrayClient.getVersion(version)` ⇒ <code>Promise&lt;[Version](#Version)&gt;</code>
 **Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
 
@@ -110,7 +102,6 @@
 | version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/bintray.BintrayClient+getVersionFiles"></a>
-
 #### `bintrayClient.getVersionFiles(version)` ⇒ <code>Promise&lt;Array&lt;[File](#File)&gt;&gt;</code>
 **Kind**: instance method of [<code>BintrayClient</code>](#BintrayClient)  
 
@@ -119,7 +110,6 @@
 | version | <code>String</code> | 
 
 <a name="module_electron-builder-http/out/CancellationToken"></a>
-
 ## electron-builder-http/out/CancellationToken
 
 * [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
@@ -130,12 +120,10 @@
         * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
 
 <a name="CancellationError"></a>
-
 ### CancellationError ⇐ <code>Error</code>
 **Kind**: class of [<code>electron-builder-http/out/CancellationToken</code>](#module_electron-builder-http/out/CancellationToken)  
 **Extends**: <code>Error</code>  
 <a name="CancellationToken"></a>
-
 ### CancellationToken ⇐ <code>internal:EventEmitter</code>
 **Kind**: class of [<code>electron-builder-http/out/CancellationToken</code>](#module_electron-builder-http/out/CancellationToken)  
 **Extends**: <code>internal:EventEmitter</code>  
@@ -152,11 +140,9 @@
     * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
 
 <a name="module_electron-builder-http/out/CancellationToken.CancellationToken+cancel"></a>
-
 #### `cancellationToken.cancel()`
 **Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
 <a name="module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise"></a>
-
 #### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
 **Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
 
@@ -165,11 +151,9 @@
 | callback | <code>callback</code> | 
 
 <a name="module_electron-builder-http/out/CancellationToken.CancellationToken+dispose"></a>
-
 #### `cancellationToken.dispose()`
 **Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
 <a name="module_electron-builder-http/out/ProgressCallbackTransform"></a>
-
 ## electron-builder-http/out/ProgressCallbackTransform
 
 * [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
@@ -179,7 +163,6 @@
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
 
 <a name="ProgressInfo"></a>
-
 ### `ProgressInfo`
 **Kind**: interface of [<code>electron-builder-http/out/ProgressCallbackTransform</code>](#module_electron-builder-http/out/ProgressCallbackTransform)  
 **Properties**
@@ -193,7 +176,6 @@
 | **bytesPerSecond**| <code>Number</code> | 
 
 <a name="ProgressCallbackTransform"></a>
-
 ### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
 **Kind**: class of [<code>electron-builder-http/out/ProgressCallbackTransform</code>](#module_electron-builder-http/out/ProgressCallbackTransform)  
 **Extends**: <code>internal:Transform</code>  
@@ -203,7 +185,6 @@
     * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
 
 <a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush"></a>
-
 #### `progressCallbackTransform._flush(callback)`
 **Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
 
@@ -212,7 +193,6 @@
 | callback | <code>function</code> | 
 
 <a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform"></a>
-
 #### `progressCallbackTransform._transform(chunk, encoding, callback)`
 **Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
 
@@ -223,10 +203,8 @@
 | callback | <code>function</code> | 
 
 <a name="module_electron-builder-http/out/rfc2253Parser"></a>
-
 ## electron-builder-http/out/rfc2253Parser
 <a name="module_electron-builder-http/out/rfc2253Parser.parseDn"></a>
-
 ### `electron-builder-http/out/rfc2253Parser.parseDn(seq)` ⇒ <code>Map&lt;String \| String&gt;</code>
 **Kind**: method of [<code>electron-builder-http/out/rfc2253Parser</code>](#module_electron-builder-http/out/rfc2253Parser)  
 
@@ -235,7 +213,6 @@
 | seq | <code>String</code> | 
 
 <a name="module_electron-builder-http"></a>
-
 ## electron-builder-http
 
 * [electron-builder-http](#module_electron-builder-http)
@@ -255,7 +232,6 @@
     * [`.safeGetHeader(response, headerKey)`](#module_electron-builder-http.safeGetHeader) ⇒ <code>any</code>
 
 <a name="DownloadOptions"></a>
-
 ### `DownloadOptions`
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 **Properties**
@@ -269,7 +245,6 @@
 | **cancellationToken**| <code>[CancellationToken](#CancellationToken)</code> | 
 
 <a name="module_electron-builder-http.DownloadOptions+onProgress"></a>
-
 #### `downloadOptions.onProgress(progress)`
 **Kind**: instance method of [<code>DownloadOptions</code>](#DownloadOptions)  
 
@@ -278,11 +253,9 @@
 | progress | <code>[ProgressInfo](#ProgressInfo)</code> | 
 
 <a name="RequestHeaders"></a>
-
 ### `RequestHeaders`
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 <a name="Response"></a>
-
 ### `Response` ⇐ <code>internal:EventEmitter</code>
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 **Extends**: <code>internal:EventEmitter</code>  
@@ -295,7 +268,6 @@
 | **headers**| <code>any</code> | 
 
 <a name="module_electron-builder-http.Response+setEncoding"></a>
-
 #### `response.setEncoding(encoding)`
 **Kind**: instance method of [<code>Response</code>](#Response)  
 
@@ -304,7 +276,6 @@
 | encoding | <code>String</code> | 
 
 <a name="DigestTransform"></a>
-
 ### DigestTransform ⇐ <code>internal:Transform</code>
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 **Extends**: <code>internal:Transform</code>  
@@ -314,7 +285,6 @@
     * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
 
 <a name="module_electron-builder-http.DigestTransform+_flush"></a>
-
 #### `digestTransform._flush(callback)`
 **Kind**: instance method of [<code>DigestTransform</code>](#DigestTransform)  
 
@@ -323,7 +293,6 @@
 | callback | <code>function</code> | 
 
 <a name="module_electron-builder-http.DigestTransform+_transform"></a>
-
 #### `digestTransform._transform(chunk, encoding, callback)`
 **Kind**: instance method of [<code>DigestTransform</code>](#DigestTransform)  
 
@@ -334,16 +303,13 @@
 | callback | <code>function</code> | 
 
 <a name="HttpError"></a>
-
 ### HttpError ⇐ <code>Error</code>
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 **Extends**: <code>Error</code>  
 <a name="HttpExecutor"></a>
-
 ### HttpExecutor
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 <a name="module_electron-builder-http.HttpExecutor+request"></a>
-
 #### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
 **Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
 
@@ -354,7 +320,6 @@
 | data | <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder-http.configureRequestOptions"></a>
-
 ### `electron-builder-http.configureRequestOptions(options, token, method)` ⇒ <code>module:http.RequestOptions</code>
 **Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 
@@ -365,7 +330,6 @@
 | method | <code>"GET"</code> \| <code>"DELETE"</code> \| <code>"PUT"</code> | 
 
 <a name="module_electron-builder-http.dumpRequestOptions"></a>
-
 ### `electron-builder-http.dumpRequestOptions(options)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 
@@ -374,7 +338,6 @@
 | options | <code>module:http.RequestOptions</code> | 
 
 <a name="module_electron-builder-http.safeGetHeader"></a>
-
 ### `electron-builder-http.safeGetHeader(response, headerKey)` ⇒ <code>any</code>
 **Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 

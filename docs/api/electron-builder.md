@@ -23,7 +23,6 @@
 </dl>
 
 <a name="module_electron-builder"></a>
-
 ## electron-builder
 
 * [electron-builder](#module_electron-builder)
@@ -60,7 +59,6 @@
     * [`.getArchSuffix(arch)`](#module_electron-builder.getArchSuffix) ⇒ <code>String</code>
 
 <a name="AfterPackContext"></a>
-
 ### `AfterPackContext`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -74,7 +72,6 @@
 | **targets**| <code>Array&lt;[Target](#Target)&gt;</code> | 
 
 <a name="ArtifactCreated"></a>
-
 ### `ArtifactCreated`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -90,7 +87,6 @@
 | publishConfig| <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
 
 <a name="BuildInfo"></a>
-
 ### `BuildInfo`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -118,7 +114,6 @@
     * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
 
 <a name="module_electron-builder.BuildInfo+afterPack"></a>
-
 #### `buildInfo.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
 
@@ -127,7 +122,6 @@
 | context | <code>[AfterPackContext](#AfterPackContext)</code> | 
 
 <a name="module_electron-builder.BuildInfo+dispatchArtifactCreated"></a>
-
 #### `buildInfo.dispatchArtifactCreated(event)`
 **Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
 
@@ -136,7 +130,6 @@
 | event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
 
 <a name="BuildResult"></a>
-
 ### `BuildResult`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -147,7 +140,6 @@
 | **platformToTargets**| <code>Map&lt;[Platform](#Platform) \| Map&lt;String \| [Target](#Target)&gt;&gt;</code> | 
 
 <a name="CommonLinuxOptions"></a>
-
 ### `CommonLinuxOptions`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -165,7 +157,6 @@
 | afterRemove| <code>String</code> \| <code>null</code> | <a name="CommonLinuxOptions-afterRemove"></a> |
 
 <a name="CommonNsisOptions"></a>
-
 ### `CommonNsisOptions`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -177,7 +168,6 @@
 | warningsAsErrors = <code>true</code>| <code>Boolean</code> | <a name="CommonNsisOptions-warningsAsErrors"></a>If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings. |
 
 <a name="ForgeOptions"></a>
-
 ### `ForgeOptions`
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -187,7 +177,6 @@
 | **dir**| <code>String</code> | 
 
 <a name="LinuxTargetSpecificOptions"></a>
-
 ### `LinuxTargetSpecificOptions` ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Extends**: <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>, <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
@@ -199,7 +188,6 @@
 | icon| <code>String</code> | <a name="LinuxTargetSpecificOptions-icon"></a> |
 
 <a name="PlatformSpecificBuildOptions"></a>
-
 ### `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
 **Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
@@ -218,7 +206,6 @@
 | forceCodeSigning| <code>Boolean</code> | 
 
 <a name="Packager"></a>
-
 ### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
 **Kind**: class of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Extends**: <code>[BuildInfo](#BuildInfo)</code>  
@@ -249,7 +236,6 @@
     * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
 
 <a name="module_electron-builder.Packager+addAfterPackHandler"></a>
-
 #### `packager.addAfterPackHandler(handler)`
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
 
@@ -258,7 +244,6 @@
 | handler | <code>callback</code> | 
 
 <a name="module_electron-builder.Packager+afterPack"></a>
-
 #### `packager.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
 **Overrides**: [<code>afterPack</code>](#module_electron-builder.BuildInfo+afterPack)  
@@ -268,7 +253,6 @@
 | context | <code>[AfterPackContext](#AfterPackContext)</code> | 
 
 <a name="module_electron-builder.Packager+artifactCreated"></a>
-
 #### `packager.artifactCreated(handler)` ⇒ <code>[Packager](#Packager)</code>
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
 
@@ -277,11 +261,9 @@
 | handler | <code>callback</code> | 
 
 <a name="module_electron-builder.Packager+build"></a>
-
 #### `packager.build()` ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
 <a name="module_electron-builder.Packager+dispatchArtifactCreated"></a>
-
 #### `packager.dispatchArtifactCreated(event)`
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
 **Overrides**: [<code>dispatchArtifactCreated</code>](#module_electron-builder.BuildInfo+dispatchArtifactCreated)  
@@ -291,7 +273,6 @@
 | event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
 
 <a name="Platform"></a>
-
 ### Platform
 **Kind**: class of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -311,7 +292,6 @@
     * [`.toString()`](#module_electron-builder.Platform+toString) ⇒ <code>String</code>
 
 <a name="module_electron-builder.Platform+createTarget"></a>
-
 #### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 
@@ -321,11 +301,9 @@
 | archs | <code>Array&lt;[Arch](#Arch)&gt;</code> | 
 
 <a name="module_electron-builder.Platform+current"></a>
-
 #### `platform.current()` ⇒ <code>[Platform](#Platform)</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 <a name="module_electron-builder.Platform+fromString"></a>
-
 #### `platform.fromString(name)` ⇒ <code>[Platform](#Platform)</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 
@@ -334,11 +312,9 @@
 | name | <code>String</code> | 
 
 <a name="module_electron-builder.Platform+toString"></a>
-
 #### `platform.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 <a name="Target"></a>
-
 ### Target
 **Kind**: class of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -354,7 +330,6 @@
     * [`.finishBuild()`](#module_electron-builder.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-builder.Target+build"></a>
-
 #### `target.build(appOutDir, arch)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>Target</code>](#Target)  
 
@@ -364,11 +339,9 @@
 | arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder.Target+finishBuild"></a>
-
 #### `target.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>Target</code>](#Target)  
 <a name="Arch"></a>
-
 ### `electron-builder.Arch` : <code>enum</code>
 **Kind**: enum of [<code>electron-builder</code>](Options#module_electron-builder)  
 **Properties**
@@ -380,7 +353,6 @@
 | **armv7l**| 
 
 <a name="module_electron-builder.archFromString"></a>
-
 ### `electron-builder.archFromString(name)` ⇒ <code>[Arch](#Arch)</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
@@ -389,7 +361,6 @@
 | name | <code>String</code> | 
 
 <a name="module_electron-builder.build"></a>
-
 ### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
@@ -398,7 +369,6 @@
 | rawOptions | <code>[CliOptions](Options#CliOptions)</code> | 
 
 <a name="module_electron-builder.buildForge"></a>
-
 ### `electron-builder.buildForge(forgeOptions, options)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
@@ -408,7 +378,6 @@
 | options | <code>[CliOptions](Options#CliOptions)</code> | 
 
 <a name="module_electron-builder.createTargets"></a>
-
 ### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
@@ -419,7 +388,6 @@
 | arch | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder.getArchSuffix"></a>
-
 ### `electron-builder.getArchSuffix(arch)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
@@ -428,7 +396,6 @@
 | arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder/out/appInfo"></a>
-
 ## electron-builder/out/appInfo
 
 * [electron-builder/out/appInfo](#module_electron-builder/out/appInfo)
@@ -436,7 +403,6 @@
         * [`.computePackageUrl()`](#module_electron-builder/out/appInfo.AppInfo+computePackageUrl) ⇒ <code>Promise&lt; \| String&gt;</code>
 
 <a name="AppInfo"></a>
-
 ### AppInfo
 **Kind**: class of [<code>electron-builder/out/appInfo</code>](#module_electron-builder/out/appInfo)  
 **Properties**
@@ -456,11 +422,9 @@
 | **copyright**| <code>String</code> | 
 
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
-
 #### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>AppInfo</code>](#AppInfo)  
 <a name="module_electron-builder/out/codeSign"></a>
-
 ## electron-builder/out/codeSign
 
 * [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
@@ -473,7 +437,6 @@
     * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="CodeSigningInfo"></a>
-
 ### `CodeSigningInfo`
 **Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 **Properties**
@@ -483,7 +446,6 @@
 | keychainName| <code>String</code> \| <code>null</code> | 
 
 <a name="CreateKeychainOptions"></a>
-
 ### `CreateKeychainOptions`
 **Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 **Properties**
@@ -498,11 +460,9 @@
 | **currentDir**| <code>String</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
-
 ### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
 **Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 <a name="module_electron-builder/out/codeSign.createKeychain"></a>
-
 ### `electron-builder/out/codeSign.createKeychain(undefined)` ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
@@ -511,7 +471,6 @@
 | undefined | <code>[CreateKeychainOptions](#CreateKeychainOptions)</code> | 
 
 <a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
-
 ### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir, currentDir)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
@@ -522,7 +481,6 @@
 | currentDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
-
 ### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
@@ -533,7 +491,6 @@
 | keychain | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/codeSign.sign"></a>
-
 ### `electron-builder/out/codeSign.sign(path, name, keychain)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
@@ -544,7 +501,6 @@
 | keychain | <code>String</code> | 
 
 <a name="module_electron-builder/out/core"></a>
-
 ## electron-builder/out/core
 
 * [electron-builder/out/core](#module_electron-builder/out/core)
@@ -555,7 +511,6 @@
     * [`.toLinuxArchString(arch)`](#module_electron-builder/out/core.toLinuxArchString) ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 
 <a name="BeforeBuildContext"></a>
-
 ### `BeforeBuildContext`
 **Kind**: interface of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
 **Properties**
@@ -568,7 +523,6 @@
 | **arch**| <code>String</code> | 
 
 <a name="SourceRepositoryInfo"></a>
-
 ### `SourceRepositoryInfo`
 **Kind**: interface of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
 **Properties**
@@ -581,7 +535,6 @@
 | **project**| <code>String</code> | 
 
 <a name="TargetConfig"></a>
-
 ### `TargetConfig`
 **Kind**: interface of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
 **Properties**
@@ -592,7 +545,6 @@
 | arch| <code>Array&lt;"x64" \| "ia32" \| "armv7l"&gt;</code> \| <code>String</code> | <a name="TargetConfig-arch"></a>The arch or list of archs. |
 
 <a name="TargetSpecificOptions"></a>
-
 ### `TargetSpecificOptions`
 **Kind**: interface of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
 **Properties**
@@ -603,7 +555,6 @@
 | publish| <code>null</code> \| <code>String</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="TargetSpecificOptions-publish"></a> |
 
 <a name="module_electron-builder/out/core.toLinuxArchString"></a>
-
 ### `electron-builder/out/core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 **Kind**: method of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
 
@@ -612,10 +563,8 @@
 | arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder/out/packager"></a>
-
 ## electron-builder/out/packager
 <a name="module_electron-builder/out/packager.normalizePlatforms"></a>
-
 ### `electron-builder/out/packager.normalizePlatforms(rawPlatforms)` ⇒ <code>Array&lt;[Platform](#Platform)&gt;</code>
 **Kind**: method of [<code>electron-builder/out/packager</code>](#module_electron-builder/out/packager)  
 
@@ -624,7 +573,6 @@
 | rawPlatforms | <code>Array&lt;String \| [Platform](#Platform)&gt;</code> \| <code>String</code> \| <code>[Platform](#Platform)</code> \| <code>undefined</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager"></a>
-
 ## electron-builder/out/platformPackager
 
 * [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
@@ -648,7 +596,6 @@
     * [`.normalizeExt(ext)`](#module_electron-builder/out/platformPackager.normalizeExt) ⇒ <code>String</code>
 
 <a name="PlatformPackager"></a>
-
 ### PlatformPackager
 **Kind**: class of [<code>electron-builder/out/platformPackager</code>](#module_electron-builder/out/platformPackager)  
 **Properties**
@@ -691,7 +638,6 @@
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName"></a>
-
 #### `platformPackager.computeSafeArtifactName(ext, arch, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -702,7 +648,6 @@
 | skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
-
 #### `platformPackager.createTargets(targets, mapper, cleanupTasks)`
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -713,7 +658,6 @@
 | cleanupTasks | <code>Array&lt;module:electron-builder/out/platformPackager.__type&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
-
 #### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -722,7 +666,6 @@
 | ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated"></a>
-
 #### `platformPackager.dispatchArtifactCreated(file, target, arch, safeArtifactName)`
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -734,7 +677,6 @@
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
-
 #### `platformPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -743,7 +685,6 @@
 | appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir"></a>
-
 #### `platformPackager.getElectronSrcDir(dist)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -752,7 +693,6 @@
 | dist | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern"></a>
-
 #### `platformPackager.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -765,7 +705,6 @@
 | skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+expandMacro"></a>
-
 #### `platformPackager.expandMacro(pattern, arch, extra, isProductNameSanitized)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -777,7 +716,6 @@
 | isProductNameSanitized |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName"></a>
-
 #### `platformPackager.generateName(ext, arch, deployment, classifier)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -789,7 +727,6 @@
 | classifier | <code>String</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+generateName2"></a>
-
 #### `platformPackager.generateName2(ext, classifier, deployment)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -800,11 +737,9 @@
 | deployment | <code>Boolean</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getIconPath"></a>
-
 #### `platformPackager.getIconPath()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir"></a>
-
 #### `platformPackager.getMacOsResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -813,7 +748,6 @@
 | appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
-
 #### `platformPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -825,7 +759,6 @@
 | postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
-
 #### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -835,7 +768,6 @@
 | names | <code>Array&lt;String&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir"></a>
-
 #### `platformPackager.getResourcesDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -844,7 +776,6 @@
 | appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getTempFile"></a>
-
 #### `platformPackager.getTempFile(suffix)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
@@ -853,7 +784,6 @@
 | suffix | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.normalizeExt"></a>
-
 ### `electron-builder/out/platformPackager.normalizeExt(ext)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder/out/platformPackager</code>](#module_electron-builder/out/platformPackager)  
 
@@ -862,7 +792,6 @@
 | ext | <code>String</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager"></a>
-
 ## electron-builder/out/publish/PublishManager
 
 * [electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)
@@ -875,7 +804,6 @@
     * [`.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)`](#module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo) ⇒ <code>Promise&lt; \| Array&gt;</code>
 
 <a name="PublishManager"></a>
-
 ### PublishManager ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
 **Kind**: class of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 **Extends**: <code>[PublishContext](electron-publish#PublishContext)</code>  
@@ -892,15 +820,12 @@
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
-
 #### `publishManager.awaitTasks()` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks"></a>
-
 #### `publishManager.cancelTasks()`
 **Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.computeDownloadUrl"></a>
-
 ### `electron-builder/out/publish/PublishManager.computeDownloadUrl(publishConfig, fileName, packager)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
@@ -911,7 +836,6 @@
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.createPublisher"></a>
-
 ### `electron-builder/out/publish/PublishManager.createPublisher(context, version, publishConfig, options)` ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
 **Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
@@ -923,7 +847,6 @@
 | options | <code>[PublishOptions](electron-publish#PublishOptions)</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigs"></a>
-
 ### `electron-builder/out/publish/PublishManager.getPublishConfigs(packager, targetSpecificOptions, arch)` ⇒ <code>Promise&lt; \| Array&gt;</code>
 **Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
@@ -934,7 +857,6 @@
 | arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
-
 ### `electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)` ⇒ <code>Promise&lt; \| Array&gt;</code>
 **Kind**: method of [<code>electron-builder/out/publish/PublishManager</code>](#module_electron-builder/out/publish/PublishManager)  
 
@@ -945,10 +867,8 @@
 | arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign"></a>
-
 ## electron-builder/out/windowsCodeSign
 <a name="SignOptions"></a>
-
 ### `SignOptions`
 **Kind**: interface of [<code>electron-builder/out/windowsCodeSign</code>](#module_electron-builder/out/windowsCodeSign)  
 **Properties**

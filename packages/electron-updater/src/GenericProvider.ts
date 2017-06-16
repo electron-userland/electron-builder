@@ -1,5 +1,6 @@
 import { HttpError, HttpExecutor } from "electron-builder-http"
-import { GenericServerOptions, UpdateInfo } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions } from "electron-builder-http/out/publishOptions"
+import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"

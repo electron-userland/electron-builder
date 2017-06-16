@@ -1,7 +1,8 @@
 import { HttpError, HttpExecutor } from "electron-builder-http"
 import { BintrayClient } from "electron-builder-http/out/bintray"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { BintrayOptions, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions } from "electron-builder-http/out/publishOptions"
+import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { FileInfo, Provider } from "./main"
 
 export class BintrayProvider extends Provider<VersionInfo> {

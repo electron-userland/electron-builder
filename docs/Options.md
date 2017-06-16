@@ -91,7 +91,6 @@ You can use macros in the file patterns, artifact file name patterns and publish
 
 <!-- do not edit. start of generated block -->
 <a name="Config"></a>
-
 ## `Config` ⇐ <code>[PlatformSpecificBuildOptions](electron-builder#PlatformSpecificBuildOptions)</code>
 Configuration Options
 
@@ -354,8 +353,9 @@ Configuration Options
 * <a name="Config-p5p"></a>`p5p` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-apk"></a>`apk` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-afterPack"></a>`afterPack` callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-* <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.<a name="Metadata"></a>
+* <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
 
+<a name="Metadata"></a>
 ## `Metadata`
 Some standard fields should be defined in the `package.json`.
 
@@ -373,6 +373,8 @@ Some standard fields should be defined in the `package.json`.
 * <a name="Metadata-repository"></a>`repository` String | [RepositoryInfo](#RepositoryInfo)<a name="RepositoryInfo"></a> - The [repository](https://docs.npmjs.com/files/package.json#repository).
   * <a name="RepositoryInfo-url"></a>**`url`** String
 * <a name="Metadata-build"></a>`build` [Config](#Config) - The electron-builder configuration.
+
+
 <!-- end of generated block -->
 
 ## Build Version Management

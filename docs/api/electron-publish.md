@@ -14,7 +14,6 @@
 </dl>
 
 <a name="module_electron-publish/out/BintrayPublisher"></a>
-
 ## electron-publish/out/BintrayPublisher
 
 * [electron-publish/out/BintrayPublisher](#module_electron-publish/out/BintrayPublisher)
@@ -25,7 +24,6 @@
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="BintrayPublisher"></a>
-
 ### BintrayPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of [<code>electron-publish/out/BintrayPublisher</code>](#module_electron-publish/out/BintrayPublisher)  
 **Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
@@ -43,16 +41,13 @@
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
-
 #### `bintrayPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString"></a>
-
 #### `bintrayPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-
 #### `bintrayPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 
@@ -62,7 +57,6 @@
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
 #### `bintrayPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 
@@ -72,7 +66,6 @@
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/gitHubPublisher"></a>
-
 ## electron-publish/out/gitHubPublisher
 
 * [electron-publish/out/gitHubPublisher](#module_electron-publish/out/gitHubPublisher)
@@ -85,7 +78,6 @@
         * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="Release"></a>
-
 ### `Release`
 **Kind**: interface of [<code>electron-publish/out/gitHubPublisher</code>](#module_electron-publish/out/gitHubPublisher)  
 **Properties**
@@ -100,7 +92,6 @@
 | **upload_url**| <code>String</code> | 
 
 <a name="GitHubPublisher"></a>
-
 ### GitHubPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
 **Kind**: class of [<code>electron-publish/out/gitHubPublisher</code>](#module_electron-publish/out/gitHubPublisher)  
 **Extends**: <code>[HttpPublisher](#HttpPublisher)</code>  
@@ -119,20 +110,16 @@
     * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
-
 #### `gitHubPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease"></a>
-
 #### `gitHubPublisher.getRelease()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString"></a>
-
 #### `gitHubPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-
 #### `gitHubPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 
@@ -142,7 +129,6 @@
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
 #### `gitHubPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 
@@ -152,7 +138,6 @@
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
-
 ## electron-publish/out/multiProgress
 
 * [electron-publish/out/multiProgress](#module_electron-publish/out/multiProgress)
@@ -161,7 +146,6 @@
         * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
 
 <a name="MultiProgress"></a>
-
 ### MultiProgress
 **Kind**: class of [<code>electron-publish/out/multiProgress</code>](#module_electron-publish/out/multiProgress)  
 
@@ -170,7 +154,6 @@
     * [`.terminate()`](#module_electron-publish/out/multiProgress.MultiProgress+terminate)
 
 <a name="module_electron-publish/out/multiProgress.MultiProgress+createBar"></a>
-
 #### `multiProgress.createBar(format, options)` ⇒ <code>[ProgressBar](#ProgressBar)</code>
 **Kind**: instance method of [<code>MultiProgress</code>](#MultiProgress)  
 
@@ -180,11 +163,9 @@
 | options | <code>any</code> | 
 
 <a name="module_electron-publish/out/multiProgress.MultiProgress+terminate"></a>
-
 #### `multiProgress.terminate()`
 **Kind**: instance method of [<code>MultiProgress</code>](#MultiProgress)  
 <a name="module_electron-publish/out/progress"></a>
-
 ## electron-publish/out/progress
 
 * [electron-publish/out/progress](#module_electron-publish/out/progress)
@@ -198,7 +179,6 @@
         * [`.update(transferred, total)`](#module_electron-publish/out/progress.ProgressCallback+update)
 
 <a name="ProgressBar"></a>
-
 ### ProgressBar
 **Kind**: class of [<code>electron-publish/out/progress</code>](#module_electron-publish/out/progress)  
 **Properties**
@@ -216,7 +196,6 @@
     * [`.update(ratio)`](#module_electron-publish/out/progress.ProgressBar+update)
 
 <a name="module_electron-publish/out/progress.ProgressBar+interrupt"></a>
-
 #### `progressBar.interrupt(message)`
 "interrupt" the progress bar and write a message above it.
 
@@ -227,15 +206,12 @@
 | message | <code>String</code> | 
 
 <a name="module_electron-publish/out/progress.ProgressBar+render"></a>
-
 #### `progressBar.render()`
 **Kind**: instance method of [<code>ProgressBar</code>](#ProgressBar)  
 <a name="module_electron-publish/out/progress.ProgressBar+terminate"></a>
-
 #### `progressBar.terminate()`
 **Kind**: instance method of [<code>ProgressBar</code>](#ProgressBar)  
 <a name="module_electron-publish/out/progress.ProgressBar+tick"></a>
-
 #### `progressBar.tick(delta)`
 "tick" the progress bar with optional `len` and optional `tokens`.
 
@@ -246,7 +222,6 @@
 | delta | <code>Number</code> | 
 
 <a name="module_electron-publish/out/progress.ProgressBar+update"></a>
-
 #### `progressBar.update(ratio)`
 "update" the progress bar to represent an exact percentage.
 The ratio (between 0 and 1) specified will be multiplied by `total` and
@@ -263,11 +238,9 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | ratio | <code>Number</code> | 
 
 <a name="ProgressCallback"></a>
-
 ### ProgressCallback
 **Kind**: class of [<code>electron-publish/out/progress</code>](#module_electron-publish/out/progress)  
 <a name="module_electron-publish/out/progress.ProgressCallback+update"></a>
-
 #### `progressCallback.update(transferred, total)`
 **Kind**: instance method of [<code>ProgressCallback</code>](#ProgressCallback)  
 
@@ -277,7 +250,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | total | <code>Number</code> | 
 
 <a name="module_electron-publish"></a>
-
 ## electron-publish
 
 * [electron-publish](#module_electron-publish)
@@ -292,7 +264,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
         * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="PublishContext"></a>
-
 ### `PublishContext`
 **Kind**: interface of [<code>electron-publish</code>](#module_electron-publish)  
 **Properties**
@@ -303,7 +274,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | progress| <code>[MultiProgress](#MultiProgress)</code> \| <code>null</code> | 
 
 <a name="PublishOptions"></a>
-
 ### `PublishOptions`
 **Kind**: interface of [<code>electron-publish</code>](#module_electron-publish)  
 **Properties**
@@ -315,7 +285,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | prerelease| <code>Boolean</code> | 
 
 <a name="HttpPublisher"></a>
-
 ### HttpPublisher ⇐ <code>[Publisher](#Publisher)</code>
 **Kind**: class of [<code>electron-publish</code>](#module_electron-publish)  
 **Extends**: <code>[Publisher](#Publisher)</code>  
@@ -326,7 +295,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
 
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-
 #### `httpPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
 **Overrides**: [<code>upload</code>](#module_electron-publish.Publisher+upload)  
@@ -337,7 +305,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-
 #### `httpPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
 
@@ -347,11 +314,9 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish.Publisher+toString"></a>
-
 #### `httpPublisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
 <a name="Publisher"></a>
-
 ### Publisher
 **Kind**: class of [<code>electron-publish</code>](#module_electron-publish)  
 **Properties**
@@ -366,11 +331,9 @@ A ratio of 0.5 will attempt to set the progress to halfway.
     * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish.Publisher+toString"></a>
-
 #### `publisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>Publisher</code>](#Publisher)  
 <a name="module_electron-publish.Publisher+upload"></a>
-
 #### `publisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>Publisher</code>](#Publisher)  
 

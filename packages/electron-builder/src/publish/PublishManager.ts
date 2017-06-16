@@ -1,7 +1,8 @@
 import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url, UpdateInfo, VersionInfo } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
+import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest, Lazy, safeStringifyJson } from "electron-builder-util"
 import { log, warn } from "electron-builder-util/out/log"
 import { throwError } from "electron-builder-util/out/promise"
@@ -267,7 +268,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const isGitHub = publishConfig.provider === "github"
       // backward compatibility - write json file
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
-      await (<any>outputJson)(updateInfoFile, <VersionInfo>{
+      await (<any>outputJson)(updateInfoFile, {
         version: version,
         releaseDate: new Date().toISOString(),
         url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),

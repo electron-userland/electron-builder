@@ -78,7 +78,7 @@ function renderProperties(object, root, level) {
   const parents = object.augments
   if (parents != null) {
     for (const parentId of parents) {
-      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions") && !parentId.endsWith("PublishConfiguration")) {
+      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions") && !parentId.endsWith("PublishConfiguration") && !parentId.endsWith("VersionInfo")) {
         if (firstDocumentedParent == null && !parentId.endsWith("PlatformSpecificBuildOptions")) {
           firstDocumentedParent = resolveById(parentId)
         }
@@ -97,7 +97,8 @@ function renderProperties(object, root, level) {
     indent += "  "
   }
 
-  if (firstDocumentedParent != null) {
+  // for level 0 "Extends" is printed
+  if (firstDocumentedParent != null && level > 0) {
     result += `${indent}Inherits [${firstDocumentedParent.name}](#${anchorName.call(firstDocumentedParent)}) options.\n`
   }
 
@@ -136,6 +137,17 @@ function renderProperties(object, root, level) {
       child.rendered = true
       result += "\n"
       result += renderProperties(child, root, level + 1)
+    }
+  }
+
+  if (level === 0) {
+    result += "\n\n"
+    // a little bit hack - add Methods header if methods next, otherwise TOC will be part of properties list
+    for (const member of root) {
+      if (member.kind === "function" && member.memberof === object.id) {
+        result += "**Methods**"
+        break
+      }
     }
   }
   return result
@@ -262,6 +274,7 @@ function identifierToLink(id, root) {
       !id.endsWith(".K") &&
       !id.endsWith(".DC") &&
       !id.startsWith("module:fs.") &&
+      id !== "module:https.RequestOptions" &&
       !id.endsWith(".__type")
     ) {
       console.warn(`Unresolved member ${id}`)
