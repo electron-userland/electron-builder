@@ -107,7 +107,7 @@ StrCpy $shortcuts ""
     FindWindow $0 "#32770" "" $hwndparent
     FindWindow $0 "#32770" "" $hwndparent $0
     GetDlgItem $0 $0 1000
-    SendMessage $0 ${WM_SETTEXT} 0 "$(installing)"
+    SendMessage $0 ${WM_SETTEXT} 0 "STR:$(installing)"
   ${endif}
   !insertmacro CHECK_APP_RUNNING
 !else
