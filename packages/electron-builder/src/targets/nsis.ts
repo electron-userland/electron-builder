@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { Arch, Target } from "electron-builder-core"
 import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
@@ -11,6 +10,7 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
+import { Arch, Target } from "../core"
 import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { WinPackager } from "../winPackager"
@@ -74,6 +74,7 @@ export class AppPackageHelper {
   }
 }
 
+/** @private */
 export class NsisTarget extends Target {
   readonly options: NsisOptions
 

@@ -1,7 +1,8 @@
 #! /usr/bin/env node
 
 import { cyan, dim, green, reset, underline } from "chalk"
-import { warn } from "electron-builder-util/out/log"
+import { exec } from "electron-builder-util"
+import { log, warn } from "electron-builder-util/out/log"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import { readJson } from "fs-extra-p"
 import isCi from "is-ci"
@@ -9,12 +10,15 @@ import * as path from "path"
 import updateNotifier from "update-notifier"
 import yargs from "yargs"
 import { build, configureBuildCommand } from "../builder"
+import { getElectronVersion, loadConfig } from "../util/readPackageJson"
+import { getGypEnv } from "../util/yarn"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
 
 yargs
   .command(<any>["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
+  .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))
   .command("create-self-signed-cert", "Create self-signed code signing cert for Windows apps",
     yargs => yargs
       .option("publisher", {
@@ -57,4 +61,14 @@ function checkIsOutdated() {
       }
     })
     .catch(e => warn(`Cannot check updates: ${e}`))
+}
+
+async function rebuildAppNativeCode(args: any) {
+  const projectDir = process.cwd()
+  const config = await loadConfig(projectDir)
+  log(`Execute node-gyp rebuild for ${args.platform}:${args.arch}`)
+  // this script must be used only for electron
+  await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
+    env: getGypEnv({version: await getElectronVersion(config, projectDir), useCustomDist: true}, args.platform, args.arch, true),
+  })
 }

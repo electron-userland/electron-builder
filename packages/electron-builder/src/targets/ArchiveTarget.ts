@@ -1,6 +1,6 @@
-import { Arch, Platform, Target } from "electron-builder-core"
 import { log } from "electron-builder-util/out/log"
 import * as path from "path"
+import { Arch, Platform, Target } from "../core"
 import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 

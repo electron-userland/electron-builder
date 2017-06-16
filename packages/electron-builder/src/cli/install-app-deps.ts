@@ -6,7 +6,7 @@ import { log, warn } from "electron-builder-util/out/log"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import yargs from "yargs"
 import { getElectronVersion, loadConfig } from "../util/readPackageJson"
-import { installOrRebuild } from "../yarn"
+import { installOrRebuild } from "../util/yarn"
 
 declare const PACKAGE_VERSION: string
 

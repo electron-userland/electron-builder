@@ -2,7 +2,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/asar-integrity packages/electron-builder-http packages/electron-builder-core packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && node ./test/vendor/yarn.js schema",
+    "compile": "ts-babel packages/asar-integrity packages/electron-builder-http packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && node ./test/vendor/yarn.js schema",
     "lint": "node test/out/helpers/lint.js",
     "pretest": "node ./test/vendor/yarn.js compile && node ./test/vendor/yarn.js lint && node ./test/vendor/yarn.js lint-deps",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
@@ -19,7 +19,7 @@
     "set-versions": "node test/out/helpers/setVersions.js",
     "npm-publish": "yarn set-versions && yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
-    "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder-util packages/electron-builder packages/electron-builder-core packages/electron-publish",
+    "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder-util packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node packages/jsdoc2md.js",
     "api": "node ./test/vendor/yarn.js jsdoc && node ./test/vendor/yarn.js jsdoc2md"
   },

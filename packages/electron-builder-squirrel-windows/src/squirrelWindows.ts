@@ -1,4 +1,4 @@
-import { Arch, getArchSuffix, Target } from "electron-builder-core"
+import { Arch, getArchSuffix, Target } from "electron-builder"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { log, warn } from "electron-builder-util/out/log"
 import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"

@@ -4,7 +4,7 @@ import { exists } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
 import { homedir } from "os"
 import * as path from "path"
-import { Config } from "./metadata"
+import { Config } from "../metadata"
 import { readInstalled } from "./readInstalled"
 
 /** @internal */

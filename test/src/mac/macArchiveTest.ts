@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Platform } from "electron-builder-core"
+import { Platform } from "electron-builder"
 import { exec } from "electron-builder-util"
 import { readFile, symlink } from "fs-extra-p"
 import * as path from "path"

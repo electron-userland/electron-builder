@@ -1,7 +1,7 @@
-import { DIR_TARGET, Platform, Target } from "electron-builder-core"
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
+import { DIR_TARGET, Platform, Target } from "./core"
 import { LinuxBuildOptions } from "./options/linuxOptions"
 import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"

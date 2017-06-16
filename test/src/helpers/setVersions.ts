@@ -62,26 +62,28 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
     let changed = false
     for (let depIndex = 0; depIndex < packages.length; depIndex++) {
       const depPackageName = packages[depIndex]
-      let oldVersion = packageJson.dependencies == null ? null : packageJson.dependencies[depPackageName]
-      if (oldVersion == null) {
-        continue
-      }
+      for (const depType of ["dependencies", "peerDependencies"]) {
+        let oldVersion = packageJson[depType] == null ? null : packageJson[depType][depPackageName]
+        if (oldVersion == null) {
+          continue
+        }
 
-      let range = ""
-      if (oldVersion.startsWith("~") || oldVersion.startsWith("^")) {
-        range = oldVersion[0]
-        oldVersion = oldVersion.substring(1)
-      }
+        let range = ""
+        if (oldVersion.startsWith("~") || oldVersion.startsWith("^")) {
+          range = oldVersion[0]
+          oldVersion = oldVersion.substring(1)
+        }
 
-      const newVersion = versions[depIndex]
-      if (oldVersion == newVersion || newVersion === "0.0.0-semantic-release") {
-        console.log(`Skip ${depPackageName} for ${packageName} — version ${newVersion} is actual`)
-        continue
-      }
+        const newVersion = versions[depIndex]
+        if (oldVersion == newVersion || newVersion === "0.0.0-semantic-release") {
+          console.log(`Skip ${depPackageName} for ${packageName} — version ${newVersion} is actual`)
+          continue
+        }
 
-      changed = true
-      packageJson.dependencies[depPackageName] = range + newVersion
-      console.log(`Set ${depPackageName} to ${newVersion} from ${oldVersion} for ${packageName}`)
+        changed = true
+        packageJson[depType][depPackageName] = range + newVersion
+        console.log(`Set ${depPackageName} to ${newVersion} from ${oldVersion} for ${packageName}`)
+      }
     }
 
     if (changed) {

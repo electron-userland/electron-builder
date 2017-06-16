@@ -7,7 +7,7 @@ function main() {
       return
     }
 
-    return spawn("ncu", ["--upgradeAll", "--reject", "electron-builder-http,electron-builder-util,electron-builder-core,electron-publish,electron-forge-maker-appimage,electron-forge-maker-nsis,electron-forge-maker-snap"], {cwd: projectDir, stdio: ["ignore", "inherit", "inherit"]})
+    return spawn("ncu", ["--upgradeAll", "--reject", "electron-builder-http,electron-builder-util,electron-publish,electron-forge-maker-appimage,electron-forge-maker-nsis,electron-forge-maker-snap"], {cwd: projectDir, stdio: ["ignore", "inherit", "inherit"]})
   })
 }
 

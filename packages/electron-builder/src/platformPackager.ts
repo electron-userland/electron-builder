@@ -1,6 +1,5 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "electron-builder-core"
 import { asArray, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
@@ -9,13 +8,14 @@ import { readdir, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./asarUtil"
+import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
-import { dependencies } from "./readInstalled"
+import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
+import { dependencies } from "./util/readInstalled"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions

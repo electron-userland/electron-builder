@@ -1,8 +1,8 @@
-import { Arch, Platform, SourceRepositoryInfo, Target } from "electron-builder-core"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"
+import { Arch, Platform, SourceRepositoryInfo, Target } from "./core"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 

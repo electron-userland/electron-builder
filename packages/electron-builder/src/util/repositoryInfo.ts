@@ -1,8 +1,8 @@
-import { SourceRepositoryInfo } from "electron-builder-core"
 import { readFile } from "fs-extra-p"
 import { fromUrl as parseRepositoryUrl } from "hosted-git-info"
 import * as path from "path"
-import { Metadata, RepositoryInfo } from "./metadata"
+import { SourceRepositoryInfo } from "../core"
+import { Metadata, RepositoryInfo } from "../metadata"
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))

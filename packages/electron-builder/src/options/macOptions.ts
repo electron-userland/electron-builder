@@ -1,4 +1,4 @@
-import { TargetConfig, TargetSpecificOptions } from "electron-builder-core"
+import { TargetConfig, TargetSpecificOptions } from "../core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"

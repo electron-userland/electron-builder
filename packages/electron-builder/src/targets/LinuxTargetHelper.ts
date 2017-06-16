@@ -8,6 +8,7 @@ import { LinuxBuildOptions, LinuxTargetSpecificOptions } from "../options/linuxO
 
 export const installPrefix = "/opt"
 
+/** @private */
 export class LinuxTargetHelper {
   readonly icons: Promise<Array<Array<string>>>
 

@@ -1,4 +1,4 @@
-import { DIR_TARGET, Platform } from "electron-builder-core"
+import { DIR_TARGET, Platform } from "electron-builder"
 import { app } from "./helpers/packTester"
 
 test.ifAll.ifDevOrLinuxCi("muon linux", app({

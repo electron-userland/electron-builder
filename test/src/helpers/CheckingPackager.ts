@@ -1,5 +1,4 @@
-import { BuildInfo, MacOptions } from "electron-builder"
-import { Arch, Target } from "electron-builder-core"
+import { Arch, BuildInfo, MacOptions, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import OsXPackager from "electron-builder/out/macPackager"
 import { DmgTarget } from "electron-builder/out/targets/dmg"

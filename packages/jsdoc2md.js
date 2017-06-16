@@ -27,10 +27,6 @@ async function main() {
     "util/**/*.js",
   ], {cwd: source})
 
-  const coreFiles = await globby([
-    "core/**/*.js",
-  ], {cwd: source})
-
   const httpFiles = await globby([
     "http/**/*.js",
     "!http/electron-builder-http-out-publishOptions.js",
@@ -68,7 +64,6 @@ async function main() {
     {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
 
     {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
-    {page: "api/electron-builder-core.md", pageUrl: "electron-builder-core", files: coreFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
   ]
 

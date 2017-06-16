@@ -1,4 +1,4 @@
-import { TargetConfigType, TargetSpecificOptions } from "electron-builder-core"
+import { TargetConfigType, TargetSpecificOptions } from "../core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 
 export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificBuildOptions {
