@@ -38,6 +38,17 @@ export class NsisUpdater extends AppUpdater {
     const tempFile = path.join(tempDir, fileInfo.name)
     try {
       await this.httpExecutor.download(fileInfo.url, tempFile, downloadOptions)
+
+      const signatureVerificationStatus = await this.verifySignature(tempFile)
+      if (signatureVerificationStatus != null) {
+        try {
+          await remove(tempDir)
+        }
+        finally {
+          // noinspection ThrowInsideFinallyBlockJS
+          throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
+        }
+      }
     }
     catch (e) {
       try {
@@ -51,17 +62,6 @@ export class NsisUpdater extends AppUpdater {
         this._logger.info("Cancelled")
       }
       throw e
-    }
-
-    const signatureVerificationStatus = await this.verifySignature(tempFile)
-    if (signatureVerificationStatus != null) {
-      try {
-        await remove(tempDir)
-      }
-      finally {
-        // noinspection ThrowInsideFinallyBlockJS
-        throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
-      }
     }
 
     this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
