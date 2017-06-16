@@ -4,6 +4,7 @@ import { access, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink
 import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
+import { orNullIfFileNotExist } from "./promise"
 import { debug } from "./util"
 
 export const MAX_FILE_REQUESTS = 8
@@ -18,17 +19,7 @@ export function unlinkIfExists(file: string) {
 }
 
 export async function statOrNull(file: string): Promise<Stats | null> {
-  try {
-    return await stat(file)
-  }
-  catch (e) {
-    if (e.code === "ENOENT") {
-      return null
-    }
-    else {
-      throw e
-    }
-  }
+  return orNullIfFileNotExist(stat(file))
 }
 
 export async function exists(file: string): Promise<boolean> {

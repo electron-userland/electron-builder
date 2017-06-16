@@ -1,9 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { computeDefaultAppDirectory, debug, exec, isEmptyOrSpaces, Lazy, safeStringifyJson, use } from "electron-builder-util"
+import { computeDefaultAppDirectory, debug, exec, Lazy, safeStringifyJson, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { log, warn } from "electron-builder-util/out/log"
-import { all, executeFinally } from "electron-builder-util/out/promise"
+import { log } from "electron-builder-util/out/log"
+import { all, executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
@@ -16,10 +16,9 @@ import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
-import { reactCra } from "./presets/rectCra"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { doLoadConfig, getElectronVersion, loadConfig, validateConfig } from "./util/config"
-import { readPackageJson } from "./util/packageMetadata"
+import { computeFinalConfig, getElectronVersion, validateConfig } from "./util/config"
+import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
 import { WinPackager } from "./winPackager"
@@ -42,7 +41,7 @@ export class Packager implements BuildInfo {
     return this._isPrepackedAppAsar
   }
 
-  devMetadata: Metadata
+  private devMetadata: Metadata
 
   private _config: Config
 
@@ -121,105 +120,64 @@ export class Packager implements BuildInfo {
     }
 
     const projectDir = this.projectDir
-    const fileOrPackageConfig = await (configPath == null ? loadConfig(projectDir) : doLoadConfig(path.resolve(projectDir, configPath), projectDir))
-    let config: Config = deepAssign({}, fileOrPackageConfig, configFromOptions)
 
-    const extraMetadata = config.extraMetadata
-    if (extraMetadata != null) {
-      if (extraMetadata.build != null) {
-        throw new Error(`--em.build is deprecated, please specify as -c"`)
-      }
-      if (extraMetadata.directories != null) {
-        throw new Error(`--em.directories is deprecated, please specify as -c.directories"`)
-      }
+    const devPackageFile = path.join(projectDir, "package.json")
+    this.devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
+
+    const devMetadata = this.devMetadata
+    const config = await computeFinalConfig(projectDir, configPath, devMetadata, configFromOptions)
+    if (debug.enabled) {
+      debug(`Effective config: ${safeStringifyJson(config)}`)
     }
-
     await validateConfig(config)
-
     this._config = config
+
     this.appDir = await computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app))
 
     this.isTwoPackageJsonProjectLayoutUsed = this.appDir !== projectDir
 
-    const devPackageFile = path.join(projectDir, "package.json")
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
 
-    await this.readProjectMetadata(appPackageFile, extraMetadata)
-
-    if (this.isTwoPackageJsonProjectLayoutUsed) {
-      this.devMetadata = await readPackageJson(devPackageFile)
-      debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
+    const extraMetadata = config.extraMetadata
+    if (devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
+      this.metadata = devMetadata
     }
     else {
-      this.devMetadata = this.metadata
-      if (this.options.appMetadata != null) {
-        deepAssign(this.devMetadata, this.options.appMetadata)
-      }
-      if (extraMetadata != null) {
-        deepAssign(this.devMetadata, extraMetadata)
-      }
+      this.metadata = await this.readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile)
+    }
+    deepAssign(this.metadata, extraMetadata)
+
+    if (this.isTwoPackageJsonProjectLayoutUsed) {
+      debug(`Two package.json structure is used (dev: ${devPackageFile}, app: ${appPackageFile})`)
     }
 
-    if (config.extends == null && config.extends !== null) {
-      const devDependencies = (<any>this.devMetadata).devDependencies
-      if (devDependencies != null && "react-scripts" in devDependencies) {
-        (<any>config).extends = "react-cra"
-      }
-    }
+    checkMetadata(this.metadata, devMetadata, appPackageFile, devPackageFile)
 
-    if (config.extends === "react-cra") {
-      const parentConfig = await reactCra(this.projectDir)
-      config = deepAssign(parentConfig, config)
-
-      // apply extraMetadata again to metadata because other code expects that appInfo.metadata it is effective metadata, not as on disk (e.g. application entry check)
-      if (parentConfig.extraMetadata != null) {
-        deepAssign(this.metadata, config.extraMetadata)
-      }
-    }
-
-    this.checkMetadata(appPackageFile, devPackageFile)
-
-    if (debug.enabled) {
-      debug(`Effective config: ${safeStringifyJson(this.config)}`)
-    }
-
-    this.electronVersion = await getElectronVersion(this.config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
-    this.muonVersion = this.config.muonVersion
-
+    this.electronVersion = await getElectronVersion(config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
+    this.muonVersion = config.muonVersion
     this.appInfo = new AppInfo(this.metadata, this)
+
     const cleanupTasks: Array<() => Promise<any>> = []
-    const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
+    const outDir = path.resolve(this.projectDir, use(config.directories, it => it!.output) || "dist")
     return {
       outDir: outDir,
       platformToTargets: await executeFinally(this.doBuild(outDir, cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
     }
   }
 
-  private async readProjectMetadata(appPackageFile: string, extraMetadata: any) {
-    try {
-      this.metadata = deepAssign(await readPackageJson(appPackageFile), this.options.appMetadata, extraMetadata)
+  private async readProjectMetadataIfTwoPackageStructureOrPrepacked(appPackageFile: string): Promise<Metadata> {
+    let data = await orNullIfFileNotExist(readPackageJson(appPackageFile))
+    if (data != null) {
+      return data
     }
-    catch (e) {
-      if (e.code !== "ENOENT") {
-        throw e
-      }
 
-      try {
-        const data = await readAsarJson(path.join(this.projectDir, "app.asar"), "package.json")
-        if (data != null) {
-          this.metadata = data
-          this._isPrepackedAppAsar = true
-          return
-        }
-      }
-      catch (e) {
-        if (e.code !== "ENOENT") {
-          throw e
-        }
-      }
-
-      throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
+    data = await orNullIfFileNotExist(readAsarJson(path.join(this.projectDir, "app.asar"), "package.json"))
+    if (data != null) {
+      this._isPrepackedAppAsar = true
+      return data
     }
+
+    throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
   }
 
   private async doBuild(outDir: string, cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
@@ -331,44 +289,6 @@ export class Packager implements BuildInfo {
 
       default:
         throw new Error(`Unknown platform: ${platform}`)
-    }
-  }
-
-  private checkMetadata(appPackageFile: string, devAppPackageFile: string): void {
-    const errors: Array<string> = []
-    const reportError = (missedFieldName: string) => {
-      errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
-    }
-
-    const checkNotEmpty = (name: string, value: string | n) => {
-      if (isEmptyOrSpaces(value)) {
-        reportError(name)
-      }
-    }
-
-    const metadata = this.metadata
-
-    checkNotEmpty("name", metadata.name)
-
-    if (isEmptyOrSpaces(metadata.description)) {
-      warn(`description is missed in the package.json (${appPackageFile})`)
-    }
-    if (!metadata.author) {
-      warn(`author is missed in the package.json (${appPackageFile})`)
-    }
-    checkNotEmpty("version", metadata.version)
-
-    checkDependencies(this.devMetadata.dependencies, errors)
-    if ((<any>metadata) !== this.devMetadata) {
-      checkDependencies(metadata.dependencies, errors)
-
-      if ((<any>metadata).build != null) {
-        errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(errors.join("\n"))
     }
   }
 
@@ -484,19 +404,6 @@ export async function checkWineVersion(checkPromise: Promise<string>) {
 
   if (isVersionLessThan(wineVersion, "1.8.0")) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
-  }
-}
-
-function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
-  if (dependencies == null) {
-    return
-  }
-
-  for (const name of ["electron", "electron-prebuilt", "electron-builder", "electron-rebuild"]) {
-    if (name in dependencies) {
-      errors.push(`Package "${name}" is only allowed in "devDependencies". `
-        + `Please remove it from the "dependencies" section in your package.json.`)
-    }
   }
 }
 

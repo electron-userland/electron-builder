@@ -1,5 +1,8 @@
+import { isEmptyOrSpaces } from "electron-builder-util"
+import { warn } from "electron-builder-util/out/log"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
+import { Metadata } from "../metadata"
 
 const normalizeData = require("normalize-package-data")
 
@@ -27,4 +30,60 @@ async function authors(file: string, data: any) {
   data.contributors = authorData
     .split(/\r?\n/g)
     .map(it => it.replace(/^\s*#.*$/, "").trim())
+}
+
+/** @internal */
+export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPackageFile: string, devAppPackageFile: string): void {
+  const errors: Array<string> = []
+  const reportError = (missedFieldName: string) => {
+    errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
+  }
+
+  const checkNotEmpty = (name: string, value: string | n) => {
+    if (isEmptyOrSpaces(value)) {
+      reportError(name)
+    }
+  }
+
+  if ((<any>metadata).directories != null) {
+    errors.push(`"directories" in the root is deprecated, please specify in the "build"`)
+  }
+
+  checkNotEmpty("name", metadata.name)
+
+  if (isEmptyOrSpaces(metadata.description)) {
+    warn(`description is missed in the package.json (${appPackageFile})`)
+  }
+  if (!metadata.author) {
+    warn(`author is missed in the package.json (${appPackageFile})`)
+  }
+  checkNotEmpty("version", metadata.version)
+
+  if (devMetadata != null) {
+    checkDependencies(devMetadata.dependencies, errors)
+  }
+  if (metadata !== devMetadata) {
+    checkDependencies(metadata.dependencies, errors)
+
+    if (metadata.build != null) {
+      errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"))
+  }
+}
+
+function checkDependencies(dependencies: { [key: string]: string } | null | undefined, errors: Array<string>) {
+  if (dependencies == null) {
+    return
+  }
+
+  for (const name of ["electron", "electron-prebuilt", "electron-builder", "electron-rebuild"]) {
+    if (name in dependencies) {
+      errors.push(`Package "${name}" is only allowed in "devDependencies". `
+        + `Please remove it from the "dependencies" section in your package.json.`)
+    }
+  }
 }

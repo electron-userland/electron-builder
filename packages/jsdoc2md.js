@@ -45,8 +45,12 @@ async function main() {
 
   const developerFiles = (await globby([
     "builder/**/*.js",
-    "!***/*-asar.js",
-    "!***/*-repositoryInfo.js",
+    "!**/*-targets-*.js",
+    "!**/*-winPackager.js",
+    "!**/*-macPackager.js",
+    "!**/*-linuxPackager.js",
+    "!**/*-asar.js",
+    "!**/*-repositoryInfo.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

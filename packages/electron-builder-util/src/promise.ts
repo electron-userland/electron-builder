@@ -62,3 +62,17 @@ export function throwError(errors: Array<Error>) {
 export function asyncAll(tasks: Array<() => Promise<any>>) {
   return BluebirdPromise.map(tasks, it => it())
 }
+
+export function orNullIfFileNotExist<T>(promise: Promise<T>): Promise<T | null> {
+  return orIfFileNotExist(promise, null)
+}
+
+export function orIfFileNotExist<T>(promise: Promise<T>, fallbackValue: T): Promise<T> {
+  return promise
+    .catch(e => {
+      if (e.code === "ENOENT" || e.code === "ENOTDIR") {
+        return fallbackValue
+      }
+      throw e
+    })
+}

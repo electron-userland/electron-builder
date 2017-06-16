@@ -8,10 +8,10 @@ import { app, appThrows, assertPack, convertUpdateInfo, platform } from "../help
 
 test.ifMac("two-package", () => assertPack("test-app", {
   targets: createTargets([Platform.MAC], null, "all"),
-  appMetadata: {
-    repository: "foo/bar"
-  },
   config: {
+    extraMetadata: {
+      repository: "foo/bar"
+    },
     artifactName: "${name}-${version}-${os}.${ext}",
   },
 }, {

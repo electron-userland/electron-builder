@@ -4,6 +4,7 @@ import { asArray, isEmptyOrSpaces, Lazy, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
+import { orIfFileNotExist } from "electron-builder-util/out/promise"
 import { readdir, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -31,15 +32,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this._resourceList.value
   }
 
-  private readonly _resourceList = new Lazy<Array<string>>(() => {
-    return readdir(this.buildResourcesDir)
-      .catch(e => {
-        if (e.code !== "ENOENT") {
-          throw e
-        }
-        return []
-      })
-  })
+  private readonly _resourceList = new Lazy<Array<string>>(() => orIfFileNotExist(readdir(this.buildResourcesDir), []))
 
   abstract get platform(): Platform
 

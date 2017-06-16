@@ -1,3 +1,4 @@
+import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readFile } from "fs-extra-p"
 import { fromUrl as parseRepositoryUrl } from "hosted-git-info"
 import * as path from "path"
@@ -9,16 +10,9 @@ export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMe
 }
 
 async function getGitUrlFromGitConfig(projectDir: string): Promise<string | null> {
-  let data: string | null = null
-  try {
-    data = await readFile(path.join(projectDir, ".git", "config"), "utf8")
-  }
-  catch (e) {
-    if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-      return null
-    }
-
-    throw e
+  const data = await orNullIfFileNotExist(readFile(path.join(projectDir, ".git", "config"), "utf8"))
+  if (data == null) {
+    return null
   }
 
   const conf = data.split(/\r?\n/)

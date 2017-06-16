@@ -40,6 +40,9 @@ export interface Metadata {
    */
   readonly repository?: string | RepositoryInfo | null
 
+  /**
+   * The electron-builder configuration.
+   */
   readonly build?: Config
 
   /** @private */

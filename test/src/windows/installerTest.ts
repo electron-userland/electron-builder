@@ -90,12 +90,12 @@ test.ifNotCiMac("boring, only perMachine", app({
 
 test.ifAll("allowToChangeInstallationDirectory", app({
   targets: nsisTarget,
-  appMetadata: {
-    name: "test-custom-inst-dir",
-    productName: "Test Custom Installation Dir",
-    repository: "foo/bar",
-  },
   config: {
+    extraMetadata: {
+      name: "test-custom-inst-dir",
+      productName: "Test Custom Installation Dir",
+      repository: "foo/bar",
+    },
     nsis: {
       allowToChangeInstallationDirectory: true,
       oneClick: false,

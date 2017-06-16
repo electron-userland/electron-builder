@@ -13,6 +13,9 @@ const snapTarget = Platform.LINUX.createTarget("snap")
 test.skip("platform", app({
   targets: snapTarget,
   config: {
+    extraMetadata: {
+      name: "sep-p",
+    },
     productName: "Sep P",
     linux: {
       executableName: "Sep"
@@ -20,9 +23,6 @@ test.skip("platform", app({
     snap: {
       ubuntuAppPlatformContent: "ubuntu-app-platform1",
     },
-  },
-  appMetadata: {
-    name: "sep-p",
   },
   effectiveOptionComputed: async ({snap, desktopFile}) => {
     delete snap.parts.app.source
@@ -38,10 +38,10 @@ test.skip("platform", app({
 test.ifAll.ifDevOrLinuxCi("snap", app({
   targets: snapTarget,
   config: {
+    extraMetadata: {
+      name: "sep",
+    },
     productName: "Sep",
-  },
-  appMetadata: {
-    name: "sep",
   },
 }))
 
@@ -50,14 +50,14 @@ test.ifAll.ifDevOrLinuxCi("default stagePackages", async () => {
     await assertPack("test-app-one", {
       targets: Platform.LINUX.createTarget("snap"),
       config: {
+        extraMetadata: {
+          name: "sep",
+        },
         productName: "Sep",
         snap: {
           stagePackages: p,
           plugs: p,
         }
-      },
-      appMetadata: {
-        name: "sep",
       },
       effectiveOptionComputed: async ({snap}) => {
         delete snap.parts.app.source

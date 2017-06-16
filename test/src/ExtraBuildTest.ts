@@ -90,10 +90,10 @@ test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
 // test https://github.com/electron-userland/electron-builder/issues/1182 also
 test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
   targets: Platform.WINDOWS.createTarget(null, Arch.ia32),
-  appMetadata: {
-    version: "1.0.0-beta.1",
-  },
   config: {
+    extraMetadata: {
+      version: "1.0.0-beta.1",
+    },
     // https://github.com/electron-userland/electron-builder/issues/1348
     win: {
       target: [

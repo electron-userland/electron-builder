@@ -377,10 +377,10 @@ export function signed(packagerOptions: PackagerOptions): PackagerOptions {
 export function createMacTargetTest(target: Array<MacOsTargetName>) {
   return app({
     targets: Platform.MAC.createTarget(),
-    appMetadata: <any>{
-      repository: "foo/bar",
-    },
     config: {
+      extraMetadata: <any>{
+        repository: "foo/bar",
+      },
       mac: {
         target: target,
       }

@@ -101,7 +101,6 @@ Building:
   --ia32                   Build for ia32                              [boolean]
   --armv7l                 Build for armv7l                            [boolean]
   --dir                    Build unpacked dir. Useful to test.         [boolean]
-  --extraMetadata, --em    Inject properties to package.json (asar only)
   --prepackaged, --pd      The path to prepackaged app (to pack in a
                            distributable format)
   --projectDir, --project  The path to project directory. Defaults to current

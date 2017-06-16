@@ -1,4 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
+import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { lstat, readdir, readJson, realpath } from "fs-extra-p"
 import * as path from "path"
 
@@ -61,19 +62,7 @@ async function _readInstalled(folder: string, parent: any | null, name: string |
     return obj
   }
 
-  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), async pkg => {
-    try {
-      return await _readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realpathSeen, findUnmetSeen)
-    }
-    catch (e) {
-      // https://github.com/electron-userland/electron-builder/issues/1424
-      if (e.code === "ENOENT" || e.code === "ENOTDIR") {
-        return null
-      }
-
-      throw e
-    }
-  }, {concurrency: 8})
+  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), async pkg => orNullIfFileNotExist(_readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realpathSeen, findUnmetSeen)), {concurrency: 8})
   if (obj.dependencies != null) {
     for (const dep of deps) {
       if (dep != null) {

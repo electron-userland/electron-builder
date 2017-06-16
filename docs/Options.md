@@ -5,12 +5,14 @@ electron-builder [configuration](#Config) can be defined
      "appId": "com.example.app"
    }
    ```
-* or through the `--config <path/to/yml-or-json5>` option (defaults to `electron-builder.yml` (or `json`, or [json5](http://json5.org))).
+* or through the `--config <path/to/yml-or-json5-or-toml>` option (defaults to `electron-builder.yml` (or `json`, or [json5](http://json5.org), or [toml](https://github.com/toml-lang/toml))).
    ```yaml
    appId: "com.example.app"
    ```
 
 See [Config](#Config). Or [config json schema](http://electron-userland.github.io/electron-builder/) viewer (experimental).
+
+If you want to use [toml](), please install `yarn add toml --dev`.
 
 Most of the options accept `null` — for example, to explicitly set that DMG icon must be default volume icon from the OS and default rules must be not applied (i.e. use application icon as DMG icon), set `dmg.icon` to `null`.
 
@@ -370,7 +372,7 @@ Some standard fields should be defined in the `package.json`.
   * <a name="AuthorMetadata-email"></a>`email` String
 * <a name="Metadata-repository"></a>`repository` String | [RepositoryInfo](#RepositoryInfo)<a name="RepositoryInfo"></a> - The [repository](https://docs.npmjs.com/files/package.json#repository).
   * <a name="RepositoryInfo-url"></a>**`url`** String
-* <a name="Metadata-build"></a>`build` [Config](#Config)
+* <a name="Metadata-build"></a>`build` [Config](#Config) - The electron-builder configuration.
 <!-- end of generated block -->
 
 ## Build Version Management

@@ -21,13 +21,6 @@ export interface PackagerOptions {
 
   readonly config?: Config | string | null
 
-  /**
-   * The same as [application package.json](https://github.com/electron-userland/electron-builder/wiki/Options#Metadata).
-   *
-   * Application `package.json` will be still read, but options specified in this object will override.
-   */
-  readonly appMetadata?: Metadata
-
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
   readonly prepackaged?: string
@@ -37,7 +30,6 @@ export interface BuildInfo {
   readonly options: PackagerOptions
 
   readonly metadata: Metadata
-  readonly devMetadata: Metadata
 
   readonly config: Config
 

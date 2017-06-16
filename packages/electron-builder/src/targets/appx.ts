@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { exec, spawn, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
-import { asyncAll } from "electron-builder-util/out/promise"
+import { asyncAll, orIfFileNotExist } from "electron-builder-util/out/promise"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { Arch, getArchSuffix, Target } from "../core"
@@ -59,19 +59,7 @@ export default class AppXTarget extends Target {
       await copyDir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME), path.join(preAppx, "assets"))
     }
 
-    let userAssets: Array<string>
-    try {
-      userAssets = await readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME))
-    }
-    catch (e) {
-      if (e.code === "ENOENT") {
-        userAssets = []
-      }
-      else {
-        throw e
-      }
-    }
-
+    const userAssets = await orIfFileNotExist(readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME)), [])
     const vendorPath = await getSignVendorPath()
     await asyncAll([
       () => BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {

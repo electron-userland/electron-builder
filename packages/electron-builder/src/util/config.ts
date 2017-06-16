@@ -1,69 +1,90 @@
 import Ajv from "ajv"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { debug } from "electron-builder-util"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { statOrNull } from "electron-builder-util/out/fs"
 import { log, warn } from "electron-builder-util/out/log"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
+import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readFile, readJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import JSON5 from "json5"
 import * as path from "path"
-import { readAsarJson } from "../asar"
 import { Config } from "../metadata"
-import { readPackageJson } from "./packageMetadata"
+import { reactCra } from "../presets/rectCra"
 import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
 import ErrorObject = ajv.ErrorObject
 import TypeParams = ajv.TypeParams
 
 function getConfigFromPackageData(metadata: any) {
-  if (metadata.directories != null) {
-    throw new Error(`"directories" in the root is deprecated, please specify in the "build"`)
-  }
   return metadata.build
 }
 
 /** @internal */
-export async function doLoadConfig(configFile: string, projectDir: string) {
+export async function doLoadConfig(configFile: string, projectDir: string): Promise<Config> {
   const data = await readFile(configFile, "utf8")
-  const result = configFile.endsWith(".json5") ? JSON5.parse(data) : safeLoad(data)
+  let result
+  if (configFile.endsWith(".json5") || configFile.endsWith(".json")) {
+    result = JSON5.parse(data)
+  }
+  else if (configFile.endsWith(".toml")) {
+    result = require("toml").parse(data)
+  }
+  else {
+    result = safeLoad(data)
+  }
+
   const relativePath = path.relative(projectDir, configFile)
   log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
   return result
 }
 
 /** @internal */
-export async function loadConfig(projectDir: string): Promise<Config | null> {
-  for (const configFile of ["electron-builder.yml", "electron-builder.json", "electron-builder.json5"]) {
-    try {
-      return await doLoadConfig(path.join(projectDir, configFile), projectDir)
-    }
-    catch (e) {
-      if (e.code !== "ENOENT") {
-        throw e
-      }
+export async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Config | null> {
+  for (const configFile of ["electron-builder.yml", "electron-builder.yaml", "electron-builder.json", "electron-builder.json5", "electron-builder.toml"]) {
+    const data = await orNullIfFileNotExist(doLoadConfig(path.join(projectDir, configFile), projectDir))
+    if (data != null) {
+      return data
     }
   }
 
-  try {
-    return getConfigFromPackageData(await readPackageJson(path.join(projectDir, "package.json")))
+  const data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
+  if (data != null) {
+    return data
   }
-  catch (e) {
-    if (e.code !== "ENOENT") {
-      throw e
-    }
 
-    try {
-      const data = await readAsarJson(path.join(projectDir, "app.asar"), "package.json")
-      if (data != null) {
-        return getConfigFromPackageData(data)
-      }
-    }
-    catch (e) {
-      if (e.code !== "ENOENT") {
-        throw e
-      }
-    }
+  if ((await statOrNull(path.join(projectDir, "app.asar"))) != null) {
+    // prepacked, do not throw error, just ignore
+    return null
+  }
 
-    throw new Error(`Cannot find package.json in the ${projectDir}`)
+  throw new Error(`Cannot find package.json in the ${projectDir}`)
+}
+
+/** @internal */
+export async function computeFinalConfig(projectDir: string, configPath: string | null, packageMetadata: any | null, configFromOptions: Config | null | undefined): Promise<Config> {
+  let fileOrPackageConfig
+  if (configPath == null) {
+    fileOrPackageConfig = packageMetadata == null ? null : await loadConfig(projectDir, packageMetadata)
+  }
+  else {
+    fileOrPackageConfig = await doLoadConfig(path.resolve(projectDir, configPath), projectDir)
+  }
+
+  let config = deepAssign(fileOrPackageConfig == null ? Object.create(null) : fileOrPackageConfig, configFromOptions)
+
+  if (config.extends == null && config.extends !== null && packageMetadata != null) {
+    const devDependencies = packageMetadata.devDependencies
+    if (devDependencies != null && "react-scripts" in devDependencies) {
+      (<any>config).extends = "react-cra"
+    }
+  }
+
+  if (config.extends === "react-cra") {
+    return deepAssign(await reactCra(projectDir), config)
+  }
+  else {
+    return config
   }
 }
 
@@ -139,6 +160,16 @@ async function createConfigValidator() {
 
 /** @internal */
 export async function validateConfig(config: Config) {
+  const extraMetadata = config.extraMetadata
+  if (extraMetadata != null) {
+    if (extraMetadata.build != null) {
+      throw new Error(`--em.build is deprecated, please specify as -c"`)
+    }
+    if (extraMetadata.directories != null) {
+      throw new Error(`--em.directories is deprecated, please specify as -c.directories"`)
+    }
+  }
+
   if (validatorPromise == null) {
     validatorPromise = createConfigValidator()
   }

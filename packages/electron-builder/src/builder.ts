@@ -226,14 +226,13 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   })
 
   const publishManager = new PublishManager(packager, options, cancellationToken)
-  const buildPromise = packager.build().then(() => Array.from(artifactPaths))
   process.on("SIGINT", () => {
     warn("Cancelled by SIGINT")
     cancellationToken.cancel()
     publishManager.cancelTasks()
   })
 
-  return await executeFinally(buildPromise, errorOccurred => {
+  return await executeFinally(packager.build().then(() => Array.from(artifactPaths)), errorOccurred => {
     if (errorOccurred) {
       publishManager.cancelTasks()
       return BluebirdPromise.resolve(null)
@@ -323,7 +322,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("extraMetadata", {
       alias: ["em"],
       group: buildGroup,
-      description: "Inject properties to package.json",
+      description: "Deprecated. Use -c.extraMetadata.",
     })
     .option("prepackaged", {
       alias: ["pd"],

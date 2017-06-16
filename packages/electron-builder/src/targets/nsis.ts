@@ -33,7 +33,6 @@ interface PackageFileInfo {
   file: string
 }
 
-/** @private */
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
   private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()
@@ -75,7 +74,6 @@ export class AppPackageHelper {
   }
 }
 
-/** @private */
 export class NsisTarget extends Target {
   readonly options: NsisOptions
 

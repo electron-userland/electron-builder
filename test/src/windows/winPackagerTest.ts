@@ -6,8 +6,10 @@ import { app, appThrows, assertPack, platform } from "../helpers/packTester"
 
 test.ifWinCi("beta version", app({
   targets: Platform.WINDOWS.createTarget(["squirrel", "nsis"]),
-  appMetadata: {
-    version: "3.0.0-beta.2",
+  config: {
+    extraMetadata: {
+      version: "3.0.0-beta.2",
+    },
   }
 }))
 

@@ -125,11 +125,11 @@ test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
 
 test.ifAll("menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-  appMetadata: {
-    name: "test-menu-category",
-    productName: "Test Menu Category"
-  },
   config: {
+    extraMetadata: {
+      name: "test-menu-category",
+      productName: "Test Menu Category"
+    },
     publish: null,
     nsis: {
       oneClick: false,
@@ -148,11 +148,11 @@ test.ifAll("menuCategory", app({
 
 test.ifAll("string menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
-  appMetadata: {
-    name: "test-menu-category",
-    productName: "Test Menu Category"
-  },
   config: {
+    extraMetadata: {
+      name: "test-menu-category",
+      productName: "Test Menu Category"
+    },
     publish: null,
     nsis: {
       oneClick: false,
