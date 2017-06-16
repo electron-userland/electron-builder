@@ -36,15 +36,22 @@ export class NsisUpdater extends AppUpdater {
 
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
-    try {
-      await this.httpExecutor.download(fileInfo.url, tempFile, downloadOptions)
-    }
-    catch (e) {
+
+    let removeTempDirIfAny = async () => {
       try {
         await remove(tempDir)
       }
       catch (ignored) {
       }
+    }
+
+    let signatureVerificationStatus
+    try {
+      await this.httpExecutor.download(fileInfo.url, tempFile, downloadOptions)
+      signatureVerificationStatus = await this.verifySignature(tempFile)
+    }
+    catch (e) {
+      await removeTempDirIfAny()
 
       if (e instanceof CancellationError) {
         this.emit("update-cancelled", this.versionInfo)
@@ -53,15 +60,10 @@ export class NsisUpdater extends AppUpdater {
       throw e
     }
 
-    const signatureVerificationStatus = await this.verifySignature(tempFile)
     if (signatureVerificationStatus != null) {
-      try {
-        await remove(tempDir)
-      }
-      finally {
-        // noinspection ThrowInsideFinallyBlockJS
-        throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
-      }
+      await removeTempDirIfAny()
+      // noinspection ThrowInsideFinallyBlockJS
+      throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
     }
 
     this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
