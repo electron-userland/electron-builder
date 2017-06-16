@@ -91,11 +91,12 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-ajv@^5.1.5:
-  version "5.1.5"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.1.5.tgz#8734931b601f00d4feef7c65738d77d1b65d1f68"
+ajv@^5.1.6:
+  version "5.1.6"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.1.6.tgz#4b2f1a19dece93d57ac216037e3e9791c7dd1564"
   dependencies:
     co "^4.6.0"
+    json-schema-traverse "^0.3.0"
     json-stable-stringify "^1.0.1"
 
 align-text@^0.1.1, align-text@^0.1.3:
@@ -265,9 +266,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.69.0:
-  version "2.69.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.69.0.tgz#ae0cd12fda5e8cc7aa203229a80169167af15add"
+aws-sdk@^2.71.0:
+  version "2.71.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.71.0.tgz#629e49d48a95874b77ed50ec9b621633ec83a8ef"
   dependencies:
     buffer "5.0.6"
     crypto-browserify "1.0.9"
@@ -1227,9 +1228,9 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "^2.0.0"
 
-fcopy-pre-bundled@0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/fcopy-pre-bundled/-/fcopy-pre-bundled-0.3.3.tgz#4e1fce4a94ab3fafcf3bbb3d5567bb152092bf1b"
+fcopy-pre-bundled@0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/fcopy-pre-bundled/-/fcopy-pre-bundled-0.3.4.tgz#7ff1a1c339e877baa86b0856bebb33621cd5620b"
 
 feature-detect-es6@^1.3.1:
   version "1.3.1"
@@ -2074,6 +2075,10 @@ jsdom@^9.12.0:
 jsesc@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/jsesc/-/jsesc-1.3.0.tgz#46c3fec8c1892b12b0833db9bc7622176dbab34b"
+
+json-schema-traverse@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/json-schema-traverse/-/json-schema-traverse-0.3.0.tgz#0016c0b1ca1efe46d44d37541bcdfc19dcfae0db"
 
 json-schema@0.2.3:
   version "0.2.3"
@@ -3349,7 +3354,7 @@ type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-typescript@next:
+typescript@2.5.0-dev.20170614:
   version "2.5.0-dev.20170614"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0-dev.20170614.tgz#eb77ed212a5e49ebc8392ba0a95713ef87d9f6f1"
 

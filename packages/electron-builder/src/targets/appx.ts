@@ -1,16 +1,26 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, getArchSuffix, Target } from "electron-builder-core"
 import { exec, spawn, use } from "electron-builder-util"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
-import { emptyDir, readFile, writeFile } from "fs-extra-p"
+import { asyncAll } from "electron-builder-util/out/promise"
+import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
-import sanitizeFileName from "sanitize-filename"
 import { AppXOptions } from "../options/winOptions"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
+const APPX_ASSETS_DIR_NAME = "appx"
+
+const vendorAssetsForDefaultAssets: { [key: string]: string; } = {
+  "StoreLogo.png": "SampleAppx.50x50.png",
+  "Square150x150Logo.png": "SampleAppx.150x150.png",
+  "Square44x44Logo.png": "SampleAppx.44x44.png",
+  "Wide310x150Logo.png": "SampleAppx.310x150.png",
+}
+
 export default class AppXTarget extends Target {
-  readonly options: AppXOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
+  readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("appx")
@@ -20,7 +30,6 @@ export default class AppXTarget extends Target {
     }
   }
 
-  // no flatten - use asar or npm 3 or yarn
   async build(appOutDir: string, arch: Arch): Promise<any> {
     const packager = this.packager
 
@@ -42,43 +51,63 @@ export default class AppXTarget extends Target {
       }
     }
 
-    const appInfo = packager.appInfo
-
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
-    const vendorPath = await getSignVendorPath()
-
-    const templatePath = path.join(__dirname, "..", "..", "templates", "appx")
-    const safeName = sanitizeFileName(appInfo.name)
     const resourceList = await packager.resourceList
-    await BluebirdPromise.all([
-      BluebirdPromise.map(["44x44", "50x50", "150x150", "310x150"], size => {
-        const target = path.join(preAppx, "assets", `${safeName}.${size}.png`)
-        if (resourceList.includes(`${size}.png`)) {
-          return copyFile(path.join(packager.buildResourcesDir, `${size}.png`), target)
+    if (resourceList.includes(APPX_ASSETS_DIR_NAME)) {
+      await copyDir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME), path.join(preAppx, "assets"))
+    }
+
+    let userAssets: Array<string>
+    try {
+      userAssets = await readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME))
+    }
+    catch (e) {
+      if (e.code === "ENOENT") {
+        userAssets = []
+      }
+      else {
+        throw e
+      }
+    }
+
+    const vendorPath = await getSignVendorPath()
+    await asyncAll([
+      () => BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
+        if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
+          copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
         }
-        return copyFile(path.join(vendorPath, "appxAssets", `SampleAppx.${size}.png`), target)
       }),
-      copyDir(appOutDir, path.join(preAppx, "app")),
-      this.writeManifest(templatePath, preAppx, safeName, arch, publisher)
+      () => this.writeManifest(path.join(__dirname, "..", "..", "templates", "appx"), preAppx, arch, publisher!, userAssets),
+      () => copyDir(appOutDir, path.join(preAppx, "app")),
     ])
 
     const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
-    const args = ["pack", "/o", "/d", preAppx, "/p", destination]
-    use(this.options.makeappxArgs, (it: Array<string>) => args.push(...it))
-    // wine supports only ia32 binary in any case makeappx crashed on wine
-    // await execWine(path.join(await getSignVendorPath(), "windows-10", process.platform === "win32" ? process.arch : "ia32", "makeappx.exe"), args)
-    await spawn(path.join(vendorPath, "windows-10", arch === Arch.ia32 ? "ia32" : "x64", "makeappx.exe"), args)
+    const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", destination]
 
+    // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
+    if (isScaledAssetsProvided(userAssets)) {
+      const priConfigPath = path.join(preAppx, "priconfig.xml")
+      const makePriPath = path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe")
+      await spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"])
+      await spawn(makePriPath, ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx])
+
+      makeAppXArgs.push("/l")
+    }
+
+    use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
+    // wine supports only ia32 binary in any case makeappx crashed on wine
+    await spawn(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe"), makeAppXArgs)
     await packager.sign(destination)
+
     packager.dispatchArtifactCreated(destination, this, arch, packager.computeSafeArtifactName("appx"))
   }
 
-  private async writeManifest(templatePath: string, preAppx: string, safeName: string, arch: Arch, publisher: string) {
+  private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {
     const appInfo = this.packager.appInfo
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
-      .replace(/\$\{([a-zA-Z]+)\}/g, (match, p1): string => {
+      .replace(/\$\{([a-zA-Z0-9]+)\}/g, (match, p1): string => {
         switch (p1) {
           case "publisher":
             return publisher
@@ -111,8 +140,23 @@ export default class AppXTarget extends Target {
           case "backgroundColor":
             return this.options.backgroundColor || "#464646"
 
-          case "safeName":
-            return safeName
+          case "logo":
+            return "assets\\StoreLogo.png"
+
+          case "square150x150Logo":
+            return "assets\\Square150x150Logo.png"
+
+          case "square44x44Logo":
+            return "assets\\Square44x44Logo.png"
+
+          case "lockScreen":
+            return lockScreenTag(userAssets)
+
+          case "defaultTile":
+            return defaultTileTag(userAssets)
+
+          case "splashScreen":
+            return splashScreenTag(userAssets)
             
           case "arch":
             return arch === Arch.ia32 ? "x86" : "x64"
@@ -123,6 +167,48 @@ export default class AppXTarget extends Target {
       })
     await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
   }
+}
+
+function lockScreenTag(userAssets: Array<string>): string {
+  if (isDefaultAssetIncluded(userAssets, "BadgeLogo.png")) {
+    return '<uap:LockScreen Notification="badgeAndTileText" BadgeLogo="assets\\BadgeLogo.png" />'
+  }
+  else {
+    return ""
+  }
+}
+
+function defaultTileTag(userAssets: Array<string>): string {
+  const defaultTiles: Array<string> = ["<uap:DefaultTile", 'Wide310x150Logo="assets\\Wide310x150Logo.png"']
+
+  if (isDefaultAssetIncluded(userAssets, "LargeTile.png")) {
+    defaultTiles.push('Square310x310Logo="assets\\LargeTile.png"')
+  }
+  if (isDefaultAssetIncluded(userAssets, "SmallTile.png")) {
+    defaultTiles.push('Square71x71Logo="assets\\SmallTile.png"')
+  }
+
+  defaultTiles.push("/>")
+  return defaultTiles.join(" ")
+}
+
+function splashScreenTag(userAssets: Array<string>): string {
+  if (isDefaultAssetIncluded(userAssets, "SplashScreen.png")) {
+    return '<uap:SplashScreen Image="assets\\SplashScreen.png" />'
+  }
+  else {
+    return ""
+  }
+}
+
+function isDefaultAssetIncluded(userAssets: Array<string>, defaultAsset: string) {
+  const defaultAssetName = defaultAsset.split(".")[0]
+  return userAssets.some(it => it.includes(defaultAssetName))
+}
+
+function isScaledAssetsProvided(userAssets: Array<string>) {
+  // noinspection SpellCheckingInspection
+  return userAssets.some(it => it.includes(".scale-") || it.includes(".targetsize-"))
 }
 
 export function quoteString(s: string): string {

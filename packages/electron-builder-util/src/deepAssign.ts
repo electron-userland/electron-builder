@@ -15,11 +15,6 @@ function assignKey(target: any, from: any, key: string) {
   }
 
   const prevValue = target[key]
-  if (prevValue === null) {
-    // if explicitly set to null, it means that we want to not use default or inherited value
-    return
-  }
-
   if (prevValue == null || value == null || !isObject(prevValue) || !isObject(value)) {
     target[key] = value
   }

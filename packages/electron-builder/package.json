@@ -51,7 +51,7 @@
   "homepage": "https://github.com/electron-userland/electron-builder",
   "dependencies": {
     "7zip-bin": "^2.1.0",
-    "ajv": "^5.1.5",
+    "ajv": "^5.1.6",
     "ajv-keywords": "^2.1.0",
     "bluebird-lst": "^1.0.2",
     "chalk": "^1.1.3",

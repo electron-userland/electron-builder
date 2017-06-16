@@ -41,6 +41,7 @@
       <w>controlfields</w>
       <w>coroutine</w>
       <w>cpus</w>
+      <w>createconfig</w>
       <w>crypto</w>
       <w>ctype</w>
       <w>cuint</w>
@@ -143,6 +144,7 @@
       <w>makedeb</w>
       <w>makedmg</w>
       <w>makensis</w>
+      <w>makepri</w>
       <w>matchers</w>
       <w>minami</w>
       <w>minimatch</w>
@@ -181,6 +183,7 @@
       <w>precompilation</w>
       <w>preinstall</w>
       <w>prerelease</w>
+      <w>priconfig</w>
       <w>productbuild</w>
       <w>progexe</w>
       <w>proguard</w>
