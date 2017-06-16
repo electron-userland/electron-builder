@@ -6,11 +6,13 @@ import { release } from "os"
 import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 
+/** @internal */
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub("winCodeSign", "1.8.0", "NWd9hH9MuAgJFzhVzW1bpPplDTBwwYfPUg2skeEri2zp4PFcibbUWPvqUTv+Xnyg0MCdpsrVF1GMIHZGT8wMRw==")
 }
 
+/** @internal */
 export interface FileCodeSigningInfo {
   readonly file?: string | null
   readonly password?: string | null
@@ -31,6 +33,7 @@ export interface SignOptions {
   readonly options: WinBuildOptions
 }
 
+/** @internal */
 export async function sign(options: SignOptions) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
@@ -143,11 +146,13 @@ function getOutputPath(inputPath: string, hash: string) {
   return path.join(path.dirname(inputPath), `${path.basename(inputPath, extension)}-signed-${hash}${extension}`)
 }
 
+/** @internal */
 export function isOldWin6() {
   const winVersion = release()
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
+/** @internal */
 export async function getToolPath(): Promise<string> {
   if (process.env.USE_SYSTEM_SIGNCODE) {
     return "osslsigncode"

@@ -8,7 +8,7 @@ import { AsarFilesystem, Node, readAsar } from "../asar"
 import { createElectronCompilerHost } from "../fileTransformer"
 import { AsarOptions } from "../metadata"
 import { PlatformPackager } from "../platformPackager"
-import { dependencies } from "./readInstalled"
+import { dependencies } from "./packageDependencies"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")

@@ -3,6 +3,7 @@ import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo }
 import { WinPackager } from "../winPackager"
 import { AppPackageHelper, NsisTarget } from "./nsis"
 
+/** @private */
 export class WebInstallerTarget extends NsisTarget {
   constructor(packager: WinPackager, outDir: string, targetName: string, packageHelper: AppPackageHelper) {
     super(packager, outDir, targetName, packageHelper)

@@ -97,8 +97,20 @@ Configuration Options
 **Extends**: <code>[PlatformSpecificBuildOptions](electron-builder#PlatformSpecificBuildOptions)</code>  
 **Properties**
 * <a name="Config-appId"></a>`appId` = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID be set.
-* <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
 * <a name="Config-productName"></a>`productName` String - As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
+* <a name="Config-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+* <a name="Config-asar"></a>`asar` = `true` Boolean | [AsarOptions](#AsarOptions)<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
+  
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.
+  * <a name="AsarOptions-smartUnpack"></a>`smartUnpack` = `true` Boolean - Whether to automatically unpack executables files.
+  * <a name="AsarOptions-ordering"></a>`ordering` String
+* <a name="Config-asarUnpack"></a>`asarUnpack` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+* <a name="Config-compression"></a>`compression` = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
+* <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
+* <a name="Config-directories"></a>`directories`<a name="MetadataDirectories"></a>
+  * <a name="MetadataDirectories-buildResources"></a>`buildResources` = `build` String - The path to build resources.
+  * <a name="MetadataDirectories-output"></a>`output` = `dist` String - The output directory.
+  * <a name="MetadataDirectories-app"></a>`app` String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 * <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
   
   Development dependencies are never copied in any case. You don't need to ignore it explicitly.
@@ -129,43 +141,37 @@ Configuration Options
   * <a name="FilePattern-to"></a>`to` String - The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
   * <a name="FilePattern-filter"></a>`filter` Array&lt;String&gt; | String - The [glob patterns](#file-patterns).
 * <a name="Config-extraFiles"></a>`extraFiles` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String - The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
-* <a name="Config-asar"></a>`asar` = `true` Boolean | [AsarOptions](#AsarOptions)<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
-  
-  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.
-  * <a name="AsarOptions-smartUnpack"></a>`smartUnpack` = `true` Boolean - Whether to automatically unpack executables files.
-  * <a name="AsarOptions-ordering"></a>`ordering` String
-* <a name="Config-asarUnpack"></a>`asarUnpack` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
-* <a name="Config-fileAssociations"></a>`fileAssociations` Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)<a name="FileAssociation"></a> - File associations.
+* <a name="Config-fileAssociations"></a>`fileAssociations` Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)<a name="FileAssociation"></a> - The file associations.
   * <a name="FileAssociation-ext"></a>**`ext`** String | Array&lt;String&gt; - The extension (minus the leading period). e.g. `png`.
   * <a name="FileAssociation-name"></a>`name` String - The name. e.g. `PNG`. Defaults to `ext`.
   * <a name="FileAssociation-description"></a>`description` String - *windows-only.* The description.
   * <a name="FileAssociation-icon"></a>`icon` String - The path to icon (`.icns` for MacOS and `.ico` for Windows), relative to `build` (build resources directory). Defaults to `${firstExt}.icns`/`${firstExt}.ico` (if several extensions specified, first is used) or to application icon.
   * <a name="FileAssociation-role"></a>`role` = `Editor` String - *macOS-only* The app’s role with respect to the type. The value can be `Editor`, `Viewer`, `Shell`, or `None`. Corresponds to `CFBundleTypeRole`.
   * <a name="FileAssociation-isPackage"></a>`isPackage` Boolean - *macOS-only* Whether the document is distributed as a bundle. If set to true, the bundle directory is treated as a file. Corresponds to `LSTypeIsPackage`.
-* <a name="Config-protocols"></a>`protocols` Array&lt;[Protocol](#Protocol)&gt; | [Protocol](#Protocol)<a name="Protocol"></a> - URL protocol schemes.
+* <a name="Config-protocols"></a>`protocols` Array&lt;[Protocol](#Protocol)&gt; | [Protocol](#Protocol)<a name="Protocol"></a> - The URL protocol schemes.
   * <a name="Protocol-name"></a>**`name`** String - The name. e.g. `IRC server URL`.
   * <a name="Protocol-schemes"></a>**`schemes`** Array&lt;String&gt; - The schemes. e.g. `["irc", "ircs"]`.
   * <a name="Protocol-role"></a>`role` = `Editor` "Editor" | "Viewer" | "Shell" | "None" - *macOS-only* The app’s role with respect to the type.
-* <a name="Config-compression"></a>`compression` = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
-* <a name="Config-afterPack"></a>`afterPack` callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-* <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
+* <a name="Config-electronCompile"></a>`electronCompile` Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
+* <a name="Config-electronDist"></a>`electronDist` String - The path to custom Electron build (e.g. `~/electron/out/R`).
+* <a name="Config-electronDownload"></a>`electronDownload` any - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+* <a name="Config-electronVersion"></a>`electronVersion` String - The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
+* <a name="Config-extends"></a>`extends` String - The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
+  
+  If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
+* <a name="Config-extraMetadata"></a>`extraMetadata` any - Inject properties to `package.json`.
+* <a name="Config-forceCodeSigning"></a>`forceCodeSigning` = `false` Boolean - Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+* <a name="Config-muonVersion"></a>`muonVersion` String - The version of muon you are packaging for.
+* <a name="Config-nodeGypRebuild"></a>`nodeGypRebuild` = `false` Boolean - Whether to execute `node-gyp rebuild` before starting to package the app.
+* <a name="Config-npmArgs"></a>`npmArgs` Array&lt;String&gt; | String - Additional command line arguments to use when installing app native deps.
 * <a name="Config-npmRebuild"></a>`npmRebuild` = `true` Boolean - Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app.
 * <a name="Config-npmSkipBuildFromSource"></a>`npmSkipBuildFromSource` = `false` Boolean - Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps.
-* <a name="Config-npmArgs"></a>`npmArgs` Array&lt;String&gt; | String - Additional command line arguments to use when installing app native deps.
-* <a name="Config-nodeGypRebuild"></a>`nodeGypRebuild` = `false` Boolean - Whether to execute `node-gyp rebuild` before starting to package the app.
-* <a name="Config-electronDist"></a>`electronDist` String - The path to custom Electron build (e.g. `~/electron/out/R`). Only macOS supported, file issue if need for Linux or Windows.
-* <a name="Config-electronDownload"></a>`electronDownload` any - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
-* <a name="Config-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array - Array of option objects. Order is important — first item will be used as a default auto-update server. See: [Publish options](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options).
-* <a name="Config-forceCodeSigning"></a>`forceCodeSigning` = `false` Boolean - Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
-* <a name="Config-directories"></a>`directories`<a name="MetadataDirectories"></a>
-  * <a name="MetadataDirectories-buildResources"></a>`buildResources` = `build` String - The path to build resources.
-  * <a name="MetadataDirectories-output"></a>`output` = `dist` String - The output directory.
-  * <a name="MetadataDirectories-app"></a>`app` String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
-* <a name="Config-electronVersion"></a>`electronVersion` String - The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
-* <a name="Config-muonVersion"></a>`muonVersion` String - The version of muon you are packaging for.
-* <a name="Config-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+* <a name="Config-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array - The [publish configuration](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). Order is important — first item will be used as a default auto-update server.
+  
+  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
+  
+  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
 * <a name="Config-buildVersion"></a>`buildVersion` String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
-* <a name="Config-electronCompile"></a>`electronCompile` Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
 * <a name="Config-detectUpdateChannel"></a>`detectUpdateChannel` = `true` Boolean - Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
 * <a name="Config-mac"></a>`mac`<a name="MacOptions"></a> - macOS options.
   * <a name="MacOptions-category"></a>`category` String - The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
@@ -345,10 +351,8 @@ Configuration Options
 * <a name="Config-freebsd"></a>`freebsd` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-p5p"></a>`p5p` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-apk"></a>`apk` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
-* <a name="Config-extends"></a>`extends` String - The name of a built-in configuration preset. Currently, only `react-cra` is supported.
-  
-  If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
-* <a name="Config-extraMetadata"></a>`extraMetadata` any<a name="Metadata"></a>
+* <a name="Config-afterPack"></a>`afterPack` callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+* <a name="Config-beforeBuild"></a>`beforeBuild` callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.<a name="Metadata"></a>
 
 ## `Metadata`
 Some standard fields should be defined in the `package.json`.

@@ -15,7 +15,7 @@ import { AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } fr
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
-import { dependencies } from "./util/readInstalled"
+import { dependencies } from "./util/packageDependencies"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions

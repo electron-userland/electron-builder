@@ -482,7 +482,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
     return options
   }
   
-  let owner = options.owner
+  let owner = isGithub ? (<GithubOptions>options).owner : (<BintrayOptions>options).owner
   let project = isGithub ? (<GithubOptions>options).repo : (<BintrayOptions>options).package
 
   if (isGithub && owner == null && project != null) {

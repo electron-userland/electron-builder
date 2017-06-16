@@ -90,15 +90,12 @@ Bintray options.
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| package| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-package"></a>The Bintray package name. |
-| repo = <code>&quot;generic&quot;</code>| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-repo"></a>The Bintray repository name. |
-| user| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-user"></a>The Bintray user account. Used in cases where the owner is an organization. |
-| token| <code>String</code> \| <code>null</code> | <a name="BintrayOptions-token"></a> |
-
-<a name="GenericServerOptions"></a>
+* <a name="BintrayOptions-package"></a>`package` String - The Bintray package name.
+* <a name="BintrayOptions-repo"></a>`repo` = `generic` String - The Bintray repository name.
+* <a name="BintrayOptions-owner"></a>`owner` String - The owner.
+* <a name="BintrayOptions-user"></a>`user` String - The Bintray user account. Used in cases where the owner is an organization.
+* <a name="BintrayOptions-token"></a>`token` String
+* <a name="BintrayOptions-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.<a name="GenericServerOptions"></a>
 
 ### `GenericServerOptions` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 Generic (any HTTP(S) server) options.
@@ -106,13 +103,9 @@ Generic (any HTTP(S) server) options.
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **url**| <code>String</code> | <a name="GenericServerOptions-url"></a>The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros. |
-| channel = <code>&quot;latest&quot;</code>| <code>String</code> \| <code>null</code> | <a name="GenericServerOptions-channel"></a>The channel. |
-
-<a name="GithubOptions"></a>
+* <a name="GenericServerOptions-url"></a>**`url`** String - The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
+* <a name="GenericServerOptions-channel"></a>`channel` = `latest` String - The channel.
+* <a name="GenericServerOptions-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.<a name="GithubOptions"></a>
 
 ### `GithubOptions` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 GitHub options.
@@ -123,34 +116,19 @@ Define `GH_TOKEN` environment variable.
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| repo| <code>String</code> \| <code>null</code> | <a name="GithubOptions-repo"></a>The repository name. [Detected automatically](#github-repository-and-bintray-package). |
-| vPrefixedTagName = <code>true</code>| <code>Boolean</code> | <a name="GithubOptions-vPrefixedTagName"></a>Whether to use `v`-prefixed tag name. |
-| host = <code>&quot;github.com&quot;</code>| <code>String</code> \| <code>null</code> | <a name="GithubOptions-host"></a>The host (including the port if need). |
-| protocol = <code>https</code>| <code>"https"</code> \| <code>"http"</code> \| <code>null</code> | <a name="GithubOptions-protocol"></a>The protocol. GitHub Publisher supports only `https`. |
-| token| <code>String</code> \| <code>null</code> | <a name="GithubOptions-token"></a>The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL). |
-| private| <code>Boolean</code> \| <code>null</code> | <a name="GithubOptions-private"></a>Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo |
-
-<a name="PublishConfiguration"></a>
+* <a name="GithubOptions-repo"></a>`repo` String - The repository name. [Detected automatically](#github-repository-and-bintray-package).
+* <a name="GithubOptions-owner"></a>`owner` String - The owner.
+* <a name="GithubOptions-vPrefixedTagName"></a>`vPrefixedTagName` = `true` Boolean - Whether to use `v`-prefixed tag name.
+* <a name="GithubOptions-host"></a>`host` = `github.com` String - The host (including the port if need).
+* <a name="GithubOptions-protocol"></a>`protocol` = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
+* <a name="GithubOptions-token"></a>`token` String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).
+* <a name="GithubOptions-private"></a>`private` Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo
+* <a name="GithubOptions-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.<a name="PublishConfiguration"></a>
 
 ### `PublishConfiguration`
-Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
-
-If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-
-If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **provider**| <code>"github"</code> \| <code>"bintray"</code> \| <code>"s3"</code> \| <code>"generic"</code> | <a name="PublishConfiguration-provider"></a>The provider. |
-| owner| <code>String</code> \| <code>null</code> | <a name="PublishConfiguration-owner"></a>The owner. |
-
-<a name="S3Options"></a>
+* <a name="PublishConfiguration-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.<a name="S3Options"></a>
 
 ### `S3Options` ⇐ <code>[PublishConfiguration](#PublishConfiguration)</code>
 Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
@@ -162,17 +140,13 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[PublishConfiguration](#PublishConfiguration)</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **bucket**| <code>String</code> | <a name="S3Options-bucket"></a>The bucket name. |
-| path = <code>&quot;/&quot;</code>| <code>String</code> \| <code>null</code> | <a name="S3Options-path"></a>The directory path. |
-| region| <code>String</code> \| <code>null</code> | <a name="S3Options-region"></a>The region. Is determined and set automatically when publishing. |
-| channel = <code>&quot;latest&quot;</code>| <code>String</code> \| <code>null</code> | <a name="S3Options-channel"></a>The channel. |
-| acl = <code>public-read</code>| <code>"private"</code> \| <code>"public-read"</code> \| <code>null</code> | <a name="S3Options-acl"></a>The ACL. |
-| storageClass = <code>STANDARD</code>| <code>"STANDARD"</code> \| <code>"REDUCED_REDUNDANCY"</code> \| <code>"STANDARD_IA"</code> \| <code>null</code> | <a name="S3Options-storageClass"></a>The type of storage to use for the object. |
-
-<a name="S3Options-s3-publish-configuration"></a>**Example** *(S3 publish configuration)*  
+* <a name="S3Options-bucket"></a>**`bucket`** String - The bucket name.
+* <a name="S3Options-path"></a>`path` = `/` String - The directory path.
+* <a name="S3Options-region"></a>`region` String - The region. Is determined and set automatically when publishing.
+* <a name="S3Options-channel"></a>`channel` = `latest` String - The channel.
+* <a name="S3Options-acl"></a>`acl` = `public-read` "private" | "public-read" - The ACL.
+* <a name="S3Options-storageClass"></a>`storageClass` = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" - The type of storage to use for the object.
+* <a name="S3Options-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.<a name="S3Options-s3-publish-configuration"></a>**Example** *(S3 publish configuration)*  
 ```js
 {
   "provider": "s3",
@@ -185,28 +159,19 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Extends**: <code>[VersionInfo](#VersionInfo)</code>  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **path**| <code>String</code> | <a name="UpdateInfo-path"></a> |
-| githubArtifactName| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-githubArtifactName"></a> |
-| sha2| <code>String</code> | <a name="UpdateInfo-sha2"></a> |
-| sha512| <code>String</code> | <a name="UpdateInfo-sha512"></a> |
-| releaseName| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-releaseName"></a>The release name. |
-| releaseNotes| <code>String</code> \| <code>null</code> | <a name="UpdateInfo-releaseNotes"></a>The release notes. |
-| **releaseDate**| <code>String</code> | <a name="UpdateInfo-releaseDate"></a>The release date. |
-
-<a name="VersionInfo"></a>
+Inherits [VersionInfo](#VersionInfo) options.
+* <a name="UpdateInfo-path"></a>**`path`** String
+* <a name="UpdateInfo-githubArtifactName"></a>`githubArtifactName` String
+* <a name="UpdateInfo-sha2"></a>`sha2` String
+* <a name="UpdateInfo-sha512"></a>`sha512` String
+* <a name="UpdateInfo-releaseName"></a>`releaseName` String - The release name.
+* <a name="UpdateInfo-releaseNotes"></a>`releaseNotes` String - The release notes.
+* <a name="UpdateInfo-releaseDate"></a>**`releaseDate`** String - The release date.<a name="VersionInfo"></a>
 
 ### `VersionInfo`
 **Kind**: interface of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  
 **Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| **version**| <code>String</code> | <a name="VersionInfo-version"></a>The version. |
-
-<a name="module_electron-builder-http/out/publishOptions.githubUrl"></a>
+* <a name="VersionInfo-version"></a>**`version`** String - The version.<a name="module_electron-builder-http/out/publishOptions.githubUrl"></a>
 
 ### `electron-builder-http/out/publishOptions.githubUrl(options)` ⇒ <code>String</code>
 **Kind**: method of [<code>electron-builder-http/out/publishOptions</code>](#module_electron-builder-http/out/publishOptions)  

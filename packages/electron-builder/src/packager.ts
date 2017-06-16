@@ -16,9 +16,10 @@ import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
-import { reactCra } from "./presets/rect-cra"
+import { reactCra } from "./presets/rectCra"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { doLoadConfig, getElectronVersion, loadConfig, readPackageJson, validateConfig } from "./util/readPackageJson"
+import { doLoadConfig, getElectronVersion, loadConfig, validateConfig } from "./util/config"
+import { readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
 import { WinPackager } from "./winPackager"
@@ -121,7 +122,7 @@ export class Packager implements BuildInfo {
 
     const projectDir = this.projectDir
     const fileOrPackageConfig = await (configPath == null ? loadConfig(projectDir) : doLoadConfig(path.resolve(projectDir, configPath), projectDir))
-    const config: Config = deepAssign({}, fileOrPackageConfig, configFromOptions)
+    let config: Config = deepAssign({}, fileOrPackageConfig, configFromOptions)
 
     const extraMetadata = config.extraMetadata
     if (extraMetadata != null) {
@@ -167,10 +168,11 @@ export class Packager implements BuildInfo {
     }
 
     if (config.extends === "react-cra") {
-      await reactCra(config, this.projectDir)
+      const parentConfig = await reactCra(this.projectDir)
+      config = deepAssign(parentConfig, config)
 
       // apply extraMetadata again to metadata because other code expects that appInfo.metadata it is effective metadata, not as on disk (e.g. application entry check)
-      if (config.extraMetadata != null) {
+      if (parentConfig.extraMetadata != null) {
         deepAssign(this.metadata, config.extraMetadata)
       }
     }

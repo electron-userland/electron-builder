@@ -78,7 +78,7 @@ function renderProperties(object, root, level) {
   const parents = object.augments
   if (parents != null) {
     for (const parentId of parents) {
-      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions")) {
+      if (!parentId.endsWith("TargetSpecificOptions") && !parentId.endsWith("CommonLinuxOptions") && !parentId.endsWith("CommonNsisOptions") && !parentId.endsWith("PublishConfiguration")) {
         if (firstDocumentedParent == null && !parentId.endsWith("PlatformSpecificBuildOptions")) {
           firstDocumentedParent = resolveById(parentId)
         }
@@ -247,7 +247,12 @@ function identifierToLink(id, root) {
   }
 
   let linked = resolveById(id)
-  if (!linked) {
+  if (linked == null && id === "module:electron-builder/out/core.Arch") {
+    id = "module:electron-builder.Arch"
+    linked = resolveById(id)
+  }
+
+  if (linked == null) {
     if (id.startsWith("module") && 
       !id.startsWith("module:http.") && 
       !id.startsWith("module:bluebird-lst.") && 
@@ -255,7 +260,9 @@ function identifierToLink(id, root) {
       !id.endsWith(".T") &&
       !id.endsWith(".R") &&
       !id.endsWith(".K") &&
-      !id.startsWith("module:fs.")
+      !id.endsWith(".DC") &&
+      !id.startsWith("module:fs.") &&
+      !id.endsWith(".__type")
     ) {
       console.warn(`Unresolved member ${id}`)
     }

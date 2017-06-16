@@ -323,7 +323,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("extraMetadata", {
       alias: ["em"],
       group: buildGroup,
-      description: "Inject properties to package.json (asar only)",
+      description: "Inject properties to package.json",
     })
     .option("prepackaged", {
       alias: ["pd"],

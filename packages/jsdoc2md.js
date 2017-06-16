@@ -155,7 +155,7 @@ async function render(pages, jsdoc2MdOptions) {
   for (const page of pages) {
     const finalOptions = Object.assign({
       data: page.data,
-      "property-list-format": page === pages[0] ? "list" : "table"
+      "property-list-format": page === pages[0] || page === pages[4] ? "list" : "table"
     }, jsdoc2MdOptions)
 
     if (page === pages[0]) {

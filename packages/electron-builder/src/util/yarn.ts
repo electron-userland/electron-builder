@@ -5,7 +5,7 @@ import { log, warn } from "electron-builder-util/out/log"
 import { homedir } from "os"
 import * as path from "path"
 import { Config } from "../metadata"
-import { readInstalled } from "./readInstalled"
+import { readInstalled } from "./packageDependencies"
 
 /** @internal */
 export async function installOrRebuild(config: Config, appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, forceInstall: boolean = false) {

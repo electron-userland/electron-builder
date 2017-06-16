@@ -5,23 +5,11 @@ export type AllPublishOptions = string | GithubOptions | S3Options | GenericServ
 // https://github.com/YousefED/typescript-json-schema/issues/80
 export type Publish = AllPublishOptions | Array<AllPublishOptions> | null
 
-/**
- * Can be specified in the [config](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
- * 
- * If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
- * 
- * If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
- */
 export interface PublishConfiguration {
   /**
    * The provider.
    */
   readonly provider: PublishProvider
-
-  /**
-   * The owner.
-   */
-  readonly owner?: string | null
 }
 
 /**
@@ -35,6 +23,11 @@ export interface GithubOptions extends PublishConfiguration {
    * The repository name. [Detected automatically](#github-repository-and-bintray-package).
    */
   readonly repo?: string | null
+
+  /**
+   * The owner.
+   */
+  readonly owner?: string | null
 
   /**
    * Whether to use `v`-prefixed tag name.
@@ -165,6 +158,11 @@ export interface BintrayOptions extends PublishConfiguration {
    * @default generic
    */
   readonly repo?: string | null
+
+  /**
+   * The owner.
+   */
+  readonly owner?: string | null
 
   /**
    * The Bintray user account. Used in cases where the owner is an organization.
