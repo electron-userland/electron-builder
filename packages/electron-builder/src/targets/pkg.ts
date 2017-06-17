@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, use } from "electron-builder-util"
+import { debug, exec, use } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
-import { unlink } from "fs-extra-p"
+import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { findIdentity, Identity } from "../codeSign"
 import { Arch, Target } from "../core"
@@ -11,7 +11,11 @@ import { filterCFBundleIdentifier } from "../packager/mac"
 
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
 export class PkgTarget extends Target {
-  readonly options: PkgOptions = this.packager.config.pkg || Object.create(null)
+  readonly options: PkgOptions = Object.assign({
+    allowAnywhere: true,
+    allowCurrentUserHome: true,
+    allowRootDirectory: true,
+  }, this.packager.config.pkg)
   private readonly installLocation = this.options.installLocation || "/Applications"
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
@@ -31,10 +35,17 @@ export class PkgTarget extends Target {
     }
 
     const appOutDir = this.outDir
-    const distInfo = path.join(appOutDir, "distribution.xml")
-    await exec("productbuild", ["--synthesize", "--component", appPath, this.installLocation, distInfo], {
+    const distInfoFile = path.join(appOutDir, "distribution.xml")
+    await exec("productbuild", ["--synthesize", "--component", appPath, this.installLocation, distInfoFile], {
       cwd: appOutDir,
     })
+
+    let distInfo = await readFile(distInfoFile, "utf-8")
+    const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
+    distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
+    await writeFile(distInfoFile, distInfo)
+
+    debug(distInfo)
 
     // to use --scripts, we must build .app bundle separately using pkgbuild
     // productbuild --scripts doesn't work (because scripts in this case not added to our package)
@@ -44,7 +55,7 @@ export class PkgTarget extends Target {
 
     const outFile = path.join(appOutDir, packager.expandArtifactNamePattern(options, "pkg"))
     const args = prepareProductBuildArgs(identity, keychainName)
-    args.push("--distribution", distInfo)
+    args.push("--distribution", distInfoFile)
     args.push(outFile)
 
     use(options.productbuild, it => args.push(...<any>it))
@@ -52,7 +63,7 @@ export class PkgTarget extends Target {
     await exec("productbuild", args, {
       cwd: appOutDir,
     })
-    await BluebirdPromise.all([unlink(innerPackageFile), unlink(distInfo)])
+    await BluebirdPromise.all([unlink(innerPackageFile), unlink(distInfoFile)])
 
     packager.dispatchArtifactCreated(outFile, this, arch, `${appInfo.name}-${appInfo.version}.pkg`)
   }

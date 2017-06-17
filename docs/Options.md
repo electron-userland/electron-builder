@@ -220,8 +220,17 @@ Configuration Options
   * <a name="DmgOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-pkg"></a>`pkg`<a name="PkgOptions"></a> - macOS product archive options.
   * <a name="PkgOptions-scripts"></a>`scripts` = `build/pkg-scripts` String - The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).
-  * <a name="PkgOptions-installLocation"></a>`installLocation` = `/Applications` String - The install location.
-  * <a name="PkgOptions-identity"></a>`identity` String
+  * <a name="PkgOptions-installLocation"></a>`installLocation` = `/Applications` String - The install location. [Do not use it](https://stackoverflow.com/questions/12863944/how-do-you-specify-a-default-install-location-to-home-with-pkgbuild) to create per-user package. Mostly never you will need to change this option. `/Applications` would install it as expected into `/Applications` if the local system domain is chosen, or into `$HOME/Applications` if the home installation is chosen.
+  * <a name="PkgOptions-allowAnywhere"></a>`allowAnywhere` = `true` Boolean - Whether can be installed at the root of any volume, including non-system volumes. Otherwise, it cannot be installed at the root of a volume.
+    
+    Corresponds to [enable_anywhere](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+  * <a name="PkgOptions-allowCurrentUserHome"></a>`allowCurrentUserHome` = `true` Boolean - Whether can be installed into the current user’s home directory. A home directory installation is done as the current user (not as root), and it cannot write outside of the home directory. If the product cannot be installed in the user’s home directory and be not completely functional from user’s home directory.
+    
+    Corresponds to [enable_currentUserHome](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+  * <a name="PkgOptions-allowRootDirectory"></a>`allowRootDirectory` = `true` Boolean - Whether can be installed into the root directory. Should usually be `true` unless the product can be installed only to the user’s home directory.
+    
+    Corresponds to [enable_localSystem](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+  * <a name="PkgOptions-identity"></a>`identity` String - The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
   * <a name="PkgOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
   * <a name="PkgOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
 * <a name="Config-win"></a>`win`<a name="WinBuildOptions"></a> - Windows options.

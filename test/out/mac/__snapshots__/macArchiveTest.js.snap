@@ -74,6 +74,18 @@ Object {
 `;
 
 exports[`pkg scripts 2`] = `
+Object {
+  "mac": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW-1.1.0.pkg",
+      "safeArtifactName": "TestApp-1.1.0.pkg",
+    },
+  ],
+}
+`;
+
+exports[`pkg scripts 3`] = `
 Array [
   "Test App ßW.app",
   "Test App ßW.app/Contents",
@@ -399,7 +411,7 @@ Array [
 ]
 `;
 
-exports[`pkg scripts 3`] = `
+exports[`pkg scripts 4`] = `
 Object {
   "choice": Array [
     Object {
@@ -424,6 +436,11 @@ Object {
         "choice": "org.electron-builder.testApp",
       },
     },
+  },
+  "domains": Object {
+    "enable_anywhere": "true",
+    "enable_currentUserHome": "true",
+    "enable_localSystem": "true",
   },
   "minSpecVersion": "2",
   "options": Object {

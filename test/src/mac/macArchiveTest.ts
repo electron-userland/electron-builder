@@ -15,7 +15,19 @@ test("only zip", createMacTargetTest(["zip"]));
 test("tar.gz", createMacTargetTest(["tar.gz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
+
 it("pkg", createMacTargetTest(["pkg"]))
+
+test.ifMac("pkg scripts", app({
+  targets: Platform.MAC.createTarget("pkg"),
+  config: {
+    pkg: {
+      installLocation: ""
+    }
+  }
+}, {
+  signed: false,
+}))
 
 test.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),

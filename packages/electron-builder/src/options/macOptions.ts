@@ -77,6 +77,9 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   readonly requirements?: string | null
 }
 
+/**
+ * macOS product archive options.
+ */
 export interface PkgOptions extends TargetSpecificOptions {
   /**
    * The scripts directory, relative to `build` (build resources directory).
@@ -94,11 +97,41 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly productbuild?: Array<string> | null
 
   /**
-   * The install location.
+   * The install location. [Do not use it](https://stackoverflow.com/questions/12863944/how-do-you-specify-a-default-install-location-to-home-with-pkgbuild) to create per-user package.
+   * Mostly never you will need to change this option. `/Applications` would install it as expected into `/Applications` if the local system domain is chosen, or into `$HOME/Applications` if the home installation is chosen.
    * @default /Applications
    */
   readonly installLocation?: string | null
 
+  /**
+   * Whether can be installed at the root of any volume, including non-system volumes. Otherwise, it cannot be installed at the root of a volume.
+   *
+   * Corresponds to [enable_anywhere](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+   * @default true
+   */
+  readonly allowAnywhere?: boolean | null
+
+  /**
+   * Whether can be installed into the current user’s home directory.
+   * A home directory installation is done as the current user (not as root), and it cannot write outside of the home directory.
+   * If the product cannot be installed in the user’s home directory and be not completely functional from user’s home directory.
+   *
+   * Corresponds to [enable_currentUserHome](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+   * @default true
+   */
+  readonly allowCurrentUserHome?: boolean | null
+
+  /**
+   * Whether can be installed into the root directory. Should usually be `true` unless the product can be installed only to the user’s home directory.
+   *
+   * Corresponds to [enable_localSystem](https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW70).
+   * @default true
+   */
+  readonly allowRootDirectory?: boolean | null
+
+  /**
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
+   */
   readonly identity?: string | null
 }
 

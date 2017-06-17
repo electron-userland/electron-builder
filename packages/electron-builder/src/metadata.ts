@@ -269,9 +269,6 @@ export interface Config extends PlatformSpecificBuildOptions {
    */
   readonly dmg?: DmgOptions | null
 
-  /**
-   * macOS product archive options.
-   */
   readonly pkg?: PkgOptions | null
 
   /**
