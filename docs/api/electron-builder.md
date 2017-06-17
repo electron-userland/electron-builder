@@ -430,10 +430,11 @@
 * [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
     * [`.CodeSigningInfo`](#CodeSigningInfo)
     * [`.CreateKeychainOptions`](#CreateKeychainOptions)
+    * [.Identity](#Identity)
     * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
     * [`.createKeychain(undefined)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
     * [`.downloadCertificate(urlOrBase64, tmpDir, currentDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;String&gt;</code>
-    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| String&gt;</code>
+    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| Identity&gt;</code>
     * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="CodeSigningInfo"></a>
@@ -459,6 +460,16 @@
 | cscIKeyPassword| <code>String</code> \| <code>null</code> | 
 | **currentDir**| <code>String</code> | 
 
+<a name="Identity"></a>
+### Identity
+**Kind**: class of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| name| <code>String</code> | 
+| hash| <code>String</code> | 
+
 <a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
 ### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
 **Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
@@ -481,7 +492,7 @@
 | currentDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/codeSign.findIdentity"></a>
-### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| String&gt;</code>
+### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| Identity&gt;</code>
 **Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
 
 | Param | Type |

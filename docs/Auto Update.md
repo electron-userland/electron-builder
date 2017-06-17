@@ -148,6 +148,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * <a name="UpdateInfo-releaseNotes"></a>`releaseNotes` String - The release notes.
 * <a name="UpdateInfo-releaseDate"></a>**`releaseDate`** String - The release date.
 * <a name="UpdateInfo-sha512"></a>`sha512` String
+* <a name="UpdateInfo-stagingPercentage"></a>`stagingPercentage` Number - The [staged rollout](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#staged-rollouts) percentage, 0-100.
 * <a name="UpdateInfo-version"></a>**`version`** String - The version.
 
 <a name="VersionInfo"></a>

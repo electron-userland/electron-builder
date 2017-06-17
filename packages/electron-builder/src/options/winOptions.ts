@@ -346,7 +346,15 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly publisherDisplayName?: string | null
 
   /**
-   * Describes the contents of the package. The Name attribute is case-sensitive. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+   * The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
+   * @default ${name}
    */
   readonly identityName?: string | null
+
+  /**
+   * The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store.
+   * The first entry (index 0) will be the default language.
+   * Defaults to en-US if omitted.
+   */
+  readonly languages?: Array<string> | string | null
 }

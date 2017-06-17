@@ -15,7 +15,7 @@
     <Logo>${logo}</Logo>
   </Properties>
   <Resources>
-    <Resource Language="en-us" />
+    ${resourceLanguages}
   </Resources>
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />

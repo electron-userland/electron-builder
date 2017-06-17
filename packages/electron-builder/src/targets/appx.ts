@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, spawn, use } from "electron-builder-util"
+import { asArray, exec, spawn, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
 import { asyncAll, orIfFileNotExist } from "electron-builder-util/out/promise"
@@ -18,6 +18,8 @@ const vendorAssetsForDefaultAssets: { [key: string]: string; } = {
   "Square44x44Logo.png": "SampleAppx.44x44.png",
   "Wide310x150Logo.png": "SampleAppx.310x150.png",
 }
+
+const DEFAULT_RESOURCE_LANG = "en-US"
 
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
@@ -94,6 +96,7 @@ export default class AppXTarget extends Target {
 
   private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {
     const appInfo = this.packager.appInfo
+    const options = this.options
     const manifest = (await readFile(path.join(templatePath, "appxmanifest.xml"), "utf8"))
       .replace(/\$\{([a-zA-Z0-9]+)\}/g, (match, p1): string => {
         switch (p1) {
@@ -101,7 +104,7 @@ export default class AppXTarget extends Target {
             return publisher
 
           case "publisherDisplayName":
-            const name = this.options.publisherDisplayName || appInfo.companyName
+            const name = options.publisherDisplayName || appInfo.companyName
             if (name == null) {
               throw new Error(`Please specify "author" in the application package.json — it is required because "appx.publisherDisplayName" is not set.`)
             }
@@ -112,21 +115,21 @@ export default class AppXTarget extends Target {
 
           case "name":
             return appInfo.name
-            
+
           case "identityName":
-            return this.options.identityName  || appInfo.name
+            return options.identityName  || appInfo.name
 
           case "executable":
             return `app\\${appInfo.productFilename}.exe`
 
           case "displayName":
-            return this.options.displayName || appInfo.productName
-            
+            return options.displayName || appInfo.productName
+
           case "description":
             return appInfo.description || appInfo.productName
 
           case "backgroundColor":
-            return this.options.backgroundColor || "#464646"
+            return options.backgroundColor || "#464646"
 
           case "logo":
             return "assets\\StoreLogo.png"
@@ -145,9 +148,12 @@ export default class AppXTarget extends Target {
 
           case "splashScreen":
             return splashScreenTag(userAssets)
-            
+
           case "arch":
             return arch === Arch.ia32 ? "x86" : "x64"
+
+          case "resourceLanguages":
+            return resourceLanguageTag(asArray(options.languages))
 
           default:
             throw new Error(`Macro ${p1} is not defined`)
@@ -155,6 +161,14 @@ export default class AppXTarget extends Target {
       })
     await writeFile(path.join(preAppx, "appxmanifest.xml"), manifest)
   }
+}
+
+// get the resource - language tag, see https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest
+function resourceLanguageTag(userLanguages: Array<string> | null | undefined): string {
+  if (userLanguages == null || userLanguages.length === 0) {
+    userLanguages = [DEFAULT_RESOURCE_LANG]
+  }
+  return userLanguages.map(it => `<Resource Language="${it.replace(/_/g, "-")}" />`).join("\n")
 }
 
 function lockScreenTag(userAssets: Array<string>): string {
