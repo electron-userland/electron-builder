@@ -329,7 +329,7 @@ test("90 staging percentage", async () => {
     bucket: "develar",
     path: "test",
   })
-  await validateDownload(updater, false)
+  await validateDownload(updater)
 })
 
 test("1 staging percentage", async () => {
