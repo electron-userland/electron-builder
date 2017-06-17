@@ -6,7 +6,7 @@ import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { appleCertificatePrefixes, CodeSigningInfo, createKeychain, findIdentity } from "./codeSign"
+import { appleCertificatePrefixes, CodeSigningInfo, createKeychain, findIdentity, Identity } from "./codeSign"
 import { Arch, DIR_TARGET, Platform, Target } from "./core"
 import { MacOptions, MasBuildOptions } from "./options/macOptions"
 import { BuildInfo } from "./packagerApi"
@@ -158,11 +158,11 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const explicitType = masOptions == null ? macOptions.type : masOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
-    let name = await findIdentity(isDevelopment ? "Mac Developer" : (isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"), isMas ? masQualifier : qualifier, keychainName)
-    if (name == null) {
+    let identity = await findIdentity(isDevelopment ? "Mac Developer" : (isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"), isMas ? masQualifier : qualifier, keychainName)
+    if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
-        name = await findIdentity("Mac Developer", qualifier, keychainName)
-        if (name != null) {
+        identity = await findIdentity("Mac Developer", qualifier, keychainName)
+        if (identity != null) {
           warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
         else if (qualifier != null) {
@@ -170,7 +170,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         }
       }
 
-      if (name == null) {
+      if (identity == null) {
         const message = process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false" ?
           `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false` :
           `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
@@ -186,7 +186,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const signOptions: any = {
       "identity-validation": false,
-      identity: name!,
+      identity: identity!,
       type: type,
       platform: isMas ? "mas" : "darwin",
       version: this.info.electronVersion,
@@ -194,7 +194,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       keychain: keychainName || undefined,
       binaries:  (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,
       requirements: isMas || macOptions.requirements == null ? undefined : await this.getResource(macOptions.requirements),
-      "gatekeeper-assess": appleCertificatePrefixes.find(it => name!.startsWith(it)) != null
+      "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null
     }
 
     const resourceList = await this.resourceList
@@ -226,7 +226,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
     }
 
-    await task(`Signing app (identity: ${name})`, this.doSign(signOptions))
+    await task(`Signing app (identity: ${identity.hash} ${identity.name})`, this.doSign(signOptions))
 
     if (masOptions != null) {
       const certType = "3rd Party Mac Developer Installer"
@@ -247,7 +247,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: string, keychain: string | n): Promise<any> {
+  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | n): Promise<any> {
     // productbuild doesn't created directory for out file
     await ensureDir(path.dirname(outFile))
 

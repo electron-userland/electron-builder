@@ -547,10 +547,6 @@ binary@^0.3.0:
     buffers "~0.1.1"
     chainsaw "~0.1.0"
 
-bit-buffer@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/bit-buffer/-/bit-buffer-0.1.0.tgz#8164c15dbd218eea74e0843da70efa555a4402c4"
-
 bl@^1.0.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/bl/-/bl-1.2.1.tgz#cac328f7bee45730d404b692203fcb590e172d5e"

@@ -3,7 +3,7 @@ import { exec, use } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import * as path from "path"
-import { findIdentity } from "../codeSign"
+import { findIdentity, Identity } from "../codeSign"
 import { Arch, Target } from "../core"
 import MacPackager from "../macPackager"
 import { PkgOptions } from "../options/macOptions"
@@ -79,10 +79,10 @@ export class PkgTarget extends Target {
   }
 }
 
-export function prepareProductBuildArgs(identity: string | n, keychain: string | n) {
-  const args = []
+export function prepareProductBuildArgs(identity: Identity | null, keychain: string | null | undefined): Array<string> {
+  const args: Array<string> = []
   if (identity != null) {
-    args.push("--sign", identity)
+    args.push("--sign", identity.hash)
     if (keychain != null) {
       args.push("--keychain", keychain)
     }

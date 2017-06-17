@@ -185,7 +185,7 @@ async function getValidIdentities(keychain?: string | null): Promise<Array<strin
   return result
 }
 
-async function _findIdentity(type: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
+async function _findIdentity(type: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
   // https://github.com/electron-userland/electron-builder/issues/484
   //noinspection SpellCheckingInspection
   const lines = await getValidIdentities(keychain)
@@ -196,7 +196,7 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
     }
 
     if (line.includes(namePrefix)) {
-      return line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'))
+      return parseIdentity(line)
     }
   }
 
@@ -218,13 +218,29 @@ async function _findIdentity(type: CertType, qualifier?: string | null, keychain
         }
       }
 
-      return line.substring(line.indexOf('"') + 1, line.lastIndexOf('"'))
+      return parseIdentity(line)
     }
   }
   return null
 }
 
-export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<string | null> {
+export declare class Identity {
+  readonly name: string
+  readonly hash: string
+
+  constructor(name: string, hash: string)
+}
+
+const _Identity = require("electron-osx-sign/util-identities").Identity
+
+function parseIdentity(line: string): Identity {
+  const firstQuoteIndex = line.indexOf('"')
+  const name = line.substring(firstQuoteIndex + 1, line.lastIndexOf('"'))
+  const hash = line.substring(0, firstQuoteIndex - 1)
+  return new _Identity(name, hash)
+}
+
+export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
   let identity = qualifier || process.env.CSC_NAME
   if (isEmptyOrSpaces(identity)) {
     if (keychain == null && !isCi && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {

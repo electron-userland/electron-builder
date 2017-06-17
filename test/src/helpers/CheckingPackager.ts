@@ -1,5 +1,6 @@
 import { Arch, BuildInfo, MacOptions, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
+import { Identity } from "electron-builder/out/codeSign"
 import OsXPackager from "electron-builder/out/macPackager"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
@@ -65,7 +66,7 @@ export class CheckingMacPackager extends OsXPackager {
   }
 
   //noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
-  async doFlat(appPath: string, outFile: string, identity: string, keychain?: string | null): Promise<any> {
+  async doFlat(appPath: string, outFile: string, identity: Identity, keychain?: string | null): Promise<any> {
     // skip
   }
 
