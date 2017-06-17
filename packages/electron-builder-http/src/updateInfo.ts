@@ -31,4 +31,9 @@ export interface UpdateInfo extends VersionInfo {
   readonly sha2?: string
 
   readonly sha512?: string
+
+  /**
+   * The [staged rollout](https://github.com/electron-userland/electron-builder/wiki/Auto-Update#staged-rollouts) percentage, 0-100.
+   */
+  readonly stagingPercentage?: number
 }

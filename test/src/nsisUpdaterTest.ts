@@ -242,13 +242,18 @@ test.skip("file url github private", async () => {
   await validateDownload(updater)
 })
 
-async function validateDownload(updater: NsisUpdater) {
+async function validateDownload(updater: NsisUpdater, expectDownloadPromise = true) {
   tuneNsisUpdater(updater)
   const actualEvents = trackEvents(updater)
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  if (expectDownloadPromise) {
+    await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  }
+  else {
+    expect(updateCheckResult.downloadPromise).toBeUndefined()
+  }
 
   expect(actualEvents).toMatchSnapshot()
   return updateCheckResult
@@ -311,6 +316,34 @@ test.ifAll.ifWindows("invalid signature", async () => {
   const actualEvents = trackEvents(updater)
   await assertThat(updater.checkForUpdates().then(it => it.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
+})
+
+test("90 staging percentage", async () => {
+  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
+  await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
+
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "s3",
+    channel: "staging-percentage",
+    bucket: "develar",
+    path: "test",
+  })
+  await validateDownload(updater, false)
+})
+
+test("1 staging percentage", async () => {
+  const userIdFile = path.join(tmpdir(), "electron-updater-test", "userData", ".updaterId")
+  await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
+
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig({
+    provider: "s3",
+    channel: "staging-percentage-small",
+    bucket: "develar",
+    path: "test",
+  })
+  await validateDownload(updater, false)
 })
 
 test("cancel download with progress", async () => {

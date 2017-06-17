@@ -8,6 +8,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS setup
 * Code signature validation not only on macOS, but also on Windows.
 * electron-builder produces and publishes all required metadata files and artifacts.
 * Download progress supported on all platforms, including macOS.
+* [Staged rollouts](#staged-rollouts) supported on all platforms, including macOS.
 * Actually, built-in autoUpdater is used inside on macOS.
 * Different providers supported out of the box (GitHub, Bintray, Amazon S3, generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
@@ -38,6 +39,24 @@ Simplified auto-update is supported on Windows if you use the default NSIS setup
 * A [complete example](https://github.com/iffy/electron-updater-example) showing how to use.
 * [Example in Typescript](https://github.com/develar/onshape-desktop-shell/blob/master/src/AppUpdater.ts) using system notifications.
 * An [encapsulated manual update via menu](https://github.com/electron-userland/electron-builder/blob/master/docs/encapsulated%20manual%20update%20via%20menu.js).
+
+## Staged Rollouts
+
+Staged rollouts allow you to distribute the latest version of your app to a subset of users that you can increase over time, similar to rollouts on platforms like Google Play.
+
+Staged rollouts are controlled by manually editing your `latest.yml` / `latest-mac.yml` (channel update info file).
+
+```yml
+version: 1.1.0
+path: TestApp Setup 1.1.0.exe
+sha512: Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==
+stagingPercentage: 10
+```
+
+Update will be shipped to 10% of userbase.
+ 
+If you want to pull a staged release because it hasn't gone well, you **must** increment the version number higher than your broken release.  
+Because some of your users will be on the broken 1.0.1, releasing a new 1.0.1 would result in them staying on a broken version.
 
 ## File Generated and Uploaded in Addition
 

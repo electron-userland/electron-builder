@@ -3,7 +3,7 @@ import { randomBytes } from "crypto"
 import { RequestHeaders } from "electron-builder-http"
 import { CancellationToken } from "electron-builder-http/out/CancellationToken"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
-import { VersionInfo } from "electron-builder-http/out/updateInfo"
+import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
 import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -77,7 +77,7 @@ export abstract class AppUpdater extends EventEmitter {
   protected get stagingUserIdPromise(): Promise<string> {
     let result = this._stagingUserIdPromise
     if (result == null) {
-      result = this.getOrCreateStagedUserId()
+      result = this.getOrCreateStagingUserId()
       this._stagingUserIdPromise = result
     }
     return result
@@ -173,6 +173,29 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
+  private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
+    const rawStagingPercentage = updateInfo.stagingPercentage
+    let stagingPercentage = rawStagingPercentage
+    if (stagingPercentage == null) {
+      return true
+    }
+
+    stagingPercentage = parseInt(<any>stagingPercentage, 10)
+    if (isNaN(stagingPercentage)) {
+      this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
+      return true
+    }
+
+    // convert from user 0-100 to internal 0-1
+    stagingPercentage = stagingPercentage / 100
+
+    const stagingUserId = await this.stagingUserIdPromise
+    const val = UUID.parse(stagingUserId).readUInt32BE(12)
+    const percentage = (val / 0xFFFFFFFF)
+    this._logger.info(`Staging percentage: ${stagingPercentage}, percentage: ${percentage}, user id: ${stagingUserId}`)
+    return percentage < stagingPercentage
+  }
+
   private async _checkForUpdates(): Promise<UpdateCheckResult> {
     try {
       await this.untilAppReady
@@ -201,7 +224,8 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error(`Latest version (from update server) is not valid semver version: "${latestVersion}`)
     }
 
-    if (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion)) {
+    const isStagingMatch = await this.isStagingMatch(versionInfo)
+    if (!isStagingMatch || (this.allowDowngrade && !hasPrereleaseComponents(latestVersion) ? isVersionsEqual(latestVersion, this.currentVersion) : !isVersionGreaterThan(latestVersion, this.currentVersion))) {
       this.updateAvailable = false
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
       this.emit("update-not-available", versionInfo)
@@ -328,7 +352,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  private async getOrCreateStagedUserId(): Promise<string> {
+  private async getOrCreateStagingUserId(): Promise<string> {
     const file = path.join(this.app.getPath("userData"), ".updaterId")
     try {
       const id = await readFile(file, "utf-8")

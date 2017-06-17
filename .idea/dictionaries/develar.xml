@@ -199,6 +199,8 @@
       <w>repos</w>
       <w>revalidate</w>
       <w>rimraf</w>
+      <w>rollout</w>
+      <w>rollouts</w>
       <w>scripthost</w>
       <w>semver</w>
       <w>setfinderinfo</w>
@@ -232,6 +234,7 @@
       <w>unpage</w>
       <w>unref</w>
       <w>unwelcomefinishpage</w>
+      <w>userbase</w>
       <w>userland</w>
       <w>userprofile</w>
       <w>valuename</w>
