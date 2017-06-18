@@ -776,7 +776,7 @@ combined-stream@^1.0.5, combined-stream@~1.0.5:
   dependencies:
     delayed-stream "~1.0.0"
 
-command-line-args@^4.0.1:
+command-line-args@^4.0.1, command-line-args@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/command-line-args/-/command-line-args-4.0.6.tgz#0ff87a1dd159890dcaeb2a005abdae71e55059fc"
   dependencies:
@@ -2853,13 +2853,14 @@ repeating@^2.0.0:
     is-finite "^1.0.0"
 
 req-then@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/req-then/-/req-then-0.6.1.tgz#e85af6b939ffcc4b4f145b7e51cae73e8f8052c9"
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/req-then/-/req-then-0.6.2.tgz#7f9e6ebbcab327adc9280aa92b3698d3fc1c5b0d"
   dependencies:
     array-back "^1.0.4"
     defer-promise "^1.0.1"
     lodash.pick "^4.4.0"
-    typical "^2.6.0"
+    stream-read-all "^0.1.0"
+    typical "^2.6.1"
 
 request@^2.45.0, request@^2.79.0:
   version "2.81.0"
@@ -3082,6 +3083,12 @@ stream-connect@^1.0.2:
   dependencies:
     array-back "^1.0.2"
 
+stream-read-all@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/stream-read-all/-/stream-read-all-0.1.0.tgz#04fd4498d4f29717f5b7f316354425cf318c6385"
+  dependencies:
+    test-runner "^0.4.0"
+
 stream-via@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/stream-via/-/stream-via-1.0.4.tgz#8dccbb0ac909328eb8bc8e2a4bd3934afdaf606c"
@@ -3224,6 +3231,17 @@ test-exclude@^4.1.1:
     object-assign "^4.1.0"
     read-pkg-up "^1.0.1"
     require-main-filename "^1.0.1"
+
+test-runner@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/test-runner/-/test-runner-0.4.0.tgz#41426f9b3dfff4bcda2cb23f3b7df73d67d6b8a2"
+  dependencies:
+    ansi-escape-sequences "^3.0.0"
+    array-back "^1.0.4"
+    command-line-args "^4.0.6"
+    command-line-usage "^4.0.0"
+    file-set "^1.1.1"
+    reduce-flatten "^1.0.1"
 
 test-value@^1.0.1:
   version "1.1.0"

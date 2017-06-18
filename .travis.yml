@@ -1,4 +1,4 @@
-#osx_image: xcode8.3
+osx_image: xcode8.3
 
 matrix:
   include:
@@ -23,11 +23,12 @@ cache:
 before_install:
   - curl -L https://dl.bintray.com/develar/bin/7za -o /tmp/7za
   - chmod +x /tmp/7za
-  - curl -L https://dl.bintray.com/develar/bin/wine.7z -o /tmp/wine.7z
+  - curl -L https://dl.bintray.com/develar/bin/wine-2.0.7z -o /tmp/wine.7z
   - /tmp/7za x -o/usr/local/Cellar -y /tmp/wine.7z
-  - brew link --overwrite fontconfig gd gnutls jasper libgphoto2 libicns libtasn1 libusb libusb-compat little-cms2 nettle openssl sane-backends webp wine git-lfs gnu-tar dpkg xz
-  - brew install freetype graphicsmagick
+  - brew link --overwrite gnutls libtasn1 libusb libusb-compat nettle openssl wine git-lfs gnu-tar dpkg xz
   - git-lfs pull
+
+# fontconfig jasper libgphoto2 libicns little-cms2 sane-backends webp gd
 
 install:
 - nvm install $NODE_VERSION

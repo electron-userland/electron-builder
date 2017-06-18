@@ -8,7 +8,6 @@ import { LinuxBuildOptions, LinuxTargetSpecificOptions } from "../options/linuxO
 
 export const installPrefix = "/opt"
 
-/** @private */
 export class LinuxTargetHelper {
   readonly icons: Promise<Array<Array<string>>>
 
@@ -148,13 +147,7 @@ export class LinuxTargetHelper {
 
       function resize(size: number): Promise<any> {
         const filename = `icon_${size}x${size}.png`
-
-        if (iconFiles.includes(filename)) {
-          return BluebirdPromise.resolve()
-        }
-
-        const sizeArg = `${size}x${size}`
-        return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, filename)])
+        return iconFiles.includes(filename) ? BluebirdPromise.resolve() : resizeImage(imagePath, path.join(tempDir, filename), size, size)
       }
 
       const promises: Array<Promise<any>> = [resize(24), resize(96)]
@@ -177,8 +170,7 @@ export class LinuxTargetHelper {
       this.maxIconPath = imagePath
 
       function resize(size: number): Promise<any> {
-        const sizeArg = `${size}x${size}`
-        return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, path.join(tempDir, `icon_${size}x${size}x32.png`)])
+        return resizeImage(imagePath, path.join(tempDir, `icon_${size}x${size}x32.png`), size, size)
       }
 
       const promises: Array<Promise<any>> = [resize(24), resize(96)]
@@ -219,5 +211,15 @@ export class LinuxTargetHelper {
       createMapping("256"),
       createMapping("512"),
     ]
+  }
+}
+
+function resizeImage(imagePath: string, result: string, w: number, h: number) {
+  if (process.platform === "darwin") {
+    return exec("sips", ["--resampleHeightWidth", h.toString(10), w.toString(10), imagePath, "--out", result])
+  }
+  else {
+    const sizeArg = `${w}x${h}`
+    return exec("gm", ["convert", "-size", sizeArg, imagePath, "-resize", sizeArg, result])
   }
 }
