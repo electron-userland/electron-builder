@@ -1,4 +1,4 @@
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "electron-builder-util/out/tmp"
 import { AppInfo } from "./appInfo"

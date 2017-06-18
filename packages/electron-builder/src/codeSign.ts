@@ -18,6 +18,7 @@ export interface CodeSigningInfo {
   keychainName?: string | null
 }
 
+/** @private */
 export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, currentDir: string): Promise<string> {
   urlOrBase64 = urlOrBase64.trim()
 
@@ -98,6 +99,7 @@ export interface CreateKeychainOptions {
   currentDir: string
 }
 
+/** @private */
 export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
   if (bundledCertKeychainAdded == null) {
     bundledCertKeychainAdded = createCustomCertKeychain()
@@ -135,6 +137,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
   }
 }
 
+/** @private */
 export function sign(path: string, name: string, keychain: string): Promise<any> {
   const args = ["--deep", "--force", "--sign", name, path]
   if (keychain != null) {

@@ -24,10 +24,6 @@ async function main() {
     "http/electron-builder-http-out-publishOptions.js",
   ], {cwd: source})
 
-  const utilFiles = await globby([
-    "util/**/*.js",
-  ], {cwd: source})
-
   const httpFiles = await globby([
     "http/**/*.js",
     "!http/electron-builder-http-out-publishOptions.js",
@@ -46,6 +42,7 @@ async function main() {
     "!**/*-linuxPackager.js",
     "!**/*-asar.js",
     "!**/*-repositoryInfo.js",
+    "!**/*-codeSign.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -61,7 +58,6 @@ async function main() {
     {page: "Publishing Artifacts.md", pageUrl: "Publishing-Artifacts", mainHeader: "API", files: publishOptionsFiles},
     {page: "api/electron-publish.md", pageUrl: "electron-publish", files: publishFiles},
 
-    {page: "api/electron-builder-util.md", pageUrl: "electron-builder-util", files: utilFiles},
     {page: "api/electron-builder-http.md", pageUrl: "electron-builder-http", files: httpFiles},
   ]
 

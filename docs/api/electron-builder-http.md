@@ -3,10 +3,6 @@
 <dl>
 <dt><a href="#module_electron-builder-http/out/bintray">electron-builder-http/out/bintray</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder-http/out/CancellationToken">electron-builder-http/out/CancellationToken</a></dt>
-<dd></dd>
-<dt><a href="#module_electron-builder-http/out/ProgressCallbackTransform">electron-builder-http/out/ProgressCallbackTransform</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder-http/out/rfc2253Parser">electron-builder-http/out/rfc2253Parser</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder-http">electron-builder-http</a></dt>
@@ -109,99 +105,6 @@
 | --- | --- |
 | version | <code>String</code> | 
 
-<a name="module_electron-builder-http/out/CancellationToken"></a>
-## electron-builder-http/out/CancellationToken
-
-* [electron-builder-http/out/CancellationToken](#module_electron-builder-http/out/CancellationToken)
-    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
-    * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-        * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-        * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-        * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="CancellationError"></a>
-### CancellationError ⇐ <code>Error</code>
-**Kind**: class of [<code>electron-builder-http/out/CancellationToken</code>](#module_electron-builder-http/out/CancellationToken)  
-**Extends**: <code>Error</code>  
-<a name="CancellationToken"></a>
-### CancellationToken ⇐ <code>internal:EventEmitter</code>
-**Kind**: class of [<code>electron-builder-http/out/CancellationToken</code>](#module_electron-builder-http/out/CancellationToken)  
-**Extends**: <code>internal:EventEmitter</code>  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **cancelled**| <code>Boolean</code> | 
-
-
-* [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
-    * [`.cancel()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+cancel)
-    * [`.createPromise(callback)`](#module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-    * [`.dispose()`](#module_electron-builder-http/out/CancellationToken.CancellationToken+dispose)
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+cancel"></a>
-#### `cancellationToken.cancel()`
-**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+createPromise"></a>
-#### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
-**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>callback</code> | 
-
-<a name="module_electron-builder-http/out/CancellationToken.CancellationToken+dispose"></a>
-#### `cancellationToken.dispose()`
-**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
-<a name="module_electron-builder-http/out/ProgressCallbackTransform"></a>
-## electron-builder-http/out/ProgressCallbackTransform
-
-* [electron-builder-http/out/ProgressCallbackTransform](#module_electron-builder-http/out/ProgressCallbackTransform)
-    * [`.ProgressInfo`](#ProgressInfo)
-    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-        * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="ProgressInfo"></a>
-### `ProgressInfo`
-**Kind**: interface of [<code>electron-builder-http/out/ProgressCallbackTransform</code>](#module_electron-builder-http/out/ProgressCallbackTransform)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **total**| <code>Number</code> | 
-| **delta**| <code>Number</code> | 
-| **transferred**| <code>Number</code> | 
-| **percent**| <code>Number</code> | 
-| **bytesPerSecond**| <code>Number</code> | 
-
-<a name="ProgressCallbackTransform"></a>
-### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
-**Kind**: class of [<code>electron-builder-http/out/ProgressCallbackTransform</code>](#module_electron-builder-http/out/ProgressCallbackTransform)  
-**Extends**: <code>internal:Transform</code>  
-
-* [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
-    * [`._flush(callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush)
-    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform)
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_flush"></a>
-#### `progressCallbackTransform._flush(callback)`
-**Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
-
-| Param | Type |
-| --- | --- |
-| callback | <code>function</code> | 
-
-<a name="module_electron-builder-http/out/ProgressCallbackTransform.ProgressCallbackTransform+_transform"></a>
-#### `progressCallbackTransform._transform(chunk, encoding, callback)`
-**Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
-
-| Param | Type |
-| --- | --- |
-| chunk | <code>any</code> | 
-| encoding | <code>String</code> | 
-| callback | <code>function</code> | 
-
 <a name="module_electron-builder-http/out/rfc2253Parser"></a>
 ## electron-builder-http/out/rfc2253Parser
 <a name="module_electron-builder-http/out/rfc2253Parser.parseDn"></a>
@@ -218,15 +121,24 @@
 * [electron-builder-http](#module_electron-builder-http)
     * [`.DownloadOptions`](#DownloadOptions)
         * [`.onProgress(progress)`](#module_electron-builder-http.DownloadOptions+onProgress)
+    * [`.ProgressInfo`](#ProgressInfo)
     * [`.RequestHeaders`](#RequestHeaders)
     * [`.Response`](#Response) ⇐ <code>internal:EventEmitter</code>
         * [`.setEncoding(encoding)`](#module_electron-builder-http.Response+setEncoding)
+    * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
+    * [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
+        * [`.cancel()`](#module_electron-builder-http.CancellationToken+cancel)
+        * [`.createPromise(callback)`](#module_electron-builder-http.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+        * [`.dispose()`](#module_electron-builder-http.CancellationToken+dispose)
     * [.DigestTransform](#DigestTransform) ⇐ <code>internal:Transform</code>
         * [`._flush(callback)`](#module_electron-builder-http.DigestTransform+_flush)
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
         * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+    * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
+        * [`._flush(callback)`](#module_electron-builder-http.ProgressCallbackTransform+_flush)
+        * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.ProgressCallbackTransform+_transform)
     * [`.configureRequestOptions(options, token, method)`](#module_electron-builder-http.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
     * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>String</code>
     * [`.safeGetHeader(response, headerKey)`](#module_electron-builder-http.safeGetHeader) ⇒ <code>any</code>
@@ -252,6 +164,19 @@
 | --- | --- |
 | progress | <code>[ProgressInfo](#ProgressInfo)</code> | 
 
+<a name="ProgressInfo"></a>
+### `ProgressInfo`
+**Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **total**| <code>Number</code> | 
+| **delta**| <code>Number</code> | 
+| **transferred**| <code>Number</code> | 
+| **percent**| <code>Number</code> | 
+| **bytesPerSecond**| <code>Number</code> | 
+
 <a name="RequestHeaders"></a>
 ### `RequestHeaders`
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
@@ -275,6 +200,40 @@
 | --- | --- |
 | encoding | <code>String</code> | 
 
+<a name="CancellationError"></a>
+### CancellationError ⇐ <code>Error</code>
+**Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Extends**: <code>Error</code>  
+<a name="CancellationToken"></a>
+### CancellationToken ⇐ <code>internal:EventEmitter</code>
+**Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Extends**: <code>internal:EventEmitter</code>  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **cancelled**| <code>Boolean</code> | 
+
+
+* [.CancellationToken](#CancellationToken) ⇐ <code>internal:EventEmitter</code>
+    * [`.cancel()`](#module_electron-builder-http.CancellationToken+cancel)
+    * [`.createPromise(callback)`](#module_electron-builder-http.CancellationToken+createPromise) ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+    * [`.dispose()`](#module_electron-builder-http.CancellationToken+dispose)
+
+<a name="module_electron-builder-http.CancellationToken+cancel"></a>
+#### `cancellationToken.cancel()`
+**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
+<a name="module_electron-builder-http.CancellationToken+createPromise"></a>
+#### `cancellationToken.createPromise(callback)` ⇒ <code>Promise&lt;module:electron-builder-http/out/CancellationToken.R&gt;</code>
+**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
+
+| Param | Type |
+| --- | --- |
+| callback | <code>callback</code> | 
+
+<a name="module_electron-builder-http.CancellationToken+dispose"></a>
+#### `cancellationToken.dispose()`
+**Kind**: instance method of [<code>CancellationToken</code>](#CancellationToken)  
 <a name="DigestTransform"></a>
 ### DigestTransform ⇐ <code>internal:Transform</code>
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
@@ -318,6 +277,33 @@
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
 | data | <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
+
+<a name="ProgressCallbackTransform"></a>
+### ProgressCallbackTransform ⇐ <code>internal:Transform</code>
+**Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Extends**: <code>internal:Transform</code>  
+
+* [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
+    * [`._flush(callback)`](#module_electron-builder-http.ProgressCallbackTransform+_flush)
+    * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.ProgressCallbackTransform+_transform)
+
+<a name="module_electron-builder-http.ProgressCallbackTransform+_flush"></a>
+#### `progressCallbackTransform._flush(callback)`
+**Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
+
+| Param | Type |
+| --- | --- |
+| callback | <code>function</code> | 
+
+<a name="module_electron-builder-http.ProgressCallbackTransform+_transform"></a>
+#### `progressCallbackTransform._transform(chunk, encoding, callback)`
+**Kind**: instance method of [<code>ProgressCallbackTransform</code>](#ProgressCallbackTransform)  
+
+| Param | Type |
+| --- | --- |
+| chunk | <code>any</code> | 
+| encoding | <code>String</code> | 
+| callback | <code>function</code> | 
 
 <a name="module_electron-builder-http.configureRequestOptions"></a>
 ### `electron-builder-http.configureRequestOptions(options, token, method)` ⇒ <code>module:http.RequestOptions</code>

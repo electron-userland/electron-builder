@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { RequestHeaders } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, RequestHeaders } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"

@@ -1,5 +1,5 @@
 import Ajv from "ajv"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { debug } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull } from "electron-builder-util/out/fs"

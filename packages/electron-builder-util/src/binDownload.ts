@@ -1,7 +1,6 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { DownloadOptions } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, DownloadOptions } from "electron-builder-http"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { statOrNull } from "./fs"

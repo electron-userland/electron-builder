@@ -1,6 +1,6 @@
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { addValue, exec, getTempName, spawn } from "electron-builder-util"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"

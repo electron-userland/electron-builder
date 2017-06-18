@@ -8,8 +8,6 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/appInfo">electron-builder/out/appInfo</a></dt>
 <dd></dd>
-<dt><a href="#module_electron-builder/out/codeSign">electron-builder/out/codeSign</a></dt>
-<dd></dd>
 <dt><a href="#module_electron-builder/out/core">electron-builder/out/core</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/packager">electron-builder/out/packager</a></dt>
@@ -102,7 +100,7 @@
 | muonVersion| <code>String</code> \| <code>null</code> | 
 | **isTwoPackageJsonProjectLayoutUsed**| <code>Boolean</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
-| **tempDirManager**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| **tempDirManager**| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
 | **isPrepackedAppAsar**| <code>Boolean</code> | 
 | prepackaged| <code>String</code> \| <code>null</code> | 
@@ -223,7 +221,7 @@
 | muonVersion| <code>String</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
-| tempDirManager = <code>new TmpDir()</code>| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
+| tempDirManager = <code>new TmpDir()</code>| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
 | prepackaged| <code>String</code> \| <code>null</code> | 
 
@@ -424,93 +422,6 @@
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
 #### `appInfo.computePackageUrl()` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>AppInfo</code>](#AppInfo)  
-<a name="module_electron-builder/out/codeSign"></a>
-## electron-builder/out/codeSign
-
-* [electron-builder/out/codeSign](#module_electron-builder/out/codeSign)
-    * [`.CodeSigningInfo`](#CodeSigningInfo)
-    * [`.CreateKeychainOptions`](#CreateKeychainOptions)
-    * [.Identity](#Identity)
-    * [`.findIdentityRawResult`](#module_electron-builder/out/codeSign.findIdentityRawResult) : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
-    * [`.createKeychain(undefined)`](#module_electron-builder/out/codeSign.createKeychain) ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
-    * [`.downloadCertificate(urlOrBase64, tmpDir, currentDir)`](#module_electron-builder/out/codeSign.downloadCertificate) ⇒ <code>Promise&lt;String&gt;</code>
-    * [`.findIdentity(certType, qualifier, keychain)`](#module_electron-builder/out/codeSign.findIdentity) ⇒ <code>Promise&lt; \| Identity&gt;</code>
-    * [`.sign(path, name, keychain)`](#module_electron-builder/out/codeSign.sign) ⇒ <code>Promise&lt;any&gt;</code>
-
-<a name="CodeSigningInfo"></a>
-### `CodeSigningInfo`
-**Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| keychainName| <code>String</code> \| <code>null</code> | 
-
-<a name="CreateKeychainOptions"></a>
-### `CreateKeychainOptions`
-**Kind**: interface of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **tmpDir**| <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| **cscLink**| <code>String</code> | 
-| **cscKeyPassword**| <code>String</code> | 
-| cscILink| <code>String</code> \| <code>null</code> | 
-| cscIKeyPassword| <code>String</code> \| <code>null</code> | 
-| **currentDir**| <code>String</code> | 
-
-<a name="Identity"></a>
-### Identity
-**Kind**: class of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| name| <code>String</code> | 
-| hash| <code>String</code> | 
-
-<a name="module_electron-builder/out/codeSign.findIdentityRawResult"></a>
-### `electron-builder/out/codeSign.findIdentityRawResult` : <code>Promise&lt;Array&lt;String&gt;&gt;</code> \| <code>null</code>
-**Kind**: property of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-<a name="module_electron-builder/out/codeSign.createKeychain"></a>
-### `electron-builder/out/codeSign.createKeychain(undefined)` ⇒ <code>Promise&lt;[CodeSigningInfo](#CodeSigningInfo)&gt;</code>
-**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-
-| Param | Type |
-| --- | --- |
-| undefined | <code>[CreateKeychainOptions](#CreateKeychainOptions)</code> | 
-
-<a name="module_electron-builder/out/codeSign.downloadCertificate"></a>
-### `electron-builder/out/codeSign.downloadCertificate(urlOrBase64, tmpDir, currentDir)` ⇒ <code>Promise&lt;String&gt;</code>
-**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-
-| Param | Type |
-| --- | --- |
-| urlOrBase64 | <code>String</code> | 
-| tmpDir | <code>[TmpDir](electron-builder-util#TmpDir)</code> | 
-| currentDir | <code>String</code> | 
-
-<a name="module_electron-builder/out/codeSign.findIdentity"></a>
-### `electron-builder/out/codeSign.findIdentity(certType, qualifier, keychain)` ⇒ <code>Promise&lt; \| Identity&gt;</code>
-**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-
-| Param | Type |
-| --- | --- |
-| certType | <code>"Developer ID Application"</code> \| <code>"Developer ID Installer"</code> \| <code>"3rd Party Mac Developer Application"</code> \| <code>"3rd Party Mac Developer Installer"</code> \| <code>"Mac Developer"</code> | 
-| qualifier | <code>String</code> \| <code>null</code> | 
-| keychain | <code>String</code> \| <code>null</code> | 
-
-<a name="module_electron-builder/out/codeSign.sign"></a>
-### `electron-builder/out/codeSign.sign(path, name, keychain)` ⇒ <code>Promise&lt;any&gt;</code>
-**Kind**: method of [<code>electron-builder/out/codeSign</code>](#module_electron-builder/out/codeSign)  
-
-| Param | Type |
-| --- | --- |
-| path | <code>String</code> | 
-| name | <code>String</code> | 
-| keychain | <code>String</code> | 
-
 <a name="module_electron-builder/out/core"></a>
 ## electron-builder/out/core
 

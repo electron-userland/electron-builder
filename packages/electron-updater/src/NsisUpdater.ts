@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { execFile, spawn } from "child_process"
-import { DownloadOptions } from "electron-builder-http"
-import { CancellationError, CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationError, CancellationToken, DownloadOptions } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"

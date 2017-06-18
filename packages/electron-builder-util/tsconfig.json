@@ -4,10 +4,6 @@
     "outDir": "out"
   },
   "declaration": true,
-  "jsdoc": {
-    "out": "../../jsdoc/out/util",
-    "access": "public"
-  },
   "include": [
     "src/**/*.ts"
   ],

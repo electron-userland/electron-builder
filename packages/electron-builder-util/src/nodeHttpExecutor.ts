@@ -1,6 +1,5 @@
 import _debug from "debug"
-import { configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir, readFile } from "fs-extra-p"
 import { Agent, ClientRequest, IncomingMessage } from "http"
 import * as https from "https"

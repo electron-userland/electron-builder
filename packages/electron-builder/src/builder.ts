@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { underline } from "chalk"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { addValue, isEmptyOrSpaces } from "electron-builder-util"
 import { warn } from "electron-builder-util/out/log"
 import { executeFinally } from "electron-builder-util/out/promise"

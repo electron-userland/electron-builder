@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { computeDefaultAppDirectory, debug, exec, Lazy, safeStringifyJson, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { log } from "electron-builder-util/out/log"

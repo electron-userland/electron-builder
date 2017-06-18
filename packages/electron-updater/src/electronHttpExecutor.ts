@@ -1,7 +1,6 @@
 import _debug from "debug"
 import { net, session } from "electron"
-import { configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { parse as parseUrl } from "url"

@@ -1,6 +1,4 @@
-import { RequestHeaders } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { ProgressInfo } from "electron-builder-http/out/ProgressCallbackTransform"
+import { CancellationToken, ProgressInfo, RequestHeaders } from "electron-builder-http"
 import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
 import { format as buggyFormat, Url } from "url"

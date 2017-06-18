@@ -1,7 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { configureRequestOptions, DigestTransform, safeGetHeader } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
-import { ProgressCallbackTransform } from "electron-builder-http/out/ProgressCallbackTransform"
+import { CancellationToken, configureRequestOptions, DigestTransform, ProgressCallbackTransform, safeGetHeader } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { createServer, IncomingMessage, ServerResponse } from "http"

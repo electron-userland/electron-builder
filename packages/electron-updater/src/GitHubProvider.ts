@@ -1,5 +1,4 @@
-import { HttpError, HttpExecutor } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, HttpError, HttpExecutor } from "electron-builder-http"
 import { GithubOptions, githubUrl } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { RequestOptions } from "http"

@@ -1,5 +1,4 @@
-import { HttpError } from "electron-builder-http"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken, HttpError } from "electron-builder-http"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { copyFile } from "electron-builder-util/out/fs"
 import { TmpDir } from "electron-builder-util/out/tmp"

@@ -1,6 +1,6 @@
 import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken } from "electron-builder-http/out/CancellationToken"
+import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { asArray, debug, isEmptyOrSpaces, isPullRequest, Lazy, safeStringifyJson } from "electron-builder-util"
@@ -252,8 +252,8 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
 
   const version = packager.appInfo.version
-  const sha2 = new Lazy(() => hashFile(event.file!, "sha256", "hex"))
-  const sha512 = new Lazy(() => hashFile(event.file!, "sha512", "base64"))
+  const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
+  const sha512 = new Lazy<string>(() => hashFile(event.file!, "sha512", "base64"))
   const isMac = packager.platform === Platform.MAC
 
   for (const publishConfig of publishConfigs) {
@@ -286,7 +286,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     const updateInfoFile = path.join(outDir, `${channel}${isMac ? "-mac" : ""}.yml`)
     if (!createdFiles.has(updateInfoFile)) {
       createdFiles.add(updateInfoFile)
-      const info = <UpdateInfo>{
+      const info: UpdateInfo = {
         version: version,
         releaseDate: new Date().toISOString(),
         githubArtifactName: event.safeArtifactName,

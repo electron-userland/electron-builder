@@ -19,7 +19,7 @@
     "set-versions": "node test/out/helpers/setVersions.js",
     "npm-publish": "yarn set-versions && yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
-    "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder-util packages/electron-builder packages/electron-publish",
+    "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node packages/jsdoc2md.js",
     "api": "node ./test/vendor/yarn.js jsdoc && node ./test/vendor/yarn.js jsdoc2md"
   },
