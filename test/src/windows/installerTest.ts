@@ -88,7 +88,7 @@ test.ifNotCiMac("boring, only perMachine", app({
   }
 }))
 
-test.ifAll("allowToChangeInstallationDirectory", app({
+test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
   targets: nsisTarget,
   config: {
     extraMetadata: {

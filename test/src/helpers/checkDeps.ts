@@ -14,7 +14,7 @@ const packageDir = path.join(rootDir, "packages")
 
 async function check(projectDir: string, devPackageData: any): Promise<boolean> {
   const packageName = path.basename(projectDir)
-  console.log(`Checking ${packageName}`)
+  // console.log(`Checking ${packageName}`)
 
   const result = await new BluebirdPromise<DepCheckResult>(function (resolve) {
     depCheck(projectDir, {

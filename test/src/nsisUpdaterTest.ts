@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
+import { TmpDir } from "electron-builder-util"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
-import { TmpDir } from "electron-builder-util/out/tmp"
 import { NoOpLogger } from "electron-updater/out/AppUpdater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"

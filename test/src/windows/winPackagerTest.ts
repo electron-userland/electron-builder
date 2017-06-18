@@ -69,7 +69,7 @@ describe.ifAll("sign", () => {
     }
   }))
 
-  test("forceCodeSigning", appThrows({
+  test.ifNotCiMac("forceCodeSigning", appThrows({
     targets: windowsDirTarget,
     config: {
       forceCodeSigning: true,

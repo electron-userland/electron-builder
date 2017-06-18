@@ -1,11 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces } from "electron-builder-util"
+import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, Lazy, TmpDir } from "electron-builder-util"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
-import { all, executeFinally } from "electron-builder-util/out/promise"
-import { TmpDir } from "electron-builder-util/out/tmp"
-import { deleteFile, outputFile, rename } from "fs-extra-p"
+import { outputFile, rename } from "fs-extra-p"
 import isCi from "is-ci"
 import { homedir } from "os"
 import * as path from "path"
@@ -62,7 +60,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   }
 }
 
-let bundledCertKeychainAdded: Promise<any> | null = null
+const bundledCertKeychainAdded = new Lazy<void>(createCustomCertKeychain)
 
 // "Note that filename will not be searched to resolve the signing identity's certificate chain unless it is also on the user's keychain search list."
 // but "security list-keychains" doesn't support add - we should 1) get current list 2) set new list - it is very bad http://stackoverflow.com/questions/10538942/add-a-keychain-to-search-list
@@ -72,22 +70,26 @@ async function createCustomCertKeychain() {
   // copy to temp and then atomic rename to final path
   const tmpKeychainPath = path.join(getCacheDirectory(), getTempName("electron-builder-root-certs"))
   const keychainPath = path.join(getCacheDirectory(), "electron-builder-root-certs.keychain")
-  const results = await BluebirdPromise.all<string>([
-    exec("security", ["list-keychains"]),
+  const results = await BluebirdPromise.all<any>([
+    listUserKeychains(),
     copyFile(path.join(__dirname, "..", "certs", "root_certs.keychain"), tmpKeychainPath)
       .then(() => rename(tmpKeychainPath, keychainPath)),
   ])
   const list = results[0]
-    .split("\n")
-    .map(it => {
-      const r = it.trim()
-      return r.substring(1, r.length - 1)
-    })
-    .filter(it => it.length > 0)
-
   if (!list.includes(keychainPath)) {
     await exec("security", ["list-keychains", "-d", "user", "-s", keychainPath].concat(list))
   }
+}
+
+function listUserKeychains(): Promise<Array<string>> {
+  return exec("security", ["list-keychains", "-d", "user"])
+    .then(it => it
+      .split("\n")
+      .map(it => {
+        const r = it.trim()
+        return r.substring(1, r.length - 1)
+      })
+      .filter(it => it.length > 0))
 }
 
 export interface CreateKeychainOptions {
@@ -99,14 +101,13 @@ export interface CreateKeychainOptions {
   currentDir: string
 }
 
-/** @private */
 export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
-  if (bundledCertKeychainAdded == null) {
-    bundledCertKeychainAdded = createCustomCertKeychain()
+  // travis has correct AppleWWDRCA cert
+  if (process.env.TRAVIS !== "true") {
+    await bundledCertKeychainAdded.value
   }
-  await bundledCertKeychainAdded
 
-  const keychainName = await tmpDir.getTempFile(".keychain")
+  const keychainFile = await tmpDir.getTempFile(".keychain")
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -114,17 +115,26 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
   }
 
   const certPaths = new Array(certLinks.length)
-  const keychainPassword = randomBytes(8).toString("hex")
-  return await executeFinally(BluebirdPromise.all([
-      BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
-      BluebirdPromise.mapSeries([
-        ["create-keychain", "-p", keychainPassword, keychainName],
-        ["unlock-keychain", "-p", keychainPassword, keychainName],
-        ["set-keychain-settings", "-t", "3600", "-u", keychainName]
-      ], it => exec("security", it))
-    ])
-    .then<CodeSigningInfo>(() => importCerts(keychainName, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))),
-    () => all(certPaths.map((it, index) => certLinks[index].startsWith("https://") ? deleteFile(it, true) : BluebirdPromise.resolve())))
+  const keychainPassword = randomBytes(8).toString("base64")
+  await BluebirdPromise.all([
+    // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
+    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
+    BluebirdPromise.mapSeries([
+      ["create-keychain", "-p", keychainPassword, keychainFile],
+      ["unlock-keychain", "-p", keychainPassword, keychainFile],
+      ["set-keychain-settings", keychainFile]
+    ], it => exec("security", it))
+  ])
+
+  // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
+  // https://github.com/electron-userland/electron-builder/issues/1457
+  if (isCi) {
+    const list = await listUserKeychains()
+    if (!list.includes(keychainFile)) {
+      await exec("security", ["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
+    }
+  }
+  return await importCerts(keychainFile, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))
 }
 
 async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {

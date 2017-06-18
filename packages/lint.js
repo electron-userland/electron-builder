@@ -72,7 +72,7 @@ for (const projectDir of require("./process").getPackages()) {
     continue
   }
   
-  console.log(`Linting ${path.basename(projectDir)}`)
+  // console.log(`Linting ${path.basename(projectDir)}`)
   const program = Linter.createProgram("tsconfig.json", projectDir)
   for (const file of Linter.getFileNames(program)) {
     const fileContents = program.getSourceFile(file).getFullText()

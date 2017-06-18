@@ -9,6 +9,8 @@ import "source-map-support/register"
 import { statOrNull } from "./fs"
 import { log, warn } from "./log"
 
+export { TmpDir } from "./tmp"
+
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
 

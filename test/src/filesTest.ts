@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
+import { TmpDir } from "electron-builder-util"
 import { copyDir } from "electron-builder-util/out/fs"
-import { TmpDir } from "electron-builder-util/out/tmp"
 import { outputFile, readFile, stat, symlink } from "fs-extra-p"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
