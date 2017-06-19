@@ -1,5 +1,5 @@
+import { warn } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
-import { warn } from "electron-builder-util/out/log"
 import * as path from "path"
 import { Config } from "../metadata"
 

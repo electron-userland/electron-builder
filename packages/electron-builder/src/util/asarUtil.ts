@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug } from "electron-builder-util"
+import { debug, log } from "electron-builder-util"
 import { CONCURRENCY, FileCopier, FileTransformer, Filter, MAX_FILE_REQUESTS, statOrNull, walk } from "electron-builder-util/out/fs"
-import { log } from "electron-builder-util/out/log"
 import { createReadStream, createWriteStream, ensureDir, readFile, readlink, stat, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "../asar"

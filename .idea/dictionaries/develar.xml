@@ -60,6 +60,8 @@
       <w>docdash</w>
       <w>docstrap</w>
       <w>dpkg</w>
+      <w>dylibbundler</w>
+      <w>eacces</w>
       <w>ebusy</w>
       <w>electronuserland</w>
       <w>emoji</w>
@@ -202,6 +204,7 @@
       <w>rimraf</w>
       <w>rollout</w>
       <w>rollouts</w>
+      <w>rpmbuild</w>
       <w>scripthost</w>
       <w>semver</w>
       <w>setfinderinfo</w>

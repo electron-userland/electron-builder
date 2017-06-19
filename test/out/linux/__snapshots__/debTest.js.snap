@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`arm deb 1`] = `
+exports[`arm 1`] = `
 Object {
   "linux": Array [
     Object {
@@ -11,7 +11,7 @@ Object {
 }
 `;
 
-exports[`arm deb 2`] = `
+exports[`arm 2`] = `
 Array [
   "/",
   "/opt/",
@@ -72,12 +72,12 @@ Array [
 ]
 `;
 
-exports[`arm deb 3`] = `
+exports[`arm 3`] = `
 Object {
   "Architecture": "armv7l",
   "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
   "Description": " 
-   Test Application (test quite “ #378)",
+  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -178,7 +178,7 @@ Object {
   "Architecture": "amd64",
   "Depends": "foo",
   "Description": " 
-   Test Application (test quite “ #378)",
+  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
@@ -267,7 +267,7 @@ Object {
   "Architecture": "amd64",
   "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
   "Description": " 
-   Test Application (test quite “ #378)",
+  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",

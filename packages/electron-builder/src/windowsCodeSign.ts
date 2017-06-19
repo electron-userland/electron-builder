@@ -1,15 +1,17 @@
-import { exec } from "electron-builder-util"
+import { exec, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"
-import { release } from "os"
+import * as os from "os"
 import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
+import { computeToolEnv, ToolInfo } from "./util/bundledTool"
+import { isOsVersionGreaterThanOrEqualTo } from "./util/macosVersion"
 
 /** @internal */
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
-  return getBinFromGithub("winCodeSign", "1.8.0", "NWd9hH9MuAgJFzhVzW1bpPplDTBwwYfPUg2skeEri2zp4PFcibbUWPvqUTv+Xnyg0MCdpsrVF1GMIHZGT8wMRw==")
+  return getBinFromGithub("winCodeSign", "1.9.0", "cyhO9Mv5MTP2o9dwk/+qs0KvuO9CbDhjEJXA2ujpvhcsk5zmc+zY9iqiWXVzOuibTLYNC3qZiuFlJrrCT2kldw==")
 }
 
 /** @internal */
@@ -138,7 +140,11 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     args.push(inputPath)
   }
 
-  return await exec(await getToolPath(), args, {timeout: 120 * 1000})
+  const toolInfo = await getToolPath()
+  return await exec(toolInfo.path, args, {
+    timeout: 120 * 1000,
+    env: toolInfo.env || process.env
+  })
 }
 
 function getOutputPath(inputPath: string, hash: string) {
@@ -148,14 +154,13 @@ function getOutputPath(inputPath: string, hash: string) {
 
 /** @internal */
 export function isOldWin6() {
-  const winVersion = release()
+  const winVersion = os.release()
   return winVersion.startsWith("6.") && !winVersion.startsWith("6.3")
 }
 
-/** @internal */
-export async function getToolPath(): Promise<string> {
+async function getToolPath(): Promise<ToolInfo> {
   if (process.env.USE_SYSTEM_SIGNCODE) {
-    return "osslsigncode"
+    return {path: "osslsigncode"}
   }
 
   const result = process.env.SIGNTOOL_PATH
@@ -167,16 +172,33 @@ export async function getToolPath(): Promise<string> {
   if (process.platform === "win32") {
     // use modern signtool on Windows Server 2012 R2 to be able to sign AppX
     if (isOldWin6()) {
-      return path.join(vendorPath, "windows-6", "signtool.exe")
+      return {path: path.join(vendorPath, "windows-6", "signtool.exe")}
     }
     else {
-      return path.join(vendorPath, "windows-10", process.arch, "signtool.exe")
+      return {path: path.join(vendorPath, "windows-10", process.arch, "signtool.exe")}
     }
   }
-  else if (process.platform === "darwin" && isCi) {
-    return path.join(vendorPath, process.platform, "ci", "osslsigncode")
+  else if (process.platform === "darwin") {
+    let suffix: string | null = null
+    try {
+      if (await isOsVersionGreaterThanOrEqualTo("10.12")) {
+        const toolDirPath = path.join(vendorPath, process.platform, "10.12")
+        return {
+          path: path.join(toolDirPath, "osslsigncode"),
+          env: computeToolEnv([path.join(toolDirPath, "lib")]),
+        }
+      }
+      else if (isCi) {
+        // not clear for what we do this instead of using version detection
+        suffix = "ci"
+      }
+    }
+    catch (e) {
+      warn(`${e.stack || e}`)
+    }
+    return {path: path.join(vendorPath, process.platform, `${suffix == null ? "" : `${suffix}/`}osslsigncode`)}
   }
   else {
-    return path.join(vendorPath, process.platform, "osslsigncode")
+    return {path: path.join(vendorPath, process.platform, "osslsigncode")}
   }
 }

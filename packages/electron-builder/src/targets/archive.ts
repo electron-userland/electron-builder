@@ -4,6 +4,8 @@ import { exists } from "electron-builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import * as path from "path"
 import { CompressionLevel } from "../core"
+import { computeEnv, getLinuxToolsPath } from "../util/bundledTool"
+import { isMacOsSierra } from "../util/macosVersion"
 
 class CompressionDescriptor {
   constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
@@ -24,11 +26,11 @@ export async function tar(compression: CompressionLevel | n, format: string, out
   const info = extToCompressionDescriptor[format]
   let tarEnv = process.env
   if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-    tarEnv = Object.assign({}, process.env)
+    tarEnv = Object.assign({}, tarEnv)
     tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   }
   else if (compression != null && compression !== "normal") {
-    tarEnv = Object.assign({}, process.env)
+    tarEnv = Object.assign({}, tarEnv)
     tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
   }
 
@@ -37,6 +39,16 @@ export async function tar(compression: CompressionLevel | n, format: string, out
     args.push("--transform", `s,^\\.,${path.basename(outFile, "." + format)},`)
   }
   args.push(isMacApp ? path.basename(dirToArchive) : ".")
+
+  if (await isMacOsSierra()) {
+    const linuxToolsPath = await getLinuxToolsPath()
+    tarEnv = Object.assign({}, tarEnv, {
+      PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
+      LANG: "en_US.UTF-8",
+      LC_CTYPE: "UTF-8",
+    })
+  }
+
   await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
     cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
     env: tarEnv

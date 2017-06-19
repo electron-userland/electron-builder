@@ -1,5 +1,4 @@
-import { isEmptyOrSpaces } from "electron-builder-util"
-import { warn } from "electron-builder-util/out/log"
+import { isEmptyOrSpaces, log, warn } from "electron-builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
 import { Metadata } from "../metadata"
@@ -68,6 +67,11 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     if (metadata.build != null) {
       errors.push(`'build' in the application package.json (${appPackageFile}) is not supported since 3.0 anymore. Please move 'build' into the development package.json (${devAppPackageFile})`)
     }
+  }
+
+  const devDependencies = (<any>metadata).devDependencies
+  if (devDependencies != null && "electron-rebuild" in devDependencies) {
+    log('electron-rebuild not required if you use electron-builder, please consider to remove excess dependency from devDependencies\n\nTo ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps" to your `package.json`')
   }
 
   if (errors.length > 0) {

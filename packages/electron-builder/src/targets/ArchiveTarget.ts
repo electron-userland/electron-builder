@@ -1,4 +1,4 @@
-import { log } from "electron-builder-util/out/log"
+import { log } from "electron-builder-util"
 import * as path from "path"
 import { Arch, Platform, Target } from "../core"
 import { PlatformPackager } from "../platformPackager"

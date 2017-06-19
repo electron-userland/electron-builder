@@ -272,9 +272,10 @@ export interface NsisWebOptions extends NsisOptions {
 }
 
 /**
- * Squirrel.Windows options.
+ * Squirrel.Windows options. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
  *
- * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
+ * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+ * To build for Squirrel.Windows on macOS, please install `mono`: `brew install mono`.
  */
 export interface SquirrelWindowsOptions extends WinBuildOptions {
   /**

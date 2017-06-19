@@ -1,9 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { asArray, debug, doSpawn, exec, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, use } from "electron-builder-util"
+import { asArray, debug, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, subTask, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
-import { log, subTask, warn } from "electron-builder-util/out/log"
 import { asyncAll } from "electron-builder-util/out/promise"
 import { outputFile, readFile, unlink } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
@@ -13,6 +12,7 @@ import { v5 as uuid5 } from "uuid-1345"
 import { Arch, Target } from "../core"
 import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
+import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
 import { archive } from "./archive"
 import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
@@ -269,7 +269,7 @@ export class NsisTarget extends Target {
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
     await this.executeMakensis(defines, commands, await this.computeFinalScript(script, false))
-    await exec(isWin ? installerPath : "wine", isWin ? [] : [installerPath])
+    await execWine(installerPath, [])
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
     delete defines.BUILD_UNINSTALLER
@@ -430,8 +430,23 @@ export class NsisTarget extends Target {
         env: Object.assign({}, process.env, {NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"}),
         cwd: this.nsisTemplatesDir,
       }, true)
-      handleProcess("close", childProcess, command, resolve, error => {
-        reject(error + "\nNSIS script:\n" + script)
+
+      const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
+
+      handleProcess("close", childProcess, command, () => {
+        try {
+          clearTimeout(timeout)
+        }
+        finally {
+          resolve()
+        }
+      }, error => {
+        try {
+          clearTimeout(timeout)
+        }
+        finally {
+          reject(error + "\nNSIS script:\n" + script)
+        }
       })
 
       childProcess.stdin.end(script)

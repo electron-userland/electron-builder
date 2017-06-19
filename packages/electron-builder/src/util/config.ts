@@ -1,9 +1,7 @@
 import Ajv from "ajv"
 import { CancellationToken } from "electron-builder-http"
-import { debug } from "electron-builder-util"
+import { debug, log, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { statOrNull } from "electron-builder-util/out/fs"
-import { log, warn } from "electron-builder-util/out/log"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readFile, readJson } from "fs-extra-p"
@@ -16,12 +14,11 @@ import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
 import ErrorObject = ajv.ErrorObject
 import TypeParams = ajv.TypeParams
 
-function getConfigFromPackageData(metadata: any) {
-  return metadata.build
+function getConfigFromPackageData(metadata: any | null) {
+  return metadata == null ? null : metadata.build
 }
 
-/** @internal */
-export async function doLoadConfig(configFile: string, projectDir: string): Promise<Config> {
+async function doLoadConfig(configFile: string, projectDir: string): Promise<Config> {
   const data = await readFile(configFile, "utf8")
   let result
   if (configFile.endsWith(".json5") || configFile.endsWith(".json")) {
@@ -39,30 +36,24 @@ export async function doLoadConfig(configFile: string, projectDir: string): Prom
   return result
 }
 
-/** @internal */
-export async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Config | null> {
+async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Config | null> {
+  let data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
+  if (data != null) {
+    return data
+  }
+
   for (const configFile of ["electron-builder.yml", "electron-builder.yaml", "electron-builder.json", "electron-builder.json5", "electron-builder.toml"]) {
-    const data = await orNullIfFileNotExist(doLoadConfig(path.join(projectDir, configFile), projectDir))
+    data = await orNullIfFileNotExist(doLoadConfig(path.join(projectDir, configFile), projectDir))
     if (data != null) {
       return data
     }
   }
 
-  const data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
-  if (data != null) {
-    return data
-  }
-
-  if ((await statOrNull(path.join(projectDir, "app.asar"))) != null) {
-    // prepacked, do not throw error, just ignore
-    return null
-  }
-
-  throw new Error(`Cannot find package.json in the ${projectDir}`)
+  return null
 }
 
 /** @internal */
-export async function computeFinalConfig(projectDir: string, configPath: string | null, packageMetadata: any | null, configFromOptions: Config | null | undefined): Promise<Config> {
+export async function getConfig(projectDir: string, configPath: string | null, packageMetadata: any | null, configFromOptions: Config | null | undefined): Promise<Config> {
   let fileOrPackageConfig
   if (configPath == null) {
     fileOrPackageConfig = packageMetadata == null ? null : await loadConfig(projectDir, packageMetadata)

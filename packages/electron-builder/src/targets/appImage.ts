@@ -1,8 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec } from "electron-builder-util"
-import { getBin } from "electron-builder-util/out/binDownload"
+import { exec, log } from "electron-builder-util"
+import { getBin, getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
-import { log } from "electron-builder-util/out/log"
 import { chmod, close, createReadStream, createWriteStream, open, write } from "fs-extra-p"
 import * as path from "path"
 import { v1 as uuid1 } from "uuid-1345"
@@ -11,11 +10,9 @@ import { LinuxPackager } from "../linuxPackager"
 import { LinuxBuildOptions } from "../options/linuxOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
-const appImageVersion = process.platform === "darwin" ? "AppImage-09-07-16-mac" : "AppImage-09-07-16-linux"
+const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
-const appImageSha256 = process.platform === "darwin" ? "5d4a954876654403698a01ef5bd7f218f18826261332e7d31d93ab4432fa0312" : "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221"
-//noinspection SpellCheckingInspection
-const appImagePathPromise = getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, appImageSha256)
+const appImagePathPromise = process.platform === "darwin" ? getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") : getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
 
 export default class AppImageTarget extends Target {
   readonly options: LinuxBuildOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
@@ -65,7 +62,7 @@ export default class AppImageTarget extends Target {
 
     if (arch === Arch.x64) {
       // noinspection SpellCheckingInspection
-      const libDir = await getBin("AppImage-packages", "10.03.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-10.03.17-x64.7z", "172f9977fe9b24d35091d26ecbfebe2a14d96516a9c903e109e12b2a929042fe")
+      const libDir = process.platform === "darwin" ? path.join(appImagePath, "packages") : await getBin("AppImage-packages", "10.03.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-10.03.17-x64.7z", "172f9977fe9b24d35091d26ecbfebe2a14d96516a9c903e109e12b2a929042fe")
       args.push("-map", libDir, "/usr/lib")
     }
 

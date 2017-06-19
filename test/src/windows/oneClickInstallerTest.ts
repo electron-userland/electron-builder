@@ -31,7 +31,7 @@ test("one-click", app({
   }
 }))
 
-test.ifAll("multi language license", app({
+test.ifAll.ifNotCiMac("multi language license", app({
   targets: Platform.WINDOWS.createTarget("nsis"),
   config: {
     publish: null,
@@ -123,7 +123,7 @@ test.ifDevOrLinuxCi("custom script", app({targets: nsisTarget}, {
   packed: context => assertThat(path.join(context.projectDir, "build", "customInstallerScript")).isFile(),
 }))
 
-test.ifAll("menuCategory", app({
+test.ifAll.ifNotCiMac("menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
     extraMetadata: {
@@ -146,7 +146,7 @@ test.ifAll("menuCategory", app({
   }
 }))
 
-test.ifAll("string menuCategory", app({
+test.ifAll.ifNotCiMac("string menuCategory", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
     extraMetadata: {

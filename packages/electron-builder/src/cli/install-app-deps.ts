@@ -1,11 +1,10 @@
 #! /usr/bin/env node
 
 import BluebirdPromise from "bluebird-lst"
-import { computeDefaultAppDirectory, use } from "electron-builder-util"
-import { log, warn } from "electron-builder-util/out/log"
+import { computeDefaultAppDirectory, log, use, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import yargs from "yargs"
-import { getElectronVersion, loadConfig } from "../util/config"
+import { getConfig, getElectronVersion } from "../util/config"
 import { installOrRebuild } from "../util/yarn"
 
 declare const PACKAGE_VERSION: string
@@ -40,7 +39,7 @@ export async function installAppDeps(args: any) {
   }
 
   const projectDir = process.cwd()
-  const config = (await loadConfig(projectDir)) || {}
+  const config = (await getConfig(projectDir, null, null, null)) || {}
   const muonVersion = config.muonVersion
   const results = await BluebirdPromise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),

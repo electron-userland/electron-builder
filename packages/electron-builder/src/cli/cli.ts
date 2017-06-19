@@ -1,8 +1,7 @@
 #! /usr/bin/env node
 
 import { cyan, dim, green, reset, underline } from "chalk"
-import { exec } from "electron-builder-util"
-import { log, warn } from "electron-builder-util/out/log"
+import { exec, log, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import { readJson } from "fs-extra-p"
 import isCi from "is-ci"
@@ -10,7 +9,7 @@ import * as path from "path"
 import updateNotifier from "update-notifier"
 import yargs from "yargs"
 import { build, configureBuildCommand } from "../builder"
-import { getElectronVersion, loadConfig } from "../util/config"
+import { getConfig, getElectronVersion } from "../util/config"
 import { getGypEnv } from "../util/yarn"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
@@ -65,7 +64,7 @@ function checkIsOutdated() {
 
 async function rebuildAppNativeCode(args: any) {
   const projectDir = process.cwd()
-  const config = await loadConfig(projectDir)
+  const config = await getConfig(projectDir, null, null, null)
   log(`Execute node-gyp rebuild for ${args.platform}:${args.arch}`)
   // this script must be used only for electron
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {

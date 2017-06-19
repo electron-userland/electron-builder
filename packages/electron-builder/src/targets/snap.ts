@@ -1,6 +1,5 @@
-import { replaceDefault, spawn } from "electron-builder-util"
+import { log, replaceDefault, spawn } from "electron-builder-util"
 import { copyFile } from "electron-builder-util/out/fs"
-import { log } from "electron-builder-util/out/log"
 import { emptyDir, outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { homedir } from "os"

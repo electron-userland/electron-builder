@@ -1,5 +1,4 @@
-import { isEmptyOrSpaces, smarten } from "electron-builder-util"
-import { warn } from "electron-builder-util/out/log"
+import { isEmptyOrSpaces, smarten, warn } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { SemVer } from "semver"
 import { Config, Metadata } from "./metadata"

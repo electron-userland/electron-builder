@@ -2,7 +2,6 @@ FROM buildpack-deps:zesty-curl
 
 # rpm is required for FPM to build rpm package
 # yasm is required to build p7zip
-# osslsigncode to sign windows on Linux
 
 # install modern multi-thread xz
 # ldconfig - see 4.6. liblzma.so (or similar) not found when running xz

@@ -1,7 +1,6 @@
-import { debug } from "electron-builder-util"
+import { debug, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { FileTransformer } from "electron-builder-util/out/fs"
-import { warn } from "electron-builder-util/out/log"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { BuildInfo } from "./packagerApi"

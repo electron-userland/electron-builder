@@ -420,7 +420,6 @@ Object {
       "versStr": "1.1.0",
     },
     Object {
-      "customLocation": "/Applications",
       "id": "org.electron-builder.testApp",
       "pkg-ref": Object {
         "id": "org.electron-builder.testApp",

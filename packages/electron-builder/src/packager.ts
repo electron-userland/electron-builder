@@ -1,13 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http"
-import { computeDefaultAppDirectory, debug, exec, Lazy, safeStringifyJson, TmpDir, use } from "electron-builder-util"
+import { computeDefaultAppDirectory, debug, exec, Lazy, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { log } from "electron-builder-util/out/log"
 import { all, executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { lt as isVersionLessThan } from "semver"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar"
 import { Arch, Platform, SourceRepositoryInfo, Target } from "./core"
@@ -16,7 +14,7 @@ import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { computeFinalConfig, getElectronVersion, validateConfig } from "./util/config"
+import { getConfig, getElectronVersion, validateConfig } from "./util/config"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
@@ -124,7 +122,7 @@ export class Packager implements BuildInfo {
     this.devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
 
     const devMetadata = this.devMetadata
-    const config = await computeFinalConfig(projectDir, configPath, devMetadata, configFromOptions)
+    const config = await getConfig(projectDir, configPath, devMetadata, configFromOptions)
     if (debug.enabled) {
       debug(`Effective config: ${safeStringifyJson(config)}`)
     }
@@ -184,8 +182,6 @@ export class Packager implements BuildInfo {
     const platformToTarget = new Map<Platform, Map<String, Target>>()
     const createdOutDirs = new Set<string>()
 
-    // custom packager - don't check wine
-    let checkWine = this.prepackaged == null && this.options.platformPackagerFactory == null
     for (const [platform, archToType] of this.options.targets!) {
       if (this.cancellationToken.cancelled) {
         break
@@ -193,11 +189,6 @@ export class Packager implements BuildInfo {
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
         throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
-      }
-
-      let wineCheck: Promise<string> | null = null
-      if (checkWine && process.platform !== "win32" && platform === Platform.WINDOWS) {
-        wineCheck = exec("wine", ["--version"])
       }
 
       const packager = this.createHelper(platform, cleanupTasks)
@@ -213,11 +204,6 @@ export class Packager implements BuildInfo {
 
         if (this.cancellationToken.cancelled) {
           break
-        }
-
-        if (checkWine && wineCheck != null) {
-          checkWine = false
-          await checkWineVersion(wineCheck)
         }
 
         const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager, cleanupTasks)
@@ -359,50 +345,6 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
   }
   else {
     return platforms.map(it => it instanceof Platform ? it : Platform.fromString(it!))
-  }
-}
-
-/**
- * @private
- */
-export async function checkWineVersion(checkPromise: Promise<string>) {
-  function wineError(prefix: string): string {
-    return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "macos")}`
-  }
-
-  let wineVersion: string
-  try {
-    wineVersion = (await checkPromise).trim()
-  }
-  catch (e) {
-    if (e.code === "ENOENT") {
-      throw new Error(wineError("wine is required"))
-    }
-    else {
-      throw new Error(`Cannot check wine version: ${e}`)
-    }
-  }
-
-  if (wineVersion.startsWith("wine-")) {
-    wineVersion = wineVersion.substring("wine-".length)
-  }
-
-  const spaceIndex = wineVersion.indexOf(" ")
-  if (spaceIndex > 0) {
-    wineVersion = wineVersion.substring(0, spaceIndex)
-  }
-
-  const suffixIndex = wineVersion.indexOf("-")
-  if (suffixIndex > 0) {
-    wineVersion = wineVersion.substring(0, suffixIndex)
-  }
-
-  if (wineVersion.split(".").length === 2) {
-    wineVersion += ".0"
-  }
-
-  if (isVersionLessThan(wineVersion, "1.8.0")) {
-    throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
 }
 

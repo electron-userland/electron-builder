@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
-import { asArray, exec, Lazy, use } from "electron-builder-util"
-import { log, warn } from "electron-builder-util/out/log"
+import { asArray, exec, Lazy, log, use, warn } from "electron-builder-util"
 import { close, open, read, readFile, rename } from "fs-extra-p"
 import * as forge from "node-forge"
 import * as path from "path"
@@ -14,6 +13,7 @@ import AppXTarget from "./targets/appx"
 import { AppPackageHelper, NsisTarget } from "./targets/nsis"
 import { createCommonTarget } from "./targets/targetFactory"
 import { WebInstallerTarget } from "./targets/WebInstallerTarget"
+import { execWine } from "./util/wine"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WinBuildOptions> {
@@ -257,13 +257,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
     use(await this.getIconPath(), it => args.push("--set-icon", it))
-
-    const rceditExecutable = path.join(await getSignVendorPath(), "rcedit.exe")
-    const isWin = process.platform === "win32"
-    if (!isWin) {
-      args.unshift(rceditExecutable)
-    }
-    await exec(isWin ? rceditExecutable : "wine", args)
+    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
 
     await this.sign(file)
   }

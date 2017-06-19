@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, isPullRequest } from "electron-builder-util"
+import { exec, isPullRequest, log, task, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { log, task, warn } from "electron-builder-util/out/log"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"

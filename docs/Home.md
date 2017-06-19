@@ -18,5 +18,4 @@
 **Programmatic API**
 
 * [[electron-builder]]
-* [[electron-builder-util]]
 * [[electron-publish]]

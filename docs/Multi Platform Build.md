@@ -22,20 +22,9 @@ You don't need to clean dist output before build — output directory is cleaned
 
 ## macOS
 
-Use [brew](http://brew.sh) to install required packages.
+All required system dependencies (except rpm) will be downloaded automatically on demand on macOS 10.12+ (macOS Sierra). On Travis, please add `osx_image: xcode8.3`
 
-### To build app for Windows on macOS:
-```
-brew install wine --without-x11
-brew install mono
-```
-
-### To build app for Linux on macOS:
-```
-brew install gnu-tar xz
-```
-
-To build rpm: `brew install rpm`.
+To build rpm: `brew install rpm` ([brew](https://brew.sh)).
 
 ## Linux
 

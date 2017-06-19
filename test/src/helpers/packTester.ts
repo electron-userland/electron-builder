@@ -1,12 +1,13 @@
+import BluebirdPromise from "bluebird-lst"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
-import { addValue, exec, getTempName, spawn } from "electron-builder-util"
+import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-util"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
-import { log, warn } from "electron-builder-util/out/log"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
+import { getLinuxToolsPath } from "electron-builder/out/util/bundledTool"
 import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -227,7 +228,9 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
     expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
   }
 
-  const control = parseDebControl(await exec("dpkg", ["--info", packageFile]))
+  const control = parseDebControl(await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
+    maxBuffer: 10 * 1024 * 1024,
+  }))
   delete control.Version
   expect(control).toMatchSnapshot()
 }
@@ -332,9 +335,21 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
   }
 }
 
-async function getContents(path: string) {
+const execShell: any = BluebirdPromise.promisify(require("child_process").exec)
+
+async function getTarExecutable() {
+  return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
+}
+
+async function getContents(packageFile: string) {
   // without LC_CTYPE dpkg can returns encoded unicode symbols
-  const result = await exec("dpkg", ["--contents", path], {env: Object.assign({}, process.env, {LANG: "en_US.UTF-8", LC_CTYPE: "UTF-8"})})
+  const result = await execShell(`ar p '${packageFile}' data.tar.gz | ${await getTarExecutable()} zt`, {
+    maxBuffer: 10 * 1024 * 1024,
+    env: Object.assign({}, process.env, {
+      LANG: "en_US.UTF-8",
+      LC_CTYPE: "UTF-8",
+    })
+  })
   return pathSorter(parseFileList(result, true)
     .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
   )

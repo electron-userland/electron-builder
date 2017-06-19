@@ -4,7 +4,7 @@ import { app } from "../helpers/packTester"
 
 test.ifNotWindows("deb", app({targets: Platform.LINUX.createTarget("deb")}))
 
-test.ifNotWindows("arm deb", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
+test.ifNotWindows("arm", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
 
 test.ifNotWindows("custom depends", app({
   targets: Platform.LINUX.createTarget("deb"),

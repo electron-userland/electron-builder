@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, debug } from "electron-builder-util"
+import { asArray, debug, warn } from "electron-builder-util"
 import { copyDir, copyOrLinkFile, Filter, statOrNull } from "electron-builder-util/out/fs"
-import { warn } from "electron-builder-util/out/log"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"

@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, exec, execWine, prepareArgs, spawn } from "electron-builder-util"
+import { debug, exec, log, spawn } from "electron-builder-util"
 import { copyFile, walk } from "electron-builder-util/out/fs"
-import { log } from "electron-builder-util/out/log"
+import { execWine, prepareArgs } from "electron-builder/out/util/wine"
 import { WinPackager } from "electron-builder/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink } from "fs-extra-p"
 import * as path from "path"
@@ -231,7 +231,8 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
     })
 
     // createExecutableStubForExe
-    if (file.endsWith(".exe") && !file.includes("squirrel.exe")) {
+    // https://github.com/Squirrel/Squirrel.Windows/pull/1051 Only generate execution stubs for the top-level executables
+    if (file.endsWith(".exe") && !file.includes("squirrel.exe") && !relativeSafeFilePath.includes("/")) {
       const tempFile = await packager.getTempFile("stub.exe")
       await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile)
       await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])

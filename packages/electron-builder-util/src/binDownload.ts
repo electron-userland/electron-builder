@@ -4,6 +4,7 @@ import { CancellationToken, DownloadOptions } from "electron-builder-http"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { statOrNull } from "./fs"
+import { log, warn } from "./log"
 import { httpExecutor } from "./nodeHttpExecutor"
 import { debug, debug7zArgs, getCacheDirectory, getTempName, spawn } from "./util"
 
@@ -46,6 +47,8 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
     return dirPath
   }
 
+  log(`Downloading ${dirName}, please wait`)
+
   // 7z cannot be extracted from the input stream, temp file is required
   const tempUnpackDir = path.join(cachePath, getTempName())
   const archiveName = `${tempUnpackDir}.7z`
@@ -64,7 +67,21 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
     (<any>options).sha512 = checksum
   }
 
-  await httpExecutor.download(url, archiveName, options)
+  for (let attemptNumber = 1; attemptNumber < 4; attemptNumber++) {
+    try {
+      await httpExecutor.download(url, archiveName, options)
+    }
+    catch (e) {
+      if (attemptNumber >= 3) {
+        throw e
+      }
+
+      warn(`Cannot download ${name}, attempt #${attemptNumber}: ${e}`)
+      await new BluebirdPromise((resolve, reject) => {
+        setTimeout(() => httpExecutor.download(url, archiveName, options).then(resolve).catch(reject), 1000 * attemptNumber)
+      })
+    }
+  }
 
   await spawn(path7za, debug7zArgs("x").concat(archiveName, `-o${tempUnpackDir}`), {
     cwd: cachePath,

@@ -1,14 +1,15 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, smarten, TmpDir, use } from "electron-builder-util"
+import { debug, exec, log, smarten, TmpDir, use, warn } from "electron-builder-util"
 import { getBin } from "electron-builder-util/out/binDownload"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
-import { log, warn } from "electron-builder-util/out/log"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import * as path from "path"
 import { Arch, Target, toLinuxArchString } from "../core"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { computeEnv, getLinuxToolsPath } from "../util/bundledTool"
+import { isMacOsSierra } from "../util/macosVersion"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
@@ -119,6 +120,12 @@ export default class FpmTarget extends Target {
       "--url", projectUrl,
     ]
 
+    if (debug.enabled) {
+      // args.push(
+      //   "--log", "debug",
+      //   "--debug")
+    }
+
     const packageCategory = options.packageCategory
     if (packageCategory != null && packageCategory !== null) {
       args.push("--category", packageCategory)
@@ -183,7 +190,21 @@ export default class FpmTarget extends Target {
       return
     }
 
-    await exec(await fpmPath, args)
+    let env = Object.assign({}, process.env, {
+      LANG: "en_US.UTF-8",
+      LC_CTYPE: "UTF-8",
+    })
+
+    // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
+    // so, for now, brew install rpm is still required.
+    if (target !== "rpm" && await isMacOsSierra()) {
+      const linuxToolsPath = await getLinuxToolsPath()
+      Object.assign(env, {
+        PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
+        DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
+      })
+    }
+    await exec(await fpmPath, args, {env})
 
     this.packager.dispatchArtifactCreated(destination, this, arch)
   }

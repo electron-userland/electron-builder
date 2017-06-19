@@ -10,6 +10,7 @@ import { statOrNull } from "./fs"
 import { log, warn } from "./log"
 
 export { TmpDir } from "./tmp"
+export { log, warn, task, subTask } from "./log"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -34,17 +35,6 @@ export function removePassword(input: string) {
   return input.replace(/(-P |pass:| \/p |-pass )([^ ]+)/g, function (match, p1, p2) {
     return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
-}
-
-export function execWine(file: string, args: Array<string>, options?: ExecOptions): Promise<string> {
-  return exec(process.platform === "win32" ? file : "wine", prepareArgs(args, file), options)
-}
-
-export function prepareArgs(args: Array<string>, exePath: string) {
-  if (process.platform !== "win32") {
-    args.unshift(exePath)
-  }
-  return args
 }
 
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): Promise<string> {

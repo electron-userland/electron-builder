@@ -9,14 +9,18 @@ import MacPackager from "../macPackager"
 import { PkgOptions } from "../options/macOptions"
 import { filterCFBundleIdentifier } from "../packager/mac"
 
+const certType = "Developer ID Installer"
+
 // http://www.shanekirk.com/2013/10/creating-flat-packages-in-osx/
+// to use --scripts, we must build .app bundle separately using pkgbuild
+// productbuild --scripts doesn't work (because scripts in this case not added to our package)
+// https://github.com/electron-userland/electron-osx-sign/issues/96#issuecomment-274986942
 export class PkgTarget extends Target {
   readonly options: PkgOptions = Object.assign({
     allowAnywhere: true,
     allowCurrentUserHome: true,
     allowRootDirectory: true,
   }, this.packager.config.pkg)
-  private readonly installLocation = this.options.installLocation || "/Applications"
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("pkg")
@@ -28,38 +32,26 @@ export class PkgTarget extends Target {
     const appInfo = packager.appInfo
 
     const keychainName = (await packager.codeSigningInfo).keychainName
-    const certType = "Developer ID Installer"
-    const identity = await findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainName)
-    if (identity == null && packager.forceCodeSigning) {
-      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
-    }
 
     const appOutDir = this.outDir
     const distInfoFile = path.join(appOutDir, "distribution.xml")
-    await exec("productbuild", ["--synthesize", "--component", appPath, this.installLocation, distInfoFile], {
-      cwd: appOutDir,
-    })
 
-    let distInfo = await readFile(distInfoFile, "utf-8")
-    const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
-    distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
-    await writeFile(distInfoFile, distInfo)
-
-    debug(distInfo)
-
-    // to use --scripts, we must build .app bundle separately using pkgbuild
-    // productbuild --scripts doesn't work (because scripts in this case not added to our package)
-    // https://github.com/electron-userland/electron-osx-sign/issues/96#issuecomment-274986942
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)
-    await this.buildComponentPackage(appPath, innerPackageFile)
+    const identity = (await BluebirdPromise.all([
+      findIdentity(certType, options.identity || packager.platformSpecificBuildOptions.identity, keychainName),
+      this.customizeDistributionConfiguration(distInfoFile, appPath),
+      this.buildComponentPackage(appPath, innerPackageFile),
+    ]))[0]
+
+    if (identity == null && packager.forceCodeSigning) {
+      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+    }
 
     const outFile = path.join(appOutDir, packager.expandArtifactNamePattern(options, "pkg"))
     const args = prepareProductBuildArgs(identity, keychainName)
     args.push("--distribution", distInfoFile)
     args.push(outFile)
-
     use(options.productbuild, it => args.push(...<any>it))
-
     await exec("productbuild", args, {
       cwd: appOutDir,
     })
@@ -68,12 +60,25 @@ export class PkgTarget extends Target {
     packager.dispatchArtifactCreated(outFile, this, arch, `${appInfo.name}-${appInfo.version}.pkg`)
   }
 
+  private async customizeDistributionConfiguration(distInfoFile: string, appPath: string) {
+    await exec("productbuild", ["--synthesize", "--component", appPath, distInfoFile], {
+      cwd: this.outDir,
+    })
+
+    const options = this.options
+    let distInfo = await readFile(distInfoFile, "utf-8")
+    const insertIndex = distInfo.lastIndexOf("</installer-gui-script>")
+    distInfo = distInfo.substring(0, insertIndex) + `    <domains enable_anywhere="${options.allowAnywhere}" enable_currentUserHome="${options.allowCurrentUserHome}" enable_localSystem="${options.allowRootDirectory}" />\n` + distInfo.substring(insertIndex)
+    debug(distInfo)
+    await writeFile(distInfoFile, distInfo)
+  }
+
   private async buildComponentPackage(appPath: string, outFile: string) {
     const options = this.options
     const args = [
       "--component", appPath,
-      "--install-location", this.installLocation,
     ]
+    use(this.options.installLocation || "/Applications", it => args.push("--install-location", it!))
     if (options.scripts != null) {
       args.push("--scripts", path.resolve(this.packager.buildResourcesDir, options.scripts))
     }
