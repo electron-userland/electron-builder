@@ -34,6 +34,7 @@ export class PkgTarget extends Target {
     const keychainName = (await packager.codeSigningInfo).keychainName
 
     const appOutDir = this.outDir
+    // https://developer.apple.com/library/content/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
     const distInfoFile = path.join(appOutDir, "distribution.xml")
 
     const innerPackageFile = path.join(appOutDir, `${filterCFBundleIdentifier(appInfo.id)}.pkg`)

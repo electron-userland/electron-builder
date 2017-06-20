@@ -45,7 +45,8 @@
 !macroend
 
 !macro registryAddInstallInfo
-	WriteRegStr SHCTX "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
+	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
+	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
 
 	${if} $installMode == "all"
 		StrCpy $0 "/allusers"
@@ -55,27 +56,27 @@
 		StrCpy $1 " (only current user)"
 	${endif}
 
-  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
+  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
   # https://github.com/electron-userland/electron-builder/issues/750
   StrCpy $2 "$INSTDIR\${UNINSTALL_FILENAME}"
-  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
+  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" UninstallString '"$2" $0'
 
-	WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
+	WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayVersion" "${VERSION}"
 	!ifdef UNINSTALLER_ICON
-	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\uninstallerIcon.ico"
+	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$INSTDIR\uninstallerIcon.ico"
 	!else
-	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
+	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "DisplayIcon" "$appExe,0"
 	!endif
 
   !ifdef COMPANY_NAME
-	  WriteRegStr SHCTX "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
+	  WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "Publisher" "${COMPANY_NAME}"
 	!endif
-	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoModify 1
-	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
+	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoModify 1
+	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" NoRepair 1
 
 	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
 	IntFmt $0 "0x%08X" $0
-	WriteRegDWORD SHCTX "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
+	WriteRegDWORD SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" "EstimatedSize" "$0"
 !macroend
 
 InitPluginsDir
@@ -88,7 +89,10 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 Var /GLOBAL shortcuts
 StrCpy $shortcuts ""
 !ifndef allowToChangeInstallationDirectory
-  ${if} ${FileExists} "$appExe"
+  ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
+
+  ${if} $R1 == "true"
+  ${andIf} ${FileExists} "$appExe"
     StrCpy $shortcuts "--keep-shortcuts"
   ${endIf}
 !endif

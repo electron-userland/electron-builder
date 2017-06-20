@@ -177,5 +177,3 @@ Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
-
-
