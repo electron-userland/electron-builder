@@ -54,6 +54,15 @@ Name "${PRODUCT_NAME}"
 !macroend
 !define Updated `"" Updated ""`
 
+!macro _ForceRun _a _b _t _f
+  ClearErrors
+  ${GetParameters} $R9
+  ${GetOptions} $R9 "--force-run" $R8
+  IfErrors `${_f}` `${_t}`
+!macroend
+!define ForceRun `"" ForceRun ""`
+
+
 !macro extractEmbeddedAppPackage
   !ifdef COMPRESS
     SetCompress off

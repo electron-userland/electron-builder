@@ -210,6 +210,7 @@ ${endif}
 !ifdef ONE_CLICK
   !ifdef RUN_AFTER_FINISH
     ${IfNot} ${Silent}
+    ${OrIf} ${ForceRun}
       # otherwise app window will be in backround
       HideWindow
       !insertmacro StartApp

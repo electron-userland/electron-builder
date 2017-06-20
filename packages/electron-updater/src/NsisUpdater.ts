@@ -134,17 +134,17 @@ export class NsisUpdater extends AppUpdater {
 
     this.app.on("quit", () => {
       this._logger.info("Auto install update on quit")
-      this.install(true)
+      this.install(true, false)
     })
   }
 
-  quitAndInstall(isSilent: boolean = false): void {
-    if (this.install(isSilent)) {
+  quitAndInstall(isSilent: boolean = false, forceRunAfter: boolean = false): void {
+    if (this.install(isSilent, forceRunAfter)) {
       this.app.quit()
     }
   }
 
-  private install(isSilent: boolean): boolean {
+  private install(isSilent: boolean, forceRunAfter: boolean): boolean {
     if (this.quitAndInstallCalled) {
       return false
     }
@@ -163,6 +163,11 @@ export class NsisUpdater extends AppUpdater {
     if (isSilent) {
       args.push("/S")
     }
+
+    if (forceRunAfter) {
+      args.push("--force-run")
+    }
+
     const spawnOptions = {
       detached: true,
       stdio: "ignore",
