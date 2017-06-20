@@ -305,9 +305,10 @@ Configuration Options
   * <a name="AppXOptions-languages"></a>`languages` Array&lt;String&gt; | String - The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store. The first entry (index 0) will be the default language. Defaults to en-US if omitted.
   * <a name="AppXOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
   * <a name="AppXOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
-* <a name="Config-squirrelWindows"></a>`squirrelWindows`<a name="SquirrelWindowsOptions"></a> - Squirrel.Windows options.
+* <a name="Config-squirrelWindows"></a>`squirrelWindows`<a name="SquirrelWindowsOptions"></a> - Squirrel.Windows options. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
   
-  To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
+  To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+  To build for Squirrel.Windows on macOS, please install `mono`: `brew install mono`.
   Inherits [WinBuildOptions](#WinBuildOptions) options.
   * <a name="SquirrelWindowsOptions-iconUrl"></a>`iconUrl` String - A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
     

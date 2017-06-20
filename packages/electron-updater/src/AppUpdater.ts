@@ -295,8 +295,9 @@ export abstract class AppUpdater extends EventEmitter {
    * This is different from the normal quit event sequence.
    *
    * @param isSilent *windows-only* Runs the installer in silent mode.
+   * @param isForceRunAfter *windows-only* Run the app after finish even on silent install.
    */
-  abstract quitAndInstall(isSilent?: boolean): void
+  abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
   async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {

@@ -24,6 +24,7 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
   return {path: "wine"}
 })
 
+/** @private */
 export function execWine(file: string, args: Array<string>, options: ExecOptions = EXEC_TIMEOUT): Promise<string> {
   if (process.platform === "win32") {
     return exec(file, args, options)
@@ -34,6 +35,7 @@ export function execWine(file: string, args: Array<string>, options: ExecOptions
   }
 }
 
+/** @private */
 export function prepareArgs(args: Array<string>, exePath: string) {
   if (process.platform !== "win32") {
     args.unshift(exePath)

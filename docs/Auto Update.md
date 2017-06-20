@@ -173,7 +173,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
         * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
         * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
+        * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
@@ -253,7 +253,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
     * [`.getFeedURL()`](#module_electron-updater.AppUpdater+getFeedURL) ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
     * [`.setFeedURL(options)`](#module_electron-updater.AppUpdater+setFeedURL)
     * [`.loadUpdateConfig()`](#module_electron-updater.AppUpdater+loadUpdateConfig) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.quitAndInstall(isSilent)`](#module_electron-updater.AppUpdater+quitAndInstall)
+    * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
 
 <a name="module_electron-updater.AppUpdater+checkForUpdates"></a>
 #### `appUpdater.checkForUpdates()` ⇒ <code>Promise&lt;[UpdateCheckResult](#UpdateCheckResult)&gt;</code>
@@ -288,7 +288,7 @@ Configure update provider. If value is `string`, [module:electron-builder-http/o
 #### `appUpdater.loadUpdateConfig()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>AppUpdater</code>](#AppUpdater)  
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
-#### `appUpdater.quitAndInstall(isSilent)`
+#### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`
 Restarts the app and installs the update after it has been downloaded.
 It should only be called after `update-downloaded` has been emitted.
 
@@ -300,6 +300,7 @@ This is different from the normal quit event sequence.
 | Param | Type | Description |
 | --- | --- | --- |
 | isSilent | <code>Boolean</code> | *windows-only* Runs the installer in silent mode. |
+| isForceRunAfter | <code>Boolean</code> | *windows-only* Run the app after finish even on silent install. |
 
 <a name="UpdaterSignal"></a>
 ### UpdaterSignal
