@@ -28,11 +28,23 @@ A complete solution to package and build a ready for distribution Electron app f
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
+## Installation
 [Yarn](http://yarnpkg.com/) is [strongly](https://github.com/electron-userland/electron-builder/issues/1147#issuecomment-276284477) recommended instead of npm.
 
-_Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional)._
+`yarn add electron-builder --dev`
+
+Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may require manual install if you have npm configured to [not install optional deps by default](https://docs.npmjs.com/misc/config#optional).
+
+## Boilerplates
+
+* [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
+* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
+* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
+* [electron-vue](https://github.com/SimulatedGREG/electron-vue) A boilerplate for making electron applications built with vue.
 
 ## Quick Setup Guide
+
+Maybe some [boilerplate](#boilerplates) will suite you?
 
 1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
@@ -54,11 +66,11 @@ _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
     "scripts": {
-      "pack": "build --dir",
-      "dist": "build"
+      "pack": "electron-builder --dir",
+      "dist": "electron-builder"
     }
     ```
-    Then you can run `npm run dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `npm run pack` (only generates the package directory without really packaging it. This is useful for testing purposes).
+    Then you can run `yarn dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `yarn pack` (only generates the package directory without really packaging it. This is useful for testing purposes).
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
@@ -66,29 +78,14 @@ _Note: Platform specific `7zip-bin-*` packages are `optionalDependencies`, which
    :bulb: Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use [node-gyp-rebuild](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241488783) bin instead.
 
    
-6. Installing the [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
+6. Install the [required system packages](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build) if you are not on macOS 10.12+.
 
 Please note that everything is packaged into an asar archive [by default](https://github.com/electron-userland/electron-builder/wiki/Options#Config-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://github.com/electron-userland/electron-builder/wiki/Code-Signing#where-to-buy-code-signing-certificate).
 
-## Auto Update
-`electron-builder` produces all required artifacts, for example, for macOS:
-
-* `.dmg`: macOS installer, required for the initial installation process on macOS.
-* `-mac.zip`: required for Squirrel.Mac.
-
-See the [Auto Update](https://github.com/electron-userland/electron-builder/wiki/Auto-Update) section of the [Wiki](https://github.com/electron-userland/electron-builder/wiki).
-
-## Boilerplates
-
-* [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate)
-* [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate)
-* [electron-boilerplate](https://github.com/szwacz/electron-boilerplate)
-* [electron-vue](https://github.com/SimulatedGREG/electron-vue)
-
 ## CLI Usage
-Execute `node_modules/.bin/build --help` to get the actual CLI usage guide.
+Execute `node_modules/.bin/electron-builder --help` (`node_modules/.bin/electron-builder build --help` for `build subcommand) to get the actual CLI usage guide.
 ```
 Building:
   --mac, -m, -o, --macos   Build for macOS, accepts target list (see
@@ -101,6 +98,7 @@ Building:
   --ia32                   Build for ia32                              [boolean]
   --armv7l                 Build for armv7l                            [boolean]
   --dir                    Build unpacked dir. Useful to test.         [boolean]
+  --extraMetadata, --em    Deprecated. Use -c.extraMetadata.
   --prepackaged, --pd      The path to prepackaged app (to pack in a
                            distributable format)
   --projectDir, --project  The path to project directory. Defaults to current
@@ -112,26 +110,29 @@ Building:
 Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
                  https://goo.gl/WMlr4n
-                           [choices: "onTag", "onTagOrDraft", "always", "never"]
+                [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
   --draft        Create a draft (unpublished) release                  [boolean]
   --prerelease   Identify the release as a prerelease                  [boolean]
 
 Deprecated:
   --platform  The target platform (preferred to use --mac, --win or --linux)
-                      [choices: "mac", "win", "linux", "darwin", "win32", "all"]
+           [choices: "mac", "win", "linux", "darwin", "win32", "all", undefined]
   --arch      The target arch (preferred to use --x64 or --ia32)
-                                                 [choices: "ia32", "x64", "all"]
+                                      [choices: "ia32", "x64", "all", undefined]
 
 Other:
   --help     Show help                                                 [boolean]
-  --version  Show version number                                       [boolean]
+  --version
 
 Examples:
-  build -mwl                    build for macOS, Windows and Linux
-  build --linux deb tar.xz      build deb and tar.xz for Linux
-  build --win --ia32            build for Windows ia32
-  build --em.foo=bar            set package.json property `foo` to `bar`
-  build --config.nsis.unicode=false  configure unicode options for NSIS
+  electron-builder -mwl                     build for macOS, Windows and Linux
+  electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
+  electron-builder --win --ia32             build for Windows ia32
+  electron-builder --em.foo=bar             set package.json property `foo` to
+                                            `bar`
+  electron-builder                          configure unicode options for NSIS
+  --config.nsis.unicode=false
+
 ```
 
 ## Programmatic Usage

@@ -14,7 +14,7 @@ By default build for current platform and current arch. Use CLI flags `--mac`, `
 
 For example, to build app for MacOS, Windows and Linux:
 ```
-build -mwl
+electron-builder -mwl
 ```
 
 Build performed in parallel, so, it is highly recommended to not use npm task per platform (e.g. `npm run dist:mac && npm run dist:win32`), but specify multiple platforms/targets in one build command.
@@ -27,6 +27,8 @@ All required system dependencies (except rpm) will be downloaded automatically o
 To build rpm: `brew install rpm` ([brew](https://brew.sh)).
 
 ## Linux
+
+You can use [Docker](https://github.com/electron-userland/electron-builder/wiki/Docker) to avoid installing system dependencies.
 
 To build app in distributable format for Linux:
 ```
@@ -48,7 +50,7 @@ To build snap: `sudo apt-get install --no-install-recommends -y snapcraft`.
   sudo apt-get install --no-install-recommends -y wine1.8
   ```
 
-* Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage) (4.2+ is required):
+* Install [Mono](http://www.mono-project.com/docs/getting-started/install/linux/#usage) (4.2+ is required) if you want to use Squirrel.Windows (NSIS, default target, doesn't require mono):
 
   ```
   sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
@@ -57,17 +59,23 @@ To build snap: `sudo apt-get install --no-install-recommends -y snapcraft`.
   sudo apt-get install --no-install-recommends -y mono-devel ca-certificates-mono
   ```
 
-### To build app in 32 bit from a machine with 64 bit:
+## To build app in 32 bit from a machine with 64 bit:
 
 ```
 sudo apt-get install --no-install-recommends -y gcc-multilib g++-multilib
 ```
 
-### Travis Linux
+## Travis Linux
 [Trusty](https://docs.travis-ci.com/user/trusty-ci-environment/) is required — default Travis Linux dist is outdated and `icnsutils` version is non-functional.
 ```yaml
 sudo: required
 dist: trusty
+```
+
+### Travis macOS
+[macOS 10.12+](https://docs.travis-ci.com/user/osx-ci-environment/#OS-X-Version) is required.
+```yaml
+osx_image: xcode8.3
 ```
 
 ## Windows

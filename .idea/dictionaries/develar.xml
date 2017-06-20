@@ -29,6 +29,7 @@
       <w>bashism</w>
       <w>bintray</w>
       <w>bitcoin</w>
+      <w>boilerplates</w>
       <w>bootstrapper</w>
       <w>buildpack</w>
       <w>checksums</w>
@@ -195,6 +196,7 @@
       <w>pulseaudio</w>
       <w>rcedit</w>
       <w>readpass</w>
+      <w>redux</w>
       <w>regedit</w>
       <w>releasify</w>
       <w>rels</w>
