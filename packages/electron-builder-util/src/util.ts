@@ -11,6 +11,7 @@ import { log, warn } from "./log"
 
 export { TmpDir } from "./tmp"
 export { log, warn, task, subTask } from "./log"
+export { Lazy } from "electron-builder-http"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -226,25 +227,6 @@ export function smarten(s: string): string {
   // closing doubles
   s = s.replace(/"/g, "\u201d")
   return s
-}
-
-export class Lazy<T> {
-  private _value: Promise<T>
-  private creator: (() => Promise<T>) | null
-
-  get value(): Promise<T> {
-    if (this.creator == null) {
-      return this._value
-    }
-
-    this._value = this.creator()
-    this.creator = null
-    return this._value
-  }
-
-  constructor(creator: () => Promise<T>) {
-    this.creator = creator
-  }
 }
 
 export function addValue<K, T>(map: Map<K, Array<T>>, key: K, value: T) {

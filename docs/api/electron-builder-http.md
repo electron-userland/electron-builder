@@ -136,6 +136,7 @@
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
         * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+    * [.Lazy](#Lazy)
     * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
         * [`._flush(callback)`](#module_electron-builder-http.ProgressCallbackTransform+_flush)
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.ProgressCallbackTransform+_transform)
@@ -277,6 +278,15 @@
 | options | <code>module:http.RequestOptions</code> | 
 | cancellationToken | <code>[CancellationToken](#CancellationToken)</code> | 
 | data | <code>Object&lt;String, any&gt;</code> \| <code>null</code> | 
+
+<a name="Lazy"></a>
+### Lazy
+**Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **value**| <code>Promise&lt;module:electron-builder-http.T&gt;</code> | 
 
 <a name="ProgressCallbackTransform"></a>
 ### ProgressCallbackTransform ⇐ <code>internal:Transform</code>

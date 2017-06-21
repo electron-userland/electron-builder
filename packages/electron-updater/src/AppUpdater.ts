@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { CancellationToken, RequestHeaders } from "electron-builder-http"
+import { CancellationToken, Lazy, RequestHeaders } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
@@ -62,25 +62,23 @@ export abstract class AppUpdater extends EventEmitter {
 
   private _appUpdateConfigPath: string | null
 
+  /**
+   * test only
+   * @private
+   */
   set updateConfigPath(value: string | null) {
     this.clientPromise = null
-    this._appUpdateConfigPath =  value
+    this._appUpdateConfigPath = value
+    this.configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
   }
 
   protected updateAvailable = false
 
   private clientPromise: Promise<Provider<any>> | null
 
-  private _stagingUserIdPromise: Promise<string> | null
+  protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
-  protected get stagingUserIdPromise(): Promise<string> {
-    let result = this._stagingUserIdPromise
-    if (result == null) {
-      result = this.getOrCreateStagingUserId()
-      this._stagingUserIdPromise = result
-    }
-    return result
-  }
+  protected configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private readonly untilAppReady: Promise<boolean>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
@@ -188,7 +186,7 @@ export abstract class AppUpdater extends EventEmitter {
     // convert from user 0-100 to internal 0-1
     stagingPercentage = stagingPercentage / 100
 
-    const stagingUserId = await this.stagingUserIdPromise
+    const stagingUserId = await this.stagingUserIdPromise.value
     const val = UUID.parse(stagingUserId).readUInt32BE(12)
     const percentage = (val / 0xFFFFFFFF)
     this._logger.info(`Staging percentage: ${stagingPercentage}, percentage: ${percentage}, user id: ${stagingUserId}`)
@@ -210,11 +208,11 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     if (this.clientPromise == null) {
-      this.clientPromise = this.loadUpdateConfig().then(it => this.createClient(it))
+      this.clientPromise = this.configOnDisk.value.then(it => this.createClient(it))
     }
 
     const client = await this.clientPromise
-    const stagingUserId = await this.stagingUserIdPromise
+    const stagingUserId = await this.stagingUserIdPromise.value
     client.setRequestHeaders(Object.assign({"X-User-Staging-Id": stagingUserId}, this.requestHeaders))
     const versionInfo = await client.getLatestVersion()
 
@@ -299,7 +297,7 @@ export abstract class AppUpdater extends EventEmitter {
    */
   abstract quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
 
-  async loadUpdateConfig() {
+  private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {
       this._appUpdateConfigPath = require("electron-is-dev") ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!, "app-update.yml")
     }

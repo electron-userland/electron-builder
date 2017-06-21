@@ -77,10 +77,19 @@ export class NsisUpdater extends AppUpdater {
   // | where {$_.Status.Equals([System.Management.Automation.SignatureStatus]::Valid) -and $_.SignerCertificate.Subject.Contains("CN=siemens.com")})
   // | Out-String ; if ($certificateInfo) { exit 0 } else { exit 1 }
   private async verifySignature(tempUpdateFile: string): Promise<string | null> {
-    const updateConfig = await this.loadUpdateConfig()
-    const publisherName = updateConfig.publisherName
-    if (publisherName == null) {
-      return null
+    let publisherName: Array<string> | string | null
+    try {
+      publisherName = (await this.configOnDisk.value).publisherName
+      if (publisherName == null) {
+        return null
+      }
+    }
+    catch (e) {
+      if (e.code === "ENOENT") {
+        // no app-update.yml
+        return null
+      }
+      throw e
     }
 
     return await new BluebirdPromise<string | null>((resolve, reject) => {
@@ -111,8 +120,8 @@ export class NsisUpdater extends AppUpdater {
         delete data.Path
 
         if (data.Status === 0) {
-          const name = parseDn(data.SignerCertificate.Subject).get("CN")
-          if ((Array.isArray(publisherName) ? <Array<string>>publisherName : [publisherName]).includes(name)) {
+          const name = parseDn(data.SignerCertificate.Subject).get("CN")!
+          if ((Array.isArray(publisherName) ? publisherName : [publisherName]).includes(name)) {
             resolve(null)
             return
           }
