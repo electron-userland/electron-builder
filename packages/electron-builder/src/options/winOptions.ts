@@ -239,6 +239,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default true
    */
   readonly packElevateHelper?: boolean
+
+  /**
+   * @private
+   * @default false
+   */
+  readonly differentialPackage?: boolean
 }
 
 /**

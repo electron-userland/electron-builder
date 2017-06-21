@@ -142,7 +142,7 @@ function findFromElectronPrebuilt(packageData: any): any {
 let validatorPromise: Promise<any> | null = null
 
 async function createConfigValidator() {
-  const ajv = new Ajv({allErrors: true})
+  const ajv = new Ajv({allErrors: true, coerceTypes: true})
   ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json"))
   require("ajv-keywords")(ajv, ["typeof"])
   const schema = await readJson(path.join(__dirname, "..", "..", "scheme.json"))

@@ -1,10 +1,11 @@
+import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { asArray, debug, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, subTask, use, warn } from "electron-builder-util"
+import { asArray, debug7zArgs, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, subTask, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { asyncAll } from "electron-builder-util/out/promise"
-import { outputFile, readFile, unlink } from "fs-extra-p"
+import { outputFile, readFile, unlink, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -14,10 +15,11 @@ import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
-import { archive } from "./archive"
+import { addUltraArgs, archive, ArchiveOptions } from "./archive"
+import { computeBlocks } from "./blockMap"
 import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
 
-const debugLang = _debug("electron-builder:lang")
+const debug = _debug("electron-builder:nsis")
 
 // noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
@@ -104,8 +106,11 @@ export class NsisTarget extends Target {
 
   /** @private */
   async buildAppPackage(appOutDir: string, arch: Arch) {
-    let isPackElevateHelper = this.options.packElevateHelper
-    if (isPackElevateHelper === false && this.options.perMachine === true) {
+    const options = this.options
+    const packager = this.packager
+
+    let isPackElevateHelper = options.packElevateHelper
+    if (isPackElevateHelper === false && options.perMachine === true) {
       isPackElevateHelper = true
       warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
     }
@@ -114,10 +119,38 @@ export class NsisTarget extends Target {
       await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
     }
 
-    const packager = this.packager
-    const format = this.options.useZip ? "zip" : "7z"
+    const format = options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
-    return await archive(packager.config.compression, format, archiveFile, appOutDir, true)
+    const archiveOptions: ArchiveOptions = {withoutDir: true, solid: !options.differentialPackage}
+    let compression = packager.config.compression
+    if (options.differentialPackage) {
+      // 7zip doesn't allow to specify files order even if listFile is used, so, we exclude asar files and main exe and add it later
+      // reduce dict size to avoid large block invalidation on change
+      archiveOptions.dictSize = 16
+      archiveOptions.excluded = ["-x!*.exe", `-x!resources${path.sep}app.asar`]
+      // do not allow to change compression level to avoid different packages
+      compression = null
+    }
+    await archive(compression, format, archiveFile, appOutDir, archiveOptions)
+
+    if (options.differentialPackage) {
+      const args = debug7zArgs("a")
+      addUltraArgs(args, archiveOptions)
+      args.push(archiveFile)
+      await spawn(path7za, args.concat("*.exe"), {
+        cwd: appOutDir,
+      })
+
+      // todo no lack - 7za adds file into the resources dir in the middle of archive
+      await spawn(path7za, args.concat(`resources${path.sep}*.asar`), {
+        cwd: appOutDir,
+      })
+
+      const blockMap = await computeBlocks(archiveFile)
+      await writeFile(path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.txt`), blockMap.join("\n"))
+    }
+
+    return archiveFile
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -429,7 +462,7 @@ export class NsisTarget extends Target {
         // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
         env: Object.assign({}, process.env, {NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"}),
         cwd: this.nsisTemplatesDir,
-      }, true)
+      }, true, debug.enabled)
 
       const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
 
@@ -465,7 +498,7 @@ export class NsisTarget extends Target {
 
     const addCustomMessageFileInclude = async (input: string) => {
       const data = computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")
-      debugLang(data)
+      debug(data)
       return '!include "' + await this.writeCustomLangFile(data) + '"\n'
     }
 

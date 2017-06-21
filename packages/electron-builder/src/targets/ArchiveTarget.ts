@@ -23,7 +23,7 @@ export class ArchiveTarget extends Target {
       await tar(packager.config.compression, format, outFile, appOutDir, isMac)
     }
     else {
-      await archive(packager.config.compression, format, outFile, appOutDir, !isMac)
+      await archive(packager.config.compression, format, outFile, appOutDir, {withoutDir: !isMac})
     }
 
     packager.dispatchArtifactCreated(outFile, this, arch, isMac ? packager.generateName2(format, "mac", true) : packager.generateName(format, arch, true, packager.platform === Platform.WINDOWS ? "win" : null))

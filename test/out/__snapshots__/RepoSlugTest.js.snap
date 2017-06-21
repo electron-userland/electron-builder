@@ -10,27 +10,8 @@ Object {
 exports[`repo slug from TRAVIS_REPO_SLUG 1`] = `
 Object {
   "auth": null,
-  "browsetemplate": "https://{domain}/{user}/{project}{/tree/committish}",
-  "bugstemplate": "https://{domain}/{user}/{project}/issues",
-  "committish": null,
-  "default": "shortcut",
   "domain": "github.com",
-  "gittemplate": "git://{auth@}{domain}/{user}/{project}.git{#committish}",
   "project": "travis-build",
-  "protocols": Array [
-    "git",
-    "http",
-    "git+ssh",
-    "git+https",
-    "ssh",
-    "https",
-  ],
-  "protocols_re": /\\^\\(git\\|http\\|git\\\\\\+ssh\\|git\\\\\\+https\\|ssh\\|https\\):\\$/,
-  "shortcuttemplate": "{type}:{user}/{project}{#committish}",
-  "sshtemplate": "git@{domain}:{user}/{project}.git{#committish}",
-  "sshurltemplate": "git+ssh://git@{domain}/{user}/{project}.git{#committish}",
-  "tarballtemplate": "https://{domain}/{user}/{project}/archive/{committish}.tar.gz",
-  "treepath": "tree",
   "type": "github",
   "user": "travis-ci",
 }

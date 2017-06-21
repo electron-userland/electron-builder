@@ -116,7 +116,7 @@ export function createFileMatcher(info: BuildInfo, appDir: string, resourcesPath
     "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
     ".editorconfig,.flowconfig,.jshintrc,.eslintrc," +
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
-    ".idea," +
+    ".idea,.vs," +
     "appveyor.yml,.travis.yml,circle.yml," +
     ".nyc_output}")
 

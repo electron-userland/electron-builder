@@ -175,3 +175,10 @@ Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading
 See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for more documentation.
+
+## Debug
+
+Set the [DEBUG](https://github.com/visionmedia/debug#windows-note) environment variable to debug what electron-builder is doing:
+```bash
+DEBUG=electron-builder:* 
+```

@@ -151,12 +151,6 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.project
 
   let config = result.config
-  if (config != null && !(typeof config === "string")) {
-    if (typeof config.asar === "string") {
-      (<any>config).asar = config.asar === "true"
-    }
-  }
-
   if (result.extraMetadata != null) {
     if (typeof config === "string") {
       // transform to object and specify path to config as extends

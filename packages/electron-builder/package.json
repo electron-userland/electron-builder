@@ -68,7 +68,6 @@
     "js-yaml": "^3.8.4",
     "json5": "^0.5.1",
     "minimatch": "^3.0.4",
-    "node-forge": "^0.7.1",
     "normalize-package-data": "^2.3.8",
     "parse-color": "^1.0.0",
     "plist": "^2.1.0",

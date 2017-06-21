@@ -1,6 +1,6 @@
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readFile } from "fs-extra-p"
-import { fromUrl as parseRepositoryUrl } from "hosted-git-info"
+import { fromUrl, Info } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"
 import { Metadata, RepositoryInfo } from "../metadata"
@@ -50,4 +50,29 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
   }
 
   return url == null ? null : parseRepositoryUrl(url)
+}
+
+function parseRepositoryUrl(url: string): Info {
+  const info: any = fromUrl(url)
+  if (info != null) {
+    delete info.protocols
+    delete info.treepath
+    delete info.filetemplate
+    delete info.bugstemplate
+    delete info.gittemplate
+    delete info.tarballtemplate
+    delete info.sshtemplate
+    delete info.sshurltemplate
+    delete info.browsetemplate
+    delete info.docstemplate
+    delete info.httpstemplate
+    delete info.shortcuttemplate
+    delete info.pathtemplate
+    delete info.pathmatch
+    delete info.protocols_re
+    delete info.committish
+    delete info.default
+    delete info.opts
+  }
+  return info
 }

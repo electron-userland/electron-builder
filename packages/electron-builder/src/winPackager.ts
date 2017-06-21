@@ -1,8 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { asArray, exec, Lazy, log, use, warn } from "electron-builder-util"
-import { close, open, read, readFile, rename } from "fs-extra-p"
-import * as forge from "node-forge"
+import { close, open, read, rename } from "fs-extra-p"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
@@ -82,11 +81,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       }
 
       try {
-        // https://github.com/digitalbazaar/forge/issues/338#issuecomment-164831585
-        const p12Asn1 = forge.asn1.fromDer(await readFile(cscFile, "binary"), false)
-        const p12 = (<any>forge).pkcs12.pkcs12FromAsn1(p12Asn1, false, cscInfo.password)
-        const bagType = (<any>forge.pki.oids).certBag
-        publisherName = p12.getBags({bagType: bagType})[bagType][0].cert.subject.getField("CN").value
+        publisherName = await extractCommonNameUsingOpenssl(cscInfo.password || "", cscFile)
       }
       catch (e) {
         throw new Error(`Cannot extract publisher name from code signing certificate, please file issue. As workaround, set win.publisherName: ${e.stack || e}`)
@@ -316,4 +311,15 @@ function parseIco(buffer: Buffer): Array<Size> {
 
 function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
+}
+
+async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
+  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024})
+  const match = result.match(/^subject.*\/CN=([^\/]+)/m)
+  if (match == null || match[1] == null) {
+    throw new Error("Cannot extract common name from p12: " + result)
+  }
+  else {
+    return match[1]
+  }
 }

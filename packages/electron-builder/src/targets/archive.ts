@@ -56,8 +56,34 @@ export async function tar(compression: CompressionLevel | n, format: string, out
   return outFile
 }
 
+export interface ArchiveOptions {
+  /**
+   * @default false
+   */
+  withoutDir?: boolean
+
+  /**
+   * @default true
+   */
+  solid?: boolean
+
+  listFile?: string
+
+  dictSize?: number
+  excluded?: Array<string>
+}
+
+// 7z is very fast, so, use ultra compression
+export function addUltraArgs(args: Array<string>, options: ArchiveOptions) {
+  // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
+  // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
+  // -mtm=off disable "Stores last Modified timestamps for files."
+  // tc and ta are off by default, but to be sure, we explicitly set it to off
+  args.push("-mx=9", `-md=${options.dictSize || 64}m`, `-ms=${options.solid === false ? "off" : "on"}`, "-mtm=off", "-mtc=off", "-mta=off")
+}
+
 /** @internal */
-export async function archive(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, withoutDir = false): Promise<string> {
+export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
   let storeOnly = compression === "store"
   const args = debug7zArgs("a")
   if (format === "7z" || format.endsWith(".7z")) {
@@ -66,8 +92,7 @@ export async function archive(compression: CompressionLevel | n, format: string,
       args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
     }
     else if (!storeOnly) {
-      // 7z is very fast, so, use ultra compression
-      args.push("-mx=9", "-mfb=64", "-md=64m", "-ms=on")
+      addUltraArgs(args, options)
     }
   }
   else if (format === "zip" && compression === "maximum") {
@@ -94,11 +119,14 @@ export async function archive(compression: CompressionLevel | n, format: string,
     args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
   }
 
-  args.push(outFile, withoutDir ? "." : path.basename(dirToArchive))
+  args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)
+  if (options.excluded != null) {
+    args.push(...options.excluded)
+  }
 
   try {
     await spawn(path7za, args, {
-      cwd: withoutDir ? dirToArchive : path.dirname(dirToArchive),
+      cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
     })
   }
   catch (e) {

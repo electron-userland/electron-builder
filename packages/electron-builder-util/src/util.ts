@@ -71,7 +71,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean): ChildProcess {
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean, isDebugEnabled = debug.enabled): ChildProcess {
   if (options == null) {
     options = {}
   }
@@ -79,7 +79,7 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
     options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", debug.enabled ? "inherit" : "pipe"]
   }
 
-  if (debug.enabled) {
+  if (isDebugEnabled) {
     const argsString = args.join(" ")
     debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
   }

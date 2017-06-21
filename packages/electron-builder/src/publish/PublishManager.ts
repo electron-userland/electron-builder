@@ -1,9 +1,10 @@
 import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
+import _debug from "debug"
 import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
-import { asArray, debug, isEmptyOrSpaces, isPullRequest, Lazy, log, safeStringifyJson, warn } from "electron-builder-util"
+import { asArray, isEmptyOrSpaces, isPullRequest, Lazy, log, safeStringifyJson, warn } from "electron-builder-util"
 import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
@@ -25,6 +26,8 @@ import { WinPackager } from "../winPackager"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
+
+const debug = _debug("electron-builder:publish")
 
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
