@@ -172,6 +172,11 @@ Configuration Options
   If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
   
   If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <a name="Config-releaseInfo"></a>`releaseInfo`<a name="ReleaseInfo"></a> - The release info. Intended for command line usage (`-c.releaseInfo.releaseNotes="new features"`) or programmatically.
+  * <a name="ReleaseInfo-releaseName"></a>`releaseName` String - The release name.
+  * <a name="ReleaseInfo-releaseNotes"></a>`releaseNotes` String - The release notes.
+  * <a name="ReleaseInfo-releaseNotesFile"></a>`releaseNotesFile` String - The path to release notes file. Defaults to `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
+  * <a name="ReleaseInfo-releaseDate"></a>`releaseDate` String - The release date.
 * <a name="Config-buildVersion"></a>`buildVersion` String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
 * <a name="Config-detectUpdateChannel"></a>`detectUpdateChannel` = `true` Boolean - Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
 * <a name="Config-mac"></a>`mac`<a name="MacOptions"></a> - macOS options.

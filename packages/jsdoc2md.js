@@ -72,7 +72,7 @@ async function main() {
 
 function sortOptions(pages) {
   function isOptionMember(member) {
-    return member.name.endsWith("Options") || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo" || member.name === "FilePattern"
+    return member.name.endsWith("Options") || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo" || member.name === "FilePattern" || member.name === "ReleaseInfo"
   }
 
   const filtered = []
