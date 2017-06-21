@@ -185,6 +185,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
 
     const signOptions: any = {
       "identity-validation": false,
+      // https://github.com/electron-userland/electron-builder/issues/1699
+      ignore: (file: string) => file.startsWith("/Contents/PlugIns", appPath.length),
       identity: identity!,
       type: type,
       platform: isMas ? "mas" : "darwin",

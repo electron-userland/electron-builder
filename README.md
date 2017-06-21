@@ -44,8 +44,6 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
 ## Quick Setup Guide
 
-Maybe some [boilerplate](#boilerplates) will suite you?
-
 1. Specify the standard fields in the application `package.json` — [name](https://github.com/electron-userland/electron-builder/wiki/Options#Metadata-name), `description`, `version` and [author](https://docs.npmjs.com/files/package.json#people-fields-author-contributors).
 
 2. Specify the [build](https://github.com/electron-userland/electron-builder/wiki/Options#build) configuration in the `package.json` as follows:
