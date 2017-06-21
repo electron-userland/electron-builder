@@ -56,7 +56,7 @@ async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Co
 export async function getConfig(projectDir: string, configPath: string | null, packageMetadata: any | null, configFromOptions: Config | null | undefined): Promise<Config> {
   let fileOrPackageConfig
   if (configPath == null) {
-    fileOrPackageConfig = packageMetadata == null ? null : await loadConfig(projectDir, packageMetadata)
+    fileOrPackageConfig = await loadConfig(projectDir, packageMetadata)
   }
   else {
     fileOrPackageConfig = await doLoadConfig(path.resolve(projectDir, configPath), projectDir)
