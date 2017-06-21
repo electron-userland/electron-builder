@@ -20,7 +20,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
 import { WinPackager } from "./winPackager"
 
-function addHandler(emitter: EventEmitter, event: string, handler: Function) {
+function addHandler(emitter: EventEmitter, event: string, handler: (...args: any[]) => void) {
   emitter.on(event, handler)
 }
 

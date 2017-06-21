@@ -39,8 +39,8 @@
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-0.6.9.tgz#38e0e00de8e6f3ff0bb1f4cddcad43e7b580733a"
 
 "@types/node@*":
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.0.tgz#acaa89247afddc7967e9902fd11761dadea1a555"
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.1.tgz#89c271e0c3b9ebb6a3756dd601336970b6228b77"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -268,8 +268,8 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
 aws-sdk@^2.73.0:
-  version "2.73.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.73.0.tgz#15e0bb31436ebe433aebb6751dd6c36447beebba"
+  version "2.74.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.74.0.tgz#dbb128d274c1a049904a7cd8ce4a395a6a77af4d"
   dependencies:
     buffer "5.0.6"
     crypto-browserify "1.0.9"
@@ -3377,9 +3377,9 @@ type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-typescript@2.5.0-dev.20170614:
-  version "2.5.0-dev.20170614"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0-dev.20170614.tgz#eb77ed212a5e49ebc8392ba0a95713ef87d9f6f1"
+typescript@2.5.0-dev.20170621:
+  version "2.5.0-dev.20170621"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0-dev.20170621.tgz#e735c4d23386fd1b31006608d9525ad97729f30b"
 
 typescript@~2.3.0:
   version "2.3.4"

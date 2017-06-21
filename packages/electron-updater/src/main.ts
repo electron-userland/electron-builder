@@ -137,7 +137,7 @@ export class UpdaterSignal {
 
 const isLogEvent = false
 
-function addHandler(emitter: EventEmitter, event: string, handler: Function) {
+function addHandler(emitter: EventEmitter, event: string, handler: (...args: any[]) => void) {
   if (isLogEvent) {
     emitter.on(event, function (...args: any[]) {
       console.log("%s %s", event, args)
