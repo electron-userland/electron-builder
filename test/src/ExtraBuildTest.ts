@@ -131,10 +131,10 @@ test.ifAll.ifDevOrLinuxCi("scheme validation", appThrows({
   },
 }))
 
-test.ifAll.ifDevOrLinuxCi("scheme validation 2", appThrows({
+test.ifDevOrLinuxCi("scheme validation 2", appThrows({
   targets: linuxDirTarget,
   config: <any>{
-    appId: 123,
+    appId: {},
   },
 }))
 
