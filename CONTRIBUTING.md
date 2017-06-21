@@ -1,6 +1,6 @@
 You decided to contribute to this project? Great, thanks a lot for pushing it.
 
-This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to <develar@gmail.com>.
+This project adheres to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. By participating, you are expected to uphold this code.
 
 ## Pull Requests
 To check that your contributions match the project coding style make sure `npm test` passes.
