@@ -13,6 +13,7 @@ const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require ("chromium-pickle-js")
 
 const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
+const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
@@ -126,8 +127,8 @@ export class AsarPackager {
     const nextSlashIndex = this.src.length + 1
     // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
     await BluebirdPromise.map(files, file => {
-      if (file.includes("/node_modules/") || file.includes("/bower_components/")
-        || !file.includes("/", nextSlashIndex) // ignore not root files 
+      if (file.includes(NODE_MODULES_PATTERN) || file.includes(BOWER_COMPONENTS_PATTERN)
+        || !file.includes(path.sep, nextSlashIndex) // ignore not root files
         || !metadata.get(file)!.isFile()) {
         return null
       }

@@ -16,3 +16,15 @@ Object {
   ],
 }
 `;
+
+exports[`languages 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": 1,
+      "file": "Test App ßW-1.1.0.appx",
+      "safeArtifactName": "TestApp-1.1.0.appx",
+    },
+  ],
+}
+`;
