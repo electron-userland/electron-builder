@@ -3377,9 +3377,9 @@ type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-typescript@2.5.0-dev.20170621:
-  version "2.5.0-dev.20170621"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0-dev.20170621.tgz#e735c4d23386fd1b31006608d9525ad97729f30b"
+typescript@2.5.0-dev.20170614:
+  version "2.5.0-dev.20170614"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0-dev.20170614.tgz#eb77ed212a5e49ebc8392ba0a95713ef87d9f6f1"
 
 typescript@~2.3.0:
   version "2.3.4"

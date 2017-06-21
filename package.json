@@ -91,7 +91,7 @@
     "source-map-support": "^0.4.15",
     "ts-babel": "^3.0.1",
     "tslint": "^5.4.3",
-    "typescript": "2.5.0-dev.20170621",
+    "typescript": "2.5.0-dev.20170614",
     "whitespace": "^2.1.0",
     "xml2js": "^0.4.17"
   },
