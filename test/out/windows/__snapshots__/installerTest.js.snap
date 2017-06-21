@@ -28,6 +28,9 @@ exports[`allowToChangeInstallationDirectory 3`] = `
 Object {
   "githubArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
   "path": "Test Custom Installation Dir Setup 1.1.0.exe",
+  "releaseNotes": "New release with new bugs and
+
+without features",
   "version": "1.1.0",
 }
 `;

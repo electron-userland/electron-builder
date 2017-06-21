@@ -240,6 +240,11 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly publish?: Publish
 
   /**
+   * The release info. Intended for command line usage (`-c.releaseInfo.releaseNotes="new features"`) or programmatically.
+   */
+  readonly releaseInfo?: ReleaseInfo
+
+  /**
    * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
    * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
    */
@@ -447,4 +452,27 @@ export interface FilePattern {
    * The [glob patterns](#file-patterns).
    */
   filter?: Array<string> | string
+}
+
+export interface ReleaseInfo {
+  /**
+   * The release name.
+   */
+  releaseName?: string | null
+
+  /**
+   * The release notes.
+   */
+
+  releaseNotes?: string | null
+
+  /**
+   * The path to release notes file. Defaults to `release-notes.md` in the [build resources](#MetadataDirectories-buildResources).
+   */
+  releaseNotesFile?: string | null
+
+  /**
+   * The release date.
+   */
+  releaseDate?: string
 }

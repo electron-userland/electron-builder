@@ -10,7 +10,7 @@ import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electr
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { ensureDir, outputJson, writeFile } from "fs-extra-p"
+import { ensureDir, outputJson, readFile, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
@@ -18,7 +18,7 @@ import { prerelease } from "semver"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import { Arch, Platform, Target } from "../core"
-import { PlatformSpecificBuildOptions } from "../metadata"
+import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
@@ -258,6 +258,17 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   const sha512 = new Lazy<string>(() => hashFile(event.file!, "sha512", "base64"))
   const isMac = packager.platform === Platform.MAC
 
+  const releaseInfo = Object.assign(<ReleaseInfo>{}, packager.config.releaseInfo)
+  if (releaseInfo.releaseNotes == null) {
+    const releaseNotesFile = await packager.getResource(releaseInfo.releaseNotesFile, "release-notes.md")
+    const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
+    // to avoid undefined in the file, check for null
+    if (releaseNotes != null) {
+      releaseInfo.releaseNotes = releaseNotes
+    }
+  }
+  delete releaseInfo.releaseNotesFile
+
   for (const publishConfig of publishConfigs) {
     if (publishConfig.provider === "bintray") {
       continue
@@ -288,13 +299,13 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     const updateInfoFile = path.join(outDir, `${channel}${isMac ? "-mac" : ""}.yml`)
     if (!createdFiles.has(updateInfoFile)) {
       createdFiles.add(updateInfoFile)
-      const info: UpdateInfo = {
+      const info = Object.assign(<UpdateInfo>{
         version: version,
         releaseDate: new Date().toISOString(),
         githubArtifactName: event.safeArtifactName,
         path: path.basename(event.file!),
         sha512: await sha512.value,
-      }
+      }, releaseInfo)
 
       if (packager.platform === Platform.WINDOWS) {
         // backward compatibility

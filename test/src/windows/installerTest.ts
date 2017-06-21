@@ -1,5 +1,5 @@
 import { Arch, archFromString, Platform } from "electron-builder"
-import { readFile } from "fs-extra-p"
+import { readFile, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { app, assertPack, copyTestAsset } from "../helpers/packTester"
@@ -88,6 +88,7 @@ test.ifNotCiMac("boring, only perMachine", app({
   }
 }))
 
+// test release notes also
 test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
   targets: nsisTarget,
   config: {
@@ -100,8 +101,11 @@ test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
       allowToChangeInstallationDirectory: true,
       oneClick: false,
     }
-  }
+  },
 }, {
+  projectDirCreated: async (projectDir) => {
+    await writeFile(path.join(projectDir, "build", "release-notes.md"), "New release with new bugs and\n\nwithout features")
+  },
   packed: async(context) => {
     await expectUpdateMetadata(context, archFromString(process.arch))
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
