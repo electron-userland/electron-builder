@@ -35,6 +35,12 @@ Object {
 }
 `;
 
+exports[`electronDist as path to local folder with electron builds zipped  1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`override targets in the config - only arch 1`] = `
 Object {
   "win": Array [

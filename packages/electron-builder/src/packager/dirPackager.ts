@@ -1,34 +1,26 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { debug7zArgs, log, spawn, warn } from "electron-builder-util"
-import { copyDir, DO_NOT_USE_HARD_LINKS } from "electron-builder-util/out/fs"
+import { debug7zArgs, log, spawn } from "electron-builder-util"
+import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull } from "electron-builder-util/out/fs"
 import { chmod, emptyDir } from "fs-extra-p"
 import * as path from "path"
+import { Config, ElectronDownloadOptions } from "../metadata"
 import { PlatformPackager } from "../platformPackager"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
-function createDownloadOpts(opts: any, platform: string, arch: string, electronVersion: string) {
-  if (opts.download != null) {
-    warn(`"build.download is deprecated — please use build.electronDownload instead`)
-  }
-
-  const downloadOpts = Object.assign({
-    cache: opts.cache,
-    strictSSL: opts["strict-ssl"]
-  }, opts.electronDownload || opts.download)
-
-  subOptionWarning(downloadOpts, "download", "platform", platform)
-  subOptionWarning(downloadOpts, "download", "arch", arch)
-  subOptionWarning(downloadOpts, "download", "version", electronVersion)
-  return downloadOpts
+interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
+  version: string
+  platform: string
+  arch: string
 }
 
-function subOptionWarning (properties: any, optionName: any, parameter: any, value: any) {
-  if (properties.hasOwnProperty(parameter)) {
-    warn(`${optionName}.${parameter} will be inferred from the main options`)
-  }
-  properties[parameter] = value
+function createDownloadOpts(opts: Config, platform: string, arch: string, electronVersion: string): InternalElectronDownloadOptions {
+  return Object.assign({
+    platform,
+    arch,
+    version: electronVersion,
+  }, opts.electronDownload)
 }
 
 /** @internal */
@@ -45,8 +37,17 @@ export function unpackMuon(packager: PlatformPackager<any>, out: string, platfor
   }, createDownloadOpts(packager.config, platform, arch, version)))
 }
 
-async function unpack(packager: PlatformPackager<any>, out: string, platform: string, options: any) {
-  const dist = packager.config.electronDist
+async function unpack(packager: PlatformPackager<any>, out: string, platform: string, options: InternalElectronDownloadOptions) {
+  let dist: string | null | undefined = packager.config.electronDist
+  if (dist != null) {
+    const zipFile = `electron-v${options.version}-${platform}-${options.arch}.zip`
+    const resolvedDist = path.resolve(packager.projectDir, dist)
+    if ((await statOrNull(path.join(resolvedDist, zipFile))) != null) {
+      options.cache = resolvedDist
+      dist = null
+    }
+  }
+
   if (dist == null) {
     const zipPath = (await BluebirdPromise.all<any>([
       downloadElectron(options),

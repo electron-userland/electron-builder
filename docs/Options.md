@@ -155,7 +155,19 @@ Configuration Options
   * <a name="Protocol-role"></a>`role` = `Editor` "Editor" | "Viewer" | "Shell" | "None" - *macOS-only* The app’s role with respect to the type.
 * <a name="Config-electronCompile"></a>`electronCompile` Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
 * <a name="Config-electronDist"></a>`electronDist` String - The path to custom Electron build (e.g. `~/electron/out/R`).
-* <a name="Config-electronDownload"></a>`electronDownload` any - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+* <a name="Config-electronDownload"></a>`electronDownload`<a name="ElectronDownloadOptions"></a> - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
+  * <a name="ElectronDownloadOptions-cache"></a>`cache` String - The [cache location](https://github.com/electron-userland/electron-download#cache-location).
+  * <a name="ElectronDownloadOptions-mirror"></a>`mirror` String - The mirror.
+  * <a name="ElectronDownloadOptions-customDir"></a>`customDir` String
+  * <a name="ElectronDownloadOptions-customFilename"></a>`customFilename` String
+  * <a name="ElectronDownloadOptions-quiet"></a>`quiet` Boolean
+  * <a name="ElectronDownloadOptions-strictSSL"></a>`strictSSL` Boolean
+  * <a name="ElectronDownloadOptions-verifyChecksum"></a>`verifyChecksum` Boolean
+  * <a name="ElectronDownloadOptions-force"></a>`force` Boolean
+  * <a name="ElectronDownloadOptions-symbols"></a>`symbols` Boolean
+  * <a name="ElectronDownloadOptions-mksnapshot"></a>`mksnapshot` Boolean
+  * <a name="ElectronDownloadOptions-ffmpeg"></a>`ffmpeg` Boolean
+  * <a name="ElectronDownloadOptions-dsym"></a>`dsym` Boolean
 * <a name="Config-electronVersion"></a>`electronVersion` String - The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
 * <a name="Config-extends"></a>`extends` String - The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
   

@@ -173,3 +173,10 @@ test.ifAll.ifDevOrLinuxCi("scheme validation extraFiles", app({
 
 // test on all CI to check path separators
 test.ifAll("do not exclude build entirely (respect files)", () => assertPack("test-app-build-sub", {targets: linuxDirTarget}))
+
+test.ifAll("electronDist as path to local folder with electron builds zipped ", app({
+  targets: linuxDirTarget,
+  config: {
+    electronDist: require("env-paths")("electron", {suffix: ""}).cache,
+  },
+}))

@@ -177,7 +177,7 @@ export interface Config extends PlatformSpecificBuildOptions {
   /**
    * The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
    */
-  readonly electronDownload?: any
+  readonly electronDownload?: ElectronDownloadOptions
 
   /**
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
@@ -475,4 +475,29 @@ export interface ReleaseInfo {
    * The release date.
    */
   releaseDate?: string
+}
+
+export interface ElectronDownloadOptions {
+  /**
+   * The [cache location](https://github.com/electron-userland/electron-download#cache-location).
+   */
+  cache?: string | null
+
+  /**
+   * The mirror.
+   */
+  mirror?: string | null
+
+  customDir?: string | null
+  customFilename?: string | null
+  quiet?: boolean
+
+  strictSSL?: boolean
+  verifyChecksum?: boolean
+
+  force?: boolean
+  symbols?: boolean
+  mksnapshot?: boolean
+  ffmpeg?: boolean
+  dsym?: boolean
 }
