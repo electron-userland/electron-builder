@@ -23,5 +23,5 @@ export async function isOsVersionGreaterThanOrEqualTo(input: string) {
 
 /** @internal */
 export async function isMacOsSierra() {
-  return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12")
+  return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
 }
