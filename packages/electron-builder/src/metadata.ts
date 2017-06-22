@@ -298,7 +298,7 @@ export interface Config extends PlatformSpecificBuildOptions {
    * [Snap](http://snapcraft.io) options.
    */
   readonly snap?: SnapOptions | null
-  readonly appimage?: LinuxTargetSpecificOptions | null
+  readonly appImage?: LinuxTargetSpecificOptions | null
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null

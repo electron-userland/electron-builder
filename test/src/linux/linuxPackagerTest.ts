@@ -16,6 +16,9 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
         Foo: "bar",
         Terminal: "true",
       },
+    },
+    appImage: {
+      artifactName: "boo-${productName}",
     }
   },
   effectiveOptionComputed: async (it) => {

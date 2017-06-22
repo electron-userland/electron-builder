@@ -35,7 +35,8 @@ export default class AppImageTarget extends Target {
     const packager = this.packager
 
     // https://github.com/electron-userland/electron-builder/issues/775
-    const resultFile = path.join(this.outDir, packager.computeSafeArtifactName("AppImage", arch, false))
+    // https://github.com/electron-userland/electron-builder/issues/1726
+    const resultFile = path.join(this.outDir, this.options.artifactName == null ? packager.computeSafeArtifactName("AppImage", arch, false) : packager.expandArtifactNamePattern(this.options, "AppImage", arch))
     await unlinkIfExists(resultFile)
 
     const appImagePath = await appImagePathPromise
@@ -98,6 +99,6 @@ export default class AppImageTarget extends Target {
 
     await chmod(resultFile, "0755")
 
-    packager.dispatchArtifactCreated(resultFile, this, arch)
+    packager.dispatchArtifactCreated(resultFile, this, arch, packager.computeSafeArtifactName("AppImage", arch, false))
   }
 }

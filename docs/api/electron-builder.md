@@ -67,6 +67,7 @@
 
 | Name | Type |
 | --- | --- |
+| **outDir**| <code>String</code> | 
 | **appOutDir**| <code>String</code> | 
 | **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | **electronPlatformName**| <code>String</code> | 
@@ -106,7 +107,6 @@
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
 | **isPrepackedAppAsar**| <code>Boolean</code> | 
 | **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
-| **outDir**| <code>String</code> | 
 
 
 * [`.BuildInfo`](#BuildInfo)
@@ -224,7 +224,6 @@
 | tempDirManager = <code>new TmpDir()</code>| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
 | options| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
-| **outDir**| <code>String</code> | 
 
 
 * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
@@ -793,9 +792,13 @@
 ## electron-builder/out/util/flags
 
 * [electron-builder/out/util/flags](#module_electron-builder/out/util/flags)
+    * [`.isBuildCacheEnabled()`](#module_electron-builder/out/util/flags.isBuildCacheEnabled) ⇒ <code>Boolean</code>
     * [`.isUseSystemSigncode()`](#module_electron-builder/out/util/flags.isUseSystemSigncode) ⇒ <code>Boolean</code>
     * [`.isUseSystemWine()`](#module_electron-builder/out/util/flags.isUseSystemWine) ⇒ <code>Boolean</code>
 
+<a name="module_electron-builder/out/util/flags.isBuildCacheEnabled"></a>
+### `electron-builder/out/util/flags.isBuildCacheEnabled()` ⇒ <code>Boolean</code>
+**Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
 <a name="module_electron-builder/out/util/flags.isUseSystemSigncode"></a>
 ### `electron-builder/out/util/flags.isUseSystemSigncode()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  

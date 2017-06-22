@@ -18,7 +18,8 @@ Object {
   "linux": Array [
     Object {
       "arch": 1,
-      "file": "TestApp-1.1.0-x86_64.AppImage",
+      "file": "boo-Test App ßW",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }
@@ -30,6 +31,7 @@ Object {
     Object {
       "arch": 1,
       "file": "TestApp-1.1.0-x86_64.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }
@@ -41,6 +43,7 @@ Object {
     Object {
       "arch": 1,
       "file": "TestApp-1.1.0-x86_64.AppImage",
+      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }

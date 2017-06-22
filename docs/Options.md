@@ -374,7 +374,7 @@ Configuration Options
     
     If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
   * <a name="SnapOptions-ubuntuAppPlatformContent"></a>`ubuntuAppPlatformContent` String - Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
-* <a name="Config-appimage"></a>`appimage` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+* <a name="Config-appImage"></a>`appImage` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-pacman"></a>`pacman` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-rpm"></a>`rpm` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-freebsd"></a>`freebsd` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
