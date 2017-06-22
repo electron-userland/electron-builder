@@ -17,6 +17,7 @@ import { AppPackageHelper, NsisTarget } from "./targets/nsis"
 import { createCommonTarget } from "./targets/targetFactory"
 import { WebInstallerTarget } from "./targets/WebInstallerTarget"
 import { BuildCacheManager, digest } from "./util/cacheManager"
+import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { execWine } from "./util/wine"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
@@ -61,6 +62,17 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
 
+  readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
+    const cscInfo = await this.cscInfo.value
+    if (cscInfo == null) {
+      return null
+    }
+
+    // https://github.com/electron-userland/electron-builder/issues/1735
+    const args = cscInfo.password ? [`(Get-PfxData "${cscInfo.file!}" -Password (ConvertTo-SecureString -String "${cscInfo.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${cscInfo.file!}").Subject`]
+    return await exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
+  })
+
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
     let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
     if (publisherName === null) {
@@ -76,9 +88,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     if (publisherName == null && cscFile != null) {
       if (process.platform === "win32") {
         try {
-          const subject = parseDn(await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`], {timeout: 30 * 1000})).get("CN")
-          if (subject) {
-            return asArray(subject)
+          const subject = await this.computedPublisherSubjectOnWindowsOnly.value
+          const commonName = subject == null ? null : parseDn(subject).get("CN")
+          if (commonName) {
+            return asArray(commonName)
           }
         }
         catch (e) {
@@ -265,7 +278,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       args.push("--set-icon", it)
     })
 
-    const cscInfoForCacheDigest = isCI ? null : await this.cscInfo.value
+    const config = this.config
+    const cscInfoForCacheDigest = !isBuildCacheEnabled() || isCI || config.electronDist != null ? null : await this.cscInfo.value
     let buildCacheManager: BuildCacheManager | null = null
     // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
     if (cscInfoForCacheDigest != null) {
@@ -276,8 +290,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       const timer = time("executable cache")
       // md5 is faster, we don't need secure hash
       const hash = createHash("md5")
-      hash.update(this.config.electronVersion || "no electronVersion")
-      hash.update(this.config.muonVersion || "no muonVersion")
+      hash.update(config.electronVersion || "no electronVersion")
+      hash.update(config.muonVersion || "no muonVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))
       hash.update(JSON.stringify(args))
       hash.update(cscInfoForCacheDigest.certificateSha1 || "no certificateSha1")

@@ -25,4 +25,6 @@ test.ifDevOrLinuxCi("remove password from log", async () => {
   expect(removePassword("pass:foo")).toMatchSnapshot()
   expect(removePassword("/usr/bin/productbuild -P wefwef")).toMatchSnapshot()
   expect(removePassword(" /p foo")).toMatchSnapshot()
+  expect(removePassword('ConvertTo-SecureString -String "test"')).toMatchSnapshot()
+  expect(removePassword('(Get-PfxData "C:\\Users\\develar\\AppData\\Local\\Temp\\electron-builder-yBY8D2\\0-1.p12" -Password (ConvertTo-SecureString -String "test" -Force -AsPlainText)).EndEntityCertificates.Subject')).toMatchSnapshot()
 })

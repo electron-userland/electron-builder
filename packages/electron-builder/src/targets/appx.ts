@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, exec, spawn, use } from "electron-builder-util"
+import _debug from "debug"
+import { asArray, spawn, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
 import { asyncAll, orIfFileNotExist } from "electron-builder-util/out/promise"
@@ -20,6 +21,7 @@ const vendorAssetsForDefaultAssets: { [key: string]: string; } = {
 }
 
 const DEFAULT_RESOURCE_LANG = "en-US"
+const debug = _debug("electron-builder:appx")
 
 export default class AppXTarget extends Target {
   readonly options: AppXOptions = deepAssign({}, this.packager.platformSpecificBuildOptions, this.packager.config.appx)
@@ -47,9 +49,9 @@ export default class AppXTarget extends Target {
         throw new Error("Please specify appx.publisher: cannot get publisher from your code signing certificate if EV cert is used")
       }
 
-      publisher = (await exec("powershell.exe", [`(Get-PfxCertificate "${cscFile}").Subject`])).trim()
+      publisher = await packager.computedPublisherSubjectOnWindowsOnly.value
       if (!publisher) {
-        throw new Error("Please specify appx.publisher: Get-PfxCertificate returns empty string")
+        throw new Error("Please specify appx.publisher, cannot compute from p12 file")
       }
     }
 
@@ -80,15 +82,15 @@ export default class AppXTarget extends Target {
     if (isScaledAssetsProvided(userAssets)) {
       const priConfigPath = path.join(preAppx, "priconfig.xml")
       const makePriPath = path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe")
-      await spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"])
-      await spawn(makePriPath, ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx])
+      await spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, {isDebugEnabled: debug.enabled})
+      await spawn(makePriPath, ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx], undefined, {isDebugEnabled: debug.enabled})
 
       makeAppXArgs.push("/l")
     }
 
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
-    await spawn(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe"), makeAppXArgs)
+    await spawn(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe"), makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
     await packager.sign(destination)
 
     packager.dispatchArtifactCreated(destination, this, arch, packager.computeSafeArtifactName("appx"))

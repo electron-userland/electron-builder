@@ -6,6 +6,10 @@ export function isUseSystemSigncode() {
   return isEnvTrue(process.env.USE_SYSTEM_SIGNCODE)
 }
 
+export function isBuildCacheEnabled() {
+  return !isEnvTrue(process.env.ELECTRON_BUILDER_DISABLE_BUILD_CACHE)
+}
+
 function isEnvTrue(value: string | null) {
   if (value != null) {
     value = value.trim()
