@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
 import BluebirdPromise from "bluebird-lst"
-import { computeDefaultAppDirectory, log, use, warn } from "electron-builder-util"
+import { log, use, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import yargs from "yargs"
-import { getConfig, getElectronVersion } from "../util/config"
+import { computeDefaultAppDirectory, getConfig, getElectronVersion } from "../util/config"
 import { installOrRebuild } from "../util/yarn"
 
 declare const PACKAGE_VERSION: string
@@ -39,11 +39,11 @@ export async function installAppDeps(args: any) {
   }
 
   const projectDir = process.cwd()
-  const config = (await getConfig(projectDir, null, null, null)) || {}
+  const config = await getConfig(projectDir, null, null, null)
   const muonVersion = config.muonVersion
   const results = await BluebirdPromise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
-    muonVersion == null ? getElectronVersion(config, projectDir) : BluebirdPromise.resolve(muonVersion),
+    muonVersion == null ? getElectronVersion(projectDir, config) : BluebirdPromise.resolve(muonVersion),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)

@@ -1,10 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
+import { createHash } from "crypto"
+import _debug from "debug"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { asArray, exec, Lazy, log, use, warn } from "electron-builder-util"
 import { close, open, read, rename } from "fs-extra-p"
+import isCI from "is-ci"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign"
-import { DIR_TARGET, Platform, Target } from "./core"
+import { Arch, DIR_TARGET, Platform, Target } from "./core"
+import { AfterPackContext } from "./metadata"
 import { WinBuildOptions } from "./options/winOptions"
 import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
@@ -12,6 +16,8 @@ import AppXTarget from "./targets/appx"
 import { AppPackageHelper, NsisTarget } from "./targets/nsis"
 import { createCommonTarget } from "./targets/targetFactory"
 import { WebInstallerTarget } from "./targets/WebInstallerTarget"
+import { BuildCacheManager, digest } from "./util/cacheManager"
+import { time } from "./util/timer"
 import { execWine } from "./util/wine"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
@@ -235,8 +241,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  async signAndEditResources(file: string) {
+  async signAndEditResources(file: string, arch: Arch, outDir: string) {
     const appInfo = this.appInfo
+
+    const files: Array<string> = []
 
     const args = [
       file,
@@ -251,16 +259,52 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
-    use(await this.getIconPath(), it => args.push("--set-icon", it))
-    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
+    const iconPath = await this.getIconPath()
+    use(iconPath, it => {
+      files.push(it)
+      args.push("--set-icon", it)
+    })
 
+    const cscInfoForCacheDigest = isCI ? null : await this.cscInfo.value
+    let buildCacheManager: BuildCacheManager | null = null
+    // resources editing doesn't change executable for the same input and executed quickly - no need to complicate
+    if (cscInfoForCacheDigest != null) {
+      if (cscInfoForCacheDigest.file != null) {
+        files.push(cscInfoForCacheDigest.file)
+      }
+
+      const timer = time("executable cache")
+      // md5 is faster, we don't need secure hash
+      const hash = createHash("md5")
+      hash.update(this.config.electronVersion || "no electronVersion")
+      hash.update(this.config.muonVersion || "no muonVersion")
+      hash.update(JSON.stringify(this.platformSpecificBuildOptions))
+      hash.update(JSON.stringify(args))
+      hash.update(cscInfoForCacheDigest.certificateSha1 || "no certificateSha1")
+      hash.update(cscInfoForCacheDigest.subjectName || "no subjectName")
+
+      buildCacheManager = new BuildCacheManager(outDir, file, arch)
+      if (await buildCacheManager.copyIfValid(await digest(hash, files))) {
+        timer.end()
+        return
+      }
+      timer.end()
+    }
+
+    const timer = time("wine&sign")
+    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
     await this.sign(file)
+    timer.end()
+
+    if (buildCacheManager != null) {
+      await buildCacheManager.save()
+    }
   }
 
-  protected async postInitApp(appOutDir: string) {
-    const executable = path.join(appOutDir, `${this.appInfo.productFilename}.exe`)
-    await rename(path.join(appOutDir, `${this.electronDistExecutableName}.exe`), executable)
-    await this.signAndEditResources(executable)
+  protected async postInitApp(packContext: AfterPackContext) {
+    const executable = path.join(packContext.appOutDir, `${this.appInfo.productFilename}.exe`)
+    await rename(path.join(packContext.appOutDir, `${this.electronDistExecutableName}.exe`), executable)
+    await this.signAndEditResources(executable, packContext.arch, packContext.outDir)
   }
 }
 
@@ -313,8 +357,9 @@ function isIco(buffer: Buffer): boolean {
   return buffer.readUInt16LE(0) === 0 && buffer.readUInt16LE(2) === 1
 }
 
+const debugOpenssl = _debug("electron-builder:openssl")
 async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
-  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024})
+  const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024}, debugOpenssl.enabled)
   const match = result.match(/^subject.*\/CN=([^\/]+)/m)
   if (match == null || match[1] == null) {
     throw new Error("Cannot extract common name from p12: " + result)

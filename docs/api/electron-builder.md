@@ -16,6 +16,10 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/util/flags">electron-builder/out/util/flags</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/util/timer">electron-builder/out/util/timer</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
 <dd></dd>
 </dl>
@@ -96,15 +100,13 @@
 | **config**| <code>[Config](Options#Config)</code> | 
 | **projectDir**| <code>String</code> | 
 | **appDir**| <code>String</code> | 
-| **electronVersion**| <code>String</code> | 
-| muonVersion| <code>String</code> \| <code>null</code> | 
 | **isTwoPackageJsonProjectLayoutUsed**| <code>Boolean</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
 | **tempDirManager**| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
 | **isPrepackedAppAsar**| <code>Boolean</code> | 
-| prepackaged| <code>String</code> \| <code>null</code> | 
 | **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+| **outDir**| <code>String</code> | 
 
 
 * [`.BuildInfo`](#BuildInfo)
@@ -217,13 +219,12 @@
 | **isPrepackedAppAsar**| <code>Boolean</code> | 
 | **config**| <code>[Config](Options#Config)</code> | 
 | isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>Boolean</code> | 
-| **electronVersion**| <code>String</code> | 
-| muonVersion| <code>String</code> \| <code>null</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
 | tempDirManager = <code>new TmpDir()</code>| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
+| options| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
-| prepackaged| <code>String</code> \| <code>null</code> | 
+| **outDir**| <code>String</code> | 
 
 
 * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
@@ -407,7 +408,7 @@
 
 | Name | Type |
 | --- | --- |
-| description = <code>&quot;smarten(this.metadata.description || \&quot;\&quot;)&quot;</code>| <code>String</code> | 
+| description = <code>&quot;smarten(this.info.metadata.description || \&quot;\&quot;)&quot;</code>| <code>String</code> | 
 | version| <code>String</code> | 
 | buildNumber| <code>String</code> | 
 | buildVersion| <code>String</code> | 
@@ -787,6 +788,41 @@
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+
+<a name="module_electron-builder/out/util/flags"></a>
+## electron-builder/out/util/flags
+
+* [electron-builder/out/util/flags](#module_electron-builder/out/util/flags)
+    * [`.isUseSystemSigncode()`](#module_electron-builder/out/util/flags.isUseSystemSigncode) ⇒ <code>Boolean</code>
+    * [`.isUseSystemWine()`](#module_electron-builder/out/util/flags.isUseSystemWine) ⇒ <code>Boolean</code>
+
+<a name="module_electron-builder/out/util/flags.isUseSystemSigncode"></a>
+### `electron-builder/out/util/flags.isUseSystemSigncode()` ⇒ <code>Boolean</code>
+**Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
+<a name="module_electron-builder/out/util/flags.isUseSystemWine"></a>
+### `electron-builder/out/util/flags.isUseSystemWine()` ⇒ <code>Boolean</code>
+**Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
+<a name="module_electron-builder/out/util/timer"></a>
+## electron-builder/out/util/timer
+
+* [electron-builder/out/util/timer](#module_electron-builder/out/util/timer)
+    * [`.Timer`](#Timer)
+        * [`.end()`](#module_electron-builder/out/util/timer.Timer+end)
+    * [`.time(label)`](#module_electron-builder/out/util/timer.time) ⇒ <code>[Timer](#Timer)</code>
+
+<a name="Timer"></a>
+### `Timer`
+**Kind**: interface of [<code>electron-builder/out/util/timer</code>](#module_electron-builder/out/util/timer)  
+<a name="module_electron-builder/out/util/timer.Timer+end"></a>
+#### `timer.end()`
+**Kind**: instance method of [<code>Timer</code>](#Timer)  
+<a name="module_electron-builder/out/util/timer.time"></a>
+### `electron-builder/out/util/timer.time(label)` ⇒ <code>[Timer](#Timer)</code>
+**Kind**: method of [<code>electron-builder/out/util/timer</code>](#module_electron-builder/out/util/timer)  
+
+| Param | Type |
+| --- | --- |
+| label | <code>String</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign"></a>
 ## electron-builder/out/windowsCodeSign

@@ -36,9 +36,6 @@ export interface BuildInfo {
   readonly projectDir: string
   readonly appDir: string
 
-  readonly electronVersion: string
-  readonly muonVersion?: string | null
-
   readonly isTwoPackageJsonProjectLayoutUsed: boolean
 
   readonly appInfo: AppInfo
@@ -48,8 +45,6 @@ export interface BuildInfo {
   readonly repositoryInfo: Promise<SourceRepositoryInfo | null>
 
   readonly isPrepackedAppAsar: boolean
-
-  readonly prepackaged?: string | null
 
   readonly cancellationToken: CancellationToken
 

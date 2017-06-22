@@ -462,7 +462,7 @@ export class NsisTarget extends Target {
         // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
         env: Object.assign({}, process.env, {NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"}),
         cwd: this.nsisTemplatesDir,
-      }, true, debug.enabled)
+      }, {isPipeInput: true, isDebugEnabled: debug.enabled})
 
       const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
 

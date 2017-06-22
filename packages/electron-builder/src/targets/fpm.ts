@@ -80,7 +80,7 @@ export default class FpmTarget extends Target {
 
     const destination = path.join(this.outDir, this.packager.expandArtifactNamePattern(this.options, target, arch, nameFormat, !isUseArchIfX64))
     await unlinkIfExists(destination)
-    if (this.packager.info.prepackaged != null) {
+    if (this.packager.packagerOptions.prepackaged != null) {
       await ensureDir(this.outDir)
     }
 
@@ -96,7 +96,7 @@ export default class FpmTarget extends Target {
     const options = this.options
     let author = options.maintainer
     if (author == null) {
-      const a = appInfo.metadata.author!
+      const a = packager.info.metadata.author!
       if (a.email == null) {
         throw new Error(errorMessages.authorEmailIsMissed)
       }
@@ -173,7 +173,7 @@ export default class FpmTarget extends Target {
       args.push("--depends", dep)
     }
 
-    use(packager.appInfo.metadata.license, it => args.push("--license", it!))
+    use(packager.info.metadata.license, it => args.push("--license", it!))
     use(appInfo.buildNumber, it => args.push("--iteration", it!))
 
     use(options.fpm, it => args.push(...<any>it))

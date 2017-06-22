@@ -1,12 +1,15 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
+import _debug from "debug"
 import { CancellationToken, DownloadOptions } from "electron-builder-http"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { statOrNull } from "./fs"
 import { log, warn } from "./log"
 import { httpExecutor } from "./nodeHttpExecutor"
-import { debug, debug7zArgs, getCacheDirectory, getTempName, spawn } from "./util"
+import { debug7zArgs, getCacheDirectory, getTempName, spawn } from "./util"
+
+const debug = _debug("electron-builder:binDownload")
 
 const versionToPromise = new Map<string, BluebirdPromise<string>>()
 

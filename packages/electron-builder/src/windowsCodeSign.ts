@@ -6,6 +6,7 @@ import * as os from "os"
 import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 import { computeToolEnv, ToolInfo } from "./util/bundledTool"
+import { isUseSystemSigncode } from "./util/flags"
 import { isOsVersionGreaterThanOrEqualTo } from "./util/macosVersion"
 
 /** @internal */
@@ -159,7 +160,7 @@ export function isOldWin6() {
 }
 
 async function getToolPath(): Promise<ToolInfo> {
-  if (process.env.USE_SYSTEM_SIGNCODE) {
+  if (isUseSystemSigncode()) {
     return {path: "osslsigncode"}
   }
 

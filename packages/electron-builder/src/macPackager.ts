@@ -43,7 +43,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   protected prepareAppInfo(appInfo: AppInfo): AppInfo {
-    return new AppInfo(appInfo.metadata, this.info, this.platformSpecificBuildOptions.bundleVersion)
+    return new AppInfo(this.info, this.platformSpecificBuildOptions.bundleVersion)
   }
 
   async getIconPath(): Promise<string | null> {
@@ -83,7 +83,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
-    const prepackaged = this.info.prepackaged
+    const prepackaged = this.packagerOptions.prepackaged
 
     if (!hasMas || targets.length > 1) {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
@@ -190,7 +190,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       identity: identity!,
       type: type,
       platform: isMas ? "mas" : "darwin",
-      version: this.info.electronVersion,
+      version: this.config.electronVersion,
       app: appPath,
       keychain: keychainName || undefined,
       binaries:  (isMas && masOptions != null ? masOptions.binaries : macOptions.binaries) || undefined,

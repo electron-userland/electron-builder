@@ -11,7 +11,7 @@ import { AppInfo } from "./appInfo"
 import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
+import { AfterPackContext, AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
@@ -81,7 +81,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected computeAppOutDir(outDir: string, arch: Arch): string {
-    return this.info.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
+    return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
   dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string) {
@@ -108,19 +108,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
   
   get electronDistMacOsAppName() {
-    return this.info.muonVersion == null ? "Electron.app" : "Brave.app"
+    return this.config.muonVersion == null ? "Electron.app" : "Brave.app"
   }
   
   get electronDistExecutableName() {
-    return this.info.muonVersion == null ? "electron" : "brave"
+    return this.config.muonVersion == null ? "electron" : "brave"
   }
   
   get electronDistMacOsExecutableName() {
-    return this.info.muonVersion == null ? "Electron" : "Brave"
+    return this.config.muonVersion == null ? "Electron" : "Brave"
   }
 
   protected async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, platformSpecificBuildOptions: DC, targets: Array<Target>) {
-    if (this.info.prepackaged != null) {
+    if (this.packagerOptions.prepackaged != null) {
       return
     }
 
@@ -131,9 +131,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, this.electronDistMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
 
-    const muonVersion = this.info.muonVersion
+    const muonVersion = this.config.muonVersion
     const isElectron = muonVersion == null
-    log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${this.info.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
+    const config = this.config
+    log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${config.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
     const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir),
@@ -141,10 +142,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       path.resolve(this.info.projectDir, "electron-builder.json"),
       path.resolve(this.info.projectDir, "electron-builder.json5")])
     if (this.info.isPrepackedAppAsar) {
-      await unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion)
+      await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
     }
     else {
-      await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], this.info.electronVersion) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
+      await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
 
       if (asarOptions == null) {
         await dependencies(appDir, ignoreFiles)
@@ -175,7 +176,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME,
-    }, this.config.extraMetadata) : this.config.extraMetadata)
+    }, config.extraMetadata) : config.extraMetadata)
     let promise
     if (this.info.isPrepackedAppAsar) {
       promise = copyDir(appDir, path.join(resourcesPath), filter, transformer)
@@ -184,13 +185,19 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       promise = copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer)
     }
     else {
-      const unpackPattern = getFileMatchers(this.config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
+      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this)
     }
 
+    const packContext: AfterPackContext = {
+      appOutDir, outDir, arch, targets,
+      packager: this,
+      electronPlatformName: platformName,
+    }
+
     //noinspection ES6MissingAwait
-    const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(appOutDir)]
+    const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(packContext)]
     if (this.platform !== Platform.MAC) {
       promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
     }
@@ -208,17 +215,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return
     }
 
-    await this.info.afterPack({
-      appOutDir: appOutDir,
-      packager: this,
-      electronPlatformName: platformName,
-      arch: arch,
-      targets: targets,
-    })
+    await this.info.afterPack(packContext)
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
   }
 
-  protected async postInitApp(executableFile: string): Promise<any> {
+  protected async postInitApp(packContext: AfterPackContext): Promise<any> {
   }
 
   async getIconPath(): Promise<string | null> {
@@ -329,7 +330,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     const resourcesDir = this.getResourcesDir(appOutDir)
-    await this.checkFileInPackage(resourcesDir, this.appInfo.metadata.main || "index.js", "Application entry file", isAsar)
+    await this.checkFileInPackage(resourcesDir, this.info.metadata.main || "index.js", "Application entry file", isAsar)
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 

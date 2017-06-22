@@ -28,6 +28,7 @@
       <excludePattern pattern="yarn.lock" />
       <excludePattern pattern="scheme.json" />
     </content>
+    <content url="file://$MODULE_DIR$/node_modules/@types/node" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

@@ -3,10 +3,11 @@ import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
+import { isUseSystemWine } from "./flags"
 import { isOsVersionGreaterThanOrEqualTo } from "./macosVersion"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
-  if (process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12")) {
+  if (!isUseSystemWine() && process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12")) {
     // noinspection SpellCheckingInspection
     const wineDir = await getBinFromGithub("wine", "2.0.1-mac-10.12", "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg==")
     return {

@@ -61,6 +61,7 @@
       <w>docdash</w>
       <w>docstrap</w>
       <w>dpkg</w>
+      <w>dsym</w>
       <w>dylibbundler</w>
       <w>eacces</w>
       <w>ebusy</w>
@@ -154,6 +155,7 @@
       <w>minimatch</w>
       <w>mkdirp</w>
       <w>mkdtemp</w>
+      <w>mksnapshot</w>
       <w>mpass</w>
       <w>multilib</w>
       <w>multiuser</w>

@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { debug7zArgs, spawn } from "electron-builder-util"
+import { debug7z, debug7zArgs, spawn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
 import { unlink } from "fs-extra-p"
 import * as path from "path"
@@ -127,7 +127,7 @@ export async function archive(compression: CompressionLevel | null | undefined, 
   try {
     await spawn(path7za, args, {
       cwd: options.withoutDir ? dirToArchive : path.dirname(dirToArchive),
-    })
+    }, {isDebugEnabled: debug7z.enabled})
   }
   catch (e) {
     if (e.code === "ENOENT" && !(await exists(dirToArchive))) {

@@ -1,4 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch } from "electron-builder"
 import { debug, exec, log, spawn } from "electron-builder-util"
 import { copyFile, walk } from "electron-builder-util/out/fs"
 import { execWine, prepareArgs } from "electron-builder/out/util/wine"
@@ -47,7 +48,7 @@ export interface SquirrelOptions {
   copyright?: string
 }
 
-export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string) {
+export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string, outDir: string, arch: Arch) {
   const appUpdate = await packager.getTempFile("Update.exe")
   await BluebirdPromise.all([
     copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
@@ -92,7 +93,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
 
   await execWine(path.join(options.vendorPath, "WriteZipToSetup.exe"), [setupPath, embeddedArchiveFile])
 
-  await packager.signAndEditResources(setupPath)
+  await packager.signAndEditResources(setupPath, arch, outDir)
   if (options.msi && process.platform === "win32") {
     const outFile = setupExe.replace(".exe", ".msi")
     await msi(options, nupkgPath, setupPath, outputDirectory, outFile)

@@ -2,6 +2,7 @@ import Ajv from "ajv"
 import { CancellationToken } from "electron-builder-http"
 import { debug, log, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readFile, readJson } from "fs-extra-p"
@@ -80,12 +81,18 @@ export async function getConfig(projectDir: string, configPath: string | null, p
 }
 
 /** @internal */
-export async function getElectronVersion(config: Config | null | undefined, projectDir: string, projectMetadata?: any | null): Promise<string> {
-  // build is required, but this check is performed later, so, we should check for null
-  if (config != null && config.electronVersion != null) {
+export async function getElectronVersion(projectDir: string, config?: Config, projectMetadata?: any | null): Promise<string> {
+  if (config == null) {
+    config = await getConfig(projectDir, null, null, null)
+  }
+  if (config.electronVersion != null) {
     return config.electronVersion
   }
+  return await computeElectronVersion(projectDir, projectMetadata)
+}
 
+/** @internal */
+export async function computeElectronVersion(projectDir: string, projectMetadata?: any | null): Promise<string> {
   // projectMetadata passed only for prepacked app asar and in this case no dev deps in the app.asar
   if (projectMetadata == null) {
     for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
@@ -242,4 +249,34 @@ function normaliseErrorMessages(errors: Array<ErrorObject>) {
     }
   }
   return result
+}
+
+const DEFAULT_APP_DIR_NAMES = ["app", "www"]
+
+/** @internal */
+export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
+  if (userAppDir != null) {
+    const absolutePath = path.resolve(projectDir, userAppDir)
+    const stat = await statOrNull(absolutePath)
+    if (stat == null) {
+      throw new Error(`Application directory ${userAppDir} doesn't exists`)
+    }
+    else if (!stat.isDirectory()) {
+      throw new Error(`Application directory ${userAppDir} is not a directory`)
+    }
+    else if (projectDir === absolutePath) {
+      warn(`Specified application directory "${userAppDir}" equals to project dir — superfluous or wrong configuration`)
+    }
+    return absolutePath
+  }
+
+  for (const dir of DEFAULT_APP_DIR_NAMES) {
+    const absolutePath = path.join(projectDir, dir)
+    const packageJson = path.join(absolutePath, "package.json")
+    const stat = await statOrNull(packageJson)
+    if (stat != null && stat.isFile()) {
+      return absolutePath
+    }
+  }
+  return projectDir
 }

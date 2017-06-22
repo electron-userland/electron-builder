@@ -1,11 +1,10 @@
 import { isEmptyOrSpaces, smarten, warn } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { SemVer } from "semver"
-import { Config, Metadata } from "./metadata"
 import { BuildInfo } from "./packagerApi"
 
 export class AppInfo {
-  readonly description = smarten(this.metadata.description || "")
+  readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
   readonly buildNumber: string
   readonly buildVersion: string
@@ -13,14 +12,10 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
-  private get config(): Config {
-    return this.info.config
-  }
+  constructor (private readonly info: BuildInfo, buildVersion?: string | null) {
+    this.version = info.metadata.version!
 
-  constructor(public readonly metadata: Metadata, private readonly info: BuildInfo, buildVersion?: string | null) {
-    this.version = metadata.version!
-
-    this.buildNumber = this.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    this.buildNumber = info.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
 
     if (isEmptyOrSpaces(buildVersion)) {
       buildVersion = this.version
@@ -33,7 +28,7 @@ export class AppInfo {
       this.buildVersion = buildVersion!
     }
 
-    this.productName = this.config.productName || metadata.productName || metadata.name!
+    this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.productFilename = sanitizeFileName(this.productName)
   }
 
@@ -43,18 +38,18 @@ export class AppInfo {
   }
 
   get companyName(): string | null {
-    const author = this.metadata.author
+    const author = this.info.metadata.author
     return author == null ? null : author.name
   }
 
   get id(): string {
     let appId
-    if (this.config.appId != null) {
-      appId = this.config.appId
+    if (this.info.config.appId != null) {
+      appId = this.info.config.appId
     }
 
     const generateDefaultAppId = () => {
-      return `com.electron.${this.metadata.name!.toLowerCase()}`
+      return `com.electron.${this.info.metadata.name!.toLowerCase()}`
     }
 
     if (appId != null && (appId === "your.id" || isEmptyOrSpaces(appId))) {
@@ -67,11 +62,11 @@ export class AppInfo {
   }
 
   get name(): string {
-    return this.metadata.name!
+    return this.info.metadata.name!
   }
 
   get copyright(): string {
-    const copyright = this.config.copyright
+    const copyright = this.info.config.copyright
     if (copyright != null) {
       return copyright
     }
@@ -79,7 +74,7 @@ export class AppInfo {
   }
 
   async computePackageUrl(): Promise<string | null> {
-    const url = this.metadata.homepage
+    const url = this.info.metadata.homepage
     if (url != null) {
       return url
     }

@@ -152,7 +152,7 @@ export class AsarPackager {
     
     this.transformedFiles[cacheFiles.length - 1] = `
 'use strict';
-require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.appInfo.metadata.main || "index"}'), true);
+require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.info.metadata.main || "index"}'), true);
 `
     // cache files should be first (better IO)
     return cacheFiles.concat(files)

@@ -34,7 +34,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     const distOptions = await this.computeEffectiveDistOptions()
 
-    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir)
+    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir, this.outDir, arch)
 
     packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
 

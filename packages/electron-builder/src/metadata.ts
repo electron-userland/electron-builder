@@ -182,7 +182,7 @@ export interface Config extends PlatformSpecificBuildOptions {
   /**
    * The version of electron you are packaging for. Defaults to version of `electron`, `electron-prebuilt` or `electron-prebuilt-compile` dependency.
    */
-  readonly electronVersion?: string | null
+  electronVersion?: string | null
 
   /**
    * The name of a built-in configuration preset or path to config file (relative to project dir). Currently, only `react-cra` is supported.
@@ -322,6 +322,7 @@ export interface Config extends PlatformSpecificBuildOptions {
 }
 
 export interface AfterPackContext {
+  readonly outDir: string
   readonly appOutDir: string
   readonly packager: PlatformPackager<any>
   readonly electronPlatformName: string

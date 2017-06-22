@@ -43,6 +43,7 @@ async function main() {
     "!**/*-asar.js",
     "!**/*-repositoryInfo.js",
     "!**/*-codeSign.js",
+    "!**/*-cacheManager.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

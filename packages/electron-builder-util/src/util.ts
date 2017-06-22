@@ -6,8 +6,6 @@ import _debug from "debug"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
-import { statOrNull } from "./fs"
-import { log, warn } from "./log"
 
 export { TmpDir } from "./tmp"
 export { log, warn, task, subTask } from "./log"
@@ -15,8 +13,6 @@ export { Lazy } from "electron-builder-http"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
-
-const DEFAULT_APP_DIR_NAMES = ["app", "www"]
 
 export interface BaseExecOptions {
   cwd?: string
@@ -38,7 +34,7 @@ export function removePassword(input: string) {
   })
 }
 
-export function exec(file: string, args?: Array<string> | null, options?: ExecOptions): Promise<string> {
+export function exec(file: string, args?: Array<string> | null, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
   }
@@ -46,12 +42,12 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   return new BluebirdPromise<string>((resolve, reject) => {
     execFile(file, <any>args, options, function (error, stdout, stderr) {
       if (error == null) {
-        if (debug.enabled) {
+        if (isLogOutIfDebug && debug.enabled) {
           if (stderr.length !== 0) {
-            log(stderr)
+            debug(stderr)
           }
           if (stdout.length !== 0) {
-            log(stdout)
+            debug(stdout)
           }
         }
         resolve(stdout)
@@ -71,12 +67,19 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   })
 }
 
-export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, pipeInput?: Boolean, isDebugEnabled = debug.enabled): ChildProcess {
+export interface ExtraSpawnOptions {
+  isDebugEnabled?: boolean
+  isPipeInput?: boolean
+}
+
+export function doSpawn(command: string, args: Array<string>, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): ChildProcess {
   if (options == null) {
     options = {}
   }
+
+  const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
   if (options.stdio == null) {
-    options.stdio = [pipeInput ? "pipe" : "ignore", debug.enabled ? "inherit" : "pipe", debug.enabled ? "inherit" : "pipe"]
+    options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "ignore", isDebugEnabled ? "inherit" : "ignore"]
   }
 
   if (isDebugEnabled) {
@@ -92,9 +95,9 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 }
 
-export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions): Promise<any> {
+export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
-    handleProcess("close", doSpawn(command, args || [], options), command, resolve, reject)
+    handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
   })
 }
 
@@ -117,47 +120,22 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
 
   childProcess.once(event, (code: number) => {
     if (code === 0 && debug.enabled) {
-      debug(`${command} (${childProcess.pid}) exited with code ${code}`)
+      debug(`${command} (${childProcess.pid}) exited with exit code 0`)
     }
 
-    if (code !== 0) {
+    if (code === 0) {
+      if (resolve != null) {
+        resolve()
+      }
+    }
+    else {
       function formatOut(text: string, title: string) {
         return text.length === 0 ? "" : `\n${title}:\n${text}`
       }
 
       reject(new Error(`${command} exited with code ${code}${formatOut(out, "Output")}${formatOut(errorOut, "Error output")}`))
     }
-    else if (resolve != null) {
-      resolve()
-    }
   })
-}
-
-export async function computeDefaultAppDirectory(projectDir: string, userAppDir: string | null | undefined): Promise<string> {
-  if (userAppDir != null) {
-    const absolutePath = path.resolve(projectDir, userAppDir)
-    const stat = await statOrNull(absolutePath)
-    if (stat == null) {
-      throw new Error(`Application directory ${userAppDir} doesn't exists`)
-    }
-    else if (!stat.isDirectory()) {
-      throw new Error(`Application directory ${userAppDir} is not a directory`)
-    }
-    else if (projectDir === absolutePath) {
-      warn(`Specified application directory "${userAppDir}" equals to project dir — superfluous or wrong configuration`)
-    }
-    return absolutePath
-  }
-
-  for (const dir of DEFAULT_APP_DIR_NAMES) {
-    const absolutePath = path.join(projectDir, dir)
-    const packageJson = path.join(absolutePath, "package.json")
-    const stat = await statOrNull(packageJson)
-    if (stat != null && stat.isFile()) {
-      return absolutePath
-    }
-  }
-  return projectDir
 }
 
 export function use<T, R>(value: T | null, task: (it: T) => R): R | null {

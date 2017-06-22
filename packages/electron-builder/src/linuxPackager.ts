@@ -2,6 +2,7 @@ import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { DIR_TARGET, Platform, Target } from "./core"
+import { AfterPackContext } from "./metadata"
 import { LinuxBuildOptions } from "./options/linuxOptions"
 import { BuildInfo } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
@@ -66,7 +67,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return Platform.LINUX
   }
 
-  protected postInitApp(appOutDir: string): Promise<any> {
-    return rename(path.join(appOutDir, this.electronDistExecutableName), path.join(appOutDir, this.executableName))
+  protected postInitApp(packContext: AfterPackContext): Promise<any> {
+    return rename(path.join(packContext.appOutDir, this.electronDistExecutableName), path.join(packContext.appOutDir, this.executableName))
   }
 }

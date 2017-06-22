@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http"
-import { computeDefaultAppDirectory, debug, exec, Lazy, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
+import { debug, exec, Lazy, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { all, executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
@@ -14,7 +14,7 @@ import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { getConfig, getElectronVersion, validateConfig } from "./util/config"
+import { computeDefaultAppDirectory, computeElectronVersion, getConfig, validateConfig } from "./util/config"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
@@ -48,9 +48,6 @@ export class Packager implements BuildInfo {
 
   isTwoPackageJsonProjectLayoutUsed = true
 
-  electronVersion: string
-  muonVersion?: string | null
-
   readonly eventEmitter = new EventEmitter()
 
   appInfo: AppInfo
@@ -61,14 +58,14 @@ export class Packager implements BuildInfo {
 
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
+  readonly options: PackagerOptions
+
   get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
     return this._repositoryInfo.value
   }
 
-  readonly prepackaged?: string | null
-
   //noinspection JSUnusedGlobalSymbols
-  constructor(readonly options: PackagerOptions, readonly cancellationToken: CancellationToken) {
+  constructor(options: PackagerOptions, readonly cancellationToken: CancellationToken) {
     if ("devMetadata" in options) {
       throw new Error("devMetadata in the options is deprecated, please use config instead")
     }
@@ -77,8 +74,9 @@ export class Packager implements BuildInfo {
     }
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-
-    this.prepackaged = options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
+    this.options = Object.assign({}, options, {
+      prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
+    })
 
     try {
       log("electron-builder " + PACKAGE_VERSION)
@@ -150,12 +148,13 @@ export class Packager implements BuildInfo {
 
     checkMetadata(this.metadata, devMetadata, appPackageFile, devPackageFile)
 
-    this.electronVersion = await getElectronVersion(config, projectDir, this.isPrepackedAppAsar ? this.metadata : null)
-    this.muonVersion = config.muonVersion
-    this.appInfo = new AppInfo(this.metadata, this)
+    if (config.electronVersion == null) {
+      config.electronVersion = await computeElectronVersion(projectDir, this.isPrepackedAppAsar ? this.metadata : null)
+    }
+    this.appInfo = new AppInfo(this)
 
     const cleanupTasks: Array<() => Promise<any>> = []
-    const outDir = path.resolve(this.projectDir, use(config.directories, it => it!.output) || "dist")
+    const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
     return {
       outDir: outDir,
       platformToTargets: await executeFinally(this.doBuild(outDir, cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
@@ -278,11 +277,11 @@ export class Packager implements BuildInfo {
   }
 
   private async installAppDependencies(platform: Platform, arch: Arch): Promise<any> {
-    if (this.prepackaged != null) {
+    if (this.options.prepackaged != null) {
       return
     }
 
-    const frameworkInfo = {version: this.muonVersion || this.electronVersion, useCustomDist: this.muonVersion == null}
+    const frameworkInfo = {version: this.config.muonVersion || this.config.electronVersion!, useCustomDist: this.config.muonVersion == null}
     const options = this.config
     if (options.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
@@ -300,7 +299,7 @@ export class Packager implements BuildInfo {
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
-        electronVersion: this.electronVersion,
+        electronVersion: this.config.electronVersion!,
         platform,
         arch: Arch[arch]
       })
