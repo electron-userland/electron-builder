@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { execFile, spawn } from "child_process"
+import { execFile, execFileSync, spawn } from "child_process"
 import { CancellationError, CancellationToken, DownloadOptions } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
@@ -94,14 +94,25 @@ export class NsisUpdater extends AppUpdater {
 
     return await new BluebirdPromise<string | null>((resolve, reject) => {
       execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {maxBuffer: 4 * 1024000, timeout: 60 * 1000}, (error, stdout, stderr) => {
-        if (error != null) {
-          reject(error)
-          return
-        }
+        if (error != null || stderr) {
+          try {
+            execFileSync("powershell.exe", ["ConvertTo-Json test"], {timeout: 10 * 1000})
+          }
+          catch (testError) {
+            this._logger.warn(`Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
+            resolve(null)
+            return
+          }
 
-        if (stderr) {
-          reject(new Error(`Cannot execute Get-AuthenticodeSignature: ${stderr}`))
-          return
+          if (error != null) {
+            reject(error)
+            return
+          }
+
+          if (stderr) {
+            reject(new Error(`Cannot execute Get-AuthenticodeSignature: ${stderr}`))
+            return
+          }
         }
 
         const data = JSON.parse(stdout)
