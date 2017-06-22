@@ -17,7 +17,8 @@ function clean(version: string) {
 
 /** @internal */
 export async function isOsVersionGreaterThanOrEqualTo(input: string) {
-  return semver.gte(await macOsVersion.value, clean(input))
+  const version = await macOsVersion.value;
+  return semver.gte(clean(version), clean(input))
 }
 
 /** @internal */
