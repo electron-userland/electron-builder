@@ -165,7 +165,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       }
     }
 
-    const defaultMatcher = createFileMatcher(this.info, appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, path.resolve(this.info.projectDir, this.buildResourcesDir))
+    const packContext: AfterPackContext = {
+      appOutDir, outDir, arch, targets,
+      packager: this,
+      electronPlatformName: platformName,
+    }
+
+    const defaultMatcher = createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, this)
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
     if (isElectronCompile) {
       defaultMatcher.addPattern("!.cache{,/**/*}")
@@ -188,12 +194,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
       promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this)
-    }
-
-    const packContext: AfterPackContext = {
-      appOutDir, outDir, arch, targets,
-      packager: this,
-      electronPlatformName: platformName,
     }
 
     //noinspection ES6MissingAwait

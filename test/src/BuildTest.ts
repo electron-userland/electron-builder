@@ -170,8 +170,9 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
   })
 })
 
-test.ifDevOrLinuxCi("smart unpack", app({
-  targets: linuxDirTarget,
+// https://github.com/electron-userland/electron-builder/issues/1738
+test.ifAll.ifDevOrLinuxCi("win smart unpack", app({
+  targets: Platform.WINDOWS.createTarget(DIR_TARGET),
 }, {
   installDepsBefore: true,
   projectDirCreated: packageJson(it => {
@@ -182,15 +183,30 @@ test.ifDevOrLinuxCi("smart unpack", app({
       "@electron-builder/test-smart-unpack-empty": "1.0.0",
     }
   }),
-  packed: async context => {
-    const resourceDir = context.getResources(Platform.LINUX)
-    expect(await readAsarJson(path.join(resourceDir, "app.asar"), "node_modules/debug/package.json")).toMatchObject({
-      name: "debug"
-    })
-
-    expect((await walk(resourceDir, file => !path.basename(file).startsWith("."))).map(it => it.substring(resourceDir.length + 1))).toMatchSnapshot()
-  }
+  packed: context => verifySmartUnpack(context.getResources(Platform.WINDOWS))
 }))
+
+async function verifySmartUnpack(resourceDir: string) {
+  expect(await readAsarJson(path.join(resourceDir, "app.asar"), "node_modules/debug/package.json")).toMatchObject({
+    name: "debug"
+  })
+
+  expect((await walk(resourceDir, file => !path.basename(file).startsWith("."))).map(it => it.substring(resourceDir.length + 1))).toMatchSnapshot()
+}
+
+// https://github.com/electron-userland/electron-builder/issues/1738
+test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
+  targets: linuxDirTarget,
+}, {
+  installDepsBefore: true,
+  projectDirCreated: packageJson(it => {
+    it.dependencies = {
+      "debug": "^2.2.0",
+      "edge-cs": "1.2.1",
+      "lzma-native": "2.0.3",
+    }
+  }),
+  packed: context => verifySmartUnpack(context.getResources(Platform.LINUX))}))
 
 test("wine version", async () => {
   await checkWineVersion(BluebirdPromise.resolve("1.9.23 (Staging)"))

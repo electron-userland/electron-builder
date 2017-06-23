@@ -44,6 +44,7 @@
       <w>cpus</w>
       <w>createconfig</w>
       <w>crypto</w>
+      <w>csproj</w>
       <w>ctype</w>
       <w>cuint</w>
       <w>customfunction</w>
@@ -257,6 +258,7 @@
       <w>xamarin</w>
       <w>xenial</w>
       <w>xorriso</w>
+      <w>xproj</w>
       <w>xubuntu</w>
       <w>yargs</w>
       <w>zenity</w>

@@ -270,19 +270,32 @@ Object {
 }
 `;
 
+exports[`posix smart unpack 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
+exports[`posix smart unpack 2`] = `
+Array [
+  "app.asar",
+  "electron.asar",
+]
+`;
+
 exports[`relative index 1`] = `
 Object {
   "linux": Array [],
 }
 `;
 
-exports[`smart unpack 1`] = `
+exports[`win smart unpack 1`] = `
 Object {
-  "linux": Array [],
+  "win": Array [],
 }
 `;
 
-exports[`smart unpack 2`] = `
+exports[`win smart unpack 2`] = `
 Array [
   "app.asar",
   "electron.asar",
@@ -296,14 +309,10 @@ Array [
   "app.asar.unpacked/node_modules/edge-cs/src",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/EdgeCompiler.cs",
-  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/edge-cs.csproj",
-  "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/edge-cs.sln",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties",
   "app.asar.unpacked/node_modules/edge-cs/src/edge-cs/Properties/AssemblyInfo.cs",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/EdgeCompiler.cs",
-  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.sln",
-  "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/edge-cs-coreclr.xproj",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/gulpfile.js",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/package.json",
   "app.asar.unpacked/node_modules/edge-cs/src/Edge.js.CSharp/project.json",
