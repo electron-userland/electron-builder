@@ -13,10 +13,11 @@ import { v5 as uuid5 } from "uuid-1345"
 import { Arch, Target } from "../core"
 import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
+import { time } from "../util/timer"
 import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
-import { addUltraArgs, archive, ArchiveOptions } from "./archive"
-import { computeBlocks } from "./blockMap"
+import { addZipArgs, archive, ArchiveOptions } from "./archive"
+import { computeBlockMap } from "./blockMap"
 import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
 
 const debug = _debug("electron-builder:nsis")
@@ -119,35 +120,35 @@ export class NsisTarget extends Target {
       await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
     }
 
-    const format = options.useZip ? "zip" : "7z"
+    const isDifferentialPackage = options.differentialPackage
+    const format = isDifferentialPackage || options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
-    const archiveOptions: ArchiveOptions = {withoutDir: true, solid: !options.differentialPackage}
+    const archiveOptions: ArchiveOptions = {withoutDir: true, solid: !isDifferentialPackage}
     let compression = packager.config.compression
-    if (options.differentialPackage) {
-      // 7zip doesn't allow to specify files order even if listFile is used, so, we exclude asar files and main exe and add it later
+
+    const timer = time(`nsis package, ${Arch[arch]}`)
+    if (isDifferentialPackage) {
       // reduce dict size to avoid large block invalidation on change
       archiveOptions.dictSize = 16
-      archiveOptions.excluded = ["-x!*.exe", `-x!resources${path.sep}app.asar`]
+      archiveOptions.method = "LZMA"
       // do not allow to change compression level to avoid different packages
       compression = null
     }
     await archive(compression, format, archiveFile, appOutDir, archiveOptions)
+    timer.end()
 
     if (options.differentialPackage) {
       const args = debug7zArgs("a")
-      addUltraArgs(args, archiveOptions)
+      addZipArgs(args)
+      args.push(`-mm=${archiveOptions.method}`, "-mx=9")
       args.push(archiveFile)
-      await spawn(path7za, args.concat("*.exe"), {
-        cwd: appOutDir,
-      })
 
-      // todo no lack - 7za adds file into the resources dir in the middle of archive
-      await spawn(path7za, args.concat(`resources${path.sep}*.asar`), {
-        cwd: appOutDir,
+      const blockMap = await computeBlockMap(appOutDir)
+      const blockMapFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.blockMap.yml`)
+      await writeFile(blockMapFile, blockMap)
+      await spawn(path7za, args.concat(blockMapFile), {
+        cwd: this.outDir,
       })
-
-      const blockMap = await computeBlocks(archiveFile)
-      await writeFile(path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.txt`), blockMap.join("\n"))
     }
 
     return archiveFile

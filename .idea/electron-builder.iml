@@ -3,7 +3,6 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
-      <excludeFolder url="file://$MODULE_DIR$/node_modules" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
       <excludeFolder url="file://$MODULE_DIR$/packages/asar-integrity/out" />
       <excludeFolder url="file://$MODULE_DIR$/packages/electron-auto-updater/node_modules" />
@@ -28,7 +27,6 @@
       <excludePattern pattern="yarn.lock" />
       <excludePattern pattern="scheme.json" />
     </content>
-    <content url="file://$MODULE_DIR$/node_modules/@types/node" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

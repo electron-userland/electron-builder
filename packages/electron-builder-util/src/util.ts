@@ -79,10 +79,12 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
 
   const isDebugEnabled = extraOptions == null || extraOptions.isDebugEnabled == null ? debug.enabled : extraOptions.isDebugEnabled
   if (options.stdio == null) {
-    options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "ignore", isDebugEnabled ? "inherit" : "ignore"]
+    // do not ignore stdout/stderr if not debug, because in this case we will read into buffer and print on error
+    options.stdio = [extraOptions != null && extraOptions.isPipeInput ? "pipe" : "ignore", isDebugEnabled ? "inherit" : "pipe", isDebugEnabled ? "inherit" : "pipe"]
   }
 
-  if (isDebugEnabled) {
+  // use general debug.enabled to log spawn, because it doesn't produce a lot of output (the only line), but important in any case
+  if (debug.enabled) {
     const argsString = args.join(" ")
     debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
   }

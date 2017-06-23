@@ -5,12 +5,14 @@ export interface Timer {
 }
 
 class DevTimer implements Timer {
+  private start = process.hrtime()
+
   constructor(private readonly label: string) {
-    console.time(label)
   }
 
   end(): void {
-    console.timeEnd(this.label)
+    const end = process.hrtime(this.start)
+    console.info(`${this.label}: %ds %dms`, end[0], end[1] / 1000000)
   }
 }
 

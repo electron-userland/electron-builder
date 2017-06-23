@@ -5,6 +5,7 @@ import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { all, executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
+import { safeDump } from "js-yaml"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar"
@@ -122,7 +123,7 @@ export class Packager implements BuildInfo {
     const devMetadata = this.devMetadata
     const config = await getConfig(projectDir, configPath, devMetadata, configFromOptions)
     if (debug.enabled) {
-      debug(`Effective config: ${safeStringifyJson(config)}`)
+      debug(`Effective config:\n${safeDump(JSON.parse(safeStringifyJson(config)))}`)
     }
     await validateConfig(config)
     this._config = config

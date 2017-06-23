@@ -71,15 +71,29 @@ export interface ArchiveOptions {
 
   dictSize?: number
   excluded?: Array<string>
+
+  method?: "Copy" | "LZMA"
 }
 
 // 7z is very fast, so, use ultra compression
+/** @internal */
 export function addUltraArgs(args: Array<string>, options: ArchiveOptions) {
   // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
   // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
   // -mtm=off disable "Stores last Modified timestamps for files."
   // tc and ta are off by default, but to be sure, we explicitly set it to off
   args.push("-mx=9", `-md=${options.dictSize || 64}m`, `-ms=${options.solid === false ? "off" : "on"}`, "-mtm=off", "-mtc=off", "-mta=off")
+}
+
+/** @internal */
+export function addZipArgs(args: Array<string>) {
+  // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
+  // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
+  // but archive should be the same regardless where produced
+  args.push("-mcu")
+  // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
+  args.push("-mtc=off")
+  args.push("-tzip")
 }
 
 /** @internal */
@@ -115,8 +129,15 @@ export async function archive(compression: CompressionLevel | null | undefined, 
     // ignore
   }
 
-  if (format === "zip" || storeOnly) {
+  if (options.method != null) {
+    args.push(`-mm=${options.method}`)
+  }
+  else if (format === "zip" || storeOnly) {
     args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
+  }
+
+  if (format === "zip") {
+    addZipArgs(args)
   }
 
   args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)

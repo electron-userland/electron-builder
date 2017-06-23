@@ -32,3 +32,15 @@ Since NSIS is awesome, no disadvantages in our approach — [compression is disa
 So, opposite to Squirrel.Windows, archive is not twice compressed.
 
 So, in your custom NSIS scripts you should not use any compression instructions. Only `SetCompress` if you need to disable compression for already archived file.
+
+
+## Package File
+
+https://sourceforge.net/p/sevenzip/discussion/45798/thread/222c71f9/
+
+(size as in windows explorer)
+7z - 34.134 Compression time 26s
+zip(lzma) - 37.612 Compression time 26s (~ the same time (as expected, because filters, as documented, are very fast ())
+zip(xz) - 37.619  Not clear why. xz supports filters, but it seems 7z doesn't apply it correctly.
+
+
