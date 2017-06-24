@@ -151,12 +151,14 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.project
 
   let config = result.config
-  if (result.extraMetadata != null) {
+  const extraMetadata = result.extraMetadata
+  delete result.extraMetadata
+  if (extraMetadata != null) {
     if (typeof config === "string") {
       // transform to object and specify path to config as extends
       config = {
         extends: config,
-        extraMetadata: result.extraMetadata,
+        extraMetadata: extraMetadata,
       };
       (<any>result).config = config
     }
@@ -164,11 +166,31 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       config = {};
       (<any>result).config = config
     }
-    (<any>config).extraMetadata = result.extraMetadata
+    (<any>config).extraMetadata = extraMetadata
+
+    coerceTypes(config.extraMetadata)
   }
-  delete result.extraMetadata
 
   return result
+}
+
+export function coerceTypes(host: any): any {
+  for (const key of Object.getOwnPropertyNames(host)) {
+    const value = host[key]
+    if (value === "true") {
+      host[key] = true
+    }
+    else if (value === "false") {
+      host[key] = false
+    }
+    else if (value === "null") {
+      host[key] = null
+    }
+    else if (value != null && typeof value === "object") {
+      coerceTypes(value)
+    }
+  }
+  return host
 }
 
 export function createTargets(platforms: Array<Platform>, type?: string | null, arch?: string | null): Map<Platform, Map<Arch, Array<string>>> {

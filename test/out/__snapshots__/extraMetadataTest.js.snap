@@ -12,13 +12,18 @@ Object {
   "description": "Test Application (test quite \\" #378)",
   "foo": Object {
     "bar": 12,
+    "disabled": false,
     "existingProp": 22,
+    "updated": true,
   },
   "homepage": "http://foo.example.com",
   "license": "MIT",
   "name": "TestApp",
   "private": true,
   "productName": "Test App ßW",
+  "rootKey": false,
+  "rootKeyN": null,
+  "rootKeyT": true,
   "version": "1.1.0",
 }
 `;
@@ -35,13 +40,18 @@ Object {
   "description": "Test Application (test quite \\" #378)",
   "foo": Object {
     "bar": 12,
+    "disabled": false,
     "existingProp": 22,
+    "updated": true,
   },
   "homepage": "http://foo.example.com",
   "license": "MIT",
   "name": "TestApp",
   "private": true,
   "productName": "Test App ßW",
+  "rootKey": false,
+  "rootKeyN": null,
+  "rootKeyT": true,
   "version": "1.1.0",
 }
 `;
