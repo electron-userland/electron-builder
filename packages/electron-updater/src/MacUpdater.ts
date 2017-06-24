@@ -7,6 +7,7 @@ import { parse as parseUrl } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 import AutoUpdater = Electron.AutoUpdater
+import { RequestHeaders } from "../../electron-builder-http/src/httpExecutor"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater
@@ -38,11 +39,13 @@ export class MacUpdater extends AppUpdater {
     return new BluebirdPromise<void>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
+        this._logger.info(`${requestUrl} requested`)
         if (requestUrl === "/") {
-          response.writeHead(200, {"Content-Type": "application/json"})
-          response.end(`{ "url": "${getServerUrl()}/app.zip" }`)
+          const data = Buffer.from(`{ "url": "${getServerUrl()}/app.zip" }`)
+          response.writeHead(200, {"Content-Type": "application/json", "Content-Length": data.length})
+          response.end(data)
         }
-        else if (requestUrl === "/app.zip") {
+        else if (requestUrl.startsWith("/app.zip")) {
           let errorOccurred = false
           response.on("finish", () => {
             try {
@@ -66,6 +69,7 @@ export class MacUpdater extends AppUpdater {
           })
         }
         else {
+          this._logger.warn(`${requestUrl} requested, but not supported`)
           response.writeHead(404)
           response.end()
         }
@@ -78,8 +82,6 @@ export class MacUpdater extends AppUpdater {
   }
 
   private proxyUpdateFile(nativeResponse: ServerResponse, fileInfo: FileInfo, errorHandler: (error: Error) => void) {
-    nativeResponse.writeHead(200, {"Content-Type": "application/zip"})
-
     const parsedUrl = parseUrl(fileInfo.url)
     const downloadRequest = this.httpExecutor.doRequest(configureRequestOptions({
       protocol: parsedUrl.protocol,
@@ -99,13 +101,17 @@ export class MacUpdater extends AppUpdater {
         return
       }
 
+      const headers: RequestHeaders = {"Content-Type": "application/zip"}
       const streams: Array<any> = []
       if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
         const contentLength = safeGetHeader(downloadResponse, "content-length")
         if (contentLength != null) {
+          headers["Content-Length"] = contentLength
           streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), new CancellationToken(), it => this.emit(DOWNLOAD_PROGRESS, it)))
         }
       }
+
+      nativeResponse.writeHead(200, headers)
 
       // for mac only sha512 is produced (sha256 is published for windows only to preserve backward compatibility)
       const sha512 = fileInfo.sha512
