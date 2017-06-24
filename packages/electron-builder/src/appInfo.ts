@@ -1,6 +1,6 @@
 import { isEmptyOrSpaces, smarten, warn } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
-import { SemVer } from "semver"
+import { prerelease, SemVer } from "semver"
 import { BuildInfo } from "./packagerApi"
 
 export class AppInfo {
@@ -30,6 +30,14 @@ export class AppInfo {
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
     this.productFilename = sanitizeFileName(this.productName)
+  }
+
+  get channel(): string | null {
+    const prereleaseInfo = prerelease(this.version)
+    if (prereleaseInfo != null && prereleaseInfo.length > 0) {
+      return prereleaseInfo[0]
+    }
+    return null
   }
 
   get versionInWeirdWindowsForm(): string {

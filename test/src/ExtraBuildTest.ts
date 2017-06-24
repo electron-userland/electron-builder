@@ -96,6 +96,7 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     },
     // https://github.com/electron-userland/electron-builder/issues/1348
     win: {
+      artifactName: "${channel}-${name}.exe",
       target: [
         "nsis",
       ],

@@ -14,7 +14,6 @@ import { ensureDir, outputJson, readFile, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
-import { prerelease } from "semver"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import { Arch, Platform, Target } from "../core"
@@ -466,10 +465,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
 
   let channelFromAppVersion: string | null = null
   if ((<any>options).channel == null && packager.config.detectUpdateChannel !== false) {
-    const prereleaseInfo = prerelease(packager.appInfo.version)
-    if (prereleaseInfo != null && prereleaseInfo.length > 0) {
-      channelFromAppVersion = prereleaseInfo[0]
-    }
+    channelFromAppVersion = packager.appInfo.channel
   }
 
   const provider = options.provider

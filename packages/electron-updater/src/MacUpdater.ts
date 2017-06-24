@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken, configureRequestOptions, DigestTransform, ProgressCallbackTransform, safeGetHeader } from "electron-builder-http"
+import { CancellationToken, configureRequestOptions, DigestTransform, ProgressCallbackTransform, RequestHeaders, safeGetHeader } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { createServer, IncomingMessage, ServerResponse } from "http"
@@ -7,7 +7,6 @@ import { parse as parseUrl } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 import AutoUpdater = Electron.AutoUpdater
-import { RequestHeaders } from "../../electron-builder-http/src/httpExecutor"
 
 export class MacUpdater extends AppUpdater {
   private readonly nativeUpdater: AutoUpdater = require("electron").autoUpdater

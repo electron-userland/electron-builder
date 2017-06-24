@@ -51,7 +51,7 @@ Object {
     },
     Object {
       "arch": 0,
-      "file": "Test App ßW Setup 1.0.0-beta.1.exe",
+      "file": "beta-TestApp.exe",
       "safeArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
     },
   ],
@@ -69,7 +69,7 @@ Object {
 exports[`override targets in the config - only arch 3`] = `
 Object {
   "githubArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
-  "path": "Test App ßW Setup 1.0.0-beta.1.exe",
+  "path": "beta-TestApp.exe",
   "version": "1.0.0-beta.1",
 }
 `;
