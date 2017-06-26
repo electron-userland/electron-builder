@@ -168,6 +168,11 @@ export async function validateConfig(config: Config) {
     }
   }
 
+  // noinspection JSDeprecatedSymbols
+  if (config.npmSkipBuildFromSource === false) {
+    config.buildDependenciesFromSource = false
+  }
+
   if (validatorPromise == null) {
     validatorPromise = createConfigValidator()
   }

@@ -10,10 +10,10 @@ import { readInstalled } from "./packageDependencies"
 export async function installOrRebuild(config: Config, appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, forceInstall: boolean = false) {
   const args = asArray(config.npmArgs)
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
-    await installDependencies(appDir, frameworkInfo, platform, arch, args, !config.npmSkipBuildFromSource)
+    await installDependencies(appDir, frameworkInfo, platform, arch, args, config.buildDependenciesFromSource === true)
   }
   else {
-    await rebuild(appDir, frameworkInfo, platform, arch, args, !config.npmSkipBuildFromSource)
+    await rebuild(appDir, frameworkInfo, platform, arch, args, config.buildDependenciesFromSource === true)
   }
 }
 
