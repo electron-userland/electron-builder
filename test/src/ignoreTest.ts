@@ -19,6 +19,29 @@ test.ifDevOrLinuxCi("ignore build resources", app({
   },
 }))
 
+test.ifDevOrLinuxCi("2 ignore", app({
+  targets: Platform.LINUX.createTarget(DIR_TARGET),
+  config: {
+    asar: false,
+    files: [
+      "**/*",
+      "!{app,build,electron,mobile,theme,uploads,util,dist,dist-app/aot,dist-app/app.bundle.js,dist-app/dependencies/shim.min.js,dist-app/dependencies/classList.min.js,dist-app/dependencies/web-animations.min.js,main.js,main-aot.js,favicon.ico,index.html,index-aot.html,index-cordova.html,index-aot.js,index-electron.js,index.bundle.js,systemjs.config.js,systemjs-angular-loader.js,package-lock.json}",
+      "!*config*.json",
+      "!**/*.{ts,scss,map,md,csv,wrapped}",
+      "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}"
+    ],
+  }
+}, {
+  projectDirCreated: projectDir => {
+    return outputFile(path.join(projectDir, "electron/foo.txt"), "data")
+  },
+  packed: context => {
+    return assertThat(path.join(context.getResources(Platform.LINUX), "app", "electron", "foo.txt")).doesNotExist()
+  },
+}))
+
 test.ifDevOrLinuxCi("ignore known ignored files", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
   config: {
