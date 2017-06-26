@@ -90,6 +90,7 @@
       <w>gtar</w>
       <w>guid</w>
       <w>guiinit</w>
+      <w>gypi</w>
       <w>hdiutil</w>
       <w>headerimage</w>
       <w>hicolor</w>
@@ -129,6 +130,7 @@
       <w>libgconf</w>
       <w>libgcrypt</w>
       <w>libgnome</w>
+      <w>liblzma</w>
       <w>libnotify</w>
       <w>libnss</w>
       <w>libunity</w>

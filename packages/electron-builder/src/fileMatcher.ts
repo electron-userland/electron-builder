@@ -62,7 +62,8 @@ export class FileMatcher {
       const parsedPattern = new Minimatch(pattern, minimatchOptions)
       result.push(parsedPattern)
 
-      if (!hasMagic(parsedPattern)) {
+      // do not add if contains dot (possibly file if has extension)
+      if (!pattern.includes(".") && !hasMagic(parsedPattern)) {
         // https://github.com/electron-userland/electron-builder/issues/545
         // add **/*
         result.push(new Minimatch(`${pattern}/**/*`, minimatchOptions))
@@ -88,23 +89,20 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   const patterns = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
   const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
 
-  const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
-  const ignoreBuildResourceDirPattern = (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) ? `!${relativeBuildResourceDir}{,/**/*}` : null
   const customFirstPatterns: Array<string> = []
   if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
-    if (ignoreBuildResourceDirPattern != null) {
-      matcher.addPattern(ignoreBuildResourceDirPattern)
-    }
     customFirstPatterns.push("**/*")
   }
   else {
-    if (ignoreBuildResourceDirPattern != null) {
-      customFirstPatterns.push(ignoreBuildResourceDirPattern)
-    }
-
     // prependPattern - user pattern should be after to be able to override
     customFirstPatterns.push("**/node_modules/**/*")
     matcher.addPattern("package.json")
+  }
+
+  // https://github.com/electron-userland/electron-builder/issues/1482
+  const relativeBuildResourceDir = path.relative(matcher.from, buildResourceDir)
+  if (relativeBuildResourceDir.length !== 0 && !relativeBuildResourceDir.startsWith(".")) {
+    customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
   }
 
   if (packager.platform !== Platform.WINDOWS) {
@@ -112,12 +110,17 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
     customFirstPatterns.push("!**/node_modules/**/*.{dll,exe}")
   }
 
-  matcher.patterns.unshift(...customFirstPatterns)
+  // add our default exclusions after user possibly defined "all" pattern
+  const insertIndex = Math.max(0, matcher.patterns.findIndex(it => it == "**/*"))
+  matcher.patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
   // https://github.com/electron-userland/electron-builder/issues/1738#issuecomment-310729208
-  // must be before common ignore patterns (to ignore common ignores like .svn)
-  matcher.addPattern("!**/node_modules/lzma-native/build/**/*")
-  matcher.addPattern("**/node_modules/lzma-native/build/{Release,Debug}")
+  // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive pattern
+  // matcher.addPattern("**/node_modules/lzma-native/build/{Release,Debug}")
+  matcher.addPattern("!**/node_modules/lzma-native/build/*.{mk,gypi,Makefile}")
+  matcher.addPattern("!**/node_modules/lzma-native/build/{Makefile,gyp-mac-tool}")
+  matcher.addPattern("!**/node_modules/lzma-native/build/liblzma{,/**/*}")
+
   matcher.addPattern("!**/node_modules/lzma-native/deps/xz-*")
   matcher.addPattern("!**/node_modules/lzma-native/deps/doc{,/**/*}")
 
@@ -128,11 +131,9 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   //noinspection SpellCheckingInspection
   matcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
     "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
-    ".editorconfig,.flowconfig,.jshintrc,.eslintrc," +
-    ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,npm-debug.log," +
-    ".idea,.vs," +
-    "appveyor.yml,.travis.yml,circle.yml," +
-    ".nyc_output}")
+    ".idea,.vs,.editorconfig,.flowconfig,.jshintrc,.eslintrc," +
+    ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
+    "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
 
   return matcher
 }
