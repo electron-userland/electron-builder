@@ -37,6 +37,7 @@ test.ifAll.ifNotCiMac("multi language license", app({
     publish: null,
     nsis: {
       uninstallDisplayName: "Hi!!!",
+      createDesktopShortcut: false,
     }
   },
 }, {

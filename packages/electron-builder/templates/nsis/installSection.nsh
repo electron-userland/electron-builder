@@ -87,14 +87,18 @@ ${endif}
 
 StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 Var /GLOBAL shortcuts
-StrCpy $shortcuts ""
-!ifndef allowToChangeInstallationDirectory
-  ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
+!ifdef DO_NOT_CREATE_DESKTOP_SHORTCUT
+  StrCpy $shortcuts "--keep-shortcuts"
+!else
+  StrCpy $shortcuts ""
+  !ifndef allowToChangeInstallationDirectory
+    ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
 
-  ${if} $R1 == "true"
-  ${andIf} ${FileExists} "$appExe"
-    StrCpy $shortcuts "--keep-shortcuts"
-  ${endIf}
+    ${if} $R1 == "true"
+    ${andIf} ${FileExists} "$appExe"
+      StrCpy $shortcuts "--keep-shortcuts"
+    ${endIf}
+  !endif
 !endif
 
 !ifdef ONE_CLICK

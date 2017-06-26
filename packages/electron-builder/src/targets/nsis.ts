@@ -410,7 +410,10 @@ export class NsisTarget extends Target {
       defines.MUI_UNICON = uninstallerIcon
     }
 
-    defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(this.options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
+    defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
+    if (options.createDesktopShortcut === false) {
+      defines.DO_NOT_CREATE_DESKTOP_SHORTCUT = null
+    }
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: any) {

@@ -275,6 +275,7 @@ Configuration Options
     If `oneClick` is `false`: no install mode installer page (choice per-machine or per-user), always install per-machine.
   * <a name="NsisOptions-allowElevation"></a>`allowElevation` = `true` Boolean - *boring installer only.* Allow requesting for elevation. If false, user will have to restart installer with elevated permissions.
   * <a name="NsisOptions-allowToChangeInstallationDirectory"></a>`allowToChangeInstallationDirectory` = `false` Boolean - *boring installer only.* Whether to allow user to change installation directory.
+  * <a name="NsisOptions-createDesktopShortcut"></a>`createDesktopShortcut` = `true` Boolean - Whether to create desktop shortcut.
   * <a name="NsisOptions-runAfterFinish"></a>`runAfterFinish` = `true` Boolean - *one-click installer only.* Run application after finish.
   * <a name="NsisOptions-installerIcon"></a>`installerIcon` String - The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerIcon.ico` or application icon.
   * <a name="NsisOptions-uninstallerIcon"></a>`uninstallerIcon` String - The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/uninstallerIcon.ico` or application icon.

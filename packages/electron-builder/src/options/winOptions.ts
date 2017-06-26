@@ -133,6 +133,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly allowToChangeInstallationDirectory?: boolean
 
   /**
+   * Whether to create desktop shortcut.
+   * @default true
+   */
+  readonly createDesktopShortcut?: boolean
+
+  /**
    * *one-click installer only.* Run application after finish.
    * @default true
    */
