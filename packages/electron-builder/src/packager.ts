@@ -283,20 +283,20 @@ export class Packager implements BuildInfo {
     }
 
     const frameworkInfo = {version: this.config.muonVersion || this.config.electronVersion!, useCustomDist: this.config.muonVersion == null}
-    const options = this.config
-    if (options.nodeGypRebuild === true) {
+    const config = this.config
+    if (config.nodeGypRebuild === true) {
       log(`Executing node-gyp rebuild for arch ${Arch[arch]}`)
       await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
         env: getGypEnv(frameworkInfo, platform.nodeName, Arch[arch], true),
       })
     }
 
-    if (options.npmRebuild === false) {
+    if (config.npmRebuild === false) {
       log("Skip app dependencies rebuild because npmRebuild is set to false")
       return
     }
 
-    const beforeBuild = options.beforeBuild
+    const beforeBuild = config.beforeBuild
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -307,11 +307,11 @@ export class Packager implements BuildInfo {
       if (!performDependenciesInstallOrRebuild) return
     }
 
-    if (options.npmSkipBuildFromSource !== true && platform.nodeName !== process.platform) {
-      log("Skip app dependencies rebuild because platform is different")
+    if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
+      log("Skip app dependencies rebuild because platform is different and buildDependenciesFromSource is set to true")
     }
     else {
-      await installOrRebuild(options, this.appDir, frameworkInfo, platform.nodeName, Arch[arch])
+      await installOrRebuild(config, this.appDir, frameworkInfo, platform.nodeName, Arch[arch])
     }
   }
 

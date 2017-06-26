@@ -179,7 +179,8 @@ Configuration Options
 * <a name="Config-nodeGypRebuild"></a>`nodeGypRebuild` = `false` Boolean - Whether to execute `node-gyp rebuild` before starting to package the app.
 * <a name="Config-npmArgs"></a>`npmArgs` Array&lt;String&gt; | String - Additional command line arguments to use when installing app native deps.
 * <a name="Config-npmRebuild"></a>`npmRebuild` = `true` Boolean - Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app.
-* <a name="Config-npmSkipBuildFromSource"></a>`npmSkipBuildFromSource` = `false` Boolean - Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps.
+* <a name="Config-buildDependenciesFromSource"></a>`buildDependenciesFromSource` = `false` Boolean - Whether to build the application native dependencies from source.
+* <a name="Config-npmSkipBuildFromSource"></a>`npmSkipBuildFromSource` Boolean - Deprecated: {tag.description}
 * <a name="Config-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array - The [publish configuration](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). Order is important — first item will be used as a default auto-update server.
   
   If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.

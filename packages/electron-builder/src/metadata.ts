@@ -225,8 +225,13 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly npmRebuild?: boolean
 
   /**
-   * Whether to omit using [--build-from-source](https://github.com/mapbox/node-pre-gyp#options) flag when installing app native deps.
+   * Whether to build the application native dependencies from source.
    * @default false
+   */
+  buildDependenciesFromSource?: boolean
+
+  /**
+   * @deprecated Please use npmBuildFromSource.
    */
   readonly npmSkipBuildFromSource?: boolean
 
