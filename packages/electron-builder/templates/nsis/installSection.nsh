@@ -215,7 +215,7 @@ ${endif}
   !ifdef RUN_AFTER_FINISH
     ${IfNot} ${Silent}
     ${OrIf} ${ForceRun}
-      # otherwise app window will be in backround
+      # otherwise app window will be in background
       HideWindow
       !insertmacro StartApp
     ${EndIf}

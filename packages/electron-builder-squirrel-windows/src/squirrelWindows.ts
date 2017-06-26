@@ -36,15 +36,19 @@ export default class SquirrelWindowsTarget extends Target {
 
     await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir, this.outDir, arch)
 
-    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${appInfo.name}-Setup-${version}${archSuffix}.exe`)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${this.appName}-Setup-${version}${archSuffix}.exe`)
 
-    const packagePrefix = `${appInfo.name}-${convertVersion(version)}-`
+    const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
     if (distOptions.remoteReleases != null) {
       packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}delta.nupkg`), this, arch)
     }
 
     packager.dispatchArtifactCreated(path.join(installerOutDir, "RELEASES"), this, arch)
+  }
+
+  private get appName() {
+    return this.options.name || this.packager.appInfo.name
   }
 
   async computeEffectiveDistOptions(): Promise<SquirrelOptions> {
@@ -65,10 +69,11 @@ export default class SquirrelWindowsTarget extends Target {
 
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
+    const appName = this.appName
     const options: any = Object.assign({
-      name: appInfo.name,
-      productName: appInfo.productName,
-      appId: this.options.useAppIdAsId ? appInfo.id : appInfo.name,
+      name: appName,
+      productName: this.options.name || appInfo.productName,
+      appId: this.options.useAppIdAsId ? appInfo.id : appName,
       version: appInfo.version,
       description: appInfo.description,
       // better to explicitly set to empty string, to avoid any nugget errors

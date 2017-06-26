@@ -319,6 +319,12 @@ export interface SquirrelWindowsOptions extends WinBuildOptions {
    * Use `appId` to identify package instead of `name`.
    */
   readonly useAppIdAsId?: boolean
+
+  /**
+   * https://github.com/electron-userland/electron-builder/issues/1743
+   * @private
+   */
+  readonly name?: string
 }
 
 /**

@@ -6,6 +6,7 @@
       <w>addons</w>
       <w>addplugindir</w>
       <w>adminrequired</w>
+      <w>allusers</w>
       <w>allusersnotpossible</w>
       <w>amazonaws</w>
       <w>andif</w>
@@ -23,6 +24,7 @@
       <w>aspx</w>
       <w>atexit</w>
       <w>atime</w>
+      <w>aumi</w>
       <w>authenticode</w>
       <w>awaiter</w>
       <w>babelrc</w>
@@ -47,6 +49,7 @@
       <w>csproj</w>
       <w>ctype</w>
       <w>cuint</w>
+      <w>currentuser</w>
       <w>customfunction</w>
       <w>dcterms</w>
       <w>debian</w>
@@ -76,6 +79,7 @@
       <w>evolvehq</w>
       <w>fcopy</w>
       <w>ffmpeg</w>
+      <w>filesonly</w>
       <w>finishpage</w>
       <w>flattennpmmodules</w>
       <w>fontconfig</w>
@@ -94,24 +98,31 @@
       <w>guiinit</w>
       <w>gypi</w>
       <w>hdiutil</w>
+      <w>headerico</w>
       <w>headerimage</w>
       <w>hicolor</w>
       <w>hkcu</w>
+      <w>hkey</w>
       <w>hklm</w>
       <w>homedir</w>
       <w>hrtime</w>
+      <w>hwndparent</w>
       <w>icns</w>
       <w>icnsutils</w>
       <w>icnv</w>
+      <w>iconexclamation</w>
       <w>iconset</w>
       <w>iconutil</w>
       <w>icvo</w>
       <w>idms</w>
+      <w>idretry</w>
       <w>ifdef</w>
       <w>ifmacrodef</w>
       <w>ifndef</w>
       <w>iloc</w>
       <w>imagekey</w>
+      <w>incomlete</w>
+      <w>inetc</w>
       <w>inno</w>
       <w>insertmacro</w>
       <w>installmode</w>
@@ -156,6 +167,7 @@
       <w>makensis</w>
       <w>makepri</w>
       <w>matchers</w>
+      <w>messagebox</w>
       <w>minami</w>
       <w>minimatch</w>
       <w>mkdirp</w>
@@ -176,6 +188,7 @@
       <w>nuget</w>
       <w>nupkg</w>
       <w>nuspec</w>
+      <w>oname</w>
       <w>opengl</w>
       <w>osslsigncode</w>
       <w>packagejson</w>
@@ -209,6 +222,7 @@
       <w>rels</w>
       <w>repos</w>
       <w>resample</w>
+      <w>retrycancel</w>
       <w>revalidate</w>
       <w>rimraf</w>
       <w>rollout</w>
@@ -217,6 +231,7 @@
       <w>scripthost</w>
       <w>semver</w>
       <w>setfinderinfo</w>
+      <w>settext</w>
       <w>shorthash</w>
       <w>signcode</w>
       <w>signtool</w>
@@ -242,6 +257,7 @@
       <w>unflatten</w>
       <w>unicon</w>
       <w>uninstallation</w>
+      <w>uninstaller</w>
       <w>unmounting</w>
       <w>unorm</w>
       <w>unpage</w>
