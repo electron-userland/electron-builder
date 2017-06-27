@@ -88,7 +88,7 @@ function getPackageToolPath() {
   }
 }
 
-function isYarnPath(execPath: string | null) {
+function isYarnPath(execPath: string | null | undefined) {
   return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn"))
 }
 
@@ -120,7 +120,7 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
     execArgs.push(...additionalArgs)
     await BluebirdPromise.each(nativeDeps, dep => {
       log(`Rebuilding native dependency ${dep.name}`)
-      return spawn(execPath, execArgs, {
+      return spawn(execPath!, execArgs, {
         cwd: dep.path,
         env: env,
       })

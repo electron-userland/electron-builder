@@ -23,7 +23,7 @@ test("custom mas", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
+    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
     config: {
       mac: {
         target: ["mas"],
@@ -48,7 +48,7 @@ test("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
+    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
     config: {
       mac: {
         entitlements: "osx-entitlements file path",
@@ -70,7 +70,7 @@ test("entitlements in build dir", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingMacPackager(packager),
+    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
   }), {
     projectDirCreated: projectDir => BluebirdPromise.all([
       writeFile(path.join(projectDir, "build", "entitlements.mac.plist"), ""),

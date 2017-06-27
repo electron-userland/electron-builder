@@ -99,11 +99,7 @@ async function proxyFromNpm() {
 
 // only https url
 async function createAgent() {
-  let proxyString: string =
-    process.env.npm_config_https_proxy ||
-    process.env.HTTPS_PROXY || process.env.https_proxy ||
-    process.env.npm_config_proxy
-
+  let proxyString = process.env.npm_config_https_proxy || process.env.HTTPS_PROXY || process.env.https_proxy || process.env.npm_config_proxy
   if (!proxyString) {
     proxyString = await proxyFromNpm()
     if (!proxyString) {
@@ -122,4 +118,3 @@ async function createAgent() {
     }
   })
 }
-

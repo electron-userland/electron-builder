@@ -166,7 +166,7 @@ async function getToolPath(): Promise<ToolInfo> {
 
   const result = process.env.SIGNTOOL_PATH
   if (result) {
-    return result
+    return {path: result}
   }
 
   const vendorPath = await getSignVendorPath()

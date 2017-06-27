@@ -253,7 +253,7 @@ export function getPlatformIconFileName(value: string | null | undefined, isMac:
 
 export function isPullRequest() {
   // TRAVIS_PULL_REQUEST is set to the pull request number if the current job is a pull request build, or false if it’s not.
-  function isSet(value: string) {
+  function isSet(value: string | undefined) {
     // value can be or null, or empty string
     return value && value !== "false"
   }

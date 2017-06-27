@@ -5,7 +5,6 @@ import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { asArray, isEmptyOrSpaces, isPullRequest, Lazy, log, safeStringifyJson, warn } from "electron-builder-util"
-import { throwError } from "electron-builder-util/out/promise"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
@@ -21,6 +20,7 @@ import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated, BuildInfo } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
+import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { WinPackager } from "../winPackager"
 
 const publishForPrWarning = "There are serious security concerns with PUBLISH_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
@@ -31,14 +31,15 @@ const debug = _debug("electron-builder:publish")
 export class PublishManager implements PublishContext {
   private readonly nameToPublisher = new Map<string, Publisher | null>()
 
-  readonly publishTasks: Array<Promise<any>> = []
-  private readonly errors: Array<Error> = []
+  private readonly taskManager: AsyncTaskManager
 
   private readonly isPublish: boolean
 
   readonly progress = (<TtyWriteStream>process.stdout).isTTY ? new MultiProgress() : null
 
   constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
+    this.taskManager = new AsyncTaskManager(cancellationToken)
+
     const forcePublishForPr = process.env.PUBLISH_FOR_PULL_REQUEST === "true"
     if (!isPullRequest() || forcePublishForPr) {
       if (publishOptions.publish === undefined) {
@@ -106,7 +107,7 @@ export class PublishManager implements PublishContext {
       await writeFile(path.join(packager.getResourcesDir(event.appOutDir), "app-update.yml"), safeDump(publishConfig))
     })
 
-    packager.artifactCreated(event => this.addTask(this.artifactCreated(event)))
+    packager.artifactCreated(event => this.taskManager.addTask(this.artifactCreated(event)))
   }
 
   private async artifactCreated(event: ArtifactCreated) {
@@ -140,10 +141,10 @@ export class PublishManager implements PublishContext {
         }
 
         if (eventFile == null) {
-          this.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
+          this.taskManager.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
         }
         else {
-          this.addTask(publisher.upload(eventFile!, event.safeArtifactName))
+          this.taskManager.addTask(publisher.upload(eventFile!, event.safeArtifactName))
         }
       }
     }
@@ -151,21 +152,9 @@ export class PublishManager implements PublishContext {
     if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") ||
         (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target) && eventFile.endsWith(".exe"))) {
-        this.addTask(writeUpdateInfo(event, publishConfigs))
+        this.taskManager.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }
-  }
-
-  private addTask(promise: Promise<any>) {
-    if (this.cancellationToken.cancelled) {
-      return
-    }
-
-    this.publishTasks.push(promise
-      .catch(it => {
-        debug(`Publish error: ${it.toString()}`)
-        this.errors.push(it)
-      }))
   }
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
@@ -179,40 +168,12 @@ export class PublishManager implements PublishContext {
   }
 
   cancelTasks() {
-    for (const task of this.publishTasks) {
-      if ("cancel" in task) {
-        (<any>task).cancel()
-      }
-    }
-    this.publishTasks.length = 0
+    this.taskManager.cancelTasks()
     this.nameToPublisher.clear()
   }
 
-  async awaitTasks() {
-    const checkErrors = () => {
-      if (this.errors.length > 0) {
-        this.cancelTasks()
-        throwError(this.errors)
-        return
-      }
-    }
-
-    checkErrors()
-
-    const publishTasks = this.publishTasks
-    let list = publishTasks.slice()
-    publishTasks.length = 0
-    while (list.length > 0) {
-      await BluebirdPromise.all(list)
-      checkErrors()
-      if (publishTasks.length === 0) {
-        break
-      }
-      else {
-        list = publishTasks.slice()
-        publishTasks.length = 0
-      }
-    }
+  awaitTasks() {
+    return this.taskManager.awaitTasks()
   }
 }
 

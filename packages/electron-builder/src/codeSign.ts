@@ -264,7 +264,7 @@ export function findIdentity(certType: CertType, qualifier?: string | null, keyc
     }
   }
   else {
-    identity = identity.trim()
+    identity = identity!.trim()
     for (const prefix of appleCertificatePrefixes) {
       checkPrefix(identity, prefix)
     }

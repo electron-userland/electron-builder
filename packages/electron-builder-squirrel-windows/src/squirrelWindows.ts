@@ -81,7 +81,7 @@ export default class SquirrelWindowsTarget extends Target {
       iconUrl: iconUrl,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: parseInt(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL) || (packager.config.compression === "store" ? 0 : 9),
+      packageCompressionLevel: parseInt(<any>(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.config.compression === "store" ? 0 : 9), 10),
       vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2)
     }, this.options)
 

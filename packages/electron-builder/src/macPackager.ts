@@ -13,6 +13,7 @@ import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
+import { AsyncTaskManager } from "./util/asyncTaskManager"
 
 const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -54,7 +55,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     return iconPath == null ? await this.getDefaultIcon("icns") : await this.getResource(iconPath)
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     for (const name of targets) {
       switch (name) {
         case DIR_TARGET:
@@ -79,7 +80,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     return Platform.MAC
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     let nonMasPromise: Promise<any> | null = null
 
     const hasMas = targets.length !== 0 && targets.some(it => it.name === "mas" || it.name === "mas-dev")
@@ -89,7 +90,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       const appPath = prepackaged == null ? path.join(this.computeAppOutDir(outDir, arch), `${this.appInfo.productFilename}.app`) : prepackaged
       nonMasPromise = (prepackaged ? BluebirdPromise.resolve() : this.doPack(outDir, path.dirname(appPath), this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets))
         .then(() => this.sign(appPath, null, null))
-        .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, postAsyncTasks))
+        .then(() => this.packageInDistributableFormat(appPath, Arch.x64, targets, taskManager))
     }
 
     for (const target of targets) {
@@ -262,7 +263,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     return path.resolve(this.projectDir, dist, this.electronDistMacOsAppName)
   }
 
-  public getElectronDestDir(appOutDir: string) {
+  public getElectronDestinationDir(appOutDir: string) {
     return path.join(appOutDir, this.electronDistMacOsAppName)
   }
 }

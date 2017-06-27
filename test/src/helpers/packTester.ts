@@ -17,7 +17,7 @@ import { TEST_DIR } from "./config"
 import { assertThat } from "./fileAssert"
 
 if (process.env.TRAVIS !== "true") {
-  process.env.CIRCLE_BUILD_NUM = 42
+  process.env.CIRCLE_BUILD_NUM = "42"
 }
 
 const OUT_DIR_NAME = "dist"

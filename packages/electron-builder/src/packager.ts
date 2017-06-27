@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http"
 import { debug, exec, Lazy, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { all, executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
+import { executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -15,6 +15,7 @@ import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
+import { AsyncTaskManager } from "./util/asyncTaskManager"
 import { computeDefaultAppDirectory, computeElectronVersion, getConfig, validateConfig } from "./util/config"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
@@ -154,11 +155,10 @@ export class Packager implements BuildInfo {
     }
     this.appInfo = new AppInfo(this)
 
-    const cleanupTasks: Array<() => Promise<any>> = []
     const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
     return {
       outDir: outDir,
-      platformToTargets: await executeFinally(this.doBuild(outDir, cleanupTasks), () => all(cleanupTasks.map(it => it()).concat(this.tempDirManager.cleanup())))
+      platformToTargets: await executeFinally(this.doBuild(outDir), () => this.tempDirManager.cleanup())
     }
   }
 
@@ -177,8 +177,9 @@ export class Packager implements BuildInfo {
     throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
   }
 
-  private async doBuild(outDir: string, cleanupTasks: Array<() => Promise<any>>): Promise<Map<Platform, Map<String, Target>>> {
-    const distTasks: Array<Promise<any>> = []
+  private async doBuild(outDir: string): Promise<Map<Platform, Map<String, Target>>> {
+    const taskManager = new AsyncTaskManager(this.cancellationToken)
+
     const platformToTarget = new Map<Platform, Map<String, Target>>()
     const createdOutDirs = new Set<string>()
 
@@ -191,7 +192,7 @@ export class Packager implements BuildInfo {
         throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
       }
 
-      const packager = this.createHelper(platform, cleanupTasks)
+      const packager = this.createHelper(platform)
       const nameToTarget: Map<String, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
@@ -206,7 +207,7 @@ export class Packager implements BuildInfo {
           break
         }
 
-        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager, cleanupTasks)
+        const targetList = createTargets(nameToTarget, targetNames.length === 0 ? packager.defaultTarget : targetNames, outDir, packager)
         const ourDirs = new Set<string>()
         for (const target of targetList) {
           if (target instanceof NoOpTarget) {
@@ -226,7 +227,7 @@ export class Packager implements BuildInfo {
           })
         }
 
-        await packager.pack(outDir, arch, targetList, distTasks)
+        await packager.pack(outDir, arch, targetList, taskManager)
       }
 
       if (this.cancellationToken.cancelled) {
@@ -234,26 +235,17 @@ export class Packager implements BuildInfo {
       }
 
       for (const target of nameToTarget.values()) {
-        distTasks.push(target.finishBuild())
+        taskManager.addTask(target.finishBuild())
       }
     }
 
-    if (this.cancellationToken.cancelled) {
-      for (const task of distTasks) {
-        if ("cancel" in task) {
-          (<BluebirdPromise<any>>task).cancel()
-        }
-      }
-    }
-    else {
-      await BluebirdPromise.all(distTasks)
-    }
+    await taskManager.awaitTasks()
     return platformToTarget
   }
 
-  private createHelper(platform: Platform, cleanupTasks: Array<() => Promise<any>>): PlatformPackager<any> {
+  private createHelper(platform: Platform): PlatformPackager<any> {
     if (this.options.platformPackagerFactory != null) {
-      return this.options.platformPackagerFactory!(this,  platform, cleanupTasks)
+      return this.options.platformPackagerFactory!(this, platform)
     }
 
     switch (platform) {

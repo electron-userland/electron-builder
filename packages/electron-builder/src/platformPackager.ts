@@ -15,6 +15,7 @@ import { AfterPackContext, AsarOptions, Config, FileAssociation, PlatformSpecifi
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { BuildInfo, PackagerOptions } from "./packagerApi"
 import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
+import { AsyncTaskManager } from "./util/asyncTaskManager"
 import { dependencies } from "./util/packageDependencies"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -57,7 +58,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return options == null ? Object.create(null) : options
   }
 
-  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void
+  abstract createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void
 
   protected getCscPassword(): string {
     const password = this.doGetCscPassword()
@@ -66,11 +67,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return ""
     }
     else {
-      return password.trim()
+      return password!.trim()
     }
   }
 
-  protected doGetCscPassword() {
+  protected doGetCscPassword(): string | undefined {
     const cscKeyPassword = this.packagerOptions.cscKeyPassword
     // allow to specify as empty string
     return cscKeyPassword == null ? process.env.CSC_KEY_PASSWORD : cscKeyPassword
@@ -91,14 +92,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     })
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     const appOutDir = this.computeAppOutDir(outDir, arch)
     await this.doPack(outDir, appOutDir, this.platform.nodeName, arch, this.platformSpecificBuildOptions, targets)
-    this.packageInDistributableFormat(appOutDir, arch, targets, postAsyncTasks)
+    this.packageInDistributableFormat(appOutDir, arch, targets, taskManager)
   }
 
-  protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): void {
-    postAsyncTasks.push(BluebirdPromise.map(targets, it => it.isAsyncSupported ? it.build(appOutDir, arch) : null)
+  protected packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
+    taskManager.addTask(BluebirdPromise.map(targets, it => it.isAsyncSupported ? it.build(appOutDir, arch) : null)
       .then(() => BluebirdPromise.each(targets, it => it.isAsyncSupported ? null : it.build(appOutDir, arch))))
   }
 
@@ -267,7 +268,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return path.resolve(this.projectDir, dist)
   }
 
-  public getElectronDestDir(appOutDir: string): string {
+  public getElectronDestinationDir(appOutDir: string): string {
     return appOutDir
   }
 

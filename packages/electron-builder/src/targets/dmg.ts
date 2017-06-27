@@ -102,8 +102,8 @@ export class DmgTarget extends Target {
 
       if (specification.backgroundColor != null || specification.background == null) {
         env.backgroundColor = specification.backgroundColor || "#ffffff"
-        env.windowWidth = window.width || 540
-        env.windowHeight = window.height || 380
+        env.windowWidth = (window.width || 540).toString()
+        env.windowHeight = (window.height || 380).toString()
       }
       else {
         delete env.backgroundColor
@@ -112,16 +112,16 @@ export class DmgTarget extends Target {
           delete env.windowWidth
         }
         else {
-          env.windowWidth = window.width
+          env.windowWidth = window.width.toString()
         }
         if (window.height == null) {
           delete env.windowHeight
         }
         else {
-          env.windowHeight = window.height
+          env.windowHeight = window.height.toString()
         }
 
-        env.backgroundFilename = backgroundFilename
+        env.backgroundFilename = <any>backgroundFilename
       }
 
       let entries = ""

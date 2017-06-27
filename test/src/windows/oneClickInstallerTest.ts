@@ -54,7 +54,7 @@ test.ifAll.ifNotCiMac("multi language license", app({
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {
-    // wine creates incorrect filenames and registry entries for unicode, so, we use ASCII
+    // wine creates incorrect file names and registry entries for unicode, so, we use ASCII
     productName: "TestApp",
     fileAssociations: [
       {
@@ -185,7 +185,7 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
 test.ifNotCiMac("web installer", app({
   targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
   config: {
-    compression: process.env.COMPRESSION || "store",
+    compression: <any>process.env.COMPRESSION || "store",
     publish: {
       provider: "s3",
       bucket: "develar",

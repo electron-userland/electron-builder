@@ -2,8 +2,8 @@ import BluebirdPromise from "bluebird-lst"
 import { mkdirs, mkdtemp, remove, removeSync } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
+import { CONCURRENCY } from "./fs"
 import { warn } from "./log"
-import { all } from "./promise"
 import { getTempName } from "./util"
 
 process.setMaxListeners(30)
@@ -79,12 +79,13 @@ export class TmpDir {
     this.tempFiles = []
     this.tempPrefixPromise = null
 
-    return all(tempFiles.map(it => remove(it)
-      .catch(e => {
-        if (e.code !== "EPERM") {
-          warn(`Cannot delete temporary dir "${it}": ${(e.stack || e).toString()}`)
-        }
-      })
-    ))
+    return BluebirdPromise.map(tempFiles, it => {
+      remove(it)
+        .catch(e => {
+          if (e.code !== "EPERM") {
+            warn(`Cannot delete temporary dir "${it}": ${(e.stack || e).toString()}`)
+          }
+        })
+    }, CONCURRENCY)
   }
 }

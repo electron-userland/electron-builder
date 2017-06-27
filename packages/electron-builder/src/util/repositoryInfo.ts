@@ -35,10 +35,10 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
     return parseRepositoryUrl(typeof repo === "string" ? repo : repo.url)
   }
 
-  let url = process.env.TRAVIS_REPO_SLUG
+  let url: string | undefined | null = process.env.TRAVIS_REPO_SLUG
   if (url == null) {
-    const user: string | null = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
-    const project: string | null = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
+    const user: string | null | undefined = process.env.APPVEYOR_ACCOUNT_NAME || process.env.CIRCLE_PROJECT_USERNAME
+    const project: string | null | undefined = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
     if (user != null && project != null) {
       return {
         user: user,

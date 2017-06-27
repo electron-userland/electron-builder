@@ -1,8 +1,9 @@
 import { Arch, BuildInfo, MacOptions, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder/out/codeSign"
-import OsXPackager from "electron-builder/out/macPackager"
+import MacPackager from "electron-builder/out/macPackager"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
+import { AsyncTaskManager } from "electron-builder/out/util/asyncTaskManager"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
 import { SignOptions as MacSignOptions } from "electron-osx-sign"
@@ -16,7 +17,7 @@ export class CheckingWinPackager extends WinPackager {
   }
 
   //noinspection JSUnusedLocalSymbols
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     // skip pack
     const helperClass: typeof SquirrelWindowsTarget = require("electron-builder-squirrel-windows").default
     this.effectiveDistOptions = await (new helperClass(this, outDir).computeEffectiveDistOptions())
@@ -25,7 +26,7 @@ export class CheckingWinPackager extends WinPackager {
   }
 
   //noinspection JSUnusedLocalSymbols
-  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
+  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
     // skip
   }
 
@@ -35,7 +36,7 @@ export class CheckingWinPackager extends WinPackager {
   }
 }
 
-export class CheckingMacPackager extends OsXPackager {
+export class CheckingMacPackager extends MacPackager {
   effectiveDistOptions: any
   effectiveSignOptions: MacSignOptions
 
@@ -43,7 +44,7 @@ export class CheckingMacPackager extends OsXPackager {
     super(info)
   }
 
-  async pack(outDir: string, arch: Arch, targets: Array<Target>, postAsyncTasks: Array<Promise<any>>): Promise<any> {
+  async pack(outDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): Promise<any> {
     for (const target of targets) {
       // do not use instanceof to avoid dmg require
       if (target.name === "dmg") {
@@ -52,7 +53,7 @@ export class CheckingMacPackager extends OsXPackager {
       }
     }
     // http://madole.xyz/babel-plugin-transform-async-to-module-method-gotcha/
-    return await OsXPackager.prototype.pack.call(this, outDir, arch, targets, postAsyncTasks)
+    return await MacPackager.prototype.pack.call(this, outDir, arch, targets, taskManager)
   }
 
   //noinspection JSUnusedLocalSymbols
@@ -71,7 +72,7 @@ export class CheckingMacPackager extends OsXPackager {
   }
 
   //noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
-  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, promises: Array<Promise<any>>): void {
+  packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
     // skip
   }
 

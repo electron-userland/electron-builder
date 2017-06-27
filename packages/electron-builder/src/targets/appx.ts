@@ -3,11 +3,12 @@ import _debug from "debug"
 import { asArray, spawn, use } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, copyFile } from "electron-builder-util/out/fs"
-import { asyncAll, orIfFileNotExist } from "electron-builder-util/out/promise"
+import { orIfFileNotExist } from "electron-builder-util/out/promise"
 import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { Arch, getArchSuffix, Target } from "../core"
 import { AppXOptions } from "../options/winOptions"
+import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
@@ -65,15 +66,15 @@ export default class AppXTarget extends Target {
 
     const userAssets = await orIfFileNotExist(readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME)), [])
     const vendorPath = await getSignVendorPath()
-    await asyncAll([
-      () => BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
-        if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
-          copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
-        }
-      }),
-      () => this.writeManifest(path.join(__dirname, "..", "..", "templates", "appx"), preAppx, arch, publisher!, userAssets),
-      () => copyDir(appOutDir, path.join(preAppx, "app")),
-    ])
+    const taskManager = new AsyncTaskManager(null)
+    taskManager.addTask(BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
+      if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
+        copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
+      }
+    }))
+    taskManager.addTask(this.writeManifest(path.join(__dirname, "..", "..", "templates", "appx"), preAppx, arch, publisher!, userAssets))
+    taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
+    await taskManager.awaitTasks()
 
     const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
     const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", destination]

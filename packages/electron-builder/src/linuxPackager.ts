@@ -26,7 +26,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     return ["appimage"]
   }
 
-  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void, cleanupTasks: Array<() => Promise<any>>): void {
+  createTargets(targets: Array<string>, mapper: (name: string, factory: (outDir: string) => Target) => void): void {
     let helper: LinuxTargetHelper | null
     const getHelper = () => {
       if (helper == null) {

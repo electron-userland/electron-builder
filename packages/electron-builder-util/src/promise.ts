@@ -1,4 +1,3 @@
-import BluebirdPromise from "bluebird-lst"
 import { red } from "chalk"
 
 export function printErrorAndExit(error: Error) {
@@ -37,30 +36,11 @@ export class NestedError extends Error {
     let m = message
     let i = 1
     for (const error of errors) {
-      const prefix = "Error #" + i++ + " "
+      const prefix = `Error #${i++} `
       m += "\n\n" + prefix + "-".repeat(80) + "\n" + error!.stack
     }
     super(m)
   }
-}
-
-export function all(promises: Array<Promise<any>>): BluebirdPromise<any> {
-  const errors: Array<Error> = []
-  return BluebirdPromise.all(promises.map(it => it.catch(it => errors.push(it))))
-    .then(() => throwError(errors))
-}
-
-export function throwError(errors: Array<Error>) {
-  if (errors.length === 1) {
-    throw errors[0]
-  }
-  else if (errors.length > 1) {
-    throw new NestedError(errors, "Cannot cleanup: ")
-  }
-}
-
-export function asyncAll(tasks: Array<() => Promise<any>>) {
-  return BluebirdPromise.map(tasks, it => it())
 }
 
 export function orNullIfFileNotExist<T>(promise: Promise<T>): Promise<T | null> {

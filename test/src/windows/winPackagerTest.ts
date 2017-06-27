@@ -34,7 +34,7 @@ test.ifMac("custom icon", () => {
   let platformPackager: CheckingWinPackager = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
+    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingWinPackager(packager),
     config: {
       win: {
         icon: "customIcon"

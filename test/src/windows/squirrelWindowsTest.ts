@@ -23,7 +23,7 @@ test.ifAll("detect install-spinner, certificateFile/password", () => {
 
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
-    platformPackagerFactory: (packager, platform, cleanupTasks) => platformPackager = new CheckingWinPackager(packager),
+    platformPackagerFactory: (packager, platform) => platformPackager = new CheckingWinPackager(packager),
     config: {
       win: {
         certificatePassword: "pass",

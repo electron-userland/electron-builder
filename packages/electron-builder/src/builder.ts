@@ -224,10 +224,10 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
   }
 
   if (options.draft === undefined && !isEmptyOrSpaces(process.env.EP_DRAFT)) {
-    options.draft = process.env.EP_DRAFT.toLowerCase() === "true"
+    options.draft = process.env.EP_DRAFT!.toLowerCase() === "true"
   }
   if (options.prerelease === undefined && !isEmptyOrSpaces(process.env.EP_PRELEASE)) {
-    options.prerelease = process.env.EP_PRELEASE.toLowerCase() === "true"
+    options.prerelease = process.env.EP_PRELEASE!.toLowerCase() === "true"
   }
 
   const cancellationToken = new CancellationToken()

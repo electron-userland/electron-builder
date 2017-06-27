@@ -17,7 +17,7 @@ export interface PackagerOptions {
   cscInstallerLink?: string | null
   cscInstallerKeyPassword?: string | null
 
-  platformPackagerFactory?: ((info: BuildInfo, platform: Platform, cleanupTasks: Array<() => Promise<any>>) => PlatformPackager<any>) | null
+  platformPackagerFactory?: ((info: BuildInfo, platform: Platform) => PlatformPackager<any>) | null
 
   readonly config?: Config | string | null
 

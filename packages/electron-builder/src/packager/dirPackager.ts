@@ -58,7 +58,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
   }
   else {
     const source = packager.getElectronSrcDir(dist)
-    const destination = packager.getElectronDestDir(out)
+    const destination = packager.getElectronDestinationDir(out)
     log(`Copying Electron from "${source}" to "${destination}"`)
     await emptyDir(out)
     await copyDir(source, destination, null, null, DO_NOT_USE_HARD_LINKS)

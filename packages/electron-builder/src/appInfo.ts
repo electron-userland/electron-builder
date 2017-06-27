@@ -6,7 +6,7 @@ import { BuildInfo } from "./packagerApi"
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
-  readonly buildNumber: string
+  readonly buildNumber: string | undefined
   readonly buildVersion: string
 
   readonly productName: string

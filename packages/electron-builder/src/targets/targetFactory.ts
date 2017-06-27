@@ -41,7 +41,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: P
   return result
 }
 
-export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>, cleanupTasks: Array<() => Promise<any>>): Array<Target> {
+export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -54,7 +54,7 @@ export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<
   }
 
   const targets = normalizeTargets(rawList, packager.defaultTarget)
-  packager.createTargets(targets, mapper, cleanupTasks)
+  packager.createTargets(targets, mapper)
   return result
 }
 

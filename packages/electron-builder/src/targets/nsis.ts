@@ -4,7 +4,6 @@ import _debug from "debug"
 import { asArray, debug7zArgs, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, subTask, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
-import { asyncAll } from "electron-builder-util/out/promise"
 import { outputFile, readFile, unlink, writeFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
@@ -13,6 +12,7 @@ import { v5 as uuid5 } from "uuid-1345"
 import { Arch, Target } from "../core"
 import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
+import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { time } from "../util/timer"
 import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
@@ -506,27 +506,29 @@ export class NsisTarget extends Target {
       return '!include "' + await this.writeCustomLangFile(data) + '"\n'
     }
 
-    const tasks: Array<() => Promise<any>> = [
-      async () => {
-        const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
-        let result = `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
-        result += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
-        return result
-      },
-      async () => {
-        // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
-        const licensePage = await this.computeLicensePage()
-        return licensePage == null ? "" : createMacro("licensePage", licensePage)
-      },
-      () => addCustomMessageFileInclude("messages.yml"),
-    ]
+    const taskManager = new AsyncTaskManager(null)
+
+    taskManager.add(async () => {
+      const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+      let result = `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
+      result += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
+      return result
+    })
+
+    taskManager.add(async () => {
+      // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
+      const licensePage = await this.computeLicensePage()
+      return licensePage == null ? "" : createMacro("licensePage", licensePage)
+    })
+
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml"))
 
     if (!this.isPortable) {
       if (this.options.oneClick === false) {
-        tasks.push(() => addCustomMessageFileInclude("boringMessages.yml"))
+        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml"))
       }
 
-      tasks.push(async () => {
+      taskManager.add(async () => {
         let result = ""
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
@@ -537,7 +539,7 @@ export class NsisTarget extends Target {
       })
     }
 
-    for (const s of await asyncAll(tasks)) {
+    for (const s of await taskManager.awaitTasks()) {
       scriptHeader += s
     }
 
