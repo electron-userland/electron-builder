@@ -1,39 +1,68 @@
 # boring installer messages, see messages.yml for one-click installer messages
 chooseInstallationOptions:
   en: Choose Installation Options
+  de: Installationsoption wählen
   ru: Выберите опции установки
   sk: Vyberte možnosti inštalácie
 chooseUninstallationOptions:
   en: Choose Uninstallation Options
+  de: Deinstallationsoption wählen
   ru: Выберите опции удаления
   sk: Vyberte možnosti odinštalovania
 whichInstallationShouldBeRemoved:
   en: Which installation should be removed?
+  de: Welche Installation soll entfernt werden?
   sk: Ktorá inštalácia by mala byt odstránená?
 whoShouldThisApplicationBeInstalledFor:
   en: Who should this application be installed for?
+  de: Für wen soll diese Anwendung installiert werden?
   sk: Pre koho sa ma táto aplikacia inštalovať?
 selectUserMode:
   en: Please select whether you wish to make this software available to all users or just yourself
+  de: Bitte wählen Sie, ob Sie die Anwendung nur für sich oder für alle Benutzer installieren möchten.
   sk: Prosím vyberte či sa ma tento softvér inštalovať len pre Vás alebo pre všetkých uživateľov
 whichInstallationRemove:
   en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
+  de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
   sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť? 
 freshInstallForAll:
-  en: Fresh install for all users.
-  ru: Новая установка для всех пользователей.
-  sk: Nová inštalácia pre všetkých uživateľov.
+  en: Fresh install for all users. (will prompt for admin credentials)
+  de: Neuinstallation für alle Benutzer durchführen. (Administratorrechte benötigt)
+  ru: Новая установка для всех пользователей. (will prompt for admin credentials)
+  sk: Nová inštalácia pre všetkých uživateľov. (will prompt for admin credentials)
 freshInstallForCurrent:
   en: Fresh install for current user only.
+  de: Neuinstallation nur für den aktuellen Benutzer durchführen. 
   ru: Новая установка только для текущего пользователя.
 onlyForMe:
   en: Only for &me
+  de: Nur für &mich
   ru: Только для &меня
   sk: Iba pre mňa
 forAll:
   en: Anyone who uses this computer (&all users)
+  de: Für alle Benutzer dieses Computers (&alle Benutzer)
   ru: Для &всех пользователей данного компьютера
   sk: Pre každého kto použiva tento počitač (všetci uživatelia)
 loginWithAdminAccount:
   en: You need to login with an account that is a member of the admin group to continue...
+  de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden... 
   sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
+perUserInstallExists:
+  en: There is already a per-user installation.
+  de: Es existiert bereits eine Installtion für den ausgewählten Benutzer.
+perUserInstall:
+  en: There is a per-user installation.
+  de: Benutzerinstallation bereits vorhanden.
+perMachineInstallExists:
+  en: There is already a per-machine installation.
+  de: Es existiert bereits eine Installation für diesen Computer.
+perMachineInstall:
+  en: There is a per-machine installation.
+  de: Es existiert eine Installation für diesen Computer.  
+reinstallUpgrade:
+  en: Will reinstall/upgrade.
+  de: Die Anwendung wird aktualisiert.  
+uninstall: 
+  en: Will uninstall.
+  de: Die Anwendung wird deinstalliert.
