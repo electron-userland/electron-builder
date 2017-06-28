@@ -66,7 +66,7 @@ export default class AppXTarget extends Target {
 
     const userAssets = await orIfFileNotExist(readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME)), [])
     const vendorPath = await getSignVendorPath()
-    const taskManager = new AsyncTaskManager(null)
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
     taskManager.addTask(BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
       if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
         copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))

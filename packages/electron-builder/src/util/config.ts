@@ -63,21 +63,33 @@ export async function getConfig(projectDir: string, configPath: string | null, p
     fileOrPackageConfig = await doLoadConfig(path.resolve(projectDir, configPath), projectDir)
   }
 
-  let config = deepAssign(fileOrPackageConfig == null ? Object.create(null) : fileOrPackageConfig, configFromOptions)
+  const config: Config = deepAssign(fileOrPackageConfig == null ? Object.create(null) : fileOrPackageConfig, configFromOptions)
 
-  if (config.extends == null && config.extends !== null && packageMetadata != null) {
+  let extendsSpec = config.extends
+  if (extendsSpec == null && extendsSpec !== null && packageMetadata != null) {
     const devDependencies = packageMetadata.devDependencies
     if (devDependencies != null && "react-scripts" in devDependencies) {
-      (<any>config).extends = "react-cra"
+      extendsSpec = "react-cra"
+      config.extends = extendsSpec
     }
   }
 
-  if (config.extends === "react-cra") {
-    return deepAssign(await reactCra(projectDir), config)
-  }
-  else {
+  if (extendsSpec == null) {
     return config
   }
+
+  let parentConfig: Config
+  if (extendsSpec === "react-cra") {
+    parentConfig = await reactCra(projectDir)
+  }
+  else {
+    let spec = extendsSpec
+    if (spec.startsWith("file:")) {
+      spec = spec.substring("file:".length)
+    }
+    parentConfig = await doLoadConfig(path.resolve(projectDir, spec), projectDir)
+  }
+  return deepAssign(parentConfig, config)
 }
 
 /** @internal */

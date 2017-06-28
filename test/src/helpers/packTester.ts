@@ -5,6 +5,7 @@ import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-util"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
+import { executeFinally } from "electron-builder-util/out/promise"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { getLinuxToolsPath } from "electron-builder/out/util/bundledTool"
@@ -93,7 +94,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   }, null, it => path.basename(it) != "package.json")
   projectDir = dir
 
-  try {
+  await executeFinally((async () => {
     if (projectDirCreated != null) {
       await projectDirCreated(projectDir)
       if (checkOptions.installDepsBefore) {
@@ -121,8 +122,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         packager: packager,
       })
     }
-  }
-  finally {
+  })(), async () => {
     if (dirToDelete != null) {
       try {
         await remove(dirToDelete)
@@ -131,7 +131,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         console.warn(`Cannot delete temporary directory ${dirToDelete}: ${(e.stack || e)}`)
       }
     }
-  }
+  })
 }
 
 const fileCopier = new FileCopier()

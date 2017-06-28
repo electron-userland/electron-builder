@@ -5,6 +5,7 @@ import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Platform } from "./core"
+import { hasDep } from "./fileTransformer"
 import { Config, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
@@ -22,8 +23,8 @@ export class FileMatcher {
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
   }
 
-  private normalizePattern(pattern: string) {
-    return path.posix.normalize(this.macroExpander(pattern))
+  normalizePattern(pattern: string) {
+    return path.posix.normalize(this.macroExpander(pattern.replace(/\\/g, "/")))
   }
 
   addPattern(pattern: string) {
@@ -83,11 +84,15 @@ export class FileMatcher {
 }
 
 /** @internal */
-export function createFileMatcher(appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: PlatformPackager<any>) {
+export function createFileMatcher(appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: PlatformPackager<any>, outDir: string) {
   const buildResourceDir = path.resolve(packager.info.projectDir, packager.buildResourcesDir)
 
-  const patterns = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
-  const matcher = patterns == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : patterns[0]
+  const matchers = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
+  const matcher = matchers == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : matchers[0]
+
+  // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive patterns
+
+  const patterns = matcher.patterns
 
   const customFirstPatterns: Array<string> = []
   if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
@@ -95,8 +100,9 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   }
   else {
     // prependPattern - user pattern should be after to be able to override
-    customFirstPatterns.push("**/node_modules/**/*")
-    matcher.addPattern("package.json")
+    // do not use **/node_modules/**/* because if pattern starts with **, all not explicitly excluded directories will be traversed (performance + empty dirs will be included into the asar)
+    customFirstPatterns.push("node_modules/**/*")
+    patterns.push("package.json")
   }
 
   // https://github.com/electron-userland/electron-builder/issues/1482
@@ -105,32 +111,41 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
     customFirstPatterns.push(`!${relativeBuildResourceDir}{,/**/*}`)
   }
 
-  if (packager.platform !== Platform.WINDOWS) {
-    // https://github.com/electron-userland/electron-builder/issues/1738
-    customFirstPatterns.push("!**/node_modules/**/*.{dll,exe}")
+  const relativeOutDir = matcher.normalizePattern(path.relative(packager.info.projectDir, outDir))
+  if (!relativeOutDir.startsWith(".")) {
+    customFirstPatterns.push(`!${relativeOutDir}{,/**/*}`)
   }
 
-  // add our default exclusions after user possibly defined "all" pattern
-  const insertIndex = Math.max(0, matcher.patterns.findIndex(it => it == "**/*"))
-  matcher.patterns.splice(insertIndex, 0, ...customFirstPatterns)
+  // add our default exclusions after last user possibly defined "all"/permissive pattern
+  let insertIndex = 0
+  for (let i = patterns.length - 1; i >= 0; i--) {
+    if (patterns[i].startsWith("**/")) {
+      insertIndex = i + 1
+      break
+    }
+  }
+  patterns.splice(insertIndex, 0, ...customFirstPatterns)
+
+  if (packager.platform !== Platform.WINDOWS) {
+    // https://github.com/electron-userland/electron-builder/issues/1738
+    patterns.push("!**/node_modules/**/*.{dll,exe}")
+  }
 
   // https://github.com/electron-userland/electron-builder/issues/1738#issuecomment-310729208
-  // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive pattern
-  // matcher.addPattern("**/node_modules/lzma-native/build/{Release,Debug}")
-  matcher.addPattern("!**/node_modules/lzma-native/build/*.{mk,gypi,Makefile}")
-  matcher.addPattern("!**/node_modules/lzma-native/build/{Makefile,gyp-mac-tool}")
-  matcher.addPattern("!**/node_modules/lzma-native/build/liblzma{,/**/*}")
+  if (hasDep("lzma-native", packager.info)) {
+    patterns.push("!**/node_modules/lzma-native/build{,/**/*}")
+    patterns.push("!**/node_modules/lzma-native/deps{,/**/*}")
+  }
 
-  matcher.addPattern("!**/node_modules/lzma-native/deps/xz-*")
-  matcher.addPattern("!**/node_modules/lzma-native/deps/doc{,/**/*}")
-
-  matcher.addPattern("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
-  matcher.addPattern("!**/node_modules/.bin")
-  matcher.addPattern(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`)
-  matcher.addPattern("!**/._*")
+  patterns.push("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+  patterns.push("!**/node_modules/.bin")
+  patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`)
+  patterns.push("!**/._*")
+  patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
+  patterns.push("!**/node_modules/@types{,/**/*}")
   //noinspection SpellCheckingInspection
-  matcher.addPattern("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
-    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitattributes," +
+  patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
+    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes," +
     ".idea,.vs,.editorconfig,.flowconfig,.jshintrc,.eslintrc," +
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
     "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
@@ -139,11 +154,11 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
 }
 
 /** @internal */
-export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDest: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
+export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
   const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>config)[name]
   const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
 
-  const defaultMatcher = new FileMatcher(defaultSrc, defaultDest, macroExpander)
+  const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
   function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
@@ -165,7 +180,7 @@ export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "
       }
       else if (allowAdvancedMatching) {
         const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
-        const to = pattern.to == null ? defaultDest : path.resolve(defaultDest, pattern.to)
+        const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
         fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
       }
       else {

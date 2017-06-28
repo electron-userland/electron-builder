@@ -189,7 +189,7 @@ export interface Config extends PlatformSpecificBuildOptions {
    *
    * If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
    */
-  readonly extends?: string | null
+  extends?: string | null
 
   /**
    * Inject properties to `package.json`.

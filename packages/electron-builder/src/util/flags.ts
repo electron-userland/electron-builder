@@ -10,6 +10,10 @@ export function isBuildCacheEnabled() {
   return !isEnvTrue(process.env.ELECTRON_BUILDER_DISABLE_BUILD_CACHE)
 }
 
+export function isAutoDiscoveryCodeSignIdentity() {
+  return process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
+}
+
 function isEnvTrue(value: string | null | undefined) {
   if (value != null) {
     value = value.trim()

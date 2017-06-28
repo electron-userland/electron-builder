@@ -107,15 +107,15 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
     return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, macroExpander, customBuildOptions)
   }
-  
+
   get electronDistMacOsAppName() {
     return this.config.muonVersion == null ? "Electron.app" : "Brave.app"
   }
-  
+
   get electronDistExecutableName() {
     return this.config.muonVersion == null ? "electron" : "brave"
   }
-  
+
   get electronDistMacOsExecutableName() {
     return this.config.muonVersion == null ? "Electron" : "Brave"
   }
@@ -138,10 +138,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${config.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
-    const ignoreFiles = new Set([path.resolve(this.info.projectDir, outDir),
-      path.resolve(this.info.projectDir, "electron-builder.yml"),
-      path.resolve(this.info.projectDir, "electron-builder.json"),
-      path.resolve(this.info.projectDir, "electron-builder.json5")])
+    const ignoreFiles = new Set()
     if (this.info.isPrepackedAppAsar) {
       await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
     }
@@ -172,38 +169,39 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
 
-    const defaultMatcher = createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, this)
+    const defaultMatcher = createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, this, outDir)
     const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
     if (isElectronCompile) {
       defaultMatcher.addPattern("!.cache{,/**/*}")
     }
-    
+
     const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
 
     const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME,
     }, config.extraMetadata) : config.extraMetadata)
-    let promise
+    const taskManager = new AsyncTaskManager(this.info.cancellationToken)
     if (this.info.isPrepackedAppAsar) {
-      promise = copyDir(appDir, path.join(resourcesPath), filter, transformer)
+      taskManager.addTask(copyDir(appDir, path.join(resourcesPath), filter, transformer))
     }
     else if (asarOptions == null) {
-      promise = copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer)
+      taskManager.addTask(copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      promise = new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this)
+      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this))
     }
 
-    //noinspection ES6MissingAwait
-    const promises = [promise, unlinkIfExists(path.join(resourcesPath, "default_app.asar")), unlinkIfExists(path.join(appOutDir, "version")), this.postInitApp(packContext)]
+    taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))
+    taskManager.addTask(unlinkIfExists(path.join(appOutDir, "version")))
+    taskManager.addTask(this.postInitApp(packContext))
     if (this.platform !== Platform.MAC) {
-      promises.push(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
+      taskManager.addTask(rename(path.join(appOutDir, "LICENSE"), path.join(appOutDir, "LICENSE.electron.txt")).catch(() => {/* ignore */}))
     }
 
-    await BluebirdPromise.all(promises)
+    await taskManager.awaitTasks()
 
     if (platformName === "darwin" || platformName === "mas") {
       await (<any>require("./packager/mac")).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
@@ -263,7 +261,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
     return deepAssign({}, result)
   }
-  
+
   public getElectronSrcDir(dist: string): string {
     return path.resolve(this.projectDir, dist)
   }

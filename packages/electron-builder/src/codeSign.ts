@@ -7,6 +7,7 @@ import { outputFile, rename } from "fs-extra-p"
 import isCi from "is-ci"
 import { homedir } from "os"
 import * as path from "path"
+import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]
 
@@ -256,11 +257,11 @@ function parseIdentity(line: string): Identity {
 export function findIdentity(certType: CertType, qualifier?: string | null, keychain?: string | null): Promise<Identity | null> {
   let identity = qualifier || process.env.CSC_NAME
   if (isEmptyOrSpaces(identity)) {
-    if (keychain == null && !isCi && process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") {
-      return BluebirdPromise.resolve(null)
+    if (isAutoDiscoveryCodeSignIdentity()) {
+      return _findIdentity(certType, null, keychain)
     }
     else {
-      return _findIdentity(certType, null, keychain)
+      return BluebirdPromise.resolve(null)
     }
   }
   else {

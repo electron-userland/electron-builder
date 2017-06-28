@@ -12,8 +12,13 @@ export function isElectronCompileUsed(info: BuildInfo): boolean {
   }
   
   // if in devDependencies - it means that babel is used for precompilation or for some reason user decided to not use electron-compile for production
+  return hasDep("electron-compile", info)
+}
+
+/** @internal */
+export function hasDep(name: string, info: BuildInfo) {
   const deps = info.metadata.dependencies
-  return deps != null && "electron-compile" in deps
+  return deps != null && name in deps
 }
 
 /** @internal */

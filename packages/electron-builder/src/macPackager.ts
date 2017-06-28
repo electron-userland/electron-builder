@@ -14,6 +14,7 @@ import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
+import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
 
 const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
   "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
@@ -158,7 +159,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const explicitType = masOptions == null ? macOptions.type : masOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
-    let identity = await findIdentity(isDevelopment ? "Mac Developer" : (isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"), isMas ? masQualifier : qualifier, keychainName)
+    const certificateType = isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"
+    let identity = await findIdentity(isDevelopment ? "Mac Developer" : certificateType, isMas ? masQualifier : qualifier, keychainName)
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
         identity = await findIdentity("Mac Developer", qualifier, keychainName)
@@ -171,9 +173,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
 
       if (identity == null) {
-        const message = process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false" ?
-          `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false` :
-          `App is not signed: cannot find valid ${isMas ? '"3rd Party Mac Developer Application" identity' : `"Developer ID Application" identity or custom non-Apple code signing certificate`}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+        const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
+        const message = isAutoDiscoveryCodeSignIdentity() ?
+          `App is not signed: cannot find valid "${certificateType}" identity${postfix}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing` :
+          `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false`
         if (isMas || this.forceCodeSigning) {
           throw new Error(message)
         }

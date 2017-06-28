@@ -506,7 +506,7 @@ export class NsisTarget extends Target {
       return '!include "' + await this.writeCustomLangFile(data) + '"\n'
     }
 
-    const taskManager = new AsyncTaskManager(null)
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     taskManager.add(async () => {
       const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"

@@ -152,7 +152,7 @@ async function readScopedDir(dir: string) {
 
   files.sort()
 
-  const scopes = files.filter(it => it.startsWith("@"))
+  const scopes = files.filter(it => it.startsWith("@") && !it.startsWith("@types"))
   if (scopes.length === 0) {
     return files
   }

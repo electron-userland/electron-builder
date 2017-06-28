@@ -7,7 +7,7 @@ export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []
 
-  constructor(private readonly cancellationToken: CancellationToken | null) {
+  constructor(private readonly cancellationToken: CancellationToken) {
 
   }
 
@@ -18,7 +18,7 @@ export class AsyncTaskManager {
   }
 
   addTask(promise: Promise<any>) {
-    if (this.cancellationToken != null && this.cancellationToken.cancelled) {
+    if (this.cancellationToken.cancelled) {
       debug(`Async task not added because cancelled: ${new Error().stack}`)
       if ("cancel" in promise) {
         (<any>promise).cancel()
@@ -30,6 +30,7 @@ export class AsyncTaskManager {
       .catch(it => {
         debug(`Async task error: ${it.stack || it}`)
         this.errors.push(it)
+        return BluebirdPromise.resolve(null)
       }))
   }
 
@@ -43,6 +44,11 @@ export class AsyncTaskManager {
   }
 
   async awaitTasks(): Promise<Array<any>> {
+    if (this.cancellationToken.cancelled) {
+      this.cancelTasks()
+      return []
+    }
+
     const checkErrors = () => {
       if (this.errors.length > 0) {
         this.cancelTasks()
@@ -65,6 +71,11 @@ export class AsyncTaskManager {
         break
       }
       else {
+        if (this.cancellationToken.cancelled) {
+          this.cancelTasks()
+          return []
+        }
+
         list = tasks.slice()
         tasks.length = 0
       }

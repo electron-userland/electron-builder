@@ -243,7 +243,7 @@ require('electron-compile').init(__dirname, require('path').resolve(__dirname, '
     return path.relative(this.src, p)
   }
 
-  async createPackageFromFiles(files: Array<string>) {
+  private async createPackageFromFiles(files: Array<string>) {
     const metadata = this.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
@@ -395,22 +395,22 @@ require('electron-compile').init(__dirname, require('path').resolve(__dirname, '
       }
     }
 
-    const filenamesSorted: Array<string> = []
+    const sortedFiles: Array<string> = []
     let missing = 0
     const total = filenames.length
     for (const file of ordering) {
-      if (!filenamesSorted.includes(file) && filenames.includes(file)) {
-        filenamesSorted.push(file)
+      if (!sortedFiles.includes(file) && filenames.includes(file)) {
+        sortedFiles.push(file)
       }
     }
     for (const file of filenames) {
-      if (!filenamesSorted.includes(file)) {
-        filenamesSorted.push(file)
+      if (!sortedFiles.includes(file)) {
+        sortedFiles.push(file)
         missing += 1
       }
     }
     log(`Ordering file has ${((total - missing) / total * 100)}% coverage.`)
-    return filenamesSorted
+    return sortedFiles
   }
 }
 

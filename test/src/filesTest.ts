@@ -24,18 +24,20 @@ test.ifDevOrLinuxCi("files", app({
   targets: linuxDirTarget,
   config: {
     asar: false,
-    files: ["!ignoreMe${/*}", "${env.__NOT_BAR__}"],
+    files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
   }
 }, {
   projectDirCreated: projectDir => BluebirdPromise.all([
     outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
     outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+    outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
   ]),
   packed: context => {
     const resources = path.join(context.getResources(Platform.LINUX), "app")
     return BluebirdPromise.all([
       assertThat(path.join(resources, "ignoreMe")).doesNotExist(),
       assertThat(path.join(resources, "ignoreEmptyDir")).doesNotExist(),
+      assertThat(path.join(resources, "dist/electron")).isDirectory(),
     ])
   },
 }))
