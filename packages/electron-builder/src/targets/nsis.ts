@@ -218,7 +218,7 @@ export class NsisTarget extends Target {
 
     if (iconPath != null) {
       if (isPortable) {
-        commands.Icon = iconPath
+        commands.Icon = `"${iconPath}"`
       }
       else {
         defines.MUI_ICON = iconPath

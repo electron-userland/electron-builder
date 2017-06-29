@@ -74,7 +74,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
 }, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
-      copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo.ico")),
+      copyTestAsset("headerIcon.ico", path.join(projectDir, "build", "foo test space.ico")),
       copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     ])
   },
