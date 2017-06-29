@@ -39,6 +39,7 @@ if (defined($ENV{'volumeIcon'})) {
     &makeEntries(".DS_Store", Iloc_xy => [ 2610, 170 ]),
     &makeEntries(".fseventsd", Iloc_xy => [ 2660, 170 ]),
     &makeEntries(".Trashes", Iloc_xy => [ 2710, 170 ]),
+    &makeEntries(".VolumeIcon.icns", Iloc_xy => [ 2760, 170 ]),
     &makeEntries(".",
         (defined($ENV{'backgroundColor'}) ? BKGD_color : BKGD_alias) => (defined($ENV{'backgroundColor'}) ? "$ENV{'backgroundColor'}" : NewAliasMinimal("$ENV{'volumePath'}/.background/$ENV{'backgroundFilename'}")),
         ICVO => 1,
