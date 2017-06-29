@@ -5,15 +5,14 @@ matrix:
   include:
     - os: osx
       env: TEST_FILES=BuildTest,extraMetadataTest,globTest,filesTest,ignoreTest,linux.*,windows.*
-#      env: TEST_FILES=oneClickInstallerTest.*
       node_js: "8"
 
     - os: osx
-      env: TEST_FILES=mac.*
+      env: TEST_FILES=CodeSignTest,dmgTest,macArchiveTest,macPackagerTest
       node_js: "8"
 
     - os: osx
-      env: TEST_FILES=mac.*
+      env: TEST_FILES=masTest
       node_js: "6"
 
 cache:
@@ -24,7 +23,7 @@ cache:
     - /tmp/jest-electron-builder-tests
 
 install:
-  - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.1.1/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.1.1.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
+  - mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.2.0/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.2.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1 && /tmp/git-lfs/git-lfs pull
   - yarn
 
 script:

@@ -318,7 +318,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   protected async postInitApp(packContext: AfterPackContext) {
     const executable = path.join(packContext.appOutDir, `${this.appInfo.productFilename}.exe`)
     await rename(path.join(packContext.appOutDir, `${this.electronDistExecutableName}.exe`), executable)
-    await this.signAndEditResources(executable, packContext.arch, packContext.outDir)
+  }
+
+  protected signApp(packContext: AfterPackContext): Promise<any> {
+    return this.signAndEditResources(path.join(packContext.appOutDir, `${this.appInfo.productFilename}.exe`), packContext.arch, packContext.outDir)
   }
 }
 

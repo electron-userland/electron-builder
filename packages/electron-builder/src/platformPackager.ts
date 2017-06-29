@@ -216,9 +216,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     await this.info.afterPack(packContext)
     await this.sanityCheckPackage(appOutDir, asarOptions != null)
+    await this.signApp(packContext)
   }
 
   protected async postInitApp(packContext: AfterPackContext): Promise<any> {
+  }
+
+  protected signApp(packContext: AfterPackContext): Promise<any> {
+    return BluebirdPromise.resolve()
   }
 
   async getIconPath(): Promise<string | null> {
