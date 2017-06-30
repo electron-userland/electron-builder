@@ -24,6 +24,8 @@ export class BintrayPublisher extends HttpPublisher {
         throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN"`)
       }
 
+      token = token.trim()
+
       if (!isTokenCharValid(token)) {
         throw new Error(`Bintray token (${JSON.stringify(token)}) contains invalid characters, please check env "BT_TOKEN"`)
       }

@@ -51,6 +51,8 @@ export class GitHubPublisher extends HttpPublisher {
         throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
       }
 
+      token = token.trim()
+
       if (!isTokenCharValid(token)) {
         throw new Error(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
       }
