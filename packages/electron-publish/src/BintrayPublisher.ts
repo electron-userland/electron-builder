@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
-import { debug, isEmptyOrSpaces, log } from "electron-builder-util"
+import { debug, isEmptyOrSpaces, isTokenCharValid, log } from "electron-builder-util"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
@@ -22,6 +22,10 @@ export class BintrayPublisher extends HttpPublisher {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
         throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN"`)
+      }
+
+      if (!isTokenCharValid(token)) {
+        throw new Error(`Bintray token (${JSON.stringify(token)}) contains invalid characters, please check env "BT_TOKEN"`)
       }
     }
 

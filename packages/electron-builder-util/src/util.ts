@@ -163,8 +163,12 @@ export function getTempName(prefix?: string | null | undefined): string {
   return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(16)}`
 }
 
-export function isEmptyOrSpaces(s: string | null | undefined) {
+export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | undefined {
   return s == null || s.trim().length === 0
+}
+
+export function isTokenCharValid(token: string) {
+  return /^[\w\/=+-]+$/.test(token)
 }
 
 export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
