@@ -5,7 +5,7 @@ import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
-import { appleCertificatePrefixes, CodeSigningInfo, createKeychain, findIdentity, Identity } from "./codeSign"
+import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity } from "./codeSign"
 import { Arch, DIR_TARGET, Platform, Target } from "./core"
 import { MacOptions, MasBuildOptions } from "./options/macOptions"
 import { BuildInfo } from "./packagerApi"
@@ -141,10 +141,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
     }
 
-    const keychainName = (await this.codeSigningInfo).keychainName
     const isMas = masOptions != null
     const macOptions = this.platformSpecificBuildOptions
-    const qualifier = macOptions.identity
+    const qualifier = (isMas ? masOptions!.identity : null) || macOptions.identity
 
     if (!isMas && qualifier === null) {
       if (this.forceCodeSigning) {
@@ -154,36 +153,23 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       return
     }
 
-    const masQualifier = isMas ? (masOptions!!.identity || qualifier) : null
-
-    const explicitType = masOptions == null ? macOptions.type : masOptions.type
+    const keychainName = (await this.codeSigningInfo).keychainName
+    const explicitType = isMas ? masOptions!.type : macOptions.type
     const type = explicitType || "distribution"
     const isDevelopment = type === "development"
-    const certificateType = isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"
-    let identity = await findIdentity(isDevelopment ? "Mac Developer" : certificateType, isMas ? masQualifier : qualifier, keychainName)
+    const certificateType = getCertificateType(isMas, isDevelopment)
+    let identity = await findIdentity(certificateType, qualifier, keychainName)
     if (identity == null) {
       if (!isMas && !isDevelopment && explicitType !== "distribution") {
         identity = await findIdentity("Mac Developer", qualifier, keychainName)
         if (identity != null) {
           warn("Mac Developer is used to sign app — it is only for development and testing, not for production")
         }
-        else if (qualifier != null) {
-          throw new Error(`Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`)
-        }
       }
 
       if (identity == null) {
-        const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
-        const message = isAutoDiscoveryCodeSignIdentity() ?
-          `App is not signed: cannot find valid "${certificateType}" identity${postfix}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing` :
-          `App is not signed: env CSC_IDENTITY_AUTO_DISCOVERY is set to false`
-        if (isMas || this.forceCodeSigning) {
-          throw new Error(message)
-        }
-        else {
-          warn(message)
-          return
-        }
+        await this.reportError(isMas, certificateType, qualifier, keychainName)
+        return
       }
     }
 
@@ -202,6 +188,57 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       "gatekeeper-assess": appleCertificatePrefixes.find(it => identity!.name.startsWith(it)) != null
     }
 
+    await this.adjustSignOptions(signOptions, masOptions)
+    await task(`Signing app (identity: ${identity.hash} ${identity.name})`, this.doSign(signOptions))
+
+    // https://github.com/electron-userland/electron-builder/issues/1196#issuecomment-312310209
+    if (masOptions != null && !isDevelopment) {
+      const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
+      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
+      if (masInstallerIdentity == null) {
+        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+      }
+
+      const pkg = path.join(outDir!, this.expandArtifactNamePattern(masOptions, "pkg"))
+      await this.doFlat(appPath, pkg, masInstallerIdentity, keychainName)
+      this.dispatchArtifactCreated(pkg, null, Arch.x64, this.computeSafeArtifactName("pkg"))
+    }
+  }
+
+  private async reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined) {
+    let message: string
+    if (qualifier == null) {
+      const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
+      message = `App is not signed: cannot find valid "${certificateType}" identity${postfix}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+      if (!isAutoDiscoveryCodeSignIdentity()) {
+        message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
+      }
+    }
+    else {
+      message = `Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`
+    }
+
+    const args = ["find-identity"]
+    if (keychainName != null) {
+      args.push(keychainName)
+    }
+
+    const allIdentities = (await exec("security", args))
+      .trim()
+      .split("\n")
+      .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
+      .join("\n")
+    message += "\n\nAll identities:\n" + allIdentities
+
+    if (isMas || this.forceCodeSigning) {
+      throw new Error(message)
+    }
+    else {
+      warn(message)
+    }
+  }
+
+  private async adjustSignOptions(signOptions: any, masOptions: MasBuildOptions | null) {
     const resourceList = await this.resourceList
     if (resourceList.includes(`entitlements.osx.plist`)) {
       throw new Error("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")
@@ -210,9 +247,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       throw new Error("entitlements.osx.inherit.plist is deprecated name, please use entitlements.mac.inherit.plist")
     }
 
-    const customSignOptions = masOptions || macOptions
+    const customSignOptions = masOptions || this.platformSpecificBuildOptions
+    const entitlementsSuffix = masOptions == null ? "mac" : "mas"
     if (customSignOptions.entitlements == null) {
-      const p = `entitlements.${isMas ? "mas" : "mac"}.plist`
+      const p = `entitlements.${entitlementsSuffix}.plist`
       if (resourceList.includes(p)) {
         signOptions.entitlements = path.join(this.buildResourcesDir, p)
       }
@@ -222,27 +260,13 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
 
     if (customSignOptions.entitlementsInherit == null) {
-      const p = `entitlements.${isMas ? "mas" : "mac"}.inherit.plist`
+      const p = `entitlements.${entitlementsSuffix}.inherit.plist`
       if (resourceList.includes(p)) {
         signOptions["entitlements-inherit"] = path.join(this.buildResourcesDir, p)
       }
     }
     else {
       signOptions["entitlements-inherit"] = customSignOptions.entitlementsInherit
-    }
-
-    await task(`Signing app (identity: ${identity.hash} ${identity.name})`, this.doSign(signOptions))
-
-    if (masOptions != null) {
-      const certType = "3rd Party Mac Developer Installer"
-      const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
-      if (masInstallerIdentity == null) {
-        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
-      }
-
-      const pkg = path.join(outDir!, this.expandArtifactNamePattern(masOptions, "pkg"))
-      await this.doFlat(appPath, pkg, masInstallerIdentity, keychainName)
-      this.dispatchArtifactCreated(pkg, null, Arch.x64, this.computeSafeArtifactName("pkg"))
     }
   }
 
@@ -269,4 +293,11 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   public getElectronDestinationDir(appOutDir: string) {
     return path.join(appOutDir, this.electronDistMacOsAppName)
   }
+}
+
+function getCertificateType(isMas: boolean, isDevelopment: boolean): CertType {
+  if (isDevelopment) {
+    return "Mac Developer"
+  }
+  return isMas ? "3rd Party Mac Developer Application" : "Developer ID Application"
 }

@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`dev 1`] = `
+Object {
+  "mac": Array [],
+}
+`;
+
 exports[`mas 1`] = `
 Object {
   "mac": Array [

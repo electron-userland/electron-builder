@@ -174,6 +174,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   return result
 }
 
+/** @private */
 export function coerceTypes(host: any): any {
   for (const key of Object.getOwnPropertyNames(host)) {
     const value = host[key]

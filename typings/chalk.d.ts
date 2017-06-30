@@ -3,10 +3,6 @@ declare module "chalk" {
   let supportsColor: boolean;
   let styles: ChalkStyleMap;
 
-  export function stripColor(value: string): any;
-
-  export function hasColor(str: string): boolean;
-
   export interface ChalkChain extends ChalkStyle {
     (...text: string[]): string;
   }

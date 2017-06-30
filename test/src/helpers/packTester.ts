@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target, Config } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-util"
@@ -16,6 +16,7 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK } from "./codeSignData"
 import { TEST_DIR } from "./config"
 import { assertThat } from "./fileAssert"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -72,6 +73,9 @@ export function getTempFile() {
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   if (checkOptions.signed) {
     packagerOptions = signed(packagerOptions)
+  }
+  else if (packagerOptions.cscLink == null) {
+    packagerOptions = deepAssign({}, packagerOptions, {config: <Config>{mac: {identity: null}}})
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
@@ -202,7 +206,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
       const nameToTarget = platformToTargets.get(platform)
       if (platform === Platform.MAC) {
-        const packedAppDir = path.join(outDir, nameToTarget.has("mas") ? "mas" : "mac", `${packager.appInfo.productFilename}.app`)
+        const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : (nameToTarget.has("mas") ? "mas" : "mac"), `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       }
       else if (platform === Platform.LINUX) {
@@ -402,7 +406,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
       }
     }
   }, {
-    signed: target.includes("mas") || target.includes("pkg"),
+    signed: target.includes("mas") || target.includes("pkg") || target.includes("mas-dev"),
     packed: async (context) => {
       if (!target.includes("tar.gz")) {
         return

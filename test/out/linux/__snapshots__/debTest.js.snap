@@ -84,7 +84,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "95691",
+  "Size": "95906",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
@@ -185,7 +185,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "130781",
+  "Size": "131068",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
@@ -274,7 +274,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "130781",
+  "Size": "131068",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;

@@ -183,6 +183,11 @@ export function asArray<T>(v: null | undefined | T | Array<T>): Array<T> {
   }
 }
 export function getCacheDirectory(): string {
+  const env = process.env.ELECTRON_BUILDER_CACHE
+  if (!isEmptyOrSpaces(env)) {
+    return env!
+  }
+
   if (process.platform === "darwin") {
     return path.join(homedir(), "Library", "Caches", "electron-builder")
   }

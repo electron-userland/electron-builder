@@ -409,10 +409,11 @@
 | --- | --- |
 | description = <code>&quot;smarten(this.info.metadata.description || \&quot;\&quot;)&quot;</code>| <code>String</code> | 
 | version| <code>String</code> | 
-| buildNumber| <code>String</code> | 
+| buildNumber| <code>String</code> \| <code>undefined</code> | 
 | buildVersion| <code>String</code> | 
 | productName| <code>String</code> | 
 | productFilename| <code>String</code> | 
+| channel| <code>String</code> \| <code>null</code> | 
 | **versionInWeirdWindowsForm**| <code>String</code> | 
 | companyName| <code>String</code> \| <code>null</code> | 
 | **id**| <code>String</code> | 
@@ -500,10 +501,10 @@
 * [electron-builder/out/platformPackager](#module_electron-builder/out/platformPackager)
     * [.PlatformPackager](#PlatformPackager)
         * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
-        * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
+        * [`.createTargets(targets, mapper)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
         * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-        * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+        * [`.getElectronDestinationDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestinationDir) ⇒ <code>String</code>
         * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
         * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
         * [`.expandMacro(pattern, arch, extra, isProductNameSanitized)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
@@ -511,7 +512,7 @@
         * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
         * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
-        * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.pack(outDir, arch, targets, taskManager)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
         * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
         * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
@@ -543,10 +544,10 @@
 
 * [.PlatformPackager](#PlatformPackager)
     * [`.computeSafeArtifactName(ext, arch, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+computeSafeArtifactName) ⇒ <code>String</code>
-    * [`.createTargets(targets, mapper, cleanupTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
+    * [`.createTargets(targets, mapper)`](#module_electron-builder/out/platformPackager.PlatformPackager+createTargets)
     * [`.getDefaultIcon(ext)`](#module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.dispatchArtifactCreated(file, target, arch, safeArtifactName)`](#module_electron-builder/out/platformPackager.PlatformPackager+dispatchArtifactCreated)
-    * [`.getElectronDestDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir) ⇒ <code>String</code>
+    * [`.getElectronDestinationDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestinationDir) ⇒ <code>String</code>
     * [`.getElectronSrcDir(dist)`](#module_electron-builder/out/platformPackager.PlatformPackager+getElectronSrcDir) ⇒ <code>String</code>
     * [`.expandArtifactNamePattern(targetSpecificOptions, ext, arch, defaultPattern, skipArchIfX64)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandArtifactNamePattern) ⇒ <code>String</code>
     * [`.expandMacro(pattern, arch, extra, isProductNameSanitized)`](#module_electron-builder/out/platformPackager.PlatformPackager+expandMacro) ⇒ <code>String</code>
@@ -554,7 +555,7 @@
     * [`.generateName2(ext, classifier, deployment)`](#module_electron-builder/out/platformPackager.PlatformPackager+generateName2) ⇒ <code>String</code>
     * [`.getIconPath()`](#module_electron-builder/out/platformPackager.PlatformPackager+getIconPath) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.getMacOsResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getMacOsResourcesDir) ⇒ <code>String</code>
-    * [`.pack(outDir, arch, targets, postAsyncTasks)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.pack(outDir, arch, targets, taskManager)`](#module_electron-builder/out/platformPackager.PlatformPackager+pack) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getResource(custom, names)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResource) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [`.getResourcesDir(appOutDir)`](#module_electron-builder/out/platformPackager.PlatformPackager+getResourcesDir) ⇒ <code>String</code>
     * [`.getTempFile(suffix)`](#module_electron-builder/out/platformPackager.PlatformPackager+getTempFile) ⇒ <code>Promise&lt;String&gt;</code>
@@ -570,14 +571,13 @@
 | skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
-#### `platformPackager.createTargets(targets, mapper, cleanupTasks)`
+#### `platformPackager.createTargets(targets, mapper)`
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
 | --- | --- |
 | targets | <code>Array&lt;String&gt;</code> | 
 | mapper | <code>callback</code> | 
-| cleanupTasks | <code>Array&lt;module:electron-builder/out/platformPackager.__type&gt;</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getDefaultIcon"></a>
 #### `platformPackager.getDefaultIcon(ext)` ⇒ <code>Promise&lt; \| String&gt;</code>
@@ -598,8 +598,8 @@
 | arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 | safeArtifactName | <code>String</code> | 
 
-<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestDir"></a>
-#### `platformPackager.getElectronDestDir(appOutDir)` ⇒ <code>String</code>
+<a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestinationDir"></a>
+#### `platformPackager.getElectronDestinationDir(appOutDir)` ⇒ <code>String</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
@@ -670,7 +670,7 @@
 | appOutDir | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+pack"></a>
-#### `platformPackager.pack(outDir, arch, targets, postAsyncTasks)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `platformPackager.pack(outDir, arch, targets, taskManager)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>PlatformPackager</code>](#PlatformPackager)  
 
 | Param | Type |
@@ -678,7 +678,7 @@
 | outDir | <code>String</code> | 
 | arch | <code>[Arch](#Arch)</code> | 
 | targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
-| postAsyncTasks | <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
+| taskManager | <code>module:electron-builder/out/util/asyncTaskManager.AsyncTaskManager</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getResource"></a>
 #### `platformPackager.getResource(custom, names)` ⇒ <code>Promise&lt; \| String&gt;</code>
@@ -718,7 +718,7 @@
 
 * [electron-builder/out/publish/PublishManager](#module_electron-builder/out/publish/PublishManager)
     * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
-        * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
+        * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;Array&lt;any&gt;&gt;</code>
         * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
     * [`.computeDownloadUrl(publishConfig, fileName, packager)`](#module_electron-builder/out/publish/PublishManager.computeDownloadUrl) ⇒ <code>String</code>
     * [`.createPublisher(context, version, publishConfig, options)`](#module_electron-builder/out/publish/PublishManager.createPublisher) ⇒ <code>null</code> \| <code>[Publisher](electron-publish#Publisher)</code>
@@ -733,16 +733,15 @@
 
 | Name | Type |
 | --- | --- |
-| publishTasks=| <code>Array&lt;Promise&lt;any&gt;&gt;</code> | 
 | progress = <code>(&lt;TtyWriteStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
 
 
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
-    * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;void&gt;</code>
+    * [`.awaitTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks) ⇒ <code>Promise&lt;Array&lt;any&gt;&gt;</code>
     * [`.cancelTasks()`](#module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks)
 
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+awaitTasks"></a>
-#### `publishManager.awaitTasks()` ⇒ <code>Promise&lt;void&gt;</code>
+#### `publishManager.awaitTasks()` ⇒ <code>Promise&lt;Array&lt;any&gt;&gt;</code>
 **Kind**: instance method of [<code>PublishManager</code>](#PublishManager)  
 <a name="module_electron-builder/out/publish/PublishManager.PublishManager+cancelTasks"></a>
 #### `publishManager.cancelTasks()`
@@ -792,10 +791,14 @@
 ## electron-builder/out/util/flags
 
 * [electron-builder/out/util/flags](#module_electron-builder/out/util/flags)
+    * [`.isAutoDiscoveryCodeSignIdentity()`](#module_electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity) ⇒ <code>Boolean</code>
     * [`.isBuildCacheEnabled()`](#module_electron-builder/out/util/flags.isBuildCacheEnabled) ⇒ <code>Boolean</code>
     * [`.isUseSystemSigncode()`](#module_electron-builder/out/util/flags.isUseSystemSigncode) ⇒ <code>Boolean</code>
     * [`.isUseSystemWine()`](#module_electron-builder/out/util/flags.isUseSystemWine) ⇒ <code>Boolean</code>
 
+<a name="module_electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity"></a>
+### `electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity()` ⇒ <code>Boolean</code>
+**Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
 <a name="module_electron-builder/out/util/flags.isBuildCacheEnabled"></a>
 ### `electron-builder/out/util/flags.isBuildCacheEnabled()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  

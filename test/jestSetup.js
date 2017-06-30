@@ -58,9 +58,6 @@ if (process.env.TEST_APP_TMP_DIR == null) {
   delete process.env.GH_TOKEN
 }
 
-if (!isCi) {
-  process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
-}
 if (!process.env.USE_HARD_LINKS) {
   process.env.USE_HARD_LINKS = "true"
 }
