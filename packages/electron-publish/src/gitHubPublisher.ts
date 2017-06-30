@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
-import { debug, isEmptyOrSpaces, log, warn } from "electron-builder-util"
+import { debug, isEmptyOrSpaces, isTokenCharValid, log, warn } from "electron-builder-util"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import mime from "mime"
@@ -49,6 +49,12 @@ export class GitHubPublisher extends HttpPublisher {
       token = process.env.GH_TOKEN
       if (isEmptyOrSpaces(token)) {
         throw new Error(`GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"`)
+      }
+
+      token = token.trim()
+
+      if (!isTokenCharValid(token)) {
+        throw new Error(`GitHub Personal Access Token (${JSON.stringify(token)}) contains invalid characters, please check env "GH_TOKEN"`)
       }
     }
 
