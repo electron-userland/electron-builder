@@ -229,6 +229,8 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
   delete releaseInfo.releaseNotesFile
 
+  let outputHash: { [filename: string]: boolean } = {}
+
   for (const publishConfig of publishConfigs) {
     if (publishConfig.provider === "bintray") {
       continue
@@ -241,11 +243,14 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const isGitHub = publishConfig.provider === "github"
       // backward compatibility - write json file
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
-      await (<any>outputJson)(updateInfoFile, {
-        version: version,
-        releaseDate: new Date().toISOString(),
-        url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
-      }, {spaces: 2})
+      if (!outputHash[updateInfoFile]) {
+        outputHash[updateInfoFile] = true
+        await (<any>outputJson)(updateInfoFile, {
+          version: version,
+          releaseDate: new Date().toISOString(),
+          url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
+        }, {spaces: 2})
+      }
 
       packager.info.dispatchArtifactCreated({
         file: updateInfoFile,
@@ -257,21 +262,24 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     }
 
     const updateInfoFile = path.join(outDir, `${channel}${isMac ? "-mac" : ""}.yml`)
-    if (!createdFiles.has(updateInfoFile)) {
-      createdFiles.add(updateInfoFile)
-      const info = Object.assign(<UpdateInfo>{
-        version: version,
-        releaseDate: new Date().toISOString(),
-        githubArtifactName: event.safeArtifactName,
-        path: path.basename(event.file!),
-        sha512: await sha512.value,
-      }, releaseInfo)
+    if (!outputHash[updateInfoFile]) {
+      outputHash[updateInfoFile] = true
+      if (!createdFiles.has(updateInfoFile)) {
+        createdFiles.add(updateInfoFile)
+        const info = Object.assign(<UpdateInfo>{
+          version: version,
+          releaseDate: new Date().toISOString(),
+          githubArtifactName: event.safeArtifactName,
+          path: path.basename(event.file!),
+          sha512: await sha512.value,
+        }, releaseInfo)
 
-      if (packager.platform === Platform.WINDOWS) {
-        // backward compatibility
-        (<any>info).sha2 = await sha2.value
+        if (packager.platform === Platform.WINDOWS) {
+          // backward compatibility
+          (<any>info).sha2 = await sha2.value
+        }
+        await writeFile(updateInfoFile, safeDump(info))
       }
-      await writeFile(updateInfoFile, safeDump(info))
     }
 
     // artifact should be uploaded only to designated publish provider
