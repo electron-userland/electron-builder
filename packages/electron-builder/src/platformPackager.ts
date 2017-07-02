@@ -399,6 +399,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
         case "os":
           return this.platform.buildConfigurationKey
 
+        case "channel":
+          return appInfo.channel || "latest"
+
         default:
           if (p1 in appInfo) {
             return (<any>appInfo)[p1]
