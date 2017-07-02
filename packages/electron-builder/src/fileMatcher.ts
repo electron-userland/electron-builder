@@ -24,6 +24,9 @@ export class FileMatcher {
   }
 
   normalizePattern(pattern: string) {
+    if (pattern.startsWith("./")) {
+      pattern = pattern.substring("./".length)
+    }
     return path.posix.normalize(this.macroExpander(pattern.replace(/\\/g, "/")))
   }
 
