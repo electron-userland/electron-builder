@@ -121,7 +121,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
 
   const packageJsonPath = path.join(projectDir, "package.json")
   const electronPrebuiltDep = findFromElectronPrebuilt(projectMetadata || await readJson(packageJsonPath))
-  if (electronPrebuiltDep == null) {
+  if (electronPrebuiltDep == null || electronPrebuiltDep === "latest") {
     try {
       const releaseInfo = await httpExecutor.request<any>({
         hostname: "github.com",
