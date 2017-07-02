@@ -23,7 +23,7 @@ test("one-click", app({
     },
   }
 }, {
-  signed: true,
+  signedWin: true,
   packed: async (context) => {
     await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), false)
     await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)

@@ -11,8 +11,8 @@ import { diff, WineManager } from "./wine"
 
 export async function expectUpdateMetadata(context: PackedContext, arch: Arch = Arch.ia32, requireCodeSign: boolean = false): Promise<void> {
   const data = safeLoad(await readFile(path.join(context.getResources(Platform.WINDOWS, arch), "app-update.yml"), "utf-8"))
-  if (requireCodeSign && process.env.CSC_KEY_PASSWORD != null) {
-    expect(data.publisherName).toEqual(["Developer ID Installer: Vladimir Krivosheev (X8C9Z9L4HW)"])
+  if (requireCodeSign) {
+    expect(data.publisherName).toEqual(["Foo, Inc"])
     delete data.publisherName
   }
 

@@ -13,7 +13,7 @@ import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra
 import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
-import { CSC_LINK } from "./codeSignData"
+import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { TEST_DIR } from "./config"
 import { assertThat } from "./fileAssert"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
@@ -33,6 +33,7 @@ interface AssertPackOptions {
 
   readonly useTempDir?: boolean
   readonly signed?: boolean
+  readonly signedWin?: boolean
 
   readonly installDepsBefore?: boolean
 }
@@ -73,6 +74,10 @@ export function getTempFile() {
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
   if (checkOptions.signed) {
     packagerOptions = signed(packagerOptions)
+  }
+  if (checkOptions.signedWin) {
+    packagerOptions.cscLink = WIN_CSC_LINK
+    packagerOptions.cscKeyPassword = ""
   }
   else if (packagerOptions.cscLink == null) {
     packagerOptions = deepAssign({}, packagerOptions, {config: <Config>{mac: {identity: null}}})

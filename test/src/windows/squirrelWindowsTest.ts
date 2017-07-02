@@ -4,7 +4,7 @@ import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
 import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/packTester"
 
-test.ifAll.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signed: true}))
+test.ifAll.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signedWin: true}))
 
 // very slow
 test.skip("delta and msi", app({

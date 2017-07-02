@@ -53,7 +53,7 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "devDependencies", "scripts", "jspm", "ava", "babel"])
+const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "devDependencies", "scripts", "jspm", "ava", "babel", "xo", "nyc", "eslintConfig"])
 
 function cleanupPackageJson(data: any, isMain: boolean): any {
   try {

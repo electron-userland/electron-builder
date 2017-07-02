@@ -180,5 +180,5 @@ See the [Wiki](https://github.com/electron-userland/electron-builder/wiki) for m
 
 Set the [DEBUG](https://github.com/visionmedia/debug#windows-note) environment variable to debug what electron-builder is doing:
 ```bash
-DEBUG=electron-builder:* 
+DEBUG=electron-builder,electron-builder:*
 ```

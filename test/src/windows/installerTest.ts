@@ -19,7 +19,7 @@ test.ifNotCiMac("boring", app({
     },
   }
 }, {
-  signed: true,
+  signedWin: true,
   projectDirCreated: projectDir => {
     return copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt"))
   },

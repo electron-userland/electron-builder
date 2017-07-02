@@ -377,7 +377,7 @@ function isIco(buffer: Buffer): boolean {
 const debugOpenssl = _debug("electron-builder:openssl")
 async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
   const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024}, debugOpenssl.enabled)
-  const match = result.match(/^subject.*\/CN=([^\/]+)/m)
+  const match = result.match(/^subject.*\/CN=([^\/]+)$/m)
   if (match == null || match[1] == null) {
     throw new Error("Cannot extract common name from p12: " + result)
   }
