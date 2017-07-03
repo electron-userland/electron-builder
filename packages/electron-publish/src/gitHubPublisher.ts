@@ -107,7 +107,7 @@ export class GitHubPublisher extends HttpPublisher {
     }
 
     const parsedUrl = parseUrl(release.upload_url.substring(0, release.upload_url.indexOf("{")) + "?name=" + fileName)
-    let badGatewayCount = 0
+    let attemptNumber = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       try {
         return await httpExecutor.doApiRequest<any>(configureRequestOptions({
@@ -138,9 +138,12 @@ export class GitHubPublisher extends HttpPublisher {
             debug(`Artifact ${fileName} not found on GitHub, trying to upload again`)
             continue
           }
-          else if (e.response.statusCode === 502 && badGatewayCount++ < 3) {
+          else if (attemptNumber++ < 3 && e.response.statusCode === 502) {
             continue
           }
+        }
+        else if (attemptNumber++ < 3 && e.code === "EPIPE") {
+          continue
         }
 
         throw e

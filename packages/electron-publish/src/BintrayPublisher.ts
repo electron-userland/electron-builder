@@ -61,7 +61,7 @@ export class BintrayPublisher extends HttpPublisher {
       return
     }
 
-    let badGatewayCount = 0
+    let attemptNumber = 0
     for (let i = 0; i < 3; i++) {
       try {
         return await httpExecutor.doApiRequest<any>(configureRequestOptions({
@@ -76,7 +76,7 @@ export class BintrayPublisher extends HttpPublisher {
         }, this.client.auth), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
-        if (e instanceof HttpError && e.response.statusCode === 502 && badGatewayCount++ < 3) {
+        if (attemptNumber++ < 3 && ((e instanceof HttpError && e.response.statusCode === 502) || e.code === "EPIPE")) {
           continue
         }
 

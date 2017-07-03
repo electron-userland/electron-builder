@@ -76,6 +76,7 @@
       <w>enoent</w>
       <w>enotdir</w>
       <w>eperm</w>
+      <w>epipe</w>
       <w>evolvehq</w>
       <w>fcopy</w>
       <w>ffmpeg</w>
