@@ -6,6 +6,10 @@ Var desktopLink
 !include "multiUser.nsh"
 !include "allowOnlyOneInstallerInstance.nsh"
 
+!ifmacrodef preInstall
+  !insertmacro preInstall
+!endif
+
 !ifdef INSTALL_MODE_PER_ALL_USERS
   !ifdef BUILD_UNINSTALLER
     RequestExecutionLevel user
