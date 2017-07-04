@@ -118,7 +118,7 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
   if (isYarn) {
     execArgs.push("run", "install", "--")
     execArgs.push(...additionalArgs)
-    await BluebirdPromise.each(nativeDeps, dep => {
+    await BluebirdPromise.map(nativeDeps, dep => {
       log(`Rebuilding native dependency ${dep.name}`)
       return spawn(execPath!, execArgs, {
         cwd: dep.path,
@@ -132,7 +132,7 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
             throw error
           }
         })
-    })
+    }, {concurrency: process.platform === "win32" ? 1 : 2})
   }
   else {
     execArgs.push("rebuild")

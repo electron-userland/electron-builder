@@ -15,6 +15,7 @@ function createExtraMetadataTest(asar: boolean) {
         executableName: "new-name",
       },
       extraMetadata: {
+        version: "1.0.0-beta.19",
         foo: {
           bar: 12,
           updated: "true",

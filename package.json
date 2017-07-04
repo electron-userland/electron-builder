@@ -2,14 +2,14 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "compile": "ts-babel packages/asar-integrity packages/electron-builder-http packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && node ./test/vendor/yarn.js schema",
+    "compile": "ts-babel packages/asar-integrity packages/electron-builder-http packages/electron-builder-util packages/electron-publish packages/electron-builder packages/electron-builder-squirrel-windows packages/electron-updater packages/electron-publisher-s3 test && yarn schema",
     "lint": "node test/out/helpers/lint.js",
     "lint-deps": "node ./test/out/helpers/checkDeps.js",
-    "pretest": "node ./test/vendor/yarn.js compile && node test/out/helpers/lint.js && node ./test/out/helpers/checkDeps.js",
+    "pretest": "yarn compile && node test/out/helpers/lint.js && node ./test/out/helpers/checkDeps.js",
     "///": "Please see https://github.com/electron-userland/electron-builder/blob/master/CONTRIBUTING.md#run-test-using-cli how to run particular test instead full (and very slow) run",
     "test": "node ./test/out/helpers/runTests.js skipArtifactPublisher ALL_TESTS=isCi",
-    "test-all": "node ./test/vendor/yarn.js pretest && node ./test/out/helpers/runTests.js",
-    "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /bin/bash -c \"node ./test/vendor/yarn.js && node ./test/vendor/yarn.js test\"",
+    "test-all": "yarn pretest && node ./test/out/helpers/runTests.js",
+    "test-linux": "docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine /bin/bash -c \"yarn && yarn test\"",
     "//": "Update wiki if docs changed. Update only if functionalily are generally available (latest release, not next)",
     "update-wiki": "(git branch -D wiki || true) && git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
@@ -20,7 +20,7 @@
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node packages/jsdoc2md.js",
-    "api": "node ./test/vendor/yarn.js jsdoc && node ./test/vendor/yarn.js jsdoc2md"
+    "api": "yarn jsdoc && yarn jsdoc2md"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "electron-userland/electron-builder",

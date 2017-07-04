@@ -53,14 +53,17 @@ export function createElectronCompilerHost(projectDir: string, cacheDir: string)
   return require(path.join(electronCompilePath, "config-parser")).createCompilerHostFromProjectRoot(projectDir, cacheDir)
 }
 
-const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "devDependencies", "scripts", "jspm", "ava", "babel", "xo", "nyc", "eslintConfig"])
+const ignoredPackageMetadataProperties = new Set(["dist", "gitHead", "keywords", "build", "devDependencies", "scripts", "jspm", "ava", "xo", "nyc", "eslintConfig"])
 
 function cleanupPackageJson(data: any, isMain: boolean): any {
+  const deps = data.dependencies
+  // https://github.com/electron-userland/electron-builder/issues/507#issuecomment-312772099
+  const isRemoveBabel = deps != null && typeof deps === "object" && !Object.getOwnPropertyNames(deps).some(it => it.startsWith("babel"))
   try {
     let changed = false
     for (const prop of Object.getOwnPropertyNames(data)) {
       // removing devDependencies from package.json breaks levelup in electron, so, remove it only from main package.json
-      if (prop[0] === "_" || ignoredPackageMetadataProperties.has(prop) || (isMain && prop === "devDependencies")) {
+      if (prop[0] === "_" || ignoredPackageMetadataProperties.has(prop) || (isMain && prop === "devDependencies") || (isRemoveBabel && prop === "babel")) {
         delete data[prop]
         changed = true
       }

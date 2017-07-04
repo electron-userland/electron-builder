@@ -140,7 +140,19 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
     patterns.push("!**/node_modules/lzma-native/deps{,/**/*}")
   }
 
-  patterns.push("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
+  if (hasDep("keytar-prebuild", packager.info)) {
+    patterns.push("!**/node_modules/keytar-prebuild/src{,/**/*}")
+  }
+  if (hasDep("keytar", packager.info)) {
+    patterns.push("!**/node_modules/keytar/src{,/**/*}")
+  }
+
+  patterns.push("!**/node_modules/*/build/Release/obj.target{,/**/*}")
+  patterns.push("!**/node_modules/*/build/Release/.deps{,/**/*}")
+  patterns.push("!**/node_modules/*/build/*.{mk,gypi,Makefile}")
+  patterns.push("!**/node_modules/*/build/{Makefile,gyp-mac-tool}")
+
+  patterns.push("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,karma.conf.js,.coveralls.yml,readme.markdown,binding.gyp,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
   patterns.push("!**/node_modules/.bin")
   patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`)
   patterns.push("!**/._*")

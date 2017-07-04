@@ -208,6 +208,7 @@
       <w>powerrequired</w>
       <w>powershell</w>
       <w>preallocated</w>
+      <w>prebuild</w>
       <w>precompilation</w>
       <w>preinstall</w>
       <w>prerelease</w>

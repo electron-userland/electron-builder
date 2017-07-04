@@ -28,10 +28,10 @@ export async function readInstalled(folder: string): Promise<Map<string, Depende
   return pathToDep
 }
 
-async function _readInstalled(folder: string, parent: any | null, name: string | null, depth: number, opts: any, realpathSeen: Map<string, Dependency>, findUnmetSeen: Set<any>): Promise<any> {
+async function _readInstalled(folder: string, parent: any | null, name: string | null, depth: number, opts: any, realPathSeen: Map<string, Dependency>, findUnmetSeen: Set<any>): Promise<any> {
   const realDir = await realpath(folder)
 
-  const processed = realpathSeen.get(realDir)
+  const processed = realPathSeen.get(realDir)
   if (processed != null) {
     return processed
   }
@@ -46,6 +46,10 @@ async function _readInstalled(folder: string, parent: any | null, name: string |
 
   obj.realName = name || obj.name
   obj.dependencyNames = obj.dependencies == null ? null : new Set(Object.keys(obj.dependencies))
+  if (obj.dependencyNames != null) {
+    obj.dependencyNames.delete("prebuild-install")
+    obj.dependencyNames.delete("nan")
+  }
 
   // Mark as extraneous at this point.
   // This will be un-marked in unmarkExtraneous, where we mark as not-extraneous everything that is required in some way from the root object.
@@ -56,13 +60,13 @@ async function _readInstalled(folder: string, parent: any | null, name: string |
     obj.parent = parent
   }
 
-  realpathSeen.set(realDir, obj)
+  realPathSeen.set(realDir, obj)
 
   if (depth > opts.depth) {
     return obj
   }
 
-  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), async pkg => orNullIfFileNotExist(_readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realpathSeen, findUnmetSeen)), {concurrency: 8})
+  const deps = await BluebirdPromise.map(await readScopedDir(path.join(folder, "node_modules")), async pkg => orNullIfFileNotExist(_readInstalled(path.join(folder, "node_modules", pkg), obj, pkg, depth + 1, opts, realPathSeen, findUnmetSeen)), {concurrency: 8})
   if (obj.dependencies != null) {
     for (const dep of deps) {
       if (dep != null) {
@@ -143,7 +147,7 @@ function findDep(obj: any, name: string) {
 async function readScopedDir(dir: string) {
   let files: Array<string>
   try {
-    files = (await readdir(dir)).filter(it => !it.startsWith("."))
+    files = (await readdir(dir)).filter(it => !it.startsWith(".") && it !== "prebuild-install" && it !== "nan")
   }
   catch (e) {
     // error indicates that nothing is installed here

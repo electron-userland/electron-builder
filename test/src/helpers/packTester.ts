@@ -108,7 +108,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       await projectDirCreated(projectDir)
       if (checkOptions.installDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn("node", [path.join(__dirname, "..", "..", "vendor", "yarn.js"), "install", "--production", "--no-lockfile"], {
+        await spawn("yarn", ["install", "--production", "--no-lockfile"], {
           cwd: projectDir,
         })
       }
