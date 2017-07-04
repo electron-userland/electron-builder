@@ -167,7 +167,9 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       (<any>result).config = config
     }
     (<any>config).extraMetadata = extraMetadata
+  }
 
+  if (config != null && typeof config !== "string" && config.extraMetadata != null) {
     coerceTypes(config.extraMetadata)
   }
 
@@ -186,6 +188,9 @@ export function coerceTypes(host: any): any {
     }
     else if (value === "null") {
       host[key] = null
+    }
+    else if (key === "version" && typeof value === "number") {
+      host[key] = value.toString()
     }
     else if (value != null && typeof value === "object") {
       coerceTypes(value)
