@@ -111,6 +111,8 @@ Configuration Options
 * <a name="Config-copyright"></a>`copyright` = `Copyright © year ${author}` String - The human-readable copyright line for the app.
 * <a name="Config-directories"></a>`directories`<a name="MetadataDirectories"></a>
   * <a name="MetadataDirectories-buildResources"></a>`buildResources` = `build` String - The path to build resources.
+    
+    Please note — build resources is not packed into app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
   * <a name="MetadataDirectories-output"></a>`output` = `dist` String - The output directory.
   * <a name="MetadataDirectories-app"></a>`app` String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 * <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
@@ -256,6 +258,8 @@ Configuration Options
   * <a name="WinBuildOptions-target"></a>`target` = `nsis` String | [TargetConfig](electron-builder#TargetConfig) | Array - Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. AppX package can be built only on Windows 10.
     
     To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
+    
+    For `portable` app, `PORTABLE_EXECUTABLE_DIR` env is set (dir where portable executable located).
   * <a name="WinBuildOptions-signingHashAlgorithms"></a>`signingHashAlgorithms` = `['sha1', 'sha256']` Array&lt;"sha1" | "sha256"&gt; - Array of signing algorithms used. For AppX `sha256` is always used.
   * <a name="WinBuildOptions-icon"></a>`icon` = `build/icon.ico` String - The path to application icon.
   * <a name="WinBuildOptions-legalTrademarks"></a>`legalTrademarks` String - The trademarks and registered trademarks.

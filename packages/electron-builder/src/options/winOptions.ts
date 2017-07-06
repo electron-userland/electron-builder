@@ -8,6 +8,8 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
    *
+   * For `portable` app, `PORTABLE_EXECUTABLE_DIR` env is set (dir where portable executable located).
+   *
    * @default nsis
   */
   readonly target?: TargetConfigType
