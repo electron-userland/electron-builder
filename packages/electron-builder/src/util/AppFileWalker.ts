@@ -7,6 +7,7 @@ import { Packager } from "../packager"
 import { Dependency, getProductionDependencies } from "./packageDependencies"
 
 const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
+const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp"])
 
 export class AppFileCopierHelper {
   transformedFiles: Array<string | Buffer | true | null>
@@ -106,15 +107,8 @@ export class AppFileWalker implements FileConsumer {
         }
       }
 
-      let addDirToResult = false
       while (queue.length > 0) {
         const dirPath = queue.pop()!
-        if (addDirToResult) {
-          result.push(dirPath)
-        }
-        else {
-          addDirToResult = true
-        }
 
         const childNames = await readdir(dirPath)
         childNames.sort()
@@ -122,7 +116,22 @@ export class AppFileWalker implements FileConsumer {
         const dirs: Array<string> = []
         // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
         const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
-          if (name === ".DS_Store" || name === "node_modules" /* already in the queue */) {
+          if (excludedFiles.has(name) || name.endsWith(".h") || name.endsWith(".obj") || name.endsWith(".cc") || name.endsWith(".pdb") || name.endsWith(".d.ts")) {
+            return null
+          }
+
+          if (dirPath.endsWith("build")) {
+            if (name === "gyp-mac-tool" || name === "Makefile" || name.endsWith(".mk") || name.endsWith(".gypi") || name.endsWith(".Makefile")) {
+              return null
+            }
+          }
+          else if (dirPath.endsWith("Release") && (name === ".deps" || name === "obj.target")) {
+            return null
+          }
+          else if (name === "src" && (dirPath.endsWith("keytar") || dirPath.endsWith("keytar-prebuild"))) {
+            return null
+          }
+          else if (dirPath.endsWith("lzma-native") && (name === "build" || name === "deps")) {
             return null
           }
 

@@ -25,6 +25,14 @@ export interface Dependency {
   stat?: Stats
 }
 
+const knownAlwaysIgnoredDevDeps = new Set([
+  "electron-builder", "electron-builder-http", "electron-builder-tslint-config", "electron-builder-util", "electron-publish",
+  "electron-forge", "electron-packager",
+  "jest", "jest-cli", "prebuild-install", "nan", "node-pre-gyp",
+  "asar-integrity", "asar",
+  "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
+])
+
 export function createLazyProductionDeps(projectDir: string) {
   return new Lazy(() => getProductionDependencies(projectDir))
 }
@@ -180,7 +188,7 @@ function unmarkExtraneous(obj: any, isDev: boolean, isRoot: boolean) {
 
 // find the one that will actually be loaded by require() so we can make sure it's valid
 function findDep(obj: Dependency, name: string) {
-  if (name === "prebuild-install" || name === "nan" || name === "node-pre-gyp") {
+  if (knownAlwaysIgnoredDevDeps.has(name)) {
     return null
   }
 
@@ -201,7 +209,7 @@ function findDep(obj: Dependency, name: string) {
 async function readScopedDir(dir: string): Promise<Array<string> | null> {
   let files: Array<string>
   try {
-    files = (await readdir(dir)).filter(it => !it.startsWith(".") && it !== "prebuild-install" && it !== "nan" && it !== "node-pre-gyp")
+    files = (await readdir(dir)).filter(it => !it.startsWith(".") && !knownAlwaysIgnoredDevDeps.has(it))
   }
   catch (e) {
     // error indicates that nothing is installed here
@@ -210,7 +218,7 @@ async function readScopedDir(dir: string): Promise<Array<string> | null> {
 
   files.sort()
 
-  const scopes = files.filter(it => it.startsWith("@") && !it.startsWith("@types"))
+  const scopes = files.filter(it => it.startsWith("@") && it !== "@types")
   if (scopes.length === 0) {
     return files
   }

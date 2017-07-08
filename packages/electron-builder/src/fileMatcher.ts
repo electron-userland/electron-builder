@@ -5,7 +5,6 @@ import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { Platform } from "./core"
-import { hasDep } from "./fileTransformer"
 import { Config, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
@@ -129,37 +128,16 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   }
   patterns.splice(insertIndex, 0, ...customFirstPatterns)
 
+  // not moved to copyNodeModules because depends on platform packager (for now, not easy)
   if (packager.platform !== Platform.WINDOWS) {
     // https://github.com/electron-userland/electron-builder/issues/1738
     patterns.push("!**/node_modules/**/*.{dll,exe}")
   }
 
-  // https://github.com/electron-userland/electron-builder/issues/1738#issuecomment-310729208
-  if (hasDep("lzma-native", packager.info)) {
-    patterns.push("!**/node_modules/lzma-native/build{,/**/*}")
-    patterns.push("!**/node_modules/lzma-native/deps{,/**/*}")
-  }
-
-  if (hasDep("keytar-prebuild", packager.info)) {
-    patterns.push("!**/node_modules/keytar-prebuild/src{,/**/*}")
-  }
-  if (hasDep("keytar", packager.info)) {
-    patterns.push("!**/node_modules/keytar/src{,/**/*}")
-  }
-
-  patterns.push("!**/node_modules/*/build/Release/obj.target{,/**/*}")
-  patterns.push("!**/node_modules/*/build/Release/.deps{,/**/*}")
-  patterns.push("!**/node_modules/*/build/*.{mk,gypi,Makefile}")
-  patterns.push("!**/node_modules/*/build/{Makefile,gyp-mac-tool}")
-
-  patterns.push("!**/node_modules/**/*.{cc,obj,pdb}")
-
-  patterns.push("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,karma.conf.js,.coveralls.yml,readme.markdown,binding.gyp,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
-  patterns.push("!**/node_modules/.bin")
-  patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`)
+  patterns.push("!**/node_modules/*/{README.md,karma.conf.js,.coveralls.yml,readme.markdown,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}")
+  patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj,cc,obj,pdb,h}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
-  patterns.push("!**/node_modules/@types{,/**/*}")
   //noinspection SpellCheckingInspection
   patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
     "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
