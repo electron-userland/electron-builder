@@ -29,11 +29,20 @@ export class AsarFilesystem {
     }
   }
 
-  searchNodeFromDirectory(p: string): Node {
+  searchNodeFromDirectory(p: string, isCreate: boolean): Node | null {
     let node = this.header
     for (const dir of p.split(path.sep)) {
       if (dir !== ".") {
-        node = node.files![dir]!
+        let child = node.files![dir]
+        if (child == null) {
+          if (!isCreate) {
+            return null
+          }
+          child = new Node()
+          child.files = {}
+          node.files![dir] = child
+        }
+        node = child
       }
     }
     return node
@@ -45,7 +54,7 @@ export class AsarFilesystem {
     }
 
     const name = path.basename(p)
-    const dirNode = this.searchNodeFromDirectory(path.dirname(p))
+    const dirNode = this.searchNodeFromDirectory(path.dirname(p), true)!
     if (dirNode.files == null) {
       dirNode.files = {}
     }
@@ -58,6 +67,34 @@ export class AsarFilesystem {
     return result
   }
 
+  addFileNode(file: string, dirNode: Node, size: number, unpacked: boolean, stat: Stats): Node {
+    if (size > 4294967295) {
+      throw new Error(`${file}: file size cannot be larger than 4.2GB`)
+    }
+
+    const node = new Node()
+    node.size = size
+    if (unpacked) {
+      node.unpacked = true
+    }
+    else {
+      node.offset = this.offset.toString()
+      if (process.platform !== "win32" && (stat.mode & 0o100)) {
+        node.executable = true
+      }
+      this.offset.add(UINT64(node.size))
+    }
+
+    let children = dirNode.files
+    if (children == null) {
+      children = {}
+      dirNode.files = children
+    }
+    children[path.basename(file)] = node
+
+    return node
+  }
+
   insertDirectory(p: string, unpacked: boolean = false) {
     const node = this.getOrCreateNode(p)
     node.files = {}
@@ -67,20 +104,8 @@ export class AsarFilesystem {
     return node.files
   }
 
-  insertFileNode(node: Node, stat: Stats, file: string) {
-    if (node.size > 4294967295) {
-      throw new Error(`${file}: file size can not be larger than 4.2GB`)
-    }
-
-    node.offset = this.offset.toString()
-    if (process.platform !== "win32" && (stat.mode & 0o100)) {
-      node.executable = true
-    }
-    this.offset.add(UINT64(node.size))
-  }
-
   getNode(p: string) {
-    const node = this.searchNodeFromDirectory(path.dirname(p))
+    const node = this.searchNodeFromDirectory(path.dirname(p), false)!
     return node.files![path.basename(p)]
   }
 

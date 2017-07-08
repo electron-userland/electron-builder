@@ -75,10 +75,10 @@ export class FileMatcher {
     }
   }
 
-  createFilter(ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): Filter {
+  createFilter(rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): Filter {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
-    return createFilter(this.from, parsedPatterns, ignoreFiles, rawFilter, excludePatterns)
+    return createFilter(this.from, parsedPatterns, rawFilter, excludePatterns)
   }
 
   toString() {
@@ -152,6 +152,8 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   patterns.push("!**/node_modules/*/build/*.{mk,gypi,Makefile}")
   patterns.push("!**/node_modules/*/build/{Makefile,gyp-mac-tool}")
 
+  patterns.push("!**/node_modules/**/*.{cc,obj,pdb}")
+
   patterns.push("!**/node_modules/*/{CHANGELOG.md,ChangeLog,changelog.md,README.md,karma.conf.js,.coveralls.yml,readme.markdown,binding.gyp,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}")
   patterns.push("!**/node_modules/.bin")
   patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`)
@@ -160,10 +162,12 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
   patterns.push("!**/node_modules/@types{,/**/*}")
   //noinspection SpellCheckingInspection
   patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
-    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes," +
+    "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
     ".idea,.vs,.editorconfig,.flowconfig,.jshintrc,.eslintrc," +
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
     "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
+
+  debug(`File patterns of first/default matcher: ${patterns.join("\n")}`)
 
   return matcher
 }

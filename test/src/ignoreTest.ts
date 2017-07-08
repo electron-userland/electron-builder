@@ -61,7 +61,7 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
     assertThat(path.join(context.getResources(Platform.LINUX), "app", "foo", "bar", "f.o")).doesNotExist(),
     assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin")).doesNotExist(),
     assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin2")).isDirectory()
+    assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin2")).doesNotExist()
   ]),
 }))
 

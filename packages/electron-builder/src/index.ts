@@ -1,5 +1,5 @@
 export { Packager, BuildResult } from "./packager"
-export { PackagerOptions, ArtifactCreated, BuildInfo } from "./packagerApi"
+export { PackagerOptions, ArtifactCreated } from "./packagerApi"
 export { getArchSuffix, Platform, Arch, archFromString, Target, DIR_TARGET } from "./core"
 export { build, CliOptions, createTargets } from "./builder"
 export { Metadata, Config, AfterPackContext, MetadataDirectories, Protocol, FileAssociation, PlatformSpecificBuildOptions, AuthorMetadata, RepositoryInfo, AsarOptions, FilePattern, ReleaseInfo, ElectronDownloadOptions } from "./metadata"

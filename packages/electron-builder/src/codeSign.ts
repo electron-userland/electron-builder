@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, Lazy, TmpDir } from "electron-builder-util"
+import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, Lazy, TmpDir, warn } from "electron-builder-util"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { outputFile, rename } from "fs-extra-p"
@@ -129,10 +129,21 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
 
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
   // https://github.com/electron-userland/electron-builder/issues/1457
-  if (isCi) {
-    const list = await listUserKeychains()
-    if (!list.includes(keychainFile)) {
-      await exec("security", ["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
+  const list = await listUserKeychains()
+  if (!list.includes(keychainFile)) {
+    await exec("security", ["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
+    // no need to clean on CI server
+    if (!isCi) {
+      // yes, we don't clear on explicit exit or or uncaught exceptions - it is ok (exit or uncaughtException doesn't allow async operations)
+      process.once("beforeExit", async () => {
+        try {
+          const list = (await listUserKeychains()).filter(it => it != keychainFile)
+          exec("security", ["list-keychains", "-d", "user", "-s"].concat(list))
+        }
+        catch (e) {
+          warn(`Cannot restore keychain search list: ${e}`)
+        }
+      })
     }
   }
   return await importCerts(keychainFile, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))

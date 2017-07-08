@@ -1,4 +1,4 @@
-import { Arch, BuildInfo, MacOptions, Target } from "electron-builder"
+import { Arch, MacOptions, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder/out/codeSign"
 import MacPackager from "electron-builder/out/macPackager"
@@ -12,7 +12,7 @@ export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
   signOptions: SignOptions | null
 
-  constructor(info: BuildInfo) {
+  constructor(info: Packager) {
     super(info)
   }
 
@@ -40,7 +40,7 @@ export class CheckingMacPackager extends MacPackager {
   effectiveDistOptions: any
   effectiveSignOptions: MacSignOptions
 
-  constructor(info: BuildInfo) {
+  constructor(info: Packager) {
     super(info)
   }
 

@@ -5,6 +5,7 @@ import { log, use, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
 import yargs from "yargs"
 import { computeDefaultAppDirectory, getConfig, getElectronVersion } from "../util/config"
+import { createLazyProductionDeps } from "../util/packageDependencies"
 import { installOrRebuild } from "../util/yarn"
 
 declare const PACKAGE_VERSION: string
@@ -47,7 +48,12 @@ export async function installAppDeps(args: any) {
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)
-  await installOrRebuild(config, results[0], {version: results[1], useCustomDist: muonVersion == null}, args.platform, args.arch, results[0] !== projectDir)
+  await installOrRebuild(config, results[0], {
+    frameworkInfo: {version: results[1], useCustomDist: muonVersion == null},
+    platform: args.platform,
+    arch: args.arch,
+    productionDeps: createLazyProductionDeps(results[0]),
+  }, results[0] !== projectDir)
 }
 
 function main() {

@@ -12,11 +12,13 @@ import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "./
 import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
+import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
-import { BuildInfo, PackagerOptions } from "./packagerApi"
+import { PackagerOptions } from "./packagerApi"
+import { copyAppFiles } from "./util/appFileCopier"
+import { AppFileCopierHelper, AppFileWalker } from "./util/AppFileWalker"
 import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
-import { dependencies } from "./util/packageDependencies"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
   readonly packagerOptions: PackagerOptions
@@ -38,7 +40,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   readonly appInfo: AppInfo
 
-  constructor(readonly info: BuildInfo) {
+  constructor(readonly info: Packager) {
     this.config = info.config
     this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
@@ -138,16 +140,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${config.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
 
     const appDir = this.info.appDir
-    const ignoreFiles = new Set()
     if (this.info.isPrepackedAppAsar) {
       await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
     }
     else {
       await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
-
-      if (asarOptions == null) {
-        await dependencies(appDir, ignoreFiles)
-      }
     }
 
     let rawFilter: any = null
@@ -175,23 +172,27 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       defaultMatcher.addPattern("!.cache{,/**/*}")
     }
 
-    const filter = defaultMatcher.createFilter(ignoreFiles, rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
+    const filter = defaultMatcher.createFilter(rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
 
     const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
       originalMain: this.info.metadata.main,
       main: ELECTRON_COMPILE_SHIM_FILENAME,
     }, config.extraMetadata) : config.extraMetadata)
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
+
+    const fileCopierHelper = new AppFileCopierHelper(transformer)
+    const fileWalker = new AppFileWalker(appDir, this.info, filter)
+
     if (this.info.isPrepackedAppAsar) {
       taskManager.addTask(copyDir(appDir, path.join(resourcesPath), filter, transformer))
     }
     else if (asarOptions == null) {
-      taskManager.addTask(copyDir(appDir, path.join(resourcesPath, "app"), filter, transformer))
+      taskManager.addTask(copyAppFiles(fileWalker, fileCopierHelper, path.join(resourcesPath, "app")))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter(), transformer).pack(filter, isElectronCompile, this))
+      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(isElectronCompile, this, fileWalker, fileCopierHelper))
     }
 
     taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))

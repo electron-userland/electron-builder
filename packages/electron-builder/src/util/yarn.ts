@@ -1,19 +1,24 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, log, spawn, warn } from "electron-builder-util"
+import { asArray, Lazy, log, spawn, warn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
 import { homedir } from "os"
 import * as path from "path"
 import { Config } from "../metadata"
-import { readInstalled } from "./packageDependencies"
+import { Dependency } from "./packageDependencies"
 
 /** @internal */
-export async function installOrRebuild(config: Config, appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, forceInstall: boolean = false) {
-  const args = asArray(config.npmArgs)
+export async function installOrRebuild(config: Config, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
+  const effectiveOptions = Object.assign({
+    buildFromSource: config.buildDependenciesFromSource === true,
+    additionalArgs: asArray(config.npmArgs),
+  }, options)
+
+
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
-    await installDependencies(appDir, frameworkInfo, platform, arch, args, config.buildDependenciesFromSource === true)
+    await installDependencies(appDir, effectiveOptions)
   }
   else {
-    await rebuild(appDir, frameworkInfo, platform, arch, args, config.buildDependenciesFromSource === true)
+    await rebuild(appDir, effectiveOptions)
   }
 }
 
@@ -52,7 +57,11 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
   })
 }
 
-function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean): Promise<any> {
+function installDependencies(appDir: string, options: RebuildOptions): Promise<any> {
+  const platform = options.platform || process.platform
+  const arch = options.arch || process.arch
+  const additionalArgs = options.additionalArgs
+
   log(`Installing app dependencies for arch ${arch} to ${appDir}`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
@@ -72,10 +81,12 @@ function installDependencies(appDir: string, frameworkInfo: DesktopFrameworkInfo
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
-  execArgs.push(...additionalArgs)
+  if (additionalArgs != null) {
+    execArgs.push(...additionalArgs)
+  }
   return spawn(execPath, execArgs, {
     cwd: appDir,
-    env: getGypEnv(frameworkInfo, platform, arch, buildFromSource),
+    env: getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true),
   })
 }
 
@@ -92,14 +103,29 @@ function isYarnPath(execPath: string | null | undefined) {
   return process.env.FORCE_YARN === "true" || (execPath != null && path.basename(execPath).startsWith("yarn"))
 }
 
+export interface RebuildOptions {
+  frameworkInfo: DesktopFrameworkInfo
+  productionDeps?: Lazy<Array<Dependency>>
+
+  platform?: string
+  arch?: string
+
+  buildFromSource?: boolean
+
+  additionalArgs?: Array<string> | null
+}
+
 /** @internal */
-export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInfo, platform: string = process.platform, arch: string = process.arch, additionalArgs: Array<string>, buildFromSource: boolean) {
-  const pathToDep = await readInstalled(appDir)
-  const nativeDeps = await BluebirdPromise.filter(pathToDep.values(), it => it.extraneous ? false : exists(path.join(it.path, "binding.gyp")), {concurrency: 8})
+export async function rebuild(appDir: string, options: RebuildOptions) {
+  const nativeDeps = await BluebirdPromise.filter(await options.productionDeps!.value, it => exists(path.join(it.path, "binding.gyp")), {concurrency: 8})
   if (nativeDeps.length === 0) {
     log(`No native production dependencies`)
     return
   }
+
+  const platform = options.platform || process.platform
+  const arch = options.arch || process.arch
+  const additionalArgs = options.additionalArgs
 
   log(`Rebuilding native production dependencies for ${platform}:${arch}`)
 
@@ -114,10 +140,12 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
     execPath = process.env.npm_node_execpath || process.env.NODE_EXE || "node"
   }
 
-  const env = getGypEnv(frameworkInfo, platform, arch, buildFromSource)
+  const env = getGypEnv(options.frameworkInfo, platform, arch, options.buildFromSource === true)
   if (isYarn) {
     execArgs.push("run", "install", "--")
-    execArgs.push(...additionalArgs)
+    if (additionalArgs != null) {
+      execArgs.push(...additionalArgs)
+    }
     await BluebirdPromise.map(nativeDeps, dep => {
       log(`Rebuilding native dependency ${dep.name}`)
       return spawn(execPath!, execArgs, {
@@ -136,7 +164,9 @@ export async function rebuild(appDir: string, frameworkInfo: DesktopFrameworkInf
   }
   else {
     execArgs.push("rebuild")
-    execArgs.push(...additionalArgs)
+    if (additionalArgs != null) {
+      execArgs.push(...additionalArgs)
+    }
     execArgs.push(...nativeDeps.map(it => it.name))
     await spawn(execPath, execArgs, {
       cwd: appDir,

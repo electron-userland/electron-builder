@@ -218,32 +218,34 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
 }
 
 async function encodedZip(archive: any, dir: string, prefix: string, vendorPath: string, packager: WinPackager) {
-  await walk(dir, null, async (file, stats) => {
-    if (stats.isDirectory()) {
-      return
-    }
+  await walk(dir, null, {
+    consume: async (file, stats) => {
+      if (stats.isDirectory()) {
+        return
+      }
 
-    // GBK file name encoding (or Non-English file name) caused a problem
-    const relativeSafeFilePath = encodeURI(file.substring(dir.length + 1).replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]")
-    archive._append(file, {
-      name: relativeSafeFilePath,
-      prefix: prefix,
-      stats: stats,
-    })
-
-    // createExecutableStubForExe
-    // https://github.com/Squirrel/Squirrel.Windows/pull/1051 Only generate execution stubs for the top-level executables
-    if (file.endsWith(".exe") && !file.includes("squirrel.exe") && !relativeSafeFilePath.includes("/")) {
-      const tempFile = await packager.getTempFile("stub.exe")
-      await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile)
-      await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])
-      await packager.sign(tempFile)
-
-      archive._append(tempFile, {
-        name: relativeSafeFilePath.substring(0, relativeSafeFilePath.length - 4) + "_ExecutionStub.exe",
+      // GBK file name encoding (or Non-English file name) caused a problem
+      const relativeSafeFilePath = encodeURI(file.substring(dir.length + 1).replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]")
+      archive._append(file, {
+        name: relativeSafeFilePath,
         prefix: prefix,
-        stats: await stat(tempFile),
+        stats: stats,
       })
+
+      // createExecutableStubForExe
+      // https://github.com/Squirrel/Squirrel.Windows/pull/1051 Only generate execution stubs for the top-level executables
+      if (file.endsWith(".exe") && !file.includes("squirrel.exe") && !relativeSafeFilePath.includes("/")) {
+        const tempFile = await packager.getTempFile("stub.exe")
+        await copyFile(path.join(vendorPath, "StubExecutable.exe"), tempFile)
+        await execWine(path.join(vendorPath, "WriteZipToSetup.exe"), ["--copy-stub-resources", file, tempFile])
+        await packager.sign(tempFile)
+
+        archive._append(tempFile, {
+          name: relativeSafeFilePath.substring(0, relativeSafeFilePath.length - 4) + "_ExecutionStub.exe",
+          prefix: prefix,
+          stats: await stat(tempFile),
+        })
+      }
     }
   })
   archive.finalize()

@@ -3,10 +3,10 @@ import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { FileTransformer } from "electron-builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
-import { BuildInfo } from "./packagerApi"
+import { Packager } from "./packager"
 
 /** @internal */
-export function isElectronCompileUsed(info: BuildInfo): boolean {
+export function isElectronCompileUsed(info: Packager): boolean {
   if (info.config.electronCompile != null) {
     return info.config.electronCompile
   }
@@ -16,7 +16,7 @@ export function isElectronCompileUsed(info: BuildInfo): boolean {
 }
 
 /** @internal */
-export function hasDep(name: string, info: BuildInfo) {
+export function hasDep(name: string, info: Packager) {
   const deps = info.metadata.dependencies
   return deps != null && name in deps
 }

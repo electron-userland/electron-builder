@@ -32,11 +32,14 @@ export async function exists(file: string): Promise<boolean> {
   }
 }
 
-export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: (file: string, stat: Stats, parent: string, extraIgnoredFiles: Set<string>, siblingNames: Array<string>) => any): Promise<Array<string>> {
-  const result: Array<string> = []
+export interface FileConsumer {
+  consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any
+}
+
+export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer): Promise<Array<string>> {
+  let result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
-  const extraIgnoredFiles = new Set<string>()
   while (queue.length > 0) {
     const dirPath = queue.pop()!
     if (addDirToResult) {
@@ -49,17 +52,23 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
     const childNames = await readdir(dirPath)
     childNames.sort()
 
+    let nodeModuleContent: Array<string> | null = null
+
     const dirs: Array<string> = []
     // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
     const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
+      if (name === ".DS_Store") {
+        return null
+      }
+
       const filePath = dirPath + path.sep + name
       return lstat(filePath)
         .then(stat => {
-          if (extraIgnoredFiles.has(filePath) || (filter != null && !filter(filePath, stat))) {
+          if (filter != null && !filter(filePath, stat)) {
             return null
           }
 
-          const consumerResult = consumer == null ? null : consumer(filePath, stat, dirPath, extraIgnoredFiles, childNames)
+          const consumerResult = consumer == null ? null : consumer.consume(filePath, stat, dirPath, childNames)
           if (consumerResult == null || !("then" in consumerResult)) {
             if (stat.isDirectory()) {
               dirs.push(name)
@@ -70,8 +79,13 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
             }
           }
           else {
-            return (<Promise<any>>consumerResult)
-              .then(it => {
+            return (consumerResult as Promise<any>)
+              .then((it): any => {
+                if (it != null && Array.isArray(it)) {
+                  nodeModuleContent = it
+                  return null
+                }
+
                 // asarUtil can return modified stat (symlink handling)
                 if ((it != null && "isDirectory" in it ? (<Stats>it) : stat).isDirectory()) {
                   dirs.push(name)
@@ -94,6 +108,10 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
     dirs.sort()
     for (const child of dirs) {
       queue.push(dirPath + path.sep + child)
+    }
+
+    if (nodeModuleContent != null) {
+      result = result.concat(nodeModuleContent)
     }
   }
 
@@ -204,22 +222,24 @@ export function copyDir(src: string, destination: string, filter?: Filter | null
 
   const createdSourceDirs = new Set<string>()
   const links: Array<Link> = []
-  return walk(src, filter, async(file, stat, parent) => {
-    if (!stat.isFile() && !stat.isSymbolicLink()) {
-      return
-    }
+  return walk(src, filter, {
+    consume: async (file, stat, parent) => {
+      if (!stat.isFile() && !stat.isSymbolicLink()) {
+        return
+      }
 
-    if (!createdSourceDirs.has(parent)) {
-      await ensureDir(parent.replace(src, destination))
-      createdSourceDirs.add(parent)
-    }
+      if (!createdSourceDirs.has(parent)) {
+        await ensureDir(parent.replace(src, destination))
+        createdSourceDirs.add(parent)
+      }
 
-    const destFile = file.replace(src, destination)
-    if (stat.isFile()) {
-      await fileCopier.copy(file, destFile, stat)
-    }
-    else {
-      links.push({"file": destFile, "link": await readlink(file)})
+      const destFile = file.replace(src, destination)
+      if (stat.isFile()) {
+        await fileCopier.copy(file, destFile, stat)
+      }
+      else {
+        links.push({"file": destFile, "link": await readlink(file)})
+      }
     }
   })
     .then(() => BluebirdPromise.map(links, it => symlink(it.link, it.file), CONCURRENCY))
@@ -227,7 +247,7 @@ export function copyDir(src: string, destination: string, filter?: Filter | null
 
 export const DO_NOT_USE_HARD_LINKS = (file: string) => false
 
-interface Link {
+export interface Link {
   readonly link: string,
   readonly file: string
 }

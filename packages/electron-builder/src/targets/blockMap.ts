@@ -26,9 +26,11 @@ async function computeBlocks(inputFile: string, stat: Stats): Promise<Array<stri
 
 export async function computeBlockMap(appOutDir: string): Promise<string> {
   const files = new Map<string, Stats>()
-  await walk(appOutDir, (it: string) => !it.endsWith(`${path.sep}.DS_Store`), (file, fileStat) => {
-    if (fileStat.isFile()) {
-      files.set(file, fileStat)
+  await walk(appOutDir, (it: string) => !it.endsWith(`${path.sep}.DS_Store`), {
+    consume: (file, fileStat) => {
+      if (fileStat.isFile()) {
+        files.set(file, fileStat)
+      }
     }
   })
 

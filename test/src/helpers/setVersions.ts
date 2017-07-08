@@ -24,7 +24,7 @@ async function main(): Promise<void> {
 }
 
 async function setPackageVersions(packages: Array<string>, packageData: Array<any>) {
-  const versions = await BluebirdPromise.map(packages, it => exec("node", [path.join(rootDir, "test", "vendor", "yarn.js"), "info", "--json", it, "dist-tags"])
+  const versions = await BluebirdPromise.map(packages, it => exec("yarn", ["info", "--json", it, "dist-tags"])
     .then((it: string) => {
       if (it === "") {
         // {"type":"error","data":"Received invalid response from npm."}

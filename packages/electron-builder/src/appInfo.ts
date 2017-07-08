@@ -1,7 +1,7 @@
 import { isEmptyOrSpaces, smarten, warn } from "electron-builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
-import { BuildInfo } from "./packagerApi"
+import { Packager } from "./packager"
 
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
@@ -12,7 +12,7 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
-  constructor (private readonly info: BuildInfo, buildVersion?: string | null) {
+  constructor (private readonly info: Packager, buildVersion?: string | null) {
     this.version = info.metadata.version!
 
     this.buildNumber = info.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER

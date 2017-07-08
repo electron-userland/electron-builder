@@ -158,7 +158,6 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
     channel: "beta",
   })
   tuneNsisUpdater(updater)
-  updater.logger = console
 
   const actualEvents = trackEvents(updater)
 

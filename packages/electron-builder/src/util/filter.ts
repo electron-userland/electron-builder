@@ -20,18 +20,13 @@ export function hasMagic(pattern: Minimatch) {
 }
 
 /** @internal */
-export function createFilter(src: string, patterns: Array<Minimatch>, ignoreFiles?: Set<string>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
+export function createFilter(src: string, patterns: Array<Minimatch>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
   return function (it, stat) {
     if (src === it) {
       return true
     }
 
     if (rawFilter != null && !rawFilter(it)) {
-      return false
-    }
-
-    // yes, check before path sep normalization
-    if (ignoreFiles != null && ignoreFiles.has(it)) {
       return false
     }
 

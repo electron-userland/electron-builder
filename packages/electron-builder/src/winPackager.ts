@@ -10,7 +10,7 @@ import { downloadCertificate } from "./codeSign"
 import { Arch, DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext } from "./metadata"
 import { WinBuildOptions } from "./options/winOptions"
-import { BuildInfo } from "./packagerApi"
+import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
 import { AppPackageHelper, NsisTarget } from "./targets/nsis"
@@ -114,7 +114,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     return this.platformSpecificBuildOptions.verifyUpdateCodeSignature !== false
   }
 
-  constructor(info: BuildInfo) {
+  constructor(info: Packager) {
     super(info)
   }
 

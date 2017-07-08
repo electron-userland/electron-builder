@@ -18,7 +18,7 @@ import * as url from "url"
 import { Arch, Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
-import { ArtifactCreated, BuildInfo } from "../packagerApi"
+import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
 import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { WinPackager } from "../winPackager"
@@ -157,7 +157,7 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: BuildInfo): Publisher | null {
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, buildInfo: Packager): Publisher | null {
     let publisher = this.nameToPublisher.get(publishConfig.provider)
     if (publisher == null) {
       publisher = createPublisher(this, buildInfo.metadata.version!, publishConfig, this.publishOptions)

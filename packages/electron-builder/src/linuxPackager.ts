@@ -4,7 +4,7 @@ import sanitizeFileName from "sanitize-filename"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext } from "./metadata"
 import { LinuxBuildOptions } from "./options/linuxOptions"
-import { BuildInfo } from "./packagerApi"
+import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppImageTarget from "./targets/appImage"
 import FpmTarget from "./targets/fpm"
@@ -15,7 +15,7 @@ import { createCommonTarget } from "./targets/targetFactory"
 export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
   readonly executableName: string
 
-  constructor(info: BuildInfo) {
+  constructor(info: Packager) {
     super(info)
 
     const executableName = this.platformSpecificBuildOptions.executableName

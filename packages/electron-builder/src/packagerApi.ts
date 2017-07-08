@@ -1,9 +1,7 @@
-import { CancellationToken } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { TmpDir } from "electron-builder-util"
-import { AppInfo } from "./appInfo"
-import { Arch, Platform, SourceRepositoryInfo, Target } from "./core"
-import { AfterPackContext, Config, Metadata } from "./metadata"
+import { Arch, Platform, Target } from "./core"
+import { Config } from "./metadata"
+import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 
 export interface PackagerOptions {
@@ -17,40 +15,13 @@ export interface PackagerOptions {
   cscInstallerLink?: string | null
   cscInstallerKeyPassword?: string | null
 
-  platformPackagerFactory?: ((info: BuildInfo, platform: Platform) => PlatformPackager<any>) | null
+  platformPackagerFactory?: ((info: Packager, platform: Platform) => PlatformPackager<any>) | null
 
   readonly config?: Config | string | null
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
   readonly prepackaged?: string
-}
-
-export interface BuildInfo {
-  readonly options: PackagerOptions
-
-  readonly metadata: Metadata
-
-  readonly config: Config
-
-  readonly projectDir: string
-  readonly appDir: string
-
-  readonly isTwoPackageJsonProjectLayoutUsed: boolean
-
-  readonly appInfo: AppInfo
-
-  readonly tempDirManager: TmpDir
-
-  readonly repositoryInfo: Promise<SourceRepositoryInfo | null>
-
-  readonly isPrepackedAppAsar: boolean
-
-  readonly cancellationToken: CancellationToken
-
-  dispatchArtifactCreated(event: ArtifactCreated): void
-
-  afterPack(context: AfterPackContext): Promise<void>
 }
 
 export interface ArtifactCreated {

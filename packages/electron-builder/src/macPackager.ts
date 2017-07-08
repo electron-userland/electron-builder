@@ -8,7 +8,7 @@ import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity } from "./codeSign"
 import { Arch, DIR_TARGET, Platform, Target } from "./core"
 import { MacOptions, MasBuildOptions } from "./options/macOptions"
-import { BuildInfo } from "./packagerApi"
+import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
@@ -22,7 +22,7 @@ const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
 
-  constructor(info: BuildInfo) {
+  constructor(info: Packager) {
     super(info)
 
     if (this.packagerOptions.cscLink == null || process.platform !== "darwin") {
@@ -208,8 +208,12 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   private async reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined) {
     let message: string
     if (qualifier == null) {
-      const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
-      message = `App is not signed: cannot find valid "${certificateType}" identity${postfix}, see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`
+      message = `App is not signed`
+      if (isAutoDiscoveryCodeSignIdentity()) {
+        const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
+        message += `: cannot find valid "${certificateType}" identity${postfix}`
+      }
+      message += ", see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
       if (!isAutoDiscoveryCodeSignIdentity()) {
         message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
       }
@@ -223,12 +227,14 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       args.push(keychainName)
     }
 
-    const allIdentities = (await exec("security", args))
-      .trim()
-      .split("\n")
-      .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
-      .join("\n")
-    message += "\n\nAll identities:\n" + allIdentities
+    if (qualifier != null || isAutoDiscoveryCodeSignIdentity()) {
+      const allIdentities = (await exec("security", args))
+        .trim()
+        .split("\n")
+        .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
+        .join("\n")
+      message += "\n\nAll identities:\n" + allIdentities
+    }
 
     if (isMas || this.forceCodeSigning) {
       throw new Error(message)

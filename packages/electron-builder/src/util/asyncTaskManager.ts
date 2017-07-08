@@ -9,7 +9,6 @@ export class AsyncTaskManager {
   private readonly errors: Array<Error> = []
 
   constructor(private readonly cancellationToken: CancellationToken) {
-
   }
 
   add(task: () => Promise<any>) {

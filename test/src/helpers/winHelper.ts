@@ -44,7 +44,7 @@ export async function doTest(outDir: string, perUser: boolean, productFilename =
   }
 
   function listFiles() {
-    return walk(driveC, null, walkFilter)
+    return walk(driveC, null, {consume: walkFilter})
   }
 
   let fsBefore = await listFiles()

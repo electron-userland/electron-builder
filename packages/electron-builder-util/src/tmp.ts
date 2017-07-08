@@ -41,6 +41,21 @@ function getTempDir() {
             }
           }
         }
+        process.once("beforeExit", () => {
+          if (tempDir == null) {
+            return
+          }
+
+          tempDir = null
+          try {
+            remove(dir)
+          }
+          catch (e) {
+            if (e.code !== "EPERM") {
+              warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
+            }
+          }
+        })
         process.on("exit", cleanup)
         process.on("uncaughtException", cleanup)
         process.on("SIGINT", cleanup)

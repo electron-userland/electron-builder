@@ -12,11 +12,12 @@ import { readAsarJson } from "./asar"
 import { Arch, Platform, SourceRepositoryInfo, Target } from "./core"
 import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
-import { ArtifactCreated, BuildInfo, PackagerOptions } from "./packagerApi"
+import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
 import { computeDefaultAppDirectory, computeElectronVersion, getConfig, validateConfig } from "./util/config"
+import { createLazyProductionDeps, Dependency } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
@@ -28,7 +29,7 @@ function addHandler(emitter: EventEmitter, event: string, handler: (...args: any
 
 declare const PACKAGE_VERSION: string
 
-export class Packager implements BuildInfo {
+export class Packager {
   readonly projectDir: string
   appDir: string
 
@@ -64,6 +65,17 @@ export class Packager implements BuildInfo {
 
   get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
     return this._repositoryInfo.value
+  }
+
+  private _productionDeps: Lazy<Array<Dependency>> | null = null
+
+  get productionDeps(): Lazy<Array<Dependency>> {
+    let result = this._productionDeps
+    if (result == null) {
+      result = createLazyProductionDeps(this.appDir)
+      this._productionDeps = result
+    }
+    return result
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -303,7 +315,12 @@ export class Packager implements BuildInfo {
       log("Skip app dependencies rebuild because platform is different and buildDependenciesFromSource is set to true")
     }
     else {
-      await installOrRebuild(config, this.appDir, frameworkInfo, platform.nodeName, Arch[arch])
+      await installOrRebuild(config, this.appDir, {
+        frameworkInfo,
+        platform: platform.nodeName,
+        arch: Arch[arch],
+        productionDeps: this.productionDeps,
+      })
     }
   }
 
