@@ -34,19 +34,27 @@ export async function exists(file: string): Promise<boolean> {
 
 export interface FileConsumer {
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any
+
+  /**
+   * @default false
+   */
+  isIncludeDir?: boolean
 }
 
 export async function walk(initialDirPath: string, filter?: Filter | null, consumer?: FileConsumer): Promise<Array<string>> {
   let result: Array<string> = []
   const queue: Array<string> = [initialDirPath]
   let addDirToResult = false
+  const isIncludeDir = consumer == null ? false : consumer.isIncludeDir === true
   while (queue.length > 0) {
     const dirPath = queue.pop()!
-    if (addDirToResult) {
-      result.push(dirPath)
-    }
-    else {
-      addDirToResult = true
+    if (isIncludeDir) {
+      if (addDirToResult) {
+        result.push(dirPath)
+      }
+      else {
+        addDirToResult = true
+      }
     }
 
     const childNames = await readdir(dirPath)

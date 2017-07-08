@@ -17,10 +17,10 @@ else if (process.env.CSC_KEY_PASSWORD == null) {
 }
 
 test("mas", createMacTargetTest(["mas"]))
-test("dev", createMacTargetTest(["mas-dev"]))
+test.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
-test("custom mas", () => {
+test.ifAll("custom mas", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
@@ -45,7 +45,7 @@ test("custom mas", () => {
   })
 })
 
-test("entitlements in the package.json", () => {
+test.ifAll("entitlements in the package.json", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
@@ -67,7 +67,7 @@ test("entitlements in the package.json", () => {
   })
 })
 
-test("entitlements in build dir", () => {
+test.ifAll("entitlements in build dir", () => {
   let platformPackager: CheckingMacPackager = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),

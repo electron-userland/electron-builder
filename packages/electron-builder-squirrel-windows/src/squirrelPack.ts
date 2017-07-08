@@ -219,6 +219,7 @@ async function msi(options: SquirrelOptions, nupkgPath: string, setupPath: strin
 
 async function encodedZip(archive: any, dir: string, prefix: string, vendorPath: string, packager: WinPackager) {
   await walk(dir, null, {
+    isIncludeDir: true,
     consume: async (file, stats) => {
       if (stats.isDirectory()) {
         return

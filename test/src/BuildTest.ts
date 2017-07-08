@@ -171,7 +171,7 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1738
-test.ifAll.ifDevOrLinuxCi("win smart unpack", app({
+test.ifDevOrLinuxCi("win smart unpack", app({
   targets: Platform.WINDOWS.createTarget(DIR_TARGET),
 }, {
   installDepsBefore: true,

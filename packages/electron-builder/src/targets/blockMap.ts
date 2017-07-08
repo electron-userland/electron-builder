@@ -2,7 +2,6 @@ import { createHash } from "crypto"
 import { walk } from "electron-builder-util/out/fs"
 import { open, read, Stats } from "fs-extra-p"
 import { safeDump } from "js-yaml"
-import * as path from "path"
 
 async function computeBlocks(inputFile: string, stat: Stats): Promise<Array<string>> {
   const fd = await open(inputFile, "r")
@@ -26,7 +25,7 @@ async function computeBlocks(inputFile: string, stat: Stats): Promise<Array<stri
 
 export async function computeBlockMap(appOutDir: string): Promise<string> {
   const files = new Map<string, Stats>()
-  await walk(appOutDir, (it: string) => !it.endsWith(`${path.sep}.DS_Store`), {
+  await walk(appOutDir, null, {
     consume: (file, fileStat) => {
       if (fileStat.isFile()) {
         files.set(file, fileStat)

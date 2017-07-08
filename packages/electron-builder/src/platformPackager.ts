@@ -16,8 +16,8 @@ import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
-import { AppFileCopierHelper, AppFileWalker } from "./util/AppFileWalker"
-import { AsarPackager, checkFileInArchive, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/asarUtil"
+import { AppFileCopierHelper, AppFileWalker, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileWalker"
+import { AsarPackager, checkFileInArchive } from "./util/asarUtil"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
 
 export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
@@ -187,12 +187,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(copyDir(appDir, path.join(resourcesPath), filter, transformer))
     }
     else if (asarOptions == null) {
-      taskManager.addTask(copyAppFiles(fileWalker, fileCopierHelper, path.join(resourcesPath, "app")))
+      taskManager.addTask(BluebirdPromise.each(fileCopierHelper.collect(fileWalker, isElectronCompile), fileSet => copyAppFiles(fileSet, path.join(resourcesPath, "app"), this.info)))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
       const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(isElectronCompile, this, fileWalker, fileCopierHelper))
+      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(await fileCopierHelper.collect(fileWalker, isElectronCompile), this))
     }
 
     taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))
