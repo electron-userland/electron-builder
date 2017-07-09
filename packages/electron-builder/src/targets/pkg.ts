@@ -16,11 +16,10 @@ const certType = "Developer ID Installer"
 // productbuild --scripts doesn't work (because scripts in this case not added to our package)
 // https://github.com/electron-userland/electron-osx-sign/issues/96#issuecomment-274986942
 export class PkgTarget extends Target {
-  readonly options: PkgOptions = Object.assign({
+  readonly options: PkgOptions = {
     allowAnywhere: true,
     allowCurrentUserHome: true,
-    allowRootDirectory: true,
-  }, this.packager.config.pkg)
+    allowRootDirectory: true, ...this.packager.config.pkg}
 
   constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("pkg")
@@ -52,7 +51,7 @@ export class PkgTarget extends Target {
     const args = prepareProductBuildArgs(identity, keychainName)
     args.push("--distribution", distInfoFile)
     args.push(outFile)
-    use(options.productbuild, it => args.push(...<any>it))
+    use(options.productbuild, it => args.push(...it as any))
     await exec("productbuild", args, {
       cwd: appOutDir,
     })

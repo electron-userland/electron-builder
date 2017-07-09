@@ -36,7 +36,7 @@ export async function computeBlockMap(appOutDir: string): Promise<string> {
   const info: Array<any> = []
   for (const [file, stat] of files.entries()) {
     const blocks = await computeBlocks(file, stat)
-    info.push({name: file.substring(appOutDir.length + 1).replace(/\\/g, "/"), blocks: blocks})
+    info.push({name: file.substring(appOutDir.length + 1).replace(/\\/g, "/"), blocks})
   }
   return safeDump(info)
 }

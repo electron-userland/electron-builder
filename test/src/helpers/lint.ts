@@ -1,19 +1,29 @@
-import BluebirdPromise from "bluebird-lst"
 import { readdir } from "fs-extra-p"
-import { cpus } from "os"
 import * as path from "path"
 
+const workerFarm = require("worker-farm")
+
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
-const spawn = require("../../../packages/electron-builder-util/out/util").spawn
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
+const workers = workerFarm(path.join(packageDir, "lint.js"))
+
 
 async function main(): Promise<void> {
   const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
-  await BluebirdPromise.map(packages, it => spawn(process.env.npm_node_execpath || process.env.NODE_EXE || "node", [path.join(packageDir, "lint.js"), path.join(packageDir, it)], {
-    stdio: ["ignore", "inherit", "pipe"],
-  }), {concurrency: cpus().length})
+  for (const name of packages) {
+    if (name.includes("electron-forge-maker-")) {
+      continue
+    }
+
+    workers(path.join(packageDir, name), (error: Error, hasError: boolean) => {
+      if (hasError) {
+        process.exitCode = 1
+      }
+    })
+  }
+  workerFarm.end(workers)
 }
 
 main()

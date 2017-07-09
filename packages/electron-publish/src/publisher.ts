@@ -40,7 +40,7 @@ export abstract class Publisher {
       return null
     }
     else {
-      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, Object.assign({total: fileStat.size}, progressBarOptions))
+      return this.context.progress.createBar(`[:bar] :percent :etas | ${green(fileName)} to ${this.providerName}`, {total: fileStat.size, ...progressBarOptions})
     }
   }
 

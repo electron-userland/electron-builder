@@ -152,8 +152,8 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
 
 /** @internal */
 export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
-  const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (<any>config)[name]
-  const platformSpecificPatterns: Array<string | FilePattern> | string | n = (<any>customBuildOptions)[name]
+  const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (config as any)[name]
+  const platformSpecificPatterns: Array<string | FilePattern> | string | n = (customBuildOptions as any)[name]
 
   const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, macroExpander)
   const fileMatchers: Array<FileMatcher> = []

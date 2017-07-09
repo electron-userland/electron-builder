@@ -87,7 +87,7 @@ export abstract class ProgressBar {
 
     const percent = ratio * 100
     const elapsed = Date.now() - this.start
-    const eta = percent == 100 ? 0 : (elapsed * (this.total / this.current - 1))
+    const eta = percent === 100 ? 0 : (elapsed * (this.total / this.current - 1))
     const rate = this.current / (elapsed / 1000)
 
     /* populate the bar template with percentages and timestamps */

@@ -26,11 +26,11 @@ export async function tar(compression: CompressionLevel | n, format: string, out
   const info = extToCompressionDescriptor[format]
   let tarEnv = process.env
   if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-    tarEnv = Object.assign({}, tarEnv)
+    tarEnv = {...tarEnv}
     tarEnv[info.env] = "-" + process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL
   }
   else if (compression != null && compression !== "normal") {
-    tarEnv = Object.assign({}, tarEnv)
+    tarEnv = {...tarEnv}
     tarEnv[info.env] = compression === "store" ? info.minLevel : info.maxLevel
   }
 
@@ -42,11 +42,12 @@ export async function tar(compression: CompressionLevel | n, format: string, out
 
   if (await isMacOsSierra()) {
     const linuxToolsPath = await getLinuxToolsPath()
-    tarEnv = Object.assign({}, tarEnv, {
+    tarEnv = {
+      ...tarEnv,
       PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
       LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
-    })
+      LC_CTYPE: "UTF-8"
+    }
   }
 
   await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {

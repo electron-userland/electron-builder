@@ -31,7 +31,7 @@ export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificB
    * @deprecated
    * @private
    */
-  readonly depends?: string[] | null
+  readonly depends?: Array<string> | null
 
   /**
    * The executable name. Defaults to `productName`.
@@ -85,7 +85,7 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   /**
    * Package dependencies.
    */
-  readonly depends?: string[] | null
+  readonly depends?: Array<string> | null
 
   readonly icon?: string
 }
@@ -105,7 +105,7 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
   /**
    * Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
    */
-  readonly depends?: string[] | null
+  readonly depends?: Array<string> | null
 }
 
 export interface SnapOptions extends LinuxBuildOptions {

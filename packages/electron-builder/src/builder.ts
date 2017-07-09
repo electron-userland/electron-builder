@@ -116,7 +116,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     }
   }
 
-  const result = Object.assign({}, args)
+  const result = {...args}
   result.targets = targets
 
   delete result.dir
@@ -126,7 +126,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   delete result.platform
   delete result.arch
 
-  const r = <any>result
+  const r = result as any
   delete r.em
 
   delete r.m
@@ -158,22 +158,22 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
       // transform to object and specify path to config as extends
       config = {
         extends: config,
-        extraMetadata: extraMetadata,
+        extraMetadata,
       };
-      (<any>result).config = config
+      (result as any).config = config
     }
     else if (config == null) {
       config = {};
-      (<any>result).config = config
+      (result as any).config = config
     }
-    (<any>config).extraMetadata = extraMetadata
+    (config as any).extraMetadata = extraMetadata
   }
 
   if (config != null && typeof config !== "string" && config.extraMetadata != null) {
     coerceTypes(config.extraMetadata)
   }
 
-  return result
+  return result as BuildOptions
 }
 
 /** @private */
@@ -316,7 +316,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       group: publishGroup,
       alias: "p",
       description: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
-      choices: ["onTag", "onTagOrDraft", "always", "never", <any>undefined],
+      choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("draft", {
       group: publishGroup,
@@ -333,12 +333,12 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("platform", {
       group: deprecated,
       description: "The target platform (preferred to use --mac, --win or --linux)",
-      choices: ["mac", "win", "linux", "darwin", "win32", "all", <any>undefined],
+      choices: ["mac", "win", "linux", "darwin", "win32", "all", undefined as any],
     })
     .option("arch", {
       group: deprecated,
       description: "The target arch (preferred to use --x64 or --ia32)",
-      choices: ["ia32", "x64", "all", <any>undefined],
+      choices: ["ia32", "x64", "all", undefined as any],
     })
     .option("extraMetadata", {
       alias: ["em"],

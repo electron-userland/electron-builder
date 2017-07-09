@@ -36,7 +36,7 @@ export class GitHubPublisher extends HttpPublisher {
   /** @private */
   get releasePromise(): Promise<Release | null> {
     if (this._releasePromise == null) {
-      this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(<any>null) : this.getOrCreateRelease()
+      this._releasePromise = this.token === "__test__" ? BluebirdPromise.resolve(null as any) : this.getOrCreateRelease()
     }
     return this._releasePromise
   }
@@ -200,7 +200,7 @@ export class GitHubPublisher extends HttpPublisher {
     const baseUrl = parseUrl(`https://${this.info.host || "api.github.com"}`)
     return httpExecutor.request<T>(configureRequestOptions({
       hostname: baseUrl.hostname,
-      port: <any>baseUrl.port,
+      port: baseUrl.port as any,
       path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
       headers: {Accept: "application/vnd.github.v3+json"}
     }, token, method), this.context.cancellationToken, data)

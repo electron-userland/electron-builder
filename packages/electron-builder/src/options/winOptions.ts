@@ -35,40 +35,40 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
    * Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
    */
-  readonly certificateFile?: string
+  readonly certificateFile?: string | null
 
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
    * Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
    */
-  readonly certificatePassword?: string
+  readonly certificatePassword?: string | null
 
   /**
    * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
    */
-  readonly certificateSubjectName?: string
+  readonly certificateSubjectName?: string | null
 
   /**
    * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows.
    */
-  readonly certificateSha1?: string
+  readonly certificateSha1?: string | null
 
   /**
    * The path to an additional certificate file you want to add to the signature block.
    */
-  readonly additionalCertificateFile?: string
+  readonly additionalCertificateFile?: string | null
 
   /**
    * The URL of the RFC 3161 time stamp server.
    * @default http://timestamp.comodoca.com/rfc3161
    */
-  readonly rfc3161TimeStampServer?: string
+  readonly rfc3161TimeStampServer?: string | null
 
   /**
    * The URL of the time stamp server.
    * @default http://timestamp.verisign.com/scripts/timstamp.dll
    */
-  readonly timeStampServer?: string
+  readonly timeStampServer?: string | null
 
   /**
    * [The publisher name](https://github.com/electron-userland/electron-builder/issues/1187#issuecomment-278972073), exactly as in your code signed certificate. Several names can be provided.

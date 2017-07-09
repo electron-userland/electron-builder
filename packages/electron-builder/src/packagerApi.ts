@@ -21,7 +21,7 @@ export interface PackagerOptions {
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 
-  readonly prepackaged?: string
+  readonly prepackaged?: string | null
 }
 
 export interface ArtifactCreated {

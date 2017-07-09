@@ -95,7 +95,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
                 }
 
                 // asarUtil can return modified stat (symlink handling)
-                if ((it != null && "isDirectory" in it ? (<Stats>it) : stat).isDirectory()) {
+                if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
                   dirs.push(name)
                   return null
                 }
@@ -126,7 +126,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
   return result
 }
 
-const _isUseHardLink = process.platform != "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
+const _isUseHardLink = process.platform !== "win32" && process.env.USE_HARD_LINKS !== "false" && (isCi || process.env.USE_HARD_LINKS === "true")
 
 export function copyFile(src: string, dest: string, isEnsureDir = true) {
   return (isEnsureDir ? ensureDir(path.dirname(dest)) : BluebirdPromise.resolve()).then(() => copyOrLinkFile(src, dest, null, false))
@@ -152,7 +152,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
     if (originalModeNumber !== stats.mode) {
       if (debug.enabled) {
-        const oldMode = new Mode(Object.assign({}, stats, {mode: originalModeNumber}))
+        const oldMode = new Mode({...stats, mode: originalModeNumber})
         debug(`${dest} permissions fixed from ${oldMode.toOctal()} (${oldMode.toString()}) to ${mode.toOctal()} (${mode.toString()})`)
       }
 
@@ -170,14 +170,14 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
     return link(src, dest)
   }
 
-  return new BluebirdPromise(function (resolve, reject) {
+  return new BluebirdPromise((resolve, reject) => {
     fcopy(src, dest, stats == null ? undefined : {mode: stats.mode}, error => error == null ? resolve() : reject(error))
   })
 }
 
 export class FileCopier {
   isUseHardLink: boolean
-  
+
   constructor(private readonly isUseHardLinkFunction?: (file: string) => boolean, private readonly transformer?: FileTransformer | null) {
     this.isUseHardLink = _isUseHardLink && isUseHardLinkFunction !== DO_NOT_USE_HARD_LINKS
   }
@@ -187,7 +187,7 @@ export class FileCopier {
       if (this.transformer != null && stat != null && stat.isFile()) {
         let data = this.transformer(src)
         if (data != null) {
-          if (typeof (<any>data).then === "function") {
+          if (typeof (data as any).then === "function") {
             data = await data
           }
 
@@ -246,7 +246,7 @@ export function copyDir(src: string, destination: string, filter?: Filter | null
         await fileCopier.copy(file, destFile, stat)
       }
       else {
-        links.push({"file": destFile, "link": await readlink(file)})
+        links.push({file: destFile, link: await readlink(file)})
       }
     }
   })

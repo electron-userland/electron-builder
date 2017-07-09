@@ -21,7 +21,7 @@ export function hasMagic(pattern: Minimatch) {
 
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
-  return function (it, stat) {
+  return (it, stat) => {
     if (src === it) {
       return true
     }

@@ -10,7 +10,7 @@ import { SnapOptions } from "../options/linuxOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 export default class SnapTarget extends Target {
-  readonly options: SnapOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  readonly options: SnapOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
 
   constructor(name: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
     super(name)
@@ -49,7 +49,8 @@ export default class SnapTarget extends Target {
     }
 
     const desktopFile = await this.helper.computeDesktopEntry(this.options, `${packager.executableName}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {
-      "Icon": "${SNAP}/meta/gui/icon.png"
+      // tslint:disable:no-invalid-template-strings
+      Icon: "${SNAP}/meta/gui/icon.png"
     })
 
     if (options.assumes != null) {
@@ -89,7 +90,7 @@ export default class SnapTarget extends Target {
         plugin: "dump",
         "stage-packages": replaceDefault(options.stagePackages, defaultStagePackages),
         source: isUseDocker ? `/out/${path.basename(appOutDir)}` : appOutDir,
-        after: after
+        after
       }
     }
 

@@ -47,7 +47,7 @@ export class S3Client {
   }
 
   createFileUploader(localFile: string, target: string, s3Options: any) {
-    return new Uploader(this, Object.assign({Key: target}, s3Options), localFile)
+    return new Uploader(this, {Key: target, ...s3Options}, localFile)
   }
 }
 
@@ -83,7 +83,7 @@ export class Uploader extends EventEmitter {
       throw new Error(`File size exceeds maximum object size: ${this.localFile}`)
     }
 
-    const data = await this.runOrRetry(() => client.s3.createMultipartUpload(Object.assign({ContentType: mime.lookup(this.localFile)}, this.s3Options)).promise())
+    const data = await this.runOrRetry(() => client.s3.createMultipartUpload({ContentType: mime.lookup(this.localFile), ...this.s3Options}).promise())
     await this.multipartUpload(data.UploadId!, multipartUploadSize)
   }
 
@@ -94,12 +94,12 @@ export class Uploader extends EventEmitter {
   private putObject(md5: string) {
     this.loaded = 0
     return new BluebirdPromise<any>((resolve, reject) => {
-      this.client.s3.putObject(Object.assign({
+      this.client.s3.putObject({
         ContentType: mime.lookup(this.localFile),
         ContentLength: this.contentLength,
         Body: createReadStream(this.localFile),
-        ContentMD5: md5,
-      }, this.s3Options))
+        ContentMD5: md5, ...this.s3Options
+      })
         .on("httpUploadProgress", progress => {
           this.loaded = progress.loaded
           this.emit("progress")
@@ -227,7 +227,7 @@ function smallestPartSizeFromFileSize(fileSize: number) {
   return partSize < MIN_MULTIPART_SIZE ? MIN_MULTIPART_SIZE : partSize
 }
 
-function hashFile(file: string, algorithm: string, encoding: string = "hex", options: any = undefined) {
+function hashFile(file: string, algorithm: string, encoding: string = "hex", options?: any) {
   return new BluebirdPromise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash
@@ -238,7 +238,7 @@ function hashFile(file: string, algorithm: string, encoding: string = "hex", opt
       .on("error", reject)
       .on("end", () => {
         hash.end()
-        resolve(<string>hash.read())
+        resolve(hash.read() as string)
       })
       .pipe(hash, {end: false})
   })

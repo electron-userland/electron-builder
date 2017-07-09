@@ -13,7 +13,7 @@ import { addLicenseToDmg } from "./dmgLicense"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
-  
+
   private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
 
   constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
@@ -70,17 +70,18 @@ export class DmgTarget extends Target {
       if (contents == null) {
         contents = [
           {
-            "x": 130, "y": 220
+            x: 130, y: 220
           },
           {
-            "x": 410, "y": 220, "type": "link", "path": "/Applications"
+            x: 410, y: 220, type: "link", path: "/Applications"
           }
         ]
       }
 
       const window = specification.window!
-      const env = Object.assign({}, process.env, {
-        volumePath: volumePath,
+      const env: any = {
+        ...process.env,
+        volumePath,
         appFileName: `${packager.appInfo.productFilename}.app`,
         iconSize: specification.iconSize || 80,
         iconTextSize: specification.iconTextSize || 12,
@@ -88,8 +89,8 @@ export class DmgTarget extends Target {
         windowX: window.x,
         windowY: window.y,
 
-        VERSIONER_PERL_PREFER_32_BIT: "true",
-      })
+        VERSIONER_PERL_PREFER_32_BIT: "true"
+      }
 
       if (specification.icon == null) {
         delete env.volumeIcon
@@ -121,7 +122,7 @@ export class DmgTarget extends Target {
           env.windowHeight = window.height.toString()
         }
 
-        env.backgroundFilename = <any>backgroundFilename
+        env.backgroundFilename = backgroundFilename as any
       }
 
       let entries = ""
@@ -151,7 +152,7 @@ export class DmgTarget extends Target {
 
       await exec("/usr/bin/perl", [dmgPropertiesFile], {
         cwd: path.join(__dirname, "..", "..", "vendor"),
-        env: env
+        env
       })
 
       await exec("sync")
@@ -194,11 +195,11 @@ export class DmgTarget extends Target {
   // public to test
   async computeDmgOptions(): Promise<DmgOptions> {
     // appdmg
-    const appdmgWindow = (<any>this.options.window) || {}
+    const appdmgWindow = (this.options.window as any) || {}
     const oldPosition = appdmgWindow.position
     const oldSize = appdmgWindow.size
-    const oldIconSize = (<any>this.options)["icon-size"]
-    const oldBackgroundColor = (<any>this.options)["background-color"]
+    const oldIconSize = (this.options as any)["icon-size"]
+    const oldBackgroundColor = (this.options as any)["background-color"]
     if (oldPosition != null) {
       warn("dmg.window.position is deprecated, please use dmg.window instead")
     }
@@ -213,7 +214,7 @@ export class DmgTarget extends Target {
     }
 
     const packager = this.packager
-    const specification = deepAssign(<DmgOptions>{
+    const specification = deepAssign<DmgOptions>({
         window: {
           x: 400,
           y: 100,
@@ -245,31 +246,31 @@ export class DmgTarget extends Target {
         throw new Error("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
       }
 
-      (<any>specification).backgroundColor = require("parse-color")(specification.backgroundColor).hex
+      (specification as any).backgroundColor = require("parse-color")(specification.backgroundColor).hex
     }
 
     if (specification.backgroundColor == null && !("background" in specification)) {
       const resourceList = await packager.resourceList
       if (resourceList.includes("background.tiff")) {
-        (<any>specification).background = path.join(packager.buildResourcesDir, "background.tiff")
+        (specification as any).background = path.join(packager.buildResourcesDir, "background.tiff")
       }
       else if (resourceList.includes("background.png")) {
-        (<any>specification).background = path.join(packager.buildResourcesDir, "background.png")
+        (specification as any).background = path.join(packager.buildResourcesDir, "background.png")
       }
       else {
-        (<any>specification).background = path.join(this.helperDir, "background.tiff")
+        (specification as any).background = path.join(this.helperDir, "background.tiff")
       }
     }
 
     if (specification.format == null) {
       if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-        (<any>specification).format = "UDZO"
+        (specification as any).format = "UDZO"
       }
       else if (packager.config.compression === "store") {
-        (<any>specification).format = "UDRO"
+        (specification as any).format = "UDRO"
       }
       else {
-        (<any>specification).format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
+        (specification as any).format = packager.config.compression === "maximum" ? "UDBZ" : "UDZO"
       }
     }
 

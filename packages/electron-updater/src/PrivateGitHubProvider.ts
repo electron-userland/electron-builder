@@ -15,37 +15,36 @@ export interface PrivateGitHubUpdateInfo extends UpdateInfo {
 }
 
 export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdateInfo> {
-  private readonly netSession = (<any>session).fromPartition(NET_SESSION_NAME)
+  private readonly netSession = (session as any).fromPartition(NET_SESSION_NAME)
 
   constructor(options: GithubOptions, private readonly token: string, private readonly executor: HttpExecutor<any>) {
     super(options, "api.github.com")
 
     this.registerHeaderRemovalListener()
   }
-  
+
   async getLatestVersion(): Promise<PrivateGitHubUpdateInfo> {
     const basePath = this.basePath
     const cancellationToken = new CancellationToken()
     const channelFile = getChannelFilename(getDefaultChannelName())
-    
+
     const assets = await this.getLatestVersionInfo(basePath, cancellationToken)
-    const requestOptions = Object.assign({
+    const requestOptions = {
       headers: this.configureHeaders("application/octet-stream"),
-      session: this.netSession
-    }, parseUrl(assets.find(it => it.name == channelFile)!.url))
+      session: this.netSession, ...parseUrl(assets.find(it => it.name === channelFile)!.url)}
     let result: any
     try {
       result = safeLoad(await this.executor.request<string>(requestOptions, cancellationToken))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
-        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(<any>requestOptions)}): ${e.stack || e.message}`)
+        throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(requestOptions as any)}): ${e.stack || e.message}`)
       }
       throw e
     }
 
     Provider.validateUpdateInfo(result);
-    (<PrivateGitHubUpdateInfo>result).assets = assets
+    (result as PrivateGitHubUpdateInfo).assets = assets
     return result
   }
 
@@ -64,22 +63,20 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private configureHeaders(accept: string) {
-    return Object.assign({
+    return {
       Accept: accept,
-      Authorization: `token ${this.token}`,
-    }, this.requestHeaders)
+      Authorization: `token ${this.token}`, ...this.requestHeaders}
   }
-  
+
   private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<Array<Asset>> {
-    const requestOptions: RequestOptions = Object.assign({
+    const requestOptions: RequestOptions = {
       path: `${basePath}/latest`,
-      headers: this.configureHeaders("application/vnd.github.v3+json"),
-    }, this.baseUrl)
+      headers: this.configureHeaders("application/vnd.github.v3+json"), ...this.baseUrl}
     try {
       return (await this.executor.request<any>(requestOptions, cancellationToken)).assets
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on GitHub (${formatUrl(<any>requestOptions)}), please ensure a production release exists: ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on GitHub (${formatUrl(requestOptions as any)}), please ensure a production release exists: ${e.stack || e.message}`)
     }
   }
 
@@ -92,16 +89,16 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       Accept: "application/octet-stream",
       Authorization: `token ${this.token}`
     }
-    
+
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
-    return <any>{
-      name: name,
-      url: versionInfo.assets.find(it => it.name == name)!.url,
+    return {
+      name,
+      url: versionInfo.assets.find(it => it.name === name)!.url,
       sha2: versionInfo.sha2,
       sha512: versionInfo.sha512,
-      headers: headers,
+      headers,
       session: this.netSession
-    }
+    } as any
   }
 }
 

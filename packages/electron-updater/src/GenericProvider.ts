@@ -40,19 +40,19 @@ export class GenericProvider extends Provider<UpdateInfo> {
 
     Provider.validateUpdateInfo(result)
     if (isUseOldMacProvider()) {
-      (<any>result).releaseJsonUrl = url.format(Object.assign({}, this.baseUrl, {pathname: pathname}))
+      (result as any).releaseJsonUrl = url.format({...this.baseUrl, pathname} as any)
     }
     return result
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
     if (isUseOldMacProvider()) {
-      return <any>versionInfo
+      return versionInfo as any
     }
 
     return {
       name: path.posix.basename(versionInfo.path),
-      url: url.format(Object.assign({}, this.baseUrl, {pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)})),
+      url: url.format({...this.baseUrl, pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)} as any),
       sha2: versionInfo.sha2,
       sha512: versionInfo.sha512,
     }

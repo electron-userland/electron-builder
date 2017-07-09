@@ -10,7 +10,7 @@ export function isElectronCompileUsed(info: Packager): boolean {
   if (info.config.electronCompile != null) {
     return info.config.electronCompile
   }
-  
+
   // if in devDependencies - it means that babel is used for precompilation or for some reason user decided to not use electron-compile for production
   return hasDep("electron-compile", info)
 }
@@ -43,7 +43,7 @@ export async function createTransformer(srcDir: string, extraMetadata: any): Pro
 /** @internal */
 export interface CompilerHost {
   compile(file: string): any
-  
+
   saveConfiguration(): Promise<any>
 }
 

@@ -10,7 +10,7 @@ export interface AsarIntegrityOptions {
    *
    * @default false
    */
-  readonly externalAllowed?: Boolean
+  readonly externalAllowed?: boolean
 }
 
 export interface AsarIntegrity extends AsarIntegrityOptions {
@@ -26,7 +26,7 @@ export async function computeData(resourcesPath: string, options?: AsarIntegrity
   for (let i = 0; i < names.length; i++) {
     result[names[i]] = checksums[i]
   }
-  return <AsarIntegrity>Object.assign({checksums: result}, options)
+  return {checksums: result, ...options}
 }
 
 export function hashFile(file: string, algorithm: string, encoding: "hex" | "base64" | "latin1" = "hex") {
@@ -40,7 +40,7 @@ export function hashFile(file: string, algorithm: string, encoding: "hex" | "bas
       .on("error", reject)
       .on("end", () => {
         hash.end()
-        resolve(<string>hash.read())
+        resolve(hash.read() as string)
       })
       .pipe(hash, {end: false})
   })

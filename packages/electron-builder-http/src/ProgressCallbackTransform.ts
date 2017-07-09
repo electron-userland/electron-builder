@@ -20,7 +20,7 @@ export class ProgressCallbackTransform extends Transform {
     super()
   }
 
-  _transform(chunk: any, encoding: string, callback: Function) {
+  _transform(chunk: any, encoding: string, callback: any) {
     if (this.cancellationToken.cancelled) {
       callback(new Error("Cancelled"), null)
       return
@@ -30,10 +30,10 @@ export class ProgressCallbackTransform extends Transform {
     this.delta += chunk.length
 
     const now = Date.now()
-    if (now >= this.nextUpdate && this.transferred != this.total /* will be emitted on _flush */) {
+    if (now >= this.nextUpdate && this.transferred !== this.total /* will be emitted on _flush */) {
       this.nextUpdate = now + 1000
 
-      this.onProgress(<ProgressInfo>{
+      this.onProgress({
         total: this.total,
         delta: this.delta,
         transferred: this.transferred,
@@ -46,13 +46,13 @@ export class ProgressCallbackTransform extends Transform {
     callback(null, chunk)
   }
 
-  _flush(callback: Function): void {
+  _flush(callback: any): void {
     if (this.cancellationToken.cancelled) {
       callback(new Error("Cancelled"))
       return
     }
 
-    this.onProgress(<ProgressInfo>{
+    this.onProgress({
       total: this.total,
       delta: this.delta,
       transferred: this.total,

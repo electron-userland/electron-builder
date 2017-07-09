@@ -32,7 +32,7 @@ export class BintrayPublisher extends HttpPublisher {
     }
 
     this.client = new BintrayClient(info, httpExecutor, this.context.cancellationToken, token)
-    this._versionPromise = <BluebirdPromise<Version>>this.init()
+    this._versionPromise = this.init() as BluebirdPromise<Version>
   }
 
   private async init(): Promise<Version | null> {

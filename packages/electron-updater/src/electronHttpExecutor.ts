@@ -45,9 +45,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }
-    
+
     return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
-      const request = (<any>net).request(Object.assign({session: (<any>session).fromPartition(NET_SESSION_NAME)}, options), (response: any) => {
+      const request = (net as any).request({session: (session as any).fromPartition(NET_SESSION_NAME), ...options}, (response: any) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
@@ -63,9 +63,8 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     })
   }
 
-
   public doRequest(options: any, callback: (response: any) => void): any {
-    const request = (<any>net).request(Object.assign({session: (<any>session).fromPartition(NET_SESSION_NAME)}, options), callback)
+    const request = (net as any).request({session: (session as any).fromPartition(NET_SESSION_NAME), ...options}, callback)
     this.addProxyLoginHandler(request)
     return request
   }

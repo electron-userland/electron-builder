@@ -207,14 +207,14 @@ How to fix:
 function normaliseErrorMessages(errors: Array<ErrorObject>) {
   const result: any = Object.create(null)
   for (const e of errors) {
-    if (e.keyword === "type" && (<TypeParams>e.params).type === "null") {
+    if (e.keyword === "type" && (e.params as TypeParams).type === "null") {
       // ignore - no sense to report that type accepts null
       continue
     }
 
     const dataPath = e.dataPath.length === 0 ? [] : e.dataPath.substring(1).split(".")
     if (e.keyword === "additionalProperties") {
-      dataPath.push((<AdditionalPropertiesParams>e.params).additionalProperty)
+      dataPath.push((e.params as AdditionalPropertiesParams).additionalProperty)
     }
 
     let o = result

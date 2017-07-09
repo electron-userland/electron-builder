@@ -426,6 +426,10 @@ babel-plugin-syntax-async-functions@^6.8.0:
   version "6.13.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-syntax-async-functions/-/babel-plugin-syntax-async-functions-6.13.0.tgz#cad9cad1191b5ad634bf30ae0872391e0647be95"
 
+babel-plugin-syntax-object-rest-spread@^6.8.0:
+  version "6.13.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-syntax-object-rest-spread/-/babel-plugin-syntax-object-rest-spread-6.13.0.tgz#fd6536f2bce13836ffa3a5458c4903a597bb3bf5"
+
 babel-plugin-transform-async-to-module-method@^6.24.1:
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-async-to-module-method/-/babel-plugin-transform-async-to-module-method-6.24.1.tgz#9109a08987794b411cb213850ce935ec2f029cdb"
@@ -464,6 +468,13 @@ babel-plugin-transform-inline-imports-commonjs@^1.2.0:
   dependencies:
     babel-plugin-transform-strict-mode "^6.8.0"
     builtin-modules "^1.1.1"
+
+babel-plugin-transform-object-rest-spread@^6.23.0:
+  version "6.23.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-object-rest-spread/-/babel-plugin-transform-object-rest-spread-6.23.0.tgz#875d6bc9be761c58a2ae3feee5dc4895d8c7f921"
+  dependencies:
+    babel-plugin-syntax-object-rest-spread "^6.8.0"
+    babel-runtime "^6.22.0"
 
 babel-plugin-transform-strict-mode@^6.8.0:
   version "6.24.1"
@@ -1086,6 +1097,10 @@ ecc-jsbn@~0.1.1:
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.1.tgz#0fc73a9ed5f0d53c38193398523ef7e543777505"
   dependencies:
     jsbn "~0.1.0"
+
+electron-builder-tslint-config@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/electron-builder-tslint-config/-/electron-builder-tslint-config-1.0.1.tgz#d016d4ee6473fc21329453ac14e11d0aa97708d0"
 
 electron-download-tf@4.3.1:
   version "4.3.1"
@@ -3530,6 +3545,10 @@ uuid@^3.0.0, uuid@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.1.0.tgz#3dd3d3e790abc24d7b0d3a034ffababe28ebbc04"
 
+v8-compile-cache@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/v8-compile-cache/-/v8-compile-cache-1.1.0.tgz#1dc2a340fb8e5f800a32bcdbfb8c23cd747021b9"
+
 validate-npm-package-license@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/validate-npm-package-license/-/validate-npm-package-license-3.0.1.tgz#2804babe712ad3379459acfbe24746ab2c303fbc"
@@ -3639,7 +3658,7 @@ wordwrapjs@^2.0.0:
     reduce-flatten "^1.0.1"
     typical "^2.6.0"
 
-worker-farm@^1.3.1:
+worker-farm@^1.3.1, worker-farm@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/worker-farm/-/worker-farm-1.4.1.tgz#a438bc993a7a7d133bcb6547c95eca7cff4897d8"
   dependencies:

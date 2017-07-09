@@ -2,7 +2,7 @@ import { setPrinter } from "electron-builder-util/out/log"
 import { ProgressBar } from "./progress"
 
 export class MultiProgress {
-  private readonly stream = <any>process.stdout
+  private readonly stream = process.stdout as any
   private cursor = 0
 
   private totalLines = 0
@@ -14,6 +14,7 @@ export class MultiProgress {
   createBar(format: string, options: any): ProgressBar {
     options.stream = this.stream
 
+    // tslint:disable:no-this-assignment
     const manager = this
     class MultiProgressBar extends ProgressBar {
       private index = -1

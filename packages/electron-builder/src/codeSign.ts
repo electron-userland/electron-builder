@@ -137,7 +137,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
       // yes, we don't clear on explicit exit or or uncaught exceptions - it is ok (exit or uncaughtException doesn't allow async operations)
       process.once("beforeExit", async () => {
         try {
-          const list = (await listUserKeychains()).filter(it => it != keychainFile)
+          const list = (await listUserKeychains()).filter(it => it !== keychainFile)
           exec("security", ["list-keychains", "-d", "user", "-s"].concat(list))
         }
         catch (e) {
@@ -146,7 +146,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
       })
     }
   }
-  return await importCerts(keychainFile, certPaths, <Array<string>>[cscKeyPassword, cscIKeyPassword].filter(it => it != null))
+  return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
 }
 
 async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
@@ -155,7 +155,7 @@ async function importCerts(keychainName: string, paths: Array<string>, keyPasswo
   }
 
   return {
-    keychainName: keychainName,
+    keychainName,
   }
 }
 

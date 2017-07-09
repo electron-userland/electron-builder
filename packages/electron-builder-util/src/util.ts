@@ -29,7 +29,7 @@ export interface ExecOptions extends BaseExecOptions {
 }
 
 export function removePassword(input: string) {
-  return input.replace(/(-String |-P |pass:| \/p |-pass )([^ ]+)/g, function (match, p1, p2) {
+  return input.replace(/(-String |-P |pass:| \/p |-pass )([^ ]+)/g, (match, p1, p2) => {
     return `${p1}${createHash("sha256").update(p2).digest("hex")} (sha256 hash)`
   })
 }
@@ -40,7 +40,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
-    execFile(file, <any>args, options, function (error, stdout, stderr) {
+    execFile(file, args as any, options, (error, stdout, stderr) => {
       if (error == null) {
         if (isLogOutIfDebug && debug.enabled) {
           if (stderr.length !== 0) {
@@ -53,7 +53,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
         resolve(stdout)
       }
       else {
-        let message = red(removePassword(`Exit code: ${(<any>error).code}. ${error.message}`))
+        let message = red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
         if (stdout.length !== 0) {
           message += `\n${yellow(stdout)}`
         }
@@ -235,9 +235,9 @@ export function replaceDefault(inList: Array<string> | null | undefined, default
 
   const index = inList.indexOf("default")
   if (index >= 0) {
-    let list = inList.slice(0, index)
+    const list = inList.slice(0, index)
     list.push(...defaultList)
-    if (index != (inList.length - 1)) {
+    if (index !== (inList.length - 1)) {
       list.push(...inList.slice(index + 1))
     }
     inList = list

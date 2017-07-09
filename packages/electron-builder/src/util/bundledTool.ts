@@ -11,16 +11,17 @@ export interface ToolInfo {
 
 /** @internal */
 export function computeEnv(oldValue: string | null | undefined, newValues: Array<string>): string {
-  let parsedOldValue = oldValue ? oldValue.split(":") : []
+  const parsedOldValue = oldValue ? oldValue.split(":") : []
   return newValues.concat(parsedOldValue).filter(it => it.length > 0).join(":")
 }
 
 /** @internal */
 export function computeToolEnv(libPath: Array<string>): any {
   // noinspection SpellCheckingInspection
-  return Object.assign({}, process.env, {
+  return {
+    ...process.env,
     DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, libPath)
-  })
+  }
 }
 
 /** @private */

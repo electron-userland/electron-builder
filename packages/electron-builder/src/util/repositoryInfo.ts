@@ -41,8 +41,8 @@ async function _getInfo(projectDir: string, repo?: RepositoryInfo | string | nul
     const project: string | null | undefined = process.env.APPVEYOR_PROJECT_NAME || process.env.CIRCLE_PROJECT_REPONAME
     if (user != null && project != null) {
       return {
-        user: user,
-        project: project,
+        user,
+        project,
       }
     }
 

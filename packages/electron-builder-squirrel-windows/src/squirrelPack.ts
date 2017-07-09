@@ -64,7 +64,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const embeddedArchiveFile = await packager.getTempFile("setup.zip")
   const embeddedArchive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 6 : options.packageCompressionLevel}})
   const embeddedArchiveOut = createWriteStream(embeddedArchiveFile)
-  const embeddedArchivePromise = new BluebirdPromise(function (resolve, reject) {
+  const embeddedArchivePromise = new BluebirdPromise((resolve, reject) => {
     embeddedArchive.on("error", reject)
     embeddedArchiveOut.on("close", resolve)
   })
@@ -105,7 +105,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
 async function pack(options: SquirrelOptions, directory: string, updateFile: string, outFile: string, version: string, packager: WinPackager) {
   const archive = archiver("zip", {zlib: {level: options.packageCompressionLevel == null ? 9 : options.packageCompressionLevel}})
   const archiveOut = createWriteStream(outFile)
-  const archivePromise = new BluebirdPromise(function (resolve, reject) {
+  const archivePromise = new BluebirdPromise((resolve, reject) => {
     archive.on("error", reject)
     archiveOut.on("error", reject)
     archiveOut.on("close", resolve)
@@ -229,8 +229,8 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
       const relativeSafeFilePath = encodeURI(file.substring(dir.length + 1).replace(/\\/g, "/")).replace(/%5B/g, "[").replace(/%5D/g, "]")
       archive._append(file, {
         name: relativeSafeFilePath,
-        prefix: prefix,
-        stats: stats,
+        prefix,
+        stats,
       })
 
       // createExecutableStubForExe
@@ -243,7 +243,7 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
 
         archive._append(tempFile, {
           name: relativeSafeFilePath.substring(0, relativeSafeFilePath.length - 4) + "_ExecutionStub.exe",
-          prefix: prefix,
+          prefix,
           stats: await stat(tempFile),
         })
       }

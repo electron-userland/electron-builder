@@ -15,6 +15,7 @@ import { safeDump } from "js-yaml"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
+import { UrlObject } from "url"
 import { Arch, Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
@@ -35,7 +36,7 @@ export class PublishManager implements PublishContext {
 
   private readonly isPublish: boolean
 
-  readonly progress = (<TtyWriteStream>process.stdout).isTTY ? new MultiProgress() : null
+  readonly progress = (process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null
 
   constructor(packager: Packager, private readonly publishOptions: PublishOptions, readonly cancellationToken: CancellationToken) {
     this.taskManager = new AsyncTaskManager(cancellationToken)
@@ -95,11 +96,11 @@ export class PublishManager implements PublishContext {
       let publishConfig = publishConfigs[0]
 
       if (packager.platform === Platform.WINDOWS) {
-        const winPackager = <WinPackager>packager
+        const winPackager = packager as WinPackager
         if (winPackager.isForceCodeSigningVerification) {
           const publisherName = await winPackager.computedPublisherName.value
           if (publisherName != null) {
-            publishConfig = Object.assign({publisherName: publisherName}, publishConfig)
+            publishConfig = {publisherName, ...publishConfig}
           }
         }
       }
@@ -141,7 +142,7 @@ export class PublishManager implements PublishContext {
         }
 
         if (eventFile == null) {
-          this.taskManager.addTask((<HttpPublisher>publisher).uploadData(event.data!, event.safeArtifactName!))
+          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, event.safeArtifactName!))
         }
         else {
           this.taskManager.addTask(publisher.upload(eventFile!, event.safeArtifactName))
@@ -218,7 +219,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   const sha512 = new Lazy<string>(() => hashFile(event.file!, "sha512", "base64"))
   const isMac = packager.platform === Platform.MAC
 
-  const releaseInfo = Object.assign(<ReleaseInfo>{}, packager.config.releaseInfo)
+  const releaseInfo: ReleaseInfo = {...packager.config.releaseInfo}
   if (releaseInfo.releaseNotes == null) {
     const releaseNotesFile = await packager.getResource(releaseInfo.releaseNotesFile, "release-notes.md")
     const releaseNotes = releaseNotesFile == null ? null : await readFile(releaseNotesFile, "utf-8")
@@ -234,7 +235,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       continue
     }
 
-    const channel = (<GenericServerOptions>publishConfig).channel || "latest"
+    const channel = (publishConfig as GenericServerOptions).channel || "latest"
     const createdFiles = new Set<string>()
 
     if (isMac) {
@@ -243,8 +244,8 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
       if (!createdFiles.has(updateInfoFile)) {
         createdFiles.add(updateInfoFile)
-        await (<any>outputJson)(updateInfoFile, {
-          version: version,
+        await (outputJson as any)(updateInfoFile, {
+          version,
           releaseDate: new Date().toISOString(),
           url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
         }, {spaces: 2})
@@ -252,9 +253,9 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
         packager.info.dispatchArtifactCreated({
           file: updateInfoFile,
           arch: null,
-          packager: packager,
+          packager,
           target: null,
-          publishConfig: publishConfig,
+          publishConfig,
         })
       }
     }
@@ -266,17 +267,16 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
     createdFiles.add(updateInfoFile)
 
-    const info = Object.assign(<UpdateInfo>{
-      version: version,
+    const info: UpdateInfo = {
+      version,
       releaseDate: new Date().toISOString(),
       githubArtifactName: event.safeArtifactName,
       path: path.basename(event.file!),
-      sha512: await sha512.value,
-    }, releaseInfo)
+      sha512: await sha512.value, ...releaseInfo as UpdateInfo}
 
     if (packager.platform === Platform.WINDOWS) {
       // backward compatibility
-      (<any>info).sha2 = await sha2.value
+      (info as any).sha2 = await sha2.value
     }
     await writeFile(updateInfoFile, safeDump(info))
 
@@ -284,9 +284,9 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     packager.info.dispatchArtifactCreated({
       file: updateInfoFile,
       arch: null,
-      packager: packager,
+      packager,
       target: null,
-      publishConfig: publishConfig,
+      publishConfig,
     })
   }
 }
@@ -303,7 +303,7 @@ export function createPublisher(context: PublishContext, version: string, publis
 
     case "bintray":
       return new BintrayPublisher(context, publishConfig, version, options)
-    
+
     case "generic":
       return null
 
@@ -331,21 +331,21 @@ function requireProviderClass(provider: string): any | null {
 
 export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
   if (publishConfig.provider === "generic") {
-    const baseUrlString = (<GenericServerOptions>publishConfig).url
+    const baseUrlString = (publishConfig as GenericServerOptions).url
     if (fileName == null) {
       return baseUrlString
     }
 
     const baseUrl = url.parse(baseUrlString)
-    return url.format(Object.assign({}, baseUrl, {pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))}))
+    return url.format({...baseUrl as UrlObject, pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))})
   }
 
   let baseUrl
   if (publishConfig.provider === "s3") {
-    baseUrl = s3Url((<S3Options>publishConfig))
+    baseUrl = s3Url((publishConfig as S3Options))
   }
   else {
-    const gh = <GithubOptions>publishConfig
+    const gh = publishConfig as GithubOptions
     baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
   }
 
@@ -402,7 +402,7 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   }
 
   debug(`Explicit publish provider: ${safeStringifyJson(publishers)}`)
-  return await (<Promise<Array<PublishConfiguration>>>BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)))
+  return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)) as Promise<Array<PublishConfiguration>>)
 }
 
 function isSuitableWindowsTarget(target: Target) {
@@ -426,24 +426,24 @@ function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch
   }
 }
 
-async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | null> {
+async function getResolvedPublishConfig(packager: PlatformPackager<any>, options: PublishConfiguration, arch: Arch | null, errorIfCannot: boolean = true): Promise<PublishConfiguration | GithubOptions | BintrayOptions | null> {
   options = Object.assign(Object.create(null), options)
   expandPublishConfig(options, packager, arch)
 
   let channelFromAppVersion: string | null = null
-  if ((<any>options).channel == null && packager.config.detectUpdateChannel !== false) {
+  if ((options as any).channel == null && packager.config.detectUpdateChannel !== false) {
     channelFromAppVersion = packager.appInfo.channel
   }
 
   const provider = options.provider
   if (provider === "generic") {
-    const o = <GenericServerOptions>options
+    const o = options as GenericServerOptions
     if (o.url == null) {
       throw new Error(`Please specify "url" for "generic" update server`)
     }
 
     if (channelFromAppVersion != null) {
-      (<any>o).channel = channelFromAppVersion
+      (o as any).channel = channelFromAppVersion
     }
     return options
   }
@@ -453,14 +453,14 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
     await providerClass.checkAndResolveOptions(options, channelFromAppVersion)
     return options
   }
-  
+
   const isGithub = provider === "github"
   if (!isGithub && provider !== "bintray") {
     return options
   }
-  
-  let owner = isGithub ? (<GithubOptions>options).owner : (<BintrayOptions>options).owner
-  let project = isGithub ? (<GithubOptions>options).repo : (<BintrayOptions>options).package
+
+  let owner = isGithub ? (options as GithubOptions).owner : (options as BintrayOptions).owner
+  let project = isGithub ? (options as GithubOptions).repo : (options as BintrayOptions).package
 
   if (isGithub && owner == null && project != null) {
     const index = project.indexOf("/")
@@ -470,7 +470,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
       owner = repo.substring(index + 1)
     }
   }
-  
+
   async function getInfo() {
     const info = await packager.info.repositoryInfo
     if (info != null) {
@@ -503,12 +503,12 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
   }
 
   if (isGithub) {
-    if ((<GithubOptions>options).token != null && !(<GithubOptions>options).private) {
+    if ((options as GithubOptions).token != null && !(options as GithubOptions).private) {
       warn('"token" specified in the github publish options. It should be used only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).')
     }
-    return Object.assign({owner, repo: project}, options)
+    return {owner, repo: project, ...options}
   }
   else {
-    return Object.assign({owner, package: project}, options)
+    return {owner, package: project, ...options}
   }
 }

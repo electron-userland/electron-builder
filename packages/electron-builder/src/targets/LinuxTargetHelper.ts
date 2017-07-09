@@ -20,7 +20,7 @@ export class LinuxTargetHelper {
   // must be name without spaces and other special characters, but not product name used
   private async computeDesktopIcons(): Promise<Array<Array<string>>> {
     const packager = this.packager
-    let customIconSetDir = packager.platformSpecificBuildOptions.icon
+    const customIconSetDir = packager.platformSpecificBuildOptions.icon
     if (customIconSetDir != null) {
       let iconDir = path.resolve(packager.buildResourcesDir, customIconSetDir)
       const stat = await statOrNull(iconDir)
@@ -63,7 +63,7 @@ export class LinuxTargetHelper {
         // If parseInt encounters a character that is not a numeral in the specified radix,
         // it returns the integer value parsed up to that point
         try {
-          let sizeString = file.match(/\d+/)
+          const sizeString = file.match(/\d+/)
           const size = sizeString == null ? 0 : parseInt(sizeString[0], 10)
           if (size > 0) {
             const iconPath = `${iconDir}/${file}`
@@ -106,19 +106,18 @@ export class LinuxTargetHelper {
 
     const productFilename = appInfo.productFilename
 
-    const desktopMeta: any = Object.assign({
+    const desktopMeta: any = {
       Name: appInfo.productName,
       Comment: this.getDescription(targetSpecificOptions),
       Exec: exec == null ? `"${installPrefix}/${productFilename}/${this.packager.executableName}" %U` : exec,
       Terminal: "false",
       Type: "Application",
-      Icon: this.packager.executableName,
-    }, extra, targetSpecificOptions.desktop)
+      Icon: this.packager.executableName, ...extra, ...targetSpecificOptions.desktop
+    }
 
     const category = targetSpecificOptions.category
     if (!isEmptyOrSpaces(category)) {
-      if (category)
-      desktopMeta.Categories = category + (category.endsWith(";") ? "" : ";")
+      desktopMeta.Categories = `${category}${category.endsWith(";") ? "" : ";"}`
     }
 
     let data = `[Desktop Entry]`

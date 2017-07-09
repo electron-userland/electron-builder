@@ -6,14 +6,14 @@ import { ArchiveTarget } from "./ArchiveTarget"
 
 const archiveTargets = new Set(["zip", "7z", "tar.xz", "tar.lz", "tar.gz", "tar.bz2"])
 
-export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: PlatformSpecificBuildOptions, platform: Platform): Map<Arch, string[]> {
+export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, options: PlatformSpecificBuildOptions, platform: Platform): Map<Arch, Array<string>> {
   for (const targetNames of raw.values()) {
     if (targetNames.length > 0) {
       // https://github.com/electron-userland/electron-builder/issues/1355
       return raw
     }
   }
-  
+
   const defaultArchs: Array<string> = raw.size === 0 ? [platform === Platform.MAC ? "x64" : process.arch] : Array.from(raw.keys()).map(it => Arch[it])
   const result = new Map(raw)
   for (const target of asArray(options.target).map<TargetConfig>(it => typeof it === "string" ? {target: it} : it)) {
@@ -41,7 +41,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, string[]>, options: P
   return result
 }
 
-export function createTargets(nameToTarget: Map<String, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
+export function createTargets(nameToTarget: Map<string, Target>, rawList: Array<string>, outDir: string, packager: PlatformPackager<any>): Array<Target> {
   const result: Array<Target> = []
 
   const mapper = (name: string, factory: (outDir: string) => Target) => {
@@ -86,11 +86,11 @@ export function createCommonTarget(target: string, outDir: string, packager: Pla
 
 export class NoOpTarget extends Target {
   readonly options = null
-  
+
   constructor(name: string) {
     super(name)
   }
-  
+
   get outDir(): string {
     throw new Error("NoOpTarget")
   }

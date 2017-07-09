@@ -5,8 +5,8 @@ import { PlatformPackager } from "../platformPackager"
 import { archive, tar } from "./archive"
 
 export class ArchiveTarget extends Target {
-  readonly options = (<any>this.packager.config)[this.name]
-  
+  readonly options = (this.packager.config as any)[this.name]
+
   constructor(name: string, readonly outDir: string, private readonly packager: PlatformPackager<any>) {
     super(name)
   }
@@ -18,6 +18,7 @@ export class ArchiveTarget extends Target {
     log(`Building ${isMac ? "macOS " : ""}${format}`)
 
     // do not specify arch if x64
+    // tslint:disable:no-invalid-template-strings
     const outFile = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, format, arch, packager.platform === Platform.LINUX ? "${name}-${version}-${arch}.${ext}" : "${productName}-${version}-${arch}-${os}.${ext}"))
     if (format.startsWith("tar.")) {
       await tar(packager.config.compression, format, outFile, appOutDir, isMac)

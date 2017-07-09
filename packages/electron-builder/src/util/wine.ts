@@ -12,12 +12,12 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     const wineDir = await getBinFromGithub("wine", "2.0.1-mac-10.12", "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg==")
     return {
       path: path.join(wineDir, "bin/wine"),
-      env: Object.assign({
+      env: {
         WINEDEBUG: "-all,err+all",
         WINEDLLOVERRIDES: "winemenubuilder.exe=d",
         WINEPREFIX: path.join(wineDir, "wine-home"),
-        DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")]),
-      })
+        DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")])
+      }
     }
   }
 
@@ -32,7 +32,7 @@ export function execWine(file: string, args: Array<string>, options: ExecOptions
   }
   else {
     return wineExecutable.value
-      .then(wine => exec(wine.path, [file].concat(args), wine.env == null ? options : Object.assign({env: wine.env}, options)))
+      .then(wine => exec(wine.path, [file].concat(args), wine.env == null ? options : {env: wine.env, ...options}))
   }
 }
 

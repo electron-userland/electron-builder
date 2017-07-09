@@ -21,7 +21,7 @@ export class AsyncTaskManager {
     if (this.cancellationToken.cancelled) {
       debug(`Async task not added because cancelled: ${new Error().stack}`)
       if ("cancel" in promise) {
-        (<any>promise).cancel()
+        (promise as any).cancel()
       }
       return
     }
@@ -37,7 +37,7 @@ export class AsyncTaskManager {
   cancelTasks() {
     for (const task of this.tasks) {
       if ("cancel" in task) {
-        (<any>task).cancel()
+        (task as any).cancel()
       }
     }
     this.tasks.length = 0
@@ -64,7 +64,7 @@ export class AsyncTaskManager {
     let list = tasks.slice()
     tasks.length = 0
     while (list.length > 0) {
-      let subResult = await BluebirdPromise.all(list)
+      const subResult = await BluebirdPromise.all(list)
       result = result == null ? subResult : result.concat(subResult)
       checkErrors()
       if (tasks.length === 0) {

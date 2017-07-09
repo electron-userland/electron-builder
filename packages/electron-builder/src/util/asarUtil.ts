@@ -88,7 +88,7 @@ export class AsarPackager {
         }
       }
     }
-    
+
     const transformedFiles = fileSet.transformedFiles
     const taskManager = new AsyncTaskManager(packager.cancellationToken)
     const fileCopier = new FileCopier()
@@ -109,9 +109,9 @@ export class AsarPackager {
         }
 
         const dirNode = currentDirNode!
-        const newData = transformedFiles == null ? null : <string | Buffer>transformedFiles[i]
+        const newData = transformedFiles == null ? null : transformedFiles[i] as string | Buffer
         const isUnpacked = dirNode.unpacked || (this.unpackPattern != null && this.unpackPattern(file, stat))
-        this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(<any>newData), isUnpacked, stat)
+        this.fs.addFileNode(file, dirNode, newData == null ? stat.size : Buffer.byteLength(newData as any), isUnpacked, stat)
         if (isUnpacked) {
           if (newData != null) {
             transformedFiles[i] = null
@@ -152,7 +152,7 @@ export class AsarPackager {
         this.fs.insertDirectory(getRelativePath(fileSet, file), unpacked)
       }
       else if (stat.isSymbolicLink()) {
-        this.fs.getOrCreateNode(getRelativePath(fileSet, file)).link = (<any>stat).relativeLink
+        this.fs.getOrCreateNode(getRelativePath(fileSet, file)).link = (stat as any).relativeLink
       }
     }
 
@@ -194,7 +194,7 @@ export class AsarPackager {
               index = 0
             }
           }
-          
+
           if ((data = transformedFiles[index++]) != null) {
             break
           }
@@ -318,7 +318,7 @@ async function detectUnpackedDirs(fileSet: FileSet, autoUnpackDirs: Set<string>,
 
   if (dirToCreate.size > 0) {
     // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(dirToCreate.keys(), async (it) => {
+    await BluebirdPromise.map(dirToCreate.keys(), async it => {
       const base = path.join(unpackedDest, it)
       await ensureDir(base)
       await BluebirdPromise.each(dirToCreate.get(it)!, it => ensureDir(path.join(base, it)))

@@ -39,7 +39,7 @@ export interface DownloadOptions {
 }
 
 export class HttpError extends Error {
-  constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: string[]; } | undefined}, public description: any | null = null) {
+  constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: Array<string>; } | undefined}, public description: any | null = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
 
     this.name = "HttpError"
@@ -48,7 +48,7 @@ export class HttpError extends Error {
 
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
-  
+
   request<T>(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<T> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
@@ -57,7 +57,7 @@ export abstract class HttpExecutor<REQUEST> {
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(options, cancellationToken, it => (<any>it).end(encodedData), 0)
+    return this.doApiRequest<T>(options, cancellationToken, it => (it as any).end(encodedData), 0)
   }
 
   protected abstract doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
@@ -92,7 +92,7 @@ export abstract class HttpExecutor<REQUEST> {
       }
 
       const newUrl = parseUrl(redirectUrl)
-      this.doApiRequest(Object.assign({}, options, newUrl), cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest({...options, ...newUrl}, cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -112,7 +112,7 @@ export abstract class HttpExecutor<REQUEST> {
           reject(new HttpError(response, isJson ? JSON.parse(data) : data))
         }
         else {
-          const pathname = (<any>options).pathname || options.path
+          const pathname = (options as any).pathname || options.path
           if (data.length === 0) {
             resolve()
           }
@@ -140,11 +140,12 @@ export abstract class HttpExecutor<REQUEST> {
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
           const parsedUrl = parseUrl(redirectUrl)
-          this.doDownload(Object.assign({}, requestOptions, {
+          this.doDownload({
+            ...requestOptions,
             hostname: parsedUrl.hostname,
             path: parsedUrl.path,
             port: parsedUrl.port == null ? undefined : parsedUrl.port
-          }), destination, redirectCount++, options, callback, onCancel)
+          }, destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -161,7 +162,7 @@ export abstract class HttpExecutor<REQUEST> {
   }
 
   protected addTimeOutHandler(request: any, callback: (error: Error) => void) {
-    request.on("socket", function (socket: Socket) {
+    request.on("socket", (socket: Socket) => {
       socket.setTimeout(60 * 1000, () => {
         callback(new Error("Request timed out"))
         request.abort()
@@ -179,12 +180,12 @@ export class DigestTransform extends Transform {
     this.digester = createHash(algorithm)
   }
 
-  _transform(chunk: any, encoding: string, callback: Function) {
+  _transform(chunk: any, encoding: string, callback: any) {
     this.digester.update(chunk)
     callback(null, chunk)
   }
 
-  _flush(callback: Function): void {
+  _flush(callback: any): void {
     const hash = this.digester.digest(this.encoding)
     callback(hash === this.expected ? null : new Error(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${hash}`))
   }
@@ -254,7 +255,7 @@ function configurePipes(options: DownloadOptions, response: any, destination: st
   }
 
   fileOut.on("finish", () => {
-    (<any>fileOut.close)(callback)
+    (fileOut.close as any)(callback)
   })
 }
 
@@ -269,7 +270,7 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
     options.headers = headers
   }
   if (token != null) {
-    (<any>headers).authorization = token.startsWith("Basic") ? token : `token ${token}`
+    (headers as any).authorization = token.startsWith("Basic") ? token : `token ${token}`
   }
   if (headers["User-Agent"] == null) {
     headers["User-Agent"] = "electron-builder"
@@ -280,14 +281,14 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   }
 
   // do not specify for node (in any case we use https module)
-  if (options.protocol == null && (<any>process.versions)["electron"] != null) {
+  if (options.protocol == null && (process.versions as any).electron != null) {
     options.protocol = "https:"
   }
   return options
 }
 
 export function dumpRequestOptions(options: RequestOptions): string {
-  const safe: any = Object.assign({}, options)
+  const safe: any = {...options}
   if (safe.headers != null && safe.headers.authorization != null) {
     safe.headers.authorization = "<skipped>"
   }

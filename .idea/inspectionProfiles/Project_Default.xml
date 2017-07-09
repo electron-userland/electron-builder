@@ -14,6 +14,7 @@
       <scope name="json5" level="INFORMATION" enabled="true" />
     </inspection_tool>
     <inspection_tool class="ReservedWordUsedAsNameJS" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="TsLint" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="UnterminatedStatementJS" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="ignoreSemicolonAtEndOfBlock" value="true" />
     </inspection_tool>

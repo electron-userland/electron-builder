@@ -99,8 +99,8 @@ export abstract class AppUpdater extends EventEmitter {
       this._logger.error(`Error: ${error.stack || error.message}`)
     })
 
-    if (app != null || (<any>global).__test_app != null) {
-      this.app = app || (<any>global).__test_app
+    if (app != null || (global as any).__test_app != null) {
+      this.app = app || (global as any).__test_app
       this.untilAppReady = BluebirdPromise.resolve()
     }
     else {
@@ -177,7 +177,7 @@ export abstract class AppUpdater extends EventEmitter {
       return true
     }
 
-    stagingPercentage = parseInt(<any>stagingPercentage, 10)
+    stagingPercentage = parseInt(stagingPercentage as any, 10)
     if (isNaN(stagingPercentage)) {
       this._logger.warn(`Staging percentage is NaN: ${rawStagingPercentage}`)
       return true
@@ -213,7 +213,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(Object.assign({"X-User-Staging-Id": stagingUserId}, this.requestHeaders))
+    client.setRequestHeaders({"X-User-Staging-Id": stagingUserId, ...this.requestHeaders})
     const versionInfo = await client.getLatestVersion()
 
     const latestVersion = parseVersion(versionInfo.version)
@@ -227,7 +227,7 @@ export abstract class AppUpdater extends EventEmitter {
       this._logger.info(`Update for version ${this.currentVersion} is not available (latest version: ${versionInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}.`)
       this.emit("update-not-available", versionInfo)
       return {
-        versionInfo: versionInfo,
+        versionInfo,
       }
     }
 
@@ -242,9 +242,9 @@ export abstract class AppUpdater extends EventEmitter {
     const cancellationToken = new CancellationToken()
     //noinspection ES6MissingAwait
     return {
-      versionInfo: versionInfo,
-      fileInfo: fileInfo,
-      cancellationToken: cancellationToken,
+      versionInfo,
+      fileInfo,
+      cancellationToken,
       downloadPromise: this.autoDownload ? this.downloadUpdate(cancellationToken) : null,
     }
   }
@@ -286,9 +286,9 @@ export abstract class AppUpdater extends EventEmitter {
   protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<any>
 
   /**
-   * Restarts the app and installs the update after it has been downloaded. 
+   * Restarts the app and installs the update after it has been downloaded.
    * It should only be called after `update-downloaded` has been emitted.
-   * 
+   *
    * **Note:** `autoUpdater.quitAndInstall()` will close all application windows first and only emit `before-quit` event on `app` after that.
    * This is different from the normal quit event sequence.
    *
@@ -306,9 +306,9 @@ export abstract class AppUpdater extends EventEmitter {
 
   /*** @private */
   protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders | null {
-    let requestHeaders = this.requestHeaders
+    const requestHeaders = this.requestHeaders
     if (fileInfo.headers != null) {
-      return requestHeaders == null ? fileInfo.headers : Object.assign({}, fileInfo.headers, requestHeaders)
+      return requestHeaders == null ? fileInfo.headers : {...fileInfo.headers, ...requestHeaders}
     }
     return requestHeaders
   }
@@ -318,10 +318,10 @@ export abstract class AppUpdater extends EventEmitter {
       throw new Error("Please pass PublishConfiguration object")
     }
 
-    const provider = (<PublishConfiguration>data).provider
+    const provider = (data as PublishConfiguration).provider
     switch (provider) {
       case "github":
-        const githubOptions = <GithubOptions>data
+        const githubOptions = data as GithubOptions
         const token = (githubOptions.private ? process.env.GH_TOKEN : null) || githubOptions.token
         if (token == null) {
           return new GitHubProvider(githubOptions, this, this.httpExecutor)
@@ -331,7 +331,7 @@ export abstract class AppUpdater extends EventEmitter {
         }
 
       case "s3": {
-        const s3 = <S3Options>data
+        const s3 = data as S3Options
         return new GenericProvider({
           provider: "generic",
           url: s3Url(s3),
@@ -340,10 +340,10 @@ export abstract class AppUpdater extends EventEmitter {
       }
 
       case "generic":
-        return new GenericProvider(<GenericServerOptions>data, this.httpExecutor)
+        return new GenericProvider(data as GenericServerOptions, this.httpExecutor)
 
       case "bintray":
-        return new BintrayProvider(<BintrayOptions>data, this.httpExecutor)
+        return new BintrayProvider(data as BintrayOptions, this.httpExecutor)
 
       default:
         throw new Error(`Unsupported provider: ${provider}`)
@@ -386,9 +386,15 @@ function hasPrereleaseComponents(version: string) {
 
 /** @private */
 export class NoOpLogger implements Logger {
-  info(message?: any) {}
+  info(message?: any) {
+    // ignore
+  }
 
-  warn(message?: any) {}
+  warn(message?: any) {
+    // ignore
+  }
 
-  error(message?: any) {}
+  error(message?: any) {
+    // ignore
+  }
 }

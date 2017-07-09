@@ -42,7 +42,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   constructor(readonly info: Packager) {
     this.config = info.config
-    this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((<any>this.config)[this.platform.buildConfigurationKey])
+    this.platformSpecificBuildOptions = PlatformPackager.normalizePlatformSpecificBuildOptions((this.config as any)[this.platform.buildConfigurationKey])
     this.appInfo = this.prepareAppInfo(info.appInfo)
     this.packagerOptions = info.options
     this.projectDir = info.projectDir
@@ -147,7 +147,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
     }
 
-    let rawFilter: any = null
+    const rawFilter: any = null
     const excludePatterns: Array<Minimatch> = []
     if (extraResourceMatchers != null) {
       for (const matcher of extraResourceMatchers) {
@@ -174,10 +174,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const filter = defaultMatcher.createFilter(rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
 
-    const transformer = await createTransformer(appDir, isElectronCompile ? Object.assign({
+    const transformer = await createTransformer(appDir, isElectronCompile ? {
       originalMain: this.info.metadata.main,
-      main: ELECTRON_COMPILE_SHIM_FILENAME,
-    }, config.extraMetadata) : config.extraMetadata)
+      main: ELECTRON_COMPILE_SHIM_FILENAME, ...config.extraMetadata} : config.extraMetadata)
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
 
     const fileCopierHelper = new AppFileCopierHelper(transformer)
@@ -187,7 +186,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       taskManager.addTask(copyDir(appDir, path.join(resourcesPath), filter, transformer))
     }
     else if (asarOptions == null) {
-      taskManager.addTask(BluebirdPromise.each(fileCopierHelper.collect(fileWalker, isElectronCompile), fileSet => copyAppFiles(fileSet, path.join(resourcesPath, "app"), this.info)))
+      taskManager.addTask(BluebirdPromise.each(fileCopierHelper.collect(fileWalker, isElectronCompile), it => copyAppFiles(it, path.join(resourcesPath, "app"), this.info)))
     }
     else {
       const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
@@ -205,7 +204,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await taskManager.awaitTasks()
 
     if (platformName === "darwin" || platformName === "mas") {
-      await (<any>require("./packager/mac")).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
+      await (require("./packager/mac") as any).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
     }
 
     await copyFiles(extraResourceMatchers)
@@ -221,6 +220,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   protected async postInitApp(packContext: AfterPackContext): Promise<any> {
+    // no default impl
   }
 
   protected signApp(packContext: AfterPackContext): Promise<any> {
@@ -236,7 +236,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return `${name} is deprecated is deprecated and not supported — please use asarUnpack`
     }
 
-    const buildMetadata = <any>this.config
+    const buildMetadata = this.config as any
     if (buildMetadata["asar-unpack"] != null) {
       throw new Error(errorMessage("asar-unpack"))
     }
@@ -261,7 +261,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     for (const name of ["unpackDir", "unpack"]) {
-      if ((<any>result)[name] != null) {
+      if ((result as any)[name] != null) {
         throw new Error(errorMessage(`asar.${name}`))
       }
     }
@@ -340,6 +340,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   computeSafeArtifactName(ext: string, arch?: Arch | null, skipArchIfX64 = true) {
+    // tslint:disable:no-invalid-template-strings
     return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
@@ -371,7 +372,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
 
     return this.expandMacro(pattern, this.platform === Platform.MAC ? null : archName, {
-      ext: ext
+      ext
     })
   }
 
@@ -405,7 +406,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
         default:
           if (p1 in appInfo) {
-            return (<any>appInfo)[p1]
+            return (appInfo as any)[p1]
           }
 
           if (p1.startsWith("env.")) {

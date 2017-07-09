@@ -102,7 +102,7 @@ export class AppFileWalker implements FileConsumer {
         })
     }
     else {
-      (<any>fileStat).relativeLink = link
+      (fileStat as any).relativeLink = link
     }
     return null
   }
@@ -168,10 +168,10 @@ export class AppFileWalker implements FileConsumer {
                 }
               }
               else {
-                return (<Promise<any>>consumerResult)
+                return (consumerResult as Promise<any>)
                   .then(it => {
                     // asarUtil can return modified stat (symlink handling)
-                    if ((it != null && "isDirectory" in it ? (<Stats>it) : stat).isDirectory()) {
+                    if ((it != null && "isDirectory" in it ? (it as Stats) : stat).isDirectory()) {
                       dirs.push(name)
                       return null
                     }
@@ -238,7 +238,7 @@ async function compileUsingElectronCompile(fileSet: FileSet, packager: Packager)
   // add shim
   const shimPath = `${fileSet.src}/${ELECTRON_COMPILE_SHIM_FILENAME}`
   cacheFiles.push(shimPath)
-  metadata.set(shimPath, <any>{isFile: () => true, isDirectory: () => false})
+  metadata.set(shimPath, {isFile: () => true, isDirectory: () => false} as any)
 
   const transformedFiles = new Array(cacheFiles.length)
   transformedFiles[cacheFiles.length - 1] = `

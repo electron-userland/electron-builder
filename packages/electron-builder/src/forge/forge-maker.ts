@@ -7,13 +7,14 @@ export interface ForgeOptions {
 
 export function buildForge(forgeOptions: ForgeOptions, options: CliOptions) {
   const appDir = forgeOptions.dir
-  return build(Object.assign({
+  return build({
     prepackaged: appDir,
     config: {
       directories: {
         // https://github.com/electron-userland/electron-forge/blob/master/src/makers/generic/zip.js
         output: path.resolve(appDir, "..", "make"),
       },
-    }
-  }, options))
+    },
+    ...options
+  })
 }

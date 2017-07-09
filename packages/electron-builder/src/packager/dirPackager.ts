@@ -16,11 +16,11 @@ interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
 }
 
 function createDownloadOpts(opts: Config, platform: string, arch: string, electronVersion: string): InternalElectronDownloadOptions {
-  return Object.assign({
+  return {
     platform,
     arch,
-    version: electronVersion,
-  }, opts.electronDownload)
+    version: electronVersion, ...opts.electronDownload
+  }
 }
 
 /** @internal */
@@ -30,11 +30,11 @@ export function unpackElectron(packager: PlatformPackager<any>, out: string, pla
 
 /** @internal */
 export function unpackMuon(packager: PlatformPackager<any>, out: string, platform: string, arch: string, version: string) {
-  return unpack(packager, out, platform, Object.assign({
+  return unpack(packager, out, platform, {
     mirror: "https://github.com/brave/muon/releases/download/v",
     customFilename: `brave-v${version}-${platform}-${arch}.zip`,
-    verifyChecksum: false,
-  }, createDownloadOpts(packager.config, platform, arch, version)))
+    verifyChecksum: false, ...createDownloadOpts(packager.config, platform, arch, version)
+  })
 }
 
 async function unpack(packager: PlatformPackager<any>, out: string, platform: string, options: InternalElectronDownloadOptions) {

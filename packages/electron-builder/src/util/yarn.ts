@@ -8,11 +8,10 @@ import { Dependency } from "./packageDependencies"
 
 /** @internal */
 export async function installOrRebuild(config: Config, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
-  const effectiveOptions = Object.assign({
+  const effectiveOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
-    additionalArgs: asArray(config.npmArgs),
-  }, options)
-
+    additionalArgs: asArray(config.npmArgs), ...options
+  }
 
   if (forceInstall || !(await exists(path.join(appDir, "node_modules")))) {
     await installDependencies(appDir, effectiveOptions)
@@ -35,16 +34,18 @@ function getElectronGypCacheDir() {
 /** @internal */
 export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string, arch: string, buildFromSource: boolean) {
   if (!frameworkInfo.useCustomDist) {
-    return Object.assign({}, process.env, {
+    return {
+      ...process.env,
       npm_config_arch: arch,
       npm_config_target_arch: arch,
       npm_config_platform: platform,
-      npm_config_build_from_source: buildFromSource,
-    })
+      npm_config_build_from_source: buildFromSource
+    }
   }
 
   // https://github.com/nodejs/node-gyp/issues/21
-  return Object.assign({}, process.env, {
+  return {
+    ...process.env,
     npm_config_disturl: "https://atom.io/download/electron",
     npm_config_target: frameworkInfo.version,
     npm_config_runtime: "electron",
@@ -53,8 +54,7 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
     npm_config_platform: platform,
     npm_config_build_from_source: buildFromSource,
     npm_config_devdir: getElectronGypCacheDir(),
-
-  })
+  }
 }
 
 function installDependencies(appDir: string, options: RebuildOptions): Promise<any> {
@@ -150,7 +150,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
       log(`Rebuilding native dependency ${dep.name}`)
       return spawn(execPath!, execArgs, {
         cwd: dep.path,
-        env: env,
+        env,
       })
         .catch(error => {
           if (dep.optional) {
@@ -170,7 +170,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     execArgs.push(...nativeDeps.map(it => it.name))
     await spawn(execPath, execArgs, {
       cwd: appDir,
-      env: env,
+      env,
     })
   }
 }

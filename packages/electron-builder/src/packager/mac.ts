@@ -40,7 +40,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
   const helperNPPlistFilename = path.join(frameworksPath, `${packager.electronDistMacOsExecutableName} Helper NP.app`, "Contents", "Info.plist")
 
   const buildMetadata = packager.config!
-  const fileContents: Array<string> = await BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (<any>buildMetadata)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
+  const fileContents: Array<string> = await BluebirdPromise.map([appPlistFilename, helperPlistFilename, helperEHPlistFilename, helperNPPlistFilename, (buildMetadata as any)["extend-info"]], it => it == null ? it : readFile(it, "utf8"))
   const appPlist = parsePlist(fileContents[0])
   const helperPlist = parsePlist(fileContents[1])
   const helperEHPlist = parsePlist(fileContents[2])
@@ -58,7 +58,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
 
   const appBundleIdentifier = filterCFBundleIdentifier(appInfo.id)
 
-  const oldHelperBundleId = (<any>buildMetadata)["helper-bundle-id"]
+  const oldHelperBundleId = (buildMetadata as any)["helper-bundle-id"]
   if (oldHelperBundleId != null) {
     warn("build.helper-bundle-id is deprecated, please set as build.mac.helperBundleId")
   }
@@ -120,12 +120,12 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
         await copyOrLinkFile(customIcon, path.join(resourcesPath, iconFile))
       }
 
-      const result = <any>{
+      const result = {
         CFBundleTypeExtensions: extensions,
         CFBundleTypeName: fileAssociation.name || extensions[0],
         CFBundleTypeRole: fileAssociation.role || "Editor",
         CFBundleTypeIconFile: iconFile
-      }
+      } as any
 
       if (fileAssociation.isPackage) {
         result.LSTypeIsPackage = true
@@ -134,7 +134,7 @@ export async function createApp(packager: PlatformPackager<any>, appOutDir: stri
     })
   }
 
-  use(packager.platformSpecificBuildOptions.category || (<any>buildMetadata).category, it => appPlist.LSApplicationCategoryType = it)
+  use(packager.platformSpecificBuildOptions.category || (buildMetadata as any).category, it => appPlist.LSApplicationCategoryType = it)
   appPlist.NSHumanReadableCopyright = appInfo.copyright
 
   if (asarIntegrity != null) {

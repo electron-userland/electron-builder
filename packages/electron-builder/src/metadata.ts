@@ -309,7 +309,7 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly freebsd?: LinuxTargetSpecificOptions | null
   readonly p5p?: LinuxTargetSpecificOptions | null
   readonly apk?: LinuxTargetSpecificOptions | null
-  
+
   /**
    * @private
    */

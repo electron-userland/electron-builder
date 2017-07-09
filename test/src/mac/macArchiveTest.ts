@@ -29,7 +29,7 @@ test.ifAll.ifMac("empty installLocation", app({
   signed: false,
 }))
 
-test.ifAll("pkg scripts", app({
+test.ifAll.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),
 }, {
   signed: false,

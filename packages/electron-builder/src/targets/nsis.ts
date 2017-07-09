@@ -47,7 +47,7 @@ export class AppPackageHelper {
     let infoPromise = this.archToFileInfo.get(arch)
     if (infoPromise == null) {
       infoPromise = subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, target.buildAppPackage(target.archs.get(arch)!, arch))
-        .then(it => {return {file: it} })
+        .then(it => ({file: it}))
       this.archToFileInfo.set(arch, infoPromise)
     }
 
@@ -67,7 +67,7 @@ export class AppPackageHelper {
     }
 
     const filesToDelete: Array<string> = []
-    for (let [info, isDelete]  of this.infoToIsDelete.entries()) {
+    for (const [info, isDelete]  of this.infoToIsDelete.entries()) {
       if (isDelete) {
         filesToDelete.push(info.file)
       }
@@ -92,7 +92,7 @@ export class NsisTarget extends Target {
 
     this.options = targetName === "portable" ? Object.create(null) : Object.assign(Object.create(null), this.packager.config.nsis)
     if (targetName !== "nsis") {
-      Object.assign(this.options, (<any>this.packager.config)[targetName === "nsis-web" ? "nsisWeb" : targetName])
+      Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }
 
     const deps = packager.info.metadata.dependencies
@@ -166,6 +166,7 @@ export class NsisTarget extends Target {
   }
 
   protected get installerFilenamePattern(): string {
+    // tslint:disable:no-invalid-template-strings
     return "${productName} " + (this.isPortable ? "" : "Setup ") + "${version}.${ext}"
   }
 
@@ -205,7 +206,7 @@ export class NsisTarget extends Target {
     }
 
     // electron uses product file name as app data, define it as well to remove on uninstall
-    if (defines.APP_FILENAME != appInfo.productFilename) {
+    if (defines.APP_FILENAME !== appInfo.productFilename) {
       defines.APP_PRODUCT_FILENAME = appInfo.productFilename
     }
 
@@ -243,7 +244,7 @@ export class NsisTarget extends Target {
 
     this.configureDefinesForAllTypeOfInstaller(defines)
     if (isPortable) {
-      defines.REQUEST_EXECUTION_LEVEL = (<PortableOptions>options).requestExecutionLevel || "user"
+      defines.REQUEST_EXECUTION_LEVEL = (options as PortableOptions).requestExecutionLevel || "user"
     }
     else {
       await this.configureDefines(oneClick, defines)
@@ -388,7 +389,7 @@ export class NsisTarget extends Target {
         menu = sanitizeFileName(companyName)
       }
       else {
-        menu = (<string>options.menuCategory).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")
+        menu = (options.menuCategory as string).split(/[\/\\]/).map(it => sanitizeFileName(it)).join("\\")
       }
       if (!isEmptyOrSpaces(menu)) {
         defines.MENU_FILENAME = menu
@@ -464,7 +465,7 @@ export class NsisTarget extends Target {
       const childProcess = doSpawn(command, args, {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-        env: Object.assign({}, process.env, {NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"}),
+        env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"},
         cwd: this.nsisTemplatesDir,
       }, {isPipeInput: true, isDebugEnabled: debug.enabled})
 
@@ -635,7 +636,7 @@ function computeCustomMessageTranslations(messages: any): Array<string> {
       unspecifiedLangs.delete(langWithRegion)
     }
 
-    const defaultTranslation = langToTranslations["en"].replace(/\n/g, "$\\r$\\n")
+    const defaultTranslation = langToTranslations.en.replace(/\n/g, "$\\r$\\n")
     for (const langWithRegion of unspecifiedLangs) {
       result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
     }

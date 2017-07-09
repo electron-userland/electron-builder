@@ -30,7 +30,7 @@ export function getBin(name: string, dirName: string, url: string, checksum: str
     return promise
   }
 
-  promise = <BluebirdPromise<string>>doGetBin(name, dirName, url, checksum)
+  promise = doGetBin(name, dirName, url, checksum) as BluebirdPromise<string>
   versionToPromise.set(dirName, promise)
   return promise
 }
@@ -64,10 +64,10 @@ async function doGetBin(name: string, dirName: string, url: string, checksum: st
   }
 
   if (checksum.length === 64 && !checksum.includes("+") && !checksum.includes("Z") && !checksum.includes("=")) {
-    (<any>options).sha2 = checksum
+    (options as any).sha2 = checksum
   }
   else {
-    (<any>options).sha512 = checksum
+    (options as any).sha512 = checksum
   }
 
   for (let attemptNumber = 1; attemptNumber < 4; attemptNumber++) {

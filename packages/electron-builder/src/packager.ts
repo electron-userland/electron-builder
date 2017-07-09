@@ -23,7 +23,7 @@ import { getRepositoryInfo } from "./util/repositoryInfo"
 import { getGypEnv, installOrRebuild } from "./util/yarn"
 import { WinPackager } from "./winPackager"
 
-function addHandler(emitter: EventEmitter, event: string, handler: (...args: any[]) => void) {
+function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   emitter.on(event, handler)
 }
 
@@ -88,9 +88,10 @@ export class Packager {
     }
 
     this.projectDir = options.projectDir == null ? process.cwd() : path.resolve(options.projectDir)
-    this.options = Object.assign({}, options, {
+    this.options = {
+      ...options,
       prepackaged: options.prepackaged == null ? null : path.resolve(this.projectDir, options.prepackaged)
-    })
+    }
 
     try {
       log("electron-builder " + PACKAGE_VERSION)
@@ -148,6 +149,7 @@ export class Packager {
     const appPackageFile = this.isTwoPackageJsonProjectLayoutUsed ? path.join(this.appDir, "package.json") : devPackageFile
 
     const extraMetadata = config.extraMetadata
+    // tslint:disable:prefer-conditional-expression
     if (devMetadata != null && !this.isTwoPackageJsonProjectLayoutUsed) {
       this.metadata = devMetadata
     }
@@ -169,7 +171,7 @@ export class Packager {
 
     const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
     return {
-      outDir: outDir,
+      outDir,
       platformToTargets: await executeFinally(this.doBuild(outDir), () => this.tempDirManager.cleanup())
     }
   }
@@ -189,10 +191,10 @@ export class Packager {
     throw new Error(`Cannot find package.json in the ${path.dirname(appPackageFile)}`)
   }
 
-  private async doBuild(outDir: string): Promise<Map<Platform, Map<String, Target>>> {
+  private async doBuild(outDir: string): Promise<Map<Platform, Map<string, Target>>> {
     const taskManager = new AsyncTaskManager(this.cancellationToken)
 
-    const platformToTarget = new Map<Platform, Map<String, Target>>()
+    const platformToTarget = new Map<Platform, Map<string, Target>>()
     const createdOutDirs = new Set<string>()
 
     for (const [platform, archToType] of this.options.targets!) {
@@ -205,7 +207,7 @@ export class Packager {
       }
 
       const packager = this.createHelper(platform)
-      const nameToTarget: Map<String, Target> = new Map()
+      const nameToTarget: Map<string, Target> = new Map()
       platformToTarget.set(platform, nameToTarget)
 
       for (const [arch, targetNames] of computeArchToTargetNamesMap(archToType, packager.platformSpecificBuildOptions, platform)) {
@@ -226,7 +228,7 @@ export class Packager {
             continue
           }
 
-          const outDir = (<Target>target).outDir
+          const outDir = (target as Target).outDir
           if (createdOutDirs.has(outDir)) {
             ourDirs.add(outDir)
           }
@@ -308,7 +310,9 @@ export class Packager {
         platform,
         arch: Arch[arch]
       })
-      if (!performDependenciesInstallOrRebuild) return
+      if (!performDependenciesInstallOrRebuild) {
+        return
+      }
     }
 
     if (config.buildDependenciesFromSource === true && platform.nodeName !== process.platform) {
@@ -336,8 +340,8 @@ export class Packager {
 }
 
 export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | n): Array<Platform> {
-  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (<Array<string | Platform | n>>rawPlatforms) : [rawPlatforms]
-  if (<any>platforms == null || platforms.length === 0) {
+  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | n>) : [rawPlatforms]
+  if (platforms as any == null || platforms.length === 0) {
     return [Platform.fromString(process.platform)]
   }
   else if (platforms[0] === "all") {
@@ -359,5 +363,5 @@ export function normalizePlatforms(rawPlatforms: Array<string | Platform> | stri
 
 export interface BuildResult {
   readonly outDir: string
-  readonly platformToTargets: Map<Platform, Map<String, Target>>
+  readonly platformToTargets: Map<Platform, Map<string, Target>>
 }

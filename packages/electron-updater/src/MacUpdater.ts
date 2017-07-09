@@ -74,7 +74,7 @@ export class MacUpdater extends AppUpdater {
         }
       })
       server.listen(0, "127.0.0.1", 16, () => {
-        this.nativeUpdater.setFeedURL(`${getServerUrl()}`, Object.assign({"Cache-Control": "no-cache"}, this.computeRequestHeaders(fileInfo)))
+        this.nativeUpdater.setFeedURL(`${getServerUrl()}`, {"Cache-Control": "no-cache", ...this.computeRequestHeaders(fileInfo)})
         this.nativeUpdater.checkForUpdates()
       })
     })

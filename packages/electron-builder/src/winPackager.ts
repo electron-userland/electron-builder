@@ -74,7 +74,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   })
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    let publisherName = (<WinBuildOptions>this.platformSpecificBuildOptions).publisherName
+    let publisherName = (this.platformSpecificBuildOptions as WinBuildOptions).publisherName
     if (publisherName === null) {
       return null
     }
@@ -165,7 +165,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
           }
         })()
 
-        mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (<any>targetClass)(this, outDir, name))
+        mapper(name, outDir => targetClass === null ? createCommonTarget(name, outDir, this) : new (targetClass as any)(this, outDir, name))
       }
     }
   }
@@ -228,10 +228,11 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       password: cscInfo.password,
       name: this.appInfo.productName,
       site: await this.appInfo.computePackageUrl(),
-      options: Object.assign({}, this.platformSpecificBuildOptions, {
+      options: {
+        ...this.platformSpecificBuildOptions,
         certificateSubjectName: cscInfo.subjectName,
-        certificateSha1: cscInfo.certificateSha1,
-      }),
+        certificateSha1: cscInfo.certificateSha1
+      },
     })
   }
 

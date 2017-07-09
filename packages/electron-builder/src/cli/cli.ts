@@ -14,8 +14,9 @@ import { getGypEnv } from "../util/yarn"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
 
+// tslint:disable:no-unused-expression
 yargs
-  .command(<any>["build", "*"], "Build", configureBuildCommand, wrap(build))
+  .command(["build", "*"], "Build", configureBuildCommand, wrap(build))
   .command("install-app-deps", "Install app deps", configureInstallAppDepsCommand, wrap(installAppDeps))
   .command("node-gyp-rebuild", "Rebuild own native code", configureInstallAppDepsCommand /* yes, args the same as for install app deps */, wrap(rebuildAppNativeCode))
   .command("create-self-signed-cert", "Create self-signed code signing cert for Windows apps",

@@ -15,6 +15,7 @@ let _autoUpdater: any
 export declare const autoUpdater: AppUpdater
 
 function _load_autoUpdater(): AppUpdater {
+  // tslint:disable:prefer-conditional-expression
   if (process.platform === "win32") {
     _autoUpdater = new (require("./NsisUpdater").NsisUpdater)()
   }
@@ -29,7 +30,7 @@ function _load_autoUpdater(): AppUpdater {
 
 Object.defineProperty(exports, "autoUpdater", {
   enumerable: true,
-  get: function () {
+  get: () => {
     return _autoUpdater || _load_autoUpdater()
   }
 })
@@ -39,7 +40,7 @@ export interface FileInfo {
   readonly url: string
   readonly sha2?: string
   readonly sha512?: string
-  readonly headers?: Object
+  readonly headers?: RequestHeaders
 }
 
 export abstract class Provider<T extends VersionInfo> {
@@ -55,7 +56,7 @@ export abstract class Provider<T extends VersionInfo> {
 
   static validateUpdateInfo(info: UpdateInfo) {
     if (isUseOldMacProvider()) {
-      if ((<any>info).url == null) {
+      if ((info as any).url == null) {
         throw new Error("Update info doesn't contain url")
       }
       return
@@ -83,7 +84,7 @@ export function getCustomChannelName(channel: string) {
   return `${channel}${getChannelFilePrefix()}`
 }
 
-export function getCurrentPlatform () {
+export function getCurrentPlatform() {
   return process.env.TEST_UPDATER_PLATFORM || process.platform
 }
 
@@ -137,9 +138,9 @@ export class UpdaterSignal {
 
 const isLogEvent = false
 
-function addHandler(emitter: EventEmitter, event: string, handler: (...args: any[]) => void) {
+function addHandler(emitter: EventEmitter, event: string, handler: (...args: Array<any>) => void) {
   if (isLogEvent) {
-    emitter.on(event, function (...args: any[]) {
+    emitter.on(event, (...args: Array<any>) => {
       console.log("%s %s", event, args)
       handler.apply(null, args)
     })

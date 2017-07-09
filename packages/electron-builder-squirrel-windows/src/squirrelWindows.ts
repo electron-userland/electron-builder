@@ -11,7 +11,7 @@ const SW_VERSION = "1.6.0.0"
 const SW_SHA2 = "ipd/ZQXyCe2+CYmNiUa9+nzVuO2PsRfF6DT8Y2mbIzkc8SVH8tJ6uS4rdhwAI1rPsYkmsPe1AcJGqv8ZDZcFww=="
 
 export default class SquirrelWindowsTarget extends Target {
-  readonly options: SquirrelWindowsOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, this.packager.config.squirrelWindows)
+  readonly options: SquirrelWindowsOptions = {...this.packager.platformSpecificBuildOptions, ...this.packager.config.squirrelWindows}
 
   constructor(private readonly packager: WinPackager, readonly outDir: string) {
     super("squirrel")
@@ -34,7 +34,7 @@ export default class SquirrelWindowsTarget extends Target {
 
     const distOptions = await this.computeEffectiveDistOptions()
 
-    await buildInstaller(<SquirrelOptions>distOptions, installerOutDir, setupFileName, packager, appOutDir, this.outDir, arch)
+    await buildInstaller(distOptions as SquirrelOptions, installerOutDir, setupFileName, packager, appOutDir, this.outDir, arch)
 
     packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${this.appName}-Setup-${version}${archSuffix}.exe`)
 
@@ -70,7 +70,7 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
-    const options: any = Object.assign({
+    const options: any = {
       name: appName,
       productName: this.options.name || appInfo.productName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
@@ -78,12 +78,11 @@ export default class SquirrelWindowsTarget extends Target {
       description: appInfo.description,
       // better to explicitly set to empty string, to avoid any nugget errors
       authors: appInfo.companyName || "",
-      iconUrl: iconUrl,
+      iconUrl,
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
-      packageCompressionLevel: parseInt(<any>(process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.config.compression === "store" ? 0 : 9), 10),
-      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2)
-    }, this.options)
+      packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.config.compression === "store" ? 0 : 9) as any, 10),
+      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2), ...this.options}
 
     if (options.remoteToken == null) {
       options.remoteToken = process.env.GH_TOKEN

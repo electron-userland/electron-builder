@@ -48,7 +48,7 @@ export class BintrayClient {
   }
 
   private bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-    return this.httpExecutor.request<T>(configureRequestOptions({hostname: "api.bintray.com", path: path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
+    return this.httpExecutor.request<T>(configureRequestOptions({hostname: "api.bintray.com", path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
   }
 
   getVersion(version: string): Promise<Version> {

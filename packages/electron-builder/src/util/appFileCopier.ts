@@ -30,7 +30,7 @@ export async function copyAppFiles(fileSet: FileSet, unpackedDest: string, packa
       const fileParent = path.dirname(file)
       // const dirNode = this.fs.getOrCreateNode(this.getRelativePath(fileParent))
 
-      const newData = transformedFiles == null ? null : <string | Buffer>transformedFiles[i]
+      const newData = transformedFiles == null ? null : transformedFiles[i] as string | Buffer
       if (newData != null) {
         transformedFiles[i] = null
       }
@@ -46,7 +46,7 @@ export async function copyAppFiles(fileSet: FileSet, unpackedDest: string, packa
       }
     }
     else if (stat.isSymbolicLink()) {
-      links.push({"file": relativePath, "link": await readlink(file)})
+      links.push({file: relativePath, link: await readlink(file)})
     }
   }
 

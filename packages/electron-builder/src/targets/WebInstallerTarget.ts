@@ -15,12 +15,12 @@ export class WebInstallerTarget extends NsisTarget {
 
   protected async configureDefines(oneClick: boolean, defines: any) {
     //noinspection ES6MissingAwait
-    await (<any>NsisTarget.prototype).configureDefines.call(this, oneClick, defines)
+    await (NsisTarget.prototype as any).configureDefines.call(this, oneClick, defines)
 
     const packager = this.packager
     const options = this.options
 
-    let appPackageUrl = (<NsisWebOptions>options).appPackageUrl
+    let appPackageUrl = (options as NsisWebOptions).appPackageUrl
     if (appPackageUrl == null) {
       const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, null), null)
       if (publishConfigs == null || publishConfigs.length === 0) {
@@ -36,6 +36,7 @@ export class WebInstallerTarget extends NsisTarget {
   }
 
   protected get installerFilenamePattern(): string {
+    // tslint:disable:no-invalid-template-strings
     return "${productName} Web Setup ${version}.${ext}"
   }
 

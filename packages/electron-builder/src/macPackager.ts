@@ -100,9 +100,9 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         continue
       }
 
-      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (<any>this.config).mas)
+      const masBuildOptions = deepAssign({}, this.platformSpecificBuildOptions, (this.config as any).mas)
       if (targetName === "mas-dev") {
-        deepAssign(masBuildOptions, (<any>this.config)[targetName], {
+        deepAssign(masBuildOptions, (this.config as any)[targetName], {
           type: "development",
         })
       }
@@ -178,7 +178,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       // https://github.com/electron-userland/electron-builder/issues/1699
       ignore: (file: string) => file.startsWith("/Contents/PlugIns", appPath.length),
       identity: identity!,
-      type: type,
+      type,
       platform: isMas ? "mas" : "darwin",
       version: this.config.electronVersion,
       app: appPath,

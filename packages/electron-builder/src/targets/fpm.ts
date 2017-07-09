@@ -28,7 +28,7 @@ function downloadFpm(): Promise<string> {
 }
 
 export default class FpmTarget extends Target {
-  readonly options: LinuxTargetSpecificOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  readonly options: LinuxTargetSpecificOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
 
   private readonly scriptFiles: Promise<Array<string>>
 
@@ -42,11 +42,10 @@ export default class FpmTarget extends Target {
     const defaultTemplatesDir = path.join(__dirname, "..", "..", "templates", "linux")
 
     const packager = this.packager
-    const templateOptions = Object.assign({
+    const templateOptions = {
       // old API compatibility
       executable: packager.executableName,
-      productFilename: packager.appInfo.productFilename,
-    }, packager.platformSpecificBuildOptions)
+      productFilename: packager.appInfo.productFilename, ...packager.platformSpecificBuildOptions}
 
     function getResource(value: string | n, defaultFile: string) {
       if (value == null) {
@@ -67,6 +66,7 @@ export default class FpmTarget extends Target {
 
     log(`Building ${target}`)
 
+    // tslint:disable:no-invalid-template-strings
     let nameFormat = "${name}-${version}-${arch}.${ext}"
     let isUseArchIfX64 = false
     if (target === "deb") {
@@ -132,8 +132,8 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      args.push("--deb-compression", (<DebOptions>options).compression || (packager.config.compression === "store" ? "gz" : "xz"))
-      use((<DebOptions>options).priority, it => args.push("--deb-priority", it!))
+      args.push("--deb-compression", (options as DebOptions).compression || (packager.config.compression === "store" ? "gz" : "xz"))
+      use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
       args.push("--rpm-os", "linux")
@@ -162,7 +162,7 @@ export default class FpmTarget extends Target {
     }
     else if (!Array.isArray(depends)) {
       if (typeof depends === "string") {
-        depends = [<string>depends]
+        depends = [depends as string]
       }
       else {
         throw new Error(`depends must be Array or String, but specified as: ${depends}`)
@@ -176,7 +176,7 @@ export default class FpmTarget extends Target {
     use(packager.info.metadata.license, it => args.push("--license", it!))
     use(appInfo.buildNumber, it => args.push("--iteration", it!))
 
-    use(options.fpm, it => args.push(...<any>it))
+    use(options.fpm, it => args.push(...it as any))
 
     args.push(`${appOutDir}/=${installPrefix}/${appInfo.productFilename}`)
     for (const mapping of (await this.helper.icons)) {
@@ -190,10 +190,11 @@ export default class FpmTarget extends Target {
       return
     }
 
-    let env = Object.assign({}, process.env, {
+    const env = {
+      ...process.env,
       LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
-    })
+      LC_CTYPE: "UTF-8"
+    }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
     // so, for now, brew install rpm is still required.

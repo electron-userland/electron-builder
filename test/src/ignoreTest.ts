@@ -68,7 +68,7 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
 // skip on macOS because we want test only / and \
 test.ifNotCiMac("ignore node_modules dev dep", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
-  config: <any>{
+  config: {
     asar: false,
     // ignore: (file: string) => {
     //   return file === "/ignoreMe"
@@ -78,9 +78,8 @@ test.ifNotCiMac("ignore node_modules dev dep", app({
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
       modifyPackageJson(projectDir, data => {
-        data.devDependencies = Object.assign({
-          "electron-osx-sign": "*",
-        }, data.devDependencies)
+        data.devDependencies = {
+          "electron-osx-sign": "*", ...data.devDependencies}
       }),
       outputFile(path.join(projectDir, "node_modules", "electron-osx-sign", "package.json"), "{}"),
       // outputFile(path.join(projectDir, "ignoreMe"), ""),

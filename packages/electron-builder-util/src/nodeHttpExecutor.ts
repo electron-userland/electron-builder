@@ -31,7 +31,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
         hostname: parsedUrl.hostname,
         path: parsedUrl.path,
         headers: options.headers || undefined,
-        agent: agent,
+        agent,
       }), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)

@@ -18,6 +18,7 @@ class DevTimer implements Timer {
 
 class ProductionTimer implements Timer {
   end(): void {
+    // ignore
   }
 }
 

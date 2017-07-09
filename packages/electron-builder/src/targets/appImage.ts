@@ -15,7 +15,7 @@ const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" 
 const appImagePathPromise = process.platform === "darwin" ? getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") : getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
 
 export default class AppImageTarget extends Target {
-  readonly options: LinuxBuildOptions = Object.assign({}, this.packager.platformSpecificBuildOptions, (<any>this.packager.config)[this.name])
+  readonly options: LinuxBuildOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
   private readonly desktopEntry: Promise<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {

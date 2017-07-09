@@ -21,18 +21,18 @@ export default class S3Publisher extends Publisher {
     if (bucket == null) {
       throw new Error(`Please specify "bucket" for "s3" update server`)
     }
-    
+
     if (bucket.includes(".") && options.region == null) {
-      // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.  
+      // on dotted bucket names, we need to use a path-based endpoint URL. Path-based endpoint URLs need to include the region.
       const s3 = new S3({signatureVersion: "v4"});
-      (<any>options).region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
+      (options as any).region = (await s3.getBucketLocation({Bucket: bucket}).promise()).LocationConstraint
     }
 
     if (options.channel == null && channelFromAppVersion != null) {
-      (<any>options).channel = channelFromAppVersion
+      (options as any).channel = channelFromAppVersion
     }
   }
-  
+
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
   async upload(file: string, safeArtifactName?: string): Promise<any> {
     const fileName = basename(file)

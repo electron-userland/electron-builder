@@ -12,7 +12,7 @@ export class AppInfo {
   readonly productName: string
   readonly productFilename: string
 
-  constructor (private readonly info: Packager, buildVersion?: string | null) {
+  constructor(private readonly info: Packager, buildVersion?: string | null) {
     this.version = info.metadata.version!
 
     this.buildNumber = info.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER

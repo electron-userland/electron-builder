@@ -23,7 +23,7 @@ export class Node {
 export class AsarFilesystem {
   private offset = UINT64(0)
 
-  constructor (readonly src: string, readonly header = new Node(), readonly headerSize: number = -1) {
+  constructor(readonly src: string, readonly header = new Node(), readonly headerSize: number = -1) {
     if (this.header.files == null) {
       this.header.files = {}
     }
@@ -130,14 +130,14 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
   let headerBuf
   try {
     const sizeBuf = new Buffer(8)
-    if (await read(fd, sizeBuf, 0, 8, <any>null) !== 8) {
+    if (await read(fd, sizeBuf, 0, 8, null as any) !== 8) {
       throw new Error("Unable to read header size")
     }
 
     const sizePickle = createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
     headerBuf = new Buffer(size)
-    if (await read(fd, headerBuf, 0, size, <any>null) !== size) {
+    if (await read(fd, headerBuf, 0, size, null as any) !== size) {
       throw new Error("Unable to read header")
     }
   }
@@ -156,7 +156,7 @@ export async function readAsarJson(archive: string, file: string): Promise<any> 
 }
 
 async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, info: Node): Promise<Buffer> {
-  let buffer = new Buffer(info.size)
+  const buffer = new Buffer(info.size)
   if (info.size <= 0) {
     return buffer
   }
@@ -167,7 +167,7 @@ async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, in
 
   const fd = await open(filesystem.src, "r")
   try {
-    const offset = 8 + filesystem.headerSize + parseInt(<any>info.offset)
+    const offset = 8 + filesystem.headerSize + parseInt(info.offset as any, 10)
     await read(fd, buffer, 0, info.size, offset)
   }
   finally {

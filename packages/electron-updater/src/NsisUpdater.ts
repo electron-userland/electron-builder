@@ -25,7 +25,7 @@ export class NsisUpdater extends AppUpdater {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.computeRequestHeaders(fileInfo),
-      cancellationToken: cancellationToken,
+      cancellationToken,
       sha2: fileInfo == null ? null : fileInfo.sha2,
       sha512: fileInfo == null ? null : fileInfo.sha512,
     }
@@ -37,11 +37,12 @@ export class NsisUpdater extends AppUpdater {
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
 
-    let removeTempDirIfAny = async () => {
+    const removeTempDirIfAny = async () => {
       try {
         await remove(tempDir)
       }
       catch (ignored) {
+        // ignored
       }
     }
 
@@ -200,7 +201,7 @@ export class NsisUpdater extends AppUpdater {
     catch (e) {
       // yes, such errors dispatched not as error event
       // https://github.com/electron-userland/electron-builder/issues/1129
-      if ((<any>e).code === "UNKNOWN" || (<any>e).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
+      if ((e as any).code === "UNKNOWN" || (e as any).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         try {
           spawn(path.join(process.resourcesPath!, "elevate.exe"), [setupPath].concat(args), spawnOptions)

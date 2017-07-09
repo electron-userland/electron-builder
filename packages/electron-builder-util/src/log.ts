@@ -28,11 +28,11 @@ class Logger {
 
   subTask(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
     this.log(`  ${title}`)
-    return <BluebirdPromise<any>>_promise
+    return _promise as BluebirdPromise<any>
   }
 
   task(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
-    const promise = <BluebirdPromise<any>>_promise
+    const promise = _promise as BluebirdPromise<any>
     this.log(title)
     return promise
   }
@@ -48,7 +48,7 @@ class TtyLogger extends Logger {
   }
 }
 
-const logger = (<any>process.stdout).isTTY ? new TtyLogger(process.stdout) : new Logger(process.stdout)
+const logger = (process.stdout as any).isTTY ? new TtyLogger(process.stdout) : new Logger(process.stdout)
 
 export function warn(message: string) {
   logger.warn(message)

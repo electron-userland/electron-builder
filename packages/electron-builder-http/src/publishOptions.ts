@@ -10,11 +10,16 @@ export interface PublishConfiguration {
    * The provider.
    */
   readonly provider: PublishProvider
+
+  /**
+   * @private
+   */
+  readonly publisherName?: Array<string> | null
 }
 
 /**
  * GitHub options.
- * 
+ *
  * GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
  * Define `GH_TOKEN` environment variable.
  */
@@ -54,7 +59,7 @@ export interface GithubOptions extends PublishConfiguration {
 
   /**
    * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set.
-   * @see https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo 
+   * @see https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo
    */
   readonly private?: boolean | null
 }
@@ -82,7 +87,7 @@ export interface GenericServerOptions extends PublishConfiguration {
 
 /**
  * Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
- * 
+ *
  * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
  * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
  * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
@@ -128,7 +133,7 @@ export function s3Url(options: S3Options) {
   let url: string
   if (!options.bucket.includes(".")) {
     url = `https://${options.bucket}.s3.amazonaws.com`
-  } 
+  }
   else {
     if (!options.region) {
       throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
