@@ -76,7 +76,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const version = convertVersion(options.version)
   const packageName = `${options.name}-${version}-full.nupkg`
   const nupkgPath = path.join(outputDirectory, packageName)
-  const setupPath = path.join(outputDirectory, setupExe || `${options.name || options.productName}Setup.exe`)
+  const setupPath = path.join(outputDirectory, setupExe)
 
   await BluebirdPromise.all<any>([
     pack(options, appOutDir, appUpdate, nupkgPath, version, packager),

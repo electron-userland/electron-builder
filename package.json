@@ -80,7 +80,7 @@
     "decompress-zip": "^0.3.0",
     "depcheck": "^0.6.7",
     "develar-typescript-json-schema": "0.17.0",
-    "electron-builder-tslint-config": "^1.0.1",
+    "electron-builder-tslint-config": "^1.0.2",
     "env-paths": "^1.0.0",
     "globby": "^6.1.0",
     "jest-cli": "^20.0.4",

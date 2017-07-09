@@ -6,6 +6,16 @@ import { app, assertPack, copyTestAsset, modifyPackageJson } from "../helpers/pa
 
 test.ifAll.ifNotCiMac("Squirrel.Windows", app({targets: Platform.WINDOWS.createTarget(["squirrel", "zip"])}, {signedWin: true}))
 
+test.ifAll.ifNotCiMac("artifactName", app({
+  targets: Platform.WINDOWS.createTarget(["squirrel"]),
+  config: {
+    win: {
+      // tslint:disable:no-invalid-template-strings
+      artifactName: "Test ${name} foo.exe"
+    }
+  }
+}))
+
 // very slow
 test.skip("delta and msi", app({
   targets: Platform.WINDOWS.createTarget("squirrel", Arch.ia32),

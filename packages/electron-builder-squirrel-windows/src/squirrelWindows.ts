@@ -28,7 +28,8 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
-    const setupFileName = `${appInfo.productFilename} Setup ${version}${archSuffix}.exe`
+    // tslint:disable:no-invalid-template-strings
+    const setupFileName = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
 
     const installerOutDir = path.join(this.outDir, `win${getArchSuffix(arch)}`)
 
