@@ -5,7 +5,7 @@ import { ELECTRON_VERSION } from "../helpers/config"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 
-test.ifDevOrLinuxCi("AppImage", app({targets: Platform.LINUX.createTarget()}))
+test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
 test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),
@@ -18,10 +18,11 @@ test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom deskt
       },
     },
     appImage: {
+      // tslint:disable:no-invalid-template-strings
       artifactName: "boo-${productName}",
     }
   },
-  effectiveOptionComputed: async (it) => {
+  effectiveOptionComputed: async it => {
     const content = await readFile(it[1], "utf-8")
     expect(content.split("\n").filter(it => !it.includes("X-AppImage-BuildId") && !it.includes("X-AppImage-Version")).join("\n")).toMatchSnapshot()
     return false
@@ -46,7 +47,7 @@ test.ifNotWindows("icons from ICNS", app({
 
     await build({
       targets: Platform.LINUX.createTarget(),
-      projectDir: projectDir,
+      projectDir,
       publish: "never",
       config: {
         electronVersion: ELECTRON_VERSION,

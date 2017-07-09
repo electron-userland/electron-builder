@@ -122,16 +122,8 @@ export interface Config extends PlatformSpecificBuildOptions {
    * All [default ignores](#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
    *
    * May be specified in the platform options (e.g. in the [mac](#MacOptions)).
-   */
-  readonly files?: Array<string> | string | null
-
-  /**
-   * A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
-   *
-   * Glob rules the same as for [files](#multiple-glob-patterns).
    *
    * You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
-   * Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
    *
    *```json<br>
    * [<br>
@@ -143,9 +135,14 @@ export interface Config extends PlatformSpecificBuildOptions {
    * ]<br>
    * ```
    *
-   * `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+   * You can use [file macros](#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+   */
+  readonly files?: Array<FilePattern | string> | FilePattern | string | null
+
+  /**
+   * A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
    *
-   * You can use [file macros](#file-macros) in the `from` and `to` fields as well.
+   * File patterns (and support for `from` and `to` fields) the same as for [files](#multiple-glob-patterns).
    */
   readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 
@@ -420,7 +417,7 @@ export interface FileAssociation {
 }
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
-  readonly files?: Array<string> | string | null
+  readonly files?: Array<FilePattern | string> | FilePattern | string | null
   readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
   readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 

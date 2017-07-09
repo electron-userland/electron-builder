@@ -64,7 +64,7 @@ test.ifNotWindows("link", app({
 test.ifNotWindows("outside link", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
-  projectDirCreated: async (projectDir) => {
+  projectDirCreated: async projectDir => {
     const tempDir = getTempFile()
     await outputFile(path.join(tempDir, "foo"), "data")
     await symlink(tempDir, path.join(projectDir, "o-dir"))
@@ -84,7 +84,7 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
       //noinspection SpellCheckingInspection
       data.dependencies = {
         "rc-datepicker": "4.0.0",
-        "react": "15.2.1",
+        react: "15.2.1",
         "react-dom": "15.2.1"
       }
     }),

@@ -65,7 +65,7 @@ export async function walk(initialDirPath: string, filter?: Filter | null, consu
     const dirs: Array<string> = []
     // our handler is async, but we should add sorted files, so, we add file to result not in the mapper, but after map
     const sortedFilePaths = await BluebirdPromise.map(childNames, name => {
-      if (name === ".DS_Store") {
+      if (name === ".DS_Store" || name === ".gitkeep") {
         return null
       }
 

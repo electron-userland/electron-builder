@@ -1,9 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target, Config } from "electron-builder"
+import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-util"
+import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import { executeFinally } from "electron-builder-util/out/promise"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
@@ -16,7 +17,6 @@ import { parse as parsePlist } from "plist"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { TEST_DIR } from "./config"
 import { assertThat } from "./fileAssert"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -80,7 +80,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
     packagerOptions.cscKeyPassword = ""
   }
   else if (packagerOptions.cscLink == null) {
-    packagerOptions = deepAssign({}, packagerOptions, {config: <Config>{mac: {identity: null}}})
+    packagerOptions = deepAssign({}, packagerOptions, {config: {mac: {identity: null}}})
   }
 
   const projectDirCreated = checkOptions.projectDirCreated
@@ -100,7 +100,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   await copyDir(projectDir, dir, it => {
     const basename = path.basename(it)
     return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
-  }, null, it => path.basename(it) != "package.json")
+  }, null, it => path.basename(it) !== "package.json")
   projectDir = dir
 
   await executeFinally((async () => {
@@ -108,27 +108,25 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
       await projectDirCreated(projectDir)
       if (checkOptions.installDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
-        await spawn("yarn", ["install", "--production", "--no-lockfile"], {
+        await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production", "--no-lockfile"], {
           cwd: projectDir,
         })
       }
     }
 
-    const {packager, outDir} = await packAndCheck(Object.assign({
-      projectDir: projectDir,
-    }, packagerOptions), checkOptions)
+    const {packager, outDir} = await packAndCheck({projectDir, ...packagerOptions}, checkOptions)
 
     if (checkOptions.packed != null) {
       function base(platform: Platform, arch?: Arch): string {
         return path.join(outDir, `${platform.buildConfigurationKey}${getArchSuffix(arch == null ? Arch.x64 : arch)}${platform === Platform.MAC ? "" : "-unpacked"}`)
       }
 
-      await checkOptions.packed(<PackedContext>{
-        projectDir: projectDir,
-        outDir: outDir,
+      await checkOptions.packed({
+        projectDir,
+        outDir,
         getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
         getContent: platform => base(platform),
-        packager: packager,
+        packager,
       })
     }
   })(), async () => {
@@ -184,7 +182,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
     objectToCompare[platform.buildConfigurationKey] = (artifacts.get(platform) || [])
       .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
       .map(it => {
-        const result: any = Object.assign({}, it)
+        const result: any = {...it}
         if (result.file != null) {
           result.file = path.basename(result.file)
         }
@@ -200,11 +198,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         return result
       })
   }
-  
+
   expect(objectToCompare).toMatchSnapshot()
 
   c: for (const [platform, archToType] of packagerOptions.targets) {
-    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, (<any>packagerOptions)[platform.buildConfigurationKey] || {}, platform)) {
+    for (const [arch, targets] of computeArchToTargetNamesMap(archToType, (packagerOptions as any)[platform.buildConfigurationKey] || {}, platform)) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
@@ -226,7 +224,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   return {packager, outDir}
 }
 
-async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<String, Target>) {
+async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
   if (!nameToTarget.has("deb")) {
     return
   }
@@ -299,7 +297,7 @@ async function checkMacResult(packager: Packager, packagerOptions: PackagerOptio
   }
 }
 
-async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<String, Target>) {
+async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOptions, artifacts: Array<ArtifactCreated>, nameToTarget: Map<string, Target>) {
   const appInfo = packager.appInfo
   let squirrel = false
   for (const target of nameToTarget.keys()) {
@@ -355,10 +353,11 @@ async function getContents(packageFile: string) {
   // without LC_CTYPE dpkg can returns encoded unicode symbols
   const result = await execShell(`ar p '${packageFile}' data.tar.gz | ${await getTarExecutable()} zt`, {
     maxBuffer: 10 * 1024 * 1024,
-    env: Object.assign({}, process.env, {
+    env: {
+      ...process.env,
       LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8",
-    })
+      LC_CTYPE: "UTF-8"
+    }
   })
   return pathSorter(parseFileList(result, true)
     .filter(it => !(it.includes(`/locales/`) || it.includes(`/libgcrypt`)))
@@ -368,7 +367,7 @@ async function getContents(packageFile: string) {
 export function parseFileList(data: string, fromDpkg: boolean): Array<string> {
   return data
     .split("\n")
-    .map(it => it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : (it.startsWith("./") ? it.substring(2) : (it == "." ? null : it)))
+    .map(it => it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : (it.startsWith("./") ? it.substring(2) : (it === "." ? null : it)))
     .filter(it => it != null && it.length > 0)
 }
 
@@ -403,16 +402,16 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
   return app({
     targets: Platform.MAC.createTarget(),
     config: {
-      extraMetadata: <any>{
+      extraMetadata: {
         repository: "foo/bar",
-      },
+      } as any,
       mac: {
-        target: target,
+        target,
       }
     }
   }, {
     signed: target.includes("mas") || target.includes("pkg") || target.includes("mas-dev"),
-    packed: async (context) => {
+    packed: async context => {
       if (!target.includes("tar.gz")) {
         return
       }

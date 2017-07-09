@@ -115,18 +115,15 @@ Configuration Options
     Please note — build resources is not packed into app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
   * <a name="MetadataDirectories-output"></a>`output` = `dist` String - The output directory.
   * <a name="MetadataDirectories-app"></a>`app` String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
-* <a name="Config-files"></a>`files` Array&lt;String&gt; | String - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+* <a name="Config-files"></a>`files` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String<a name="FilePattern"></a> - A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
   
   Development dependencies are never copied in any case. You don't need to ignore it explicitly.
   
   Default pattern `**/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`). `package.json` and `**/node_modules/**/*` (only production dependencies will be copied) is added to your custom in any case. All [default ignores](#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
   
   May be specified in the platform options (e.g. in the [mac](#MacOptions)).
-* <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String<a name="FilePattern"></a> - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
   
-  Glob rules the same as for [files](#multiple-glob-patterns).
-  
-  You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns. Note this only works for [extraFiles](#Config-extraFiles) and [extraResources](#Config-extraResources).
+  You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
   
   ```json
    [
@@ -138,12 +135,13 @@ Configuration Options
    ]
    ```
   
-  `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
-  
-  You can use [file macros](#file-macros) in the `from` and `to` fields as well.
+  You can use [file macros](#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
   * <a name="FilePattern-from"></a>`from` String - The source path relative to the project directory.
   * <a name="FilePattern-to"></a>`to` String - The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
   * <a name="FilePattern-filter"></a>`filter` Array&lt;String&gt; | String - The [glob patterns](#file-patterns).
+* <a name="Config-extraResources"></a>`extraResources` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String - A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
+  
+  File patterns (and support for `from` and `to` fields) the same as for [files](#multiple-glob-patterns).
 * <a name="Config-extraFiles"></a>`extraFiles` Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String - The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
 * <a name="Config-fileAssociations"></a>`fileAssociations` Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)<a name="FileAssociation"></a> - The file associations.
   * <a name="FileAssociation-ext"></a>**`ext`** String | Array&lt;String&gt; - The extension (minus the leading period). e.g. `png`.

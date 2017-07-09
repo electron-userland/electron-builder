@@ -7,7 +7,7 @@ import { AsarFilesystem, Node, readAsar } from "../asar"
 import { AsarOptions } from "../metadata"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { FileSet, NODE_MODULES_PATTERN } from "./AppFileWalker"
+import { FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
 import { AsyncTaskManager } from "./asyncTaskManager"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))

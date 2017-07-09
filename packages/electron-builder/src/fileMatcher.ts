@@ -9,6 +9,9 @@ import { Config, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
 
+// https://github.com/electron-userland/electron-builder/issues/733
+const minimatchOptions = {dot: true}
+
 /** @internal */
 export class FileMatcher {
   readonly from: string
@@ -16,10 +19,15 @@ export class FileMatcher {
 
   readonly patterns: Array<string>
 
+  excludePatterns: Array<Minimatch> | null = null
+
+  readonly isSpecifiedAsEmptyArray: boolean
+
   constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | n) {
     this.from = macroExpander(from)
     this.to = macroExpander(to)
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
+    this.isSpecifiedAsEmptyArray = Array.isArray(patterns) && patterns.length === 0
   }
 
   normalizePattern(pattern: string) {
@@ -46,9 +54,6 @@ export class FileMatcher {
   }
 
   computeParsedPatterns(result: Array<Minimatch>, fromDir?: string): void {
-    // https://github.com/electron-userland/electron-builder/issues/733
-    const minimatchOptions = {dot: true}
-
     const relativeFrom = fromDir == null ? null : path.relative(fromDir, this.from)
 
     if (this.patterns.length === 0 && relativeFrom != null) {
@@ -74,10 +79,10 @@ export class FileMatcher {
     }
   }
 
-  createFilter(rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | n): Filter {
+  createFilter(): Filter {
     const parsedPatterns: Array<Minimatch> = []
     this.computeParsedPatterns(parsedPatterns)
-    return createFilter(this.from, parsedPatterns, rawFilter, excludePatterns)
+    return createFilter(this.from, parsedPatterns, this.excludePatterns)
   }
 
   toString() {
@@ -86,25 +91,35 @@ export class FileMatcher {
 }
 
 /** @internal */
-export function createFileMatcher(appDir: string, resourcesPath: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: PlatformPackager<any>, outDir: string) {
+export function getMainFileMatchers(appDir: string, destination: string, macroExpander: (pattern: string) => string, platformSpecificBuildOptions: PlatformSpecificBuildOptions, packager: PlatformPackager<any>, outDir: string, isElectronCompile: boolean): Array<FileMatcher> {
   const buildResourceDir = path.resolve(packager.info.projectDir, packager.buildResourcesDir)
 
-  const matchers = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
-  const matcher = matchers == null ? new FileMatcher(appDir, path.join(resourcesPath, "app"), macroExpander) : matchers[0]
+  let matchers = packager.info.isPrepackedAppAsar ? null : getFileMatchers(packager.info.config, "files", appDir, destination, macroExpander, platformSpecificBuildOptions)
+  if (matchers == null) {
+    matchers = [new FileMatcher(appDir, destination, macroExpander)]
+  }
+
+  const matcher = matchers[0]
+  // add default patterns, but only if from equals to app dir
+  if (matcher.from !== appDir) {
+    return matchers
+  }
 
   // https://github.com/electron-userland/electron-builder/issues/1741#issuecomment-311111418 so, do not use inclusive patterns
-
   const patterns = matcher.patterns
 
   const customFirstPatterns: Array<string> = []
-  if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+  // electron-webpack - we need to copy only package.json and node_modules from root dir (and these files are added by default), so, explicit empty array is specified
+  if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
     customFirstPatterns.push("**/*")
   }
   else {
     // prependPattern - user pattern should be after to be able to override
     // do not use **/node_modules/**/* because if pattern starts with **, all not explicitly excluded directories will be traversed (performance + empty dirs will be included into the asar)
     customFirstPatterns.push("node_modules/**/*")
-    patterns.push("package.json")
+    if (!patterns.includes("package.json")) {
+      patterns.push("package.json")
+    }
   }
 
   // https://github.com/electron-userland/electron-builder/issues/1482
@@ -145,13 +160,17 @@ export function createFileMatcher(appDir: string, resourcesPath: string, macroEx
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
     "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
 
-  debug(`File patterns of first/default matcher: ${patterns.join("\n")}`)
+  if (isElectronCompile) {
+    patterns.push("!.cache{,/**/*}")
+  }
 
-  return matcher
+  debug(`File patterns of first/default matcher:\n\t${patterns.join("\n\t")}`)
+
+  return matchers
 }
 
 /** @internal */
-export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, allowAdvancedMatching: boolean, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
+export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
   const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (config as any)[name]
   const platformSpecificPatterns: Array<string | FilePattern> | string | n = (customBuildOptions as any)[name]
 
@@ -175,13 +194,13 @@ export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "
         // use normalize to transform ./foo to foo
         defaultMatcher.addPattern(pattern)
       }
-      else if (allowAdvancedMatching) {
+      else if (name === "asarUnpack") {
+        throw new Error(`Advanced file copying not supported for "${name}"`)
+      }
+      else {
         const from = pattern.from == null ? defaultSrc : path.resolve(defaultSrc, pattern.from)
         const to = pattern.to == null ? defaultDestination : path.resolve(defaultDestination, pattern.to)
         fileMatchers.push(new FileMatcher(from, to, macroExpander, pattern.filter))
-      }
-      else {
-        throw new Error(`Advanced file copying not supported for "${name}"`)
       }
     }
   }
@@ -198,35 +217,35 @@ export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "
 }
 
 /** @internal */
-export function copyFiles(patterns: Array<FileMatcher> | null): Promise<any> {
-  if (patterns == null || patterns.length === 0) {
+export function copyFiles(matchers: Array<FileMatcher> | null): Promise<any> {
+  if (matchers == null || matchers.length === 0) {
     return BluebirdPromise.resolve()
   }
 
-  return BluebirdPromise.map(patterns, async pattern => {
-    const fromStat = await statOrNull(pattern.from)
+  return BluebirdPromise.map(matchers, async (matcher: FileMatcher) => {
+    const fromStat = await statOrNull(matcher.from)
     if (fromStat == null) {
-      warn(`File source ${pattern.from} doesn't exist`)
+      warn(`File source ${matcher.from} doesn't exist`)
       return
     }
 
     if (fromStat.isFile()) {
-      const toStat = await statOrNull(pattern.to)
+      const toStat = await statOrNull(matcher.to)
       // https://github.com/electron-userland/electron-builder/issues/1245
       if (toStat != null && toStat.isDirectory()) {
-        return await copyOrLinkFile(pattern.from, path.join(pattern.to, path.basename(pattern.from)), fromStat)
+        return await copyOrLinkFile(matcher.from, path.join(matcher.to, path.basename(matcher.from)), fromStat)
       }
 
-      await mkdirs(path.dirname(pattern.to))
-      return await copyOrLinkFile(pattern.from, pattern.to, fromStat)
+      await mkdirs(path.dirname(matcher.to))
+      return await copyOrLinkFile(matcher.from, matcher.to, fromStat)
     }
 
-    if (pattern.isEmpty() || pattern.containsOnlyIgnore()) {
-      pattern.prependPattern("**/*")
+    if (matcher.isEmpty() || matcher.containsOnlyIgnore()) {
+      matcher.prependPattern("**/*")
     }
     if (debug.enabled) {
-      debug(`Copying files using pattern: ${pattern}`)
+      debug(`Copying files using pattern: ${matcher}`)
     }
-    return await copyDir(pattern.from, pattern.to, pattern.createFilter())
+    return await copyDir(matcher.from, matcher.to, matcher.createFilter())
   })
 }

@@ -1,54 +1,28 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, log } from "electron-builder-util"
-import { CONCURRENCY, FileConsumer, FileTransformer, Filter, walk } from "electron-builder-util/out/fs"
-import { ensureDir, lstat, readdir, readlink, stat, Stats } from "fs-extra-p"
+import { debug } from "electron-builder-util"
+import { CONCURRENCY, FileConsumer, Filter } from "electron-builder-util/out/fs"
+import { lstat, readdir, readlink, stat, Stats } from "fs-extra-p"
 import * as path from "path"
-import { createElectronCompilerHost } from "../fileTransformer"
+import { FileMatcher } from "../fileMatcher"
 import { Packager } from "../packager"
 import { Dependency, getProductionDependencies } from "./packageDependencies"
-
-export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
 const nodeModulesSystemDependentSuffix = `${path.sep}node_modules`
 const excludedFiles = new Set([".DS_Store", "node_modules" /* already in the queue */, "CHANGELOG.md", "ChangeLog", "changelog.md", "binding.gyp"])
 
-export interface FileSet {
-  src: string
-  files: Array<string>
-  metadata: Map<string, Stats>
-  transformedFiles: Array<string | Buffer | true | null>
-}
-
-export class AppFileCopierHelper {
-  constructor(private readonly transformer: FileTransformer) {
-  }
-
-  async collect(fileWalker: AppFileWalker, isElectronCompile: boolean): Promise<Array<FileSet>> {
-    const files = await walk(fileWalker.src, fileWalker.filter, fileWalker)
-    const transformer = this.transformer
-    const metadata = fileWalker.metadata
-    const transformedFiles = await BluebirdPromise.map(files, it => {
-      const fileStat = metadata.get(it)
-      return fileStat != null && fileStat.isFile() ? transformer(it) : null
-    }, CONCURRENCY)
-
-    const mainFileSet: FileSet = {src: fileWalker.src, files, metadata: fileWalker.metadata, transformedFiles}
-    const fileSets = [mainFileSet]
-    if (isElectronCompile) {
-      // cache should be first in the asar
-      fileSets.unshift(await compileUsingElectronCompile(mainFileSet, fileWalker.packager))
-    }
-    return fileSets
-  }
-}
-
 /** @internal */
 export class AppFileWalker implements FileConsumer {
   readonly metadata = new Map<string, Stats>()
+  readonly filter: Filter
 
-  constructor(readonly src: string, readonly packager: Packager, readonly filter: Filter) {
+  constructor(readonly matcher: FileMatcher, readonly packager: Packager) {
+    if (!matcher.isSpecifiedAsEmptyArray && (matcher.isEmpty() || matcher.containsOnlyIgnore())) {
+      matcher.prependPattern("**/*")
+    }
+    this.filter = matcher.createFilter()
   }
 
+  // noinspection JSUnusedGlobalSymbols
   consume(file: string, fileStat: Stats, parent: string, siblingNames: Array<string>): any {
     if (fileStat.isDirectory()) {
       // https://github.com/electron-userland/electron-builder/issues/1539
@@ -92,7 +66,7 @@ export class AppFileWalker implements FileConsumer {
   }
 
   private handleSymlink(fileStat: Stats, file: string, linkTarget: string) {
-    const link = path.relative(this.src, linkTarget)
+    const link = path.relative(this.matcher.from, linkTarget)
     if (link.startsWith("..")) {
       // outside of project, linked module (https://github.com/electron-userland/electron-builder/issues/675)
       return stat(linkTarget)
@@ -197,54 +171,4 @@ export class AppFileWalker implements FileConsumer {
     }
     return result
   }
-}
-
-const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
-/** @internal */
-export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
-
-async function compileUsingElectronCompile(fileSet: FileSet, packager: Packager): Promise<FileSet> {
-  log("Compiling using electron-compile")
-
-  const electronCompileCache = await packager.tempDirManager.getTempFile("electron-compile-cache")
-  const cacheDir = path.join(electronCompileCache, ".cache")
-  // clear and create cache dir
-  await ensureDir(cacheDir)
-  const compilerHost = await createElectronCompilerHost(fileSet.src, cacheDir)
-  const nextSlashIndex = fileSet.src.length + 1
-  // pre-compute electron-compile to cache dir - we need to process only subdirectories, not direct files of app dir
-  await BluebirdPromise.map(fileSet.files, file => {
-    if (file.includes(NODE_MODULES_PATTERN) || file.includes(BOWER_COMPONENTS_PATTERN)
-      || !file.includes(path.sep, nextSlashIndex) // ignore not root files
-      || !fileSet.metadata.get(file)!.isFile()) {
-      return null
-    }
-    return compilerHost.compile(file)
-      .then((it: any) => null)
-  }, CONCURRENCY)
-
-  await compilerHost.saveConfiguration()
-
-  const metadata = new Map<string, Stats>()
-  const cacheFiles = await walk(cacheDir, (file, stat) => !file.startsWith("."), {
-    consume: (file, fileStat) => {
-      if (fileStat.isFile()) {
-        metadata.set(file, fileStat)
-      }
-      return null
-    }
-  })
-
-  // add shim
-  const shimPath = `${fileSet.src}/${ELECTRON_COMPILE_SHIM_FILENAME}`
-  cacheFiles.push(shimPath)
-  metadata.set(shimPath, {isFile: () => true, isDirectory: () => false} as any)
-
-  const transformedFiles = new Array(cacheFiles.length)
-  transformedFiles[cacheFiles.length - 1] = `
-'use strict';
-require('electron-compile').init(__dirname, require('path').resolve(__dirname, '${packager.metadata.main || "index"}'), true);
-`
-  // cache files should be first (better IO)
-  return {src: electronCompileCache, files: cacheFiles, transformedFiles, metadata}
 }

@@ -20,14 +20,10 @@ export function hasMagic(pattern: Minimatch) {
 }
 
 /** @internal */
-export function createFilter(src: string, patterns: Array<Minimatch>, rawFilter?: (file: string) => boolean, excludePatterns?: Array<Minimatch> | null): Filter {
+export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
   return (it, stat) => {
     if (src === it) {
       return true
-    }
-
-    if (rawFilter != null && !rawFilter(it)) {
-      return false
     }
 
     let relative = it.substring(src.length + 1)

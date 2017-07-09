@@ -16,9 +16,15 @@
 <dd></dd>
 <dt><a href="#module_electron-builder/out/publish/PublishManager">electron-builder/out/publish/PublishManager</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/util/asarUtil">electron-builder/out/util/asarUtil</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/util/flags">electron-builder/out/util/flags</a></dt>
 <dd></dd>
+<dt><a href="#module_electron-builder/out/util/packageDependencies">electron-builder/out/util/packageDependencies</a></dt>
+<dd></dd>
 <dt><a href="#module_electron-builder/out/util/timer">electron-builder/out/util/timer</a></dt>
+<dd></dd>
+<dt><a href="#module_electron-builder/out/util/yarn">electron-builder/out/util/yarn</a></dt>
 <dd></dd>
 <dt><a href="#module_electron-builder/out/windowsCodeSign">electron-builder/out/windowsCodeSign</a></dt>
 <dd></dd>
@@ -30,16 +36,13 @@
 * [electron-builder](#module_electron-builder)
     * [`.AfterPackContext`](#AfterPackContext)
     * [`.ArtifactCreated`](#ArtifactCreated)
-    * [`.BuildInfo`](#BuildInfo)
-        * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-        * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
     * [`.BuildResult`](#BuildResult)
     * [`.CommonLinuxOptions`](#CommonLinuxOptions)
     * [`.CommonNsisOptions`](#CommonNsisOptions)
     * [`.ForgeOptions`](#ForgeOptions)
     * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
     * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
-    * [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+    * [.Packager](#Packager)
         * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
         * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
         * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
@@ -88,46 +91,6 @@
 | data| <code>Buffer</code> | 
 | safeArtifactName| <code>String</code> | 
 | publishConfig| <code>[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)</code> | 
-
-<a name="BuildInfo"></a>
-### `BuildInfo`
-**Kind**: interface of [<code>electron-builder</code>](Options#module_electron-builder)  
-**Properties**
-
-| Name | Type |
-| --- | --- |
-| **options**| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
-| **metadata**| <code>[Metadata](Options#Metadata)</code> | 
-| **config**| <code>[Config](Options#Config)</code> | 
-| **projectDir**| <code>String</code> | 
-| **appDir**| <code>String</code> | 
-| **isTwoPackageJsonProjectLayoutUsed**| <code>Boolean</code> | 
-| **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
-| **tempDirManager**| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
-| **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
-| **isPrepackedAppAsar**| <code>Boolean</code> | 
-| **cancellationToken**| <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
-
-
-* [`.BuildInfo`](#BuildInfo)
-    * [`.afterPack(context)`](#module_electron-builder.BuildInfo+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
-    * [`.dispatchArtifactCreated(event)`](#module_electron-builder.BuildInfo+dispatchArtifactCreated)
-
-<a name="module_electron-builder.BuildInfo+afterPack"></a>
-#### `buildInfo.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
-**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
-
-| Param | Type |
-| --- | --- |
-| context | <code>[AfterPackContext](#AfterPackContext)</code> | 
-
-<a name="module_electron-builder.BuildInfo+dispatchArtifactCreated"></a>
-#### `buildInfo.dispatchArtifactCreated(event)`
-**Kind**: instance method of [<code>BuildInfo</code>](#BuildInfo)  
-
-| Param | Type |
-| --- | --- |
-| event | <code>[ArtifactCreated](#ArtifactCreated)</code> | 
 
 <a name="BuildResult"></a>
 ### `BuildResult`
@@ -195,7 +158,7 @@
 
 | Name | Type |
 | --- | --- |
-| files| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
+| files| <code>Array&lt;String \| [FilePattern](Options#FilePattern)&gt;</code> \| <code>[FilePattern](Options#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
 | extraFiles| <code>Array&lt;String \| [FilePattern](Options#FilePattern)&gt;</code> \| <code>[FilePattern](Options#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
 | extraResources| <code>Array&lt;String \| [FilePattern](Options#FilePattern)&gt;</code> \| <code>[FilePattern](Options#FilePattern)</code> \| <code>String</code> \| <code>null</code> | 
 | asarUnpack| <code>Array&lt;String&gt;</code> \| <code>String</code> \| <code>null</code> | 
@@ -206,9 +169,8 @@
 | forceCodeSigning| <code>Boolean</code> | 
 
 <a name="Packager"></a>
-### Packager ⇐ <code>[BuildInfo](#BuildInfo)</code>
+### Packager
 **Kind**: class of [<code>electron-builder</code>](Options#module_electron-builder)  
-**Extends**: <code>[BuildInfo](#BuildInfo)</code>  
 **Properties**
 
 | Name | Type |
@@ -224,9 +186,10 @@
 | tempDirManager = <code>new TmpDir()</code>| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
 | options| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
+| **productionDeps**| <code>[Lazy](electron-builder-http#Lazy)&lt;Array&lt;module:electron-builder/out/util/packageDependencies.Dependency&gt;&gt;</code> | 
 
 
-* [.Packager](#Packager) ⇐ <code>[BuildInfo](#BuildInfo)</code>
+* [.Packager](#Packager)
     * [`.addAfterPackHandler(handler)`](#module_electron-builder.Packager+addAfterPackHandler)
     * [`.afterPack(context)`](#module_electron-builder.Packager+afterPack) ⇒ <code>Promise&lt;void&gt;</code>
     * [`.artifactCreated(handler)`](#module_electron-builder.Packager+artifactCreated) ⇒ <code>[Packager](#Packager)</code>
@@ -244,7 +207,6 @@
 <a name="module_electron-builder.Packager+afterPack"></a>
 #### `packager.afterPack(context)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
-**Overrides**: [<code>afterPack</code>](#module_electron-builder.BuildInfo+afterPack)  
 
 | Param | Type |
 | --- | --- |
@@ -264,7 +226,6 @@
 <a name="module_electron-builder.Packager+dispatchArtifactCreated"></a>
 #### `packager.dispatchArtifactCreated(event)`
 **Kind**: instance method of [<code>Packager</code>](#Packager)  
-**Overrides**: [<code>dispatchArtifactCreated</code>](#module_electron-builder.BuildInfo+dispatchArtifactCreated)  
 
 | Param | Type |
 | --- | --- |
@@ -733,7 +694,7 @@
 
 | Name | Type |
 | --- | --- |
-| progress = <code>(&lt;TtyWriteStream&gt;process.stdout).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
+| progress = <code>(process.stdout as TtyWriteStream).isTTY ? new MultiProgress() : null</code>| <code>null</code> \| <code>[MultiProgress](electron-publish#MultiProgress)</code> | 
 
 
 * [.PublishManager](#PublishManager) ⇐ <code>[PublishContext](electron-publish#PublishContext)</code>
@@ -787,6 +748,20 @@
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
 | arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
 
+<a name="module_electron-builder/out/util/asarUtil"></a>
+## electron-builder/out/util/asarUtil
+<a name="module_electron-builder/out/util/asarUtil.copyFileOrData"></a>
+### `electron-builder/out/util/asarUtil.copyFileOrData(fileCopier, data, src, destination, stats)` ⇒ <code>Promise&lt;void&gt;</code>
+**Kind**: method of [<code>electron-builder/out/util/asarUtil</code>](#module_electron-builder/out/util/asarUtil)  
+
+| Param | Type |
+| --- | --- |
+| fileCopier | <code>module:electron-builder-util/out/fs.FileCopier</code> | 
+| data | <code>String</code> \| <code>Buffer</code> \| <code>undefined</code> \| <code>null</code> | 
+| src | <code>String</code> | 
+| destination | <code>String</code> | 
+| stats | <code>module:fs.Stats</code> | 
+
 <a name="module_electron-builder/out/util/flags"></a>
 ## electron-builder/out/util/flags
 
@@ -808,6 +783,16 @@
 <a name="module_electron-builder/out/util/flags.isUseSystemWine"></a>
 ### `electron-builder/out/util/flags.isUseSystemWine()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
+<a name="module_electron-builder/out/util/packageDependencies"></a>
+## electron-builder/out/util/packageDependencies
+<a name="module_electron-builder/out/util/packageDependencies.createLazyProductionDeps"></a>
+### `electron-builder/out/util/packageDependencies.createLazyProductionDeps(projectDir)` ⇒ <code>[Lazy](electron-builder-http#Lazy)&lt;Array&lt;module:electron-builder/out/util/packageDependencies.Dependency&gt;&gt;</code>
+**Kind**: method of [<code>electron-builder/out/util/packageDependencies</code>](#module_electron-builder/out/util/packageDependencies)  
+
+| Param | Type |
+| --- | --- |
+| projectDir | <code>String</code> | 
+
 <a name="module_electron-builder/out/util/timer"></a>
 ## electron-builder/out/util/timer
 
@@ -829,6 +814,22 @@
 | Param | Type |
 | --- | --- |
 | label | <code>String</code> | 
+
+<a name="module_electron-builder/out/util/yarn"></a>
+## electron-builder/out/util/yarn
+<a name="RebuildOptions"></a>
+### `RebuildOptions`
+**Kind**: interface of [<code>electron-builder/out/util/yarn</code>](#module_electron-builder/out/util/yarn)  
+**Properties**
+
+| Name | Type |
+| --- | --- |
+| **frameworkInfo**| <code>module:electron-builder/out/util/yarn.DesktopFrameworkInfo</code> | 
+| productionDeps| <code>[Lazy](electron-builder-http#Lazy)&lt;Array&lt;module:electron-builder/out/util/packageDependencies.Dependency&gt;&gt;</code> | 
+| platform| <code>String</code> | 
+| arch| <code>String</code> | 
+| buildFromSource| <code>Boolean</code> | 
+| additionalArgs| <code>Array&lt;String&gt;</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/windowsCodeSign"></a>
 ## electron-builder/out/windowsCodeSign

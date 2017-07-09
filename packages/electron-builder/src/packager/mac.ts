@@ -27,7 +27,7 @@ export function filterCFBundleIdentifier(identifier: string) {
 }
 
 /** @internal */
-export async function createApp(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity) {
+export async function createMacApp(packager: PlatformPackager<any>, appOutDir: string, asarIntegrity: AsarIntegrity | null) {
   const appInfo = packager.appInfo
   const appFilename = appInfo.productFilename
 

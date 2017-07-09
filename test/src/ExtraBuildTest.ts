@@ -36,7 +36,7 @@ test.ifAll.ifNotWindows("custom buildResources and output dirs: linux", createBu
 test.ifAll.ifLinuxOrDevMac("prepackaged", app({
   targets: linuxDirTarget,
 }, {
-  packed: async (context) => {
+  packed: async context => {
     await build({
       prepackaged: path.join(context.outDir, "linux-unpacked"),
       project: context.projectDir,
@@ -67,7 +67,7 @@ test.ifAll.ifLinuxOrDevMac("retrieve latest electron version", app({
 test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
   targets: linuxDirTarget,
 }, {
-  packed: async (context) => {
+  packed: async context => {
     await build({
       projectDir: context.projectDir,
       linux: ["deb"],
@@ -75,7 +75,7 @@ test.ifAll.ifDevOrLinuxCi("override targets in the config", app({
         publish: null,
         // https://github.com/electron-userland/electron-builder/issues/1355
         linux: {
-          "target": [
+          target: [
             "AppImage",
             "deb",
             "rpm"
@@ -107,7 +107,7 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     },
   },
 }, {
-  packed: async (context) => {
+  packed: async context => {
     await assertThat(path.join(context.projectDir, "dist", "win-unpacked")).doesNotExist()
     await assertThat(path.join(context.projectDir, "dist", "latest.yml")).doesNotExist()
     await expectUpdateMetadata(context, Arch.ia32)
@@ -124,19 +124,19 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
 
 test.ifAll.ifDevOrLinuxCi("scheme validation", appThrows({
   targets: linuxDirTarget,
-  config: <any>{
+  config: {
     foo: 123,
     mac: {
       foo: 12123,
     },
-  },
+  } as any,
 }))
 
 test.ifDevOrLinuxCi("scheme validation 2", appThrows({
   targets: linuxDirTarget,
-  config: <any>{
+  config: {
     appId: {},
-  },
+  } as any,
 }))
 
 // https://github.com/electron-userland/electron-builder/issues/1302
@@ -146,27 +146,27 @@ test.ifAll.ifDevOrLinuxCi("scheme validation extraFiles", app({
     linux: {
       target: "zip:ia32",
     },
-    "extraFiles": [
+    extraFiles: [
       "lib/*.jar",
       "lib/Proguard/**/*",
       {
-        "from": "lib/",
-        "to": ".",
-        "filter": [
+        from: "lib/",
+        to: ".",
+        filter: [
           "*.dll"
         ]
       },
       {
-        "from": "lib/",
-        "to": ".",
-        "filter": [
+        from: "lib/",
+        to: ".",
+        filter: [
           "*.exe"
         ]
       },
       "BLClient/BLClient.json",
       {
-        "from": "include/",
-        "to": "."
+        from: "include/",
+        to: "."
       }
     ],
   },

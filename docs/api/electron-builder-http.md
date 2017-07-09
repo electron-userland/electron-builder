@@ -250,7 +250,7 @@
 
 | Param | Type |
 | --- | --- |
-| callback | <code>function</code> | 
+| callback | <code>any</code> | 
 
 <a name="module_electron-builder-http.DigestTransform+_transform"></a>
 #### `digestTransform._transform(chunk, encoding, callback)`
@@ -260,7 +260,7 @@
 | --- | --- |
 | chunk | <code>any</code> | 
 | encoding | <code>String</code> | 
-| callback | <code>function</code> | 
+| callback | <code>any</code> | 
 
 <a name="HttpError"></a>
 ### HttpError ⇐ <code>Error</code>
@@ -303,7 +303,7 @@
 
 | Param | Type |
 | --- | --- |
-| callback | <code>function</code> | 
+| callback | <code>any</code> | 
 
 <a name="module_electron-builder-http.ProgressCallbackTransform+_transform"></a>
 #### `progressCallbackTransform._transform(chunk, encoding, callback)`
@@ -313,7 +313,7 @@
 | --- | --- |
 | chunk | <code>any</code> | 
 | encoding | <code>String</code> | 
-| callback | <code>function</code> | 
+| callback | <code>any</code> | 
 
 <a name="module_electron-builder-http.configureRequestOptions"></a>
 ### `electron-builder-http.configureRequestOptions(options, token, method)` ⇒ <code>module:http.RequestOptions</code>

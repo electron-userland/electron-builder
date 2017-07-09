@@ -22,9 +22,8 @@ export function hasDep(name: string, info: Packager) {
 }
 
 /** @internal */
-export async function createTransformer(srcDir: string, extraMetadata: any): Promise<FileTransformer> {
+export function createTransformer(srcDir: string, extraMetadata: any): FileTransformer {
   const mainPackageJson = path.join(srcDir, "package.json")
-
   return file => {
     if (file === mainPackageJson) {
       return modifyMainPackageJson(file, extraMetadata)

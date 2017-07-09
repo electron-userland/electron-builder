@@ -11,7 +11,7 @@ async function main() {
   const userFiles = await globby([
     "builder/electron-builder.js",
   ], {cwd: source})
-  
+
   const appUpdateFiles = await globby([
     "updater/*.js",
     "http/electron-builder-http-out-updateInfo.js",
@@ -19,7 +19,7 @@ async function main() {
     "!updater/electron-updater-out-*Updater.js",
     "!updater/electron-updater-out-*Provider.js",
   ], {cwd: source})
-  
+
   const publishOptionsFiles = await globby([
     "http/electron-builder-http-out-publishOptions.js",
   ], {cwd: source})
@@ -44,6 +44,9 @@ async function main() {
     "!**/*-repositoryInfo.js",
     "!**/*-codeSign.js",
     "!**/*-cacheManager.js",
+    "!**/*-AppFileCopierHelper.js",
+    "!**/*-appFileCopier.js",
+    "!**/*-AppFileWalker.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 

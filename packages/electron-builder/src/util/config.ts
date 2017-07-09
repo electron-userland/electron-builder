@@ -1,6 +1,6 @@
 import Ajv from "ajv"
 import { CancellationToken } from "electron-builder-http"
-import { debug, log, warn } from "electron-builder-util"
+import { asArray, debug, log, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
@@ -68,9 +68,15 @@ export async function getConfig(projectDir: string, configPath: string | null, p
   let extendsSpec = config.extends
   if (extendsSpec == null && extendsSpec !== null && packageMetadata != null) {
     const devDependencies = packageMetadata.devDependencies
-    if (devDependencies != null && "react-scripts" in devDependencies) {
-      extendsSpec = "react-cra"
-      config.extends = extendsSpec
+    if (devDependencies != null) {
+      if ("react-scripts" in devDependencies) {
+        extendsSpec = "react-cra"
+        config.extends = extendsSpec
+      }
+      else if ("electron-webpack" in devDependencies) {
+        extendsSpec = "electron-webpack/electron-builder.yml"
+        config.extends = extendsSpec
+      }
     }
   }
 
@@ -78,17 +84,49 @@ export async function getConfig(projectDir: string, configPath: string | null, p
     return config
   }
 
-  let parentConfig: Config
+  let parentConfig: Config | null
   if (extendsSpec === "react-cra") {
     parentConfig = await reactCra(projectDir)
   }
   else {
     let spec = extendsSpec
+    let isFileSpec: boolean | undefined
     if (spec.startsWith("file:")) {
       spec = spec.substring("file:".length)
+      isFileSpec = true
     }
-    parentConfig = await doLoadConfig(path.resolve(projectDir, spec), projectDir)
+
+    parentConfig = await orNullIfFileNotExist(doLoadConfig(path.resolve(projectDir, spec), projectDir))
+    if (parentConfig == null && isFileSpec !== true) {
+      let resolved: string | null = null
+      try {
+        resolved = require.resolve(spec)
+      }
+      catch (e) {
+        // ignore
+      }
+
+      if (resolved != null) {
+        parentConfig = await doLoadConfig(resolved, projectDir)
+      }
+    }
+
+    if (parentConfig == null) {
+      throw new Error(`Cannot find parent config file: ${spec}`)
+    }
   }
+
+  // electron-webpack and electrify client config - want to exclude some files
+  // we add client files configuration to main parent file matcher
+  if (parentConfig.files != null && config.files != null && (Array.isArray(config.files) || typeof config.files === "string") && Array.isArray(parentConfig.files) && parentConfig.files.length > 0) {
+    const mainFileSet = parentConfig.files[0]
+    if (typeof mainFileSet === "object" && (mainFileSet.from == null || mainFileSet.from === ".")) {
+      mainFileSet.filter = asArray(mainFileSet.filter)
+      mainFileSet.filter.push(...asArray(config.files as any))
+      delete (config as any).files
+    }
+  }
+
   return deepAssign(parentConfig, config)
 }
 

@@ -2,21 +2,22 @@ import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
 import { asArray, isEmptyOrSpaces, Lazy, log, use, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
-import { copyDir, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
+import { statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { orIfFileNotExist } from "electron-builder-util/out/promise"
 import { readdir, rename } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
 import { AppInfo } from "./appInfo"
 import { Arch, getArchSuffix, Platform, Target, TargetSpecificOptions } from "./core"
-import { copyFiles, createFileMatcher, FileMatcher, getFileMatchers } from "./fileMatcher"
+import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
 import { AfterPackContext, AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
 import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
+import { createMacApp } from "./packager/mac"
 import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
-import { AppFileCopierHelper, AppFileWalker, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileWalker"
+import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
 import { AsarPackager, checkFileInArchive } from "./util/asarUtil"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
 
@@ -107,7 +108,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
   private getExtraFileMatchers(isResources: boolean, appOutDir: string, macroExpander: (pattern: string) => string, customBuildOptions: DC): Array<FileMatcher> | null {
     const base = isResources ? this.getResourcesDir(appOutDir) : (this.platform === Platform.MAC ? path.join(appOutDir, `${this.appInfo.productFilename}.app`, "Contents") : appOutDir)
-    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, true, macroExpander, customBuildOptions)
+    return getFileMatchers(this.config, isResources ? "extraResources" : "extraFiles", this.projectDir, base, macroExpander, customBuildOptions)
   }
 
   get electronDistMacOsAppName() {
@@ -129,8 +130,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 
     const asarOptions = await this.computeAsarOptions(platformSpecificBuildOptions)
     const macroExpander = (it: string) => this.expandMacro(it, arch == null ? null : Arch[arch], {"/*": "{,/**/*}"})
-    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
-    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
 
     const resourcesPath = this.platform === Platform.MAC ? path.join(appOutDir, this.electronDistMacOsAppName, "Contents", "Resources") : path.join(appOutDir, "resources")
 
@@ -139,7 +138,6 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     const config = this.config
     log(`Packaging for ${platformName} ${Arch[arch]} using ${isElectron ? `electron ${config.electronVersion}` : `muon ${muonVersion}`} to ${path.relative(this.projectDir, appOutDir)}`)
 
-    const appDir = this.info.appDir
     if (this.info.isPrepackedAppAsar) {
       await unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!)
     }
@@ -147,18 +145,20 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       await (isElectron ? unpackElectron(this, appOutDir, platformName, Arch[arch], config.electronVersion!) : unpackMuon(this, appOutDir, platformName, Arch[arch], muonVersion!))
     }
 
-    const rawFilter: any = null
     const excludePatterns: Array<Minimatch> = []
-    if (extraResourceMatchers != null) {
-      for (const matcher of extraResourceMatchers) {
-        matcher.computeParsedPatterns(excludePatterns, this.info.projectDir)
+
+    const computeParsedPatterns = (patterns: Array<FileMatcher> | null) => {
+      if (patterns != null) {
+        for (const pattern of patterns) {
+          pattern.computeParsedPatterns(excludePatterns, this.info.projectDir)
+        }
       }
     }
-    if (extraFileMatchers != null) {
-      for (const matcher of extraFileMatchers) {
-        matcher.computeParsedPatterns(excludePatterns, this.info.projectDir)
-      }
-    }
+
+    const extraResourceMatchers = this.getExtraFileMatchers(true, appOutDir, macroExpander, platformSpecificBuildOptions)
+    computeParsedPatterns(extraResourceMatchers)
+    const extraFileMatchers = this.getExtraFileMatchers(false, appOutDir, macroExpander, platformSpecificBuildOptions)
+    computeParsedPatterns(extraFileMatchers)
 
     const packContext: AfterPackContext = {
       appOutDir, outDir, arch, targets,
@@ -166,33 +166,9 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       electronPlatformName: platformName,
     }
 
-    const defaultMatcher = createFileMatcher(appDir, resourcesPath, macroExpander, platformSpecificBuildOptions, this, outDir)
-    const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
-    if (isElectronCompile) {
-      defaultMatcher.addPattern("!.cache{,/**/*}")
-    }
-
-    const filter = defaultMatcher.createFilter(rawFilter, excludePatterns.length > 0 ? excludePatterns : null)
-
-    const transformer = await createTransformer(appDir, isElectronCompile ? {
-      originalMain: this.info.metadata.main,
-      main: ELECTRON_COMPILE_SHIM_FILENAME, ...config.extraMetadata} : config.extraMetadata)
     const taskManager = new AsyncTaskManager(this.info.cancellationToken)
 
-    const fileCopierHelper = new AppFileCopierHelper(transformer)
-    const fileWalker = new AppFileWalker(appDir, this.info, filter)
-
-    if (this.info.isPrepackedAppAsar) {
-      taskManager.addTask(copyDir(appDir, path.join(resourcesPath), filter, transformer))
-    }
-    else if (asarOptions == null) {
-      taskManager.addTask(BluebirdPromise.each(fileCopierHelper.collect(fileWalker, isElectronCompile), it => copyAppFiles(it, path.join(resourcesPath, "app"), this.info)))
-    }
-    else {
-      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, path.join(resourcesPath, "app"), false, macroExpander, platformSpecificBuildOptions)
-      const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
-      taskManager.addTask(new AsarPackager(appDir, resourcesPath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(await fileCopierHelper.collect(fileWalker, isElectronCompile), this))
-    }
+    this.copyAppFiles(taskManager, asarOptions, resourcesPath, outDir, platformSpecificBuildOptions, excludePatterns, macroExpander)
 
     taskManager.addTask(unlinkIfExists(path.join(resourcesPath, "default_app.asar")))
     taskManager.addTask(unlinkIfExists(path.join(appOutDir, "version")))
@@ -204,11 +180,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await taskManager.awaitTasks()
 
     if (platformName === "darwin" || platformName === "mas") {
-      await (require("./packager/mac") as any).createApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
+      await createMacApp(this, appOutDir, asarOptions == null ? null : await computeData(resourcesPath, asarOptions.externalAllowed ? {externalAllowed: true} : null))
     }
 
-    await copyFiles(extraResourceMatchers)
-    await copyFiles(extraFileMatchers)
+    await BluebirdPromise.each([extraResourceMatchers, extraFileMatchers], it => copyFiles(it))
 
     if (this.info.cancellationToken.cancelled) {
       return
@@ -219,8 +194,43 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.signApp(packContext)
   }
 
+  private copyAppFiles(taskManager: AsyncTaskManager, asarOptions: AsarOptions | null, resourcePath: string, outDir: string, platformSpecificBuildOptions: DC, excludePatterns: Array<Minimatch>, macroExpander: ((it: string) => string)) {
+    const appDir = this.info.appDir
+    const config = this.config
+    const isElectronCompile = asarOptions != null && isElectronCompileUsed(this.info)
+
+    const defaultDestination = path.join(resourcePath, "app")
+
+    const mainMatchers = getMainFileMatchers(appDir, defaultDestination, macroExpander, platformSpecificBuildOptions, this, outDir, isElectronCompile)
+    if (excludePatterns.length > 0) {
+      for (const matcher of mainMatchers) {
+        matcher.excludePatterns = excludePatterns
+      }
+    }
+    const transformer = createTransformer(appDir, isElectronCompile ? {
+      originalMain: this.info.metadata.main,
+      main: ELECTRON_COMPILE_SHIM_FILENAME, ...config.extraMetadata
+    } : config.extraMetadata)
+    const _computeFileSets = (matchers: Array<FileMatcher>) => {
+      return computeFileSets(matchers, transformer, this.info, isElectronCompile)
+    }
+
+    if (this.info.isPrepackedAppAsar) {
+      taskManager.addTask(BluebirdPromise.each(_computeFileSets([new FileMatcher(appDir, resourcePath, macroExpander)]), it => copyAppFiles(it, this.info)))
+    }
+    else if (asarOptions == null) {
+      taskManager.addTask(BluebirdPromise.each(_computeFileSets(mainMatchers), it => copyAppFiles(it, this.info)))
+    }
+    else {
+      const unpackPattern = getFileMatchers(config, "asarUnpack", appDir, defaultDestination, macroExpander, platformSpecificBuildOptions)
+      const fileMatcher = unpackPattern == null ? null : unpackPattern[0]
+      taskManager.addTask(_computeFileSets(mainMatchers)
+        .then(fileSets => new AsarPackager(appDir, resourcePath, asarOptions, fileMatcher == null ? null : fileMatcher.createFilter()).pack(fileSets, this)))
+    }
+  }
+
+  // tslint:disable:no-empty
   protected async postInitApp(packContext: AfterPackContext): Promise<any> {
-    // no default impl
   }
 
   protected signApp(packContext: AfterPackContext): Promise<any> {

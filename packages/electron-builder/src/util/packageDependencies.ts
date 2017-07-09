@@ -31,6 +31,7 @@ const knownAlwaysIgnoredDevDeps = new Set([
   "jest", "jest-cli", "prebuild-install", "nan", "node-pre-gyp",
   "asar-integrity", "asar",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
+  "react-scripts",
 ])
 
 export function createLazyProductionDeps(projectDir: string) {
@@ -124,7 +125,7 @@ async function readChildPackage(name: string, parentDir: string, parent: any, pa
   if (isSymbolicLink) {
     dir = await orNullIfFileNotExist(realpath(dir))
     if (dir == null) {
-      debug(`Broken symlink ${dir}`)
+      debug(`Broken symlink ${rawDir}`)
       return null
     }
   }

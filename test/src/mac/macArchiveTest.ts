@@ -8,11 +8,11 @@ import { parseString } from "xml2js"
 import { assertThat } from "../helpers/fileAssert"
 import { app, createMacTargetTest, getFixtureDir, parseFileList } from "../helpers/packTester"
 
-test.ifMac("invalid target", () => assertThat(createMacTargetTest([<any>"ttt"])()).throws())
+test.ifMac("invalid target", () => assertThat(createMacTargetTest(["ttt" as any])()).throws())
 
-test("only zip", createMacTargetTest(["zip"]));
+test.ifNotWindows("only zip", createMacTargetTest(["zip"]))
 
-test("tar.gz", createMacTargetTest(["tar.gz"]))
+test.ifNotWindows("tar.gz", createMacTargetTest(["tar.gz"]))
 
 const it = process.env.CSC_KEY_PASSWORD == null ? test.skip : test.ifMac
 
@@ -33,10 +33,10 @@ test.ifAll.ifMac("pkg scripts", app({
   targets: Platform.MAC.createTarget("pkg"),
 }, {
   signed: false,
-  projectDirCreated: async (projectDir) => {
+  projectDirCreated: async projectDir => {
     await symlink(path.join(getFixtureDir(), "pkg-scripts"), path.join(projectDir, "build", "pkg-scripts"))
   },
-  packed: async (context) => {
+  packed: async context => {
     const pkgPath = path.join(context.outDir, "Test App ßW-1.1.0.pkg")
     const fileList = pathSorter(parseFileList(await exec("pkgutil", ["--payload-files", pkgPath]), false))
     expect(fileList).toMatchSnapshot()

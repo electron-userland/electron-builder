@@ -187,7 +187,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * <a name="FileInfo-url"></a>**`url`** String
 * <a name="FileInfo-sha2"></a>`sha2` String
 * <a name="FileInfo-sha512"></a>`sha512` String
-* <a name="FileInfo-headers"></a>`headers` Object
+* <a name="FileInfo-headers"></a>`headers` [RequestHeaders](electron-builder-http#RequestHeaders)
 
 <a name="Logger"></a>
 ### `Logger`
