@@ -35,8 +35,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.31.tgz#54aeb8bcaaf94a7b1a64311bc318dbfe601a593a"
 
 "@types/node@*":
-  version "8.0.9"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.9.tgz#19f44c3b6cb8a70d261d366f73650e3e3891ab2d"
+  version "8.0.10"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.10.tgz#12efec9183b072d5f951cf86395a4c780f868a17"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -2234,6 +2234,10 @@ lodash.pick@^4.4.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/lodash.pick/-/lodash.pick-4.4.0.tgz#52f05610fff9ded422611441ed1fc123a03001b3"
 
+lodash.toarray@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/lodash.toarray/-/lodash.toarray-4.4.0.tgz#24c4bfcd6b2fba38bfd0594db1179d8e9b656561"
+
 lodash@^4.0.0, lodash@^4.14.0, lodash@^4.2.0, lodash@^4.5.1, lodash@^4.8.0:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
@@ -2391,10 +2395,11 @@ natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
 
-node-emoji@^1.6.1:
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/node-emoji/-/node-emoji-1.6.1.tgz#7d2f0a8fd11237cba0ddcef3bdc015dc50b011f9"
+node-emoji@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/node-emoji/-/node-emoji-1.7.0.tgz#a400490aac409b616d13941532200f128af037f9"
   dependencies:
+    lodash.toarray "^4.4.0"
     string.prototype.codepointat "^0.2.0"
 
 node-int64@^0.4.0:
@@ -2875,7 +2880,7 @@ repeating@^2.0.0:
   dependencies:
     is-finite "^1.0.0"
 
-req-then@^0.6.2:
+req-then@^0.6.4:
   version "0.6.4"
   resolved "https://registry.yarnpkg.com/req-then/-/req-then-0.6.4.tgz#9f9c04626afd311ae01d727846a0a1075c0e1965"
   dependencies:
@@ -3499,13 +3504,13 @@ url@0.10.3:
     querystring "0.2.0"
 
 usage-stats@^0.9.0:
-  version "0.9.3"
-  resolved "https://registry.yarnpkg.com/usage-stats/-/usage-stats-0.9.3.tgz#6c906491becb9b4e8659f2e0d27f337fcf8f087e"
+  version "0.9.4"
+  resolved "https://registry.yarnpkg.com/usage-stats/-/usage-stats-0.9.4.tgz#ff06ba51d824faa1982f48a055dea8495a249077"
   dependencies:
     array-back "^2.0.0"
     home-path "^1.0.5"
     mkdirp2 "^1.0.3"
-    req-then "^0.6.2"
+    req-then "^0.6.4"
     typical "^2.6.1"
     uuid "^3.1.0"
 

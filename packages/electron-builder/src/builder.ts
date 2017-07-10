@@ -169,32 +169,42 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     (config as any).extraMetadata = extraMetadata
   }
 
-  if (config != null && typeof config !== "string" && config.extraMetadata != null) {
-    coerceTypes(config.extraMetadata)
+  if (config != null && typeof config !== "string") {
+    if (config.extraMetadata != null) {
+      coerceTypes(config.extraMetadata)
+    }
+    if (config.mac != null) {
+      // ability to disable code sign using -c.mac.identity=null
+      coerceValue(config.mac, "identity")
+    }
   }
 
   return result as BuildOptions
 }
 
+function coerceValue(host: any, key: string): void {
+  const value = host[key]
+  if (value === "true") {
+    host[key] = true
+  }
+  else if (value === "false") {
+    host[key] = false
+  }
+  else if (value === "null") {
+    host[key] = null
+  }
+  else if (key === "version" && typeof value === "number") {
+    host[key] = value.toString()
+  }
+  else if (value != null && typeof value === "object") {
+    coerceTypes(value)
+  }
+}
+
 /** @private */
 export function coerceTypes(host: any): any {
   for (const key of Object.getOwnPropertyNames(host)) {
-    const value = host[key]
-    if (value === "true") {
-      host[key] = true
-    }
-    else if (value === "false") {
-      host[key] = false
-    }
-    else if (value === "null") {
-      host[key] = null
-    }
-    else if (key === "version" && typeof value === "number") {
-      host[key] = value.toString()
-    }
-    else if (value != null && typeof value === "object") {
-      coerceTypes(value)
-    }
+    coerceValue(host, key)
   }
   return host
 }
