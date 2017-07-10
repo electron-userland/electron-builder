@@ -88,7 +88,7 @@
     "jest-junit": "^1.5.1",
     "jsdoc-to-markdown": "^3.0.0",
     "path-sort": "^0.1.0",
-    "ts-babel": "^3.1.0",
+    "ts-babel": "^3.1.2",
     "tslint": "^5.5.0",
     "typescript": "^2.4.1",
     "v8-compile-cache": "^1.1.0",

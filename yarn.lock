@@ -3353,15 +3353,16 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-3.1.0.tgz#148987b1a7bec76c5e419f65ef32c92a5e679450"
+ts-babel@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-3.1.2.tgz#e63b93f842b607bb0121ec977c12074543bc552f"
   dependencies:
     babel-core "^6.25.0"
     bluebird-lst "^1.0.2"
     chalk "^2.0.1"
     fs-extra-p "^4.3.0"
     source-map-support "^0.4.15"
+    v8-compile-cache "^1.1.0"
 
 ts-jsdoc@^2.0.3:
   version "2.0.3"
