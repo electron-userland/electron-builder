@@ -132,7 +132,12 @@ export interface S3Options extends PublishConfiguration {
 export function s3Url(options: S3Options) {
   let url: string
   if (!options.bucket.includes(".")) {
-    url = `https://${options.bucket}.s3.amazonaws.com`
+    if (options.region === "cn-north-1") {
+      url = `https://${options.bucket}.s3.${options.region}.amazonaws.com.cn`
+    }
+    else {
+      url = `https://${options.bucket}.s3.amazonaws.com`
+    }
   }
   else {
     if (!options.region) {

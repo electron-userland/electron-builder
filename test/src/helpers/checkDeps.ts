@@ -45,9 +45,10 @@ async function check(projectDir: string, devPackageData: any): Promise<boolean> 
     delete (result.missing as any).toml
   }
 
-  const squirrel = (result.missing as any)["electron-builder-squirrel-windows"]
-  if (squirrel != null && squirrel.length === 1 && squirrel[0].endsWith("winPackager.js")) {
-    delete (result.missing as any)["electron-builder-squirrel-windows"]
+  for (const name of Object.keys(result.missing)) {
+    if (name === "electron-builder-squirrel-windows" || name === "electron-webpack") {
+      delete (result.missing as any)[name]
+    }
   }
 
   if (Object.keys(result.missing).length > 0) {
