@@ -28,10 +28,9 @@ export class WebInstallerTarget extends NsisTarget {
       }
 
       appPackageUrl = computeDownloadUrl(publishConfigs[0], null, packager)
-
-      defines.APP_PACKAGE_URL_IS_INCOMLETE = null
     }
 
+    defines.APP_PACKAGE_URL_IS_INCOMLETE = null
     defines.APP_PACKAGE_URL = appPackageUrl
   }
 
