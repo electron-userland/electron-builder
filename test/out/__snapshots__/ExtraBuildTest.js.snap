@@ -4,7 +4,7 @@ exports[`custom buildResources and output dirs: linux 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
@@ -22,7 +22,7 @@ exports[`custom buildResources and output dirs: win 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -46,11 +46,15 @@ exports[`override targets in the config - only arch 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "beta.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
+        "path": "beta-TestApp.exe",
+        "version": "1.0.0-beta.1",
+      },
     },
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "beta-TestApp.exe",
       "safeArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
     },
@@ -130,12 +134,12 @@ exports[`scheme validation extraFiles 1`] = `
 Object {
   "linux": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
       "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "TestApp-1.1.0-ia32.zip",
       "safeArtifactName": "TestApp-1.1.0-ia32.zip",
     },

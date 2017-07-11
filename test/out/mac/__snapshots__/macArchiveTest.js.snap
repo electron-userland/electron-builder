@@ -4,7 +4,7 @@ exports[`empty installLocation 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -45,15 +45,18 @@ exports[`only zip 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": null,
       "file": "latest-mac.json",
     },
     Object {
-      "arch": null,
       "file": "latest-mac.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-1.1.0-mac.zip",
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -65,7 +68,7 @@ exports[`pkg 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -77,7 +80,7 @@ exports[`pkg scripts 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.pkg",
       "safeArtifactName": "TestApp-1.1.0.pkg",
     },
@@ -483,7 +486,7 @@ exports[`tar.gz 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.tar.gz",
       "safeArtifactName": "TestApp-1.1.0-mac.tar.gz",
     },

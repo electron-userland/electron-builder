@@ -4,7 +4,7 @@ exports[`custom include 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -16,7 +16,7 @@ exports[`custom script 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -30,7 +30,7 @@ exports[`installerHeaderIcon 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -42,7 +42,7 @@ exports[`menuCategory 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
     },
@@ -54,7 +54,7 @@ exports[`multi language license 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -66,7 +66,7 @@ exports[`one-click 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -86,11 +86,15 @@ exports[`perMachine, no run after finish 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-Setup-1.1.0.exe",
+        "path": "TestApp Setup 1.1.0.exe",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "TestApp Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -117,7 +121,7 @@ exports[`string menuCategory 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "Test Menu Category CustomName 1.1.0.exe",
       "safeArtifactName": "test-menu-category-setup-1.1.0.exe",
     },
@@ -129,20 +133,23 @@ exports[`web installer (default github) 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "path": "Test App ßW Web Setup 1.1.0.exe",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": null,
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "TestApp-1.1.0-ia32.nsis.7z",
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
     },
   ],
@@ -161,16 +168,20 @@ exports[`web installer 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "path": "Test App ßW Web Setup 1.1.0.exe",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Web Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-x64.nsis.7z",
     },
   ],

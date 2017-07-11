@@ -4,7 +4,7 @@ exports[`custom background - new way 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -16,7 +16,7 @@ exports[`disable dmg icon (light), bundleVersion 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -28,7 +28,7 @@ exports[`license en 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -40,7 +40,7 @@ exports[`license ru 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -52,7 +52,7 @@ exports[`multi language license 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -79,12 +79,12 @@ exports[`no Applications link 2`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "NoApplicationsLink-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "NoApplicationsLink-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -96,7 +96,7 @@ exports[`no background 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "NoBackground-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -110,7 +110,7 @@ exports[`no build directory 2`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "NoBuildDirectory-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
@@ -122,7 +122,7 @@ exports[`unset dmg icon 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test ß No Volume Icon-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },

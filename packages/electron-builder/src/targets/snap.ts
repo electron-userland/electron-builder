@@ -111,23 +111,25 @@ export default class SnapTarget extends Target {
     const snapFileName = `${snap.name}_${snap.version}_${toLinuxArchString(arch)}.snap`
     const resultFile = path.join(this.outDir, snapFileName)
 
-    function mayInstallBuildPackagesCmd() {
-      if (options.buildPackages && options.buildPackages.length > 0) {
-        return `apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`
-      }
-      else {
-        return ""
-      }
-    }
-
     if (isUseDocker) {
+      const commands: Array<string> = []
+      if (options.buildPackages && options.buildPackages.length > 0) {
+        commands.push(`apt-get update && apt-get install -y ${options.buildPackages.join(" ")}`)
+      }
+
+      // https://bugs.launchpad.net/snapcraft/+bug/1692752
+      // commands.push("snapcraft --version")
+      commands.push(`cp -R /out/${path.basename(stageDir)} /s/`)
+      commands.push("cd /s")
+      commands.push(`snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`)
+
       await spawn("docker", ["run", "--rm",
         "-v", `${packager.info.projectDir}:/project`,
         "-v", `${homedir()}/.electron:/root/.electron`,
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
         "electronuserland/electron-builder:latest",
-        "/bin/bash", "-c", `${mayInstallBuildPackagesCmd()} && snapcraft --version && cp -R /out/${path.basename(stageDir)} /s/ && cd /s && snapcraft snap --target-arch ${toLinuxArchString(arch)} -o /out/${snapFileName}`], {
+        "/bin/bash", "-c", commands.join(" && ")], {
         cwd: packager.info.projectDir,
         stdio: ["ignore", "inherit", "inherit"],
       })

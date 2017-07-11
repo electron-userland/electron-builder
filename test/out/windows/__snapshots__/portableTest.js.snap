@@ -4,7 +4,7 @@ exports[`portable - artifactName and request execution level 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßWPortable.1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
     },
@@ -16,12 +16,12 @@ exports[`portable 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW 1.1.0.exe",
       "safeArtifactName": "TestApp-1.1.0.exe",
     },

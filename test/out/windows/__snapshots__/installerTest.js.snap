@@ -4,11 +4,18 @@ exports[`allowToChangeInstallationDirectory 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
+        "path": "Test Custom Installation Dir Setup 1.1.0.exe",
+        "releaseNotes": "New release with new bugs and
+
+without features",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test Custom Installation Dir Setup 1.1.0.exe",
       "safeArtifactName": "test-custom-inst-dir-setup-1.1.0.exe",
     },
@@ -39,7 +46,7 @@ exports[`boring 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -57,7 +64,6 @@ exports[`boring, MUI_HEADER as option 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": null,
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },
@@ -69,7 +75,7 @@ exports[`boring, only perMachine 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW Setup 1.1.0.exe",
       "safeArtifactName": "TestApp-Setup-1.1.0.exe",
     },

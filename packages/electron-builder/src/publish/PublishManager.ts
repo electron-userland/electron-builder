@@ -9,7 +9,7 @@ import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electr
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
-import { ensureDir, outputJson, readFile, writeFile } from "fs-extra-p"
+import { ensureDir, outputFile, outputJson, readFile, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import { safeDump } from "js-yaml"
 import * as path from "path"
@@ -230,21 +230,27 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
   }
   delete releaseInfo.releaseNotesFile
 
+  const createdFiles = new Set<string>()
+
   for (const publishConfig of publishConfigs) {
     if (publishConfig.provider === "bintray") {
       continue
     }
 
     const channel = (publishConfig as GenericServerOptions).channel || "latest"
-    const createdFiles = new Set<string>()
+
+    let dir = outDir
+    if (publishConfigs.length > 1 && publishConfig !== publishConfigs[0]) {
+      dir = path.join(outDir, publishConfig.provider)
+    }
 
     if (isMac) {
       const isGitHub = publishConfig.provider === "github"
       // backward compatibility - write json file
-      const updateInfoFile = isGitHub ? path.join(outDir, "github", `${channel}-mac.json`) : path.join(outDir, `${channel}-mac.json`)
+      const updateInfoFile = (isGitHub && outDir === dir) ? path.join(dir, "github", `${channel}-mac.json`) : path.join(dir, `${channel}-mac.json`)
       if (!createdFiles.has(updateInfoFile)) {
         createdFiles.add(updateInfoFile)
-        await (outputJson as any)(updateInfoFile, {
+        await outputJson(updateInfoFile, {
           version,
           releaseDate: new Date().toISOString(),
           url: computeDownloadUrl(publishConfig, packager.generateName2("zip", "mac", isGitHub), packager),
@@ -260,7 +266,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       }
     }
 
-    const updateInfoFile = path.join(outDir, `${channel}${isMac ? "-mac" : ""}.yml`)
+    const updateInfoFile = path.join(dir, `${channel}${isMac ? "-mac" : ""}.yml`)
     if (createdFiles.has(updateInfoFile)) {
       continue
     }
@@ -278,7 +284,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       // backward compatibility
       (info as any).sha2 = await sha2.value
     }
-    await writeFile(updateInfoFile, safeDump(info))
+    await outputFile(updateInfoFile, safeDump(info))
 
     // artifact should be uploaded only to designated publish provider
     packager.info.dispatchArtifactCreated({

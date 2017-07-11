@@ -6,20 +6,23 @@ exports[`one-package 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
-      "arch": null,
       "file": "latest-mac.json",
     },
     Object {
-      "arch": null,
       "file": "latest-mac.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-1.1.0-mac.zip",
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },
@@ -92,20 +95,23 @@ exports[`two-package 1`] = `
 Object {
   "mac": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-mac.dmg",
       "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
-      "arch": null,
       "file": "latest-mac.json",
     },
     Object {
-      "arch": null,
       "file": "latest-mac.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-1.1.0-mac.zip",
+        "path": "TestApp-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "TestApp-1.1.0-mac.zip",
       "safeArtifactName": "TestApp-1.1.0-mac.zip",
     },

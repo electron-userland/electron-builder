@@ -11,6 +11,7 @@ import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { getLinuxToolsPath } from "electron-builder/out/util/bundledTool"
 import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
@@ -179,24 +180,35 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   const objectToCompare: any = {}
   for (const platform of packagerOptions.targets.keys()) {
-    objectToCompare[platform.buildConfigurationKey] = (artifacts.get(platform) || [])
-      .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
-      .map(it => {
-        const result: any = {...it}
-        if (result.file != null) {
-          result.file = path.basename(result.file)
+    objectToCompare[platform.buildConfigurationKey] = await BluebirdPromise.map((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), async it => {
+      const result: any = {...it}
+      if (result.file != null) {
+        if (result.file.endsWith(".yml")) {
+          const fileContent = safeLoad(await readFile(result.file, "utf-8"))
+          delete fileContent.sha2
+          delete fileContent.sha512
+          delete fileContent.releaseDate
+          result.fileContent = fileContent
         }
+        result.file = path.basename(result.file)
+      }
 
-        // reduce snapshot - avoid noise
-        if (result.safeArtifactName == null) {
-          delete result.safeArtifactName
-        }
+      // reduce snapshot - avoid noise
+      if (result.safeArtifactName == null) {
+        delete result.safeArtifactName
+      }
+      if (result.arch == null) {
+        delete result.arch
+      }
+      else {
+        result.arch = Arch[result.arch]
+      }
 
-        delete result.packager
-        delete result.target
-        delete result.publishConfig
-        return result
-      })
+      delete result.packager
+      delete result.target
+      delete result.publishConfig
+      return result
+    })
   }
 
   expect(objectToCompare).toMatchSnapshot()

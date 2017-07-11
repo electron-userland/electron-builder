@@ -86,7 +86,7 @@ async function runTests() {
       args.push("fpmTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest", "extraMetadataTest", "mainEntryTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest")
+      args.push("BuildTest", "extraMetadataTest", "mainEntryTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest", "PublishManagerTest")
       args.push("mac.+")
       args.push(...baseForLinuxTests)
     }
