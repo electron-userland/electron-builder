@@ -7,7 +7,7 @@ import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 import { computeToolEnv, ToolInfo } from "./util/bundledTool"
 import { isUseSystemSigncode } from "./util/flags"
-import { isOsVersionGreaterThanOrEqualTo } from "./util/macosVersion"
+import { isMacOsSierra } from "./util/macosVersion"
 
 /** @internal */
 export function getSignVendorPath() {
@@ -182,7 +182,7 @@ async function getToolPath(): Promise<ToolInfo> {
   else if (process.platform === "darwin") {
     let suffix: string | null = null
     try {
-      if (await isOsVersionGreaterThanOrEqualTo("10.12")) {
+      if (await isMacOsSierra()) {
         const toolDirPath = path.join(vendorPath, process.platform, "10.12")
         return {
           path: path.join(toolDirPath, "osslsigncode"),
