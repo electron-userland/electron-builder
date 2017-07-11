@@ -1,7 +1,7 @@
 {
   "name": "electron-builder",
   "description": "A complete solution to package and build a ready for distribution Electron app for MacOS, Windows and Linux with “auto update” support out of the box",
-  "version": "0.0.0-semantic-release",
+  "version": "19.5.1-semantic-release",
   "main": "out/index.js",
   "files": [
     "out",
