@@ -4,12 +4,12 @@ exports[`AppX 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 0,
+      "arch": "ia32",
       "file": "Test App ßW-1.1.0-ia32.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },
@@ -21,7 +21,7 @@ exports[`languages 1`] = `
 Object {
   "win": Array [
     Object {
-      "arch": 1,
+      "arch": "x64",
       "file": "Test App ßW-1.1.0.appx",
       "safeArtifactName": "TestApp-1.1.0.appx",
     },

@@ -10,6 +10,7 @@ import { executeFinally } from "electron-builder-util/out/promise"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { getLinuxToolsPath } from "electron-builder/out/util/bundledTool"
+import { PublishPolicy } from "electron-publish"
 import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
@@ -37,6 +38,8 @@ interface AssertPackOptions {
   readonly signedWin?: boolean
 
   readonly installDepsBefore?: boolean
+
+  readonly publish?: PublishPolicy
 }
 
 export interface PackedContext {
@@ -155,7 +158,7 @@ export function getFixtureDir() {
 async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
-  const publishManager = new PublishManager(packager, {publish: "never"}, cancellationToken)
+  const publishManager = new PublishManager(packager, {publish: checkOptions.publish || "never"}, cancellationToken)
 
   const artifacts: Map<Platform, Array<ArtifactCreated>> = new Map()
   packager.artifactCreated(event => {

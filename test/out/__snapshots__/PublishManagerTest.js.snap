@@ -33,3 +33,42 @@ Object {
   ],
 }
 `;
+
+exports[`os macro 1`] = `
+Object {
+  "linux": Array [
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0.zip",
+      "safeArtifactName": "TestApp-1.1.0.zip",
+    },
+  ],
+  "mac": Array [
+    Object {
+      "file": "latest-mac.json",
+    },
+    Object {
+      "file": "latest-mac.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-1.1.0-mac.zip",
+        "path": "Test App ßW-1.1.0-mac.zip",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW-1.1.0-mac.zip",
+      "safeArtifactName": "TestApp-1.1.0-mac.zip",
+    },
+  ],
+}
+`;
+
+exports[`os macro 2`] = `
+Array [
+  "latest/mac/Test App ßW-1.1.0-mac.zip",
+  "latest/mac/latest-mac.json",
+  "latest/mac/latest-mac.yml",
+  "latest/linux/TestApp-1.1.0.zip",
+]
+`;

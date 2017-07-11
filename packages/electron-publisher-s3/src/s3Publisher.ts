@@ -3,7 +3,8 @@ import { S3Options } from "electron-builder-http/out/publishOptions"
 import { debug } from "electron-builder-util"
 import { PublishContext, Publisher } from "electron-publish"
 import { ProgressCallback } from "electron-publish/out/progress"
-import { stat } from "fs-extra-p"
+import { ensureDir, stat, symlink } from "fs-extra-p"
+import * as path from "path"
 import { basename } from "path"
 import { S3Client } from "./uploader"
 
@@ -40,7 +41,16 @@ export default class S3Publisher extends Publisher {
     const client = new S3Client({s3Options: {signatureVersion: "v4"}})
     const cancellationToken = this.context.cancellationToken
 
-    const uploader = client.createFileUploader(file, (this.info.path == null ? "" : `${this.info.path}/`) + fileName, {
+    const target = (this.info.path == null ? "" : `${this.info.path}/`) + fileName
+
+    if (process.env.__TEST_S3_PUBLISHER__ != null) {
+      const testFile = path.join(process.env.__TEST_S3_PUBLISHER__!, target)
+      await ensureDir(path.dirname(testFile))
+      await symlink(file, testFile)
+      return
+    }
+
+    const uploader = client.createFileUploader(file, target, {
       Bucket: this.info.bucket!,
       ACL: this.info.acl || "public-read",
       StorageClass: this.info.storageClass || undefined
