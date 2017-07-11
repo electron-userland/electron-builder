@@ -13,6 +13,7 @@ import { getElectronVersion } from "../util/config"
 import { getGypEnv } from "../util/yarn"
 import { createSelfSignedCert } from "./create-self-signed-cert"
 import { configureInstallAppDepsCommand, installAppDeps } from "./install-app-deps"
+import { start } from "./start"
 
 // tslint:disable:no-unused-expression
 yargs
@@ -29,6 +30,9 @@ yargs
       })
       .demandOption("publisher"),
     wrap(argv => createSelfSignedCert(argv.publisher)))
+  .command("start", "Run application in a development mode using electron-webpack",
+    yargs => yargs,
+    wrap(argv => start()))
   .help()
   .epilog(`See the Wiki (${underline("https://github.com/electron-userland/electron-builder/wiki")}) for more documentation.`)
   .strict()

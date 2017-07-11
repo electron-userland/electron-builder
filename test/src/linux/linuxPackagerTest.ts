@@ -7,7 +7,7 @@ import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 
 test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
-test.ifDevOrLinuxCi("AppImage - default icon, custom executable and custom desktop", app({
+test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),
   config: {
     linux: {

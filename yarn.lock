@@ -30,9 +30,9 @@
   version "20.0.2"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-20.0.2.tgz#86c751121fb53dbd39bb1a08c45083da13f2dc67"
 
-"@types/js-yaml@^3.5.31":
-  version "3.5.31"
-  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.5.31.tgz#54aeb8bcaaf94a7b1a64311bc318dbfe601a593a"
+"@types/js-yaml@^3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.9.0.tgz#cf82d31326251e8e94848d98a0665875928cdae6"
 
 "@types/node@*":
   version "8.0.10"
@@ -89,9 +89,9 @@ ajv@^4.9.1:
     co "^4.6.0"
     json-stable-stringify "^1.0.1"
 
-ajv@^5.2.1:
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.2.1.tgz#dcd03045175883ba1b636e5ae9ec3df9ab85323a"
+ajv@^5.2.2:
+  version "5.2.2"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-5.2.2.tgz#47c68d69e86f5d953103b0074a9430dc63da5e39"
   dependencies:
     co "^4.6.0"
     fast-deep-equal "^1.0.0"
@@ -1087,9 +1087,9 @@ ecc-jsbn@~0.1.1:
   dependencies:
     jsbn "~0.1.0"
 
-electron-builder-tslint-config@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/electron-builder-tslint-config/-/electron-builder-tslint-config-1.0.2.tgz#434bbddafa9137c53d82648cec2badb4b6e1966c"
+electron-builder-tslint-config@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/electron-builder-tslint-config/-/electron-builder-tslint-config-1.0.3.tgz#3fde180068f34314ab547476fe97144c6f6499a6"
 
 electron-download-tf@4.3.1:
   version "4.3.1"
@@ -3399,8 +3399,8 @@ tslint@^5.5.0:
     tsutils "^2.5.1"
 
 tsutils@^2.5.1:
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.5.1.tgz#c2001390c79eec1a5ccfa7ac12d599639683e0cf"
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/tsutils/-/tsutils-2.6.0.tgz#e5e99c79a8accd3977ce18d83fdf1d235a6c2ebb"
   dependencies:
     tslib "^1.7.1"
 
