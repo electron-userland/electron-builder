@@ -28,7 +28,7 @@ export interface Dependency {
 const knownAlwaysIgnoredDevDeps = new Set([
   "electron-builder", "electron-builder-tslint-config", "electron-builder-util", "electron-publish", "electron-download-tf", "electron-download",
   "electron-forge", "electron-packager", "electron-compilers",
-  "jest", "jest-cli", "prebuild-install", "nan", "node-pre-gyp",
+  "jest", "jest-cli", "prebuild-install", "nan",
   "asar-integrity", "asar",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
   "react-scripts",
