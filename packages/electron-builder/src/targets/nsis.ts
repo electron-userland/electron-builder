@@ -1,11 +1,10 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { asArray, debug7zArgs, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, subTask, use, warn } from "electron-builder-util"
+import { asArray, debug7zArgs, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
-import { outputFile, readFile, unlink, writeFile } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
@@ -18,7 +17,8 @@ import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
 import { addZipArgs, archive, ArchiveOptions } from "./archive"
 import { computeBlockMap } from "./blockMap"
-import { bundledLanguages, getLicenseFiles, lcid, toLangWithRegion } from "./license"
+import { bundledLanguages, getLicenseFiles, lcid } from "./license"
+import { addCustomMessageFileInclude, AppPackageHelper, nsisTemplatesDir } from "./nsis/nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -32,58 +32,11 @@ const nsisResourcePathPromise = getBinFromGithub("nsis-resources", "3.0.0", "cde
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
-interface PackageFileInfo {
-  file: string
-}
-
-export class AppPackageHelper {
-  private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
-  private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()
-
-  /** @private */
-  refCount = 0
-
-  async packArch(arch: Arch, target: NsisTarget) {
-    let infoPromise = this.archToFileInfo.get(arch)
-    if (infoPromise == null) {
-      infoPromise = subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, target.buildAppPackage(target.archs.get(arch)!, arch))
-        .then(it => ({file: it}))
-      this.archToFileInfo.set(arch, infoPromise)
-    }
-
-    const info = await infoPromise
-    if (target.isWebInstaller) {
-      this.infoToIsDelete.set(info, false)
-    }
-    else if (!this.infoToIsDelete.has(info)) {
-      this.infoToIsDelete.set(info, true)
-    }
-    return info.file
-  }
-
-  async finishBuild(): Promise<any> {
-    if (--this.refCount > 0) {
-      return
-    }
-
-    const filesToDelete: Array<string> = []
-    for (const [info, isDelete]  of this.infoToIsDelete.entries()) {
-      if (isDelete) {
-        filesToDelete.push(info.file)
-      }
-    }
-
-    await BluebirdPromise.map(filesToDelete, it => unlink(it))
-  }
-}
-
 export class NsisTarget extends Target {
   readonly options: NsisOptions
 
   /** @private */
   readonly archs: Map<Arch, string> = new Map()
-
-  private readonly nsisTemplatesDir = path.join(__dirname, "..", "..", "templates", "nsis")
 
   constructor(protected readonly packager: WinPackager, readonly outDir: string, targetName: string, protected readonly packageHelper: AppPackageHelper) {
     super(targetName)
@@ -267,7 +220,7 @@ export class NsisTarget extends Target {
       return
     }
 
-    const script = isPortable ? await readFile(path.join(this.nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath)
+    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath)
     await this.executeMakensis(defines, commands, await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
@@ -291,7 +244,7 @@ export class NsisTarget extends Target {
   private async computeScriptAndSignUninstaller(defines: any, commands: any, installerPath: string) {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
-    const script = await readFile(customScriptPath || path.join(this.nsisTemplatesDir, "installer.nsi"), "utf8")
+    const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
 
     if (customScriptPath != null) {
       log("Custom NSIS script is used - uninstaller is not signed by electron-builder")
@@ -466,7 +419,7 @@ export class NsisTarget extends Target {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
         env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"},
-        cwd: this.nsisTemplatesDir,
+        cwd: nsisTemplatesDir,
       }, {isPipeInput: true, isDebugEnabled: debug.enabled})
 
       const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
@@ -491,21 +444,9 @@ export class NsisTarget extends Target {
     })
   }
 
-  private async writeCustomLangFile(data: string) {
-    const file = await this.packager.getTempFile("messages.nsh")
-    await outputFile(file, data)
-    return file
-  }
-
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     const packager = this.packager
     let scriptHeader = `!addincludedir "${path.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
-
-    const addCustomMessageFileInclude = async (input: string) => {
-      const data = computeCustomMessageTranslations(safeLoad(await readFile(path.join(this.nsisTemplatesDir, input), "utf-8"))).join("\n")
-      debug(data)
-      return '!include "' + await this.writeCustomLangFile(data) + '"\n'
-    }
 
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
@@ -522,11 +463,11 @@ export class NsisTarget extends Target {
       return licensePage == null ? "" : createMacro("licensePage", licensePage)
     })
 
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml"))
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, this.isUnicodeEnabled))
 
     if (!this.isPortable) {
-      if (this.options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml"))
+      if (this.isUnicodeEnabled && this.options.oneClick === false) {
+        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml", packager, this.isUnicodeEnabled))
       }
 
       taskManager.add(async () => {
@@ -623,25 +564,6 @@ export class NsisTarget extends Target {
     licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
     return licensePage
   }
-}
-
-function computeCustomMessageTranslations(messages: any): Array<string> {
-  const result: Array<string> = []
-  for (const messageId of Object.keys(messages)) {
-    const langToTranslations = messages[messageId]
-    const unspecifiedLangs = new Set(bundledLanguages)
-    for (const lang of Object.keys(langToTranslations)) {
-      const langWithRegion = toLangWithRegion(lang)
-      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
-      unspecifiedLangs.delete(langWithRegion)
-    }
-
-    const defaultTranslation = langToTranslations.en.replace(/\n/g, "$\\r$\\n")
-    for (const langWithRegion of unspecifiedLangs) {
-      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
-    }
-  }
-  return result
 }
 
 function createMacro(name: string, lines: Array<string>) {

@@ -5,7 +5,7 @@
   },
   "declaration": true,
   "jsdoc": {
-    "out": "../../jsdoc/out/publisher",
+    "out": "../../scripts/jsdoc/out/publisher",
     "access": "public"
   },
   "include": [

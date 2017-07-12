@@ -7,7 +7,7 @@ const printErrorAndExit = require("../../../packages/electron-builder-util/out/p
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
-const workers = workerFarm({maxRetries: 1, maxCallTime: 2 * 60 * 1000}, path.join(packageDir, "lint.js"))
+const workers = workerFarm({maxRetries: 1, maxCallTime: 2 * 60 * 1000}, path.join(rootDir, "scripts", "lint.js"))
 
 async function main(): Promise<void> {
   const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()

@@ -5,8 +5,8 @@
   },
   "declaration": true,
   "jsdoc": {
-    "out": "../../jsdoc/out/updater",
-    "examples": "../../jsdoc/examples",
+    "out": "../../scripts/jsdoc/out/updater",
+    "examples": "../../scripts/jsdoc/examples",
     "access": "public"
   },
   "files": [

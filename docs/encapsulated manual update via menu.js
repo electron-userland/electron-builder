@@ -1,8 +1,8 @@
 /**
  * updater.js
- * 
+ *
  * Please use manual update only when it is really required, otherwise please use recommended non-intrusive auto update.
- * 
+ *
  * Import steps:
  * 1. create `updater.js` for the code snippet
  * 2. require `updater.js` for menu implementation, and set `checkForUpdates` callback from `updater` for the click property of `Check Updates...` MenuItem.
@@ -26,7 +26,7 @@ autoUpdater.on('update-available', () => {
   }, (buttonIndex) => {
     if (buttonIndex === 0) {
       autoUpdater.downloadUpdate()
-    } 
+    }
     else {
       updater.enabled = true
       updater = null
@@ -36,7 +36,7 @@ autoUpdater.on('update-available', () => {
 
 autoUpdater.on('update-not-available', () => {
   dialog.showMessageBox({
-    title: 'No Updates', 
+    title: 'No Updates',
     message: 'Current version is up-to-date.'
   })
   updater.enabled = true
@@ -48,7 +48,7 @@ autoUpdater.on('update-downloaded', () => {
     title: 'Install Updates',
     message: 'Updates downloaded, application will be quit for update...'
   }, () => {
-    autoUpdater.quitAndInstall()
+    setImmediate(() => autoUpdater.quitAndInstall())
   })
 })
 

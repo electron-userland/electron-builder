@@ -5,8 +5,8 @@
   },
   "declaration": true,
   "jsdoc": {
-    "out": "../../jsdoc/out/http",
-    "examples": "../../jsdoc/examples",
+    "out": "../../scripts/jsdoc/out/http",
+    "examples": "../../scripts/jsdoc/examples",
     "access": "public"
   },
   "include": [

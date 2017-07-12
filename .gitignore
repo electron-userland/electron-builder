@@ -27,6 +27,6 @@ dist/
 /packages/electron-builder/README.md
 /packages/electron-builder/scheme.json
 
-/jsdoc/out/
+/scripts/jsdoc/out/
 
 electron-builder-*.d.ts

@@ -5,7 +5,7 @@ const path = require("path")
 const fs = require("fs-extra-p")
 const jsdoc2md = require("jsdoc-to-markdown")
 const pathSorter = require("path-sort")
-const source = path.join(__dirname, "..", "jsdoc", "out")
+const source = path.join(__dirname, "jsdoc", "out")
 
 async function main() {
   const userFiles = await globby([
@@ -50,7 +50,7 @@ async function main() {
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
-  const partialDir = path.join(__dirname, "..", "jsdoc")
+  const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
   const pages = [
@@ -128,7 +128,7 @@ function sortAutoUpdate(pages) {
 }
 
 async function render(pages, jsdoc2MdOptions) {
-  require(path.join(__dirname, "..", "jsdoc", "helpers.js")).pages = pages
+  require(path.join(__dirname, "jsdoc", "helpers.js")).pages = pages
 
   for (const page of pages) {
     page.data = await jsdoc2md.getTemplateData(Object.assign({

@@ -1,7 +1,8 @@
-import { NsisWebOptions } from "../options/winOptions"
-import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../publish/PublishManager"
-import { WinPackager } from "../winPackager"
-import { AppPackageHelper, NsisTarget } from "./nsis"
+import { NsisWebOptions } from "../../options/winOptions"
+import { computeDownloadUrl, getPublishConfigs, getPublishConfigsForUpdateInfo } from "../../publish/PublishManager"
+import { WinPackager } from "../../winPackager"
+import { NsisTarget } from "../nsis"
+import { AppPackageHelper } from "./nsisUtil"
 
 /** @private */
 export class WebInstallerTarget extends NsisTarget {

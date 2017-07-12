@@ -3,6 +3,7 @@ import { FileInfo } from "./main"
 
 let isEqual: any
 
+/** @private **/
 export class DownloadedUpdateHelper {
   private setupPath: string | null
   private versionInfo: VersionInfo | null

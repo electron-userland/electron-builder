@@ -16,10 +16,10 @@
         [
           "transform-inline-imports-commonjs",
           {
-            excludeModules: ["path"]
+            excludeModules: ["path", "debug"]
           }
         ],
-        "./packages/babel-plugin-version-transform.js",
+        "./scripts/babel-plugin-version-transform.js",
       ],
     },
     test: {
@@ -35,7 +35,7 @@
         [
           "transform-inline-imports-commonjs",
           {
-            excludeModules: ["path"]
+            excludeModules: ["path", "debug"]
           }
         ],
       ]

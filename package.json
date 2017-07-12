@@ -14,13 +14,14 @@
     "update-wiki": "(git branch -D wiki || true) && git subtree split -b wiki --prefix docs/ && git push -f wiki wiki:master",
     "whitespace": "whitespace 'src/**/*.ts'",
     "docker-images": "docker/build.sh",
-    "update-deps": "node ./packages/update-deps.js",
+    "update-deps": "node ./scripts/update-deps.js",
     "set-versions": "node test/out/helpers/setVersions.js",
-    "npm-publish": "yarn set-versions && yarn compile && ./packages/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
+    "npm-publish": "yarn set-versions && yarn compile && ./scripts/npm-publish.sh && conventional-changelog -p angular -i CHANGELOG.md -s",
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Config --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/electron-builder packages/electron-publish",
-    "jsdoc2md": "node packages/jsdoc2md.js",
-    "api": "yarn jsdoc && yarn jsdoc2md"
+    "jsdoc2md": "node scripts/jsdoc2md.js",
+    "api": "yarn jsdoc && yarn jsdoc2md",
+    "dist": "webpack --env.production --progress --bail --config scripts/webpack.config.js"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
   "repository": "electron-userland/electron-builder",
@@ -89,10 +90,13 @@
     "jest-junit": "^1.5.1",
     "jsdoc-to-markdown": "^3.0.0",
     "path-sort": "^0.1.0",
+    "shebang-loader": "^0.0.1",
     "ts-babel": "^3.1.2",
+    "ts-loader": "^2.2.2",
     "tslint": "^5.5.0",
     "typescript": "^2.4.1",
     "v8-compile-cache": "^1.1.0",
+    "webpack": "^3.2.0",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.4.1",
     "xml2js": "^0.4.17"
@@ -116,5 +120,8 @@
       "<rootDir>/packages"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
