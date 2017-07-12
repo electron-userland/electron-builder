@@ -143,7 +143,9 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 * <a name="S3Options-path"></a>`path` = `/` String - The directory path.
 * <a name="S3Options-region"></a>`region` String - The region. Is determined and set automatically when publishing.
 * <a name="S3Options-channel"></a>`channel` = `latest` String - The channel.
-* <a name="S3Options-acl"></a>`acl` = `public-read` "private" | "public-read" - The ACL.
+* <a name="S3Options-acl"></a>`acl` = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+  
+  Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
 * <a name="S3Options-storageClass"></a>`storageClass` = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" - The type of storage to use for the object.
 * <a name="S3Options-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.
 

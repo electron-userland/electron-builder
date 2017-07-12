@@ -1,12 +1,14 @@
 import { S3 } from "aws-sdk"
+import { CreateMultipartUploadRequest, ObjectCannedACL, StorageClass } from "aws-sdk/clients/s3"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { debug } from "electron-builder-util"
 import { PublishContext, Publisher } from "electron-publish"
 import { ProgressCallback } from "electron-publish/out/progress"
 import { ensureDir, stat, symlink } from "fs-extra-p"
+import mime from "mime"
 import * as path from "path"
 import { basename } from "path"
-import { S3Client } from "./uploader"
+import { S3Client, Uploader } from "./uploader"
 
 export default class S3Publisher extends Publisher {
   readonly providerName = "S3"
@@ -50,11 +52,21 @@ export default class S3Publisher extends Publisher {
       return
     }
 
-    const uploader = client.createFileUploader(file, target, {
+    const s3Options: CreateMultipartUploadRequest  = {
+      Key: target,
       Bucket: this.info.bucket!,
-      ACL: this.info.acl || "public-read",
-      StorageClass: this.info.storageClass || undefined
-    })
+      ContentType: mime.lookup(file)
+    }
+
+    // if explicitly set to null, do not add
+    if (this.info.acl !== null) {
+      s3Options.ACL = this.info.acl as ObjectCannedACL || "public-read"
+    }
+    if (this.info.storageClass != null) {
+      s3Options.StorageClass = this.info.storageClass as StorageClass
+    }
+
+    const uploader = new Uploader(client, s3Options, file, fileStat)
 
     const progressBar = this.createProgressBar(fileName, fileStat)
     if (progressBar != null) {
