@@ -19,40 +19,47 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
 const tmpDir = new TmpDir()
 
 function createTestApp(version: string) {
-  return {
-    getVersion: () => version,
+  class MockApp {
+    // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
+    getVersion() {
+      return version
+    }
 
-    getAppPath: function () {
-    },
-
-    getPath: function (type: string) {
-      return path.join(tmpdir(), "electron-updater-test", type)
-    },
-
-    on: function () {
+    // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
+    getAppPath() {
       // ignored
-    },
+    }
+
+    // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
+    getPath(type: string) {
+      return path.join(tmpdir(), "electron-updater-test", type)
+    }
+
+    on() {
+      // ignored
+    }
   }
+  return new MockApp()
 }
 
-const g = (<any>global)
+const g = (global as any)
 g.__test_app = createTestApp("0.0.1")
 
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
 function tuneNsisUpdater(updater: NsisUpdater) {
-  (<any>updater).httpExecutor = httpExecutor
+  (updater as any).httpExecutor = httpExecutor
   updater.logger = new NoOpLogger()
 }
 
 test("check updates - no versions at all", async () => {
   const updater = new NsisUpdater()
   tuneNsisUpdater(updater)
-  updater.setFeedURL(<BintrayOptions>{
+  updater.setFeedURL({
     provider: "bintray",
     owner: "actperepo",
     package: "no-versions",
-  })
+  } as BintrayOptions)
 
   await assertThat(updater.checkForUpdates()).throws()
 })
@@ -60,11 +67,11 @@ test("check updates - no versions at all", async () => {
 async function testUpdateFromBintray(app: any) {
   const updater = new NsisUpdater(null, app)
   updater.allowDowngrade = true
-  updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
-  })
+  } as BintrayOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
@@ -85,11 +92,11 @@ test("file url", () => testUpdateFromBintray(null))
 
 test("downgrade (disallowed)", async () => {
   const updater = new NsisUpdater(null, createTestApp("2.0.0"))
-  updater.updateConfigPath = await writeUpdateConfig(<BintrayOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "bintray",
     owner: "actperepo",
     package: "TestApp",
-  })
+  } as BintrayOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
@@ -109,11 +116,11 @@ test("downgrade (disallowed)", async () => {
 
 test("downgrade (disallowed, beta)", async () => {
   const updater = new NsisUpdater(null, createTestApp("1.5.2-beta.4"))
-  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
-  })
+  } as GithubOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents: Array<string> = []
@@ -135,10 +142,10 @@ test("downgrade (allowed)", () => testUpdateFromBintray(createTestApp("2.0.0-bet
 
 test("file url generic", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  })
+  } as GenericServerOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
@@ -152,11 +159,11 @@ test("file url generic", async () => {
 
 test.ifNotCiWin("sha512 mismatch error event", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
     channel: "beta",
-  })
+  } as GenericServerOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
@@ -170,10 +177,10 @@ test.ifNotCiWin("sha512 mismatch error event", async () => {
 
 test("file url generic - manual download", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  })
+  } as GenericServerOptions)
   tuneNsisUpdater(updater)
   updater.autoDownload = false
 
@@ -190,10 +197,10 @@ test("file url generic - manual download", async () => {
 // https://github.com/electron-userland/electron-builder/issues/1045
 test("checkForUpdates several times", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GenericServerOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
-  })
+  } as GenericServerOptions)
   tuneNsisUpdater(updater)
 
   const actualEvents = trackEvents(updater)
@@ -202,30 +209,37 @@ test("checkForUpdates several times", async () => {
     //noinspection JSIgnoredPromiseFromCall
     updater.checkForUpdates()
   }
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+
+  async function checkForUpdates() {
+    const updateCheckResult = await updater.checkForUpdates()
+    expect(updateCheckResult.fileInfo).toMatchSnapshot()
+    await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  }
+
+  await checkForUpdates()
+  // we must not download the same file again
+  await checkForUpdates()
 
   expect(actualEvents).toMatchSnapshot()
 })
 
 test("file url github", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
-  })
+  } as GithubOptions)
   await validateDownload(updater)
 })
 
 test("file url github pre-release", async () => {
   const updater = new NsisUpdater(null, createTestApp("1.5.0-beta.1"))
-  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release",
-  })
+  } as GithubOptions)
 
   const updateCheckResult = await validateDownload(updater)
   expect(updateCheckResult.versionInfo).toMatchSnapshot()
@@ -233,11 +247,11 @@ test("file url github pre-release", async () => {
 
 test.skip("file url github private", async () => {
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig(<GithubOptions>{
+  updater.updateConfigPath = await writeUpdateConfig({
     provider: "github",
     owner: "develar",
     repo: "__test_nsis_release_private",
-  })
+  } as GithubOptions)
   await validateDownload(updater)
 })
 
@@ -369,7 +383,7 @@ test("cancel download with progress", async () => {
     expect(lastEvent.transferred).not.toBe(lastEvent.total)
   }
 
-  const downloadPromise = <BluebirdPromise<any>>checkResult.downloadPromise
+  const downloadPromise = checkResult.downloadPromise as BluebirdPromise<any>
   await assertThat(downloadPromise).throws()
   expect(downloadPromise.isRejected()).toBe(true)
   expect(cancelled).toBe(true)

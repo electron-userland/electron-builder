@@ -24,7 +24,7 @@ test("one-click", app({
   }
 }, {
   signedWin: true,
-  packed: async (context) => {
+  packed: async context => {
     await checkHelpers(context.getResources(Platform.WINDOWS, Arch.ia32), false)
     await doTest(context.outDir, true, "TestApp Setup", "TestApp", null, false)
     await expectUpdateMetadata(context, Arch.ia32, true)
@@ -68,6 +68,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
     },
     publish: {
       provider: "generic",
+      // tslint:disable:no-invalid-template-strings
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
   },
@@ -78,7 +79,7 @@ test.ifDevOrLinuxCi("perMachine, no run after finish", app({
       copyTestAsset("license.txt", path.join(projectDir, "build", "license.txt")),
     ])
   },
-  packed: async(context) => {
+  packed: async context => {
     await expectUpdateMetadata(context)
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha512).not.toEqual("")
@@ -96,7 +97,7 @@ test.ifNotCiMac("installerHeaderIcon", () => {
   let headerIconPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
-      effectiveOptionComputed: async (it) => {
+      effectiveOptionComputed: async it => {
         const defines = it[0]
         expect(defines.HEADER_ICO).toEqual(headerIconPath)
         return false
@@ -142,7 +143,7 @@ test.ifAll.ifNotCiMac("menuCategory", app({
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.name = "test-menu-category"
   }),
-  packed: async(context) => {
+  packed: async context => {
     await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
   }
 }))
@@ -158,6 +159,7 @@ test.ifAll.ifNotCiMac("string menuCategory", app({
     nsis: {
       oneClick: false,
       menuCategory: "Foo/Bar",
+      // tslint:disable:no-invalid-template-strings
       artifactName: "${productName} CustomName ${version}.${ext}"
     },
   }
@@ -165,7 +167,7 @@ test.ifAll.ifNotCiMac("string menuCategory", app({
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.name = "test-menu-category"
   }),
-  packed: async(context) => {
+  packed: async context => {
     await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
   }
 }))
@@ -185,7 +187,7 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
 test.ifNotCiMac("web installer", app({
   targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
   config: {
-    compression: <any>process.env.COMPRESSION || "store",
+    compression: process.env.COMPRESSION as any || "store",
     publish: {
       provider: "s3",
       bucket: "develar",

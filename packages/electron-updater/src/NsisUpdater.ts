@@ -9,10 +9,12 @@ import { tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
+import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 
 export class NsisUpdater extends AppUpdater {
-  private setupPath: string | null
+  private readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
+
   private quitAndInstallCalled = false
   private quitHandlerAdded = false
 
@@ -30,6 +32,11 @@ export class NsisUpdater extends AppUpdater {
       sha512: fileInfo == null ? null : fileInfo.sha512,
     }
 
+    const downloadedFile = this.downloadedUpdateHelper.getDownloadedFile(versionInfo, fileInfo)
+    if (downloadedFile != null) {
+      return downloadedFile
+    }
+
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
@@ -37,13 +44,12 @@ export class NsisUpdater extends AppUpdater {
     const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
     const tempFile = path.join(tempDir, fileInfo.name)
 
-    const removeTempDirIfAny = async () => {
-      try {
-        await remove(tempDir)
-      }
-      catch (ignored) {
-        // ignored
-      }
+    const removeTempDirIfAny = () => {
+      this.downloadedUpdateHelper.clear()
+      return remove(tempDir)
+        .catch(error => {
+          // ignored
+        })
     }
 
     let signatureVerificationStatus
@@ -68,7 +74,7 @@ export class NsisUpdater extends AppUpdater {
     }
 
     this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
-    this.setupPath = tempFile
+    this.downloadedUpdateHelper.setDownloadedFile(tempFile, versionInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.versionInfo)
     return tempFile
@@ -170,7 +176,7 @@ export class NsisUpdater extends AppUpdater {
       return false
     }
 
-    const setupPath = this.setupPath
+    const setupPath = this.downloadedUpdateHelper.file
     if (!this.updateAvailable || setupPath == null) {
       const message = "No update available, can't quit and install"
       this.emit("error", new Error(message), message)

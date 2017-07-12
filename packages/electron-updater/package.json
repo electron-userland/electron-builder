@@ -21,7 +21,8 @@
     "electron-is-dev": "^0.2.0",
     "xelement": "^1.0.16",
     "debug": "^2.6.8",
-    "uuid-1345": "^0.99.6"
+    "uuid-1345": "^0.99.6",
+    "lodash.isequal": "^4.5.0"
   },
   "typings": "./out/electron-updater.d.ts"
 }
