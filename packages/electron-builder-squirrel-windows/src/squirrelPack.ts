@@ -152,6 +152,8 @@ async function pack(options: SquirrelOptions, directory: string, updateFile: str
   <Default Extension="diff" ContentType="application/octet" />
   <Default Extension="bsdiff" ContentType="application/octet" />
   <Default Extension="shasum" ContentType="text/plain" />
+  <Default Extension="mp3" ContentType="audio/mpeg" />
+  <Default Extension="node" ContentType="application/octet" />
 </Types>`.replace(/\n/, "\r\n"), {name: "[Content_Types].xml"})
 
   archive.append(`<?xml version="1.0" encoding="utf-8"?>
