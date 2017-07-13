@@ -5,5 +5,6 @@ const path = require("path")
 
 exports.getPackages = function () {
   const args = process.argv.slice(2)
-  return args.length == 0 ? fs.readdirSync(__dirname).filter(it => !it.includes(".")).sort().map(it => path.join(__dirname, it)) : [args[0]]
+  const packageDir = path.join(__dirname, "..", "packages")
+  return args.length == 0 ? fs.readdirSync(packageDir).filter(it => !it.includes(".")).sort().map(it => path.join(packageDir, it)) : [args[0]]
 }

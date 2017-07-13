@@ -36,7 +36,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const xElement = require("xelement")
     const feedXml = await this.executor.request({
       path: `${basePath}.atom`,
-      headers: {...this.requestHeaders, Accept: "application/xml"}, ...this.baseUrl
+      headers: {...this.requestHeaders, Accept: "application/xml, application/atom+xml, text/xml, */*"},
+      ...this.baseUrl
     }, cancellationToken)
 
     const feed = new xElement.Parse(feedXml)
