@@ -90,3 +90,26 @@ test.ifDevOrLinuxCi("failed peer dep", () => {
     }),
   })
 })
+
+test.ifAll.ifDevOrLinuxCi("ignore node_modules", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.LINUX.createTarget(DIR_TARGET),
+    config: {
+      asar: false,
+      files: [
+        "!node_modules/**/*"
+      ]
+    }
+  }, {
+    installDepsBefore: true,
+    projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+      //noinspection SpellCheckingInspection
+      data.dependencies = {
+        "is-ci": "*",
+      }
+    }),
+    packed: context => {
+      return assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules")).doesNotExist()
+    }
+  })
+})

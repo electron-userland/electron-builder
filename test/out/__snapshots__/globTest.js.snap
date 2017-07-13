@@ -6,6 +6,12 @@ Object {
 }
 `;
 
+exports[`ignore node_modules 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`link 1`] = `
 Object {
   "linux": Array [],

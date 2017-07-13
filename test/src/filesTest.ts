@@ -14,6 +14,7 @@ test.ifDevOrLinuxCi("expand not defined env", appThrows({
   targets: linuxDirTarget,
   config: {
     asar: false,
+    // tslint:disable:no-invalid-template-strings
     files: ["${env.FOO_NOT_DEFINED}"],
   }
 }))
@@ -24,6 +25,7 @@ test.ifDevOrLinuxCi("files", app({
   targets: linuxDirTarget,
   config: {
     asar: false,
+    // tslint:disable:no-invalid-template-strings
     files: ["**/*", "!ignoreMe${/*}", "${env.__NOT_BAR__}", "dist/electron/**/*"],
   }
 }, {
@@ -220,14 +222,13 @@ test("postpone symlink", async () => {
   await outputFile(aSourceFile, "test")
   await symlink(aSourceFile, bSourceFileLink)
 
-
   const dest = await tmpDir.getTempFile("dest")
   await copyDir(source, dest)
 
   await tmpDir.cleanup()
 })
 
-async function allCan(file: string, execute: Boolean) {
+async function allCan(file: string, execute: boolean) {
   const mode = new Mode(await stat(file))
 
   function checkExecute(value: Permissions) {
