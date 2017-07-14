@@ -5,10 +5,9 @@ import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
-import { readFile, readJson } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
-import JSON5 from "json5"
+import { readJson } from "fs-extra-p"
 import * as path from "path"
+import { findAndReadConfig, readConfig } from "read-config-file"
 import { Config } from "../metadata"
 import { reactCra } from "../presets/rectCra"
 import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
@@ -19,38 +18,9 @@ function getConfigFromPackageData(metadata: any | null) {
   return metadata == null ? null : metadata.build
 }
 
-async function doLoadConfig(configFile: string, projectDir: string): Promise<Config> {
-  const data = await readFile(configFile, "utf8")
-  let result
-  if (configFile.endsWith(".json5") || configFile.endsWith(".json")) {
-    result = JSON5.parse(data)
-  }
-  else if (configFile.endsWith(".toml")) {
-    result = require("toml").parse(data)
-  }
-  else {
-    result = safeLoad(data)
-  }
-
-  const relativePath = path.relative(projectDir, configFile)
-  log(`Using ${relativePath.startsWith("..") ? configFile : relativePath} configuration file`)
-  return result
-}
-
 async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Config | null> {
-  let data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
-  if (data != null) {
-    return data
-  }
-
-  for (const configFile of ["electron-builder.yml", "electron-builder.yaml", "electron-builder.json", "electron-builder.json5", "electron-builder.toml"]) {
-    data = await orNullIfFileNotExist(doLoadConfig(path.join(projectDir, configFile), projectDir))
-    if (data != null) {
-      return data
-    }
-  }
-
-  return null
+  const data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
+  return data == null ? findAndReadConfig<Config>(projectDir, "electron-builder", log) : data
 }
 
 /** @internal */
@@ -60,7 +30,7 @@ export async function getConfig(projectDir: string, configPath: string | null, p
     fileOrPackageConfig = await loadConfig(projectDir, packageMetadata)
   }
   else {
-    fileOrPackageConfig = await doLoadConfig(path.resolve(projectDir, configPath), projectDir)
+    fileOrPackageConfig = await readConfig<Config>(path.resolve(projectDir, configPath), projectDir, log)
   }
 
   const config: Config = deepAssign(fileOrPackageConfig == null ? Object.create(null) : fileOrPackageConfig, configFromOptions)
@@ -96,7 +66,7 @@ export async function getConfig(projectDir: string, configPath: string | null, p
       isFileSpec = true
     }
 
-    parentConfig = await orNullIfFileNotExist(doLoadConfig(path.resolve(projectDir, spec), projectDir))
+    parentConfig = await orNullIfFileNotExist(readConfig(path.resolve(projectDir, spec), projectDir, log))
     if (parentConfig == null && isFileSpec !== true) {
       let resolved: string | null = null
       try {
@@ -107,7 +77,7 @@ export async function getConfig(projectDir: string, configPath: string | null, p
       }
 
       if (resolved != null) {
-        parentConfig = await doLoadConfig(resolved, projectDir)
+        parentConfig = await readConfig(resolved, projectDir, log)
       }
     }
 

@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { emptyDir, readdir, readJson, removeSync, unlink } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
-import { ELECTRON_VERSION, TEST_DIR } from "./config"
+import { ELECTRON_VERSION, TEST_DIR } from "./testConfig"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/util' path here
 const util = require("../../../packages/electron-builder-util/out/util")

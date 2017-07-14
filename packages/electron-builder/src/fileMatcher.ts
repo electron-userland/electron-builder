@@ -177,7 +177,7 @@ export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "
   const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, macroExpander)
   const fileMatchers: Array<FileMatcher> = []
 
-  function addPatterns(patterns: Array<string | FilePattern> | string | n | FilePattern) {
+  function addPatterns(patterns: Array<string | FilePattern> | string | null | undefined | FilePattern) {
     if (patterns == null) {
       return
     }

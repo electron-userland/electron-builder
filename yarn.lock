@@ -35,8 +35,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.9.0.tgz#cf82d31326251e8e94848d98a0665875928cdae6"
 
 "@types/node@*":
-  version "8.0.11"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.11.tgz#3cf80de7185292c6dab156ece696dffed0cc3502"
+  version "8.0.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.12.tgz#0560c3e8c9e3da0aa07d0b86e0b0a02b5fd29480"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -275,9 +275,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.83.0:
-  version "2.83.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.83.0.tgz#f0107183576d2e6093636ab89ccd9b546a531be7"
+aws-sdk@^2.84.0:
+  version "2.84.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.84.0.tgz#c87bb05bc43bea681c115503f73a7e784c9bfeb6"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -1894,9 +1894,9 @@ jest-jasmine2@^20.0.4:
     once "^1.4.0"
     p-map "^1.1.1"
 
-jest-junit@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/jest-junit/-/jest-junit-2.0.1.tgz#b14baea1b509e7f634a24170c4733d9f39d41b19"
+jest-junit@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/jest-junit/-/jest-junit-2.1.0.tgz#364194f6529fbf5a900ff02fa6744cb624f4bb54"
   dependencies:
     mkdirp "^0.5.1"
     strip-ansi "^4.0.0"
@@ -2761,6 +2761,15 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.2.1:
     ini "~1.3.0"
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
+
+read-config-file@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/read-config-file/-/read-config-file-0.1.2.tgz#cecf6c80ee99e4b304afe11fb08efac26349d43b"
+  dependencies:
+    bluebird-lst "^1.0.2"
+    fs-extra-p "^4.3.0"
+    js-yaml "^3.9.0"
+    json5 "^0.5.1"
 
 read-pkg-up@^1.0.1:
   version "1.0.1"

@@ -68,7 +68,7 @@
     "is-ci": "^1.0.10",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.9.0",
-    "json5": "^0.5.1",
+    "read-config-file": "^0.1.2",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.4.0",
     "parse-color": "^1.0.0",

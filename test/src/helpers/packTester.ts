@@ -17,8 +17,8 @@ import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
-import { TEST_DIR } from "./config"
 import { assertThat } from "./fileAssert"
+import { TEST_DIR } from "./testConfig"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"

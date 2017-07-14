@@ -1,9 +1,9 @@
 import { build, Platform } from "electron-builder"
 import { readFile, remove, rename } from "fs-extra-p"
 import * as path from "path"
-import { ELECTRON_VERSION } from "../helpers/config"
 import { assertThat } from "../helpers/fileAssert"
 import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
+import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
 

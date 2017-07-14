@@ -5,8 +5,8 @@ import { readAsarJson } from "electron-builder/out/asar"
 import { checkWineVersion } from "electron-builder/out/util/wine"
 import { move, outputJson, readJson } from "fs-extra-p"
 import * as path from "path"
-import { ELECTRON_VERSION } from "./helpers/config"
 import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson } from "./helpers/packTester"
+import { ELECTRON_VERSION } from "./helpers/testConfig"
 
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
