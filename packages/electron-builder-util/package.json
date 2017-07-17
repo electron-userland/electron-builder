@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.3.0",
+    "fs-extra-p": "^4.4.0",
     "fcopy-pre-bundled": "0.3.4",
     "is-ci": "^1.0.10",
     "stat-mode": "^0.2.2",

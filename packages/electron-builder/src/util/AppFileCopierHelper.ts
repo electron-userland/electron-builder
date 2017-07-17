@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { log } from "electron-builder-util"
-import { CONCURRENCY, FileTransformer, walk } from "electron-builder-util/out/fs"
+import { debug, log } from "electron-builder-util"
+import { CONCURRENCY, FileTransformer, statOrNull, walk } from "electron-builder-util/out/fs"
 import { ensureDir, Stats } from "fs-extra-p"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher"
@@ -24,6 +24,13 @@ export async function computeFileSets(matchers: Array<FileMatcher>, transformer:
   const fileSets: Array<FileSet> = []
   for (const matcher of matchers) {
     const fileWalker = new AppFileWalker(matcher, packager)
+
+    const fromStat = await statOrNull(fileWalker.matcher.from)
+    if (fromStat == null) {
+      debug(`Directory ${fileWalker.matcher.from} doesn't exists, skip file copying`)
+      continue
+    }
+
     const files = await walk(fileWalker.matcher.from, fileWalker.filter, fileWalker)
     const metadata = fileWalker.metadata
 

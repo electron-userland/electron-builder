@@ -13,7 +13,7 @@
   "dependencies": {
     "electron-builder-util": "~0.0.0-semantic-release",
     "bluebird-lst": "^1.0.2",
-    "fs-extra-p": "^4.3.0",
+    "fs-extra-p": "^4.4.0",
     "archiver": "^2.0.0"
   },
   "peerDependencies": {

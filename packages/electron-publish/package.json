@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.3.0",
+    "fs-extra-p": "^4.4.0",
     "mime": "^1.3.6",
     "bluebird-lst": "^1.0.2",
     "electron-builder-http": "~0.0.0-semantic-release",
