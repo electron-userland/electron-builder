@@ -102,6 +102,12 @@ export interface CommonNsisOptions {
    * @default true
    */
   readonly warningsAsErrors?: boolean
+
+  /**
+   * @private
+   * @default false
+   */
+  readonly useZip?: boolean
 }
 
 /**
@@ -224,12 +230,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default ${productName} ${version}
    */
   readonly uninstallDisplayName?: string
-
-  /**
-   * @private
-   * @default false
-   */
-  readonly useZip?: boolean
 
   /**
    * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
