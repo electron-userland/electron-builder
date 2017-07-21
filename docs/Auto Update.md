@@ -187,7 +187,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * <a name="FileInfo-url"></a>**`url`** String
 * <a name="FileInfo-sha2"></a>`sha2` String
 * <a name="FileInfo-sha512"></a>`sha512` String
-* <a name="FileInfo-headers"></a>`headers` [RequestHeaders](electron-builder-http#RequestHeaders)
+* <a name="FileInfo-headers"></a>`headers` [RequestHeaders](api/electron-builder-http.md#RequestHeaders)
 
 <a name="Logger"></a>
 ### `Logger`
@@ -229,7 +229,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
 * <a name="UpdateCheckResult-versionInfo"></a>**`versionInfo`** [VersionInfo](#VersionInfo)
 * <a name="UpdateCheckResult-fileInfo"></a>`fileInfo` [FileInfo](#FileInfo)
 * <a name="UpdateCheckResult-downloadPromise"></a>`downloadPromise` Promise&lt;any&gt;
-* <a name="UpdateCheckResult-cancellationToken"></a>`cancellationToken` [CancellationToken](electron-builder-http#CancellationToken)
+* <a name="UpdateCheckResult-cancellationToken"></a>`cancellationToken` [CancellationToken](api/electron-builder-http.md#CancellationToken)
 
 <a name="AppUpdater"></a>
 ### AppUpdater ⇐ <code>internal:EventEmitter</code>
@@ -241,7 +241,7 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
   
   If `true`, downgrade will be allowed (`allowDowngrade` will be set to `true`).
 * <a name="AppUpdater-allowDowngrade"></a>`allowDowngrade` = `false` Boolean - Whether to allow version downgrade (when a user from the beta channel wants to go back to the stable channel).
-* <a name="AppUpdater-requestHeaders"></a>`requestHeaders` [RequestHeaders](electron-builder-http#RequestHeaders) - The request headers.
+* <a name="AppUpdater-requestHeaders"></a>`requestHeaders` [RequestHeaders](api/electron-builder-http.md#RequestHeaders) - The request headers.
 * <a name="AppUpdater-logger"></a>`logger` [Logger](#Logger) - The logger. You can pass [electron-log](https://github.com/megahertz/electron-log), [winston](https://github.com/winstonjs/winston) or another logger with the following interface: `{ info(), warn(), error() }`. Set it to `null` if you would like to disable a logging feature.
 * <a name="AppUpdater-signals"></a>`signals` = `new UpdaterSignal(this)` [UpdaterSignal](#UpdaterSignal) - For type safety you can use signals, e.g. `autoUpdater.signals.updateDownloaded(() => {})` instead of `autoUpdater.on('update-available', () => {})`
 
@@ -267,7 +267,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 
 | Param | Type |
 | --- | --- |
-| cancellationToken | <code>[CancellationToken](electron-builder-http#CancellationToken)</code> | 
+| cancellationToken | <code>[CancellationToken](api/electron-builder-http.md#CancellationToken)</code> | 
 
 <a name="module_electron-updater.AppUpdater+getFeedURL"></a>
 #### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
