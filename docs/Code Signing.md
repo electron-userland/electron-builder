@@ -25,7 +25,7 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
 
 1. [Export](https://developer.apple.com/library/ios/documentation/IDEs/Conceptual/AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html#//apple_ref/doc/uid/TP40012582-CH31-SW7) certificate.
  Consider to not use special characters (for bash) in the password because “*values are not escaped when your builds are executed*”.
-2. Encode file to base64 (macOS/linux: `base64 -i yourFile.p12 -o envValue.txt`).
+2. Encode file to base64 (macOS: `base64 -i yourFile.p12 -o envValue.txt`, Linux: `base64 yourFile.p12 > envValue.txt`).
 
    Or upload `*.p12` file (e.g. on Google Drive, use [direct link generator](http://www.syncwithtech.org/p/direct-download-link-generator.html) to get correct download link).
 
