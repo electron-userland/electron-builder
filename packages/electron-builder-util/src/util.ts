@@ -10,6 +10,8 @@ import "source-map-support/register"
 export { TmpDir } from "./tmp"
 export { log, warn, task, subTask } from "./log"
 export { Lazy } from "electron-builder-http"
+export { isMacOsSierra } from "./macosVersion"
+export { execWine, prepareWindowsExecutableArgs } from "./wine"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -277,4 +279,11 @@ export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
     }
     return value
   }, 2)
+}
+
+export function isEnvTrue(value: string | null | undefined) {
+  if (value != null) {
+    value = value.trim()
+  }
+  return value === "true" || value === "" || value === "1"
 }

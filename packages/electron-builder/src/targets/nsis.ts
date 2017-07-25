@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { asArray, debug7zArgs, doSpawn, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, use, warn } from "electron-builder-util"
+import { asArray, debug7zArgs, doSpawn, execWine, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile } from "electron-builder-util/out/fs"
 import { readFile, writeFile } from "fs-extra-p"
@@ -13,7 +13,6 @@ import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { time } from "../util/timer"
-import { execWine } from "../util/wine"
 import { WinPackager } from "../winPackager"
 import { addZipArgs, archive, ArchiveOptions } from "./archive"
 import { computeBlockMap } from "./blockMap"
@@ -43,7 +42,7 @@ export class NsisTarget extends Target {
 
     this.packageHelper.refCount++
 
-    this.options = targetName === "portable" ? Object.create(null) : Object.assign(Object.create(null), this.packager.config.nsis)
+    this.options = targetName === "portable" ? Object.create(null) : {...this.packager.config.nsis}
     if (targetName !== "nsis") {
       Object.assign(this.options, (this.packager.config as any)[targetName === "nsis-web" ? "nsisWeb" : targetName])
     }

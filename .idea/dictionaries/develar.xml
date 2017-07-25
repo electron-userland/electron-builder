@@ -68,6 +68,7 @@
       <w>docstrap</w>
       <w>dpkg</w>
       <w>dsym</w>
+      <w>dyld</w>
       <w>dylibbundler</w>
       <w>eacces</w>
       <w>ebusy</w>
@@ -281,6 +282,7 @@
       <w>volname</w>
       <w>welcomefinishpage</w>
       <w>winedlloverrides</w>
+      <w>winemenubuilder</w>
       <w>winstaller</w>
       <w>writev</w>
       <w>xamarin</w>

@@ -1,14 +1,13 @@
-import { debug, exec, ExecOptions, Lazy } from "electron-builder-util"
-import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
+import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
-import { isUseSystemWine } from "./flags"
 import { isMacOsSierra } from "./macosVersion"
+import { debug, exec, ExecOptions, isEnvTrue, Lazy } from "./util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   debug(`USE_SYSTEM_WINE: ${process.env.USE_SYSTEM_WINE}`)
-  if (!isUseSystemWine() && await isMacOsSierra()) {
+  if (!isEnvTrue(process.env.USE_SYSTEM_WINE) && await isMacOsSierra()) {
     // noinspection SpellCheckingInspection
     const wineDir = await getBinFromGithub("wine", "2.0.1-mac-10.12", "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg==")
     return {
@@ -38,7 +37,7 @@ export function execWine(file: string, args: Array<string>, options: ExecOptions
 }
 
 /** @private */
-export function prepareArgs(args: Array<string>, exePath: string) {
+export function prepareWindowsExecutableArgs(args: Array<string>, exePath: string) {
   if (process.platform !== "win32") {
     args.unshift(exePath)
   }

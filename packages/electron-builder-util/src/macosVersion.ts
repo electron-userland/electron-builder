@@ -1,6 +1,6 @@
-import { debug, Lazy } from "electron-builder-util"
 import { readFile } from "fs-extra-p"
 import * as semver from "semver"
+import { debug, Lazy } from "./util"
 
 const macOsVersion = new Lazy<string>(async () => {
   const file = await readFile("/System/Library/CoreServices/SystemVersion.plist", "utf8")
@@ -20,7 +20,6 @@ async function isOsVersionGreaterThanOrEqualTo(input: string) {
   return semver.gte(await macOsVersion.value, clean(input))
 }
 
-/** @internal */
 export async function isMacOsSierra() {
   return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
 }

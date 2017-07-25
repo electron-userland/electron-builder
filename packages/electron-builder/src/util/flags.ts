@@ -1,6 +1,4 @@
-export function isUseSystemWine() {
-  return isEnvTrue(process.env.USE_SYSTEM_WINE)
-}
+import { isEnvTrue } from "electron-builder-util"
 
 export function isUseSystemSigncode() {
   return isEnvTrue(process.env.USE_SYSTEM_SIGNCODE)
@@ -12,11 +10,4 @@ export function isBuildCacheEnabled() {
 
 export function isAutoDiscoveryCodeSignIdentity() {
   return process.env.CSC_IDENTITY_AUTO_DISCOVERY !== "false"
-}
-
-function isEnvTrue(value: string | null | undefined) {
-  if (value != null) {
-    value = value.trim()
-  }
-  return value === "true" || value === "" || value === "1"
 }

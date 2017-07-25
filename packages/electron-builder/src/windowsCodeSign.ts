@@ -1,13 +1,12 @@
-import { exec, warn } from "electron-builder-util"
+import { exec, isMacOsSierra, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
+import { computeToolEnv, ToolInfo } from "electron-builder-util/out/bundledTool"
 import { rename } from "fs-extra-p"
 import isCi from "is-ci"
 import * as os from "os"
 import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
-import { computeToolEnv, ToolInfo } from "./util/bundledTool"
 import { isUseSystemSigncode } from "./util/flags"
-import { isMacOsSierra } from "./util/macosVersion"
 
 /** @internal */
 export function getSignVendorPath() {
