@@ -18,6 +18,10 @@ export interface RequestHeaders {
   [key: string]: any
 }
 
+// tslint:disable:no-empty-interface
+export interface RequestOptionsEx extends RequestOptions {
+}
+
 export interface Response extends EventEmitter {
   statusCode?: number
   statusMessage?: string
@@ -49,7 +53,7 @@ export class HttpError extends Error {
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
 
-  request<T>(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<T> {
+  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
@@ -57,14 +61,12 @@ export abstract class HttpExecutor<REQUEST> {
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest<T>(options, cancellationToken, it => (it as any).end(encodedData), 0)
+    return this.doApiRequest(options, cancellationToken, it => (it as any).end(encodedData), 0)
   }
 
-  protected abstract doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<T>
+  protected abstract doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<string>
 
-  // abstract download(url: string, destination: string, options: DownloadOptions): Promise<string>
-
-  protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  protected handleResponse(response: Response, options: RequestOptionsEx, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
     if (debug.enabled) {
       debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
     }
@@ -92,7 +94,7 @@ export abstract class HttpExecutor<REQUEST> {
       }
 
       const newUrl = parseUrl(redirectUrl)
-      this.doApiRequest({...options, ...newUrl}, cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest({...options, ...newUrl as any}, cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -107,18 +109,12 @@ export abstract class HttpExecutor<REQUEST> {
     response.on("end", () => {
       try {
         const contentType = response.headers["content-type"]
-        const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
         if (response.statusCode != null && response.statusCode >= 400) {
+          const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
           reject(new HttpError(response, isJson ? JSON.parse(data) : data))
         }
         else {
-          const pathname = (options as any).pathname || options.path
-          if (data.length === 0) {
-            resolve()
-          }
-          else {
-            resolve(isJson || (pathname != null && pathname.endsWith(".json")) ? JSON.parse(data) : data)
-          }
+          resolve(data.length === 0 ? null : data)
         }
       }
       catch (e) {

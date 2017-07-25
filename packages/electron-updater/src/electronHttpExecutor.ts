@@ -1,6 +1,6 @@
 import _debug from "debug"
 import { net, session } from "electron"
-import { CancellationToken, configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor } from "electron-builder-http"
+import { CancellationToken, configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { parse as parseUrl } from "url"
@@ -41,7 +41,7 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     })
   }
 
-  doApiRequest<T>(options: any, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
+  doApiRequest<T>(options: RequestOptionsEx, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     if (debug.enabled) {
       debug(`request: ${dumpRequestOptions(options)}`)
     }

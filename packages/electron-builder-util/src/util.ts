@@ -50,15 +50,15 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
             debug(stdout)
           }
         }
-        resolve(stdout)
+        resolve(stdout.toString())
       }
       else {
         let message = red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
         if (stdout.length !== 0) {
-          message += `\n${yellow(stdout)}`
+          message += `\n${yellow(stdout.toString())}`
         }
         if (stderr.length !== 0) {
-          message += `\n${red(stderr)}`
+          message += `\n${red(stderr.toString())}`
         }
 
         reject(new Error(message))

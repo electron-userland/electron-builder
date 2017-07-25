@@ -48,11 +48,12 @@ export class BintrayClient {
   }
 
   private bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-    return this.httpExecutor.request<T>(configureRequestOptions({hostname: "api.bintray.com", path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
+    return this.httpExecutor.request(configureRequestOptions({hostname: "api.bintray.com", path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
+      .then(it => JSON.parse(it))
   }
 
   getVersion(version: string): Promise<Version> {
-    return this.bintrayRequest<Version>(`${this.basePath}/versions/${version}`, this.auth, null, this.cancellationToken)
+    return this.bintrayRequest(`${this.basePath}/versions/${version}`, this.auth, null, this.cancellationToken)
   }
 
   getVersionFiles(version: string): Promise<Array<File>> {

@@ -1,4 +1,4 @@
-import { CancellationToken, HttpError, HttpExecutor } from "electron-builder-http"
+import { CancellationToken, HttpError, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
 import { GithubOptions, githubUrl } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { RequestOptions } from "http"
@@ -37,7 +37,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const feedXml = await this.executor.request({
       path: `${basePath}.atom`,
       headers: {...this.requestHeaders, Accept: "application/xml, application/atom+xml, text/xml, */*"},
-      ...this.baseUrl
+      ...this.baseUrl as any
     }, cancellationToken)
 
     const feed = new xElement.Parse(feedXml)
@@ -64,7 +64,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const requestOptions = {path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined, ...this.baseUrl}
     let rawData: string
     try {
-      rawData = await this.executor.request<string>(requestOptions, cancellationToken)
+      rawData = await this.executor.request(requestOptions, cancellationToken)
     }
     catch (e) {
       if (!this.updater.allowPrerelease) {
@@ -97,12 +97,12 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string> {
-    const requestOptions: RequestOptions = {
+    const requestOptions: RequestOptionsEx = {
       path: `${basePath}/latest`,
-      headers: {...this.requestHeaders, Accept: "application/json"}, ...this.baseUrl}
+      headers: {...this.requestHeaders, Accept: "application/json"}, ...this.baseUrl as any}
     try {
       // do not use API to avoid limit
-      const releaseInfo = (await this.executor.request<GithubReleaseInfo>(requestOptions, cancellationToken))
+      const releaseInfo: GithubReleaseInfo = JSON.parse(await this.executor.request(requestOptions, cancellationToken))
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {

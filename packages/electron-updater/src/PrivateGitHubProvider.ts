@@ -1,8 +1,7 @@
 import { session } from "electron"
-import { CancellationToken, HttpError, HttpExecutor } from "electron-builder-http"
+import { CancellationToken, HttpError, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
-import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { parse as parseUrl } from "url"
@@ -29,12 +28,14 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const channelFile = getChannelFilename(getDefaultChannelName())
 
     const assets = await this.getLatestVersionInfo(basePath, cancellationToken)
-    const requestOptions = {
+    const requestOptions: RequestOptionsEx = {
       headers: this.configureHeaders("application/octet-stream"),
-      session: this.netSession, ...parseUrl(assets.find(it => it.name === channelFile)!.url)}
+      session: this.netSession,
+      ...parseUrl(assets.find(it => it.name === channelFile)!.url) as any,
+    }
     let result: any
     try {
-      result = safeLoad(await this.executor.request<string>(requestOptions, cancellationToken))
+      result = safeLoad(await this.executor.request(requestOptions, cancellationToken))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -69,11 +70,13 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<Array<Asset>> {
-    const requestOptions: RequestOptions = {
+    const requestOptions: RequestOptionsEx = {
       path: `${basePath}/latest`,
-      headers: this.configureHeaders("application/vnd.github.v3+json"), ...this.baseUrl}
+      headers: this.configureHeaders("application/vnd.github.v3+json"), ...this.baseUrl as any,
+      isParseJson: false,
+    }
     try {
-      return (await this.executor.request<any>(requestOptions, cancellationToken)).assets
+      return (JSON.parse(await this.executor.request(requestOptions, cancellationToken))).assets
     }
     catch (e) {
       throw new Error(`Unable to find latest version on GitHub (${formatUrl(requestOptions as any)}), please ensure a production release exists: ${e.stack || e.message}`)

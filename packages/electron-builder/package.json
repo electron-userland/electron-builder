@@ -74,7 +74,7 @@
     "parse-color": "^1.0.0",
     "plist": "^2.1.0",
     "sanitize-filename": "^1.6.1",
-    "semver": "^5.3.0",
+    "semver": "^5.4.1",
     "update-notifier": "^2.2.0",
     "uuid-1345": "^0.99.6",
     "yargs": "^8.0.2",

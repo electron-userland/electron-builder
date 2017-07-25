@@ -1,7 +1,6 @@
-import { HttpError, HttpExecutor } from "electron-builder-http"
+import { HttpError, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
 import { GenericServerOptions } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
-import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import * as url from "url"
@@ -20,16 +19,16 @@ export class GenericProvider extends Provider<UpdateInfo> {
     const channelFile = getChannelFilename(this.channel)
     const pathname = path.posix.resolve(this.baseUrl.pathname || "/", channelFile)
     try {
-      const options: RequestOptions = {
+      const options: RequestOptionsEx = {
         hostname: this.baseUrl.hostname,
         path: `${pathname}${this.baseUrl.search || ""}`,
         protocol: this.baseUrl.protocol,
-        headers: this.requestHeaders || undefined
+        headers: this.requestHeaders || undefined,
       }
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
       }
-      result = safeLoad(await this.executor.request<string>(options))
+      result = safeLoad(await this.executor.request(options))
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

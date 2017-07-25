@@ -198,12 +198,13 @@ export class GitHubPublisher extends HttpPublisher {
   private githubRequest<T>(path: string, token: string | null, data: {[name: string]: any; } | null = null, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
     // host can contains port, but node http doesn't support host as url does
     const baseUrl = parseUrl(`https://${this.info.host || "api.github.com"}`)
-    return httpExecutor.request<T>(configureRequestOptions({
+    return httpExecutor.request(configureRequestOptions({
       hostname: baseUrl.hostname,
       port: baseUrl.port as any,
       path: (this.info.host != null && this.info.host !== "github.com") ? `/api/v3${path.startsWith("/") ? path : `/${path}`}` : path,
       headers: {Accept: "application/vnd.github.v3+json"}
     }, token, method), this.context.cancellationToken, data)
+      .then(it => JSON.parse(it))
   }
 
   toString() {

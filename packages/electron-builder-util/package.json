@@ -18,7 +18,7 @@
     "bluebird-lst": "^1.0.2",
     "chalk": "^2.0.1",
     "debug": "^2.6.8",
-    "node-emoji": "^1.7.0",
+    "node-emoji": "^1.8.1",
     "electron-builder-http": "~0.0.0-semantic-release",
     "source-map-support": "^0.4.15",
     "7zip-bin": "^2.1.0",
