@@ -16,6 +16,7 @@
           </value>
         </option>
         <option name="LINE_SEPARATOR" value="&#10;" />
+        <option name="RIGHT_MARGIN" value="180" />
         <JSCodeStyleSettings>
           <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
           <option name="SPACES_WITHIN_IMPORTS" value="true" />

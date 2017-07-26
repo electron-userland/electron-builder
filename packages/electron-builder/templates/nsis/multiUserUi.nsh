@@ -188,14 +188,14 @@ Var RadioButtonLabel1
 		nsDialogs::GetUserData $1
 		pop $1
 		GetDlgItem $0 $hwndParent 1 ; get item 1 (next button) at parent window, store in $0 - (0 is back, 1 is next .. what about CANCEL? http://nsis.sourceforge.net/Buttons_Header )
-		
+
 		StrCpy $7 ""
 		${if} "$1" == "0" ; current user
 			${if} $hasPerUserInstallation == "1"
 				!ifndef BUILD_UNINSTALLER
-					StrCpy $7 "There is already a per-user installation. ($perUserInstallationFolder)$\r$\nWill reinstall/upgrade."
+					StrCpy $7 "$(perUserInstallExists)($perUserInstallationFolder)$\r$\n$(reinstallUpgrade)"
 				!else
-					StrCpy $7 "There is a per-user installation. ($perUserInstallationFolder)$\r$\nWill uninstall."
+					StrCpy $7 "$(perUserInstall)($perUserInstallationFolder)$\r$\n$(uninstall)"
 				!endif
 			${else}
 				StrCpy $7 "$(freshInstallForCurrent)"
@@ -204,15 +204,15 @@ Var RadioButtonLabel1
 		${else} ; all users
 			${if} $hasPerMachineInstallation == "1"
 				!ifndef BUILD_UNINSTALLER
-					StrCpy $7 "There is already a per-machine installation. ($perMachineInstallationFolder)$\r$\nWill reinstall/upgrade."
+					StrCpy $7 "$(perMachineInstallExists)($perMachineInstallationFolder)$\r$\n$(reinstallUpgrade)"
 				!else
-					StrCpy $7 "There is a per-machine installation. ($perMachineInstallationFolder)$\r$\nWill uninstall."
+					StrCpy $7 "$(perMachineInstall)($perMachineInstallationFolder)$\r$\n$(uninstall)"
 				!endif
 			${else}
 				StrCpy $7 "$(freshInstallForAll)"
 			${endif}
 			${ifNot} ${UAC_IsAdmin}
-				StrCpy $7 "$7 (will prompt for admin credentials)"
+				StrCpy $7 "$7"
 				SendMessage $0 ${BCM_SETSHIELD} 0 1 ; display SHIELD
 			${else}
 				SendMessage $0 ${BCM_SETSHIELD} 0 0 ; hide SHIELD
