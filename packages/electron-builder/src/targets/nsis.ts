@@ -462,11 +462,12 @@ export class NsisTarget extends Target {
       return licensePage == null ? "" : createMacro("licensePage", licensePage)
     })
 
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, this.isUnicodeEnabled))
+    const isMultiLang = this.isUnicodeEnabled && this.options.multiLanguageInstaller !== false
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, isMultiLang))
 
     if (!this.isPortable) {
       if (this.isUnicodeEnabled && this.options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml", packager, this.isUnicodeEnabled))
+        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml", packager, isMultiLang))
       }
 
       taskManager.add(async () => {

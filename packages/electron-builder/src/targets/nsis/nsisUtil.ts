@@ -64,9 +64,9 @@ async function writeCustomLangFile(data: string, packager: PlatformPackager<any>
   return file
 }
 
-export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, isUnicodeEnabled: boolean) {
+export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, isMultiLang: boolean) {
   const data = safeLoad(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
-  if (!isUnicodeEnabled) {
+  if (!isMultiLang) {
     for (const messageId of Object.keys(data)) {
       for (const langId of Object.keys(data[messageId])) {
         if (langId !== "en") {
@@ -76,7 +76,7 @@ export async function addCustomMessageFileInclude(input: string, packager: Platf
     }
   }
 
-  const instructions = computeCustomMessageTranslations(data, isUnicodeEnabled).join("\n")
+  const instructions = computeCustomMessageTranslations(data, isMultiLang).join("\n")
   debug(instructions)
   return '!include "' + await writeCustomLangFile(instructions, packager) + '"\n'
 }

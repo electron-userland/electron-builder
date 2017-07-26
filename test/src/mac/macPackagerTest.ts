@@ -67,7 +67,7 @@ test.ifMac("one-package", app({
   },
 }))
 
-test.ifMac("electronDist", appThrows({
+test.ifMac.ifAll("electronDist", appThrows({
   targets: Platform.MAC.createTarget(DIR_TARGET),
   config: {
     electronDist: "foo",

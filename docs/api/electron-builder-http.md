@@ -123,6 +123,7 @@
         * [`.onProgress(progress)`](#module_electron-builder-http.DownloadOptions+onProgress)
     * [`.ProgressInfo`](#ProgressInfo)
     * [`.RequestHeaders`](#RequestHeaders)
+    * [`.RequestOptionsEx`](#RequestOptionsEx) ⇐ <code>module:http.RequestOptions</code>
     * [`.Response`](#Response) ⇐ <code>internal:EventEmitter</code>
         * [`.setEncoding(encoding)`](#module_electron-builder-http.Response+setEncoding)
     * [.CancellationError](#CancellationError) ⇐ <code>Error</code>
@@ -135,7 +136,7 @@
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;String&gt;</code>
     * [.Lazy](#Lazy)
     * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
         * [`._flush(callback)`](#module_electron-builder-http.ProgressCallbackTransform+_flush)
@@ -181,6 +182,10 @@
 <a name="RequestHeaders"></a>
 ### `RequestHeaders`
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+<a name="RequestOptionsEx"></a>
+### `RequestOptionsEx` ⇐ <code>module:http.RequestOptions</code>
+**Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+**Extends**: <code>module:http.RequestOptions</code>  
 <a name="Response"></a>
 ### `Response` ⇐ <code>internal:EventEmitter</code>
 **Kind**: interface of [<code>electron-builder-http</code>](#module_electron-builder-http)  
@@ -270,7 +275,7 @@
 ### HttpExecutor
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 <a name="module_electron-builder-http.HttpExecutor+request"></a>
-#### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;module:electron-builder-http.T&gt;</code>
+#### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;String&gt;</code>
 **Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
 
 | Param | Type |

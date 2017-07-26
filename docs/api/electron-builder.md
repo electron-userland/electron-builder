@@ -769,7 +769,6 @@
     * [`.isAutoDiscoveryCodeSignIdentity()`](#module_electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity) ⇒ <code>Boolean</code>
     * [`.isBuildCacheEnabled()`](#module_electron-builder/out/util/flags.isBuildCacheEnabled) ⇒ <code>Boolean</code>
     * [`.isUseSystemSigncode()`](#module_electron-builder/out/util/flags.isUseSystemSigncode) ⇒ <code>Boolean</code>
-    * [`.isUseSystemWine()`](#module_electron-builder/out/util/flags.isUseSystemWine) ⇒ <code>Boolean</code>
 
 <a name="module_electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity"></a>
 ### `electron-builder/out/util/flags.isAutoDiscoveryCodeSignIdentity()` ⇒ <code>Boolean</code>
@@ -779,9 +778,6 @@
 **Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
 <a name="module_electron-builder/out/util/flags.isUseSystemSigncode"></a>
 ### `electron-builder/out/util/flags.isUseSystemSigncode()` ⇒ <code>Boolean</code>
-**Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
-<a name="module_electron-builder/out/util/flags.isUseSystemWine"></a>
-### `electron-builder/out/util/flags.isUseSystemWine()` ⇒ <code>Boolean</code>
 **Kind**: method of [<code>electron-builder/out/util/flags</code>](#module_electron-builder/out/util/flags)  
 <a name="module_electron-builder/out/util/packageDependencies"></a>
 ## electron-builder/out/util/packageDependencies

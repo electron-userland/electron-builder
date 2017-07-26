@@ -34,7 +34,7 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
           oneClick: false,
         }
       },
-      effectiveOptionComputed: async(it) => {
+      effectiveOptionComputed: async it => {
         const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
@@ -54,14 +54,14 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
 test.ifAll.ifNotCiMac("boring, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
-    targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
-    config: {
-      nsis: {
-        oneClick: false,
-        installerHeader: "foo.bmp"
-      }
-    },
-      effectiveOptionComputed: async (it) => {
+      targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
+      config: {
+        nsis: {
+          oneClick: false,
+          installerHeader: "foo.bmp"
+        }
+      },
+      effectiveOptionComputed: async it => {
         const defines = it[0]
         expect(defines.MUI_HEADERIMAGE).toBeNull()
         expect(defines.MUI_HEADERIMAGE_BITMAP).toEqual(installerHeaderPath)
@@ -100,13 +100,14 @@ test.ifAll.ifNotCiMac("allowToChangeInstallationDirectory", app({
     nsis: {
       allowToChangeInstallationDirectory: true,
       oneClick: false,
+      multiLanguageInstaller: false,
     }
   },
 }, {
-  projectDirCreated: async (projectDir) => {
+  projectDirCreated: async projectDir => {
     await writeFile(path.join(projectDir, "build", "release-notes.md"), "New release with new bugs and\n\nwithout features")
   },
-  packed: async(context) => {
+  packed: async context => {
     await expectUpdateMetadata(context, archFromString(process.arch))
     const updateInfo = safeLoad(await readFile(path.join(context.outDir, "latest.yml"), "utf-8"))
     expect(updateInfo.sha512).not.toEqual("")

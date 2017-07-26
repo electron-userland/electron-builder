@@ -307,7 +307,7 @@ Configuration Options
   Inherits [NsisOptions](#NsisOptions) options.
   * <a name="NsisWebOptions-appPackageUrl"></a>`appPackageUrl` String - The application package download URL. Optional — by default computed using publish configuration.
     
-    URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package).
+    URL like `https://example.com/download/latest` allows web installer to be version independent (installer will download latest application package). Please note — it is [full URL](https://github.com/electron-userland/electron-builder/issues/1810#issuecomment-317650878).
     
     Custom `X-Arch` http header is set to `32` or `64`.
   * <a name="NsisWebOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
