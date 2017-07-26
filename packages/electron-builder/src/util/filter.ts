@@ -1,7 +1,7 @@
 import { Filter } from "electron-builder-util/out/fs"
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
-import * as path from "path"
+import { sep } from "path"
 
 /** @internal */
 export function hasMagic(pattern: Minimatch) {
@@ -21,13 +21,14 @@ export function hasMagic(pattern: Minimatch) {
 
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
+  const checkedSrc = src.endsWith(sep) ? src : src + sep
   return (it, stat) => {
     if (src === it) {
       return true
     }
 
-    let relative = it.substring(src.length + 1)
-    if (path.sep === "\\") {
+    let relative = it.substring(checkedSrc.length)
+    if (sep === "\\") {
       relative = relative.replace(/\\/g, "/")
     }
 
