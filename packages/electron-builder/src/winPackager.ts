@@ -256,6 +256,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
+  async editResources(args: Array<string>) {
+    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
+  }
+
   async signAndEditResources(file: string, arch: Arch, outDir: string) {
     const appInfo = this.appInfo
 
@@ -308,7 +312,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
 
     const timer = time("wine&sign")
-    await execWine(path.join(await getSignVendorPath(), "rcedit.exe"), args)
+    await this.editResources(args)
     await this.sign(file)
     timer.end()
 

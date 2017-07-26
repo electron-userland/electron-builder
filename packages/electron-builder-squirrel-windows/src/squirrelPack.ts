@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch } from "electron-builder"
-import { debug, exec, log, spawn } from "electron-builder-util"
+import { debug, exec, log, spawn, use } from "electron-builder-util"
 import { copyFile, walk } from "electron-builder-util/out/fs"
 import { execWine, prepareArgs } from "electron-builder/out/util/wine"
 import { WinPackager } from "electron-builder/out/winPackager"
@@ -52,6 +52,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const appUpdate = await packager.getTempFile("Update.exe")
   await BluebirdPromise.all([
     copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
+      .then(() => editUpdateExeResources(packager, appUpdate))
       .then(() => packager.sign(appUpdate)),
     BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
       .then(() => ensureDir(outputDirectory))
@@ -252,4 +253,18 @@ async function encodedZip(archive: any, dir: string, prefix: string, vendorPath:
     }
   })
   archive.finalize()
+}
+
+async function editUpdateExeResources(packager: WinPackager, file: string) {
+  const appInfo = packager.appInfo
+  const args = [
+    file,
+    "--set-version-string", "ProductName", appInfo.productName,
+    "--set-version-string", "LegalCopyright", appInfo.copyright,
+    "--set-product-version", appInfo.versionInWeirdWindowsForm,
+  ]
+  use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
+  use(packager.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
+  use(await packager.getIconPath(), it => args.push("--set-icon", it!))
+  await packager.editResources(args)
 }
