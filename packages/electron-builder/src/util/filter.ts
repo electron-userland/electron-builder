@@ -21,13 +21,15 @@ export function hasMagic(pattern: Minimatch) {
 
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
+  const pathSeparator = path.sep
+  const checkedSrc = src.endsWith(pathSeparator) ? src : src + pathSeparator
   return (it, stat) => {
     if (src === it) {
       return true
     }
 
-    let relative = it.substring(src.length + 1)
-    if (path.sep === "\\") {
+    let relative = it.substring(checkedSrc.length)
+    if (pathSeparator === "\\") {
       relative = relative.replace(/\\/g, "/")
     }
 
