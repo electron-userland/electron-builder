@@ -46,7 +46,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       throw new Error(`No published versions on GitHub`)
     }
 
-    let version: string
+    let version: string | null
     try {
       if (this.updater.allowPrerelease) {
         version = latestRelease.element("link").getAttr("href").match(/\/tag\/v?([^\/]+)$/)[1]
@@ -57,6 +57,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     }
     catch (e) {
       throw new Error(`Cannot parse releases feed: ${e.stack || e.message},\nXML:\n${feedXml}`)
+    }
+
+    if (version == null) {
+      throw new Error(`No published versions on GitHub`)
     }
 
     let result: UpdateInfo
@@ -96,13 +100,18 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     return result
   }
 
-  private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string> {
+  private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string | null> {
     const requestOptions: RequestOptionsEx = {
       path: `${basePath}/latest`,
       headers: {...this.requestHeaders, Accept: "application/json"}, ...this.baseUrl as any}
     try {
       // do not use API to avoid limit
-      const releaseInfo: GithubReleaseInfo = JSON.parse(await this.executor.request(requestOptions, cancellationToken))
+      const rawData = await this.executor.request(requestOptions, cancellationToken)
+      if (rawData == null) {
+        return null
+      }
+
+      const releaseInfo: GithubReleaseInfo = JSON.parse(rawData)
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
