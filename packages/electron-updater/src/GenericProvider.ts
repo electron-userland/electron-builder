@@ -49,9 +49,10 @@ export class GenericProvider extends Provider<UpdateInfo> {
       return versionInfo as any
     }
 
+    const filePath = versionInfo.path
     return {
-      name: path.posix.basename(versionInfo.path),
-      url: url.format({...this.baseUrl, pathname: path.posix.resolve(this.baseUrl.pathname || "/", versionInfo.path)} as any),
+      name: path.posix.basename(filePath),
+      url: (filePath.startsWith("http:") || filePath.startsWith("https:")) ? filePath : url.format({...this.baseUrl, pathname: path.posix.resolve(this.baseUrl.pathname || "/", filePath)} as any),
       sha2: versionInfo.sha2,
       sha512: versionInfo.sha512,
     }
