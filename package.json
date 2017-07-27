@@ -30,7 +30,7 @@
     "ajv": "^5.2.2",
     "ajv-keywords": "^2.1.0",
     "archiver": "^2.0.0",
-    "aws-sdk": "^2.90.0",
+    "aws-sdk": "^2.91.0",
     "bluebird-lst": "^1.0.2",
     "chalk": "^2.0.1",
     "chromium-pickle-js": "^0.2.0",

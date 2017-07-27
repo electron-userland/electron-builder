@@ -1,5 +1,4 @@
 import Ajv from "ajv"
-import { CancellationToken } from "electron-builder-http"
 import { asArray, debug, log, warn } from "electron-builder-util"
 import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull } from "electron-builder-util/out/fs"
@@ -137,7 +136,7 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
         headers: {
           Accept: "application/json",
         },
-      }, new CancellationToken()))
+      }))
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {

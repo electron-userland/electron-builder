@@ -35,7 +35,7 @@ export class MacUpdater extends AppUpdater {
       return `http://${address.address}:${address.port}`
     }
 
-    return new BluebirdPromise<void>((resolve, reject) => {
+    return new BluebirdPromise<null>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         this._logger.info(`${requestUrl} requested`)
@@ -52,17 +52,19 @@ export class MacUpdater extends AppUpdater {
             }
             finally {
               if (!errorOccurred) {
-                resolve()
+                this.nativeUpdater.removeListener("error", reject)
+                resolve(null)
               }
             }
           })
-          this.proxyUpdateFile(response, fileInfo, error => {
+          this.proxyUpdateFile(response, fileInfo, cancellationToken, error => {
             errorOccurred = true
             try {
               response.writeHead(500)
               response.end()
             }
             finally {
+              this.nativeUpdater.removeListener("error", reject)
               reject(new Error(`Cannot download "${fileInfo.url}": ${error}`))
             }
           })
@@ -74,20 +76,25 @@ export class MacUpdater extends AppUpdater {
         }
       })
       server.listen(0, "127.0.0.1", 16, () => {
-        this.nativeUpdater.setFeedURL(`${getServerUrl()}`, {"Cache-Control": "no-cache", ...this.computeRequestHeaders(fileInfo)})
+        this.nativeUpdater.setFeedURL(`${getServerUrl()}`, {"Cache-Control": "no-cache"})
+
+        this.nativeUpdater.once("error", reject)
         this.nativeUpdater.checkForUpdates()
       })
     })
   }
 
-  private proxyUpdateFile(nativeResponse: ServerResponse, fileInfo: FileInfo, errorHandler: (error: Error) => void) {
-    const parsedUrl = parseUrl(fileInfo.url)
+  private proxyUpdateFile(nativeResponse: ServerResponse, fileInfo: FileInfo, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
+    this.doProxyUpdateFile(nativeResponse, parseUrl(fileInfo.url), this.computeRequestHeaders(fileInfo), fileInfo.sha512 || null, cancellationToken, errorHandler)
+  }
+
+  private doProxyUpdateFile(nativeResponse: ServerResponse, parsedUrl: any, headers: RequestHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
     const downloadRequest = this.httpExecutor.doRequest(configureRequestOptions({
       protocol: parsedUrl.protocol,
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
       port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : undefined,
-      headers: this.computeRequestHeaders(fileInfo) || undefined,
+      headers,
     }), downloadResponse => {
       if (downloadResponse.statusCode! >= 400) {
         try {
@@ -95,25 +102,35 @@ export class MacUpdater extends AppUpdater {
           nativeResponse.end()
         }
         finally {
-          this.emit("error", new Error(`Cannot download "${fileInfo.url}", status ${downloadResponse.statusCode}: ${downloadResponse.statusMessage}`))
+          errorHandler(new Error(`Cannot download "${JSON.stringify(parsedUrl)}", status ${downloadResponse.statusCode}: ${downloadResponse.statusMessage}`))
         }
         return
       }
 
-      const headers: RequestHeaders = {"Content-Type": "application/zip"}
+      // in tests Electron NET Api is not used, so, we have to handle redirect.
+      const redirectUrl = safeGetHeader(downloadResponse, "location")
+      if (redirectUrl != null) {
+        const newUrl = parseUrl(redirectUrl)
+        this.doProxyUpdateFile(nativeResponse, newUrl, headers, sha512, cancellationToken, errorHandler)
+        return
+      }
+
+      const nativeHeaders: RequestHeaders = {"Content-Type": "application/zip"}
       const streams: Array<any> = []
-      if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
+      const downloadListenerCount = this.listenerCount(DOWNLOAD_PROGRESS)
+      this._logger.info(`${DOWNLOAD_PROGRESS} listener count: ${downloadListenerCount}`)
+      if (downloadListenerCount > 0) {
         const contentLength = safeGetHeader(downloadResponse, "content-length")
+        this._logger.info(`contentLength: ${contentLength}`)
         if (contentLength != null) {
-          headers["Content-Length"] = contentLength
-          streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), new CancellationToken(), it => this.emit(DOWNLOAD_PROGRESS, it)))
+          nativeHeaders["Content-Length"] = contentLength
+          streams.push(new ProgressCallbackTransform(parseInt(contentLength, 10), cancellationToken, it => this.emit(DOWNLOAD_PROGRESS, it)))
         }
       }
 
-      nativeResponse.writeHead(200, headers)
+      nativeResponse.writeHead(200, nativeHeaders)
 
       // for mac only sha512 is produced (sha256 is published for windows only to preserve backward compatibility)
-      const sha512 = fileInfo.sha512
       if (sha512 != null) {
         // "hex" to easy migrate to new base64 encoded hash (we already produces latest-mac.yml with hex encoded hash)
         streams.push(new DigestTransform(sha512, "sha512", sha512.length === 128 && !sha512.includes("+") && !sha512.includes("Z") && !sha512.includes("=") ? "hex" : "base64"))

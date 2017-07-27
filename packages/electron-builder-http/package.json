@@ -10,7 +10,6 @@
   "files": [
     "out"
   ],
-  "//": "client can also install js-yaml to load yaml",
   "dependencies": {
     "debug": "^2.6.8",
     "fs-extra-p": "^4.4.0",

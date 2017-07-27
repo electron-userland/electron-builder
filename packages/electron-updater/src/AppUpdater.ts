@@ -305,12 +305,12 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /*** @private */
-  protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders | null {
+  protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders {
     const requestHeaders = this.requestHeaders
     if (fileInfo.headers != null) {
       return requestHeaders == null ? fileInfo.headers : {...fileInfo.headers, ...requestHeaders}
     }
-    return requestHeaders
+    return {Accept: "*/*", ...requestHeaders}
   }
 
   private createClient(data: string | PublishConfiguration) {
