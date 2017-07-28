@@ -255,7 +255,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  async signAndEditResources(file: string, arch: Arch, outDir: string) {
+  async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null) {
     const appInfo = this.appInfo
 
     const files: Array<string> = []
@@ -264,12 +264,17 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
       file,
       "--set-version-string", "FileDescription", appInfo.productName,
       "--set-version-string", "ProductName", appInfo.productName,
-      "--set-version-string", "InternalName", path.basename(appInfo.productFilename, ".exe"),
       "--set-version-string", "LegalCopyright", appInfo.copyright,
-      "--set-version-string", "OriginalFilename", "",
       "--set-file-version", appInfo.buildVersion,
       "--set-product-version", appInfo.versionInWeirdWindowsForm,
     ]
+
+    if (internalName != null) {
+      args.push(
+        "--set-version-string", "InternalName", internalName,
+        "--set-version-string", "OriginalFilename", "",
+      )
+    }
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
     use(this.platformSpecificBuildOptions.legalTrademarks, it => args.push("--set-version-string", "LegalTrademarks", it!))
@@ -322,7 +327,8 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   }
 
   protected signApp(packContext: AfterPackContext): Promise<any> {
-    return this.signAndEditResources(path.join(packContext.appOutDir, `${this.appInfo.productFilename}.exe`), packContext.arch, packContext.outDir)
+    const exeFileName = `${this.appInfo.productFilename}.exe`
+    return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"))
   }
 }
 

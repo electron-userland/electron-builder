@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`check updates - no versions at all 1`] = `"getaddrinfo ENOTFOUND api.bintray.com api.bintray.com:443"`;
+
+exports[`test error 1`] = `"Path must be a string. Received undefined"`;
+
+exports[`test error 2`] = `
+Array [
+  "checking-for-update",
+  "error",
+]
+`;

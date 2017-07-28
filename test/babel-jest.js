@@ -44,11 +44,22 @@ function createTransformer(options) {
         .digest("hex")
     },
     process(src, filename, config, transformOptions) {
+      // allow  ~/Documents/electron-builder/node_modules/electron-builder/out/targets/nsis.js:1
+
+      const nodeModulesIndexOf = filename.indexOf("node_modules")
+      if ((nodeModulesIndexOf > 0 && !filename.includes("electron-builder", nodeModulesIndexOf)) || !(filename.includes("/out/") || filename.includes("\\out\\"))) {
+        // console.log(`Skip ${filename}`)
+        return src
+      }
+
+      // console.log(`Do ${filename}`)
+
       if (babel == null) {
         babel = require('babel-core')
       }
 
-      if (!babel.util.canCompile(filename) || isFullyCompiled(src)) {
+      if (isFullyCompiled(src)) {
+        // console.log(`!canCompile!o ${filename}`)
         return src
       }
 

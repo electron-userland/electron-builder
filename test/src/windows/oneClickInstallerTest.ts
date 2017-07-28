@@ -51,6 +51,23 @@ test.ifAll.ifNotCiMac("multi language license", app({
   },
 }))
 
+test.ifAll.ifNotCiMac("html license", app({
+  targets: Platform.WINDOWS.createTarget("nsis"),
+  config: {
+    publish: null,
+    nsis: {
+      uninstallDisplayName: "Hi!!!",
+      createDesktopShortcut: false,
+    }
+  },
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      writeFile(path.join(projectDir, "build", "license.html"), '<html><body><p>Hi <a href="https://google.com" target="_blank">google</a></p></body></html>'),
+    ])
+  },
+}))
+
 test.ifDevOrLinuxCi("perMachine, no run after finish", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32),
   config: {

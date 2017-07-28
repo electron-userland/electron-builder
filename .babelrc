@@ -1,29 +1,14 @@
 {
   env: {
     development: {
+      presets: ["babel-preset-ts-node4-bluebird"],
       plugins: [
-        [
-          "transform-async-to-module-method",
-          {
-            module: "bluebird-lst",
-            method: "coroutine"
-          }
-        ],
-        "transform-es2015-parameters",
-        "transform-es2015-spread",
-        "transform-es2015-destructuring",
-        "array-includes",
-        [
-          "transform-inline-imports-commonjs",
-          {
-            excludeModules: ["path", "debug"]
-          }
-        ],
         "./scripts/babel-plugin-version-transform.js",
       ],
     },
     test: {
       sourceMaps: "inline",
+      presets: ["babel-preset-ts-node4-bluebird"],
       plugins: [
         [
           "transform-async-to-module-method",

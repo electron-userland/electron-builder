@@ -287,7 +287,7 @@ Configuration Options
   * <a name="NsisOptions-installerHeaderIcon"></a>`installerHeaderIcon` String - *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. Defaults to `build/installerHeaderIcon.ico` or application icon.
   * <a name="NsisOptions-include"></a>`include` String - The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
   * <a name="NsisOptions-script"></a>`script` String - The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
-  * <a name="NsisOptions-license"></a>`license` String - The path to EULA license file. Defaults to `license.rtf` or `license.txt` or `eula.rtf` or `eula.txt` (or uppercase variants, e.g. `EULA.txt` or `LICENSE.TXT`).
+  * <a name="NsisOptions-license"></a>`license` String - The path to EULA license file. Defaults to `license.txt` or `eula.txt` (or uppercase variants). In addition to `txt, `rtf` and `html` supported (don't forget to use `target="_blank"` for links).
     
     Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources. If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
     

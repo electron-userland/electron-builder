@@ -17,6 +17,10 @@ interface PackageFileInfo {
 
 const debug = _debug("electron-builder:nsis")
 
+export function createMacro(name: string, lines: Array<string>) {
+  return `\n!macro ${name}\n  ${lines.join("\n  ")}\n!macroend\n`
+}
+
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
   private readonly infoToIsDelete = new Map<PackageFileInfo, boolean>()

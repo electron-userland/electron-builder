@@ -55,6 +55,11 @@ Function .onInit
     !ifmacrodef customInit
       !insertmacro customInit
     !endif
+
+    !ifmacrodef addLicenseFiles
+      InitPluginsDir
+      !insertmacro addLicenseFiles
+    !endif
   !endif
 FunctionEnd
 

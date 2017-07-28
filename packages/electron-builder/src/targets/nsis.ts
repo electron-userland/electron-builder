@@ -16,7 +16,7 @@ import { time } from "../util/timer"
 import { WinPackager } from "../winPackager"
 import { addZipArgs, archive, ArchiveOptions } from "./archive"
 import { computeBlockMap } from "./blockMap"
-import { bundledLanguages, getLicenseFiles, lcid } from "./license"
+import { computeLicensePage } from "./nsis/nsisLicense"
 import { addCustomMessageFileInclude, AppPackageHelper, nsisTemplatesDir } from "./nsis/nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
@@ -27,7 +27,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 // noinspection SpellCheckingInspection
 const nsisPathPromise = getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057")
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = getBinFromGithub("nsis-resources", "3.0.0", "cde0e77b249e29d74250bf006aa355d3e02b32226e1c6431fb48facae41d8a7e")
+const nsisResourcePathPromise = getBinFromGithub("nsis-resources", "3.1.0", "/QBlR/F8AAGInT/eQQ0eJNSF0RFR11g+L54WWViDYTgBHwTIlkcqBHgvNDKO6LQODtqOm9N2nG2AxK7UZT5bOg==")
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -458,8 +458,8 @@ export class NsisTarget extends Target {
 
     taskManager.add(async () => {
       // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
-      const licensePage = await this.computeLicensePage()
-      return licensePage == null ? "" : createMacro("licensePage", licensePage)
+      const licensePage = await computeLicensePage(packager, this.options)
+      return licensePage || ""
     })
 
     const isMultiLang = this.isUnicodeEnabled && this.options.multiLanguageInstaller !== false
@@ -531,41 +531,4 @@ export class NsisTarget extends Target {
 
     return scriptHeader + originalScript
   }
-
-  private async computeLicensePage(): Promise<Array<string> | null> {
-    const packager = this.packager
-
-    const license = await packager.getResource(this.options.license, "license.rtf", "license.txt", "eula.rtf", "eula.txt", "LICENSE.rtf", "LICENSE.txt", "EULA.rtf", "EULA.txt", "LICENSE.RTF", "LICENSE.TXT", "EULA.RTF", "EULA.TXT")
-    if (license != null) {
-      return [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
-    }
-
-    const licenseFiles = await getLicenseFiles(packager)
-    if (licenseFiles.length === 0) {
-      return null
-    }
-
-    const licensePage: Array<string> = []
-    const unspecifiedLangs = new Set(bundledLanguages)
-
-    let defaultFile: string | null = null
-    for (const item of licenseFiles) {
-      unspecifiedLangs.delete(item.langWithRegion)
-      if (defaultFile == null) {
-        defaultFile = item.file
-      }
-      licensePage.push(`LicenseLangString MUILicense ${lcid[item.langWithRegion] || item.lang} "${item.file}"`)
-    }
-
-    for (const l of unspecifiedLangs) {
-      licensePage.push(`LicenseLangString MUILicense ${lcid[l]} "${defaultFile}"`)
-    }
-
-    licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
-    return licensePage
-  }
-}
-
-function createMacro(name: string, lines: Array<string>) {
-  return `\n!macro ${name}\n  ${lines.join("\n  ")}\n!macroend\n`
 }

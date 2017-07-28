@@ -51,7 +51,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   const appUpdate = await packager.getTempFile("Update.exe")
   await BluebirdPromise.all([
     copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
-      .then(() => packager.sign(appUpdate)),
+      .then(() => packager.signAndEditResources(appUpdate, arch, outDir)),
     BluebirdPromise.all([remove(`${outputDirectory.replace(/\\/g, "/")}/*-full.nupkg`), remove(path.join(outputDirectory, "RELEASES"))])
       .then(() => ensureDir(outputDirectory))
   ])

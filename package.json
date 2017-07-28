@@ -30,7 +30,7 @@
     "ajv": "^5.2.2",
     "ajv-keywords": "^2.1.0",
     "archiver": "^2.0.0",
-    "aws-sdk": "^2.91.0",
+    "aws-sdk": "^2.92.0",
     "bluebird-lst": "^1.0.2",
     "chalk": "^2.0.1",
     "chromium-pickle-js": "^0.2.0",
@@ -71,12 +71,7 @@
     "@types/js-yaml": "^3.9.0",
     "@types/source-map-support": "^0.4.0",
     "@types/xml2js": "^0.4.0",
-    "babel-plugin-array-includes": "^2.0.3",
-    "babel-plugin-transform-async-to-module-method": "^6.24.1",
-    "babel-plugin-transform-es2015-destructuring": "^6.23.0",
-    "babel-plugin-transform-es2015-parameters": "^6.24.1",
-    "babel-plugin-transform-es2015-spread": "^6.22.0",
-    "babel-plugin-transform-inline-imports-commonjs": "^1.2.0",
+    "babel-preset-ts-node4-bluebird": "^0.1.0",
     "convert-source-map": "^1.5.0",
     "decompress-zip": "^0.3.0",
     "depcheck": "^0.6.7",
@@ -104,9 +99,7 @@
       "test/out"
     ],
     "transform": {
-      "<rootDir>/packages/[^\\/]+/node_modules/electron-builder-[a-z]+/out/.+\\.js$": "<rootDir>/test/babel-jest.js",
-      "<rootDir>\\packages\\[^\\/]+\\node_modules\\electron-builder-[a-z]+\\out\\.+\\.js$": "<rootDir>/test/babel-jest.js",
-      "^(?!.+[\\/]{1}node_modules[\\/]{1}.+).+[\\/]{1}out[\\/]{1}.+\\.js$": "<rootDir>/test/babel-jest.js"
+      "^.+\\.js$": "<rootDir>/test/babel-jest.js"
     },
     "transformIgnorePatterns": [],
     "testPathIgnorePatterns": [
