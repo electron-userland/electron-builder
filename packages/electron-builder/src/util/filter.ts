@@ -30,6 +30,10 @@ export function createFilter(src: string, patterns: Array<Minimatch>, excludePat
 
     let relative = it.substring(checkedSrc.length)
     if (pathSeparator === "\\") {
+      if (relative.startsWith("\\")) {
+        // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
+        relative = relative.substring(1)
+      }
       relative = relative.replace(/\\/g, "/")
     }
 

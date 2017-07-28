@@ -8,6 +8,8 @@ import { copyFileOrData } from "./asarUtil"
 import { AsyncTaskManager } from "./asyncTaskManager"
 
 export async function copyAppFiles(fileSet: FileSet, packager: Packager) {
+  const pathSeparator = path.sep
+
   const metadata = fileSet.metadata
   const transformedFiles = fileSet.transformedFiles
   // search auto unpacked dir
@@ -25,7 +27,11 @@ export async function copyAppFiles(fileSet: FileSet, packager: Packager) {
       continue
     }
 
-    const relativePath = file.replace(fileSet.src, fileSet.destination)
+    // sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
+    const src = fileSet.src.endsWith(pathSeparator) ? fileSet.src : fileSet.src + pathSeparator
+    const destination = fileSet.destination.endsWith(pathSeparator) ? fileSet.destination : fileSet.destination + pathSeparator
+
+    const relativePath = file.replace(src, destination)
     if (stat.isFile()) {
       const fileParent = path.dirname(file)
       // const dirNode = this.fs.getOrCreateNode(this.getRelativePath(fileParent))
@@ -37,7 +43,7 @@ export async function copyAppFiles(fileSet: FileSet, packager: Packager) {
 
       if (!dirToCreateForUnpackedFiles.has(fileParent)) {
         dirToCreateForUnpackedFiles.add(fileParent)
-        await ensureDir(fileParent.replace(fileSet.src, fileSet.destination))
+        await ensureDir(fileParent.replace(src, destination))
       }
 
       taskManager.addTask(copyFileOrData(fileCopier, newData, file, relativePath, stat))
