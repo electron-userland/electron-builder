@@ -11,7 +11,9 @@ import { FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
 import { AsyncTaskManager } from "./asyncTaskManager"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
-const pickle = require ("chromium-pickle-js")
+const pickle = require("chromium-pickle-js")
+
+const pathSeparator = path.sep
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   let list = map.get(key)
@@ -365,9 +367,24 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
 }
 
 function getRelativePath(fileSet: FileSet, p: string) {
-  return p.substring(fileSet.src.length + 1)
+  const checkedSrc = fileSet.src.endsWith(pathSeparator) ? fileSet.src : fileSet.src + pathSeparator
+  const relative = p.substring(checkedSrc.length)
+
+  if (pathSeparator === "\\") {
+    if (relative.startsWith('\\')) {
+      // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
+      return relative.substring(1)
+    }
+  }
+
+  return relative
 }
 
 function getTargetPath(fileSet: FileSet, p: string, to: string) {
-  return p.replace(fileSet.src, to)
+  // sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
+  const src = fileSet.src.endsWith(pathSeparator) ? fileSet.src : fileSet.src + pathSeparator
+  const destination = to.endsWith(pathSeparator) ? to : to + pathSeparator
+
+  return p.replace(src, destination)
 }
+
