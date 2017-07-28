@@ -26,13 +26,20 @@ export interface Dependency {
 }
 
 const knownAlwaysIgnoredDevDeps = new Set([
-  "electron-builder", "electron-builder-tslint-config", "electron-builder-util", "electron-publish", "electron-download-tf", "electron-download",
+  "electron-builder-tslint-config", "electron-download",
   "electron-forge", "electron-packager", "electron-compilers",
   "jest", "jest-cli", "prebuild-install", "nan",
   "asar-integrity", "asar",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
   "react-scripts",
 ])
+
+if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
+  knownAlwaysIgnoredDevDeps.add("electron-builder")
+  knownAlwaysIgnoredDevDeps.add("electron-builder-util")
+  knownAlwaysIgnoredDevDeps.add("electron-publish")
+  knownAlwaysIgnoredDevDeps.add("electron-download-tf")
+}
 
 export function createLazyProductionDeps(projectDir: string) {
   return new Lazy(() => getProductionDependencies(projectDir))

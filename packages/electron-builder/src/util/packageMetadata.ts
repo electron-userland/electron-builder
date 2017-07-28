@@ -84,7 +84,11 @@ function checkDependencies(dependencies: { [key: string]: string } | null | unde
     return
   }
 
-  for (const name of ["electron", "electron-prebuilt", "electron-builder", "electron-rebuild"]) {
+  const deps = ["electron", "electron-prebuilt", "electron-rebuild"]
+  if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
+    deps.push("electron-builder")
+  }
+  for (const name of deps) {
     if (name in dependencies) {
       errors.push(`Package "${name}" is only allowed in "devDependencies". `
         + `Please remove it from the "dependencies" section in your package.json.`)
