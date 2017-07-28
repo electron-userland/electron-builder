@@ -371,7 +371,7 @@ function getRelativePath(fileSet: FileSet, p: string) {
   const relative = p.substring(checkedSrc.length)
 
   if (pathSeparator === "\\") {
-    if (relative.startsWith('\\')) {
+    if (relative.startsWith("\\")) {
       // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
       return relative.substring(1)
     }
@@ -387,4 +387,3 @@ function getTargetPath(fileSet: FileSet, p: string, to: string) {
 
   return p.replace(src, destination)
 }
-
