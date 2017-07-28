@@ -7,7 +7,7 @@ import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { tmpdir } from "os"
 import * as path from "path"
-import { assertThat } from "../helpers/fileAssert"
+import { assertThat } from "./fileAssert"
 
 const tmpDir = new TmpDir()
 

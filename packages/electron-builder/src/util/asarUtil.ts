@@ -7,11 +7,11 @@ import { AsarFilesystem, Node, readAsar } from "../asar"
 import { AsarOptions } from "../metadata"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
+import { ensureEndSlash, FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
 import { AsyncTaskManager } from "./asyncTaskManager"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
-const pickle = require ("chromium-pickle-js")
+const pickle = require("chromium-pickle-js")
 
 function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   let list = map.get(key)
@@ -24,9 +24,9 @@ function addValue(map: Map<string, Array<string>>, key: string, value: string) {
   }
 }
 
-export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, src: string, destination: string, stats: Stats) {
+export function copyFileOrData(fileCopier: FileCopier, data: string | Buffer | undefined | null, source: string, destination: string, stats: Stats) {
   if (data == null) {
-    return fileCopier.copy(src, destination, stats)
+    return fileCopier.copy(source, destination, stats)
   }
   else {
     return writeFile(destination, data)
@@ -365,9 +365,21 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
 }
 
 function getRelativePath(fileSet: FileSet, p: string) {
-  return p.substring(fileSet.src.length + 1)
+  const relative = p.substring(ensureEndSlash(fileSet.src).length)
+
+  if (path.sep === "\\") {
+    if (relative.startsWith("\\")) {
+      // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
+      return relative.substring(1)
+    }
+  }
+
+  return relative
 }
 
 function getTargetPath(fileSet: FileSet, p: string, to: string) {
-  return p.replace(fileSet.src, to)
+  if (p === fileSet.src) {
+    return to
+  }
+  return p.replace(ensureEndSlash(fileSet.src), ensureEndSlash(to))
 }

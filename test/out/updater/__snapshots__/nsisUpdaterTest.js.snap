@@ -1,6 +1,177 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`check updates - no versions at all 1`] = `"getaddrinfo ENOTFOUND api.bintray.com api.bintray.com:443"`;
+exports[`1 staging percentage 1`] = `undefined`;
+
+exports[`1 staging percentage 2`] = `
+Array [
+  "checking-for-update",
+]
+`;
+
+exports[`90 staging percentage 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`90 staging percentage 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`cancel download with progress 1`] = `"Cancelled"`;
+
+exports[`check updates - no versions at all 1`] = `"No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. HttpError: 404 Not Found"`;
+
+exports[`checkForUpdates several times 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`checkForUpdates several times 2`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`checkForUpdates several times 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+  "checking-for-update",
+  "update-available",
+]
+`;
+
+exports[`downgrade (allowed) 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`downgrade (disallowed) 1`] = `undefined`;
+
+exports[`downgrade (disallowed, beta) 1`] = `undefined`;
+
+exports[`file url 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+  "url": "https://dl.bintray.com/actperepo/generic/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`file url generic - manual download 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`file url generic - manual download 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+]
+`;
+
+exports[`file url generic 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`file url generic 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github 1`] = `
+Object {
+  "name": "TestApp-Setup-1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "xrTrW8dzWYlPnu71Y4lpLIAuIurBZJvZmqEZyz1rzM3CbbE1Z+T+P5qYYZgwmhmXdYPOpvnmYKa0HGdgXggwtQ==",
+  "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.1.0/TestApp-Setup-1.1.0.exe",
+}
+`;
+
+exports[`file url github 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github pre-release 1`] = `
+Object {
+  "name": "TestApp-Setup-1.5.2-beta.3.exe",
+  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "sha512": undefined,
+  "url": "https://github.com/develar/__test_nsis_release/releases/download/v1.5.2-beta.3/TestApp-Setup-1.5.2-beta.3.exe",
+}
+`;
+
+exports[`file url github pre-release 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
+exports[`file url github pre-release 3`] = `
+Object {
+  "path": "TestApp Setup 1.5.2-beta.3.exe",
+  "releaseName": "v1.5.2-beta.3",
+  "releaseNotes": "No content.",
+  "sha2": "f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+  "version": "1.5.2-beta.3",
+}
+`;
+
+exports[`sha512 mismatch error event 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha2": undefined,
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==",
+  "url": "https://develar.s3.amazonaws.com/test/TestApp Setup 1.1.0.exe",
+}
+`;
+
+exports[`sha512 mismatch error event 2`] = `"sha512 checksum mismatch, expected Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIZ==, got Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw=="`;
+
+exports[`sha512 mismatch error event 3`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "error",
+]
+`;
 
 exports[`test error 1`] = `"Path must be a string. Received undefined"`;
 

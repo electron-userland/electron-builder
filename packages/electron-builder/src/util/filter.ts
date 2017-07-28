@@ -2,6 +2,7 @@ import { Filter } from "electron-builder-util/out/fs"
 import { Stats } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { ensureEndSlash } from "./AppFileCopierHelper"
 
 /** @internal */
 export function hasMagic(pattern: Minimatch) {
@@ -22,14 +23,18 @@ export function hasMagic(pattern: Minimatch) {
 /** @internal */
 export function createFilter(src: string, patterns: Array<Minimatch>, excludePatterns?: Array<Minimatch> | null): Filter {
   const pathSeparator = path.sep
-  const checkedSrc = src.endsWith(pathSeparator) ? src : src + pathSeparator
+  const srcWithEndSlash = ensureEndSlash(src)
   return (it, stat) => {
     if (src === it) {
       return true
     }
 
-    let relative = it.substring(checkedSrc.length)
+    let relative = it.substring(srcWithEndSlash.length)
     if (pathSeparator === "\\") {
+      if (relative.startsWith("\\")) {
+        // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
+        relative = relative.substring(1)
+      }
       relative = relative.replace(/\\/g, "/")
     }
 

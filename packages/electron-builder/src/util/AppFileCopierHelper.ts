@@ -99,3 +99,8 @@ require('electron-compile').init(__dirname, require('path').resolve(__dirname, '
   // cache files should be first (better IO)
   return {src: electronCompileCache, files: cacheFiles, transformedFiles, metadata, destination: mainFileSet.destination}
 }
+
+// sometimes, destination may not contain path separator in the end (path to folder), but the src does. So let's ensure paths have path separators in the end
+export function ensureEndSlash(s: string) {
+  return s === "" || s.endsWith(path.sep) ? s : (s + path.sep)
+}

@@ -5,7 +5,7 @@ import { outputFile } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
-import { createTestApp, trackEvents, tuneNsisUpdater, validateDownload, writeUpdateConfig } from "./updaterTestUtil"
+import { createTestApp, trackEvents, tuneNsisUpdater, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   fit("Skip ArtifactPublisherTest suite — ELECTRON_BUILDER_OFFLINE is defined", () => {
