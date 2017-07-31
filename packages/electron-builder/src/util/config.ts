@@ -130,13 +130,13 @@ export async function computeElectronVersion(projectDir: string, projectMetadata
   const electronPrebuiltDep = findFromElectronPrebuilt(projectMetadata || await readJson(packageJsonPath))
   if (electronPrebuiltDep == null || electronPrebuiltDep === "latest") {
     try {
-      const releaseInfo = JSON.parse(await httpExecutor.request({
+      const releaseInfo = JSON.parse((await httpExecutor.request({
         hostname: "github.com",
         path: "/electron/electron/releases/latest",
         headers: {
           Accept: "application/json",
         },
-      }))
+      }))!!)
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {

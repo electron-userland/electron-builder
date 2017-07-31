@@ -35,7 +35,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
     let result: any
     try {
-      result = safeLoad(await this.executor.request(requestOptions, cancellationToken))
+      result = safeLoad((await this.executor.request(requestOptions, cancellationToken))!!)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {
@@ -76,7 +76,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       isParseJson: false,
     }
     try {
-      return (JSON.parse(await this.executor.request(requestOptions, cancellationToken))).assets
+      return (JSON.parse((await this.executor.request(requestOptions, cancellationToken))!!)).assets
     }
     catch (e) {
       throw new Error(`Unable to find latest version on GitHub (${formatUrl(requestOptions as any)}), please ensure a production release exists: ${e.stack || e.message}`)

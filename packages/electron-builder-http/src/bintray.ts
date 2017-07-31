@@ -1,5 +1,5 @@
 import { CancellationToken } from "./CancellationToken"
-import { configureRequestOptions, HttpExecutor, RequestHeaders } from "./httpExecutor"
+import { configureRequestOptions, HttpExecutor, parseJson, RequestHeaders } from "./httpExecutor"
 import { BintrayOptions } from "./publishOptions"
 
 export interface Version {
@@ -48,8 +48,7 @@ export class BintrayClient {
   }
 
   private bintrayRequest<T>(path: string, auth: string | null, data: {[name: string]: any; } | null = null, cancellationToken: CancellationToken, method?: "GET" | "DELETE" | "PUT"): Promise<T> {
-    return this.httpExecutor.request(configureRequestOptions({hostname: "api.bintray.com", path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data)
-      .then(it => JSON.parse(it))
+    return parseJson(this.httpExecutor.request(configureRequestOptions({hostname: "api.bintray.com", path, headers: this.requestHeaders || undefined}, auth, method), cancellationToken, data))
   }
 
   getVersion(version: string): Promise<Version> {

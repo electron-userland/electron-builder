@@ -28,7 +28,7 @@ export class GenericProvider extends Provider<UpdateInfo> {
       if (this.baseUrl.port != null) {
         options.port = parseInt(this.baseUrl.port, 10)
       }
-      result = safeLoad(await this.executor.request(options))
+      result = safeLoad((await this.executor.request(options))!!)
     }
     catch (e) {
       if (e instanceof HttpError && e.response.statusCode === 404) {

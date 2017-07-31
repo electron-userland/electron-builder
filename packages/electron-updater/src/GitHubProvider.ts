@@ -68,7 +68,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const requestOptions = {path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined, ...this.baseUrl}
     let rawData: string
     try {
-      rawData = await this.executor.request(requestOptions, cancellationToken)
+      rawData = (await this.executor.request(requestOptions, cancellationToken))!!
     }
     catch (e) {
       if (!this.updater.allowPrerelease) {

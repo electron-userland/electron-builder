@@ -50,10 +50,14 @@ export class HttpError extends Error {
   }
 }
 
+export function parseJson(result: Promise<string | null>) {
+  return result.then(it => it == null || it.length === 0 ? null : JSON.parse(it))
+}
+
 export abstract class HttpExecutor<REQUEST> {
   protected readonly maxRedirects = 10
 
-  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string> {
+  request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string | null> {
     configureRequestOptions(options)
     const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
     if (encodedData != null) {
