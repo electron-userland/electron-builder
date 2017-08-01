@@ -51,7 +51,7 @@ Section "un.install"
   !ifmacrodef customRemoveFiles
     !insertmacro customRemoveFiles
   !else
-    RMDir /r /REBOOTOK $INSTDIR
+    RMDir /r $INSTDIR
   !endif
 
   Var /GLOBAL isDeleteAppData
