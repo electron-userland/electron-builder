@@ -33,7 +33,7 @@ export interface SquirrelOptions {
   remoteReleases?: string
   remoteToken?: string
   loadingGif?: string
-  productName?: string
+  productName: string
   appId?: string
   name: string
   packageCompressionLevel?: number
@@ -47,7 +47,12 @@ export interface SquirrelOptions {
   copyright?: string
 }
 
-export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, setupExe: string, packager: WinPackager, appOutDir: string, outDir: string, arch: Arch) {
+export interface OutFileNames {
+  setupFile: string
+  packageFile: string
+}
+
+export async function buildInstaller(options: SquirrelOptions, outputDirectory: string, outFileNames: OutFileNames, packager: WinPackager, appOutDir: string, outDir: string, arch: Arch) {
   const appUpdate = await packager.getTempFile("Update.exe")
   await BluebirdPromise.all([
     copyFile(path.join(options.vendorPath, "Update.exe"), appUpdate)
@@ -73,18 +78,17 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
   embeddedArchive.file(options.loadingGif ? path.resolve(packager.projectDir, options.loadingGif) : path.join(options.vendorPath, "install-spinner.gif"), {name: "background.gif"})
 
   const version = convertVersion(options.version)
-  const packageName = `${options.name}-${version}-full.nupkg`
-  const nupkgPath = path.join(outputDirectory, packageName)
-  const setupPath = path.join(outputDirectory, setupExe)
+  const nupkgPath = path.join(outputDirectory, outFileNames.packageFile)
+  const setupPath = path.join(outputDirectory, outFileNames.setupFile)
 
   await BluebirdPromise.all<any>([
     pack(options, appOutDir, appUpdate, nupkgPath, version, packager),
     copyFile(path.join(options.vendorPath, "Setup.exe"), setupPath),
   ])
 
-  embeddedArchive.file(nupkgPath, {name: packageName})
+  embeddedArchive.file(nupkgPath, {name: outFileNames.packageFile})
 
-  const releaseEntry = await releasify(options, nupkgPath, outputDirectory, packageName)
+  const releaseEntry = await releasify(options, nupkgPath, outputDirectory, outFileNames.packageFile)
 
   embeddedArchive.append(releaseEntry, {name: "RELEASES"})
   embeddedArchive.finalize()
@@ -94,7 +98,7 @@ export async function buildInstaller(options: SquirrelOptions, outputDirectory: 
 
   await packager.signAndEditResources(setupPath, arch, outDir)
   if (options.msi && process.platform === "win32") {
-    const outFile = setupExe.replace(".exe", ".msi")
+    const outFile = outFileNames.setupFile.replace(".exe", ".msi")
     await msi(options, nupkgPath, setupPath, outputDirectory, outFile)
     // rcedit can only edit .exe resources
     await packager.sign(path.join(outputDirectory, outFile))

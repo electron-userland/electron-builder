@@ -19,7 +19,7 @@ export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
     super(info)
 
     const executableName = this.platformSpecificBuildOptions.executableName
-    this.executableName = sanitizeFileName(executableName == null ? this.appInfo.name.toLowerCase() : executableName)
+    this.executableName = executableName == null ? this.appInfo.sanitizedName.toLowerCase() : sanitizeFileName(executableName)
   }
 
   get defaultTarget(): Array<string> {

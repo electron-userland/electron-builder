@@ -14,7 +14,7 @@
   "dependencies": {
     "bluebird-lst": "^1.0.2",
     "fs-extra-p": "^4.4.0",
-    "js-yaml": "^3.9.0",
+    "js-yaml": "^3.9.1",
     "semver": "^5.4.1",
     "source-map-support": "^0.4.15",
     "electron-builder-http": "~0.0.0-semantic-release",

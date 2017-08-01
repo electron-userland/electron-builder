@@ -4,6 +4,7 @@ import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
 import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
+import sanitizeFileName from "sanitize-filename"
 import { buildInstaller, convertVersion, SquirrelOptions } from "./squirrelPack"
 
 const SW_VERSION = "1.6.0.0"
@@ -28,16 +29,17 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const version = appInfo.version
     const archSuffix = getArchSuffix(arch)
-    // tslint:disable:no-invalid-template-strings
-    const setupFileName = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
+
+    const sanitizedName = sanitizeFileName(this.appName)
+
+    // tslint:disable-next-line:no-invalid-template-strings
+    const setupFile = packager.expandArtifactNamePattern(this.options, "exe", arch, "${productName} Setup ${version}.${ext}")
+    const packageFile = `${sanitizedName}-${version}-full.nupkg`
 
     const installerOutDir = path.join(this.outDir, `win${getArchSuffix(arch)}`)
-
     const distOptions = await this.computeEffectiveDistOptions()
-
-    await buildInstaller(distOptions as SquirrelOptions, installerOutDir, setupFileName, packager, appOutDir, this.outDir, arch)
-
-    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFileName), this, arch, `${this.appName}-Setup-${version}${archSuffix}.exe`)
+    await buildInstaller(distOptions as SquirrelOptions, installerOutDir, {setupFile, packageFile}, packager, appOutDir, this.outDir, arch)
+    packager.dispatchArtifactCreated(path.join(installerOutDir, setupFile), this, arch, `${sanitizedName}-Setup-${version}${archSuffix}.exe`)
 
     const packagePrefix = `${this.appName}-${convertVersion(version)}-`
     packager.dispatchArtifactCreated(path.join(installerOutDir, `${packagePrefix}full.nupkg`), this, arch)
@@ -71,7 +73,7 @@ export default class SquirrelWindowsTarget extends Target {
     const appInfo = packager.appInfo
     const projectUrl = await appInfo.computePackageUrl()
     const appName = this.appName
-    const options: any = {
+    const options: SquirrelOptions = {
       name: appName,
       productName: this.options.name || appInfo.productName,
       appId: this.options.useAppIdAsId ? appInfo.id : appName,
@@ -83,7 +85,9 @@ export default class SquirrelWindowsTarget extends Target {
       extraMetadataSpecs: projectUrl == null ? null : `\n    <projectUrl>${projectUrl}</projectUrl>`,
       copyright: appInfo.copyright,
       packageCompressionLevel: parseInt((process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || packager.config.compression === "store" ? 0 : 9) as any, 10),
-      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2), ...this.options}
+      vendorPath: await getBinFromGithub("Squirrel.Windows", SW_VERSION, SW_SHA2),
+      ...this.options as any,
+    }
 
     if (options.remoteToken == null) {
       options.remoteToken = process.env.GH_TOKEN
@@ -96,7 +100,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
     }
 
-    if (options.remoteReleases === true) {
+    if (this.options.remoteReleases === true) {
       const info = await packager.info.repositoryInfo
       if (info == null) {
         warn("remoteReleases set to true, but cannot get repository info")

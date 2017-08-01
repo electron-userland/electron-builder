@@ -73,6 +73,10 @@ export class AppInfo {
     return this.info.metadata.name!
   }
 
+  get sanitizedName(): string {
+    return sanitizeFileName(this.name)
+  }
+
   get copyright(): string {
     const copyright = this.info.config.copyright
     if (copyright != null) {
