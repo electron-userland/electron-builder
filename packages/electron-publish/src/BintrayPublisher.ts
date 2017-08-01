@@ -4,7 +4,7 @@ import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
 import { debug, isEmptyOrSpaces, isTokenCharValid, log } from "electron-builder-util"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
-import { ClientRequest } from "http"
+import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export class BintrayPublisher extends HttpPublisher {
@@ -62,19 +62,32 @@ export class BintrayPublisher extends HttpPublisher {
     }
 
     let attemptNumber = 0
+
+    const options: RequestOptions = {
+      hostname: "api.bintray.com",
+      path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
+      method: "PUT",
+      headers: {
+        "Content-Length": dataLength,
+        "X-Bintray-Override": "1",
+        "X-Bintray-Publish": "1",
+        "X-Bintray-Debian-Architecture": arch
+      }
+    }
+
+    if (this.client.distribution) {
+      options.headers = options.headers || {}
+      options.headers["X-Bintray-Debian-Distribution"] = this.client.distribution
+    }
+
+    if (this.client.component) {
+      options.headers = options.headers || {}
+      options.headers["X-Bintray-Debian-Component"] = this.client.component
+    }
+
     for (let i = 0; i < 3; i++) {
       try {
-        return await httpExecutor.doApiRequest<any>(configureRequestOptions({
-          hostname: "api.bintray.com",
-          path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
-          method: "PUT",
-          headers: {
-            "Content-Length": dataLength,
-            "X-Bintray-Override": "1",
-            "X-Bintray-Publish": "1",
-            "X-Bintray-Debian-Architecture": arch
-          }
-        }, this.client.auth), this.context.cancellationToken, requestProcessor)
+        return await httpExecutor.doApiRequest<any>(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
         if (attemptNumber++ < 3 && ((e instanceof HttpError && e.response.statusCode === 502) || e.code === "EPIPE")) {

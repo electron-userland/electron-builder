@@ -23,6 +23,8 @@ export class BintrayClient {
 
   readonly owner: string
   readonly user: string
+  readonly component: string | null
+  readonly distribution: string | null
   readonly packageName: string
 
   private requestHeaders: RequestHeaders | null
@@ -43,6 +45,8 @@ export class BintrayClient {
     this.packageName = options.package
     this.owner = options.owner
     this.user = options.user || options.owner
+    this.component = options.component || null
+    this.distribution = options.distribution || "stable"
     this.auth = apiKey == null ? null : `Basic ${new Buffer(`${this.user}:${apiKey}`).toString("base64")}`
     this.basePath = `/packages/${this.owner}/${this.repo}/${this.packageName}`
   }
