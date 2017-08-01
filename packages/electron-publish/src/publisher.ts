@@ -32,7 +32,7 @@ export abstract class Publisher {
 
   abstract get providerName(): string
 
-  abstract upload(file: string, safeArtifactName?: string): Promise<any>
+  abstract upload(file: string, arch: string, safeArtifactName?: string): Promise<any>
 
   protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
     if (this.context.progress == null) {
@@ -66,12 +66,12 @@ export abstract class HttpPublisher extends Publisher {
     super(context)
   }
 
-  async upload(file: string, safeArtifactName?: string): Promise<any> {
+  async upload(file: string, arch: string, safeArtifactName?: string): Promise<any> {
     const fileName = (this.useSafeArtifactName ? safeArtifactName : null) || basename(file)
     const fileStat = await stat(file)
 
     const progressBar = this.createProgressBar(fileName, fileStat)
-    await this.doUpload(fileName, fileStat.size, (request, reject) => {
+    await this.doUpload(fileName, arch, fileStat.size, (request, reject) => {
       if (progressBar != null) {
         // reset (because can be called several times (several attempts)
         progressBar.update(0)
@@ -80,12 +80,12 @@ export abstract class HttpPublisher extends Publisher {
     }, file)
   }
 
-  uploadData(data: Buffer, fileName: string): Promise<any> {
+  uploadData(data: Buffer, arch: string, fileName: string): Promise<any> {
     if (data == null || fileName == null) {
       throw new Error("data or fileName is null")
     }
-    return this.doUpload(fileName, data.length, it => it.end(data))
+    return this.doUpload(fileName, arch, data.length, it => it.end(data))
   }
 
-  protected abstract doUpload(fileName: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
+  protected abstract doUpload(fileName: string, arch: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
 }

@@ -16,7 +16,7 @@ import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import { UrlObject } from "url"
-import { Arch, Platform, Target } from "../core"
+import { Arch, Platform, Target, toLinuxArchString } from "../core"
 import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
@@ -142,10 +142,10 @@ export class PublishManager implements PublishContext {
         }
 
         if (eventFile == null) {
-          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, event.safeArtifactName!))
+          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, toLinuxArchString(event.arch || Arch.x64), event.safeArtifactName!))
         }
         else {
-          this.taskManager.addTask(publisher.upload(eventFile!, event.safeArtifactName))
+          this.taskManager.addTask(publisher.upload(eventFile!, toLinuxArchString(event.arch || Arch.x64), event.safeArtifactName))
         }
       }
     }
