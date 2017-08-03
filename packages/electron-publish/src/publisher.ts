@@ -1,4 +1,5 @@
 import { green } from "chalk"
+import { Arch } from "electron-builder"
 import { CancellationToken, ProgressCallbackTransform } from "electron-builder-http"
 import { log } from "electron-builder-util"
 import { createReadStream, stat, Stats } from "fs-extra-p"
@@ -32,7 +33,7 @@ export abstract class Publisher {
 
   abstract get providerName(): string
 
-  abstract upload(file: string, arch: string, safeArtifactName?: string): Promise<any>
+  abstract upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any>
 
   protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
     if (this.context.progress == null) {
@@ -66,7 +67,7 @@ export abstract class HttpPublisher extends Publisher {
     super(context)
   }
 
-  async upload(file: string, arch: string, safeArtifactName?: string): Promise<any> {
+  async upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any> {
     const fileName = (this.useSafeArtifactName ? safeArtifactName : null) || basename(file)
     const fileStat = await stat(file)
 
@@ -80,12 +81,12 @@ export abstract class HttpPublisher extends Publisher {
     }, file)
   }
 
-  uploadData(data: Buffer, arch: string, fileName: string): Promise<any> {
+  uploadData(data: Buffer, arch: Arch, fileName: string): Promise<any> {
     if (data == null || fileName == null) {
       throw new Error("data or fileName is null")
     }
     return this.doUpload(fileName, arch, data.length, it => it.end(data))
   }
 
-  protected abstract doUpload(fileName: string, arch: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
+  protected abstract doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
 }

@@ -1,11 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { Hash } from "crypto"
-import { debug, warn } from "electron-builder-util"
+import { Arch, debug, warn } from "electron-builder-util"
 import { copyFile } from "electron-builder-util/out/fs"
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { ensureDir, readFile, readJson, writeJson } from "fs-extra-p"
 import * as path from "path"
-import { Arch } from "../core"
 
 export interface BuildCacheInfo {
   executableDigest: string

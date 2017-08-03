@@ -55,6 +55,8 @@
 | repo| <code>String</code> | 
 | owner| <code>String</code> | 
 | user| <code>String</code> | 
+| component| <code>String</code> \| <code>null</code> | 
+| distribution| <code>String</code> \| <code>null</code> | 
 | packageName| <code>String</code> | 
 
 
@@ -136,13 +138,14 @@
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.DigestTransform+_transform)
     * [.HttpError](#HttpError) ⇐ <code>Error</code>
     * [.HttpExecutor](#HttpExecutor)
-        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt;String&gt;</code>
+        * [`.request(options, cancellationToken, data)`](#module_electron-builder-http.HttpExecutor+request) ⇒ <code>Promise&lt; \| String&gt;</code>
     * [.Lazy](#Lazy)
     * [.ProgressCallbackTransform](#ProgressCallbackTransform) ⇐ <code>internal:Transform</code>
         * [`._flush(callback)`](#module_electron-builder-http.ProgressCallbackTransform+_flush)
         * [`._transform(chunk, encoding, callback)`](#module_electron-builder-http.ProgressCallbackTransform+_transform)
     * [`.configureRequestOptions(options, token, method)`](#module_electron-builder-http.configureRequestOptions) ⇒ <code>module:http.RequestOptions</code>
     * [`.dumpRequestOptions(options)`](#module_electron-builder-http.dumpRequestOptions) ⇒ <code>String</code>
+    * [`.parseJson(result)`](#module_electron-builder-http.parseJson) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.safeGetHeader(response, headerKey)`](#module_electron-builder-http.safeGetHeader) ⇒ <code>any</code>
 
 <a name="DownloadOptions"></a>
@@ -275,7 +278,7 @@
 ### HttpExecutor
 **Kind**: class of [<code>electron-builder-http</code>](#module_electron-builder-http)  
 <a name="module_electron-builder-http.HttpExecutor+request"></a>
-#### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt;String&gt;</code>
+#### `httpExecutor.request(options, cancellationToken, data)` ⇒ <code>Promise&lt; \| String&gt;</code>
 **Kind**: instance method of [<code>HttpExecutor</code>](#HttpExecutor)  
 
 | Param | Type |
@@ -337,6 +340,14 @@
 | Param | Type |
 | --- | --- |
 | options | <code>module:http.RequestOptions</code> | 
+
+<a name="module_electron-builder-http.parseJson"></a>
+### `electron-builder-http.parseJson(result)` ⇒ <code>Promise&lt;any&gt;</code>
+**Kind**: method of [<code>electron-builder-http</code>](#module_electron-builder-http)  
+
+| Param | Type |
+| --- | --- |
+| result | <code>Promise&lt; \| String&gt;</code> | 
 
 <a name="module_electron-builder-http.safeGetHeader"></a>
 ### `electron-builder-http.safeGetHeader(response, headerKey)` ⇒ <code>any</code>

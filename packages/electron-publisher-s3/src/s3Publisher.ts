@@ -1,5 +1,6 @@
 import { S3 } from "aws-sdk"
 import { CreateMultipartUploadRequest, ObjectCannedACL, StorageClass } from "aws-sdk/clients/s3"
+import { Arch } from "electron-builder"
 import { S3Options } from "electron-builder-http/out/publishOptions"
 import { debug } from "electron-builder-util"
 import { PublishContext, Publisher } from "electron-publish"
@@ -37,7 +38,7 @@ export default class S3Publisher extends Publisher {
   }
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
-  async upload(file: string, safeArtifactName?: string): Promise<any> {
+  async upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any> {
     const fileName = basename(file)
     const fileStat = await stat(file)
     const client = new S3Client({s3Options: {signatureVersion: "v4"}})

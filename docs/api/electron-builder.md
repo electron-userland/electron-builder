@@ -49,19 +49,16 @@
         * [`.build()`](#module_electron-builder.Packager+build) ⇒ <code>Promise&lt;[BuildResult](#BuildResult)&gt;</code>
         * [`.dispatchArtifactCreated(event)`](#module_electron-builder.Packager+dispatchArtifactCreated)
     * [.Platform](#Platform)
-        * [`.createTarget(type, archs)`](#module_electron-builder.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
+        * [`.createTarget(type, archs)`](#module_electron-builder.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;module:electron-builder-util/out/arch.Arch \| Array&lt;String&gt;&gt;&gt;</code>
         * [`.current()`](#module_electron-builder.Platform+current) ⇒ <code>[Platform](#Platform)</code>
         * [`.fromString(name)`](#module_electron-builder.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
         * [`.toString()`](#module_electron-builder.Platform+toString) ⇒ <code>String</code>
     * [.Target](#Target)
         * [`.build(appOutDir, arch)`](#module_electron-builder.Target+build) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.finishBuild()`](#module_electron-builder.Target+finishBuild) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.Arch`](#Arch) : <code>enum</code>
-    * [`.archFromString(name)`](#module_electron-builder.archFromString) ⇒ <code>[Arch](#Arch)</code>
     * [`.build(rawOptions)`](#module_electron-builder.build) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
     * [`.buildForge(forgeOptions, options)`](#module_electron-builder.buildForge) ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
-    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
-    * [`.getArchSuffix(arch)`](#module_electron-builder.getArchSuffix) ⇒ <code>String</code>
+    * [`.createTargets(platforms, type, arch)`](#module_electron-builder.createTargets) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;module:electron-builder-util/out/arch.Arch \| Array&lt;String&gt;&gt;&gt;</code>
 
 <a name="AfterPackContext"></a>
 ### `AfterPackContext`
@@ -74,7 +71,7 @@
 | **appOutDir**| <code>String</code> | 
 | **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | **electronPlatformName**| <code>String</code> | 
-| **arch**| <code>[Arch](#Arch)</code> | 
+| **arch**| <code>module:electron-builder-util/out/arch.Arch</code> | 
 | **targets**| <code>Array&lt;[Target](#Target)&gt;</code> | 
 
 <a name="ArtifactCreated"></a>
@@ -86,7 +83,7 @@
 | --- | --- |
 | **packager**| <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | target| <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch| <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch| <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 | file| <code>String</code> | 
 | data| <code>Buffer</code> | 
 | safeArtifactName| <code>String</code> | 
@@ -245,19 +242,19 @@
 
 
 * [.Platform](#Platform)
-    * [`.createTarget(type, archs)`](#module_electron-builder.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
+    * [`.createTarget(type, archs)`](#module_electron-builder.Platform+createTarget) ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;module:electron-builder-util/out/arch.Arch \| Array&lt;String&gt;&gt;&gt;</code>
     * [`.current()`](#module_electron-builder.Platform+current) ⇒ <code>[Platform](#Platform)</code>
     * [`.fromString(name)`](#module_electron-builder.Platform+fromString) ⇒ <code>[Platform](#Platform)</code>
     * [`.toString()`](#module_electron-builder.Platform+toString) ⇒ <code>String</code>
 
 <a name="module_electron-builder.Platform+createTarget"></a>
-#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
+#### `platform.createTarget(type, archs)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;module:electron-builder-util/out/arch.Arch \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: instance method of [<code>Platform</code>](#Platform)  
 
 | Param | Type |
 | --- | --- |
 | type | <code>String</code> \| <code>Array&lt;String&gt;</code> \| <code>null</code> | 
-| archs | <code>Array&lt;[Arch](#Arch)&gt;</code> | 
+| archs | <code>Array&lt;module:electron-builder-util/out/arch.Arch&gt;</code> | 
 
 <a name="module_electron-builder.Platform+current"></a>
 #### `platform.current()` ⇒ <code>[Platform](#Platform)</code>
@@ -295,30 +292,11 @@
 | Param | Type |
 | --- | --- |
 | appOutDir | <code>String</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 
 <a name="module_electron-builder.Target+finishBuild"></a>
 #### `target.finishBuild()` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>Target</code>](#Target)  
-<a name="Arch"></a>
-### `electron-builder.Arch` : <code>enum</code>
-**Kind**: enum of [<code>electron-builder</code>](Options#module_electron-builder)  
-**Properties**
-
-| Name |
-| --- |
-| **ia32**| 
-| **x64**| 
-| **armv7l**| 
-
-<a name="module_electron-builder.archFromString"></a>
-### `electron-builder.archFromString(name)` ⇒ <code>[Arch](#Arch)</code>
-**Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
-
-| Param | Type |
-| --- | --- |
-| name | <code>String</code> | 
-
 <a name="module_electron-builder.build"></a>
 ### `electron-builder.build(rawOptions)` ⇒ <code>Promise&lt;Array&lt;String&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
@@ -337,7 +315,7 @@
 | options | <code>[CliOptions](Options#CliOptions)</code> | 
 
 <a name="module_electron-builder.createTargets"></a>
-### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;[Arch](#Arch) \| Array&lt;String&gt;&gt;&gt;</code>
+### `electron-builder.createTargets(platforms, type, arch)` ⇒ <code>Map&lt;[Platform](#Platform) \| Map&lt;module:electron-builder-util/out/arch.Arch \| Array&lt;String&gt;&gt;&gt;</code>
 **Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
 
 | Param | Type |
@@ -345,14 +323,6 @@
 | platforms | <code>Array&lt;[Platform](#Platform)&gt;</code> | 
 | type | <code>String</code> \| <code>null</code> | 
 | arch | <code>String</code> \| <code>null</code> | 
-
-<a name="module_electron-builder.getArchSuffix"></a>
-### `electron-builder.getArchSuffix(arch)` ⇒ <code>String</code>
-**Kind**: method of [<code>electron-builder</code>](Options#module_electron-builder)  
-
-| Param | Type |
-| --- | --- |
-| arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder/out/appInfo"></a>
 ## electron-builder/out/appInfo
@@ -379,6 +349,7 @@
 | companyName| <code>String</code> \| <code>null</code> | 
 | **id**| <code>String</code> | 
 | **name**| <code>String</code> | 
+| **sanitizedName**| <code>String</code> | 
 | **copyright**| <code>String</code> | 
 
 <a name="module_electron-builder/out/appInfo.AppInfo+computePackageUrl"></a>
@@ -392,7 +363,6 @@
     * [`.SourceRepositoryInfo`](#SourceRepositoryInfo)
     * [`.TargetConfig`](#TargetConfig)
     * [`.TargetSpecificOptions`](#TargetSpecificOptions)
-    * [`.toLinuxArchString(arch)`](#module_electron-builder/out/core.toLinuxArchString) ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
 
 <a name="BeforeBuildContext"></a>
 ### `BeforeBuildContext`
@@ -437,14 +407,6 @@
 | --- | --- | --- |
 | artifactName| <code>String</code> \| <code>null</code> | <a name="TargetSpecificOptions-artifactName"></a>The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). |
 | publish| <code>null</code> \| <code>String</code> \| <code>[GithubOptions](Publishing-Artifacts#GithubOptions)</code> \| <code>[S3Options](Publishing-Artifacts#S3Options)</code> \| <code>[GenericServerOptions](Publishing-Artifacts#GenericServerOptions)</code> \| <code>[BintrayOptions](Publishing-Artifacts#BintrayOptions)</code> \| <code>Array</code> | <a name="TargetSpecificOptions-publish"></a> |
-
-<a name="module_electron-builder/out/core.toLinuxArchString"></a>
-### `electron-builder/out/core.toLinuxArchString(arch)` ⇒ <code>"armv7l"</code> \| <code>"i386"</code> \| <code>"amd64"</code>
-**Kind**: method of [<code>electron-builder/out/core</code>](#module_electron-builder/out/core)  
-
-| Param | Type |
-| --- | --- |
-| arch | <code>[Arch](#Arch)</code> | 
 
 <a name="module_electron-builder/out/packager"></a>
 ## electron-builder/out/packager
@@ -528,7 +490,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>String</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 | skipArchIfX64 |  | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+createTargets"></a>
@@ -556,7 +518,7 @@
 | --- | --- |
 | file | <code>String</code> | 
 | target | <code>[Target](#Target)</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-builder/out/platformPackager.PlatformPackager+getElectronDestinationDir"></a>
@@ -583,7 +545,7 @@
 | --- | --- |
 | targetSpecificOptions | <code>[TargetSpecificOptions](#TargetSpecificOptions)</code> \| <code>undefined</code> \| <code>null</code> | 
 | ext | <code>String</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 | defaultPattern | <code>String</code> | 
 | skipArchIfX64 |  | 
 
@@ -605,7 +567,7 @@
 | Param | Type |
 | --- | --- |
 | ext | <code>String</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | deployment | <code>Boolean</code> | 
 | classifier | <code>String</code> \| <code>null</code> | 
 
@@ -637,7 +599,7 @@
 | Param | Type |
 | --- | --- |
 | outDir | <code>String</code> | 
-| arch | <code>[Arch](#Arch)</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | targets | <code>Array&lt;[Target](#Target)&gt;</code> | 
 | taskManager | <code>module:electron-builder/out/util/asyncTaskManager.AsyncTaskManager</code> | 
 
@@ -736,7 +698,7 @@
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | targetSpecificOptions | <code>[PlatformSpecificBuildOptions](#PlatformSpecificBuildOptions)</code> \| <code>null</code> \| <code>undefined</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo"></a>
 ### `electron-builder/out/publish/PublishManager.getPublishConfigsForUpdateInfo(packager, publishConfigs, arch)` ⇒ <code>Promise&lt; \| Array&gt;</code>
@@ -746,19 +708,19 @@
 | --- | --- |
 | packager | <code>[PlatformPackager](#PlatformPackager)&lt;any&gt;</code> | 
 | publishConfigs | <code>Array&lt;[PublishConfiguration](Publishing-Artifacts#PublishConfiguration)&gt;</code> \| <code>null</code> | 
-| arch | <code>[Arch](#Arch)</code> \| <code>null</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> \| <code>null</code> | 
 
 <a name="module_electron-builder/out/util/asarUtil"></a>
 ## electron-builder/out/util/asarUtil
 <a name="module_electron-builder/out/util/asarUtil.copyFileOrData"></a>
-### `electron-builder/out/util/asarUtil.copyFileOrData(fileCopier, data, src, destination, stats)` ⇒ <code>Promise&lt;void&gt;</code>
+### `electron-builder/out/util/asarUtil.copyFileOrData(fileCopier, data, source, destination, stats)` ⇒ <code>Promise&lt;void&gt;</code>
 **Kind**: method of [<code>electron-builder/out/util/asarUtil</code>](#module_electron-builder/out/util/asarUtil)  
 
 | Param | Type |
 | --- | --- |
 | fileCopier | <code>module:electron-builder-util/out/fs.FileCopier</code> | 
 | data | <code>String</code> \| <code>Buffer</code> \| <code>undefined</code> \| <code>null</code> | 
-| src | <code>String</code> | 
+| source | <code>String</code> | 
 | destination | <code>String</code> | 
 | stats | <code>module:fs.Stats</code> | 
 

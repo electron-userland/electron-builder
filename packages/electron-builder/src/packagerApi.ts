@@ -1,5 +1,6 @@
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { Arch, Platform, Target } from "./core"
+import { Arch } from "electron-builder-util"
+import { Platform, Target } from "./core"
 import { Config } from "./metadata"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"

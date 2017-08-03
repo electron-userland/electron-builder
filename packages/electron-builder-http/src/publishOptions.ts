@@ -180,12 +180,13 @@ export interface BintrayOptions extends PublishConfiguration {
   readonly owner?: string | null
 
   /**
-   * The Debian component.
+   * The Bintray component (Debian only).
    */
   readonly component?: string | null
 
   /**
-   * The Debian distribution.
+   * The Bintray distribution (Debian only).
+   * @default stable
    */
   readonly distribution?: string | null
 

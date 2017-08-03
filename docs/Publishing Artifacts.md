@@ -88,8 +88,8 @@ Bintray options.
 * <a name="BintrayOptions-package"></a>`package` String - The Bintray package name.
 * <a name="BintrayOptions-repo"></a>`repo` = `generic` String - The Bintray repository name.
 * <a name="BintrayOptions-owner"></a>`owner` String - The owner.
-* <a name="BintrayOptions-distribution"></a>`distribution` = `stable` String - The Bintray distribution (Debian only).
 * <a name="BintrayOptions-component"></a>`component` String - The Bintray component (Debian only).
+* <a name="BintrayOptions-distribution"></a>`distribution` = `stable` String - The Bintray distribution (Debian only).
 * <a name="BintrayOptions-user"></a>`user` String - The Bintray user account. Used in cases where the owner is an organization.
 * <a name="BintrayOptions-token"></a>`token` String
 * <a name="BintrayOptions-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.

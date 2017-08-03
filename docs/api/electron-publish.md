@@ -20,8 +20,8 @@
     * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
         * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>String</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="BintrayPublisher"></a>
 ### BintrayPublisher ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
@@ -37,8 +37,8 @@
 * [.BintrayPublisher](#BintrayPublisher) ⇐ <code>[HttpPublisher](#HttpPublisher)</code>
     * [`.deleteRelease()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish/out/BintrayPublisher.BintrayPublisher+toString) ⇒ <code>String</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish/out/BintrayPublisher.BintrayPublisher+deleteRelease"></a>
 #### `bintrayPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
@@ -48,21 +48,23 @@
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-#### `bintrayPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `bintrayPublisher.upload(file, arch, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-#### `bintrayPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `bintrayPublisher.uploadData(data, arch, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>BintrayPublisher</code>](#BintrayPublisher)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/gitHubPublisher"></a>
@@ -74,8 +76,8 @@
         * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>String</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="Release"></a>
 ### `Release`
@@ -106,8 +108,8 @@
     * [`.deleteRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.getRelease()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+getRelease) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish/out/gitHubPublisher.GitHubPublisher+toString) ⇒ <code>String</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish/out/gitHubPublisher.GitHubPublisher+deleteRelease"></a>
 #### `gitHubPublisher.deleteRelease()` ⇒ <code>Promise&lt;any&gt;</code>
@@ -120,21 +122,23 @@
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 **Overrides**: [<code>toString</code>](#module_electron-publish.Publisher+toString)  
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-#### `gitHubPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `gitHubPublisher.upload(file, arch, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-#### `gitHubPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `gitHubPublisher.uploadData(data, arch, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>GitHubPublisher</code>](#GitHubPublisher)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
@@ -256,12 +260,12 @@ A ratio of 0.5 will attempt to set the progress to halfway.
     * [`.PublishContext`](#PublishContext)
     * [`.PublishOptions`](#PublishOptions)
     * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-        * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
     * [.Publisher](#Publisher)
         * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
-        * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+        * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="PublishContext"></a>
 ### `PublishContext`
@@ -290,27 +294,29 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 **Extends**: <code>[Publisher](#Publisher)</code>  
 
 * [.HttpPublisher](#HttpPublisher) ⇐ <code>[Publisher](#Publisher)</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
-    * [`.uploadData(data, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.HttpPublisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.uploadData(data, arch, fileName)`](#module_electron-publish.HttpPublisher+uploadData) ⇒ <code>Promise&lt;any&gt;</code>
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
 
 <a name="module_electron-publish.HttpPublisher+upload"></a>
-#### `httpPublisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `httpPublisher.upload(file, arch, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
 **Overrides**: [<code>upload</code>](#module_electron-publish.Publisher+upload)  
 
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
-#### `httpPublisher.uploadData(data, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `httpPublisher.uploadData(data, arch, fileName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>HttpPublisher</code>](#HttpPublisher)  
 
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish.Publisher+toString"></a>
@@ -328,17 +334,18 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 
 * [.Publisher](#Publisher)
     * [`.toString()`](#module_electron-publish.Publisher+toString) ⇒ <code>String</code>
-    * [`.upload(file, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
+    * [`.upload(file, arch, safeArtifactName)`](#module_electron-publish.Publisher+upload) ⇒ <code>Promise&lt;any&gt;</code>
 
 <a name="module_electron-publish.Publisher+toString"></a>
 #### `publisher.toString()` ⇒ <code>String</code>
 **Kind**: instance method of [<code>Publisher</code>](#Publisher)  
 <a name="module_electron-publish.Publisher+upload"></a>
-#### `publisher.upload(file, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
+#### `publisher.upload(file, arch, safeArtifactName)` ⇒ <code>Promise&lt;any&gt;</code>
 **Kind**: instance method of [<code>Publisher</code>](#Publisher)  
 
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
+| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
 | safeArtifactName | <code>String</code> | 
 

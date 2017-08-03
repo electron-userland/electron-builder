@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
-import { debug, isEmptyOrSpaces, isTokenCharValid, log } from "electron-builder-util"
+import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "electron-builder-util"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
@@ -54,7 +54,7 @@ export class BintrayPublisher extends HttpPublisher {
     }
   }
 
-  protected async doUpload(fileName: string, arch: string, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
+  protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void) {
     const version = await this._versionPromise
     if (version == null) {
       debug(`Version ${this.version} doesn't exist and is not created, artifact ${fileName} is not published`)
@@ -71,7 +71,7 @@ export class BintrayPublisher extends HttpPublisher {
         "Content-Length": dataLength,
         "X-Bintray-Override": "1",
         "X-Bintray-Publish": "1",
-        "X-Bintray-Debian-Architecture": arch
+        "X-Bintray-Debian-Architecture": toLinuxArchString(arch)
       }
     }
 

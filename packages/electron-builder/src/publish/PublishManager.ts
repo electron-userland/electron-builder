@@ -4,7 +4,7 @@ import _debug from "debug"
 import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
-import { asArray, isEmptyOrSpaces, isPullRequest, Lazy, log, safeStringifyJson, warn } from "electron-builder-util"
+import { Arch, asArray, isEmptyOrSpaces, isPullRequest, Lazy, log, safeStringifyJson, warn } from "electron-builder-util"
 import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
@@ -16,7 +16,7 @@ import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
 import { UrlObject } from "url"
-import { Arch, Platform, Target, toLinuxArchString } from "../core"
+import { Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
@@ -142,10 +142,10 @@ export class PublishManager implements PublishContext {
         }
 
         if (eventFile == null) {
-          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, toLinuxArchString(event.arch || Arch.x64), event.safeArtifactName!))
+          this.taskManager.addTask((publisher as HttpPublisher).uploadData(event.data!, event.arch || Arch.x64, event.safeArtifactName!))
         }
         else {
-          this.taskManager.addTask(publisher.upload(eventFile!, toLinuxArchString(event.arch || Arch.x64), event.safeArtifactName))
+          this.taskManager.addTask(publisher.upload(eventFile!, event.arch || Arch.x64, event.safeArtifactName))
         }
       }
     }
