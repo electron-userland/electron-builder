@@ -17,16 +17,21 @@ export async function  computeLicensePage(packager: WinPackager, options: NsisOp
 
   const license = await packager.getResource(options.license, ...possibleFiles)
   if (license != null) {
-    const licensePage = [`!insertmacro MUI_PAGE_LICENSE "${path.join(nsisTemplatesDir, "empty-license.txt")}"`]
+    let licensePage: Array<string>
     if (license.endsWith(".html")) {
-      licensePage.unshift(
+      licensePage = [
         "!define MUI_PAGE_CUSTOMFUNCTION_SHOW LicenseShow",
         "Function LicenseShow",
         "  FindWindow $R0 `#32770` `` $HWNDPARENT",
         "  GetDlgItem $R0 $R0 1000",
         "EmbedHTML::Load /replace $R0 file://$PLUGINSDIR\\license.html",
         "FunctionEnd",
-      )
+
+        `!insertmacro MUI_PAGE_LICENSE "${path.join(nsisTemplatesDir, "empty-license.txt")}"`,
+      ]
+    }
+    else {
+      licensePage = [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
     }
 
     let result = createMacro("licensePage", licensePage)
