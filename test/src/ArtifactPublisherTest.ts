@@ -1,7 +1,6 @@
-import { Arch } from "electron-builder"
 import { CancellationToken, HttpError } from "electron-builder-http"
 import { S3Options } from "electron-builder-http/out/publishOptions"
-import { TmpDir } from "electron-builder-util"
+import { Arch, TmpDir } from "electron-builder-util"
 import { copyFile } from "electron-builder-util/out/fs"
 import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"

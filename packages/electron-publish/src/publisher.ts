@@ -1,7 +1,6 @@
 import { green } from "chalk"
-import { Arch } from "electron-builder"
 import { CancellationToken, ProgressCallbackTransform } from "electron-builder-http"
-import { log } from "electron-builder-util"
+import { Arch, log } from "electron-builder-util"
 import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
 import { basename } from "path"
