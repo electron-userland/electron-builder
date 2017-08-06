@@ -1,10 +1,12 @@
+import addExitHook from "async-exit-hook"
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, Lazy, TmpDir, warn } from "electron-builder-util"
+import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, TmpDir, warn } from "electron-builder-util"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { outputFile, rename } from "fs-extra-p"
 import isCi from "is-ci"
+import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
@@ -102,6 +104,38 @@ export interface CreateKeychainOptions {
   currentDir: string
 }
 
+const createdKeychains: Array<string> = []
+let exitHookAdded = false
+
+function removeKeychainOnExit(keychainFile: string) {
+  // no need to clean on CI server
+  if (isCi) {
+    return
+  }
+
+  createdKeychains.push(keychainFile)
+
+  if (exitHookAdded) {
+    return
+  }
+
+  addExitHook(callback => {
+    // delete-keychain also remove keychain from search list
+    exec("security", ["delete-keychain"].concat(createdKeychains))
+      .then(() => callback())
+      .catch(e => {
+        try {
+          warn(`Cannot delete keychains: ${e}`)
+        }
+        finally {
+          callback()
+        }
+      })
+  })
+
+  exitHookAdded = true
+}
+
 export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
   // travis has correct AppleWWDRCA cert
   if (process.env.TRAVIS !== "true") {
@@ -127,24 +161,13 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     ], it => exec("security", it))
   ])
 
+  removeKeychainOnExit(keychainFile)
+
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
   // https://github.com/electron-userland/electron-builder/issues/1457
   const list = await listUserKeychains()
   if (!list.includes(keychainFile)) {
     await exec("security", ["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
-    // no need to clean on CI server
-    if (!isCi) {
-      // yes, we don't clear on explicit exit or or uncaught exceptions - it is ok (exit or uncaughtException doesn't allow async operations)
-      process.once("beforeExit", async () => {
-        try {
-          const list = (await listUserKeychains()).filter(it => it !== keychainFile)
-          exec("security", ["list-keychains", "-d", "user", "-s"].concat(list))
-        }
-        catch (e) {
-          warn(`Cannot restore keychain search list: ${e}`)
-        }
-      })
-    }
   }
   return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
 }

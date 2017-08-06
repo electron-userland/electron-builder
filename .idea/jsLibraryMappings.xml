@@ -2,7 +2,5 @@
 <project version="4">
   <component name="JavaScriptLibraryMappings">
     <excludedPredefinedLibrary name="HTML" />
-    <excludedPredefinedLibrary name="electron-builder/packages/electron-builder-http/node_modules" />
-    <excludedPredefinedLibrary name="electron-builder/packages/electron-builder/node_modules" />
   </component>
 </project>

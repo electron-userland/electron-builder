@@ -1,8 +1,8 @@
 import { debug, warn } from "electron-builder-util"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { FileTransformer } from "electron-builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
+import { deepAssign } from "read-config-file/out/deepAssign"
 import { Packager } from "./packager"
 
 /** @internal */

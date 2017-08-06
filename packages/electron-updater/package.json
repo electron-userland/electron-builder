@@ -12,6 +12,7 @@
     "out"
   ],
   "dependencies": {
+    "lazy-val": "^1.0.1",
     "bluebird-lst": "^1.0.2",
     "fs-extra-p": "^4.4.0",
     "js-yaml": "^3.9.1",

@@ -1,12 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http"
-import { Arch, debug, exec, Lazy, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
+import { Arch, debug, exec, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
 import { executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
 import { safeDump } from "js-yaml"
+import { Lazy } from "lazy-val"
 import * as path from "path"
+import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar"
 import { Platform, SourceRepositoryInfo, Target } from "./core"
@@ -16,7 +17,8 @@ import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { AsyncTaskManager } from "./util/asyncTaskManager"
-import { computeDefaultAppDirectory, computeElectronVersion, getConfig, validateConfig } from "./util/config"
+import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
+import { computeElectronVersion, getElectronVersionFromInstalled } from "./util/electronVersion"
 import { createLazyProductionDeps, Dependency } from "./util/packageDependencies"
 import { checkMetadata, readPackageJson } from "./util/packageMetadata"
 import { getRepositoryInfo } from "./util/repositoryInfo"
@@ -135,7 +137,7 @@ export class Packager {
     this.devMetadata = await orNullIfFileNotExist(readPackageJson(devPackageFile))
 
     const devMetadata = this.devMetadata
-    const config = await getConfig(projectDir, configPath, devMetadata, configFromOptions)
+    const config = await getConfig(projectDir, configPath, configFromOptions, new Lazy(() => BluebirdPromise.resolve(devMetadata)))
     if (debug.enabled) {
       debug(`Effective config:\n${safeDump(JSON.parse(safeStringifyJson(config)))}`)
     }
@@ -165,7 +167,14 @@ export class Packager {
     checkMetadata(this.metadata, devMetadata, appPackageFile, devPackageFile)
 
     if (config.electronVersion == null) {
-      config.electronVersion = await computeElectronVersion(projectDir, this.isPrepackedAppAsar ? this.metadata : null)
+      // for prepacked app asar no dev deps in the app.asar
+      if (this.isPrepackedAppAsar) {
+        config.electronVersion = await getElectronVersionFromInstalled(projectDir)
+        if (config.electronVersion == null) {
+          throw new Error(`Cannot compute electron version for prepacked asar`)
+        }
+      }
+      config.electronVersion = await computeElectronVersion(projectDir, new Lazy(() => BluebirdPromise.resolve(this.metadata)))
     }
     this.appInfo = new AppInfo(this)
 

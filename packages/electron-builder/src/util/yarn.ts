@@ -1,6 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, Lazy, log, spawn, warn } from "electron-builder-util"
+import { asArray, log, spawn, warn } from "electron-builder-util"
 import { exists } from "electron-builder-util/out/fs"
+import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
 import { Config } from "../metadata"

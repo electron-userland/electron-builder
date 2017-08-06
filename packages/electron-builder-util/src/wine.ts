@@ -1,9 +1,10 @@
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { lt as isVersionLessThan } from "semver"
 import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
 import { isMacOsSierra } from "./macosVersion"
-import { debug, exec, ExecOptions, isEnvTrue, Lazy } from "./util"
+import { debug, exec, ExecOptions, isEnvTrue } from "./util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
   debug(`USE_SYSTEM_WINE: ${process.env.USE_SYSTEM_WINE}`)

@@ -3,8 +3,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { log, use, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
+import { readJson } from "fs-extra-p"
+import { Lazy } from "lazy-val"
+import * as path from "path"
+import { orNullIfFileNotExist } from "read-config-file"
 import yargs from "yargs"
-import { computeDefaultAppDirectory, getConfig, getElectronVersion } from "../util/config"
+import { computeDefaultAppDirectory, getConfig } from "../util/config"
+import { getElectronVersion } from "../util/electronVersion"
 import { createLazyProductionDeps } from "../util/packageDependencies"
 import { installOrRebuild } from "../util/yarn"
 
@@ -40,11 +45,12 @@ export async function installAppDeps(args: any) {
   }
 
   const projectDir = process.cwd()
-  const config = await getConfig(projectDir, null, null, null)
+  const packageMetadata = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))
+  const config = await getConfig(projectDir, null, null, packageMetadata)
   const muonVersion = config.muonVersion
   const results = await BluebirdPromise.all<string>([
     computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app)),
-    muonVersion == null ? getElectronVersion(projectDir, config) : BluebirdPromise.resolve(muonVersion),
+    muonVersion == null ? getElectronVersion(projectDir, config, packageMetadata) : BluebirdPromise.resolve(muonVersion),
   ])
 
   // if two package.json — force full install (user wants to install/update app deps in addition to dev)

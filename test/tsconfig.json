@@ -18,7 +18,8 @@
     "../node_modules/@types/jest/index.d.ts",
     "../node_modules/fs-extra-p/index.d.ts",
     "../node_modules/bluebird-lst/index.d.ts",
-    "../node_modules/electron-osx-sign/index.d.ts"
+    "../node_modules/electron-osx-sign/index.d.ts",
+    "../node_modules/read-config-file/out/read-config-file.d.ts"
   ],
   "include": [
     "../typings/*.d.ts",

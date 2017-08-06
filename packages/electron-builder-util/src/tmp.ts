@@ -1,15 +1,13 @@
+import exitHook from "async-exit-hook"
 import BluebirdPromise from "bluebird-lst"
-import { mkdirs, mkdtemp, remove, removeSync } from "fs-extra-p"
+import { mkdirs, mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { CONCURRENCY } from "./fs"
 import { warn } from "./log"
 import { getTempName } from "./util"
 
-process.setMaxListeners(30)
-
 let tempDirPromise: Promise<string> | null
-let tempDir: string | null
 
 function getTempDir() {
   if (tempDirPromise == null) {
@@ -25,40 +23,20 @@ function getTempDir() {
 
     tempDirPromise = promise
       .then(dir => {
-        tempDir = dir
-        const cleanup = () => {
-          if (tempDir == null) {
-            return
-          }
-
-          tempDir = null
-          try {
-            removeSync(dir)
-          }
-          catch (e) {
-            if (e.code !== "EPERM") {
-              warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
-            }
-          }
-        }
-        process.once("beforeExit", () => {
-          if (tempDir == null) {
-            return
-          }
-
-          tempDir = null
-          try {
-            remove(dir)
-          }
-          catch (e) {
-            if (e.code !== "EPERM") {
-              warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
-            }
-          }
+        exitHook(callback => {
+          remove(dir)
+            .then(() => callback())
+            .catch(e => {
+              try {
+                if (e.code !== "EPERM") {
+                  warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
+                }
+              }
+              finally {
+                callback()
+              }
+            })
         })
-        process.on("exit", cleanup)
-        process.on("uncaughtException", cleanup)
-        process.on("SIGINT", cleanup)
         return dir
       })
   }

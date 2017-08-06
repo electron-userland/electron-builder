@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { emptyDir, readdir, readJson, removeSync, unlink } from "fs-extra-p"
+import { emptyDir, readdir, readJson, remove, unlink } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import { ELECTRON_VERSION, TEST_DIR } from "./testConfig"
@@ -54,8 +54,8 @@ function downloadAllRequiredElectronVersions(): Promise<any> {
     for (const arch of archs) {
       versions.push({
         version: ELECTRON_VERSION,
-        arch: arch,
-        platform: platform,
+        arch,
+        platform,
       })
     }
   }
@@ -164,15 +164,14 @@ async function runTests() {
   require("jest-cli").runCLI({
     verbose: true,
     updateSnapshot: process.env.UPDATE_SNAPSHOT === "true",
-    config: config,
-    runInBand: runInBand,
+    config,
+    runInBand,
     testPathPattern: args.length > 0 ? args.join("|") : null,
   }, [rootDir], (result: any) => {
-    const code = !result || result.success ? 0 : 1
-    removeSync(TEST_DIR)
-    process.exitCode = code
-    process.on("exit", () => {
-      return process.exit(code)
-    })
+    process.exitCode = !result || result.success ? 0 : 1
+    remove(TEST_DIR)
+      .catch(e => {
+        console.error(e.stack)
+      })
   })
 }

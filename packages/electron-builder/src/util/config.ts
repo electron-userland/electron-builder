@@ -1,42 +1,25 @@
 import Ajv from "ajv"
 import { asArray, debug, log, warn } from "electron-builder-util"
-import { deepAssign } from "electron-builder-util/out/deepAssign"
 import { statOrNull } from "electron-builder-util/out/fs"
-import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
-import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { readJson } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
-import { findAndReadConfig, readConfig } from "read-config-file"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist } from "read-config-file"
+import { deepAssign } from "read-config-file/out/deepAssign"
 import { Config } from "../metadata"
 import { reactCra } from "../presets/rectCra"
 import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
 import ErrorObject = ajv.ErrorObject
 import TypeParams = ajv.TypeParams
 
-function getConfigFromPackageData(metadata: any | null) {
-  return metadata == null ? null : metadata.build
-}
-
-async function loadConfig(projectDir: string, packageMetadata?: any): Promise<Config | null> {
-  const data = getConfigFromPackageData(packageMetadata || (await orNullIfFileNotExist(readJson(path.join(projectDir, "package.json")))))
-  return data == null ? findAndReadConfig<Config>(projectDir, "electron-builder", log) : data
-}
-
 /** @internal */
-export async function getConfig(projectDir: string, configPath: string | null, packageMetadata: any | null, configFromOptions: Config | null | undefined): Promise<Config> {
-  let fileOrPackageConfig
-  if (configPath == null) {
-    fileOrPackageConfig = await loadConfig(projectDir, packageMetadata)
-  }
-  else {
-    fileOrPackageConfig = await readConfig<Config>(path.resolve(projectDir, configPath), projectDir, log)
-  }
-
-  const config: Config = deepAssign(fileOrPackageConfig == null ? Object.create(null) : fileOrPackageConfig, configFromOptions)
+export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Config | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Config> {
+  const configRequest = {key: "build", projectDir, packageMetadata, log}
+  const config = await _getConfig<Config>(configRequest, configPath, configFromOptions)
 
   let extendsSpec = config.extends
-  if (extendsSpec == null && extendsSpec !== null && packageMetadata != null) {
-    const devDependencies = packageMetadata.devDependencies
+  if (extendsSpec == null && extendsSpec !== null) {
+    const devDependencies = (await packageMetadata.value || {}).devDependencies
     if (devDependencies != null) {
       if ("react-scripts" in devDependencies) {
         extendsSpec = "react-cra"
@@ -58,31 +41,7 @@ export async function getConfig(projectDir: string, configPath: string | null, p
     parentConfig = await reactCra(projectDir)
   }
   else {
-    let spec = extendsSpec
-    let isFileSpec: boolean | undefined
-    if (spec.startsWith("file:")) {
-      spec = spec.substring("file:".length)
-      isFileSpec = true
-    }
-
-    parentConfig = await orNullIfFileNotExist(readConfig(path.resolve(projectDir, spec), projectDir, log))
-    if (parentConfig == null && isFileSpec !== true) {
-      let resolved: string | null = null
-      try {
-        resolved = require.resolve(spec)
-      }
-      catch (e) {
-        // ignore
-      }
-
-      if (resolved != null) {
-        parentConfig = await readConfig(resolved, projectDir, log)
-      }
-    }
-
-    if (parentConfig == null) {
-      throw new Error(`Cannot find parent config file: ${spec}`)
-    }
+    parentConfig = await loadParentConfig<Config>(configRequest, extendsSpec)
   }
 
   // electron-webpack and electrify client config - want to exclude some files
@@ -97,72 +56,6 @@ export async function getConfig(projectDir: string, configPath: string | null, p
   }
 
   return deepAssign(parentConfig, config)
-}
-
-/** @internal */
-export async function getElectronVersion(projectDir: string, config?: Config, projectMetadata?: any | null): Promise<string> {
-  if (config == null) {
-    config = await getConfig(projectDir, null, null, null)
-  }
-  if (config.electronVersion != null) {
-    return config.electronVersion
-  }
-  return await computeElectronVersion(projectDir, projectMetadata)
-}
-
-/** @internal */
-export async function computeElectronVersion(projectDir: string, projectMetadata?: any | null): Promise<string> {
-  // projectMetadata passed only for prepacked app asar and in this case no dev deps in the app.asar
-  if (projectMetadata == null) {
-    for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
-      try {
-        return (await readJson(path.join(projectDir, "node_modules", name, "package.json"))).version
-      }
-      catch (e) {
-        if (e.code !== "ENOENT") {
-          warn(`Cannot read electron version from ${name} package.json: ${e.message}`)
-        }
-      }
-    }
-  }
-
-  const packageJsonPath = path.join(projectDir, "package.json")
-  const electronPrebuiltDep = findFromElectronPrebuilt(projectMetadata || await readJson(packageJsonPath))
-  if (electronPrebuiltDep == null || electronPrebuiltDep === "latest") {
-    try {
-      const releaseInfo = JSON.parse((await httpExecutor.request({
-        hostname: "github.com",
-        path: "/electron/electron/releases/latest",
-        headers: {
-          Accept: "application/json",
-        },
-      }))!!)
-      return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
-    }
-    catch (e) {
-      warn(e)
-    }
-
-    throw new Error(`Cannot find electron dependency to get electron version in the '${packageJsonPath}'`)
-  }
-
-  const firstChar = electronPrebuiltDep[0]
-  return firstChar === "^" || firstChar === "~" ? electronPrebuiltDep.substring(1) : electronPrebuiltDep
-}
-
-function findFromElectronPrebuilt(packageData: any): any {
-  for (const name of ["electron", "electron-prebuilt", "electron-prebuilt-compile"]) {
-    const devDependencies = packageData.devDependencies
-    let dep = devDependencies == null ? null : devDependencies[name]
-    if (dep == null) {
-      const dependencies = packageData.dependencies
-      dep = dependencies == null ? null : dependencies[name]
-    }
-    if (dep != null) {
-      return dep
-    }
-  }
-  return null
 }
 
 let validatorPromise: Promise<any> | null = null

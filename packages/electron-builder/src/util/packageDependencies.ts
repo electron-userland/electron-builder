@@ -1,8 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, Lazy } from "electron-builder-util"
+import { debug } from "electron-builder-util"
 import { CONCURRENCY } from "electron-builder-util/out/fs"
 import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { lstat, readdir, readFile, realpath, Stats } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 
 /** @internal */
