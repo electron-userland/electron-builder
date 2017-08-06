@@ -35,18 +35,9 @@ async function main() {
   ], {cwd: source})
 
   const developerFiles = (await globby([
-    "builder/**/*.js",
-    "!**/*-targets-*.js",
-    "!**/*-winPackager.js",
-    "!**/*-macPackager.js",
-    "!**/*-linuxPackager.js",
-    "!**/*-asar.js",
-    "!**/*-repositoryInfo.js",
-    "!**/*-codeSign.js",
-    "!**/*-cacheManager.js",
-    "!**/*-AppFileCopierHelper.js",
-    "!**/*-appFileCopier.js",
-    "!**/*-AppFileWalker.js",
+    "builder/electron-builder-out-appInfo.js",
+    "builder/electron-builder-out-core.js",
+    "util/electron-builder-util.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -90,6 +81,23 @@ function sortOptions(pages) {
     pages[1].dataMap.set(member.id, member)
 
     filtered.push(member)
+    return false
+  })
+
+  // move Arch from electron-builder-util to electron-builder
+  pages[1].data = pages[1].data.filter(member => {
+    if (!member.id.startsWith("module:electron-builder-util")) {
+      return true
+    }
+
+    if (member.name === "Arch") {
+      member.id = "module:electron-builder.Arch"
+      member.longname = member.id
+      member.memberof = "module:electron-builder"
+      return true
+    }
+
+    pages[1].dataMap.delete(member.id)
     return false
   })
 

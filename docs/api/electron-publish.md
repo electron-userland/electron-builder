@@ -54,7 +54,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
@@ -64,7 +64,7 @@
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/gitHubPublisher"></a>
@@ -128,7 +128,7 @@
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
@@ -138,7 +138,7 @@
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish/out/multiProgress"></a>
@@ -306,7 +306,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | safeArtifactName | <code>String</code> | 
 
 <a name="module_electron-publish.HttpPublisher+uploadData"></a>
@@ -316,7 +316,7 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | Param | Type |
 | --- | --- |
 | data | <code>Buffer</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | fileName | <code>String</code> | 
 
 <a name="module_electron-publish.Publisher+toString"></a>
@@ -346,6 +346,6 @@ A ratio of 0.5 will attempt to set the progress to halfway.
 | Param | Type |
 | --- | --- |
 | file | <code>String</code> | 
-| arch | <code>module:electron-builder-util/out/arch.Arch</code> | 
+| arch | <code>[Arch](#Arch)</code> | 
 | safeArtifactName | <code>String</code> | 
 

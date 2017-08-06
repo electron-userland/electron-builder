@@ -16,5 +16,9 @@
     "../../typings/node-emoji.d.ts",
     "../../typings/ansi-escapes.d.ts",
     "../../typings/fcopy-pre-bundled.d.ts"
-  ]
+  ],
+  "jsdoc": {
+    "out": "../../scripts/jsdoc/out/util",
+    "access": "public"
+  }
 }

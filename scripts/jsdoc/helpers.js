@@ -176,7 +176,7 @@ function _link(input, options) {
   if (typeof input !== 'string') {
     return null
   }
-  
+
   /*
    test input for
    1. A type expression containing a namepath, e.g. Array.<module:Something>
@@ -191,7 +191,7 @@ function _link(input, options) {
     options.hash = {longname: namepath}
     linked = _identifier(options)
   }
-  
+
   if (!linked) {
     return {name: input, url: null}
   }
@@ -199,7 +199,7 @@ function _link(input, options) {
   const output = {
     name: input.replace(namepath, linked.name),
   }
-  
+
   if (isExternal.call(linked)) {
     if (linked.description) {
       output.url = `#${anchorName.call(linked, options)}`
@@ -225,20 +225,20 @@ function link2(type, delimiter, root, isSkipNull) {
   switch (type.type) {
     case "NameExpression":
       return identifierToLink(type.name, root)
-    
+
     case "NullLiteral":
     case "UndefinedLiteral":
       return type.typeExpression
-    
+
     case "FunctionType":
       return type.typeExpression
-    
+
     case "TypeUnion":
       return type.elements
         .map(it => link2(it, delimiter, root))
         .filter(it => !isSkipNull || it !== "null")
         .join(delimiter)
-    
+
     case "TypeApplication":
       return link2(type.expression, delimiter, root) + "&lt;" + type.applications.map(it => link2(it, delimiter, root)).join(", ") + "&gt;"
 
@@ -260,8 +260,8 @@ function identifierToLink(id, root) {
 
   let linked = resolveById(id)
   if (linked == null) {
-    if (id === "module:electron-builder/out/core.Arch") {
-      id = "module:electron-builder.Arch"
+    if (id === "module:electron-builder/out/core.Arch" || id === "module:electron-builder-util/out/arch.Arch") {
+      id = "module:electron-builder-util.Arch"
     }
     else if (id === "module:electron-builder-http/out/CancellationToken.CancellationToken") {
       id = "module:electron-builder-http.CancellationToken"
@@ -270,9 +270,9 @@ function identifierToLink(id, root) {
   }
 
   if (linked == null) {
-    if (id.startsWith("module") && 
-      !id.startsWith("module:http.") && 
-      !id.startsWith("module:bluebird-lst.") && 
+    if (id.startsWith("module") &&
+      !id.startsWith("module:http.") &&
+      !id.startsWith("module:bluebird-lst.") &&
       !id.startsWith("module:child_process.") &&
       !id.endsWith(".T") &&
       !id.endsWith(".R") &&
@@ -339,7 +339,7 @@ function anchorName() {
   if (!this.id) {
     throw new Error(`[anchorName helper] cannot create a link without a id: ${JSON.stringify(this)}`)
   }
-  
+
   if (this.inherited) {
     const inherits = resolveById(this.inherits)
     return inherits ? anchorName.call(inherits) : ""

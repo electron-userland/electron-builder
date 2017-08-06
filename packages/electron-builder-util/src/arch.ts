@@ -13,15 +13,17 @@ export function getArchSuffix(arch: Arch): string {
 }
 
 export function archFromString(name: string): Arch {
-  if (name === "x64") {
-    return Arch.x64
-  }
-  if (name === "ia32") {
-    return Arch.ia32
-  }
-  if (name === "armv7l") {
-    return Arch.armv7l
-  }
+  switch (name) {
+    case "x64":
+      return Arch.x64
 
-  throw new Error(`Unsupported arch ${name}`)
+    case "ia32":
+      return Arch.ia32
+
+    case "armv7l":
+      return Arch.armv7l
+
+    default:
+      throw new Error(`Unsupported arch ${name}`)
+  }
 }
