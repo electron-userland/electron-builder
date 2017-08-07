@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": true,
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/updater",
     "examples": "../../scripts/jsdoc/examples",

@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": true,
   "include": [
     "src/**/*.ts"
   ],
@@ -14,7 +13,6 @@
     "../../typings/chalk.d.ts",
     "../../typings/debug.d.ts",
     "../../typings/node-emoji.d.ts",
-    "../../typings/ansi-escapes.d.ts",
     "../../typings/fcopy-pre-bundled.d.ts",
     "../../typings/async-exit-hook.d.ts"
   ],

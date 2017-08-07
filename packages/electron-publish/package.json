@@ -16,7 +16,7 @@
     "bluebird-lst": "^1.0.2",
     "electron-builder-http": "~0.0.0-semantic-release",
     "electron-builder-util": "~0.0.0-semantic-release",
-    "chalk": "^2.0.1"
+    "chalk": "^2.1.0"
   },
-  "typings": "./out/electron-publish.d.ts"
+  "typings": "./out/publisher.d.ts"
 }

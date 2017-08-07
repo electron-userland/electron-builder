@@ -11,18 +11,19 @@ if (process.env.CSC_KEY_PASSWORD == null) {
 const tmpDir = new TmpDir()
 
 test.ifMac("create keychain", async () => {
-  const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD, currentDir: process.cwd()})
+  const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})
   expect(result.keychainName).not.toEqual("")
 })
 
 test.ifMac("create keychain with installers", async () => {
-  const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD, currentDir: process.cwd()})
+  const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})
   expect(result.keychainName).not.toEqual("")
 })
 
 test.ifDevOrLinuxCi("remove password from log", async () => {
   expect(removePassword("seq -P foo -B")).toMatchSnapshot()
   expect(removePassword("pass:foo")).toMatchSnapshot()
+  // noinspection SpellCheckingInspection
   expect(removePassword("/usr/bin/productbuild -P wefwef")).toMatchSnapshot()
   expect(removePassword(" /p foo")).toMatchSnapshot()
   expect(removePassword('ConvertTo-SecureString -String "test"')).toMatchSnapshot()

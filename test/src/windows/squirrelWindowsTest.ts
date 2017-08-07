@@ -28,8 +28,8 @@ test.skip("delta and msi", app({
 }))
 
 test.ifAll("detect install-spinner, certificateFile/password", () => {
-  let platformPackager: CheckingWinPackager = null
-  let loadingGifPath: string = null
+  let platformPackager: CheckingWinPackager | null = null
+  let loadingGifPath: string | null = null
 
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
@@ -52,9 +52,9 @@ test.ifAll("detect install-spinner, certificateFile/password", () => {
         })])
     },
     packed: async () => {
-      expect(platformPackager.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
-      expect(platformPackager.signOptions.cert).toEqual("secretFile")
-      expect(platformPackager.signOptions.password).toEqual("pass")
+      expect(platformPackager!!.effectiveDistOptions.loadingGif).toEqual(loadingGifPath)
+      expect(platformPackager!!.signOptions!!.cert).toEqual("secretFile")
+      expect(platformPackager!!.signOptions!!.password).toEqual("pass")
     },
   })
 })

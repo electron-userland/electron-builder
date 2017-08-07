@@ -18,5 +18,5 @@
     "electron-builder-util": "~0.0.0-semantic-release",
     "bluebird-lst": "^1.0.2"
   },
-  "typings": "./out/electron-publisher-s3.d.ts"
+  "typings": "./out/s3Publisher.d.ts"
 }

@@ -1,5 +1,6 @@
 import addExitHook from "async-exit-hook"
 import BluebirdPromise from "bluebird-lst"
+import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
 import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, TmpDir, warn } from "electron-builder-util"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
@@ -120,8 +121,20 @@ function removeKeychainOnExit(keychainFile: string) {
   }
 
   addExitHook(callback => {
+    const args = ["delete-keychain"].concat(createdKeychains)
+
+    if (callback == null) {
+      try {
+        execFileSync("security", args)
+      }
+      catch (e) {
+        warn(`Cannot delete keychains: ${e}`)
+      }
+      return
+    }
+
     // delete-keychain also remove keychain from search list
-    exec("security", ["delete-keychain"].concat(createdKeychains))
+    exec("security", args)
       .then(() => callback())
       .catch(e => {
         try {

@@ -14,7 +14,7 @@ test.ifWinCi("beta version", app({
 }))
 
 test.ifNotCiMac("win zip", app({
-  targets: Platform.WINDOWS.createTarget(["zip",]),
+  targets: Platform.WINDOWS.createTarget(["zip", ]),
 }))
 
 test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
@@ -22,7 +22,7 @@ test.ifNotCiMac("icon < 256", appThrows(platform(Platform.WINDOWS), {
 }))
 
 test.ifNotCiMac("icon not an image", appThrows(platform(Platform.WINDOWS), {
-  projectDirCreated: async (projectDir) => {
+  projectDirCreated: async projectDir => {
     const file = path.join(projectDir, "build", "icon.ico")
     // because we use hardlinks
     await unlink(file)
@@ -31,7 +31,7 @@ test.ifNotCiMac("icon not an image", appThrows(platform(Platform.WINDOWS), {
 }))
 
 test.ifMac("custom icon", () => {
-  let platformPackager: CheckingWinPackager = null
+  let platformPackager: CheckingWinPackager | null = null
   return assertPack("test-app-one", {
     targets: Platform.WINDOWS.createTarget("squirrel"),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingWinPackager(packager),
@@ -43,7 +43,7 @@ test.ifMac("custom icon", () => {
   }, {
     projectDirCreated: projectDir => rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
     packed: async context => {
-      expect(await platformPackager.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
+      expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },
   })
 })

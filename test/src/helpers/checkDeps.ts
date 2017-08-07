@@ -8,7 +8,7 @@ require("v8-compile-cache")
 
 const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
 
-const knownUnusedDevDependencies = new Set([
+const knownUnusedDevDependencies = new Set<string>([
 ])
 
 const rootDir = path.join(__dirname, "../../..")

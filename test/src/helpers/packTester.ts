@@ -178,11 +178,11 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   }
 
   function sortKey(a: ArtifactCreated) {
-    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.data.toString("hex") : path.basename(a.file)}`
+    return `${a.target == null ? "no-target" : a.target.name}:${a.file == null ? a.data!!.toString("hex") : path.basename(a.file)}`
   }
 
   const objectToCompare: any = {}
-  for (const platform of packagerOptions.targets.keys()) {
+  for (const platform of packagerOptions.targets!!.keys()) {
     objectToCompare[platform.buildConfigurationKey] = await BluebirdPromise.map((artifacts.get(platform) || []).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), async it => {
       const result: any = {...it}
       if (result.file != null) {
@@ -216,13 +216,13 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
 
   expect(objectToCompare).toMatchSnapshot()
 
-  c: for (const [platform, archToType] of packagerOptions.targets) {
+  c: for (const [platform, archToType] of packagerOptions.targets!!) {
     for (const [arch, targets] of computeArchToTargetNamesMap(archToType, (packagerOptions as any)[platform.buildConfigurationKey] || {}, platform)) {
       if (targets.length === 1 && targets[0] === DIR_TARGET) {
         continue c
       }
 
-      const nameToTarget = platformToTargets.get(platform)
+      const nameToTarget = platformToTargets.get(platform)!!
       if (platform === Platform.MAC) {
         const packedAppDir = path.join(outDir, nameToTarget.has("mas-dev") ? "mas-dev" : (nameToTarget.has("mas") ? "mas" : "mac"), `${packager.appInfo.productFilename}.app`)
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
@@ -231,7 +231,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         await checkLinuxResult(outDir, packager, arch, nameToTarget)
       }
       else if (platform === Platform.WINDOWS) {
-        await checkWindowsResult(packager, checkOptions, artifacts.get(platform), nameToTarget)
+        await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!!, nameToTarget)
       }
     }
   }
@@ -260,7 +260,7 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
 
 function parseDebControl(info: string): any {
   const regexp = /([\w]+): *(.+\n)([^:\n]+\n)?/g
-  let match: Array<string>
+  let match: Array<string> | null
   const metadata: any = {}
   info = info.substring(info.indexOf("Package:"))
   while ((match = regexp.exec(info)) !== null) {
@@ -325,8 +325,8 @@ async function checkWindowsResult(packager: Packager, checkOptions: AssertPackOp
     return
   }
 
-  const packageFile = artifacts.find(it => it.file.endsWith("-full.nupkg"))!.file
-  const unZipper = new DecompressZip(packageFile)
+  const packageFile = artifacts.find(it => it.file!!.endsWith("-full.nupkg"))!.file!!
+  const unZipper = new DecompressZip(packageFile!!)
   const fileDescriptors = await unZipper.getFiles()
 
   // we test app-update.yml separately, don't want to complicate general assert (yes, it is not good that we write app-update.yml for squirrel.windows if we build nsis and squirrel.windows in parallel, but as squirrel.windows is deprecated, it is ok)
@@ -383,7 +383,7 @@ export function parseFileList(data: string, fromDpkg: boolean): Array<string> {
   return data
     .split("\n")
     .map(it => it.length === 0 ? null : fromDpkg ? it.substring(it.indexOf(".") + 1) : (it.startsWith("./") ? it.substring(2) : (it === "." ? null : it)))
-    .filter(it => it != null && it.length > 0)
+    .filter(it => it != null && it.length > 0) as Array<string>
 }
 
 export function packageJson(task: (data: any) => void, isApp = false) {

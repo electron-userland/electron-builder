@@ -14,5 +14,5 @@
     "bluebird-lst": "^1.0.2",
     "fs-extra-p": "^4.4.0"
   },
-  "typings": "./out/asar-integrity.d.ts"
+  "typings": "./out/main.d.ts"
 }

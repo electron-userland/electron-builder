@@ -1,31 +1,15 @@
 {
+  "extends": "../node_modules/ts-babel/tsconfig-base.json",
   "compilerOptions": {
-    "module": "es2015",
-    "target": "es2017",
-    "noImplicitAny": true,
     "outDir": "out",
-    "newLine": "LF",
-    "noEmitOnError": true,
-    "inlineSources": true,
-    "sourceMap": true,
-    "noImplicitReturns": true,
-    "noEmitHelpers": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "../packages"
   },
-  "files": [
-    "../node_modules/@types/jest/index.d.ts",
-    "../node_modules/fs-extra-p/index.d.ts",
-    "../node_modules/bluebird-lst/index.d.ts",
-    "../node_modules/electron-osx-sign/index.d.ts",
-    "../node_modules/read-config-file/out/read-config-file.d.ts"
-  ],
+  "declaration": false,
   "include": [
     "../typings/*.d.ts",
     "typings/*.d.ts",
-    "src/**/*.ts",
-    "../packages/*/out/*.d.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "../typings/electron.d.ts"

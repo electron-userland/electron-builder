@@ -47,7 +47,7 @@ test("repo slug from APPVEYOR", async () => {
   }
 })
 
-function restoreEnv(name: string, value: string) {
+function restoreEnv(name: string, value: string | undefined) {
   if (value != null) {
     // otherwise will be set to string value "undefined"
     process.env[name] = value

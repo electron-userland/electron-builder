@@ -21,7 +21,7 @@ test.ifAll("dev", createMacTargetTest(["mas-dev"]))
 test.ifAll("mas and 7z", createMacTargetTest(["mas", "7z"]))
 
 test.ifAll("custom mas", () => {
-  let platformPackager: CheckingMacPackager = null
+  let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
@@ -36,7 +36,7 @@ test.ifAll("custom mas", () => {
     }
   }), {
     packed: () => {
-      expect(platformPackager.effectiveSignOptions).toMatchObject({
+      expect(platformPackager!!.effectiveSignOptions).toMatchObject({
         entitlements: "mas-entitlements file path",
         "entitlements-inherit": "mas-entitlementsInherit file path",
       })
@@ -46,7 +46,7 @@ test.ifAll("custom mas", () => {
 })
 
 test.ifAll("entitlements in the package.json", () => {
-  let platformPackager: CheckingMacPackager = null
+  let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
@@ -58,7 +58,7 @@ test.ifAll("entitlements in the package.json", () => {
     }
   }), {
     packed: () => {
-      expect(platformPackager.effectiveSignOptions).toMatchObject({
+      expect(platformPackager!!.effectiveSignOptions).toMatchObject({
         entitlements: "osx-entitlements file path",
         "entitlements-inherit": "osx-entitlementsInherit file path",
       })
@@ -68,7 +68,7 @@ test.ifAll("entitlements in the package.json", () => {
 })
 
 test.ifAll("entitlements in build dir", () => {
-  let platformPackager: CheckingMacPackager = null
+  let platformPackager: CheckingMacPackager | null = null
   return assertPack("test-app-one", signed({
     targets: Platform.MAC.createTarget(),
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingMacPackager(packager),
@@ -78,7 +78,7 @@ test.ifAll("entitlements in build dir", () => {
       writeFile(path.join(projectDir, "build", "entitlements.mac.inherit.plist"), ""),
     ]),
     packed: context => {
-      expect(platformPackager.effectiveSignOptions).toMatchObject({
+      expect(platformPackager!!.effectiveSignOptions).toMatchObject({
         entitlements: path.join(context.projectDir, "build", "entitlements.mac.plist"),
         "entitlements-inherit": path.join(context.projectDir, "build", "entitlements.mac.inherit.plist"),
       })

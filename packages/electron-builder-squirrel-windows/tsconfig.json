@@ -3,13 +3,11 @@
   "compilerOptions": {
     "outDir": "out"
   },
-  "declaration": true,
   "include": [
     "src/**/*.ts"
   ],
   "files": [
     "../../typings/debug.d.ts",
-    "../../typings/sanitize-filename.d.ts",
-    "../electron-builder/out/electron-builder.d.ts"
+    "../../typings/sanitize-filename.d.ts"
   ]
 }

@@ -8,7 +8,7 @@ export function assertThat(actual: any): Assertions {
 }
 
 class Assertions {
-  constructor (private actual: any) {
+  constructor(private actual: any) {
   }
 
   containsAll<T>(expected: Iterable<T>) {
@@ -49,7 +49,7 @@ class Assertions {
   }
 
   async throws() {
-    let actualError: Error | null
+    let actualError: Error | null = null
     let result: any
     try {
       result = await this.actual

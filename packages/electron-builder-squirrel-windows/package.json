@@ -20,5 +20,5 @@
   "peerDependencies": {
     "electron-builder": "~0.0.0-semantic-release"
   },
-  "typings": "./out/electron-builder-squirrel-windows.d.ts"
+  "typings": "./out/squirrelWindows.d.ts"
 }

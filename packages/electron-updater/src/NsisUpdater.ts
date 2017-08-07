@@ -18,7 +18,7 @@ export class NsisUpdater extends AppUpdater {
   private quitAndInstallCalled = false
   private quitHandlerAdded = false
 
-  constructor(options?: PublishConfiguration, app?: any) {
+  constructor(options?: PublishConfiguration | null, app?: any) {
     super(options, app)
   }
 

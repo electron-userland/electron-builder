@@ -1,6 +1,6 @@
 import exitHook from "async-exit-hook"
 import BluebirdPromise from "bluebird-lst"
-import { mkdirs, mkdtemp, remove } from "fs-extra-p"
+import { mkdirs, mkdtemp, remove, removeSync } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"
 import { CONCURRENCY } from "./fs"
@@ -23,14 +23,28 @@ function getTempDir() {
 
     tempDirPromise = promise
       .then(dir => {
+        function handleError(e: any) {
+          if (e.code !== "EPERM") {
+            warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
+          }
+        }
+
         exitHook(callback => {
+          if (callback == null) {
+            try {
+              removeSync(dir)
+            }
+            catch (e) {
+              handleError(e)
+            }
+            return
+          }
+
           remove(dir)
             .then(() => callback())
             .catch(e => {
               try {
-                if (e.code !== "EPERM") {
-                  warn(`Cannot delete temporary dir "${dir}": ${(e.stack || e).toString()}`)
-                }
+                handleError(e)
               }
               finally {
                 callback()

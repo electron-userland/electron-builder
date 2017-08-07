@@ -326,7 +326,7 @@ test("cancel download with progress", async () => {
   updater.signals.updateCancelled(() => cancelled = true)
 
   const checkResult = await updater.checkForUpdates()
-  checkResult.cancellationToken.cancel()
+  checkResult.cancellationToken!!.cancel()
 
   if (progressEvents.length > 0) {
     const lastEvent = progressEvents[progressEvents.length - 1]

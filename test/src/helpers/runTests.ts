@@ -69,18 +69,18 @@ async function runTests() {
     emptyDir(TEST_DIR),
   ])
 
-  const testFiles: string | null = process.env.TEST_FILES
+  const testFiles: string | null | undefined = process.env.TEST_FILES
 
   const args = []
   const baseForLinuxTests = ["ArtifactPublisherTest.js", "httpRequestTest.js", "RepoSlugTest.js"]
   if (!isEmptyOrSpaces(testFiles)) {
-    args.push(...testFiles.split(",").map(it => `${it.trim()}.js`))
+    args.push(...testFiles!!.split(",").map(it => `${it.trim()}.js`))
     if (process.platform === "linux") {
       args.push(...baseForLinuxTests)
     }
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
-    const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX, 10)
+    const circleNodeIndex = parseInt(process.env.CIRCLE_NODE_INDEX!!, 10)
     if (circleNodeIndex === 0) {
       args.push("debTest")
       args.push("fpmTest")
@@ -158,7 +158,7 @@ async function runTests() {
 
   if (process.env.CIRCLECI != null) {
     config.testResultsProcessor = "<rootDir>/node_modules/jest-junit"
-    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS, "reports"), "test-report.xml")
+    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS!!, "reports"), "test-report.xml")
   }
 
   require("jest-cli").runCLI({

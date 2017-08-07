@@ -15,5 +15,5 @@
     "fs-extra-p": "^4.4.0",
     "bluebird-lst": "^1.0.2"
   },
-  "typings": "./out/electron-builder-http.d.ts"
+  "typings": "./out/httpExecutor.d.ts"
 }
