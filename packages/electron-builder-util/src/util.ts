@@ -39,6 +39,18 @@ export function removePassword(input: string) {
 export function exec(file: string, args?: Array<string> | null, options?: ExecOptions, isLogOutIfDebug = true): Promise<string> {
   if (debug.enabled) {
     debug(`Executing ${file} ${args == null ? "" : removePassword(args.join(" "))}`)
+    if (options != null && options.env != null) {
+      const diffEnv = {...options.env}
+      for (const name of Object.keys(process.env)) {
+        if (process.env[name] !== "") {
+          delete diffEnv[name]
+        }
+      }
+      debug(`env: ${safeStringifyJson(diffEnv)}`)
+    }
+    if (options != null && options.cwd != null) {
+      debug(`cwd: ${options.cwd}`)
+    }
   }
 
   return new BluebirdPromise<string>((resolve, reject) => {
@@ -89,6 +101,9 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   if (debug.enabled) {
     const argsString = args.join(" ")
     debug(`Spawning ${command} ${command === "docker" ? argsString : removePassword(argsString)}`)
+    if (options != null && options.cwd != null) {
+      debug(`cwd: ${options.cwd}`)
+    }
   }
 
   try {
@@ -274,7 +289,7 @@ export function isPullRequest() {
 
 export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
   return JSON.stringify(data, (name, value) => {
-    if (name.endsWith("Password") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
+    if (name.endsWith("Password") || name.endsWith("PASSWORD") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
       return "<stripped sensitive data>"
     }
     return value

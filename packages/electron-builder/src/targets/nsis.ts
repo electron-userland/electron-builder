@@ -184,7 +184,7 @@ export class NsisTarget extends Target {
     }
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
-        const file = await this.packageHelper.packArch(arch, this, )
+        const file = await this.packageHelper.packArch(arch, this)
         defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
         defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
 
@@ -417,7 +417,7 @@ export class NsisTarget extends Target {
       const childProcess = doSpawn(command, args, {
         // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
         // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-        env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8"},
+        env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8", LANG: "en_US.UTF-8"},
         cwd: nsisTemplatesDir,
       }, {isPipeInput: true, isDebugEnabled: debug.enabled})
 

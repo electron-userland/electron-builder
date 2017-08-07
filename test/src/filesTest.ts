@@ -216,13 +216,13 @@ test.ifNotCiWin("extraResources - two-package", () => {
 // copyDir walks to a symlink referencing a file that has not yet been copied by postponing the linking step until after the full walk is complete
 test("postpone symlink", async () => {
   const tmpDir = new TmpDir()
-  const source = await tmpDir.getTempFile("src")
+  const source = await tmpDir.getTempDir("src")
   const aSourceFile = path.join(source, "z", "Z")
   const bSourceFileLink = path.join(source, "B")
   await outputFile(aSourceFile, "test")
   await symlink(aSourceFile, bSourceFileLink)
 
-  const dest = await tmpDir.getTempFile("dest")
+  const dest = await tmpDir.getTempDir("dest")
   await copyDir(source, dest)
 
   await tmpDir.cleanup()

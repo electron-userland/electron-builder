@@ -26,9 +26,8 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions()
 
-    const tempDir = await packager.getTempFile("dmg")
-    const tempDmg = path.join(tempDir, "temp.dmg")
-    const backgroundDir = path.join(tempDir, ".background")
+    const tempDmg = await packager.getTempFile(".dmg")
+    const backgroundDir = path.join(await packager.getTempDir("dmg"), ".background")
     const backgroundFilename = specification.background == null ? null : path.basename(specification.background)
     if (backgroundFilename != null) {
       await copyFile(path.resolve(packager.info.projectDir, specification.background!), path.join(backgroundDir, backgroundFilename))

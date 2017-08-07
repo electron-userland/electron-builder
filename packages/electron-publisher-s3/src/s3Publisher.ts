@@ -7,7 +7,6 @@ import { ProgressCallback } from "electron-publish/out/progress"
 import { ensureDir, stat, symlink } from "fs-extra-p"
 import mime from "mime"
 import * as path from "path"
-import { basename } from "path"
 import { S3Client, Uploader } from "./uploader"
 
 export default class S3Publisher extends Publisher {
@@ -38,7 +37,7 @@ export default class S3Publisher extends Publisher {
 
   // http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-example-creating-buckets.html
   async upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any> {
-    const fileName = basename(file)
+    const fileName = path.basename(file)
     const fileStat = await stat(file)
     const client = new S3Client({s3Options: {signatureVersion: "v4"}})
     const cancellationToken = this.context.cancellationToken

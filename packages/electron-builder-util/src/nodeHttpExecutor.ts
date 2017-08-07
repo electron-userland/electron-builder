@@ -1,10 +1,8 @@
 import _debug from "debug"
 import { CancellationToken, configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir, readFile } from "fs-extra-p"
-import * as http from "http"
-import { Agent, ClientRequest, IncomingMessage } from "http"
+import { Agent, ClientRequest, IncomingMessage, request as _request, RequestOptions } from "http"
 import * as https from "https"
-import { RequestOptions } from "https"
 import { parse as parseIni } from "ini"
 import { homedir } from "os"
 import * as path from "path"
@@ -50,7 +48,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
     }
 
     return cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const request = ((options.protocol === "http:" ? http : https) as any).request(options, (response: IncomingMessage) => {
+      const request = (options.protocol === "http:" ? _request : https.request)(options, (response: IncomingMessage) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }

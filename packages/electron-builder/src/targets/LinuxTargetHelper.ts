@@ -49,7 +49,7 @@ export class LinuxTargetHelper {
       return await this.iconsFromDir(path.join(packager.buildResourcesDir, "icons"))
     }
     else {
-      const iconDir = await packager.getTempFile("linux.iconset")
+      const iconDir = await packager.getTempDir("linux.iconset")
       ensureDir(iconDir)
       return await this.createFromIcns(iconDir)
     }

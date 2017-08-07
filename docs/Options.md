@@ -85,6 +85,10 @@ You can use macros in the file patterns, artifact file name patterns and publish
 
 `${ext}` macro is supported in addition to [file macros](#file-macros).
 
+## Environment Variables from File
+
+Env file `electron-builder.env` in the current dir. Supported only for CLI usage.
+
 ## How to Read Docs
 
 * Name of optional property is normal, **required** is bold.

@@ -1,4 +1,4 @@
-import { Arch, log, replaceDefault, spawn, toLinuxArchString } from "electron-builder-util"
+import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString } from "electron-builder-util"
 import { copyFile } from "electron-builder-util/out/fs"
 import { emptyDir, outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -79,9 +79,25 @@ export default class SnapTarget extends Target {
       }
     }
 
-    // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
-    const isUseDocker = process.platform !== "linux"
+    let isUseDocker = process.platform !== "linux"
+    if (process.platform === "darwin" && process.env.USE_SYSTEM_SNAPCAFT) {
+      try {
+        // http://click.pocoo.org/5/python3/
+        const env: any = {...process.env, LC_ALL: "en_US.UTF-8", LANG: "en_US.UTF-8"}
+        delete env.VERSIONER_PYTHON_VERSION
+        delete env.VERSIONER_PYTHON_PREFER_32_BIT
+        await exec("snapcraft", ["--version"], {
+          // execution because Python 3 was configured to use ASCII as encoding for the environment
+          env,
+        })
+        isUseDocker = false
+      }
+      catch (e) {
+        debug(`snapcraft not installed: ${e}`)
+      }
+    }
 
+    // libxss1, libasound2, gconf2 - was "error while loading shared libraries: libXss.so.1" on Xubuntu 16.04
     const defaultStagePackages = (isUseUbuntuPlatform ? ["libnss3"] : ["libnotify4", "libappindicator1", "libxtst6", "libnss3", "libxss1", "fontconfig-config", "gconf2", "libasound2", "pulseaudio"])
     const defaultAfter = isUseUbuntuPlatform ? ["extra", "desktop-ubuntu-app-platform"] : ["desktop-glib-only"]
     const after = replaceDefault(options.after, defaultAfter)

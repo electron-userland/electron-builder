@@ -37,6 +37,8 @@
     "chromium-pickle-js": "^0.2.0",
     "cuint": "^0.2.2",
     "debug": "^2.6.8",
+    "dotenv": "^4.0.0",
+    "dotenv-expand": "^4.0.1",
     "electron-download-tf": "4.3.1",
     "electron-is-dev": "^0.3.0",
     "electron-osx-sign": "0.4.7",
@@ -68,6 +70,7 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
+    "@types/dotenv": "^4.0.0",
     "@types/ini": "^1.3.29",
     "@types/jest": "^20.0.6",
     "@types/js-yaml": "^3.9.0",
@@ -87,8 +90,8 @@
     "jsdoc-to-markdown": "^3.0.0",
     "path-sort": "^0.1.0",
     "shebang-loader": "^0.0.1",
-    "ts-babel": "^3.2.0",
-    "tslint": "^5.5.0",
+    "ts-babel": "^3.2.1",
+    "tslint": "^5.6.0",
     "typescript": "^2.4.2",
     "v8-compile-cache": "^1.1.0",
     "whitespace": "^2.1.0",

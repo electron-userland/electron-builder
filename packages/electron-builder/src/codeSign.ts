@@ -1,12 +1,9 @@
-import addExitHook from "async-exit-hook"
 import BluebirdPromise from "bluebird-lst"
-import { execFileSync } from "child_process"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, TmpDir, warn } from "electron-builder-util"
-import { copyFile, statOrNull } from "electron-builder-util/out/fs"
+import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, TmpDir } from "electron-builder-util"
+import { copyFile, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { outputFile, rename } from "fs-extra-p"
-import isCi from "is-ci"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
@@ -105,48 +102,14 @@ export interface CreateKeychainOptions {
   currentDir: string
 }
 
-const createdKeychains: Array<string> = []
-let exitHookAdded = false
-
-function removeKeychainOnExit(keychainFile: string) {
-  // no need to clean on CI server
-  if (isCi) {
-    return
+async function removeKeychain(keychainFile: string) {
+  try {
+    await exec("security", ["delete-keychain", keychainFile])
   }
-
-  createdKeychains.push(keychainFile)
-
-  if (exitHookAdded) {
-    return
+  catch (e) {
+    console.warn(`Cannot delete keychain ${keychainFile}: ${e.stack || e}`)
+    await unlinkIfExists(keychainFile)
   }
-
-  addExitHook(callback => {
-    const args = ["delete-keychain"].concat(createdKeychains)
-
-    if (callback == null) {
-      try {
-        execFileSync("security", args)
-      }
-      catch (e) {
-        warn(`Cannot delete keychains: ${e}`)
-      }
-      return
-    }
-
-    // delete-keychain also remove keychain from search list
-    exec("security", args)
-      .then(() => callback())
-      .catch(e => {
-        try {
-          warn(`Cannot delete keychains: ${e}`)
-        }
-        finally {
-          callback()
-        }
-      })
-  })
-
-  exitHookAdded = true
 }
 
 export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink, cscIKeyPassword, currentDir}: CreateKeychainOptions): Promise<CodeSigningInfo> {
@@ -155,7 +118,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     await bundledCertKeychainAdded.value
   }
 
-  const keychainFile = await tmpDir.getTempFile(".keychain")
+  const keychainFile = await tmpDir.getTempFile(".keychain", false, removeKeychain)
 
   const certLinks = [cscLink]
   if (cscILink != null) {
@@ -173,8 +136,6 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
       ["set-keychain-settings", keychainFile]
     ], it => exec("security", it))
   ])
-
-  removeKeychainOnExit(keychainFile)
 
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
   // https://github.com/electron-userland/electron-builder/issues/1457

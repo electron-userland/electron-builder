@@ -1,7 +1,7 @@
 {
   "name": "asar-integrity",
   "version": "0.0.0-semantic-release",
-  "main": "out/asarIntegrity.js",
+  "main": "out/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",

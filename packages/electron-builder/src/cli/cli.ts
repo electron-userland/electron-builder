@@ -1,11 +1,13 @@
 #! /usr/bin/env node
 
 import { cyan, dim, green, reset, underline } from "chalk"
+import { parse as parseEnv } from "dotenv"
 import { exec, log, warn } from "electron-builder-util"
 import { printErrorAndExit } from "electron-builder-util/out/promise"
-import { readJson } from "fs-extra-p"
+import { readFile, readJson } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
+import { orNullIfFileNotExist } from "read-config-file"
 import updateNotifier from "update-notifier"
 import yargs from "yargs"
 import { build, configureBuildCommand } from "../builder"
@@ -41,7 +43,8 @@ yargs
 function wrap(task: (args: any) => Promise<any>) {
   return (args: any) => {
     checkIsOutdated()
-    task(args)
+    loadEnv(path.join(process.cwd(), "electron-builder.env"))
+      .then(() => task(args))
       .catch(printErrorAndExit)
   }
 }
@@ -74,4 +77,20 @@ async function rebuildAppNativeCode(args: any) {
   await exec(process.platform === "win32" ? "node-gyp.cmd" : "node-gyp", ["rebuild"], {
     env: getGypEnv({version: await getElectronVersion(projectDir), useCustomDist: true}, args.platform, args.arch, true),
   })
+}
+
+async function loadEnv(envFile: string) {
+  const data = await orNullIfFileNotExist(readFile(envFile, "utf8"))
+  if (data == null) {
+    return null
+  }
+
+  const parsed = parseEnv(data)
+  for (const key of Object.keys(parsed)) {
+    if (!process.env.hasOwnProperty(key)) {
+      process.env[key] = parsed[key]
+    }
+  }
+  require("dotenv-expand")(parsed)
+  return parsed
 }

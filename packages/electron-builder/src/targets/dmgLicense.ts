@@ -16,7 +16,6 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
     debug(`License files: ${licenseFiles.join(" ")}`)
   }
 
-  const tempFile = await packager.getTempFile(".r")
   let data = await readFile(path.join(__dirname, "..", "..", "templates", "dmg", "license.txt"), "utf8")
   let counter = 5000
   for (const item of licenseFiles) {
@@ -40,6 +39,7 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
     counter++
   }
 
+  const tempFile = await packager.getTempFile(".r")
   await writeFile(tempFile, data)
   await exec("hdiutil", ["unflatten", dmgPath])
   await exec("Rez", ["-a", tempFile, "-o", dmgPath])

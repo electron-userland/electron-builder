@@ -16,7 +16,6 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
-import { UrlObject } from "url"
 import { Platform, Target } from "../core"
 import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
@@ -345,7 +344,7 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
     }
 
     const baseUrl = url.parse(baseUrlString)
-    return url.format({...baseUrl as UrlObject, pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))})
+    return url.format({...baseUrl as url.UrlObject, pathname: path.posix.resolve(baseUrl.pathname || "/", encodeURI(fileName))})
   }
 
   let baseUrl
