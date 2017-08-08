@@ -87,7 +87,7 @@ You can use macros in the file patterns, artifact file name patterns and publish
 
 ## Environment Variables from File
 
-Env file `electron-builder.env` in the current dir. Supported only for CLI usage.
+Env file `electron-builder.env` in the current dir ([example](https://github.com/motdotla/dotenv-expand/blob/master/test/.env)). Supported only for CLI usage.
 
 ## How to Read Docs
 
