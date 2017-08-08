@@ -2,7 +2,7 @@ import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
 
 /** @internal */
-export const bundledLanguages = ["en_US", "de_DE", "fr_FR", "es_ES", "zh_CN", "zh_TW", "ja_JP", "it_IT", "nl_NL", "ru_RU", "pl_PL", "uk_UA", "cs_CZ", "sv_SE", "nb_NO", "da_DK", "pt_PT", "hu_HU", "ko_KR", "fi_FI", "sk_SK"]
+export const bundledLanguages = ["en_US", "de_DE", "fr_FR", "es_ES", "zh_CN", "zh_TW", "ja_JP", "it_IT", "nl_NL", "ru_RU", "pl_PL", "uk_UA", "cs_CZ", "sv_SE", "nb_NO", "da_DK", "pt_PT", "hu_HU", "ko_KR", "fi_FI", "sk_SK", "ar_SA"]
 
 const langToLangWithRegion = new Map<string, string>()
 for (const id of bundledLanguages) {
