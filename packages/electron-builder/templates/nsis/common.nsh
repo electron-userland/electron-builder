@@ -2,7 +2,7 @@
 !include WinVer.nsh
 
 Var /GLOBAL oldShortcutName
-var /GLOBAL oldMenuDirectory
+Var /GLOBAL oldMenuDirectory
 
 BrandingText "${PRODUCT_NAME} ${VERSION}"
 ShowInstDetails nevershow
