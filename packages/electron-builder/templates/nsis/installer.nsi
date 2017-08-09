@@ -1,5 +1,7 @@
-Var startMenuLink
-Var desktopLink
+Var newStartMenuLink
+Var oldStartMenuLink
+Var newDesktopLink
+Var oldDesktopLink
 
 !include "common.nsh"
 !include "MUI2.nsh"

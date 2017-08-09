@@ -8,11 +8,11 @@
       ${else}
         StrCpy $startAppArgs ""
       ${endif}
-    
+
       !ifdef INSTALL_MODE_PER_ALL_USERS
-        ${StdUtils.ExecShellAsUser} $0 $startMenuLink "open" "$startAppArgs"
+        ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" "$startAppArgs"
       !else
-        ExecShell "" "$startMenuLink" "$startAppArgs"
+        ExecShell "" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "$startAppArgs"
       !endif
     !macroend
   !endif

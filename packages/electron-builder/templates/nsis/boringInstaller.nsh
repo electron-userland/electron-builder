@@ -8,9 +8,9 @@
 !ifndef BUILD_UNINSTALLER
   Function StartApp
     ${if} ${Updated}
-      ${StdUtils.ExecShellAsUser} $0 "$startMenuLink" "open" "--updated"
+      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" "--updated"
     ${else}
-      ${StdUtils.ExecShellAsUser} $0 "$startMenuLink" "open" ""
+      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" ""
     ${endif}
   FunctionEnd
 
@@ -28,7 +28,7 @@
 
   !ifdef allowToChangeInstallationDirectory
     !include StrContains.nsh
-          
+
     !insertmacro MUI_PAGE_DIRECTORY
 
     # pageDirectory leave doesn't work (it seems because $INSTDIR is set after custom leave function)

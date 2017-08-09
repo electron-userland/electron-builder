@@ -226,6 +226,11 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly menuCategory?: boolean | string
 
   /**
+   * The name that will be used for all shortcuts. Defaults to the name defined in package.json
+   */
+  readonly shortcutName?: string | null
+
+  /**
    * The uninstaller display name in the control panel.
    * @default ${productName} ${version}
    */

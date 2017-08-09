@@ -33,15 +33,28 @@ Section "un.install"
   ${GetOptions} $R0 "--keep-shortcuts" $R1
   ${if} ${Errors}
     WinShell::UninstAppUserModelId "${APP_ID}"
-    WinShell::UninstShortcut "$startMenuLink"
-    WinShell::UninstShortcut "$desktopLink"
+    WinShell::UninstShortcut "$oldStartMenuLink"
+    WinShell::UninstShortcut "$oldDesktopLink"
 
-    Delete "$startMenuLink"
-    Delete "$desktopLink"
-
-    # Refresh the desktop
-    System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
+    ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory
+    ${If} $R1 != ""
+      RMDir /r /REBOOTOK "$SMPROGRAMS\$R1"
+    ${Else}
+      Delete "$oldStartMenuLink"
+    ${EndIf}
+    Delete "$oldDesktopLink"
+  ${else}
+    ClearErrors
+    ${GetParameters} $R0
+    ${GetOptions} $R0 "--no-desktop-shortcut" $R1
+    ${ifNot} ${Errors}
+      WinShell::UninstShortcut "$oldDesktopLink"
+      Delete "$oldDesktopLink"
+    ${endif}
   ${endif}
+
+  # Refresh the desktop
+  System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 
   !ifmacrodef unregisterFileAssociations
     !insertmacro unregisterFileAssociations

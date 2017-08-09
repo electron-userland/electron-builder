@@ -348,6 +348,12 @@ export class NsisTarget extends Target {
       }
     }
 
+    if (options.shortcutName != null && !isEmptyOrSpaces(options.shortcutName)) {
+      defines.SHORTCUT_NAME = options.shortcutName
+    } else {
+      defines.SHORTCUT_NAME = defines.PRODUCT_FILENAME
+    }
+
     if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled : options.multiLanguageInstaller) {
       defines.MULTI_LANGUAGE_INSTALLER = null
     }
