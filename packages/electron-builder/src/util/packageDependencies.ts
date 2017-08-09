@@ -9,6 +9,7 @@ import * as path from "path"
 /** @internal */
 export interface Dependency {
   name: string
+  version: string
   path: string
   extraneous: boolean
   optional: boolean

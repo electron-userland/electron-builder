@@ -168,7 +168,7 @@ export async function rebuild(appDir: string, options: RebuildOptions) {
     if (additionalArgs != null) {
       execArgs.push(...additionalArgs)
     }
-    execArgs.push(...nativeDeps.map(it => it.name))
+    execArgs.push(...nativeDeps.map(it => `${it.name}@${it.version}`))
     await spawn(execPath, execArgs, {
       cwd: appDir,
       env,
