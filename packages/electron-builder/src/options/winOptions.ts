@@ -226,7 +226,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly menuCategory?: boolean | string
 
   /**
-   * The name that will be used for all shortcuts. Defaults to the name defined in package.json
+   * The name that will be used for all shortcuts. Defaults to the application name.
    */
   readonly shortcutName?: string | null
 
