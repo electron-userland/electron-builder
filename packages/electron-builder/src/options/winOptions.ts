@@ -379,4 +379,9 @@ export interface AppXOptions extends TargetSpecificOptions {
    * Defaults to en-US if omitted.
    */
   readonly languages?: Array<string> | string | null
+
+  /**
+   * @default false
+   */
+  readonly electronUpdaterAware?: boolean
 }

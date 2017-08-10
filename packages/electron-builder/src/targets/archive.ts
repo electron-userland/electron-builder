@@ -19,7 +19,7 @@ const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
 }
 
 /** @internal */
-export async function tar(compression: CompressionLevel | n, format: string, outFile: string, dirToArchive: string, isMacApp: boolean = false) {
+export async function tar(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, isMacApp: boolean = false) {
   // we don't use 7z here - develar: I spent a lot of time making pipe working - but it works on MacOS and often hangs on Linux (even if use pipe-io lib)
   // and in any case it is better to use system tools (in the light of docker - it is not problem for user because we provide complete docker image).
   const info = extToCompressionDescriptor[format]

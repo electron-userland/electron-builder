@@ -80,7 +80,7 @@ export class PublishManager implements PublishContext {
         }
       }
       else if (packager.platform === Platform.WINDOWS) {
-        if (!event.targets.some(it => isSuitableWindowsTarget(it))) {
+        if (!event.targets.some(it => isSuitableWindowsTarget(it, null))) {
           return
         }
       }
@@ -95,12 +95,12 @@ export class PublishManager implements PublishContext {
 
       let publishConfig = publishConfigs[0]
 
-      if (packager.platform === Platform.WINDOWS) {
+      if (packager.platform === Platform.WINDOWS && publishConfig.publisherName == null) {
         const winPackager = packager as WinPackager
         if (winPackager.isForceCodeSigningVerification) {
           const publisherName = await winPackager.computedPublisherName.value
           if (publisherName != null) {
-            publishConfig = {publisherName, ...publishConfig}
+            publishConfig = {...publishConfig, publisherName}
           }
         }
       }
@@ -152,7 +152,7 @@ export class PublishManager implements PublishContext {
 
     if (target != null && eventFile != null && !this.cancellationToken.cancelled) {
       if ((packager.platform === Platform.MAC && target.name === "zip") ||
-        (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target) && eventFile.endsWith(".exe"))) {
+        (packager.platform === Platform.WINDOWS && isSuitableWindowsTarget(target, event))) {
         this.taskManager.addTask(writeUpdateInfo(event, publishConfigs))
       }
     }
@@ -210,7 +210,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
   const target = event.target!
   let outDir = target.outDir
-  if (target.name.startsWith("nsis-")) {
+  if (event.packager.platform === Platform.WINDOWS && target.name !== "nsis") {
     outDir = path.join(outDir, target.name)
     await ensureDir(outDir)
   }
@@ -412,7 +412,14 @@ export async function getPublishConfigs(packager: PlatformPackager<any>, targetS
   return await (BluebirdPromise.map(asArray(publishers), it => getResolvedPublishConfig(packager, typeof it === "string" ? {provider: it} : it, arch)) as Promise<Array<PublishConfiguration>>)
 }
 
-function isSuitableWindowsTarget(target: Target) {
+function isSuitableWindowsTarget(target: Target, event: ArtifactCreated | null) {
+  if (event != null && !event.isWriteUpdateInfo) {
+    return false
+  }
+
+  if (target.name === "appx" && target.options != null && (target.options as any).electronUpdaterAware) {
+    return true
+  }
   return target.name === "nsis" || target.name.startsWith("nsis-")
 }
 

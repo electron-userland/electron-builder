@@ -81,7 +81,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
-  private readonly untilAppReady: Promise<boolean>
+  private readonly untilAppReady: Promise<any>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null
 
   protected readonly app: Electron.App

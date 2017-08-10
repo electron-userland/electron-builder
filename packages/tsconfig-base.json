@@ -1,7 +1,6 @@
 {
   "extends": "../node_modules/ts-babel/tsconfig-base.json",
   "compilerOptions": {
-    "skipLibCheck": true,
     "moduleResolution": "Node",
     "baseUrl": ".",
     "stripInternal": true

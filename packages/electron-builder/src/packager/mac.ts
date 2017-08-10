@@ -141,7 +141,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     appPlist.AsarIntegrity = JSON.stringify(asarIntegrity)
   }
 
-  const promises: Array<Promise<any | n>> = [
+  const promises: Array<Promise<any | null | undefined>> = [
     writeFile(appPlistFilename, buildPlist(appPlist)),
     writeFile(helperPlistFilename, buildPlist(helperPlist)),
     writeFile(helperEHPlistFilename, buildPlist(helperEHPlist)),

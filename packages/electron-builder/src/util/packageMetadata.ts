@@ -38,7 +38,7 @@ export function checkMetadata(metadata: Metadata, devMetadata: any | null, appPa
     errors.push(`Please specify '${missedFieldName}' in the package.json (${appPackageFile})`)
   }
 
-  const checkNotEmpty = (name: string, value: string | n) => {
+  const checkNotEmpty = (name: string, value: string | null | undefined) => {
     if (isEmptyOrSpaces(value)) {
       reportError(name)
     }

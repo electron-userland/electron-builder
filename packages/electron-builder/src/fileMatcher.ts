@@ -23,7 +23,7 @@ export class FileMatcher {
 
   readonly isSpecifiedAsEmptyArray: boolean
 
-  constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | n) {
+  constructor(from: string, to: string, private readonly macroExpander: (pattern: string) => string, patterns?: Array<string> | string | null | undefined) {
     this.from = macroExpander(from)
     this.to = macroExpander(to)
     this.patterns = asArray(patterns).map(it => this.normalizePattern(it))
@@ -171,8 +171,8 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
 
 /** @internal */
 export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
-  const globalPatterns: Array<string | FilePattern> | string | n | FilePattern = (config as any)[name]
-  const platformSpecificPatterns: Array<string | FilePattern> | string | n = (customBuildOptions as any)[name]
+  const globalPatterns: Array<string | FilePattern> | string | null | undefined | FilePattern = (config as any)[name]
+  const platformSpecificPatterns: Array<string | FilePattern> | string | null | undefined = (customBuildOptions as any)[name]
 
   const defaultMatcher = new FileMatcher(defaultSrc, defaultDestination, macroExpander)
   const fileMatchers: Array<FileMatcher> = []

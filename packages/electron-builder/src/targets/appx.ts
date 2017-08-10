@@ -69,8 +69,9 @@ export default class AppXTarget extends Target {
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
     taskManager.addTask(BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
       if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
+        return copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
       }
+      return null
     }))
     taskManager.addTask(this.writeManifest(path.join(__dirname, "..", "..", "templates", "appx"), preAppx, arch, publisher!, userAssets))
     taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
@@ -94,7 +95,14 @@ export default class AppXTarget extends Target {
     await spawn(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe"), makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
     await packager.sign(destination)
 
-    packager.dispatchArtifactCreated(destination, this, arch, packager.computeSafeArtifactName("appx"))
+    packager.info.dispatchArtifactCreated({
+      file: destination,
+      packager,
+      arch,
+      safeArtifactName: packager.computeSafeArtifactName("appx"),
+      target: this,
+      isWriteUpdateInfo: this.options.electronUpdaterAware,
+    })
   }
 
   private async writeManifest(templatePath: string, preAppx: string, arch: Arch, publisher: string, userAssets: Array<string>) {

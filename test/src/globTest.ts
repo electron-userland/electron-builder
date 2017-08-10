@@ -4,7 +4,7 @@ import { readAsar } from "electron-builder/out/asar"
 import { mkdirs, outputFile, symlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, assertPack, getTempFile, modifyPackageJson, PackedContext } from "./helpers/packTester"
+import { app, assertPack, modifyPackageJson, PackedContext } from "./helpers/packTester"
 
 async function createFiles(appDir: string) {
   await BluebirdPromise.all([
@@ -64,8 +64,8 @@ test.ifNotWindows("link", app({
 test.ifNotWindows("outside link", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
-  projectDirCreated: async projectDir => {
-    const tempDir = getTempFile()
+  projectDirCreated: async (projectDir, tmpDir) => {
+    const tempDir = await tmpDir.getTempDir("link")
     await outputFile(path.join(tempDir, "foo"), "data")
     await symlink(tempDir, path.join(projectDir, "o-dir"))
   },

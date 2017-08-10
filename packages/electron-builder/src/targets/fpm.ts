@@ -46,7 +46,7 @@ export default class FpmTarget extends Target {
       executable: packager.executableName,
       productFilename: packager.appInfo.productFilename, ...packager.platformSpecificBuildOptions}
 
-    function getResource(value: string | n, defaultFile: string) {
+    function getResource(value: string | null | undefined, defaultFile: string) {
       if (value == null) {
         return path.join(defaultTemplatesDir, defaultFile)
       }

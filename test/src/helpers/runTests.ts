@@ -1,14 +1,19 @@
 import BluebirdPromise from "bluebird-lst"
+import { createHash } from "crypto"
 import { emptyDir, readdir, readJson, remove, unlink } from "fs-extra-p"
 import isCi from "is-ci"
+import { tmpdir } from "os"
 import * as path from "path"
-import { ELECTRON_VERSION, TEST_DIR } from "./testConfig"
+import { ELECTRON_VERSION } from "./testConfig"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/util' path here
 const util = require("../../../packages/electron-builder-util/out/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
+
+const baseDir = process.env.ELECTRON_BUILDER_TEST_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
+const TEST_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
 
 runTests()
   .catch(error => {

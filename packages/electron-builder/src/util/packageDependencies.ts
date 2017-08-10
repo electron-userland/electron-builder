@@ -6,7 +6,6 @@ import { lstat, readdir, readFile, realpath, Stats } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 
-/** @internal */
 export interface Dependency {
   name: string
   version: string

@@ -223,7 +223,14 @@ export class NsisTarget extends Target {
     await this.executeMakensis(defines, commands, await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
-    packager.dispatchArtifactCreated(installerPath, this, this.archs.size === 1 ? this.archs.keys().next().value : null, this.generateGitHubInstallerName())
+    packager.info.dispatchArtifactCreated({
+      file: installerPath,
+      target: this,
+      packager,
+      arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
+      safeArtifactName: this.generateGitHubInstallerName(),
+      isWriteUpdateInfo: true,
+    })
   }
 
   protected generateGitHubInstallerName() {

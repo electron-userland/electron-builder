@@ -12,7 +12,7 @@
   ],
   "dependencies": {
     "electron-builder-util": "~0.0.0-semantic-release",
-    "bluebird-lst": "^1.0.2",
+    "bluebird-lst": "^1.0.3",
     "fs-extra-p": "^4.4.0",
     "archiver": "^2.0.0",
     "sanitize-filename": "^1.6.1"

@@ -36,4 +36,6 @@ export interface ArtifactCreated {
   readonly safeArtifactName?: string
 
   readonly publishConfig?: PublishConfiguration
+
+  readonly isWriteUpdateInfo?: boolean
 }

@@ -7,10 +7,11 @@ import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-
 import { getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import { executeFinally } from "electron-builder-util/out/promise"
+import { TmpDir } from "electron-builder-util/out/tmp"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, mkdir, readFile, readJson, remove, writeJson } from "fs-extra-p"
+import { emptyDir, mkdir, readFile, readJson, writeJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
@@ -18,7 +19,6 @@ import { parse as parsePlist } from "plist"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
-import { TEST_DIR } from "./testConfig"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -27,7 +27,7 @@ if (process.env.TRAVIS !== "true") {
 const OUT_DIR_NAME = "dist"
 
 interface AssertPackOptions {
-  readonly projectDirCreated?: (projectDir: string) => Promise<any>
+  readonly projectDirCreated?: (projectDir: string, tmpDir: TmpDir) => Promise<any>
   readonly packed?: (context: PackedContext) => Promise<any>
   readonly expectedArtifacts?: Array<string>
 
@@ -52,9 +52,6 @@ export interface PackedContext {
   readonly packager: Packager
 }
 
-let tmpDirCounter = 0
-const testDir = path.join(TEST_DIR, process.pid.toString(16))
-
 export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
   return () => assertThat(assertPack("test-app-one", packagerOptions, checkOptions)).throws()
 }
@@ -69,10 +66,6 @@ export function app(packagerOptions: PackagerOptions, checkOptions: AssertPackOp
 
 export function appTwo(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
   return () => assertPack("test-app", packagerOptions, checkOptions)
-}
-
-export function getTempFile() {
-  return path.join(testDir, `${(tmpDirCounter++).toString(16)}`)
 }
 
 export async function assertPack(fixtureName: string, packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}): Promise<void> {
@@ -91,13 +84,10 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   let projectDir = path.join(__dirname, "..", "..", "fixtures", fixtureName)
   // const isDoNotUseTempDir = platform === "darwin"
   const customTmpDir = process.env.TEST_APP_TMP_DIR
-  let dirToDelete: string | null = null
+  const tmpDir = new TmpDir()
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? getTempFile() : path.resolve(customTmpDir)
-  if (customTmpDir == null) {
-    dirToDelete = dir
-  }
-  else {
+  const dir = customTmpDir == null ? await tmpDir.getTempDir(fixtureName) : path.resolve(customTmpDir)
+  if (customTmpDir != null) {
     log(`Custom temp dir used: ${customTmpDir}`)
   }
   await emptyDir(dir)
@@ -109,7 +99,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
 
   await executeFinally((async () => {
     if (projectDirCreated != null) {
-      await projectDirCreated(projectDir)
+      await projectDirCreated(projectDir, tmpDir)
       if (checkOptions.installDepsBefore) {
         // bin links required (e.g. for node-pre-gyp - if package refers to it in the install script)
         await spawn(process.platform === "win32" ? "yarn.cmd" : "yarn", ["install", "--production", "--no-lockfile"], {
@@ -133,16 +123,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         packager,
       })
     }
-  })(), async () => {
-    if (dirToDelete != null) {
-      try {
-        await remove(dirToDelete)
-      }
-      catch (e) {
-        console.warn(`Cannot delete temporary directory ${dirToDelete}: ${(e.stack || e)}`)
-      }
-    }
-  })
+  })(), () => tmpDir.cleanup())
 }
 
 const fileCopier = new FileCopier()
@@ -207,6 +188,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         result.arch = Arch[result.arch]
       }
 
+      delete result.isWriteUpdateInfo
       delete result.packager
       delete result.target
       delete result.publishConfig

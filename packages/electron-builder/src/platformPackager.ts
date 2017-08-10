@@ -58,7 +58,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return appInfo
   }
 
-  private static normalizePlatformSpecificBuildOptions(options: any | n): any {
+  private static normalizePlatformSpecificBuildOptions(options: any | null | undefined): any {
     return options == null ? Object.create(null) : options
   }
 
@@ -355,7 +355,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
-  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | n, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
+  expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}-${arch}.${ext}"
@@ -476,7 +476,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.generateName2(e, c, deployment)
   }
 
-  generateName2(ext: string | null, classifier: string | n, deployment: boolean): string {
+  generateName2(ext: string | null, classifier: string | null | undefined, deployment: boolean): string {
     const dotExt = ext == null ? "" : `.${ext}`
     const separator = ext === "deb" ? "_" : "-"
     return `${deployment ? this.appInfo.name : this.appInfo.productFilename}${separator}${this.appInfo.version}${classifier == null ? "" : `${separator}${classifier}`}${dotExt}`
@@ -506,7 +506,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return asArray(this.config.fileAssociations).concat(asArray(this.platformSpecificBuildOptions.fileAssociations))
   }
 
-  async getResource(custom: string | n, ...names: Array<string>): Promise<string | null> {
+  async getResource(custom: string | null | undefined, ...names: Array<string>): Promise<string | null> {
     if (custom === undefined) {
       const resourceList = await this.resourceList
       for (const name of names) {

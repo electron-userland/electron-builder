@@ -282,7 +282,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   //noinspection JSMethodCanBeStatic
-  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | n): Promise<any> {
+  protected async doFlat(appPath: string, outFile: string, identity: Identity, keychain: string | null | undefined): Promise<any> {
     // productbuild doesn't created directory for out file
     await ensureDir(path.dirname(outFile))
 

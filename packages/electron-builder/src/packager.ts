@@ -337,7 +337,7 @@ export class Packager {
     }
   }
 
-  afterPack(context: AfterPackContext): Promise<void> {
+  afterPack(context: AfterPackContext): Promise<any> {
     const afterPack = this.config.afterPack
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
@@ -348,8 +348,8 @@ export class Packager {
   }
 }
 
-export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | n): Array<Platform> {
-  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | n>) : [rawPlatforms]
+export function normalizePlatforms(rawPlatforms: Array<string | Platform> | string | Platform | null | undefined): Array<Platform> {
+  const platforms = rawPlatforms == null || Array.isArray(rawPlatforms) ? (rawPlatforms as Array<string | Platform | null | undefined>) : [rawPlatforms]
   if (platforms as any == null || platforms.length === 0) {
     return [Platform.fromString(process.platform)]
   }

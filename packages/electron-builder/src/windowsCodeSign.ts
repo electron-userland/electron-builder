@@ -8,13 +8,11 @@ import * as path from "path"
 import { WinBuildOptions } from "./options/winOptions"
 import { isUseSystemSigncode } from "./util/flags"
 
-/** @internal */
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
   return getBinFromGithub("winCodeSign", "1.9.0", "cyhO9Mv5MTP2o9dwk/+qs0KvuO9CbDhjEJXA2ujpvhcsk5zmc+zY9iqiWXVzOuibTLYNC3qZiuFlJrrCT2kldw==")
 }
 
-/** @internal */
 export interface FileCodeSigningInfo {
   readonly file?: string | null
   readonly password?: string | null
@@ -35,7 +33,6 @@ export interface SignOptions {
   readonly options: WinBuildOptions
 }
 
-/** @internal */
 export async function sign(options: SignOptions) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
