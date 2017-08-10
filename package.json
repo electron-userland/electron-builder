@@ -57,7 +57,7 @@
     "normalize-package-data": "^2.4.0",
     "parse-color": "^1.0.0",
     "plist": "^2.1.0",
-    "read-config-file": "^1.0.4",
+    "read-config-file": "^1.0.5",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.4.1",
     "source-map-support": "^0.4.15",

@@ -4,7 +4,7 @@ import { statOrNull } from "electron-builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist } from "read-config-file"
+import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest } from "read-config-file"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Config } from "../metadata"
 import { reactCra } from "../presets/rectCra"
@@ -14,7 +14,7 @@ import TypeParams = ajv.TypeParams
 
 /** @internal */
 export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Config | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Config> {
-  const configRequest = {key: "build", projectDir, packageMetadata, log}
+  const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata, log}
   const config = await _getConfig<Config>(configRequest, configPath, configFromOptions)
 
   let extendsSpec = config.extends

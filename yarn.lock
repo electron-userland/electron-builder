@@ -2201,7 +2201,7 @@ lazy-cache@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-1.0.4.tgz#a1d78fc3a50474cb80845d3b3b6e1da49a446e8e"
 
-lazy-val@^1.0.1, lazy-val@^1.0.2:
+lazy-val@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/lazy-val/-/lazy-val-1.0.2.tgz#d9b07fb1fce54cbc99b3c611de431b83249369b6"
 
@@ -2785,15 +2785,15 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.2.1:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-read-config-file@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/read-config-file/-/read-config-file-1.0.4.tgz#e9f00bb02551581019a2c2a54da9a1d58f33c697"
+read-config-file@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/read-config-file/-/read-config-file-1.0.5.tgz#9992d2a4d24a993518e7eb6f3c30c0562264c367"
   dependencies:
-    bluebird-lst "^1.0.2"
+    bluebird-lst "^1.0.3"
     fs-extra-p "^4.4.0"
     js-yaml "^3.9.1"
     json5 "^0.5.1"
-    lazy-val "^1.0.1"
+    lazy-val "^1.0.2"
 
 read-pkg-up@^1.0.1:
   version "1.0.1"
