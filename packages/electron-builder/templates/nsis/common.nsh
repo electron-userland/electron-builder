@@ -38,29 +38,30 @@ Name "${PRODUCT_NAME}"
 !macroend
 
 !macro setLinkVars
-  StrCpy $desktopLink "$DESKTOP\${PRODUCT_FILENAME}.lnk"
+  # old desktop shortcut (could exist or not since the user might has selected to delete it)
+  ReadRegStr $oldShortcutName SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" ShortcutName
+  ${if} $oldShortcutName == ""
+    StrCpy $oldShortcutName "${PRODUCT_FILENAME}"
+  ${endIf}
+  StrCpy $oldDesktopLink "$DESKTOP\$oldShortcutName.lnk"
+
+  # new desktop shortcut (will be created/renamed in case of a fresh installation or if the user haven't deleted the initial one)
+  StrCpy $newDesktopLink "$DESKTOP\${SHORTCUT_NAME}.lnk"
+
+  ReadRegStr $oldMenuDirectory SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory
+  ${if} $oldMenuDirectory == ""
+    StrCpy $oldStartMenuLink "$SMPROGRAMS\$oldShortcutName.lnk"
+  ${else}
+    StrCpy $oldStartMenuLink "$SMPROGRAMS\$oldMenuDirectory\$oldShortcutName.lnk"
+  ${endIf}
+
+  # new menu shortcut (will be created/renamed in case of a fresh installation or if the user haven't deleted the initial one)
   !ifdef MENU_FILENAME
-    StrCpy $startMenuLink "$SMPROGRAMS\${MENU_FILENAME}\${PRODUCT_FILENAME}.lnk"
+    StrCpy $newStartMenuLink "$SMPROGRAMS\${MENU_FILENAME}\${SHORTCUT_NAME}.lnk"
   !else
-    StrCpy $startMenuLink "$SMPROGRAMS\${PRODUCT_FILENAME}.lnk"
+    StrCpy $newStartMenuLink "$SMPROGRAMS\${SHORTCUT_NAME}.lnk"
   !endif
 !macroend
-
-!macro _Updated _a _b _t _f
-  ClearErrors
-  ${GetParameters} $R9
-  ${GetOptions} $R9 "--updated" $R8
-  IfErrors `${_f}` `${_t}`
-!macroend
-!define Updated `"" Updated ""`
-
-!macro _ForceRun _a _b _t _f
-  ClearErrors
-  ${GetParameters} $R9
-  ${GetOptions} $R9 "--force-run" $R8
-  IfErrors `${_f}` `${_t}`
-!macroend
-!define ForceRun `"" ForceRun ""`
 
 !macro extractEmbeddedAppPackage
   !ifdef COMPRESS

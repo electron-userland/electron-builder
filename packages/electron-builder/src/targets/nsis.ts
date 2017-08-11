@@ -355,6 +355,8 @@ export class NsisTarget extends Target {
       }
     }
 
+    defines.SHORTCUT_NAME = isEmptyOrSpaces(options.shortcutName) ? defines.PRODUCT_FILENAME : packager.expandMacro(options.shortcutName!!)
+
     if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled : options.multiLanguageInstaller) {
       defines.MULTI_LANGUAGE_INSTALLER = null
     }
@@ -453,6 +455,18 @@ export class NsisTarget extends Target {
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     const packager = this.packager
     let scriptHeader = `!addincludedir "${path.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
+
+    for (const flag of [["--updated", "Updated"], ["--force-run", "ForceRun"], ["--keep-shortcuts", "KeepShortcuts"], ["--no-desktop-shortcut", "isNoDesktopShortcut"], ["--delete-app-data", "isDeleteAppData"]]) {
+      scriptHeader += `
+!macro _${flag[1]} _a _b _t _f
+ClearErrors
+$\{GetParameters} $R9
+$\{GetOptions} $R9 "${flag[0]}" $R8
+IfErrors \`$\{_f}\` \`$\{_t}\`
+!macroend
+!define ${flag[1]} \`"" ${flag[1]} ""\`
+`
+    }
 
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 

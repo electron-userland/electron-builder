@@ -168,6 +168,11 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * @default false
    */
   readonly differentialPackage?: boolean
+
+  /**
+   * The name that will be used for all shortcuts. Defaults to the application name.
+   */
+  readonly shortcutName?: string | null
 }
 
 /**
