@@ -8,9 +8,9 @@
 !ifndef BUILD_UNINSTALLER
   Function StartApp
     ${if} ${Updated}
-      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" "--updated"
+      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "--updated"
     ${else}
-      ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" ""
+      ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" ""
     ${endif}
   FunctionEnd
 

@@ -10,9 +10,9 @@
       ${endif}
 
       !ifdef INSTALL_MODE_PER_ALL_USERS
-        ${StdUtils.ExecShellAsUser} $0 "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "open" "$startAppArgs"
+        ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "$startAppArgs"
       !else
-        ExecShell "" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "$startAppArgs"
+        ExecShell "" "$launchLink" "$startAppArgs"
       !endif
     !macroend
   !endif

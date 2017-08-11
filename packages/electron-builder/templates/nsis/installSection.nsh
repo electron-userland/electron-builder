@@ -230,6 +230,12 @@ ${else}
   !insertmacro cleanupOldMenuDirectory
 ${endif}
 
+${If} ${FileExists} "$newStartMenuLink"
+  StrCpy $launchLink "$newStartMenuLink"
+${Else}
+  StrCpy $launchLink "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+${EndIf}
+
 !ifmacrodef registerFileAssociations
   !insertmacro registerFileAssociations
 !endif

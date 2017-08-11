@@ -18,6 +18,13 @@ Var oldDesktopLink
   RequestExecutionLevel user
 !endif
 
+!ifdef BUILD_UNINSTALLER
+  SilentInstall silent
+!else
+  Var appExe
+  Var launchLink
+!endif
+
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else
@@ -26,12 +33,6 @@ Var oldDesktopLink
 
 !ifmacrodef customHeader
   !insertmacro customHeader
-!endif
-
-!ifdef BUILD_UNINSTALLER
-  SilentInstall silent
-!else
-  Var appExe
 !endif
 
 Function .onInit
