@@ -30,7 +30,7 @@ Var oldMenuDirectory
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else
-  !include "boringInstaller.nsh"
+  !include "assistedInstaller.nsh"
 !endif
 
 !ifmacrodef customHeader

@@ -1,57 +1,5 @@
 !include installer.nsh
 
-# http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
-!macro uninstallOldVersion ROOT_KEY
-  ReadRegStr $R0 ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}" UninstallString
-  ${if} $R0 != ""
-    Push $R0
-    Call GetInQuotes
-    Pop $R1
-    ${if} $R1 != ""
-      StrCpy $R0 "$R1"
-    ${endif}
-
-    ReadRegStr $R1 ${ROOT_KEY} "${INSTALL_REGISTRY_KEY}" InstallLocation
-    ${if} $R1 == ""
-    ${andIf} $R0 != ""
-      # https://github.com/electron-userland/electron-builder/issues/735#issuecomment-246918567
-      Push $R0
-      Call GetFileParent
-      Pop $R1
-    ${endif}
-
-    ${if} $R1 != ""
-    ${andIf} $R0 != ""
-      CopyFiles /SILENT /FILESONLY "$R0" "$PLUGINSDIR\old-uninstaller.exe"
-
-      ${if} $installMode == "CurrentUser"
-      ${orIf} ${ROOT_KEY} == "HKEY_CURRENT_USER"
-        StrCpy $0 "/currentuser"
-      ${else}
-        StrCpy $0 "/allusers"
-      ${endif}
-
-      !ifndef allowToChangeInstallationDirectory
-        ReadRegStr $R5 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
-        # if true, it means that old uninstaller supports --keep-shortcuts flag
-        ${if} $R5 == "true"
-        ${andIf} ${FileExists} "$appExe"
-          StrCpy $0 "$0 --keep-shortcuts"
-        ${endIf}
-      !endif
-
-      ${if} ${isDeleteAppData}
-        StrCpy $0 "$0 --delete-app-data"
-      ${else}
-        # always pass --updated flag - to ensure that if DELETE_APP_DATA_ON_UNINSTALL is defined, user data will be not removed
-        StrCpy $0 "$0 --updated"
-      ${endif}
-
-      ExecWait '"$PLUGINSDIR\old-uninstaller.exe" /S /KEEP_APP_DATA $0 _?=$R1'
-    ${endif}
-  ${endif}
-!macroend
-
 InitPluginsDir
 
 ${IfNot} ${Silent}
@@ -99,23 +47,7 @@ SetOutPath $INSTDIR
 !insertmacro installApplicationFiles
 !insertmacro registryAddInstallInfo
 !insertmacro addStartMenuLink
-
-!ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
-  # https://github.com/electron-userland/electron-builder/pull/1432
-  ${ifNot} ${isNoDesktopShortcut}
-    ${if} $oldDesktopLink != $newDesktopLink
-    ${andIf} ${FileExists} "$oldDesktopLink"
-      Rename $oldDesktopLink $newDesktopLink
-      WinShell::UninstShortcut "$oldDesktopLink"
-    ${else}
-      CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-      ClearErrors
-    ${endIf}
-
-    WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
-    System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
-  ${endIf}
-!endif
+!insertmacro addDesktopLink
 
 ${if} ${FileExists} "$newStartMenuLink"
   StrCpy $launchLink "$newStartMenuLink"
