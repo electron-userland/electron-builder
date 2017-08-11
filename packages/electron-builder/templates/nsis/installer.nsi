@@ -1,5 +1,7 @@
-Var startMenuLink
-Var desktopLink
+Var newStartMenuLink
+Var oldStartMenuLink
+Var newDesktopLink
+Var oldDesktopLink
 
 !include "common.nsh"
 !include "MUI2.nsh"
@@ -16,6 +18,13 @@ Var desktopLink
   RequestExecutionLevel user
 !endif
 
+!ifdef BUILD_UNINSTALLER
+  SilentInstall silent
+!else
+  Var appExe
+  Var launchLink
+!endif
+
 !ifdef ONE_CLICK
   !include "oneClick.nsh"
 !else
@@ -24,12 +33,6 @@ Var desktopLink
 
 !ifmacrodef customHeader
   !insertmacro customHeader
-!endif
-
-!ifdef BUILD_UNINSTALLER
-  SilentInstall silent
-!else
-  Var appExe
 !endif
 
 Function .onInit

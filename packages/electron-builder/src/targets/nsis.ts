@@ -355,6 +355,8 @@ export class NsisTarget extends Target {
       }
     }
 
+    defines.SHORTCUT_NAME = isEmptyOrSpaces(options.shortcutName) ? defines.PRODUCT_FILENAME : options.shortcutName!!
+
     if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled : options.multiLanguageInstaller) {
       defines.MULTI_LANGUAGE_INSTALLER = null
     }

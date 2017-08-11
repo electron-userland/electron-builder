@@ -29,6 +29,10 @@
         StrCpy $0 "/allusers"
       ${endif}
 
+      !ifdef DO_NOT_CREATE_DESKTOP_SHORTCUT
+        StrCpy $0 "$0 --no-desktop-shortcut"
+      !endif
+
       ClearErrors
       ${GetParameters} $R0
       ${GetOptions} $R0 "--delete-app-data" $R2
@@ -47,6 +51,10 @@
 !macro registryAddInstallInfo
 	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" InstallLocation "$INSTDIR"
 	WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts "true"
+  WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" ShortcutName "${SHORTCUT_NAME}"
+  !ifdef MENU_FILENAME
+    WriteRegStr SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" MenuDirectory "${MENU_FILENAME}"
+  !endif
 
 	${if} $installMode == "all"
 		StrCpy $0 "/allusers"
@@ -87,19 +95,17 @@ ${endif}
 
 StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 Var /GLOBAL shortcuts
-!ifdef DO_NOT_CREATE_DESKTOP_SHORTCUT
-  StrCpy $shortcuts "--keep-shortcuts"
-!else
-  StrCpy $shortcuts ""
-  !ifndef allowToChangeInstallationDirectory
-    ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
+StrCpy $shortcuts ""
+!ifndef allowToChangeInstallationDirectory
+  ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
 
-    ${if} $R1 == "true"
-    ${andIf} ${FileExists} "$appExe"
-      StrCpy $shortcuts "--keep-shortcuts"
-    ${endIf}
-  !endif
+  ${if} $R1 == "true"
+  ${andIf} ${FileExists} "$appExe"
+    StrCpy $shortcuts "--keep-shortcuts"
+  ${endIf}
 !endif
+
+!insertmacro setLinkVars
 
 !ifdef ONE_CLICK
   !ifdef HEADER_ICO
@@ -186,26 +192,49 @@ SetOutPath $INSTDIR
 File "/oname=${UNINSTALL_FILENAME}" "${UNINSTALLER_OUT_FILE}"
 
 !insertmacro registryAddInstallInfo
-!insertmacro setLinkVars
-
-!ifdef MENU_FILENAME
-  CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
-!endif
 
 ${if} $shortcuts == ""
+  !insertmacro createMenuDirectory
+
   # create shortcuts in the start menu and on the desktop
   # shortcut for uninstall is bad cause user can choose this by mistake during search, so, we don't add it
-  CreateShortCut "$startMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-  WinShell::SetLnkAUMI "$startMenuLink" "${APP_ID}"
+  CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+  WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
 
-  ClearErrors
-  ${GetParameters} $R0
-  ${GetOptions} $R0 "--no-desktop-shortcut" $R1
-  ${If} ${Errors}
-    CreateShortCut "$desktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-    WinShell::SetLnkAUMI "$desktopLink" "${APP_ID}"
-  ${endIf}
+  !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
+    CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+    WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+  !endif
+${else}
+  # Start menu shortcut
+  ${if} ${FileExists} "$oldStartMenuLink"
+  ${andIf} $oldStartMenuLink != $newStartMenuLink
+    !insertmacro createMenuDirectory
+
+    Rename $oldStartMenuLink $newStartMenuLink
+    WinShell::UninstShortcut "$oldStartMenuLink"
+    WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+  ${endif}
+
+  # Desktop shortcut
+  !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
+    ${if} ${FileExists} "$oldDesktopLink"
+    ${andIf} $oldDesktopLink != $newDesktopLink
+      Rename $oldDesktopLink $newDesktopLink
+      WinShell::UninstShortcut "$oldDesktopLink"
+      WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+      System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
+    ${endif}
+  !endif
+
+  !insertmacro cleanupOldMenuDirectory
 ${endif}
+
+${If} ${FileExists} "$newStartMenuLink"
+  StrCpy $launchLink "$newStartMenuLink"
+${Else}
+  StrCpy $launchLink "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+${EndIf}
 
 !ifmacrodef registerFileAssociations
   !insertmacro registerFileAssociations
