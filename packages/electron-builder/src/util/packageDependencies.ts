@@ -30,7 +30,6 @@ const knownAlwaysIgnoredDevDeps = new Set([
   "electron-builder-tslint-config", "electron-download",
   "electron-forge", "electron-packager", "electron-compilers",
   "jest", "jest-cli", "prebuild-install", "nan",
-  "asar-integrity", "asar",
   "electron-webpack", "electron-webpack-ts", "electron-webpack-vue",
   "react-scripts",
 ])
