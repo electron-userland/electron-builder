@@ -377,7 +377,7 @@ To see changes for current major release, please use [GiHub releases](https://gi
 * **nsis:** Slovak(sk) translation ([09495f9](https://github.com/electron-userland/electron-builder/commit/09495f9))
 * do not override HOME env on reinstall deps, use devdir for nodegyp ([ae0f668](https://github.com/electron-userland/electron-builder/commit/ae0f668))
 * use base64 to encode sha512 checksum in the update info ([4451107](https://github.com/electron-userland/electron-builder/commit/4451107))
-* **nsis:** Slovak(sk) translation for boring installer ([63f019f](https://github.com/electron-userland/electron-builder/commit/63f019f)), closes [#1617](https://github.com/electron-userland/electron-builder/issues/1617)
+* **nsis:** Slovak(sk) translation for assisted installer ([63f019f](https://github.com/electron-userland/electron-builder/commit/63f019f)), closes [#1617](https://github.com/electron-userland/electron-builder/issues/1617)
 
 
 
@@ -2590,7 +2590,7 @@ Auto-update — please see https://github.com/electron-userland/electron-builder
 
 ### Bug Fixes
 
-* **nsis:** machine-wide boring NSIS installer launches application as administrator ([7ea3d62](https://github.com/electron-userland/electron-builder/commit/7ea3d62)), closes [#864](https://github.com/electron-userland/electron-builder/issues/864)
+* **nsis:** machine-wide assisted NSIS installer launches application as administrator ([7ea3d62](https://github.com/electron-userland/electron-builder/commit/7ea3d62)), closes [#864](https://github.com/electron-userland/electron-builder/issues/864)
 
 
 
@@ -2620,7 +2620,7 @@ Auto-update — please see https://github.com/electron-userland/electron-builder
 
 ### Features
 
-* **nsis:** boring installer — respect /allusers ([4536e91](https://github.com/electron-userland/electron-builder/commit/4536e91)), closes [#845](https://github.com/electron-userland/electron-builder/issues/845)
+* **nsis:** assisted installer — respect /allusers ([4536e91](https://github.com/electron-userland/electron-builder/commit/4536e91)), closes [#845](https://github.com/electron-userland/electron-builder/issues/845)
 
 
 
@@ -3223,7 +3223,7 @@ Auto-update — please see https://github.com/electron-userland/electron-builder
 
 ### Features
 
-* **nsis:** boring per-machine only installer ([a4eeade](https://github.com/electron-userland/electron-builder/commit/a4eeade))
+* **nsis:** assisted per-machine only installer ([a4eeade](https://github.com/electron-userland/electron-builder/commit/a4eeade))
 
 
 
@@ -3713,7 +3713,7 @@ Auto-update — please see https://github.com/electron-userland/electron-builder
 
 ### Bug Fixes
 
-* **nsis:** per machine boring installer ([1bd32a7](https://github.com/electron-userland/electron-builder/commit/1bd32a7)), closes [#564](https://github.com/electron-userland/electron-builder/issues/564)
+* **nsis:** per machine assisted installer ([1bd32a7](https://github.com/electron-userland/electron-builder/commit/1bd32a7)), closes [#564](https://github.com/electron-userland/electron-builder/issues/564)
 
 
 

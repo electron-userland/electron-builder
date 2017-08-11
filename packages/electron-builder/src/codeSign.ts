@@ -1,12 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, getTempName, isEmptyOrSpaces, TmpDir } from "electron-builder-util"
+import { exec, getCacheDirectory, isEmptyOrSpaces, TmpDir } from "electron-builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { outputFile, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
+import { getTempName } from "temp-file"
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
 
 export const appleCertificatePrefixes = ["Developer ID Application:", "Developer ID Installer:", "3rd Party Mac Developer Application:", "3rd Party Mac Developer Installer:"]

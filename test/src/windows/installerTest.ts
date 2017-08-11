@@ -7,7 +7,7 @@ import { checkHelpers, doTest, expectUpdateMetadata } from "../helpers/winHelper
 
 const nsisTarget = Platform.WINDOWS.createTarget(["nsis"])
 
-test.ifNotCiMac("boring", app({
+test.ifNotCiMac("assisted", app({
   targets: nsisTarget,
   config: {
     nsis: {
@@ -25,7 +25,26 @@ test.ifNotCiMac("boring", app({
   },
 }))
 
-test.ifNotCiMac("boring, MUI_HEADER", () => {
+test.ifAll.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin", app({
+  targets: nsisTarget,
+  config: {
+    extraMetadata: {
+      // mt.exe doesn't like unicode names from wine
+      name: "test",
+      productName: "test"
+    },
+    win: {
+      requestedExecutionLevel: "requireAdministrator",
+    },
+    nsis: {
+      oneClick: false,
+      allowElevation: false,
+      perMachine: true,
+    },
+  }
+}))
+
+test.ifNotCiMac("assisted, MUI_HEADER", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
       targets: nsisTarget,
@@ -51,7 +70,7 @@ test.ifNotCiMac("boring, MUI_HEADER", () => {
   )
 })
 
-test.ifAll.ifNotCiMac("boring, MUI_HEADER as option", () => {
+test.ifAll.ifNotCiMac("assisted, MUI_HEADER as option", () => {
   let installerHeaderPath: string | null = null
   return assertPack("test-app-one", {
       targets: Platform.WINDOWS.createTarget(["nsis"], Arch.ia32, Arch.x64),
@@ -78,7 +97,7 @@ test.ifAll.ifNotCiMac("boring, MUI_HEADER as option", () => {
   )
 })
 
-test.ifNotCiMac("boring, only perMachine", app({
+test.ifNotCiMac("assisted, only perMachine", app({
   targets: nsisTarget,
   config: {
     nsis: {

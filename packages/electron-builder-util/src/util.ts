@@ -7,7 +7,7 @@ import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 
-export { TmpDir } from "./tmp"
+export { TmpDir } from "temp-file"
 export { log, warn, task, subTask } from "./log"
 export { isMacOsSierra } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
@@ -42,7 +42,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
     if (options != null && options.env != null) {
       const diffEnv = {...options.env}
       for (const name of Object.keys(process.env)) {
-        if (process.env[name] !== "") {
+        if (process.env[name] === options.env[name]) {
           delete diffEnv[name]
         }
       }
@@ -170,14 +170,6 @@ export function debug7zArgs(command: "a" | "x"): Array<string> {
     args.push("-bb0")
   }
   return args
-}
-
-export let tmpDirCounter = 0
-// add date to avoid use stale temp dir
-const tempDirPrefix = `${process.pid.toString(16)}-${Date.now().toString(16)}`
-
-export function getTempName(prefix?: string | null | undefined): string {
-  return `${prefix == null ? "" : `${prefix}-`}${tempDirPrefix}-${(tmpDirCounter++).toString(16)}`
 }
 
 export function isEmptyOrSpaces(s: string | null | undefined): s is "" | null | undefined {

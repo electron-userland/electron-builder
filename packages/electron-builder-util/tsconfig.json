@@ -13,8 +13,7 @@
     "../../typings/chalk.d.ts",
     "../../typings/debug.d.ts",
     "../../typings/node-emoji.d.ts",
-    "../../typings/fcopy-pre-bundled.d.ts",
-    "../../typings/async-exit-hook.d.ts"
+    "../../typings/fcopy-pre-bundled.d.ts"
   ],
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/util",

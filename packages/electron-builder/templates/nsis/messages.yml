@@ -1,4 +1,4 @@
-# one-click installer messages, see boringMessages.yml for boring installer messages
+# one-click installer messages, see assistedMessages.yml for assisted installer messages
 win7Required:
   de: Windows 7 oder höher wird vorausgesetzt
   it: È necessario disporre del sistema operativo Windows 7 e successivi
@@ -18,7 +18,7 @@ x64WinRequired:
   ja: 64 ビット バージョンの Windows が必要です
   ko: 64 비트 버전의 Windows가 필요합니다
   ru: Требуется Windows 64-bit
-  sk: Potrebujete 64-bit Windows 
+  sk: Potrebujete 64-bit Windows
   hu: 64-bit Windows szükséges
   pl: Windows 64-bitowy jest wymagany
 appRunning:

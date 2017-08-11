@@ -3,7 +3,6 @@ import { CancellationToken } from "electron-builder-http"
 import { debug } from "electron-builder-util"
 import { NestedError } from "electron-builder-util/out/promise"
 
-/** @private */
 export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []
   private readonly errors: Array<Error> = []

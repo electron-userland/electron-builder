@@ -4,10 +4,11 @@ import _debug from "debug"
 import { CancellationToken, DownloadOptions } from "electron-builder-http"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
+import { getTempName } from "temp-file"
 import { statOrNull } from "./fs"
 import { log, warn } from "./log"
 import { httpExecutor } from "./nodeHttpExecutor"
-import { debug7zArgs, getCacheDirectory, getTempName, spawn } from "./util"
+import { debug7zArgs, getCacheDirectory, spawn } from "./util"
 
 const debug = _debug("electron-builder:binDownload")
 

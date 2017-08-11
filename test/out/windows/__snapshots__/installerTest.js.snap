@@ -1,5 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`allowElevation false, app requestedExecutionLevel admin 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "arch": "x64",
+      "file": "test Setup 1.1.0.exe",
+      "safeArtifactName": "test-setup-1.1.0.exe",
+    },
+  ],
+}
+`;
+
 exports[`allowToChangeInstallationDirectory 1`] = `
 Object {
   "win": Array [
@@ -42,7 +54,7 @@ without features",
 }
 `;
 
-exports[`boring 1`] = `
+exports[`assisted 1`] = `
 Object {
   "win": Array [
     Object {
@@ -54,13 +66,13 @@ Object {
 }
 `;
 
-exports[`boring, MUI_HEADER 1`] = `
+exports[`assisted, MUI_HEADER 1`] = `
 Object {
   "win": Array [],
 }
 `;
 
-exports[`boring, MUI_HEADER as option 1`] = `
+exports[`assisted, MUI_HEADER as option 1`] = `
 Object {
   "win": Array [
     Object {
@@ -71,7 +83,7 @@ Object {
 }
 `;
 
-exports[`boring, only perMachine 1`] = `
+exports[`assisted, only perMachine 1`] = `
 Object {
   "win": Array [
     Object {

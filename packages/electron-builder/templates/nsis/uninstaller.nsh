@@ -21,7 +21,7 @@ FunctionEnd
 
 Section "un.install"
   !ifndef ONE_CLICK
-    # for boring installer we check it here to show progress
+    # for assisted installer we check it here to show progress
     !insertmacro CHECK_APP_RUNNING
   !endif
 

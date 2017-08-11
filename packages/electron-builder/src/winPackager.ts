@@ -10,7 +10,7 @@ import * as path from "path"
 import { downloadCertificate } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { AfterPackContext } from "./metadata"
-import { WinBuildOptions } from "./options/winOptions"
+import { RequestedExecutionLevel, WinBuildOptions } from "./options/winOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
@@ -256,7 +256,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     }
   }
 
-  async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null) {
+  async signAndEditResources(file: string, arch: Arch, outDir: string, internalName?: string | null, requestedExecutionLevel?: RequestedExecutionLevel | null) {
     const appInfo = this.appInfo
 
     const files: Array<string> = []
@@ -275,6 +275,10 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
         "--set-version-string", "InternalName", internalName,
         "--set-version-string", "OriginalFilename", "",
       )
+    }
+
+    if (requestedExecutionLevel != null && requestedExecutionLevel !== "asInvoker") {
+      args.push("--set-requested-execution-level", requestedExecutionLevel)
     }
 
     use(appInfo.companyName, it => args.push("--set-version-string", "CompanyName", it!))
@@ -329,7 +333,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
 
   protected signApp(packContext: AfterPackContext): Promise<any> {
     const exeFileName = `${this.appInfo.productFilename}.exe`
-    return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"))
+    return this.signAndEditResources(path.join(packContext.appOutDir, exeFileName), packContext.arch, packContext.outDir, path.basename(exeFileName, ".exe"), this.platformSpecificBuildOptions.requestedExecutionLevel)
   }
 }
 

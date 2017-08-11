@@ -1,4 +1,4 @@
-# boring installer messages, see messages.yml for one-click installer messages
+# assisted installer messages, see messages.yml for one-click installer messages
 chooseInstallationOptions:
   en: Choose Installation Options
   de: Installationsoption wählen
@@ -24,7 +24,7 @@ selectUserMode:
 whichInstallationRemove:
   en: This software is installed both per-machine (all users) and per-user.\nWhich installation you wish to remove?
   de: Die Anwendung wurde für alle Benutzer und pro Benutzer installiert.\nWelche Installation möchten Sie entfernen?
-  sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť? 
+  sk: Tento softvér je nainštalovaný pre Vás a súčasne pre všetkých uživateľov.\nKtorú inštaláciu si želáte odstraniť?
 freshInstallForAll:
   en: Fresh install for all users. (will prompt for admin credentials)
   de: Neuinstallation für alle Benutzer durchführen. (Administratorrechte benötigt)
@@ -32,7 +32,7 @@ freshInstallForAll:
   sk: Nová inštalácia pre všetkých uživateľov. (will prompt for admin credentials)
 freshInstallForCurrent:
   en: Fresh install for current user only.
-  de: Neuinstallation nur für den aktuellen Benutzer durchführen. 
+  de: Neuinstallation nur für den aktuellen Benutzer durchführen.
   ru: Новая установка только для текущего пользователя.
 onlyForMe:
   en: Only for &me
@@ -46,7 +46,7 @@ forAll:
   sk: Pre každého kto použiva tento počitač (všetci uživatelia)
 loginWithAdminAccount:
   en: You need to login with an account that is a member of the admin group to continue...
-  de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden... 
+  de: Um die Installation fortzusetzen müssen Sie sich mit einem Administrator-Account anmelden...
   sk: Pre pokračovanie sa musíte zalogovať s účtom ktorý patrí do skupiny adminstrátorov...
 perUserInstallExists:
   en: There is already a per-user installation.
@@ -59,10 +59,10 @@ perMachineInstallExists:
   de: Es existiert bereits eine Installation für diesen Computer.
 perMachineInstall:
   en: There is a per-machine installation.
-  de: Es existiert eine Installation für diesen Computer.  
+  de: Es existiert eine Installation für diesen Computer.
 reinstallUpgrade:
   en: Will reinstall/upgrade.
-  de: Die Anwendung wird aktualisiert.  
-uninstall: 
+  de: Die Anwendung wird aktualisiert.
+uninstall:
   en: Will uninstall.
   de: Die Anwendung wird deinstalliert.

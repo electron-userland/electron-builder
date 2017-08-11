@@ -1,7 +1,7 @@
 import * as path from "path"
-import { NsisOptions } from "../../options/winOptions"
 import { WinPackager } from "../../winPackager"
 import { bundledLanguages, getLicenseFiles, lcid } from "../license"
+import { NsisOptions } from "./nsisOptions"
 import { createMacro, nsisTemplatesDir } from "./nsisUtil"
 
 export async function  computeLicensePage(packager: WinPackager, options: NsisOptions): Promise<string | null> {

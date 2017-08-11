@@ -4,8 +4,9 @@ import { Arch } from "electron-builder-util"
 import { BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "./core"
 import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
-import { AppXOptions, NsisOptions, NsisWebOptions, PortableOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
+import { AppXOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
+import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
 /**
  * Some standard fields should be defined in the `package.json`.

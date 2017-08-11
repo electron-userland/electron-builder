@@ -9,7 +9,6 @@ import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../core"
-import { NsisOptions, PortableOptions } from "../options/winOptions"
 import { normalizeExt } from "../platformPackager"
 import { AsyncTaskManager } from "../util/asyncTaskManager"
 import { time } from "../util/timer"
@@ -17,6 +16,7 @@ import { WinPackager } from "../winPackager"
 import { addZipArgs, archive, ArchiveOptions } from "./archive"
 import { computeBlockMap } from "./blockMap"
 import { computeLicensePage } from "./nsis/nsisLicense"
+import { NsisOptions, PortableOptions } from "./nsis/nsisOptions"
 import { addCustomMessageFileInclude, AppPackageHelper, nsisTemplatesDir } from "./nsis/nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
@@ -333,7 +333,7 @@ export class NsisTarget extends Target {
 
     if (options.allowToChangeInstallationDirectory) {
       if (oneClick) {
-        throw new Error("allowToChangeInstallationDirectory makes sense only for boring installer (please set oneClick to false)")
+        throw new Error("allowToChangeInstallationDirectory makes sense only for assisted installer (please set oneClick to false)")
       }
       defines.allowToChangeInstallationDirectory = null
     }
@@ -474,7 +474,7 @@ export class NsisTarget extends Target {
 
     if (!this.isPortable) {
       if (this.isUnicodeEnabled && this.options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("boringMessages.yml", packager, isMultiLang))
+        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, isMultiLang))
       }
 
       taskManager.add(async () => {

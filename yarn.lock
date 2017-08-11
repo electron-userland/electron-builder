@@ -291,9 +291,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.95.0:
-  version "2.95.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.95.0.tgz#26e21db149443b1f063949dc87984f0d17700e6a"
+aws-sdk@^2.96.0:
+  version "2.96.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.96.0.tgz#b07c74bb82a59a280a56486cb689bd92098f0e24"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -3288,6 +3288,15 @@ tar-stream@^1.5.0:
     readable-stream "^2.0.0"
     xtend "^4.0.0"
 
+temp-file@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/temp-file/-/temp-file-1.0.2.tgz#790ac9093b9d12a84f277f42f6314e0cf579f1c7"
+  dependencies:
+    async-exit-hook "^2.0.1"
+    bluebird-lst "^1.0.3"
+    fs-extra-p "^4.4.0"
+    lazy-val "^1.0.2"
+
 temp-path@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/temp-path/-/temp-path-1.0.0.tgz#24b1543973ab442896d9ad367dd9cbdbfafe918b"
@@ -3394,12 +3403,12 @@ ts-babel@^3.2.1:
     source-map-support "^0.4.15"
     v8-compile-cache "^1.1.0"
 
-ts-jsdoc@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-2.0.4.tgz#e2b4b11bd6ed25041252212d461c4761e6adae19"
+ts-jsdoc@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/ts-jsdoc/-/ts-jsdoc-2.0.5.tgz#5228cdbd95afa97068615791a5699e64014b6382"
   dependencies:
-    bluebird-lst "^1.0.2"
-    chalk "^2.0.1"
+    bluebird-lst "^1.0.3"
+    chalk "^2.1.0"
     doctrine "^2.0.0"
     fs-extra-p "^4.4.0"
     source-map-support "^0.4.15"

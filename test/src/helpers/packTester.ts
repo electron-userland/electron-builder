@@ -3,20 +3,20 @@ import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
-import { addValue, exec, getTempName, log, spawn, warn } from "electron-builder-util"
+import { addValue, exec, log, spawn, warn } from "electron-builder-util"
 import { getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
 import { copyDir, FileCopier } from "electron-builder-util/out/fs"
 import { executeFinally } from "electron-builder-util/out/promise"
-import { TmpDir } from "electron-builder-util/out/tmp"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { PublishPolicy } from "electron-publish"
-import { emptyDir, mkdir, readFile, readJson, writeJson } from "fs-extra-p"
+import { emptyDir, readFile, readJson, writeJson } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import pathSorter from "path-sort"
 import { parse as parsePlist } from "plist"
 import { deepAssign } from "read-config-file/out/deepAssign"
+import { TmpDir } from "temp-file"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
 
@@ -50,6 +50,8 @@ export interface PackedContext {
   readonly getContent: (platform: Platform) => string
 
   readonly packager: Packager
+
+  readonly tmpDir: TmpDir
 }
 
 export function appThrows(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions = {}) {
@@ -86,11 +88,12 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = new TmpDir()
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.getTempDir(fixtureName) : path.resolve(customTmpDir)
+  const dir = customTmpDir == null ? await tmpDir.createTempDir(fixtureName) : path.resolve(customTmpDir)
   if (customTmpDir != null) {
+    await emptyDir(dir)
     log(`Custom temp dir used: ${customTmpDir}`)
   }
-  await emptyDir(dir)
+
   await copyDir(projectDir, dir, it => {
     const basename = path.basename(it)
     return basename !== OUT_DIR_NAME && basename !== "node_modules" && !basename.startsWith(".")
@@ -121,6 +124,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
         getResources: (platform, arch) => path.join(base(platform, arch), "resources"),
         getContent: platform => base(platform),
         packager,
+        tmpDir,
       })
     }
   })(), () => tmpDir.cleanup())
@@ -413,8 +417,7 @@ export function createMacTargetTest(target: Array<MacOsTargetName>) {
         return
       }
 
-      const tempDir = path.join(context.outDir, getTempName())
-      await mkdir(tempDir)
+      const tempDir = await context.tmpDir.createTempDir()
       await exec("tar", ["xf", path.join(context.outDir, "Test App ßW-1.1.0-mac.tar.gz")], {cwd: tempDir})
       await assertThat(path.join(tempDir, "Test App ßW.app")).isDirectory()
     }

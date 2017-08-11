@@ -90,10 +90,10 @@ Or you can create Node.js run configuration manually:
   
 ### Run Test using CLI
 ```sh
-TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'boring' '/oneClickInstallerTest\.\w+$'
+TEST_APP_TMP_DIR=/tmp/electron-builder-test ./node_modules/.bin/jest --env jest-environment-node-debug -t 'assisted' '/oneClickInstallerTest\.\w+$'
 ```
 
-where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `boring` is the test name and `/oneClickInstallerTest\.\w+$` is the path to test file.
+where `TEST_APP_TMP_DIR` is specified to easily inspect and use test build, `assisted` is the test name and `/oneClickInstallerTest\.\w+$` is the path to test file.
 
 Do not forget to execute `yarn compile` before run.
 

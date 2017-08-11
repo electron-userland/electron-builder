@@ -82,7 +82,8 @@
     "asar-integrity": "0.0.0-semantic-release",
     "lazy-val": "^1.0.2",
     "dotenv": "^4.0.0",
-    "dotenv-expand": "^4.0.1"
+    "dotenv-expand": "^4.0.1",
+    "temp-file": "^1.0.1"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {

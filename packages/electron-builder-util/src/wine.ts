@@ -14,6 +14,7 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
     return {
       path: path.join(wineDir, "bin/wine"),
       env: {
+        ...process.env,
         WINEDEBUG: "-all,err+all",
         WINEDLLOVERRIDES: "winemenubuilder.exe=d",
         WINEPREFIX: path.join(wineDir, "wine-home"),
