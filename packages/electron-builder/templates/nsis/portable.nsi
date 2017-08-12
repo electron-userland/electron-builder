@@ -1,4 +1,5 @@
 !include "common.nsh"
+!include "StdUtils.nsh"
 
 WindowIcon Off
 AutoCloseWindow True
@@ -17,7 +18,8 @@ Section
 	!insertmacro extractEmbeddedAppPackage
 
   System::Call 'Kernel32::SetEnvironmentVariable(t, t)i ("PORTABLE_EXECUTABLE_DIR", "$EXEDIR").r0'
-	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+  ${StdUtils.GetAllParameters} $R0 0
+	ExecWait "$INSTDIR\${APP_EXECUTABLE_FILENAME} $R0"
 
   SetOutPath $PLUGINSDIR
 	RMDir /r $INSTDIR

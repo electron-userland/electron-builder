@@ -14,8 +14,8 @@ test.ifAll.ifNotCiMac("portable", app({
 test.ifNotCiMac("portable - artifactName and request execution level", app({
   targets: Platform.WINDOWS.createTarget(["portable"]),
   config: {
-    "nsis": {
-      "artifactName": "${productName}Installer.${version}.${ext}",
+    nsis: {
+      artifactName: "${productName}Installer.${version}.${ext}",
       installerIcon: "foo test space.ico",
     },
     portable: {
