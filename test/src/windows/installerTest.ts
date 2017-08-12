@@ -40,6 +40,8 @@ test.ifAll.ifNotCiMac("allowElevation false, app requestedExecutionLevel admin",
       oneClick: false,
       allowElevation: false,
       perMachine: true,
+      displayLanguageSelector: true,
+      installerLanguages: ["en_US", "ru_RU"]
     },
   }
 }))

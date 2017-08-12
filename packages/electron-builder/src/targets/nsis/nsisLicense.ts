@@ -1,11 +1,12 @@
 import * as path from "path"
+import { lcid } from "../../util/langs"
 import { WinPackager } from "../../winPackager"
-import { bundledLanguages, getLicenseFiles, lcid } from "../license"
+import { getLicenseFiles } from "../license"
 import { NsisOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { nsisTemplatesDir } from "./nsisUtil"
 
-export async function computeLicensePage(packager: WinPackager, options: NsisOptions, scriptGenerator: NsisScriptGenerator): Promise<void> {
+export async function computeLicensePage(packager: WinPackager, options: NsisOptions, scriptGenerator: NsisScriptGenerator, languages: Array<string>): Promise<void> {
   const possibleFiles: Array<string> = []
   for (const name of ["license", "eula"]) {
     for (const ext of ["rtf", "txt", "html"]) {
@@ -48,7 +49,7 @@ export async function computeLicensePage(packager: WinPackager, options: NsisOpt
   }
 
   const licensePage: Array<string> = []
-  const unspecifiedLangs = new Set(bundledLanguages)
+  const unspecifiedLangs = new Set(languages)
 
   let defaultFile: string | null = null
   for (const item of licenseFiles) {

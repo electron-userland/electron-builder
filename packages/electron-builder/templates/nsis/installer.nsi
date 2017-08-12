@@ -33,6 +33,8 @@ Var oldMenuDirectory
   !include "assistedInstaller.nsh"
 !endif
 
+!insertmacro addLangs
+
 !ifmacrodef customHeader
   !insertmacro customHeader
 !endif
@@ -41,6 +43,11 @@ Function .onInit
   !ifmacrodef preInit
     !insertmacro preInit
   !endif
+
+  !ifdef DISPLAY_LANG_SELECTOR
+    !insertmacro MUI_LANGDLL_DISPLAY
+  !endif
+
   !ifdef BUILD_UNINSTALLER
     WriteUninstaller "${UNINSTALLER_OUT_FILE}"
     !insertmacro quitSuccess

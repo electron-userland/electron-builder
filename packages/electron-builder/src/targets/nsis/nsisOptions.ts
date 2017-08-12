@@ -104,6 +104,17 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly installerHeaderIcon?: string | null
 
   /**
+   * The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what.
+   */
+  readonly installerLanguages?: Array<string> | string | null
+
+  /**
+   * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
+   * @default false
+   */
+  readonly displayLanguageSelector?: boolean
+
+  /**
    * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
    */
   readonly include?: string | null
@@ -129,8 +140,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly language?: string | null
 
   /**
-   * *assisted installer only.* Whether to create multi-language installer. Defaults to `unicode` option value.
-   * [Not all strings are translated](https://github.com/electron-userland/electron-builder/issues/646#issuecomment-238155800).
+   * Whether to create multi-language installer. Defaults to `unicode` option value.
    */
   readonly multiLanguageInstaller?: boolean
 

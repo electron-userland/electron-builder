@@ -123,9 +123,3 @@
     ${endif}
   !endif
 !macroend
-
-!ifdef MULTI_LANGUAGE_INSTALLER
-  !include "langs.nsh"
-!else
-  !insertmacro MUI_LANGUAGE "English"
-!endif

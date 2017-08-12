@@ -1,21 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
-import _debug from "debug"
 import { Arch, subTask } from "electron-builder-util"
-import { outputFile, readFile, unlink } from "fs-extra-p"
-import { safeLoad } from "js-yaml"
+import { unlink } from "fs-extra-p"
 import * as path from "path"
-import { PlatformPackager } from "../../platformPackager"
-import { bundledLanguages, lcid, toLangWithRegion } from "../license"
 import { NsisTarget } from "./nsis"
-import { NsisScriptGenerator } from "./nsisScriptGenerator"
 
 export const nsisTemplatesDir = path.join(__dirname, "..", "..", "..", "templates", "nsis")
 
 interface PackageFileInfo {
   file: string
 }
-
-const debug = _debug("electron-builder:nsis")
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -56,48 +49,4 @@ export class AppPackageHelper {
 
     await BluebirdPromise.map(filesToDelete, it => unlink(it))
   }
-}
-
-async function writeCustomLangFile(data: string, packager: PlatformPackager<any>) {
-  const file = await packager.getTempFile("messages.nsh")
-  await outputFile(file, data)
-  return file
-}
-
-export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, isMultiLang: boolean, scriptGenerator: NsisScriptGenerator) {
-  const data = safeLoad(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
-  if (!isMultiLang) {
-    for (const messageId of Object.keys(data)) {
-      for (const langId of Object.keys(data[messageId])) {
-        if (langId !== "en") {
-          delete data[messageId][langId]
-        }
-      }
-    }
-  }
-
-  const instructions = computeCustomMessageTranslations(data, isMultiLang).join("\n")
-  debug(instructions)
-  scriptGenerator.include(await writeCustomLangFile(instructions, packager))
-}
-
-function computeCustomMessageTranslations(messages: any, isUnicodeEnabled: boolean): Array<string> {
-  const result: Array<string> = []
-  for (const messageId of Object.keys(messages)) {
-    const langToTranslations = messages[messageId]
-    const unspecifiedLangs = new Set(bundledLanguages)
-    for (const lang of Object.keys(langToTranslations)) {
-      const langWithRegion = toLangWithRegion(lang)
-      result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${langToTranslations[lang].replace(/\n/g, "$\\r$\\n")}"`)
-      unspecifiedLangs.delete(langWithRegion)
-    }
-
-    if (isUnicodeEnabled) {
-      const defaultTranslation = langToTranslations.en.replace(/\n/g, "$\\r$\\n")
-      for (const langWithRegion of unspecifiedLangs) {
-        result.push(`LangString ${messageId} ${lcid[langWithRegion]} "${defaultTranslation}"`)
-      }
-    }
-  }
-  return result
 }

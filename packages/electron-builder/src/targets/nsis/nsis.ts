@@ -15,10 +15,11 @@ import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { addZipArgs, archive, ArchiveOptions } from "../archive"
 import { computeBlockMap } from "../blockMap"
+import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { addCustomMessageFileInclude, AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
+import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
@@ -220,8 +221,10 @@ export class NsisTarget extends Target {
       return
     }
 
-    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath)
-    await this.executeMakensis(defines, commands, await this.computeFinalScript(script, true))
+    const sharedHeader = await this.computeCommonInstallerScriptHeader()
+
+    const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath, sharedHeader)
+    await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
     packager.info.dispatchArtifactCreated({
@@ -241,14 +244,14 @@ export class NsisTarget extends Target {
   }
 
   private get isUnicodeEnabled() {
-    return this.options.unicode == null ? true : this.options.unicode
+    return this.options.unicode !== false
   }
 
   get isWebInstaller(): boolean {
     return false
   }
 
-  private async computeScriptAndSignUninstaller(defines: any, commands: any, installerPath: string) {
+  private async computeScriptAndSignUninstaller(defines: any, commands: any, installerPath: string, sharedHeader: string) {
     const packager = this.packager
     const customScriptPath = await packager.getResource(this.options.script, "installer.nsi")
     const script = await readFile(customScriptPath || path.join(nsisTemplatesDir, "installer.nsi"), "utf8")
@@ -263,7 +266,7 @@ export class NsisTarget extends Target {
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
-    await this.executeMakensis(defines, commands, await this.computeFinalScript(script, false))
+    await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, false))
     await execWine(installerPath, [])
     await packager.sign(uninstallerPath, "  Signing NSIS uninstaller")
 
@@ -358,10 +361,6 @@ export class NsisTarget extends Target {
 
     defines.SHORTCUT_NAME = isEmptyOrSpaces(options.shortcutName) ? defines.PRODUCT_FILENAME : packager.expandMacro(options.shortcutName!!)
 
-    if (options.multiLanguageInstaller == null ? this.isUnicodeEnabled : options.multiLanguageInstaller) {
-      defines.MULTI_LANGUAGE_INSTALLER = null
-    }
-
     if (options.deleteAppDataOnUninstall) {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
@@ -376,6 +375,10 @@ export class NsisTarget extends Target {
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (options.createDesktopShortcut === false) {
       defines.DO_NOT_CREATE_DESKTOP_SHORTCUT = null
+    }
+
+    if (options.displayLanguageSelector === true) {
+      defines.DISPLAY_LANG_SELECTOR = null
     }
   }
 
@@ -445,7 +448,7 @@ export class NsisTarget extends Target {
           clearTimeout(timeout)
         }
         finally {
-          reject(error + "\nNSIS script:\n" + script)
+          reject((error.stack || error.toString()) + "\nNSIS script:\n" + script)
         }
       })
 
@@ -453,17 +456,21 @@ export class NsisTarget extends Target {
     })
   }
 
-  private async computeFinalScript(originalScript: string, isInstaller: boolean) {
+  private async computeCommonInstallerScriptHeader() {
     const packager = this.packager
-
+    const options = this.options
     const scriptGenerator = new NsisScriptGenerator()
-    scriptGenerator.addIncludeDir(path.join(nsisTemplatesDir, "include"))
+    const langConfigurator = new LangConfigurator(options)
+
+    const includeDir = path.join(nsisTemplatesDir, "include")
+    scriptGenerator.addIncludeDir(includeDir)
     scriptGenerator.flags(["--updated", "--force-run", "--keep-shortcuts", "--no-desktop-shortcut", "--delete-app-data"])
+
+    createAddLangsMacro(scriptGenerator, langConfigurator)
 
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
-
     taskManager.add(async () => {
       scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise, "plugins", pluginArch))
     })
@@ -476,15 +483,11 @@ export class NsisTarget extends Target {
       }
     })
 
-    // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
-    taskManager.add(() => computeLicensePage(packager, this.options, scriptGenerator))
-
-    const isMultiLang = this.isUnicodeEnabled && this.options.multiLanguageInstaller !== false
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, isMultiLang, scriptGenerator))
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, scriptGenerator, langConfigurator))
 
     if (!this.isPortable) {
-      if (this.isUnicodeEnabled && this.options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, isMultiLang, scriptGenerator))
+      if (options.oneClick === false) {
+        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, scriptGenerator, langConfigurator))
       }
 
       taskManager.add(async () => {
@@ -497,6 +500,23 @@ export class NsisTarget extends Target {
     }
 
     await taskManager.awaitTasks()
+    return scriptGenerator.build()
+  }
+
+  private async computeFinalScript(originalScript: string, isInstaller: boolean) {
+    const packager = this.packager
+    const options = this.options
+    const langConfigurator = new LangConfigurator(options)
+
+    const scriptGenerator = new NsisScriptGenerator()
+    const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
+
+    if (isInstaller) {
+      // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
+      taskManager.add(() => computeLicensePage(packager, options, scriptGenerator, langConfigurator.langs))
+    }
+
+    await taskManager.awaitTasks()
 
     if (this.isPortable) {
       return scriptGenerator.build() + originalScript
@@ -504,12 +524,12 @@ export class NsisTarget extends Target {
 
     const fileAssociations = packager.fileAssociations
     if (fileAssociations.length !== 0) {
-      if (this.options.perMachine !== true) {
+      if (options.perMachine !== true) {
         // https://github.com/electron-userland/electron-builder/issues/772
         throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
       }
 
-      scriptGenerator.include("FileAssociation.nsh")
+      scriptGenerator.include(path.join(path.join(nsisTemplatesDir, "include"), "FileAssociation.nsh"))
       if (isInstaller) {
         const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {

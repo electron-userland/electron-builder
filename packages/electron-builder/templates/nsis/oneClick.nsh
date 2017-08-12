@@ -28,12 +28,6 @@
   !insertmacro MUI_UNPAGE_INSTFILES
 !endif
 
-!ifdef MULTI_LANGUAGE_INSTALLER
-  !include "langs.nsh"
-!else
-  !insertmacro MUI_LANGUAGE "English"
-!endif
-
 !macro initMultiUser
   !ifdef INSTALL_MODE_PER_ALL_USERS
     !insertmacro setInstallModePerAllUsers
