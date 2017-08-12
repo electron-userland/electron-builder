@@ -3,7 +3,7 @@
     !include StdUtils.nsh
     !macro StartApp
       Var /GLOBAL startAppArgs
-      ${if} ${Updated}
+      ${if} ${isUpdated}
         StrCpy $startAppArgs "--updated"
       ${else}
         StrCpy $startAppArgs ""

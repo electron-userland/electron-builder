@@ -100,7 +100,7 @@ Name "${PRODUCT_NAME}"
 
 !macro licensePageHelper
   Function licensePre
-    ${if} ${Updated}
+    ${if} ${isUpdated}
       Abort
     ${endif}
   FunctionEnd

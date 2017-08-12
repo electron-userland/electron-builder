@@ -28,7 +28,7 @@
   ${if} $3 != "${APP_EXECUTABLE_FILENAME}"
     ${nsProcess::FindProcess} "${APP_EXECUTABLE_FILENAME}" $R0
     ${If} $R0 == 0
-      ${if} ${Updated}
+      ${if} ${isUpdated}
         Goto doStopProcess
       ${endif}
       MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess

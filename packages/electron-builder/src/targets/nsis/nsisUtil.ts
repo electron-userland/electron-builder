@@ -7,6 +7,7 @@ import * as path from "path"
 import { PlatformPackager } from "../../platformPackager"
 import { bundledLanguages, lcid, toLangWithRegion } from "../license"
 import { NsisTarget } from "./nsis"
+import { NsisScriptGenerator } from "./nsisScriptGenerator"
 
 export const nsisTemplatesDir = path.join(__dirname, "..", "..", "..", "templates", "nsis")
 
@@ -15,10 +16,6 @@ interface PackageFileInfo {
 }
 
 const debug = _debug("electron-builder:nsis")
-
-export function createMacro(name: string, lines: Array<string>) {
-  return `\n!macro ${name}\n  ${lines.join("\n  ")}\n!macroend\n`
-}
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -67,7 +64,7 @@ async function writeCustomLangFile(data: string, packager: PlatformPackager<any>
   return file
 }
 
-export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, isMultiLang: boolean) {
+export async function addCustomMessageFileInclude(input: string, packager: PlatformPackager<any>, isMultiLang: boolean, scriptGenerator: NsisScriptGenerator) {
   const data = safeLoad(await readFile(path.join(nsisTemplatesDir, input), "utf-8"))
   if (!isMultiLang) {
     for (const messageId of Object.keys(data)) {
@@ -81,7 +78,7 @@ export async function addCustomMessageFileInclude(input: string, packager: Platf
 
   const instructions = computeCustomMessageTranslations(data, isMultiLang).join("\n")
   debug(instructions)
-  return '!include "' + await writeCustomLangFile(instructions, packager) + '"\n'
+  scriptGenerator.include(await writeCustomLangFile(instructions, packager))
 }
 
 function computeCustomMessageTranslations(messages: any, isUnicodeEnabled: boolean): Array<string> {

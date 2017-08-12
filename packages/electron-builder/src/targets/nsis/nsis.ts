@@ -3,7 +3,7 @@ import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
 import { Arch, asArray, debug7zArgs, doSpawn, execWine, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
-import { copyFile } from "electron-builder-util/out/fs"
+import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -17,6 +17,7 @@ import { addZipArgs, archive, ArchiveOptions } from "../archive"
 import { computeBlockMap } from "../blockMap"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
+import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { addCustomMessageFileInclude, AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
@@ -454,60 +455,51 @@ export class NsisTarget extends Target {
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {
     const packager = this.packager
-    let scriptHeader = `!addincludedir "${path.join(__dirname, "..", "..", "templates", "nsis", "include")}"\n`
 
-    for (const flag of [["--updated", "Updated"], ["--force-run", "ForceRun"], ["--keep-shortcuts", "KeepShortcuts"], ["--no-desktop-shortcut", "isNoDesktopShortcut"], ["--delete-app-data", "isDeleteAppData"]]) {
-      scriptHeader += `
-!macro _${flag[1]} _a _b _t _f
-ClearErrors
-$\{GetParameters} $R9
-$\{GetOptions} $R9 "${flag[0]}" $R8
-IfErrors \`$\{_f}\` \`$\{_t}\`
-!macroend
-!define ${flag[1]} \`"" ${flag[1]} ""\`
-`
-    }
+    const scriptGenerator = new NsisScriptGenerator()
+    scriptGenerator.addIncludeDir(path.join(nsisTemplatesDir, "include"))
+    scriptGenerator.flags(["--updated", "--force-run", "--keep-shortcuts", "--no-desktop-shortcut", "--delete-app-data"])
 
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
+    const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
+
     taskManager.add(async () => {
-      const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
-      let result = `!addplugindir /${pluginArch} "${path.join(await nsisResourcePathPromise, "plugins", pluginArch)}"\n`
-      result += `!addplugindir /${pluginArch} "${path.join(packager.buildResourcesDir, pluginArch)}"\n`
-      return result
+      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise, "plugins", pluginArch))
     })
 
     taskManager.add(async () => {
-      // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
-      const licensePage = await computeLicensePage(packager, this.options)
-      return licensePage || ""
+      const userPluginDir = path.join(packager.buildResourcesDir, pluginArch)
+      const stat = await statOrNull(userPluginDir)
+      if (stat != null && stat.isDirectory()) {
+        scriptGenerator.addPluginDir(pluginArch, userPluginDir)
+      }
     })
+
+    // http://stackoverflow.com/questions/997456/nsis-license-file-based-on-language-selection
+    taskManager.add(() => computeLicensePage(packager, this.options, scriptGenerator))
 
     const isMultiLang = this.isUnicodeEnabled && this.options.multiLanguageInstaller !== false
-    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, isMultiLang))
+    taskManager.addTask(addCustomMessageFileInclude("messages.yml", packager, isMultiLang, scriptGenerator))
 
     if (!this.isPortable) {
       if (this.isUnicodeEnabled && this.options.oneClick === false) {
-        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, isMultiLang))
+        taskManager.addTask(addCustomMessageFileInclude("assistedMessages.yml", packager, isMultiLang, scriptGenerator))
       }
 
       taskManager.add(async () => {
-        let result = ""
         const customInclude = await packager.getResource(this.options.include, "installer.nsh")
         if (customInclude != null) {
-          result += `!addincludedir "${packager.buildResourcesDir}"\n`
-          result += `!include "${customInclude}"\n\n`
+          scriptGenerator.addIncludeDir(packager.buildResourcesDir)
+          scriptGenerator.include(customInclude)
         }
-        return result
       })
     }
 
-    for (const s of await taskManager.awaitTasks()) {
-      scriptHeader += s
-    }
+    await taskManager.awaitTasks()
 
     if (this.isPortable) {
-      return scriptHeader + originalScript
+      return scriptGenerator.build() + originalScript
     }
 
     const fileAssociations = packager.fileAssociations
@@ -517,9 +509,9 @@ IfErrors \`$\{_f}\` \`$\{_t}\`
         throw new Error(`Please set perMachine to true — file associations works on Windows only if installed for all users`)
       }
 
-      scriptHeader += "!include FileAssociation.nsh\n"
+      scriptGenerator.include("FileAssociation.nsh")
       if (isInstaller) {
-        let registerFileAssociationsScript = ""
+        const registerFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
           const extensions = asArray(item.ext).map(normalizeExt)
           for (const ext of extensions) {
@@ -527,29 +519,28 @@ IfErrors \`$\{_f}\` \`$\{_t}\`
             let installedIconPath = "$appExe,0"
             if (customIcon != null) {
               installedIconPath = `$INSTDIR\\resources\\${path.basename(customIcon)}`
-              //noinspection SpellCheckingInspection
-              registerFileAssociationsScript += `  File "/oname=${installedIconPath}" "${customIcon}"\n`
+              registerFileAssociationsScript.file(installedIconPath, customIcon)
             }
 
             const icon = `"${installedIconPath}"`
             const commandText = `"Open with ${packager.appInfo.productName}"`
             const command = '"$appExe $\\"%1$\\""'
-            registerFileAssociationsScript += `  !insertmacro APP_ASSOCIATE "${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}\n`
+            registerFileAssociationsScript.insertMacro("APP_ASSOCIATE", `"${ext}" "${item.name || ext}" "${item.description || ""}" ${icon} ${commandText} ${command}`)
           }
         }
-        scriptHeader += `!macro registerFileAssociations\n${registerFileAssociationsScript}!macroend\n`
+        scriptGenerator.macro("registerFileAssociations", registerFileAssociationsScript)
       }
       else {
-        let unregisterFileAssociationsScript = ""
+        const unregisterFileAssociationsScript = new NsisScriptGenerator()
         for (const item of fileAssociations) {
           for (const ext of asArray(item.ext)) {
-            unregisterFileAssociationsScript += `  !insertmacro APP_UNASSOCIATE "${normalizeExt(ext)}" "${item.name || ext}"\n`
+            unregisterFileAssociationsScript.insertMacro("APP_UNASSOCIATE", `"${normalizeExt(ext)}" "${item.name || ext}"`)
           }
         }
-        scriptHeader += `!macro unregisterFileAssociations\n${unregisterFileAssociationsScript}!macroend\n`
+        scriptGenerator.macro("unregisterFileAssociations", unregisterFileAssociationsScript)
       }
     }
 
-    return scriptHeader + originalScript
+    return scriptGenerator.build() + originalScript
   }
 }

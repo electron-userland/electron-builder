@@ -7,7 +7,7 @@
 
 !ifndef BUILD_UNINSTALLER
   Function StartApp
-    ${if} ${Updated}
+    ${if} ${isUpdated}
       ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" "--updated"
     ${else}
       ${StdUtils.ExecShellAsUser} $0 "$launchLink" "open" ""

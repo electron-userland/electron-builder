@@ -2,9 +2,10 @@ import * as path from "path"
 import { WinPackager } from "../../winPackager"
 import { bundledLanguages, getLicenseFiles, lcid } from "../license"
 import { NsisOptions } from "./nsisOptions"
-import { createMacro, nsisTemplatesDir } from "./nsisUtil"
+import { NsisScriptGenerator } from "./nsisScriptGenerator"
+import { nsisTemplatesDir } from "./nsisUtil"
 
-export async function  computeLicensePage(packager: WinPackager, options: NsisOptions): Promise<string | null> {
+export async function computeLicensePage(packager: WinPackager, options: NsisOptions, scriptGenerator: NsisScriptGenerator): Promise<void> {
   const possibleFiles: Array<string> = []
   for (const name of ["license", "eula"]) {
     for (const ext of ["rtf", "txt", "html"]) {
@@ -34,16 +35,16 @@ export async function  computeLicensePage(packager: WinPackager, options: NsisOp
       licensePage = [`!insertmacro MUI_PAGE_LICENSE "${license}"`]
     }
 
-    let result = createMacro("licensePage", licensePage)
+    scriptGenerator.macro("licensePage", licensePage)
     if (license.endsWith(".html")) {
-      result += "\n" + createMacro("addLicenseFiles", [`File /oname=$PLUGINSDIR\\license.html "${license}"`])
+      scriptGenerator.macro("addLicenseFiles", [`File /oname=$PLUGINSDIR\\license.html "${license}"`])
     }
-    return result
+    return
   }
 
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
-    return null
+    return
   }
 
   const licensePage: Array<string> = []
@@ -63,5 +64,5 @@ export async function  computeLicensePage(packager: WinPackager, options: NsisOp
   }
 
   licensePage.push('!insertmacro MUI_PAGE_LICENSE "$(MUILicense)"')
-  return createMacro("licensePage", licensePage)
+  scriptGenerator.macro("licensePage", licensePage)
 }

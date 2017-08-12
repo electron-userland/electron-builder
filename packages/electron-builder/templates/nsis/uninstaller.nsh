@@ -27,7 +27,7 @@ Section "un.install"
 
   !insertmacro setLinkVars
 
-  ${ifNot} ${KeepShortcuts}
+  ${ifNot} ${isKeepShortcuts}
     WinShell::UninstAppUserModelId "${APP_ID}"
 
     !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
@@ -67,7 +67,7 @@ Section "un.install"
   ${GetOptions} $R0 "--delete-app-data" $R1
   ${if} ${Errors}
     !ifdef DELETE_APP_DATA_ON_UNINSTALL
-      ${ifNot} ${Updated}
+      ${ifNot} ${isUpdated}
         StrCpy $isDeleteAppData "1"
       ${endif}
     !endif

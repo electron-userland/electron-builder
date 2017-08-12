@@ -66,7 +66,7 @@ ${endIf}
 !ifdef ONE_CLICK
   !ifdef RUN_AFTER_FINISH
     ${IfNot} ${Silent}
-    ${OrIf} ${ForceRun}
+    ${OrIf} ${isForceRun}
       # otherwise app window will be in background
       HideWindow
       !insertmacro StartApp
