@@ -3,11 +3,6 @@ import { PlatformSpecificBuildOptions } from "../metadata"
 
 export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**
-   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
-   */
-  readonly packageCategory?: string | null
-
-  /**
    * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
    * electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
@@ -61,6 +56,10 @@ export interface CommonLinuxOptions {
    * The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
    */
   readonly category?: string | null
+
+  /**
+   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
+   */
   readonly packageCategory?: string | null
 
   /**

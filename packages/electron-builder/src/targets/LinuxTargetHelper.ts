@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, exec, isEmptyOrSpaces } from "electron-builder-util"
+import { debug, exec, isEmptyOrSpaces, warn } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
 import { ensureDir, outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
@@ -115,10 +115,24 @@ export class LinuxTargetHelper {
       Icon: this.packager.executableName, ...extra, ...targetSpecificOptions.desktop
     }
 
-    const category = targetSpecificOptions.category
-    if (!isEmptyOrSpaces(category)) {
-      desktopMeta.Categories = `${category}${category.endsWith(";") ? "" : ";"}`
+    let category = targetSpecificOptions.category
+    if (isEmptyOrSpaces(category)) {
+      const macCategory = (this.packager.config.mac || {}).category
+      if (macCategory != null) {
+        category = macToLinuxCategory[macCategory]
+      }
+
+      if (category == null) {
+        // https://github.com/develar/onshape-desktop-shell/issues/48
+        let message = "Application category is not set for Linux (linux.category).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-category"
+        if (macCategory != null) {
+          message += `\n Cannot map mac category "${macCategory}" to Linux. If possible mapping is known for you, please file issue to add it.`
+        }
+        warn(message)
+        category = "Utility"
+      }
     }
+    desktopMeta.Categories = `${category}${category.endsWith(";") ? "" : ";"}`
 
     let data = `[Desktop Entry]`
     for (const name of Object.keys(desktopMeta)) {
@@ -211,6 +225,15 @@ export class LinuxTargetHelper {
       createMapping("512"),
     ]
   }
+}
+
+const macToLinuxCategory: any = {
+  "public.app-category.graphics-design": "Graphics",
+  "public.app-category.developer-tools": "Development",
+  "public.app-category.education": "Education",
+  "public.app-category.games": "Game",
+  "public.app-category.video": "Video;AudioVideo",
+  "public.app-category.utilities": "Utility",
 }
 
 function resizeImage(imagePath: string, result: string, w: number, h: number) {
