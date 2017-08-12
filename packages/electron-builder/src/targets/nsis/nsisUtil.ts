@@ -6,7 +6,7 @@ import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { PlatformPackager } from "../../platformPackager"
 import { bundledLanguages, lcid, toLangWithRegion } from "../license"
-import { NsisTarget } from "../nsis"
+import { NsisTarget } from "./nsis"
 
 export const nsisTemplatesDir = path.join(__dirname, "..", "..", "..", "templates", "nsis")
 
