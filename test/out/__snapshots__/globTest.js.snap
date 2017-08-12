@@ -32,7 +32,7 @@ Object {
 
 exports[`outside link 2`] = `
 Object {
-  "offset": "4879",
+  "offset": "5047",
   "size": 4,
 }
 `;
