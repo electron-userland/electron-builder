@@ -125,7 +125,7 @@ export default class AppXTarget extends Target {
             return appInfo.versionInWeirdWindowsForm
 
           case "name":
-            return appInfo.name
+            return options.identityName || appInfo.name
 
           case "identityName":
             return options.identityName  || appInfo.name
