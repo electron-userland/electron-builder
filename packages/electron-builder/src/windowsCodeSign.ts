@@ -139,7 +139,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
 
   const toolInfo = await getToolPath()
   return await exec(toolInfo.path, args, {
-    timeout: +(process.env.SIGNTOOL_TIMEOUT || 120 * 1000),
+    timeout: parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 120 * 1000,
     env: toolInfo.env || process.env
   })
 }
