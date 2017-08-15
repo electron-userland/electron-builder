@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, isEmptyOrSpaces, TmpDir } from "electron-builder-util"
+import { exec, getCacheDirectory, isEmptyOrSpaces, isMacOsSierra, TmpDir } from "electron-builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
 import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { outputFile, rename } from "fs-extra-p"
@@ -128,28 +128,37 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
 
   const certPaths = new Array(certLinks.length)
   const keychainPassword = randomBytes(8).toString("base64")
-  await BluebirdPromise.all([
-    // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
-    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
-    BluebirdPromise.mapSeries([
-      ["create-keychain", "-p", keychainPassword, keychainFile],
-      ["unlock-keychain", "-p", keychainPassword, keychainFile],
-      ["set-keychain-settings", keychainFile]
-    ], it => exec("security", it))
-  ])
+  const securityCommands = [
+    ["create-keychain", "-p", keychainPassword, keychainFile],
+    ["unlock-keychain", "-p", keychainPassword, keychainFile],
+    ["set-keychain-settings", keychainFile]
+  ]
 
   // https://stackoverflow.com/questions/42484678/codesign-keychain-gets-ignored
   // https://github.com/electron-userland/electron-builder/issues/1457
   const list = await listUserKeychains()
   if (!list.includes(keychainFile)) {
-    await exec("security", ["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
+    securityCommands.push(["list-keychains", "-d", "user", "-s", keychainFile].concat(list))
   }
+
+  await BluebirdPromise.all([
+    // we do not clear downloaded files - will be removed on tmpDir cleanup automatically. not a security issue since in any case data is available as env variables and protected by password.
+    BluebirdPromise.map(certLinks, (link, i) => downloadCertificate(link, tmpDir, currentDir).then(it => certPaths[i] = it)),
+    BluebirdPromise.mapSeries(securityCommands, it => exec("security", it))
+  ])
   return await importCerts(keychainFile, certPaths, [cscKeyPassword, cscIKeyPassword].filter(it => it != null) as Array<string>)
 }
 
 async function importCerts(keychainName: string, paths: Array<string>, keyPasswords: Array<string>): Promise<CodeSigningInfo> {
   for (let i = 0; i < paths.length; i++) {
-    await exec("security", ["import", paths[i], "-k", keychainName, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", keyPasswords[i]])
+    const password = keyPasswords[i]
+    await exec("security", ["import", paths[i], "-k", keychainName, "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild", "-P", password])
+
+    // https://stackoverflow.com/questions/39868578/security-codesign-in-sierra-keychain-ignores-access-control-settings-and-ui-p
+    // https://github.com/electron-userland/electron-packager/issues/701#issuecomment-322315996
+    if (await isMacOsSierra()) {
+      await exec("security", ["set-key-partition-list", "-S", "apple-tool:,apple:", "-s", "-k", password, keychainName])
+    }
   }
 
   return {

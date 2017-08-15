@@ -8,6 +8,7 @@ ${endif}
 
 StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
 
+# must be called before uninstallOldVersion
 !insertmacro setLinkVars
 
 !ifdef ONE_CLICK

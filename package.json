@@ -31,7 +31,7 @@
     "ajv-keywords": "^2.1.0",
     "archiver": "^2.0.0",
     "async-exit-hook": "^2.0.1",
-    "aws-sdk": "^2.97.0",
+    "aws-sdk": "^2.98.0",
     "bluebird-lst": "^1.0.3",
     "chalk": "^2.1.0",
     "chromium-pickle-js": "^0.2.0",
@@ -73,7 +73,7 @@
   "devDependencies": {
     "@types/dotenv": "^4.0.0",
     "@types/ini": "^1.3.29",
-    "@types/jest": "^20.0.6",
+    "@types/jest": "^20.0.7",
     "@types/js-yaml": "^3.9.0",
     "@types/source-map-support": "^0.4.0",
     "@types/xml2js": "^0.4.0",
@@ -96,8 +96,8 @@
     "typescript": "^2.4.2",
     "v8-compile-cache": "^1.1.0",
     "whitespace": "^2.1.0",
-    "worker-farm": "^1.4.1",
-    "xml2js": "^0.4.17"
+    "worker-farm": "^1.5.0",
+    "xml2js": "^0.4.18"
   },
   "jest": {
     "testEnvironment": "node",

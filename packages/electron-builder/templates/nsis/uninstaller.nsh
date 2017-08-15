@@ -45,7 +45,7 @@ Section "un.install"
     ${endIf}
   ${endIf}
 
-  # Refresh the desktop
+  # refresh the desktop
   System::Call 'shell32::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 
   !ifmacrodef unregisterFileAssociations

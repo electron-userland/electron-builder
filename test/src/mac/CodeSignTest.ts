@@ -15,6 +15,8 @@ test.ifMac("create keychain", async () => {
   expect(result.keychainName).not.toEqual("")
 })
 
+afterEach(() => tmpDir.cleanup())
+
 test.ifMac("create keychain with installers", async () => {
   const result = await createKeychain({tmpDir, cscLink: CSC_LINK, cscKeyPassword: process.env.CSC_KEY_PASSWORD!!, currentDir: process.cwd()})
   expect(result.keychainName).not.toEqual("")
