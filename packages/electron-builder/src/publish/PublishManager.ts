@@ -135,7 +135,7 @@ export class PublishManager implements PublishContext {
           break
         }
 
-        const publisher = this.getOrCreatePublisher(publishConfig, packager)
+        const publisher = this.getOrCreatePublisher(publishConfig, packager, event.target)
         if (publisher == null) {
           debug(`${eventFile} is not published: publisher is null, ${safeStringifyJson(publishConfig)}`)
           continue
@@ -158,8 +158,12 @@ export class PublishManager implements PublishContext {
     }
   }
 
-  private getOrCreatePublisher(publishConfig: PublishConfiguration, platformPackager: PlatformPackager<any>): Publisher | null {
-    const providerCacheKey = `${publishConfig.provider}-${platformPackager.platform.name}`
+  private getOrCreatePublisher(publishConfig: PublishConfiguration, platformPackager: PlatformPackager<any>, target: Target | null): Publisher | null {
+    let providerCacheKey = `${publishConfig.provider}-${platformPackager.platform.name}`
+    if (target) {
+      providerCacheKey += `-${target.name}`
+    }
+
     let publisher = this.nameToPublisher.get(providerCacheKey)
     if (publisher == null) {
       publisher = createPublisher(this, platformPackager.info.metadata.version!, publishConfig, this.publishOptions)
