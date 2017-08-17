@@ -2,7 +2,13 @@ import { Arch, Platform } from "electron-builder"
 import { readFile } from "fs-extra-p"
 import { app } from "../helpers/packTester"
 
-test.ifNotWindows("deb", app({targets: Platform.LINUX.createTarget("deb")}))
+test.ifNotWindows("deb", app({
+  targets: Platform.LINUX.createTarget("deb"),
+  config: {
+    // to test xz (on macos we bundle xz and gnu-tar and it should be tested)
+    compression: "normal"
+  }
+}))
 
 test.ifNotWindows("arm", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
 

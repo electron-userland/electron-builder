@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import DecompressZip from "decompress-zip"
-import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
+import { Arch, ArtifactCreated, Config, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
 import { addValue, exec, log, spawn, warn } from "electron-builder-util"
@@ -214,7 +214,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         await checkMacResult(packager, packagerOptions, checkOptions, packedAppDir)
       }
       else if (platform === Platform.LINUX) {
-        await checkLinuxResult(outDir, packager, arch, nameToTarget)
+        await checkLinuxResult(outDir, packager, arch, nameToTarget, packagerOptions.config != null && (packagerOptions.config as Config).compression === "normal")
       }
       else if (platform === Platform.WINDOWS) {
         await checkWindowsResult(packager, checkOptions, artifacts.get(platform)!!, nameToTarget)
@@ -225,16 +225,16 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
   return {packager, outDir}
 }
 
-async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>) {
+async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, nameToTarget: Map<string, Target>, isNormalCompression: boolean) {
   if (!nameToTarget.has("deb")) {
     return
   }
 
   const appInfo = packager.appInfo
   const packageFile = `${outDir}/TestApp_${appInfo.version}_${arch === Arch.ia32 ? "i386" : (arch === Arch.x64 ? "amd64" : "armv7l")}.deb`
-  expect(await getContents(packageFile)).toMatchSnapshot()
+  expect(await getContents(packageFile, isNormalCompression)).toMatchSnapshot()
   if (arch === Arch.ia32) {
-    expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`)).toMatchSnapshot()
+    expect(await getContents(`${outDir}/TestApp_${appInfo.version}_i386.deb`, isNormalCompression)).toMatchSnapshot()
   }
 
   const control = parseDebControl(await execShell(`ar p '${packageFile}' control.tar.gz | ${await getTarExecutable()} zx --to-stdout ./control`, {
@@ -350,9 +350,9 @@ async function getTarExecutable() {
   return process.platform === "darwin" ? path.join(await getLinuxToolsPath(), "bin", "gtar") : "tar"
 }
 
-async function getContents(packageFile: string) {
+async function getContents(packageFile: string, isNormalCompression: boolean) {
   // without LC_CTYPE dpkg can returns encoded unicode symbols
-  const result = await execShell(`ar p '${packageFile}' data.tar.gz | ${await getTarExecutable()} zt`, {
+  const result = await execShell(`ar p '${packageFile}' data.tar.${isNormalCompression ? "xz" : "gz"} | ${await getTarExecutable()} ${isNormalCompression ? "J" : "z"}t`, {
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
