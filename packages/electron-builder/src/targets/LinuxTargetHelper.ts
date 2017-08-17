@@ -234,6 +234,7 @@ const macToLinuxCategory: any = {
   "public.app-category.games": "Game",
   "public.app-category.video": "Video;AudioVideo",
   "public.app-category.utilities": "Utility",
+  "public.app-category.social-networking": "Chat",
 }
 
 function resizeImage(imagePath: string, result: string, w: number, h: number) {

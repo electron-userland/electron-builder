@@ -60,7 +60,7 @@
     "read-config-file": "^1.0.5",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.4.1",
-    "source-map-support": "^0.4.15",
+    "source-map-support": "^0.4.16",
     "stat-mode": "^0.2.2",
     "temp-file": "^1.0.2",
     "ts-jsdoc": "^2.0.5",

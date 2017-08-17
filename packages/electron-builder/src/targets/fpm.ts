@@ -120,9 +120,9 @@ export default class FpmTarget extends Target {
     ]
 
     if (debug.enabled) {
-      // args.push(
-      //   "--log", "debug",
-      //   "--debug")
+      args.push(
+        "--log", "debug",
+        "--debug")
     }
 
     const packageCategory = options.packageCategory
