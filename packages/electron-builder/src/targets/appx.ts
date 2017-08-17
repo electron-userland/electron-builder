@@ -1,9 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
 import { Arch, asArray, getArchSuffix, spawn, use } from "electron-builder-util"
-import { copyDir, copyFile } from "electron-builder-util/out/fs"
-import { orIfFileNotExist } from "electron-builder-util/out/promise"
-import { emptyDir, readdir, readFile, writeFile } from "fs-extra-p"
+import { copyDir, copyOrLinkFile } from "electron-builder-util/out/fs"
+import { emptyDir, mkdir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Target } from "../core"
@@ -59,17 +58,24 @@ export default class AppXTarget extends Target {
     const preAppx = path.join(this.outDir, `pre-appx-${getArchSuffix(arch)}`)
     await emptyDir(preAppx)
 
-    const resourceList = await packager.resourceList
-    if (resourceList.includes(APPX_ASSETS_DIR_NAME)) {
-      await copyDir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME), path.join(preAppx, "assets"))
+    const assetOutDir = path.join(preAppx, "assets")
+    await mkdir(assetOutDir)
+
+    const userAssetDir = await packager.getResource(undefined, APPX_ASSETS_DIR_NAME)
+    let userAssets: Array<string>
+    if (userAssetDir == null) {
+      userAssets = []
+    }
+    else {
+      userAssets = (await readdir(userAssetDir)).filter(it => !it.startsWith(".") && !it.endsWith(".db") && it.includes("."))
+      await BluebirdPromise.map(userAssets, it => copyOrLinkFile(path.join(userAssetDir, it), path.join(assetOutDir, it)))
     }
 
-    const userAssets = await orIfFileNotExist(readdir(path.join(packager.buildResourcesDir, APPX_ASSETS_DIR_NAME)), [])
     const vendorPath = await getSignVendorPath()
     const taskManager = new AsyncTaskManager(packager.info.cancellationToken)
     taskManager.addTask(BluebirdPromise.map(Object.keys(vendorAssetsForDefaultAssets), defaultAsset => {
       if (!isDefaultAssetIncluded(userAssets, defaultAsset)) {
-        return copyFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(preAppx, "assets", defaultAsset))
+        return copyOrLinkFile(path.join(vendorPath, "appxAssets", vendorAssetsForDefaultAssets[defaultAsset]), path.join(assetOutDir, defaultAsset))
       }
       return null
     }))
@@ -215,12 +221,11 @@ function splashScreenTag(userAssets: Array<string>): string {
 }
 
 function isDefaultAssetIncluded(userAssets: Array<string>, defaultAsset: string) {
-  const defaultAssetName = defaultAsset.split(".")[0]
+  const defaultAssetName = defaultAsset.substring(0, defaultAsset.indexOf("."))
   return userAssets.some(it => it.includes(defaultAssetName))
 }
 
 function isScaledAssetsProvided(userAssets: Array<string>) {
-  // noinspection SpellCheckingInspection
   return userAssets.some(it => it.includes(".scale-") || it.includes(".targetsize-"))
 }
 

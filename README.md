@@ -58,9 +58,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
     ```
    See [all options](https://github.com/electron-userland/electron-builder/wiki/Options).
 
-3. Create a directory [build](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) in the root of the project and save a `background.png` (macOS DMG background), `icon.icns` (macOS app icon) and `icon.ico` (Windows app icon) into it.
-
-   <a id="user-content-linuxIcon" class="anchor" href="#linuxIcon" aria-hidden="true"></a>The Linux icon set will be generated automatically based on the macOS `icns` file (or you can put them into the `build/icons` directory if you want to specify them yourself. The filename must contain the size (e.g. `32x32.png`) of the icon).
+3. Add [icons](https://github.com/electron-userland/electron-builder/wiki/Icons).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json

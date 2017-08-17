@@ -247,6 +247,7 @@
       <w>snapcraft</w>
       <w>srcfolder</w>
       <w>subcommand</w>
+      <w>targetsize</w>
       <w>templating</w>
       <w>testapp</w>
       <w>thenable</w>

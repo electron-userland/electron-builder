@@ -1,6 +1,7 @@
 **Basics**
 
 * [[Options]]
+* [[Icons]]
 * [[Auto Update]]
 * [[Code Signing]]
 * [[Publishing Artifacts]]
