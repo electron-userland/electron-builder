@@ -13,7 +13,7 @@ Object {
 `;
 
 exports[`invalid target 1`] = `
-"Config is invalid:
+"Configuration is invalid:
 {
   \\"mac\\": [
     {

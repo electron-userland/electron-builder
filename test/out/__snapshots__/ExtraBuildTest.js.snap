@@ -117,7 +117,7 @@ How to fix:
 `;
 
 exports[`scheme validation 2 1`] = `
-"Config is invalid:
+"Configuration is invalid:
 {
   \\"appId\\": \\"Should be null,string\\"
 }

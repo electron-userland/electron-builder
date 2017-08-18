@@ -1,9 +1,11 @@
+import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "electron-builder-util"
-import { getBin } from "electron-builder-util/out/binDownload"
+import { getBin, getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { computeEnv, getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { Target } from "../core"
 import * as errorMessages from "../errorMessages"
@@ -11,20 +13,25 @@ import { LinuxPackager } from "../linuxPackager"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 
-const fpmPath = (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") ?
-  BluebirdPromise.resolve("fpm") : downloadFpm()
+const fpmPath = new Lazy(() => {
+  if (process.platform === "win32" || process.env.USE_SYSTEM_FPM === "true") {
+    return BluebirdPromise.resolve("fpm")
+  }
 
-// can be called in parallel, all calls for the same version will get the same promise - will be downloaded only once
-function downloadFpm(): Promise<string> {
-  const version = process.platform === "darwin" ? "fpm-1.8.1-20150715-2.2.2" : "fpm-1.8.1-2.3.1"
   const osAndArch = process.platform === "darwin" ? "mac" : `linux-x86${process.arch === "ia32" ? "" : "_64"}`
-  //noinspection SpellCheckingInspection
-  const sha2 = process.platform === "darwin" ? "97352e184a1f54e5ed0d12f38ac383edebbe421db5a3fb59898e8c9a1c407ed7" :
-    (process.arch === "ia32" ? "8380331f7d9762a36d7c7181501c3fc9342745b8499b962f6ea37c7dc3778f99" : "6538fcd2486c2831949562abfd0017b67eff502addad5b444baec4899b0babc6")
 
+  if (process.platform === "darwin") {
+    //noinspection SpellCheckingInspection
+    return getBinFromGithub("fpm", "1.9.2-20150715-2.2.2-mac", "6sZZoRKkxdmv3a6E5dnZgVl23apGnImhDtGHKhgCE1WOtXBUJnx+w0WvB2HD2/sitz4f93Mf7+QqDCIbfP7LOw==")
+      .then(it => path.join(it, "fpm"))
+  }
+
+  const version = "fpm-1.8.1-2.3.1"
+  //noinspection SpellCheckingInspection
+  const sha2 = (process.arch === "ia32" ? "8380331f7d9762a36d7c7181501c3fc9342745b8499b962f6ea37c7dc3778f99" : "6538fcd2486c2831949562abfd0017b67eff502addad5b444baec4899b0babc6")
   return getBin("fpm", version, `https://dl.bintray.com/electron-userland/bin/${version}-${osAndArch}.7z`, sha2)
     .then(it => path.join(it, "fpm"))
-}
+})
 
 export default class FpmTarget extends Target {
   readonly options: LinuxTargetSpecificOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
@@ -131,7 +138,7 @@ export default class FpmTarget extends Target {
     }
 
     if (target === "deb") {
-      args.push("--deb-compression", (options as DebOptions).compression || (packager.config.compression === "store" ? "gz" : "xz"))
+      args.push("--deb-compression", (options as DebOptions).compression || "xz")
       use((options as DebOptions).priority, it => args.push("--deb-priority", it!))
     }
     else if (target === "rpm") {
@@ -192,7 +199,10 @@ export default class FpmTarget extends Target {
     const env = {
       ...process.env,
       LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8"
+      LC_CTYPE: "UTF-8",
+      FPM_COMPRESS_PROGRAM: path7x,
+      SZA_PATH: path7za,
+      SZA_COMPRESSION_LEVEL: packager.config.compression === "store" ? "0" : "9",
     }
 
     // rpmbuild wants directory rpm with some default config files. Even if we can use dylibbundler, path to such config files are not changed (we need to replace in the binary)
@@ -204,7 +214,7 @@ export default class FpmTarget extends Target {
         DYLD_LIBRARY_PATH: computeEnv(process.env.DYLD_LIBRARY_PATH, [path.join(linuxToolsPath, "lib")]),
       })
     }
-    await exec(await fpmPath, args, {env})
+    await exec(await fpmPath.value, args, {env})
 
     this.packager.dispatchArtifactCreated(destination, this, arch)
   }
@@ -221,7 +231,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
     }
   }
   const config = (await readFile(templatePath, "utf8"))
-    .replace(/\$\{([a-zA-Z]+)\}/g, replacer)
+    .replace(/\${([a-zA-Z]+)}/g, replacer)
     .replace(/<%=([a-zA-Z]+)%>/g, (match, p1) => {
       warn("<%= varName %> is deprecated, please use ${varName} instead")
       return replacer(match, p1.trim())

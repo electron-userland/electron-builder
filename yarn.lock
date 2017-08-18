@@ -14,9 +14,9 @@
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/7zip-bin-win/-/7zip-bin-win-2.1.0.tgz#ce632da797ec282c5d2a8d07b60e8df7ca7f164d"
 
-"7zip-bin@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.1.0.tgz#d728d3f950895cfcfee1a166fe93afc07dfe35a9"
+"7zip-bin@^2.2.2":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-2.2.2.tgz#bcd9986ca8c8969945b8c981f9d1e27dd923f435"
   optionalDependencies:
     "7zip-bin-linux" "^1.1.0"
     "7zip-bin-mac" "^1.0.1"
@@ -41,8 +41,8 @@
   resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.9.1.tgz#2f3c142771bb345829ce690c5838760b6b9ba553"
 
 "@types/node@*":
-  version "8.0.23"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.23.tgz#c746697004782346594a0d755c34425bbf3014d2"
+  version "8.0.24"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.24.tgz#06c580084d9add1fb40c1510ef0b448961246fb1"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -322,7 +322,7 @@ babel-code-frame@^6.22.0, babel-code-frame@^6.26.0:
     esutils "^2.0.2"
     js-tokens "^3.0.2"
 
-babel-core@^6.0.0, babel-core@^6.25.0, babel-core@^6.26.0:
+babel-core@^6.0.0, babel-core@^6.26.0:
   version "6.26.0"
   resolved "https://registry.yarnpkg.com/babel-core/-/babel-core-6.26.0.tgz#af32f78b31a6fcef119c87b0fd8d9753f03a0bb8"
   dependencies:
@@ -1878,10 +1878,6 @@ jest-environment-jsdom@^20.0.3:
     jest-util "^20.0.3"
     jsdom "^9.12.0"
 
-jest-environment-node-debug@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/jest-environment-node-debug/-/jest-environment-node-debug-2.0.0.tgz#5ef098942fec1b6af5ee4841f4f8a2ff419562f9"
-
 jest-environment-node@^20.0.3:
   version "20.0.3"
   resolved "https://registry.yarnpkg.com/jest-environment-node/-/jest-environment-node-20.0.3.tgz#d488bc4612af2c246e986e8ae7671a099163d403"
@@ -3042,10 +3038,6 @@ shebang-command@^1.2.0:
   dependencies:
     shebang-regex "^1.0.0"
 
-shebang-loader@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/shebang-loader/-/shebang-loader-0.0.1.tgz#a4000495d44cceefbec63435e7b1698569fa52ec"
-
 shebang-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-1.0.0.tgz#da42f49740c0b42db2ca9728571cb190c98efea3"
@@ -3392,15 +3384,14 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-3.2.1.tgz#97ef0582e3da7d9f16e712d4ae2b39cd8be7a4fb"
+ts-babel@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.0.1.tgz#d8c822858d38b11ba87942653ceaaf8c51eb48ed"
   dependencies:
-    babel-core "^6.25.0"
-    bluebird-lst "^1.0.2"
-    chalk "^2.1.0"
+    babel-core "^6.26.0"
+    bluebird-lst "^1.0.3"
     fs-extra-p "^4.4.0"
-    source-map-support "^0.4.15"
+    source-map-support "^0.4.16"
     v8-compile-cache "^1.1.0"
 
 ts-jsdoc@^2.0.5:
@@ -3454,7 +3445,11 @@ type-check@~0.3.2:
   dependencies:
     prelude-ls "~1.1.2"
 
-typescript@^2.4.2, typescript@~2.4.1:
+typescript@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.5.0.tgz#60989e74cad93c28fe35f7f7b41fe9b205a25701"
+
+typescript@~2.4.1:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.4.2.tgz#f8395f85d459276067c988aa41837a8f82870844"
 

@@ -173,10 +173,16 @@ async function runTests() {
     runInBand,
     testPathPattern: args.length > 0 ? args.join("|") : null,
   }, [rootDir], (result: any) => {
-    process.exitCode = !result || result.success ? 0 : 1
+    const exitCode = !result || result.success ? 0 : 1
+    process.exitCode = exitCode
     remove(TEST_DIR)
       .catch(e => {
         console.error(e.stack)
       })
+
+    // strange, without this code process exit code always 0
+    if (exitCode > 0) {
+      process.on("exit", () => process.exit(exitCode))
+    }
   })
 }

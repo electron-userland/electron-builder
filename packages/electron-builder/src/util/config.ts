@@ -1,4 +1,4 @@
-import Ajv from "ajv"
+import Ajv, { AdditionalPropertiesParams, ErrorObject, TypeParams } from "ajv"
 import { asArray, debug, log, warn } from "electron-builder-util"
 import { statOrNull } from "electron-builder-util/out/fs"
 import { readJson } from "fs-extra-p"
@@ -8,9 +8,6 @@ import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadCo
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Config } from "../metadata"
 import { reactCra } from "../presets/rectCra"
-import AdditionalPropertiesParams = ajv.AdditionalPropertiesParams
-import ErrorObject = ajv.ErrorObject
-import TypeParams = ajv.TypeParams
 
 /** @internal */
 export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Config | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Config> {
@@ -58,15 +55,13 @@ export async function getConfig(projectDir: string, configPath: string | null, c
   return deepAssign(parentConfig, config)
 }
 
-let validatorPromise: Promise<any> | null = null
-
-async function createConfigValidator() {
+const validatorPromise = new Lazy(async () => {
   const ajv = new Ajv({allErrors: true, coerceTypes: true})
   ajv.addMetaSchema(require("ajv/lib/refs/json-schema-draft-04.json"))
   require("ajv-keywords")(ajv, ["typeof"])
   const schema = await readJson(path.join(__dirname, "..", "..", "scheme.json"))
   return ajv.compile(schema)
-}
+})
 
 /** @internal */
 export async function validateConfig(config: Config) {
@@ -85,14 +80,10 @@ export async function validateConfig(config: Config) {
     config.buildDependenciesFromSource = false
   }
 
-  if (validatorPromise == null) {
-    validatorPromise = createConfigValidator()
-  }
-
-  const validator = await validatorPromise
+  const validator = await validatorPromise.value
   if (!validator(config)) {
     debug(JSON.stringify(validator.errors, null, 2))
-    throw new Error(`Config is invalid:
+    throw new Error(`Configuration is invalid:
 ${JSON.stringify(normaliseErrorMessages(validator.errors!), null, 2)}
 
 How to fix:

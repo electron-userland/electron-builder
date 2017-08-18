@@ -84,7 +84,7 @@ Object {
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "95919",
+  "Size": "95920",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;

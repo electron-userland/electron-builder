@@ -4,10 +4,6 @@ import { app } from "../helpers/packTester"
 
 test.ifNotWindows("deb", app({
   targets: Platform.LINUX.createTarget("deb"),
-  config: {
-    // to test xz (on macos we bundle xz and gnu-tar and it should be tested)
-    compression: "normal"
-  }
 }))
 
 test.ifNotWindows("arm", app({targets: Platform.LINUX.createTarget("deb", Arch.armv7l)}))
@@ -22,7 +18,7 @@ test.ifNotWindows("custom depends", app({
       depends: ["foo"],
     },
   },
-  effectiveOptionComputed: async (it) => {
+  effectiveOptionComputed: async it => {
     const content = await readFile(it[1], "utf8")
     expect(content).toMatchSnapshot()
     return false

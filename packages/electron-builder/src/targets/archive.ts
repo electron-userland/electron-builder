@@ -1,4 +1,4 @@
-import { path7za } from "7zip-bin"
+import { path7x, path7za } from "7zip-bin"
 import { debug7z, debug7zArgs, isMacOsSierra, spawn } from "electron-builder-util"
 import { computeEnv, getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
 import { exists } from "electron-builder-util/out/fs"
@@ -7,12 +7,12 @@ import * as path from "path"
 import { CompressionLevel } from "../core"
 
 class CompressionDescriptor {
-  constructor(public flag: string, public env: string, public minLevel: string, public maxLevel: string = "-9") {
+  constructor(readonly flag: string, readonly env: string, readonly minLevel: string, readonly maxLevel: string = "-9") {
   }
 }
 
 const extToCompressionDescriptor: { [key: string]: CompressionDescriptor; } = {
-  "tar.xz": new CompressionDescriptor("--xz", "XZ_OPT", "-0", "-9e"),
+  "tar.xz": new CompressionDescriptor(`-I'${path7x}'`, "XZ_OPT", "-0", "-9e"),
   "tar.lz": new CompressionDescriptor("--lzip", "LZOP", "-0"),
   "tar.gz": new CompressionDescriptor("--gz", "GZIP", "-1"),
   "tar.bz2": new CompressionDescriptor("--bzip2", "BZIP2", "-1"),
@@ -45,13 +45,14 @@ export async function tar(compression: CompressionLevel | null | undefined, form
       ...tarEnv,
       PATH: computeEnv(process.env.PATH, [path.join(linuxToolsPath, "bin")]),
       LANG: "en_US.UTF-8",
-      LC_CTYPE: "UTF-8"
+      LC_CTYPE: "UTF-8",
+      SZA_PATH: path7za,
     }
   }
 
   await spawn(process.platform === "darwin" || process.platform === "freebsd" ? "gtar" : "tar", args, {
     cwd: isMacApp ? path.dirname(dirToArchive) : dirToArchive,
-    env: tarEnv
+    env: tarEnv,
   })
   return outFile
 }
@@ -93,6 +94,7 @@ export function addZipArgs(args: Array<string>) {
   args.push("-mcu")
   // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
   args.push("-mtc=off")
+  // noinspection SpellCheckingInspection
   args.push("-tzip")
 }
 

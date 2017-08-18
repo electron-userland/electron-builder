@@ -67,3 +67,6 @@ if (process.env.TEST_APP_TMP_DIR == null) {
 if (!process.env.USE_HARD_LINKS) {
   process.env.USE_HARD_LINKS = "true"
 }
+if (!process.env.SZA_COMPRESSION_LEVEL) {
+  process.env.SZA_COMPRESSION_LEVEL = "0"
+}
