@@ -6,7 +6,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }
@@ -97,7 +96,7 @@ Object {
 `;
 
 exports[`scheme validation 1`] = `
-"Config is invalid:
+"Configuration is invalid:
 {
   \\"foo\\": \\"Unknown option\\",
   \\"mac\\": [
@@ -136,7 +135,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
     Object {
       "arch": "ia32",

@@ -83,8 +83,9 @@ export default class AppXTarget extends Target {
     taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
     await taskManager.awaitTasks()
 
-    const destination = path.join(this.outDir, packager.expandArtifactNamePattern(this.options, "appx", arch))
-    const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", destination]
+    const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
+    const artifactPath = path.join(this.outDir, artifactName)
+    const makeAppXArgs = ["pack", "/o", "/d", preAppx, "/p", artifactPath]
 
     // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
     if (isScaledAssetsProvided(userAssets)) {
@@ -99,13 +100,13 @@ export default class AppXTarget extends Target {
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
     await spawn(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe"), makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
-    await packager.sign(destination)
+    await packager.sign(artifactPath)
 
     packager.info.dispatchArtifactCreated({
-      file: destination,
+      file: artifactPath,
       packager,
       arch,
-      safeArtifactName: packager.computeSafeArtifactName("appx"),
+      safeArtifactName: packager.computeSafeArtifactName(artifactName, "appx"),
       target: this,
       isWriteUpdateInfo: this.options.electronUpdaterAware,
     })

@@ -32,7 +32,7 @@ export abstract class Publisher {
 
   abstract get providerName(): string
 
-  abstract upload(file: string, arch: Arch, safeArtifactName?: string): Promise<any>
+  abstract upload(file: string, arch: Arch, safeArtifactName?: string | null): Promise<any>
 
   protected createProgressBar(fileName: string, fileStat: Stats): ProgressBar | null {
     if (this.context.progress == null) {

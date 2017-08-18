@@ -160,7 +160,7 @@ export class PublishManager implements PublishContext {
 
   private getOrCreatePublisher(publishConfig: PublishConfiguration, platformPackager: PlatformPackager<any>, target: Target | null): Publisher | null {
     let providerCacheKey = `${publishConfig.provider}-${platformPackager.platform.name}`
-    if (target) {
+    if (target != null) {
       providerCacheKey += `-${target.name}`
     }
 
@@ -281,9 +281,13 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
     const info: UpdateInfo = {
       version,
       releaseDate: new Date().toISOString(),
-      githubArtifactName: event.safeArtifactName,
       path: path.basename(event.file!),
-      sha512: await sha512.value, ...releaseInfo as UpdateInfo}
+      sha512: await sha512.value, ...releaseInfo as UpdateInfo,
+    }
+
+    if (event.safeArtifactName != null) {
+      info.githubArtifactName = event.safeArtifactName
+    }
 
     if (packager.platform === Platform.WINDOWS) {
       // backward compatibility

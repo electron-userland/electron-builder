@@ -31,7 +31,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }
@@ -43,7 +42,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-x86_64.AppImage",
-      "safeArtifactName": "TestApp-1.1.0-x86_64.AppImage",
     },
   ],
 }

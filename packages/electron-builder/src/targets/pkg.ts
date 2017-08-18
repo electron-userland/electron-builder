@@ -47,17 +47,18 @@ export class PkgTarget extends Target {
       throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
     }
 
-    const outFile = path.join(appOutDir, packager.expandArtifactNamePattern(options, "pkg"))
+    const artifactName = packager.expandArtifactNamePattern(options, "pkg")
+    const artifactPath = path.join(appOutDir, artifactName)
     const args = prepareProductBuildArgs(identity, keychainName)
     args.push("--distribution", distInfoFile)
-    args.push(outFile)
+    args.push(artifactPath)
     use(options.productbuild, it => args.push(...it as any))
     await exec("productbuild", args, {
       cwd: appOutDir,
     })
     await BluebirdPromise.all([unlink(innerPackageFile), unlink(distInfoFile)])
 
-    packager.dispatchArtifactCreated(outFile, this, arch, packager.computeSafeArtifactName("pkg", arch))
+    packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "pkg", arch))
   }
 
   private async customizeDistributionConfiguration(distInfoFile: string, appPath: string) {

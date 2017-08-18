@@ -33,7 +33,7 @@ export interface ArtifactCreated {
   readonly file?: string
   readonly data?: Buffer
 
-  readonly safeArtifactName?: string
+  readonly safeArtifactName?: string | null
 
   readonly publishConfig?: PublishConfiguration
 

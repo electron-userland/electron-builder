@@ -7,7 +7,7 @@ export interface VersionInfo {
 
 export interface UpdateInfo extends VersionInfo {
   readonly path: string
-  readonly githubArtifactName?: string | null
+  githubArtifactName?: string | null
 
   /**
    * The release name.

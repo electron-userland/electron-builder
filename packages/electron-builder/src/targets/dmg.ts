@@ -163,7 +163,8 @@ export class DmgTarget extends Target {
       return
     }
 
-    const artifactPath = path.join(this.outDir, packager.expandArtifactNamePattern(packager.config.dmg, "dmg"))
+    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
+    const artifactPath = path.join(this.outDir, artifactName)
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     //noinspection SpellCheckingInspection
@@ -176,7 +177,7 @@ export class DmgTarget extends Target {
 
     await addLicenseToDmg(packager, artifactPath)
 
-    this.packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName("dmg"))
+    this.packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "dmg"))
   }
 
   computeVolumeName(custom?: string | null): string {

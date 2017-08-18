@@ -81,7 +81,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "NoApplicationsLink-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
       "arch": "x64",
@@ -98,7 +97,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "NoBackground-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
     },
   ],
 }
@@ -112,7 +110,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "NoBuildDirectory-1.1.0.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
     },
   ],
 }

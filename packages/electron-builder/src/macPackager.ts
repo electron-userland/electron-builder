@@ -199,9 +199,10 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
         throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
       }
 
-      const pkg = path.join(outDir!, this.expandArtifactNamePattern(masOptions, "pkg"))
-      await this.doFlat(appPath, pkg, masInstallerIdentity, keychainName)
-      this.dispatchArtifactCreated(pkg, null, Arch.x64, this.computeSafeArtifactName("pkg"))
+      const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
+      const artifactPath = path.join(outDir!, artifactName)
+      await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainName)
+      this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg"))
     }
   }
 

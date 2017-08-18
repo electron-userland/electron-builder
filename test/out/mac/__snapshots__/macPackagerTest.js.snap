@@ -97,7 +97,6 @@ Object {
     Object {
       "arch": "x64",
       "file": "TestApp-1.1.0-mac.dmg",
-      "safeArtifactName": "TestApp-1.1.0.dmg",
     },
     Object {
       "file": "latest-mac.json",

@@ -89,7 +89,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     return this.packagerOptions.prepackaged || path.join(outDir, `${this.platform.buildConfigurationKey}${getArchSuffix(arch)}${this.platform === Platform.MAC ? "" : "-unpacked"}`)
   }
 
-  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string) {
+  dispatchArtifactCreated(file: string, target: Target | null, arch: Arch | null, safeArtifactName?: string | null) {
     this.info.dispatchArtifactCreated({
       file, safeArtifactName, target, arch,
       packager: this,
@@ -350,7 +350,12 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
-  computeSafeArtifactName(ext: string, arch?: Arch | null, skipArchIfX64 = true) {
+  computeSafeArtifactName(suggestedName: string | null, ext: string, arch?: Arch | null, skipArchIfX64 = true): string | null {
+    // GitHub only allows the listed characters in file names.
+    if (suggestedName != null && /^[0-9A-Za-z._-]+$/.test(suggestedName)) {
+      return null
+    }
+
     // tslint:disable:no-invalid-template-strings
     return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
