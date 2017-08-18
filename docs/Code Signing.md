@@ -34,6 +34,8 @@ To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:
 
    In case of AppVeyor, don't forget to click on lock icon to “Toggle variable encryption”.
 
+   Keep in mind that Windows is not able to handle enviroment variable values longer than 8192 characters, thus if the base64 representation of your certificate exceeds that limit, try re-exporting the certificate without including all the certificates in the certification path (they are not necessary, but the Certificate Manager export wizard ticks the option by default), otherwise the encoded value will be truncated.
+
 # Where to Buy Code Signing Certificate
 See [Get a code signing certificate](https://msdn.microsoft.com/windows/hardware/drivers/dashboard/get-a-code-signing-certificate) for Windows.
 Please note — Gatekeeper only recognises [Apple digital certificates](http://stackoverflow.com/questions/11833481/non-apple-issued-code-signing-certificate-can-it-work-with-mac-os-10-8-gatekeep).
