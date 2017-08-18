@@ -350,6 +350,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     await this.checkFileInPackage(resourcesDir, "package.json", "Application", isAsar)
   }
 
+  isSafeArtifactName(name: string) {
+    // GitHub only allows the listed characters in file names.
+    return /^[0-9A-Za-z._-]+$/.test(name)
+  }
+
   computeSafeArtifactName(ext: string, arch?: Arch | null, skipArchIfX64 = true) {
     // tslint:disable:no-invalid-template-strings
     return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
