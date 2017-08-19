@@ -500,11 +500,11 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   }
 
   getTempFile(suffix: string): Promise<string> {
-    return this.info.tempDirManager.getTempFile(suffix)
+    return this.info.tempDirManager.getTempFile({suffix})
   }
 
-  getTempDir(suffix: string): Promise<string> {
-    return this.info.tempDirManager.getTempDir(suffix)
+  getTempDir(suffix?: string): Promise<string> {
+    return this.info.tempDirManager.getTempDir(suffix == null ? undefined : {suffix})
   }
 
   get fileAssociations(): Array<FileAssociation> {

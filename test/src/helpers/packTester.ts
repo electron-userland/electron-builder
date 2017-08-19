@@ -89,7 +89,7 @@ export async function assertPack(fixtureName: string, packagerOptions: PackagerO
   const customTmpDir = process.env.TEST_APP_TMP_DIR
   const tmpDir = new TmpDir()
   // non-macOS test uses the same dir as macOS test, but we cannot share node_modules (because tests executed in parallel)
-  const dir = customTmpDir == null ? await tmpDir.createTempDir(fixtureName) : path.resolve(customTmpDir)
+  const dir = customTmpDir == null ? await tmpDir.createTempDir() : path.resolve(customTmpDir)
   if (customTmpDir != null) {
     await emptyDir(dir)
     log(`Custom temp dir used: ${customTmpDir}`)

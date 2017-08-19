@@ -35,7 +35,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
   else {
     const isUrl = urlOrBase64.startsWith("https://")
     if (isUrl || urlOrBase64.length > 2048 || urlOrBase64.endsWith("=")) {
-      const tempFile = await tmpDir.getTempFile(".p12")
+      const tempFile = await tmpDir.getTempFile({suffix: ".p12"})
       if (isUrl) {
         await httpExecutor.download(urlOrBase64, tempFile)
       }
@@ -119,7 +119,7 @@ export async function createKeychain({tmpDir, cscLink, cscKeyPassword, cscILink,
     await bundledCertKeychainAdded.value
   }
 
-  const keychainFile = await tmpDir.getTempFile(".keychain", false, removeKeychain)
+  const keychainFile = await tmpDir.getTempFile({suffix: ".keychain", disposer: removeKeychain})
 
   const certLinks = [cscLink]
   if (cscILink != null) {

@@ -1,10 +1,11 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { Arch, asArray, debug7zArgs, doSpawn, execWine, getPlatformIconFileName, handleProcess, isEmptyOrSpaces, log, spawn, use, warn } from "electron-builder-util"
+import { Arch, asArray, debug7zArgs, exec, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawn, spawnAndWrite, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
-import { readFile, writeFile } from "fs-extra-p"
+import { outputFile, readFile } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
@@ -27,9 +28,9 @@ const debug = _debug("electron-builder:nsis")
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 // noinspection SpellCheckingInspection
-const nsisPathPromise = getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057")
+const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057"))
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = getBinFromGithub("nsis-resources", "3.1.0", "/QBlR/F8AAGInT/eQQ0eJNSF0RFR11g+L54WWViDYTgBHwTIlkcqBHgvNDKO6LQODtqOm9N2nG2AxK7UZT5bOg==")
+const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.1.0", "/QBlR/F8AAGInT/eQQ0eJNSF0RFR11g+L54WWViDYTgBHwTIlkcqBHgvNDKO6LQODtqOm9N2nG2AxK7UZT5bOg=="))
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -71,7 +72,7 @@ export class NsisTarget extends Target {
     }
 
     if (isPackElevateHelper !== false) {
-      await copyFile(path.join(await nsisPathPromise, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
+      await copyFile(path.join(await NSIS_PATH.value, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
     }
 
     const isDifferentialPackage = options.differentialPackage
@@ -94,15 +95,18 @@ export class NsisTarget extends Target {
     if (options.differentialPackage) {
       const args = debug7zArgs("a")
       addZipArgs(args)
-      args.push(`-mm=${archiveOptions.method}`, "-mx=9")
+      args.push(`-mm=${archiveOptions.method}`, "-mx=" + (process.env.TEST_APP_TMP_DIR == null ? "9" : "3"))
       args.push(archiveFile)
 
       const blockMap = await computeBlockMap(appOutDir)
-      const blockMapFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.blockMap.yml`)
-      await writeFile(blockMapFile, blockMap)
+      // https://superuser.com/a/966241, use leading ~ symbol to add file to the end (and avoid file rewrite)
+      const blockMapFile = await packager.info.tempDirManager.getTempFile({prefix: "~"})
+      await outputFile(blockMapFile, blockMap)
       await spawn(path7za, args.concat(blockMapFile), {
         cwd: this.outDir,
       })
+      // rename to final name (file order will be not changed and preserved as is)
+      await exec(path7za, ["rn", archiveFile, path.basename(blockMapFile), "blockMap.yml"])
     }
 
     return archiveFile
@@ -424,36 +428,14 @@ export class NsisTarget extends Target {
       process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
     }
 
-    const nsisPath = await nsisPathPromise
-    await new BluebirdPromise<any>((resolve, reject) => {
-      const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
-      const childProcess = doSpawn(command, args, {
-        // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
-        // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
-        env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8", LANG: "en_US.UTF-8"},
-        cwd: nsisTemplatesDir,
-      }, {isPipeInput: true, isDebugEnabled: debug.enabled})
-
-      const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
-
-      handleProcess("close", childProcess, command, () => {
-        try {
-          clearTimeout(timeout)
-        }
-        finally {
-          resolve()
-        }
-      }, error => {
-        try {
-          clearTimeout(timeout)
-        }
-        finally {
-          reject((error.stack || error.toString()) + "\nNSIS script:\n" + script)
-        }
-      })
-
-      childProcess.stdin.end(script)
-    })
+    const nsisPath = await NSIS_PATH.value
+    const command = path.join(nsisPath, process.platform === "darwin" ? "mac" : (process.platform === "win32" ? "Bin" : "linux"), process.platform === "win32" ? "makensis.exe" : "makensis")
+    await spawnAndWrite(command, args, script, {
+      // we use NSIS_CONFIG_CONST_DATA_PATH=no to build makensis on Linux, but in any case it doesn't use stubs as MacOS/Windows version, so, we explicitly set NSISDIR
+      // set LC_CTYPE to avoid crash https://github.com/electron-userland/electron-builder/issues/503 Even "en_DE.UTF-8" leads to error.
+      env: {...process.env, NSISDIR: nsisPath, LC_CTYPE: "en_US.UTF-8", LANG: "en_US.UTF-8"},
+      cwd: nsisTemplatesDir,
+    }, debug.enabled)
   }
 
   private async computeCommonInstallerScriptHeader() {
@@ -472,7 +454,7 @@ export class NsisTarget extends Target {
 
     const pluginArch = this.isUnicodeEnabled ? "x86-unicode" : "x86-ansi"
     taskManager.add(async () => {
-      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise, "plugins", pluginArch))
+      scriptGenerator.addPluginDir(pluginArch, path.join(await nsisResourcePathPromise.value, "plugins", pluginArch))
     })
 
     taskManager.add(async () => {

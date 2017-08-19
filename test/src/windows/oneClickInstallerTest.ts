@@ -209,6 +209,9 @@ test.ifNotCiMac("web installer", app({
       provider: "s3",
       bucket: "develar",
       path: "test",
+    },
+    nsis: {
+      differentialPackage: true,
     }
   }
 }))

@@ -194,7 +194,7 @@ Object {
     },
     Object {
       "arch": "x64",
-      "file": "TestApp-1.1.0-x64.nsis.7z",
+      "file": "TestApp-1.1.0-x64.nsis.zip",
     },
   ],
 }

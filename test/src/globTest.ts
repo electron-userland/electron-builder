@@ -65,7 +65,7 @@ test.ifNotWindows("outside link", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
 }, {
   projectDirCreated: async (projectDir, tmpDir) => {
-    const tempDir = await tmpDir.getTempDir("link")
+    const tempDir = await tmpDir.getTempDir()
     await outputFile(path.join(tempDir, "foo"), "data")
     await symlink(tempDir, path.join(projectDir, "o-dir"))
   },

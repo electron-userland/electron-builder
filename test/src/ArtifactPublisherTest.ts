@@ -80,7 +80,7 @@ test("Bintray upload", async () => {
   const version = versionNumber()
 
   const tmpDir = new TmpDir()
-  const artifactPath = await tmpDir.getTempFile(`icon-${version}.icns`)
+  const artifactPath = await tmpDir.getTempFile({suffix: ".icns"})
   await copyFile(iconPath, artifactPath)
 
   //noinspection SpellCheckingInspection

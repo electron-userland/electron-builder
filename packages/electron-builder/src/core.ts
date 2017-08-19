@@ -1,5 +1,5 @@
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { Arch, archFromString } from "electron-builder-util"
+import { Arch, archFromString, ArchType } from "electron-builder-util"
 
 export type TargetConfigType = Array<string | TargetConfig> | string | TargetConfig | null
 
@@ -12,7 +12,7 @@ export interface TargetConfig {
   /**
    * The arch or list of archs.
    */
-  readonly arch?: Array<"x64" | "ia32" | "armv7l"> | string
+  readonly arch?: Array<ArchType> | ArchType
 }
 
 export class Platform {

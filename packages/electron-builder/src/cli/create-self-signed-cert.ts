@@ -11,7 +11,7 @@ import { getSignVendorPath } from "../windowsCodeSign"
 export async function createSelfSignedCert(publisher: string) {
   const tmpDir = new TmpDir()
   const targetDir = process.cwd()
-  const tempPrefix = path.join(await tmpDir.getTempDir(""), sanitizeFileName(publisher))
+  const tempPrefix = path.join(await tmpDir.getTempDir(), sanitizeFileName(publisher))
   const cer = `${tempPrefix}.cer`
   const pvk = `${tempPrefix}.pvk`
 

@@ -1,4 +1,4 @@
-import { addValue, Arch, archFromString, asArray } from "electron-builder-util"
+import { addValue, Arch, archFromString, ArchType, asArray } from "electron-builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfig } from "../core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 import { PlatformPackager } from "../platformPackager"
@@ -14,7 +14,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, optio
     }
   }
 
-  const defaultArchs: Array<string> = raw.size === 0 ? [platform === Platform.MAC ? "x64" : process.arch] : Array.from(raw.keys()).map(it => Arch[it])
+  const defaultArchs: Array<ArchType> = raw.size === 0 ? [platform === Platform.MAC ? "x64" : process.arch as ArchType] : Array.from(raw.keys()).map(it => Arch[it] as ArchType)
   const result = new Map(raw)
   for (const target of asArray(options.target).map<TargetConfig>(it => typeof it === "string" ? {target: it} : it)) {
     let name = target.target
@@ -23,7 +23,7 @@ export function computeArchToTargetNamesMap(raw: Map<Arch, Array<string>>, optio
     if (suffixPos > 0) {
       name = target.target.substring(0, suffixPos)
       if (archs == null) {
-        archs = target.target.substring(suffixPos + 1)
+        archs = target.target.substring(suffixPos + 1) as ArchType
       }
     }
 

@@ -236,7 +236,7 @@ async function writeConfigFile(tmpDir: TmpDir, templatePath: string, options: an
       return replacer(match, p1.trim())
     })
 
-  const outputPath = await tmpDir.getTempFile(path.basename(templatePath, ".tpl"))
+  const outputPath = await tmpDir.getTempFile({suffix: path.basename(templatePath, ".tpl")})
   await outputFile(outputPath, config)
   return outputPath
 }

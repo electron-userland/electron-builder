@@ -40,7 +40,7 @@ export function createTestApp(version: string) {
 }
 
 export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions>(data: T): Promise<string> {
-  const updateConfigPath = path.join(await tmpDir.getTempDir("update-config"), "app-update.yml")
+  const updateConfigPath = path.join(await tmpDir.getTempDir(), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))
   return updateConfigPath
 }

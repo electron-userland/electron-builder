@@ -57,7 +57,7 @@ export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 async function compileUsingElectronCompile(mainFileSet: FileSet, packager: Packager): Promise<FileSet> {
   log("Compiling using electron-compile")
 
-  const electronCompileCache = await packager.tempDirManager.getTempDir("electron-compile-cache")
+  const electronCompileCache = await packager.tempDirManager.getTempDir({prefix: "electron-compile-cache"})
   const cacheDir = path.join(electronCompileCache, ".cache")
   // clear and create cache dir
   await ensureDir(cacheDir)

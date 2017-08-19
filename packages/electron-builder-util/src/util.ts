@@ -114,6 +114,30 @@ export function doSpawn(command: string, args: Array<string>, options?: SpawnOpt
   }
 }
 
+export function spawnAndWrite(command: string, args: Array<string>, data: string, options?: SpawnOptions, isDebugEnabled: boolean = false) {
+  const childProcess = doSpawn(command, args, options, {isPipeInput: true, isDebugEnabled})
+  const timeout = setTimeout(() => childProcess.kill(), 4 * 60 * 1000)
+  return new BluebirdPromise<any>((resolve, reject) => {
+    handleProcess("close", childProcess, command, () => {
+      try {
+        clearTimeout(timeout)
+      }
+      finally {
+        resolve()
+      }
+    }, error => {
+      try {
+        clearTimeout(timeout)
+      }
+      finally {
+        reject(error.stack || error.toString())
+      }
+    })
+
+    childProcess.stdin.end(data)
+  })
+}
+
 export function spawn(command: string, args?: Array<string> | null, options?: SpawnOptions, extraOptions?: ExtraSpawnOptions): Promise<any> {
   return new BluebirdPromise<any>((resolve, reject) => {
     handleProcess("close", doSpawn(command, args || [], options, extraOptions), command, resolve, reject)
