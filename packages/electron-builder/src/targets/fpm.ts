@@ -1,7 +1,7 @@
 import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "electron-builder-util"
-import { getBin, getBinFromGithub } from "electron-builder-util/out/binDownload"
+import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { computeEnv, getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
@@ -22,14 +22,13 @@ const fpmPath = new Lazy(() => {
 
   if (process.platform === "darwin") {
     //noinspection SpellCheckingInspection
-    return getBinFromGithub("fpm", "1.9.2-20150715-2.2.2-mac", "6sZZoRKkxdmv3a6E5dnZgVl23apGnImhDtGHKhgCE1WOtXBUJnx+w0WvB2HD2/sitz4f93Mf7+QqDCIbfP7LOw==")
+    return getBinFromGithub("fpm", "1.9.2.1-20150715-2.2.2-mac", "6sZZoRKkxdmv3a6E5dnZgVl23apGnImhDtGHKhgCE1WOtXBUJnx+w0WvB2HD2/sitz4f93Mf7+QqDCIbfP7LOw==")
       .then(it => path.join(it, "fpm"))
   }
 
-  const version = "fpm-1.8.1-2.3.1"
   //noinspection SpellCheckingInspection
-  const sha2 = (process.arch === "ia32" ? "8380331f7d9762a36d7c7181501c3fc9342745b8499b962f6ea37c7dc3778f99" : "6538fcd2486c2831949562abfd0017b67eff502addad5b444baec4899b0babc6")
-  return getBin("fpm", version, `https://dl.bintray.com/electron-userland/bin/${version}-${osAndArch}.7z`, sha2)
+  const checksum = process.arch === "ia32" ? "cTT/HdjrQ6qTJQhTZaZC3lyDkRCyNFtNBZ0F7n6mh5B3YmD5ttJZ0xn65pQS03dhEi67A8K1xXNO+tyEEviiIg==" : "0zKxWlHuQEUsXJpWll5Bc4OTI8d0jcMVlme9OeHI+Y+s3sv1S4KyGLOEVEkNw6pRU8F+A1Dj5IR95/+U8YzB0A=="
+  return getBinFromGithub("fpm", `1.9.2-2.3.1-${osAndArch}`, checksum)
     .then(it => path.join(it, "fpm"))
 })
 

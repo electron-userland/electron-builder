@@ -242,7 +242,12 @@ async function checkLinuxResult(outDir: string, packager: Packager, arch: Arch, 
     maxBuffer: 10 * 1024 * 1024,
   }))
   delete control.Version
+  delete control.Size
+  const description = control.Description
+  delete control.Description
   expect(control).toMatchSnapshot()
+  // strange difference on linux and mac (no leading space on Linux)
+  expect(description.trim()).toMatchSnapshot()
 }
 
 function parseDebControl(info: string): any {

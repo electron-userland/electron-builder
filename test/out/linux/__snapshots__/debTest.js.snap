@@ -76,18 +76,17 @@ exports[`arm 3`] = `
 Object {
   "Architecture": "armv7l",
   "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
-  "Description": " 
-  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "95920",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
+
+exports[`arm 4`] = `"Test Application (test quite “ #378)"`;
 
 exports[`custom depends 1`] = `
 "[Desktop Entry]
@@ -177,18 +176,17 @@ exports[`custom depends 4`] = `
 Object {
   "Architecture": "amd64",
   "Depends": "foo",
-  "Description": " 
-  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "131082",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
+
+exports[`custom depends 5`] = `"Test Application (test quite “ #378)"`;
 
 exports[`deb 1`] = `
 Object {
@@ -266,15 +264,14 @@ exports[`deb 3`] = `
 Object {
   "Architecture": "amd64",
   "Depends": "gconf2, gconf-service, libnotify4, libappindicator1, libxtst6, libnss3, libxss1",
-  "Description": " 
-  Test Application (test quite “ #378)",
   "Homepage": "http://foo.example.com",
   "License": "MIT",
   "Maintainer": "Foo Bar <foo@example.com>",
   "Package": "testapp",
   "Priority": "extra",
   "Section": "devel",
-  "Size": "131082",
   "Vendor": "Foo Bar <foo@example.com>",
 }
 `;
+
+exports[`deb 4`] = `"Test Application (test quite “ #378)"`;
