@@ -1,10 +1,9 @@
-import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
 import _debug from "debug"
-import { Arch, asArray, debug7zArgs, exec, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawn, spawnAndWrite, use, warn } from "electron-builder-util"
+import { Arch, asArray, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "electron-builder-util"
 import { getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { copyFile, statOrNull } from "electron-builder-util/out/fs"
-import { outputFile, readFile } from "fs-extra-p"
+import { readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -14,11 +13,11 @@ import { normalizeExt } from "../../platformPackager"
 import { AsyncTaskManager } from "../../util/asyncTaskManager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
-import { addZipArgs, archive, ArchiveOptions } from "../archive"
-import { computeBlockMap } from "../blockMap"
+import { archive, ArchiveOptions } from "../archive"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
+import { createDifferentialPackage } from "./nsisPackage"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
 
@@ -78,13 +77,11 @@ export class NsisTarget extends Target {
     const isDifferentialPackage = options.differentialPackage
     const format = isDifferentialPackage || options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
-    const archiveOptions: ArchiveOptions = {withoutDir: true, solid: !isDifferentialPackage}
+    const archiveOptions: ArchiveOptions = {withoutDir: true}
     let compression = packager.config.compression
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     if (isDifferentialPackage) {
-      // reduce dict size to avoid large block invalidation on change
-      archiveOptions.dictSize = 16
       archiveOptions.method = "LZMA"
       // do not allow to change compression level to avoid different packages
       compression = null
@@ -93,20 +90,7 @@ export class NsisTarget extends Target {
     timer.end()
 
     if (options.differentialPackage) {
-      const args = debug7zArgs("a")
-      addZipArgs(args)
-      args.push(`-mm=${archiveOptions.method}`, "-mx=" + (process.env.TEST_APP_TMP_DIR == null ? "9" : "3"))
-      args.push(archiveFile)
-
-      const blockMap = await computeBlockMap(appOutDir)
-      // https://superuser.com/a/966241, use leading ~ symbol to add file to the end (and avoid file rewrite)
-      const blockMapFile = await packager.info.tempDirManager.getTempFile({prefix: "~"})
-      await outputFile(blockMapFile, blockMap)
-      await spawn(path7za, args.concat(blockMapFile), {
-        cwd: this.outDir,
-      })
-      // rename to final name (file order will be not changed and preserved as is)
-      await exec(path7za, ["rn", archiveFile, path.basename(blockMapFile), "blockMap.yml"])
+      await createDifferentialPackage(archiveFile, archiveOptions, packager)
     }
 
     return archiveFile

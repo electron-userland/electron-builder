@@ -76,6 +76,8 @@
       <w>emoji</w>
       <w>enoent</w>
       <w>enotdir</w>
+      <w>eocdl</w>
+      <w>eocdr</w>
       <w>eperm</w>
       <w>epipe</w>
       <w>evolvehq</w>
@@ -295,6 +297,7 @@
       <w>xubuntu</w>
       <w>yaml</w>
       <w>yargs</w>
+      <w>yauzl</w>
       <w>zenity</w>
       <w>zisofs</w>
       <w>zlib</w>

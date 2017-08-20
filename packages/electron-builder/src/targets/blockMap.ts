@@ -1,18 +1,15 @@
+import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { walk } from "electron-builder-util/out/fs"
-import { open, read, Stats } from "fs-extra-p"
-import { safeDump } from "js-yaml"
+import { read } from "fs-extra-p"
+import { EntryDataRange, openZip } from "./nsis/zip"
 
-async function computeBlocks(inputFile: string, stat: Stats): Promise<Array<string>> {
-  const fd = await open(inputFile, "r")
-
+async function computeBlocks(fd: number, range: EntryDataRange): Promise<Array<string>> {
   const chunkSize = 64 * 1024
   const buffer = Buffer.allocUnsafe(chunkSize)
-  const size = stat.size
   const blocks = []
 
-  for (let offset = 0; offset < size; offset += chunkSize) {
-    const actualChunkSize = Math.min(size - offset, chunkSize)
+  for (let offset = range.start; offset < range.end; offset += chunkSize) {
+    const actualChunkSize = Math.min(range.end - offset, chunkSize)
     await read(fd, buffer, 0, actualChunkSize, offset)
 
     const hash = createHash("sha256")
@@ -23,20 +20,46 @@ async function computeBlocks(inputFile: string, stat: Stats): Promise<Array<stri
   return blocks
 }
 
-export async function computeBlockMap(appOutDir: string): Promise<string> {
-  const files = new Map<string, Stats>()
-  await walk(appOutDir, null, {
-    consume: (file, fileStat) => {
-      if (fileStat.isFile()) {
-        files.set(file, fileStat)
+export async function computeBlockMap(archiveFile: string, compressionMethod: "lzma", compressionLevel: 9 | 1): Promise<BlockMap> {
+  const zip = await openZip(archiveFile)
+  try {
+    const entries = await zip.readEntries()
+    const files = await BluebirdPromise.map(entries, async entry => {
+      const blocks = await computeBlocks(zip.fd, await zip.getDataPosition(entry))
+      return {
+        name: (entry.fileName as string).replace(/\\/g, "/"),
+        size: entry.compressedSize,
+        blocks,
       }
+    }, {concurrency: 8})
+    return {
+      blockSize: 64,
+      hashMethod: "sha256",
+      files,
+      compressionMethod,
+      compressionLevel,
     }
-  })
-
-  const info: Array<any> = []
-  for (const [file, stat] of files.entries()) {
-    const blocks = await computeBlocks(file, stat)
-    info.push({name: file.substring(appOutDir.length + 1).replace(/\\/g, "/"), blocks})
   }
-  return safeDump(info)
+  finally {
+    await zip.close()
+  }
+}
+
+export interface BlockMap {
+  blockSize: number
+  hashMethod: "sha256"
+
+  // https://sourceforge.net/p/sevenzip/discussion/45798/thread/222c71f9/?limit=25
+  compressionMethod: "lzma"
+  compressionLevel: 9 | 1
+
+  files: Array<BlockMapFile>
+}
+
+export interface BlockMapFile {
+  name: string
+  size: number
+
+  // size of block 64K, last block size `size % (64 * 1024)`
+  blocks: Array<string>
 }

@@ -73,73 +73,75 @@ export interface ArchiveOptions {
   dictSize?: number
   excluded?: Array<string>
 
-  method?: "Copy" | "LZMA"
+  method?: "Copy" | "LZMA" | "Deflate"
 }
 
-// 7z is very fast, so, use ultra compression
-/** @internal */
-export function addUltraArgs(args: Array<string>, options: ArchiveOptions) {
-  // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
-  // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
-  // -mtm=off disable "Stores last Modified timestamps for files."
-  // tc and ta are off by default, but to be sure, we explicitly set it to off
-  args.push("-mx=9", `-md=${options.dictSize || 64}m`, `-ms=${options.solid === false ? "off" : "on"}`, "-mtm=off", "-mtc=off", "-mta=off")
-}
-
-/** @internal */
-export function addZipArgs(args: Array<string>) {
-  // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
-  // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
-  // but archive should be the same regardless where produced
-  args.push("-mcu")
-  // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
-  args.push("-mtc=off")
-  // noinspection SpellCheckingInspection
-  args.push("-tzip")
-}
-
-/** @internal */
-export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
+export function compute7zCompressArgs(compression: CompressionLevel | any | any, format: string, options: ArchiveOptions = {}) {
   let storeOnly = compression === "store"
   const args = debug7zArgs("a")
-  if (format === "7z" || format.endsWith(".7z")) {
-    if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-      storeOnly = false
-      args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
-    }
-    else if (!storeOnly) {
-      addUltraArgs(args, options)
-    }
+
+  let isLevelSet = false
+  if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
+    storeOnly = false
+    args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
+    isLevelSet = true
   }
-  else if (format === "zip" && compression === "maximum") {
+
+  if (format === "zip" && compression === "maximum") {
     // http://superuser.com/a/742034
     args.push("-mfb=258", "-mpass=15")
   }
-  else if (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL != null) {
-    storeOnly = false
-    args.push(`-mx=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}`)
-  }
-  else if (!storeOnly) {
+
+  if (!isLevelSet && !storeOnly) {
     args.push("-mx=9")
   }
 
-  // remove file before - 7z doesn't overwrite file, but update
-  try {
-    await unlink(outFile)
+  if (options.dictSize != null) {
+    args.push(`-md=${options.dictSize}m`)
   }
-  catch (e) {
-    // ignore
+
+  // https://sevenzip.osdn.jp/chm/cmdline/switches/method.htm#7Z
+  // https://stackoverflow.com/questions/27136783/7zip-produces-different-output-from-identical-input
+  // tc and ta are off by default, but to be sure, we explicitly set it to off
+  // disable "Stores NTFS timestamps for files: Modification time, Creation time, Last access time." to produce the same archive for the same data
+  args.push("-mtc=off")
+
+  if (format === "7z" || format.endsWith(".7z")) {
+    if (options.solid === false) {
+      args.push("-ms=off")
+    }
+
+    // args valid only for 7z
+    // -mtm=off disable "Stores last Modified timestamps for files."
+    args.push("-mtm=off", "-mta=off")
   }
 
   if (options.method != null) {
     args.push(`-mm=${options.method}`)
   }
   else if (format === "zip" || storeOnly) {
-    args.push("-mm=" + (storeOnly ? "Copy" : "Deflate"))
+    args.push(`-mm=${storeOnly ? "Copy" : "Deflate"}`)
   }
 
   if (format === "zip") {
-    addZipArgs(args)
+    // -mcu switch:  7-Zip uses UTF-8, if there are non-ASCII symbols.
+    // because default mode: 7-Zip uses UTF-8, if the local code page doesn't contain required symbols.
+    // but archive should be the same regardless where produced
+    args.push("-mcu")
+  }
+  return args
+}
+
+// 7z is very fast, so, use ultra compression
+/** @internal */
+export async function archive(compression: CompressionLevel | null | undefined, format: string, outFile: string, dirToArchive: string, options: ArchiveOptions = {}): Promise<string> {
+  const args = compute7zCompressArgs(compression, format, options)
+  // remove file before - 7z doesn't overwrite file, but update
+  try {
+    await unlink(outFile)
+  }
+  catch (e) {
+    // ignore
   }
 
   args.push(outFile, options.listFile == null ? (options.withoutDir ? "." : path.basename(dirToArchive)) : `@${options.listFile}`)
