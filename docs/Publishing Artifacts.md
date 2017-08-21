@@ -47,7 +47,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
  ```json
  "release": "build"
  ```
- and if you run `npm run release`, a release will be drafted (if doesn't already exist) and artifacts published.
+ and if you run `yarn release`, a release will be drafted (if doesn't already exist) and artifacts published.
 
 ## Publish Options
 

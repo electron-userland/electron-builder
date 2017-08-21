@@ -6,7 +6,7 @@ import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
 import mime from "mime"
 import { parse as parseUrl } from "url"
-import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
+import { getCiTag, HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
 export interface Release {
   id: number
@@ -71,32 +71,38 @@ export class GitHubPublisher extends HttpPublisher {
     // we don't use "Get a release by tag name" because "tag name" means existing git tag, but we draft release and don't create git tag
     const releases = await this.githubRequest<Array<Release>>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token)
     for (const release of releases) {
-      if (release.tag_name === this.tag || release.tag_name === this.version) {
-        if (release.draft) {
-          return release
-        }
+      if (!(release.tag_name === this.tag || release.tag_name === this.version)) {
+        continue
+      }
 
-        // https://github.com/electron-userland/electron-builder/issues/1197
-        // https://electron-builder.slack.com/archives/general/p1485961449000202
-        if (this.options.draft == null || this.options.draft) {
-          warn(`Release with tag ${this.tag} already exists`)
-          return null
-        }
-
-        // https://github.com/electron-userland/electron-builder/issues/1133
-        // if release created < 2 hours — allow to upload
-        const publishedAt = release.published_at == null ? null : new Date(release.published_at)
-        if (publishedAt != null && (Date.now() - publishedAt.getMilliseconds()) > (2 * 3600 * 1000)) {
-          // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
-          warn(`Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`)
-          return null
-        }
+      if (release.draft) {
         return release
       }
+
+      // https://github.com/electron-userland/electron-builder/issues/1197
+      // https://electron-builder.slack.com/archives/general/p1485961449000202
+      if (this.options.draft !== null || this.options.draft) {
+        warn(`Release with tag ${this.tag} already exists`)
+        return null
+      }
+
+      // https://github.com/electron-userland/electron-builder/issues/1133
+      // if release created < 2 hours — allow to upload
+      const publishedAt = release.published_at == null ? null : new Date(release.published_at)
+      if (publishedAt != null && (Date.now() - publishedAt.getMilliseconds()) > (2 * 3600 * 1000)) {
+        // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
+        warn(`Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`)
+        return null
+      }
+      return release
     }
 
-    log(`Release with tag ${this.tag} doesn't exist, creating one`)
-    return this.createRelease()
+    // https://github.com/electron-userland/electron-builder/issues/1835
+    if (this.options.publish === "always" || getCiTag() != null) {
+      log(`Release with tag ${this.tag} doesn't exist, creating one`)
+      return this.createRelease()
+    }
+    return null
   }
 
   protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<void> {
@@ -155,8 +161,8 @@ export class GitHubPublisher extends HttpPublisher {
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.version,
-      draft: this.options.draft == null || this.options.draft,
-      prerelease: this.options.prerelease != null && this.options.prerelease,
+      draft: this.options.draft !== false,
+      prerelease: this.options.prerelease === true,
     })
   }
 

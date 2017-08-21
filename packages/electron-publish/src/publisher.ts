@@ -89,3 +89,8 @@ export abstract class HttpPublisher extends Publisher {
 
   protected abstract doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, file?: string): Promise<any>
 }
+
+export function getCiTag() {
+  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG
+  return tag != null && tag.length > 0 ? tag : null
+}

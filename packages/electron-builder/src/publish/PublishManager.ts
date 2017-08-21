@@ -5,7 +5,7 @@ import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
 import { Arch, asArray, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn } from "electron-builder-util"
-import { HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
+import { getCiTag, HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import { MultiProgress } from "electron-publish/out/multiProgress"
@@ -429,11 +429,6 @@ function isSuitableWindowsTarget(target: Target, event: ArtifactCreated | null) 
     return true
   }
   return target.name === "nsis" || target.name.startsWith("nsis-")
-}
-
-function getCiTag() {
-  const tag = process.env.TRAVIS_TAG || process.env.APPVEYOR_REPO_TAG_NAME || process.env.CIRCLE_TAG || process.env.BITRISE_GIT_TAG || process.env.CI_BUILD_TAG
-  return tag != null && tag.length > 0 ? tag : null
 }
 
 function expandPublishConfig(options: any, packager: PlatformPackager<any>, arch: Arch | null): void {
