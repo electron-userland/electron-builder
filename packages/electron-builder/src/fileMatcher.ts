@@ -156,13 +156,17 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   //noinspection SpellCheckingInspection
   patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
     "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
-    ".idea,.vs,.editorconfig,.flowconfig,.jshintrc,.eslintrc," +
+    ".idea,.vs,.flowconfig,.jshintrc,.eslintrc," +
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
     "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
 
   if (isElectronCompile) {
     patterns.push("!.cache{,/**/*}")
   }
+
+  // https://github.com/electron-userland/electron-builder/issues/1969
+  // exclude ony for app root, use .yarnclean to clean node_modules
+  patterns.push("!.editorconfig")
 
   debug(`File patterns of first/default matcher:\n\t${patterns.join("\n\t")}`)
 

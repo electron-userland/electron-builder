@@ -79,7 +79,8 @@ You can use macros in the file patterns, artifact file name patterns and publish
 * `!**/node_modules/.bin`
 * `!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}`
 * `!**/._*`
-* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.editorconfig,.flowconfig,.yarn-metadata.json,.idea,.vs,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
+* `!.editorconfig`
+* `!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.flowconfig,.yarn-metadata.json,.idea,.vs,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}`
 
 ## Artifact File Name Pattern
 

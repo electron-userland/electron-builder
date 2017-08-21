@@ -72,6 +72,7 @@
       <w>dylibbundler</w>
       <w>eacces</w>
       <w>ebusy</w>
+      <w>editorconfig</w>
       <w>electronuserland</w>
       <w>emoji</w>
       <w>enoent</w>
@@ -297,6 +298,7 @@
       <w>xubuntu</w>
       <w>yaml</w>
       <w>yargs</w>
+      <w>yarnclean</w>
       <w>yauzl</w>
       <w>zenity</w>
       <w>zisofs</w>
