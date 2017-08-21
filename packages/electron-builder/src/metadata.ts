@@ -2,8 +2,9 @@ import { AsarIntegrityOptions } from "asar-integrity"
 import { Publish } from "electron-builder-http/out/publishOptions"
 import { Arch } from "electron-builder-util"
 import { BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "./core"
-import { DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions, SnapOptions } from "./options/linuxOptions"
+import { AppImageOptions, DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
+import { SnapOptions } from "./options/SnapOptions"
 import { AppXOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
@@ -302,7 +303,7 @@ export interface Config extends PlatformSpecificBuildOptions {
    * [Snap](http://snapcraft.io) options.
    */
   readonly snap?: SnapOptions | null
-  readonly appImage?: LinuxTargetSpecificOptions | null
+  readonly appImage?: AppImageOptions | null
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null

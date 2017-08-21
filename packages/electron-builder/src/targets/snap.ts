@@ -6,7 +6,7 @@ import { homedir } from "os"
 import * as path from "path"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
-import { SnapOptions } from "../options/linuxOptions"
+import { SnapOptions } from "../options/SnapOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 export default class SnapTarget extends Target {

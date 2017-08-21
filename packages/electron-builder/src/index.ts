@@ -7,5 +7,6 @@ export { Metadata, Config, AfterPackContext, MetadataDirectories, Protocol, File
 export { MacOptions, DmgOptions, MasBuildOptions, MacOsTargetName, PkgOptions, DmgContent, DmgWindow } from "./options/macOptions"
 export { WinBuildOptions, SquirrelWindowsOptions, AppXOptions } from "./options/winOptions"
 export { NsisOptions, NsisWebOptions, PortableOptions, CommonNsisOptions } from "./targets/nsis/nsisOptions"
-export { LinuxBuildOptions, DebOptions, SnapOptions, CommonLinuxOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+export { LinuxBuildOptions, DebOptions, CommonLinuxOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+export { SnapOptions } from "./options/SnapOptions"
 export { buildForge, ForgeOptions } from "./forge/forge-maker"

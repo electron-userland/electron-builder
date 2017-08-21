@@ -352,7 +352,6 @@ Configuration Options
   * <a name="SquirrelWindowsOptions-remoteToken"></a>`remoteToken` String - Authentication token for remote updates
   * <a name="SquirrelWindowsOptions-useAppIdAsId"></a>`useAppIdAsId` Boolean - Use `appId` to identify package instead of `name`.
 * <a name="Config-linux"></a>`linux`<a name="LinuxBuildOptions"></a> - Linux options.
-  * <a name="LinuxBuildOptions-packageCategory"></a>`packageCategory` String - The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
   * <a name="LinuxBuildOptions-target"></a>`target` = `AppImage` String | [TargetConfig](electron-builder#TargetConfig) | Array - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
     
     electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build). See: [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
@@ -364,15 +363,17 @@ Configuration Options
   * <a name="LinuxBuildOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
   * <a name="LinuxBuildOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
   * <a name="LinuxBuildOptions-desktop"></a>`desktop` any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
-  * <a name="LinuxBuildOptions-afterInstall"></a>`afterInstall` String
-  * <a name="LinuxBuildOptions-afterRemove"></a>`afterRemove` String
 * <a name="Config-deb"></a>`deb`<a name="DebOptions"></a> - Debian package specific options.
   * <a name="DebOptions-compression"></a>`compression` = `xz` "gz" | "bzip2" | "xz" - The compression type.
   * <a name="DebOptions-priority"></a>`priority` String - The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
   * <a name="DebOptions-depends"></a>`depends` Array&lt;String&gt; - Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
   * <a name="DebOptions-icon"></a>`icon` String
+  * <a name="DebOptions-packageCategory"></a>`packageCategory` String - The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
+  * <a name="DebOptions-vendor"></a>`vendor` String
+  * <a name="DebOptions-maintainer"></a>`maintainer` String
+  * <a name="DebOptions-afterInstall"></a>`afterInstall` String
+  * <a name="DebOptions-afterRemove"></a>`afterRemove` String
 * <a name="Config-snap"></a>`snap`<a name="SnapOptions"></a> - [Snap](http://snapcraft.io) options.
-  Inherits [LinuxBuildOptions](#LinuxBuildOptions) options.
   * <a name="SnapOptions-confinement"></a>`confinement` = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.
   * <a name="SnapOptions-summary"></a>`summary` String - The 78 character long summary. Defaults to [productName](#Config-productName).
   * <a name="SnapOptions-grade"></a>`grade` = `stable` "devel" | "stable" - The quality grade of the snap. It can be either `devel` (i.e. a development version of the snap, so not to be published to the “stable” or “candidate” channels) or “stable” (i.e. a stable release or release candidate, which can be released to all channels).
@@ -388,7 +389,13 @@ Configuration Options
     
     If list contains `default`, it will be replaced to default list, so, `["default", "foo"]` can be used to add custom parts `foo` in addition to defaults.
   * <a name="SnapOptions-ubuntuAppPlatformContent"></a>`ubuntuAppPlatformContent` String - Specify `ubuntu-app-platform1` to use [ubuntu-app-platform](https://insights.ubuntu.com/2016/11/17/how-to-create-snap-packages-on-qt-applications/). Snap size will be greatly reduced, but it is not recommended for now because "the snaps must be connected before running uitk-gallery for the first time".
-* <a name="Config-appImage"></a>`appImage` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
+  * <a name="SnapOptions-synopsis"></a>`synopsis` String - The [short description](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Description).
+  * <a name="SnapOptions-description"></a>`description` String - As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
+  * <a name="SnapOptions-category"></a>`category` String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
+  * <a name="SnapOptions-desktop"></a>`desktop` any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
+  * <a name="SnapOptions-artifactName"></a>`artifactName` String - The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+  * <a name="SnapOptions-publish"></a>`publish` String | [GithubOptions](Publishing-Artifacts#GithubOptions) | [S3Options](Publishing-Artifacts#S3Options) | [GenericServerOptions](Publishing-Artifacts#GenericServerOptions) | [BintrayOptions](Publishing-Artifacts#BintrayOptions) | Array
+* <a name="Config-appImage"></a>`appImage` module:electron-builder/out/options/linuxOptions.AppImageOptions
 * <a name="Config-pacman"></a>`pacman` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-rpm"></a>`rpm` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)
 * <a name="Config-freebsd"></a>`freebsd` [LinuxTargetSpecificOptions](electron-builder#LinuxTargetSpecificOptions)

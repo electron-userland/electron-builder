@@ -2,20 +2,25 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log } from "electron-builder-util"
 import { getBin, getBinFromGithub } from "electron-builder-util/out/binDownload"
 import { unlinkIfExists } from "electron-builder-util/out/fs"
-import { chmod, close, createReadStream, createWriteStream, open, write } from "fs-extra-p"
+import { chmod, close, createReadStream, createWriteStream, open, outputFile, readFile, write } from "fs-extra-p"
+import { Lazy } from "lazy-val"
 import * as path from "path"
 import { v1 as uuid1 } from "uuid-1345"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxBuildOptions } from "../options/linuxOptions"
+import { AppImageOptions } from "../options/linuxOptions"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
 const appImagePathPromise = process.platform === "darwin" ? getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") : getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
 
+const appRunTemplate = new Lazy<(data: any) => string>(async () => {
+  return require("ejs").compile(await readFile(path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), "utf-8"))
+})
+
 export default class AppImageTarget extends Target {
-  readonly options: LinuxBuildOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
+  readonly options: AppImageOptions = {...this.packager.platformSpecificBuildOptions, ...(this.packager.config as any)[this.name]}
   private readonly desktopEntry: Promise<string>
 
   constructor(ignored: string, private readonly packager: LinuxPackager, private readonly helper: LinuxTargetHelper, readonly outDir: string) {
@@ -40,6 +45,14 @@ export default class AppImageTarget extends Target {
     const resultFile = path.join(this.outDir, artifactName)
     await unlinkIfExists(resultFile)
 
+    const appRunData = (await appRunTemplate.value)({
+      systemIntegration: this.options.systemIntegration || "ask"
+    })
+    const appRunFile = await packager.getTempFile(".sh")
+    await outputFile(appRunFile, appRunData, {
+      mode: "0755",
+    })
+
     const appImagePath = await appImagePathPromise
     const desktopFile = await this.desktopEntry
     const args = [
@@ -48,7 +61,7 @@ export default class AppImageTarget extends Target {
       "-dev", resultFile,
       "-padding", "0",
       "-map", appOutDir, "/usr/bin",
-      "-map", path.join(__dirname, "..", "..", "templates", "linux", "AppRun.sh"), "/AppRun",
+      "-map", appRunFile, "/AppRun",
       // we get executable name in the AppRun by desktop file name, so, must be named as executable
       "-map", desktopFile, `/${this.packager.executableName}.desktop`,
     ]

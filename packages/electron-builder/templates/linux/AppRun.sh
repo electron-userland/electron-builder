@@ -160,10 +160,14 @@ if [ -e "$DESTINATION_DIR_DESKTOP/$VENDORPREFIX-$DESKTOP_FILE_NAME" ] ; then
   fi
 fi
 
+<% if (systemIntegration === "ask") { %>
+
 # We ask the user only if we have found no reason to skip until here
 if [ -z "$SKIP" ] ; then
   yesno "Install" "Would you like to integrate $APPIMAGE with your system?\n\nThis will add it to your applications menu and install icons.\nIf you don't do this you can still launch the application by double-clicking on the AppImage."
 fi
+
+<% } %>
 
 # If the user has agreed, rewrite and install the desktop file, and the MIME information
 if [ -z "$SKIP" ] ; then

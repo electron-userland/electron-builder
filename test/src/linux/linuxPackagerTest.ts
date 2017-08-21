@@ -7,6 +7,15 @@ import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
 
+test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
+  targets: Platform.LINUX.createTarget(),
+  config: {
+    appImage: {
+      systemIntegration: "doNotAsk",
+    },
+  }
+}))
+
 test.ifNotWindows.ifNotCiMac("AppImage - default icon, custom executable and custom desktop", app({
   targets: Platform.LINUX.createTarget("appimage"),
   config: {

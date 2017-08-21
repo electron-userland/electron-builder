@@ -83,7 +83,8 @@
     "lazy-val": "^1.0.2",
     "dotenv": "^4.0.0",
     "dotenv-expand": "^4.0.1",
-    "temp-file": "^2.0.2"
+    "temp-file": "^2.0.2",
+    "ejs": "^2.5.7"
   },
   "typings": "./out/index.d.ts",
   "publishConfig": {
