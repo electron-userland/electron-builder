@@ -150,7 +150,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   }
 
   patterns.push("!**/node_modules/*/{README.md,karma.conf.js,.coveralls.yml,readme.markdown,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples}")
-  patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj,cc,obj,pdb,h}`)
+  patterns.push(`!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj,cc,obj,pdb}`)
   patterns.push("!**/._*")
   patterns.push("!**/electron-builder.{yaml,yml,json,json5,toml}")
   //noinspection SpellCheckingInspection

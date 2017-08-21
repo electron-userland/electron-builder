@@ -125,6 +125,18 @@ Object {
 }
 `;
 
+exports[`files 2`] = `
+Array [
+  "index.html",
+  "index.js",
+  "package.json",
+  "test.h",
+  "dist/electron/foo.js",
+  "app/readme.md",
+  "app/package.json/readme.md",
+]
+`;
+
 exports[`map resources 1`] = `
 Object {
   "linux": Array [],

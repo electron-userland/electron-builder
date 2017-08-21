@@ -1,7 +1,6 @@
 import { createTargets, Platform } from "electron-builder"
-import { walk } from "electron-builder-util/out/fs"
 import * as path from "path"
-import { app } from "./helpers/packTester"
+import { app, checkDirContents } from "./helpers/packTester"
 
 const target = Platform.MAC.createTarget("zip")
 
@@ -36,8 +35,8 @@ test.ifAll.ifNotWindows("os macro", app({
   projectDirCreated: async projectDir => {
     process.env.__TEST_S3_PUBLISHER__ = path.join(projectDir, "dist/s3")
   },
-  packed: async context => {
+  packed: context => {
     const dir = path.join(context.projectDir, "dist/s3")
-    expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => it.substring(dir.length + 1))).toMatchSnapshot()
+    return checkDirContents(dir)
   }
 }))

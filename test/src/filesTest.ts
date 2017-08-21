@@ -6,7 +6,7 @@ import { outputFile, readFile, stat, symlink } from "fs-extra-p"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack } from "./helpers/packTester"
+import { app, appThrows, assertPack, checkDirContents } from "./helpers/packTester"
 
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
@@ -32,15 +32,12 @@ test.ifDevOrLinuxCi("files", app({
   projectDirCreated: projectDir => BluebirdPromise.all([
     outputFile(path.join(projectDir, "ignoreMe", "foo"), "data"),
     outputFile(path.join(projectDir, "ignoreEmptyDir", "bar"), "data"),
+    outputFile(path.join(projectDir, "test.h"), "test that"),
     outputFile(path.join(projectDir, "dist/electron/foo.js"), "data"),
   ]),
   packed: context => {
     const resources = path.join(context.getResources(Platform.LINUX), "app")
-    return BluebirdPromise.all([
-      assertThat(path.join(resources, "ignoreMe")).doesNotExist(),
-      assertThat(path.join(resources, "ignoreEmptyDir")).doesNotExist(),
-      assertThat(path.join(resources, "dist/electron")).isDirectory(),
-    ])
+    return checkDirContents(resources)
   },
 }))
 

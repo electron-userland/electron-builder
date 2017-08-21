@@ -20,6 +20,7 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { TmpDir } from "temp-file"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
+import { walk } from "electron-builder-util/out/fs"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -436,4 +437,8 @@ export function convertUpdateInfo(info: any) {
     info.releaseDate = "1970-01-01T00:00:00.000Z"
   }
   return info
+}
+
+export async function checkDirContents(dir: string) {
+  expect((await walk(dir, file => !path.basename(file).startsWith("."))).map(it => it.substring(dir.length + 1))).toMatchSnapshot()
 }
