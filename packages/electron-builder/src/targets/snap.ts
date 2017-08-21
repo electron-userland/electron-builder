@@ -48,7 +48,7 @@ export default class SnapTarget extends Target {
       await copyFile(this.helper.maxIconPath, path.join(snapDir, "gui", "icon.png"))
     }
 
-    const desktopFile = await this.helper.computeDesktopEntry(this.options, `${packager.executableName}`, path.join(snapDir, "gui", `${snap.name}.desktop`), {
+    const desktopFile = await this.helper.computeDesktopEntry(this.options, packager.executableName, path.join(snapDir, "gui", `${snap.name}.desktop`), {
       // tslint:disable:no-invalid-template-strings
       Icon: "${SNAP}/meta/gui/icon.png"
     })

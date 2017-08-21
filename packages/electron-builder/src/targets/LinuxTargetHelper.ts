@@ -102,6 +102,10 @@ export class LinuxTargetHelper {
   }
 
   async computeDesktopEntry(targetSpecificOptions: LinuxTargetSpecificOptions, exec?: string, destination?: string | null, extra?: { [key: string]: string; }): Promise<string> {
+    if (exec != null && exec.length === 0) {
+      throw new Error("Specified exec is emptyd")
+    }
+
     const appInfo = this.packager.appInfo
 
     const productFilename = appInfo.productFilename

@@ -39,6 +39,12 @@ export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificB
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
+
+  /**
+   * backward compatibility + to allow specify fpm-only category for all possible fpm targets in one place
+   * @private
+   */
+  readonly packageCategory?: string | null
 }
 
 export interface CommonLinuxOptions {
@@ -63,6 +69,7 @@ export interface CommonLinuxOptions {
   readonly desktop?: any | null
 }
 
+// fpm-only specific options
 export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSpecificOptions {
   /**
    * Package dependencies.
@@ -72,7 +79,7 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly icon?: string
 
   /**
-   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section). Not applicable for AppImage.
+   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
    */
   readonly packageCategory?: string | null
 

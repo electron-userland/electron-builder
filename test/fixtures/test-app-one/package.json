@@ -16,7 +16,9 @@
       "category": "your.app.category.type"
     },
     "linux": {
-      "category": "Development",
+      "category": "Development"
+    },
+    "deb": {
       "packageCategory": "devel"
     },
     "squirrelWindows": {
