@@ -3,7 +3,7 @@ To build Linux or Windows (only if you don't have native dependencies) on any pl
 1. Run docker container:
 
    ```sh
-   docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.electron:/root/.electron electronuserland/electron-builder:wine
+   docker run --rm -ti -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.cache/electron:/root/.cache/electron ~/.cache/electron-builder:/root/.cache/electron-builder electronuserland/electron-builder:wine
    ```
    
 2. Type in `yarn && yarn dist`
