@@ -1,8 +1,6 @@
-import BluebirdPromise from "bluebird-lst"
-import { execFile, execFileSync, spawn } from "child_process"
+import { spawn } from "child_process"
 import { CancellationError, CancellationToken, DownloadOptions } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
@@ -11,6 +9,7 @@ import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
+import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
 
 export class NsisUpdater extends AppUpdater {
   private readonly downloadedUpdateHelper = new DownloadedUpdateHelper()
@@ -47,7 +46,7 @@ export class NsisUpdater extends AppUpdater {
     const removeTempDirIfAny = () => {
       this.downloadedUpdateHelper.clear()
       return remove(tempDir)
-        .catch(error => {
+        .catch(() => {
           // ignored
         })
     }
@@ -98,58 +97,7 @@ export class NsisUpdater extends AppUpdater {
       }
       throw e
     }
-
-    return await new BluebirdPromise<string | null>((resolve, reject) => {
-      execFile("powershell.exe", [`Get-AuthenticodeSignature '${tempUpdateFile}' | ConvertTo-Json -Compress`], {maxBuffer: 4 * 1024000, timeout: 60 * 1000}, (error, stdout, stderr) => {
-        if (error != null || stderr) {
-          try {
-            execFileSync("powershell.exe", ["ConvertTo-Json test"], {timeout: 10 * 1000})
-          }
-          catch (testError) {
-            this._logger.warn(`Cannot execute ConvertTo-Json: ${testError.message}. Ignoring signature validation due to unsupported powershell version. Please upgrade to powershell 3 or higher.`)
-            resolve(null)
-            return
-          }
-
-          if (error != null) {
-            reject(error)
-            return
-          }
-
-          if (stderr) {
-            reject(new Error(`Cannot execute Get-AuthenticodeSignature: ${stderr}`))
-            return
-          }
-        }
-
-        const data = JSON.parse(stdout)
-        delete data.PrivateKey
-        delete data.IsOSBinary
-        delete data.SignatureType
-        const signerCertificate = data.SignerCertificate
-        if (signerCertificate != null) {
-          delete signerCertificate.Archived
-          delete signerCertificate.Extensions
-          delete signerCertificate.Handle
-          delete signerCertificate.HasPrivateKey
-          // duplicates data.SignerCertificate (contains RawData)
-          delete signerCertificate.SubjectName
-        }
-        delete data.Path
-
-        if (data.Status === 0) {
-          const name = parseDn(data.SignerCertificate.Subject).get("CN")!
-          if ((Array.isArray(publisherName) ? publisherName : [publisherName]).includes(name)) {
-            resolve(null)
-            return
-          }
-        }
-
-        const result = JSON.stringify(data, (name, value) => name === "RawData" ? undefined : value, 2)
-        this._logger.info(`Sign verification failed, installer signed with incorrect certificate: ${result}`)
-        resolve(result)
-      })
-    })
+    return await verifySignature(Array.isArray(publisherName) ? publisherName : [publisherName], tempUpdateFile, this._logger)
   }
 
   private addQuitHandler() {
