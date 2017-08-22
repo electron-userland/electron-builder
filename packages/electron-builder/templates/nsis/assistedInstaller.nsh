@@ -1,5 +1,4 @@
 !include UAC.nsh
-!include StdUtils.nsh
 
 !ifndef INSTALL_MODE_PER_ALL_USERS
   !include multiUserUi.nsh

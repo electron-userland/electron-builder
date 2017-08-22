@@ -29,7 +29,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 // noinspection SpellCheckingInspection
 const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057"))
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.1.0", "/QBlR/F8AAGInT/eQQ0eJNSF0RFR11g+L54WWViDYTgBHwTIlkcqBHgvNDKO6LQODtqOm9N2nG2AxK7UZT5bOg=="))
+const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.2.0", "C4MGw/sFv9imo0OwWWTCOhuTXR6Ne3ifm1AH1s0wEA+PZqLbuLVg6DW+0paUXMMJX4XPEqGf8g6Nbb/v7ZLT9A=="))
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -466,7 +466,7 @@ export class NsisTarget extends Target {
     }
 
     await taskManager.awaitTasks()
-    return scriptGenerator.build()
+    return `!include ${path.join(nsisTemplatesDir, "include", "StdUtils.nsh")}\n${scriptGenerator.build()}`
   }
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {

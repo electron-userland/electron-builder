@@ -1,5 +1,4 @@
 !include "common.nsh"
-!include "StdUtils.nsh"
 
 WindowIcon Off
 AutoCloseWindow True

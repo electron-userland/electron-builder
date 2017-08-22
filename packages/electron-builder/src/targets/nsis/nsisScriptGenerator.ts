@@ -34,10 +34,8 @@ export class NsisScriptGenerator {
       const variableName = "is" + flagName[2].toUpperCase() + flagName.substring(3)
         .replace(/[\-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
       this.lines.push(`!macro _${variableName} _a _b _t _f
-  ClearErrors
-  $\{GetParameters} $R9
-  $\{GetOptions} $R9 "${flagName}" $R8
-  IfErrors \`$\{_f}\` \`$\{_t}\`
+  $\{StdUtils.TestParameter} $R9 "${flagName}"
+  StrCmp "$R9" "true" \`$\{_t}\` \`$\{_f}\`
 !macroend
 !define ${variableName} \`"" ${variableName} ""\`
 `)

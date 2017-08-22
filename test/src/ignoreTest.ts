@@ -3,7 +3,7 @@ import { DIR_TARGET, Platform } from "electron-builder"
 import { outputFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, modifyPackageJson } from "./helpers/packTester"
+import { app, checkDirContents, modifyPackageJson } from "./helpers/packTester"
 
 test.ifDevOrLinuxCi("ignore build resources", app({
   targets: Platform.LINUX.createTarget(DIR_TARGET),
@@ -28,7 +28,7 @@ test.ifDevOrLinuxCi("2 ignore", app({
       "!{app,build,electron,mobile,theme,uploads,util,dist,dist-app/aot,dist-app/app.bundle.js,dist-app/dependencies/shim.min.js,dist-app/dependencies/classList.min.js,dist-app/dependencies/web-animations.min.js,main.js,main-aot.js,favicon.ico,index.html,index-aot.html,index-cordova.html,index-aot.js,index-electron.js,index.bundle.js,systemjs.config.js,systemjs-angular-loader.js,package-lock.json}",
       "!*config*.json",
       "!**/*.{ts,scss,map,md,csv,wrapped}",
-      "!**/*.{o,hprof,orig,pyc,pyo,rbc}",
+      "!**/*.{hprof,orig,pyc,pyo,rbc}",
       "!**/._*",
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes,.flowconfig,.yarn-metadata.json,.idea,appveyor.yml,.travis.yml,circle.yml,npm-debug.log,.nyc_output,yarn.lock,.yarn-integrity}"
     ],
@@ -51,18 +51,10 @@ test.ifDevOrLinuxCi("ignore known ignored files", app({
   projectDirCreated: projectDir => BluebirdPromise.all([
     outputFile(path.join(projectDir, ".svn", "foo"), "data"),
     outputFile(path.join(projectDir, ".git", "foo"), "data"),
-    outputFile(path.join(projectDir, "foo", "bar", "f.o"), "data"),
     outputFile(path.join(projectDir, "node_modules", ".bin", "f.txt"), "data"),
     outputFile(path.join(projectDir, "node_modules", ".bin2", "f.txt"), "data"),
   ]),
-  packed: context => BluebirdPromise.all([
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", ".svn")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", ".git")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", "foo", "bar", "f.o")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin")).doesNotExist(),
-    assertThat(path.join(context.getResources(Platform.LINUX), "app", "node_modules", ".bin2")).doesNotExist()
-  ]),
+  packed: context => checkDirContents(path.join(context.getResources(Platform.LINUX), "app")),
 }))
 
 // skip on macOS because we want test only / and \

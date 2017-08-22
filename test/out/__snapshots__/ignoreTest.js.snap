@@ -18,6 +18,16 @@ Object {
 }
 `;
 
+exports[`ignore known ignored files 2`] = `
+Array [
+  "index.html",
+  "index.js",
+  "package.json",
+  "app/readme.md",
+  "app/package.json/readme.md",
+]
+`;
+
 exports[`ignore node_modules dev dep 1`] = `
 Object {
   "linux": Array [],

@@ -1,6 +1,5 @@
 !ifndef BUILD_UNINSTALLER
   !ifdef RUN_AFTER_FINISH
-    !include StdUtils.nsh
     !macro StartApp
       Var /GLOBAL startAppArgs
       ${if} ${isUpdated}

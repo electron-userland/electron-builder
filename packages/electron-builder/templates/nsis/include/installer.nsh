@@ -52,50 +52,23 @@
   ${endif}
 !macroend
 
+!ifdef APP_PACKAGE_URL
+  !include webPackage.nsh
+!endif
+
 !macro installApplicationFiles
   !ifdef APP_BUILD_DIR
     File /r "${APP_BUILD_DIR}/*.*"
   !else
     !ifdef APP_PACKAGE_URL
-      Var /GLOBAL packageUrl
-      Var /GLOBAL packageArch
-
-      StrCpy $packageUrl "${APP_PACKAGE_URL}"
-      StrCpy $packageArch "${APP_PACKAGE_URL}"
-
-      !ifdef APP_PACKAGE_URL_IS_INCOMLETE
-        !ifdef APP_64_NAME
-          !ifdef APP_32_NAME
-            ${if} ${RunningX64}
-              StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
-            ${else}
-              StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
-            ${endif}
-          !else
-            StrCpy $packageUrl "$packageUrl/${APP_64_NAME}"
-          !endif
-        !else
-          StrCpy $packageUrl "$packageUrl/${APP_32_NAME}"
-        !endif
-      !endif
-
-      ${if} ${RunningX64}
-        StrCpy $packageArch "64"
+      ${StdUtils.GetParameter} $R0 "package-file" ""
+      MessageBox MB_OK "$R0"
+      ${if} $R0 == ""
+        !insertmacro downloadApplicationFiles
       ${else}
-        StrCpy $packageArch "32"
-      ${endif}
-
-      download:
-      inetc::get /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
-      Pop $0
-      ${if} $0 == "Cancelled"
-        quit
-      ${elseif} $0 != "OK"
-        Messagebox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check you Internet connection and retry." IDRETRY download
-        quit
-      ${endif}
-
-      Nsis7z::Extract "$PLUGINSDIR\package.7z"
+        SetDetailsPrint both
+        Nsis7z::ExtractWithDetails "$R0"
+      ${endIf}
     !else
       !insertmacro extractEmbeddedAppPackage
     !endif
@@ -118,7 +91,7 @@
 	${else}
 		StrCpy $0 "/currentuser"
 		StrCpy $1 " (only current user)"
-	${endif}
+	${endIf}
 
   WriteRegStr SHELL_CONTEXT "${UNINSTALL_REGISTRY_KEY}" DisplayName "${UNINSTALL_DISPLAY_NAME}$1"
   # https://github.com/electron-userland/electron-builder/issues/750

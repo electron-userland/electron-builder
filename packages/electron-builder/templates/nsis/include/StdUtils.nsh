@@ -1,6 +1,6 @@
 #################################################################################
 # StdUtils plug-in for NSIS
-# Copyright (C) 2004-2016 LoRd_MuldeR <MuldeR2@GMX.de>
+# Copyright (C) 2004-2017 LoRd_MuldeR <MuldeR2@GMX.de>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,9 @@
 #################################################################################
 # FUNCTION DECLARTIONS
 #################################################################################
+
+!ifndef ___STDUTILS__NSH___
+!define ___STDUTILS__NSH___
 
 !define StdUtils.Time             '!insertmacro _StdUtils_Time'          #time(), as in C standard library
 !define StdUtils.GetMinutes       '!insertmacro _StdUtils_GetMinutes'    #GetSystemTimeAsFileTime(), returns the number of minutes
@@ -68,6 +71,8 @@
 !define StdUtils.VerifyOSBuildNo  '!insertmacro _StdUtils_VrfyRealOSBld' #Compare *real* operating system to an expected build number
 !define StdUtils.HashText         '!insertmacro _StdUtils_HashText'      #Compute hash from text string (CRC32, MD5, SHA1/2/3, BLAKE2)
 !define StdUtils.HashFile         '!insertmacro _StdUtils_HashFile'      #Compute hash from file (CRC32, MD5, SHA1/2/3, BLAKE2)
+!define StdUtils.NormalizePath    '!insertmacro _StdUtils_NormalizePath' #Simplifies the path to produce a direct, well-formed path
+!define StdUtils.GetParentPath    '!insertmacro _StdUtils_GetParentPath' #Get parent path by removing the last component from the path
 !define StdUtils.TimerCreate      '!insertmacro _StdUtils_TimerCreate'   #Create a new event-timer that will be triggered periodically
 !define StdUtils.TimerDestroy     '!insertmacro _StdUtils_TimerDestroy'  #Destroy a running timer created with TimerCreate()
 !define StdUtils.GetLibVersion    '!insertmacro _StdUtils_GetLibVersion' #Get the current StdUtils library version (for debugging)
@@ -348,6 +353,18 @@
 	pop ${out}
 !macroend
 
+!macro _StdUtils_NormalizePath out path
+	push '${path}'
+	StdUtils::NormalizePath /NOUNLOAD
+	pop ${out}
+!macroend
+
+!macro _StdUtils_GetParentPath out path
+	push '${path}'
+	StdUtils::GetParentPath /NOUNLOAD
+	pop ${out}
+!macroend
+
 !macro _StdUtils_TimerCreate out callback interval
 	GetFunctionAddress ${out} ${callback}
 	push ${out}
@@ -385,3 +402,5 @@
 !define StdUtils.Const.ShellVerb.UnpinFromTaskbar 1
 !define StdUtils.Const.ShellVerb.PinToStart       2
 !define StdUtils.Const.ShellVerb.UnpinFromStart   3
+
+!endif # !___STDUTILS__NSH___
