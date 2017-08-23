@@ -29,7 +29,7 @@ const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 // noinspection SpellCheckingInspection
 const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057"))
 // noinspection SpellCheckingInspection
-const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.2.0", "C4MGw/sFv9imo0OwWWTCOhuTXR6Ne3ifm1AH1s0wEA+PZqLbuLVg6DW+0paUXMMJX4XPEqGf8g6Nbb/v7ZLT9A=="))
+const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
 
 const USE_NSIS_BUILT_IN_COMPRESSOR = false
 
@@ -367,6 +367,12 @@ export class NsisTarget extends Target {
 
     if (options.displayLanguageSelector === true) {
       defines.DISPLAY_LANG_SELECTOR = null
+    }
+
+    if (options.differentialPackage) {
+      // todo use x64 if installer only x64
+      // todo sign using user cert
+      defines.SEVEN_ZIP_FILE = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
     }
   }
 

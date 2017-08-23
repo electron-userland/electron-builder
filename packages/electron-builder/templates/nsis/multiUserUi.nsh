@@ -27,35 +27,35 @@ Var RadioButtonLabel1
 
 !macro FUNCTION_INSTALL_MODE_PAGE_FUNCTION PRE LEAVE UNINSTALLER_FUNCPREFIX
 	Function "${UNINSTALLER_FUNCPREFIX}${PRE}"
-		${If} ${UAC_IsInnerInstance}
-		${AndIf} ${UAC_IsAdmin}
+		${if} ${UAC_IsInnerInstance}
+		${andIf} ${UAC_IsAdmin}
 		  # inner Process (and Admin) - skip selection, inner process is always used for elevation (machine-wide)
 			!insertmacro setInstallModePerAllUsers
 			Abort
-		${EndIf}
+		${endIf}
 
     ${GetParameters} $R0
     ${GetOptions} $R0 "/allusers" $R1
-    ${IfNot} ${Errors}
+    ${ifNot} ${Errors}
       StrCpy $hasPerMachineInstallation "1"
       StrCpy $hasPerUserInstallation "0"
-      ${IfNot} ${UAC_IsAdmin}
+      ${ifNot} ${UAC_IsAdmin}
         ShowWindow $HWNDPARENT ${SW_HIDE}
         !insertmacro UAC_RunElevated
         Quit
-      ${endif}
+      ${endIf}
 
       !insertmacro setInstallModePerAllUsers
       Abort
-    ${EndIf}
+    ${endIf}
 
     ${GetOptions} $R0 "/currentuser" $R1
-    ${IfNot} ${Errors}
+    ${ifNot} ${Errors}
       StrCpy $hasPerMachineInstallation "0"
       StrCpy $hasPerUserInstallation "1"
       !insertmacro setInstallModePerUser
       Abort
-    ${EndIf}
+    ${endIf}
 
 		# If uninstalling, will check if there is both a per-user and per-machine installation. If there is only one, will skip the form.
 	  # If uninstallation was invoked from the "add/remove programs" Windows will automatically requests elevation (depending if uninstall keys are in HKLM or HKCU)
@@ -65,17 +65,17 @@ Var RadioButtonLabel1
       ${andif} $hasPerMachineInstallation == "0"
 				!insertmacro setInstallModePerUser
 				Abort
-			${elseif} $hasPerUserInstallation == "0"
-      ${andif} $hasPerMachineInstallation == "1"
+			${elseIf} $hasPerUserInstallation == "0"
+      ${andIf} $hasPerMachineInstallation == "1"
 				${IfNot} ${UAC_IsAdmin}
           ShowWindow $HWNDPARENT ${SW_HIDE}
           !insertmacro UAC_RunElevated
           Quit
-        ${endif}
+        ${endIf}
 
 				!insertmacro setInstallModePerAllUsers
 				Abort
-			${endif}
+			${endIf}
 
       !insertmacro MUI_HEADER_TEXT "$(chooseUninstallationOptions)" "$(whichInstallationShouldBeRemoved)"
 		!else

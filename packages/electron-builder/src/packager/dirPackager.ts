@@ -54,7 +54,7 @@ async function unpack(packager: PlatformPackager<any>, out: string, platform: st
       emptyDir(out)
     ]))[0]
 
-    await spawn(path7za, debug7zArgs("x").concat(zipPath, `-o${out}`))
+    await spawn(path7za, debug7zArgs("x").concat(zipPath, "-aoa", `-o${out}`))
   }
   else {
     const source = packager.getElectronSrcDir(dist)

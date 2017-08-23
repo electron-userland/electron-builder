@@ -57,17 +57,28 @@
 !endif
 
 !macro installApplicationFiles
+  !ifdef SEVEN_ZIP_FILE
+    File /oname=$PLUGINSDIR\7za.exe "${SEVEN_ZIP_FILE}"
+  !endif
+
   !ifdef APP_BUILD_DIR
     File /r "${APP_BUILD_DIR}/*.*"
   !else
     !ifdef APP_PACKAGE_URL
       ${StdUtils.GetParameter} $R0 "package-file" ""
-      MessageBox MB_OK "$R0"
       ${if} $R0 == ""
         !insertmacro downloadApplicationFiles
       ${else}
-        SetDetailsPrint both
-        Nsis7z::ExtractWithDetails "$R0"
+        extractAppFiles:
+          ClearErrors
+          nsExec::ExecToStack '"$PLUGINSDIR\7za.exe" x "$R0" -aoa -bb0 -o"$INSTDIR"'
+          Pop $0 # return value/error/timeout
+          Pop $1 # printed text, up to ${NSIS_MAX_STRLEN}
+
+        ${if} $0 != "0"
+          MessageBox MB_RETRYCANCEL "Failed to extract files: $0 $1" /SD IDCANCEL IDRETRY extractAppFiles IDCANCEL
+          Quit
+        ${endIf}
       ${endIf}
     !else
       !insertmacro extractEmbeddedAppPackage
