@@ -2,6 +2,7 @@ import * as path from "path"
 import { PlatformPackager } from "../platformPackager"
 import { langIdToName, toLangWithRegion } from "../util/langs"
 
+/** @internal */
 export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<Array<LicenseFile>> {
   const files = (await packager.resourceList)
     .filter(it => {

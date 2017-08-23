@@ -177,7 +177,7 @@ export interface DmgOptions extends TargetSpecificOptions {
   /**
    * The content — to customize icon locations.
    */
-  readonly contents?: Array<DmgContent>
+  contents?: Array<DmgContent>
 
   /**
    * The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).

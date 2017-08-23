@@ -64,6 +64,7 @@
       <w>digester</w>
       <w>dirname</w>
       <w>disturl</w>
+      <w>dmgbuild</w>
       <w>docdash</w>
       <w>docstrap</w>
       <w>dpkg</w>
@@ -119,6 +120,7 @@
       <w>iconexclamation</w>
       <w>iconset</w>
       <w>iconutil</w>
+      <w>iconv</w>
       <w>icvo</w>
       <w>idms</w>
       <w>idretry</w>
@@ -168,6 +170,7 @@
       <w>lzop</w>
       <w>macos</w>
       <w>macroend</w>
+      <w>macroman</w>
       <w>makeappx</w>
       <w>makecert</w>
       <w>makedeb</w>
@@ -225,6 +228,7 @@
       <w>promisify</w>
       <w>psmdcp</w>
       <w>pulseaudio</w>
+      <w>pythonpath</w>
       <w>rcedit</w>
       <w>readpass</w>
       <w>redux</w>

@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, subTask } from "electron-builder-util"
 import { unlink } from "fs-extra-p"
-import * as path from "path"
 import { NsisTarget } from "./nsis"
+import { getTemplatePath } from "../../util/pathManager"
 
-export const nsisTemplatesDir = path.join(__dirname, "..", "..", "..", "templates", "nsis")
+export const nsisTemplatesDir = getTemplatePath("nsis")
 
 interface PackageFileInfo {
   file: string

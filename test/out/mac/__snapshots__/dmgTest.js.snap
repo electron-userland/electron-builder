@@ -102,7 +102,20 @@ Object {
 }
 `;
 
-exports[`no build directory 1`] = `undefined`;
+exports[`no build directory 1`] = `
+Array [
+  Object {
+    "x": 130,
+    "y": 220,
+  },
+  Object {
+    "path": "/Applications",
+    "type": "link",
+    "x": 410,
+    "y": 220,
+  },
+]
+`;
 
 exports[`no build directory 2`] = `
 Object {

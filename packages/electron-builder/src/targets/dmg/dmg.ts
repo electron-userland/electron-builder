@@ -1,20 +1,21 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, exec, isEmptyOrSpaces, log, spawn, warn } from "electron-builder-util"
 import { copyFile, exists, statOrNull } from "electron-builder-util/out/fs"
-import { executeFinally } from "electron-builder-util/out/promise"
 import { outputFile, readFile, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
-import { Target } from "../core"
-import { DmgOptions, MacOptions } from "../options/macOptions"
-import { PlatformPackager } from "../platformPackager"
+import { DmgOptions, MacOptions } from "../../options/macOptions"
+import { PlatformPackager } from "../../platformPackager"
 import { addLicenseToDmg } from "./dmgLicense"
+import { Target } from "../../core"
+import { attachAndExecute, detach } from "./dmgUtil"
+import { getTemplatePath, getVendorPath } from "../../util/pathManager"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
 
-  private helperDir = path.join(__dirname, "..", "..", "templates", "dmg")
+  private helperDir = getTemplatePath("dmg")
 
   constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
     super("dmg")
@@ -25,6 +26,9 @@ export class DmgTarget extends Target {
     log("Building DMG")
 
     const specification = await this.computeDmgOptions()
+    const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
+    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
+    const artifactPath = path.join(this.outDir, artifactName)
 
     const tempDmg = await packager.getTempFile(".dmg")
     const backgroundDir = path.join(await packager.getTempDir("dmg"), ".background")
@@ -44,7 +48,6 @@ export class DmgTarget extends Target {
     // allocate space for .DS_Store
     await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), new Buffer(preallocatedSize))
 
-    const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
     //noinspection SpellCheckingInspection
     await spawn("hdiutil", addVerboseIfNeed(["create",
       "-srcfolder", backgroundDir,
@@ -64,18 +67,6 @@ export class DmgTarget extends Target {
       const promises = [
         specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`),
       ]
-
-      let contents = specification.contents
-      if (contents == null) {
-        contents = [
-          {
-            x: 130, y: 220
-          },
-          {
-            x: 410, y: 220, type: "link", path: "/Applications"
-          }
-        ]
-      }
 
       const window = specification.window!
       const env: any = {
@@ -125,7 +116,7 @@ export class DmgTarget extends Target {
       }
 
       let entries = ""
-      for (const c of contents) {
+      for (const c of specification.contents!!) {
         if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
           warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
         }
@@ -150,7 +141,7 @@ export class DmgTarget extends Target {
       await BluebirdPromise.all<any>(promises)
 
       await exec("/usr/bin/perl", [dmgPropertiesFile], {
-        cwd: path.join(__dirname, "..", "..", "vendor"),
+        cwd: getVendorPath(),
         env
       })
 
@@ -162,9 +153,6 @@ export class DmgTarget extends Target {
     if (!isContinue) {
       return
     }
-
-    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
-    const artifactPath = path.join(this.outDir, artifactName)
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
     //noinspection SpellCheckingInspection
@@ -274,44 +262,18 @@ export class DmgTarget extends Target {
       }
     }
 
+    if (specification.contents == null) {
+      specification.contents = [
+        {
+          x: 130, y: 220
+        },
+        {
+          x: 410, y: 220, type: "link", path: "/Applications"
+        }
+      ]
+    }
     return specification
   }
-}
-
-async function detach(name: string) {
-  try {
-    await exec("hdiutil", ["detach", name])
-  }
-  catch (e) {
-    await new BluebirdPromise((resolve, reject) => {
-      setTimeout(() => {
-        exec("hdiutil", ["detach", "-force", name])
-          .then(resolve)
-          .catch(reject)
-      }, 1000)
-    })
-  }
-}
-
-export async function attachAndExecute(dmgPath: string, readWrite: boolean, task: () => Promise<any>) {
-  //noinspection SpellCheckingInspection
-  const args = ["attach", "-noverify", "-noautoopen"]
-  if (readWrite) {
-    args.push("-readwrite")
-  }
-
-  // otherwise hangs
-  // addVerboseIfNeed(args)
-
-  args.push(dmgPath)
-  const attachResult = await exec("hdiutil", args, {maxBuffer: 2 * 1024 * 1024})
-  const deviceResult = attachResult == null ? null : /^(\/dev\/\w+)/.exec(attachResult)
-  const device = deviceResult == null || deviceResult.length !== 2 ? null : deviceResult[1]
-  if (device == null) {
-    throw new Error(`Cannot mount: ${attachResult}`)
-  }
-
-  return await executeFinally(task(), () => detach(device))
 }
 
 function addVerboseIfNeed(args: Array<string>): Array<string> {

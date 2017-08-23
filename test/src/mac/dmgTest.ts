@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
 import { copyFile } from "electron-builder-util/out/fs"
 import { PlatformPackager } from "electron-builder/out/platformPackager"
-import { attachAndExecute } from "electron-builder/out/targets/dmg"
+import { attachAndExecute } from "electron-builder/out/targets/dmg/dmgUtil"
 import { remove, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -63,16 +63,16 @@ test.ifMac("no Applications link", () => {
       publish: null,
       productName: "NoApplicationsLink",
       dmg: {
-        "contents": [
+        contents: [
           {
-            "x": 110,
-            "y": 150
+            x: 110,
+            y: 150
           },
           {
-            "x": 410,
-            "y": 440,
-            "type": "link",
-            "path": "/Applications/TextEdit.app"
+            x: 410,
+            y: 440,
+            type: "link",
+            path: "/Applications/TextEdit.app"
           }
         ],
       },
@@ -101,7 +101,7 @@ test.ifMac("unset dmg icon", app({
     }
   }
 }, {
-  packed: (context) => {
+  packed: context => {
     return attachAndExecute(path.join(context.outDir, "Test ß No Volume Icon-1.1.0.dmg"), false, () => {
       return BluebirdPromise.all([
         assertThat(path.join("/Volumes/Test ß No Volume Icon 1.1.0/.background/background.tiff")).isFile(),
@@ -123,7 +123,7 @@ test.ifMac("no background", app({
     }
   }
 }, {
-  packed: (context) => {
+  packed: context => {
     return attachAndExecute(path.join(context.outDir, "NoBackground-1.1.0.dmg"), false, () => {
       return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
     })
@@ -158,6 +158,7 @@ test.ifAll.ifMac("multi language license", app({
     return BluebirdPromise.all([
       writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
       writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
+      writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo, Grünwald"),
     ])
   },
 }))

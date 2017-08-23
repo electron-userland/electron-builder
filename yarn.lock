@@ -291,9 +291,9 @@ asynckit@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
 
-aws-sdk@^2.101.0:
-  version "2.101.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.101.0.tgz#1252c364b840eba1ae0b8cd8c1accf78bfa14d96"
+aws-sdk@^2.102.0:
+  version "2.102.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.102.0.tgz#70e52a8eff63de4c68e1d08c5c37db5561324340"
   dependencies:
     buffer "4.9.1"
     crypto-browserify "1.0.9"
@@ -1566,6 +1566,10 @@ http-signature@~1.1.0:
 iconv-lite@0.4.13:
   version "0.4.13"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.13.tgz#1f88aba4ab0b1508e8312acc39345f36e992e2f2"
+
+iconv-lite@^0.4.18:
+  version "0.4.18"
+  resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.18.tgz#23d8656b16aae6742ac29732ea8f0336a4789cf2"
 
 ieee754@^1.1.4:
   version "1.1.8"
@@ -3703,6 +3707,10 @@ write-file-atomic@^2.0.0:
     graceful-fs "^4.1.11"
     imurmurhash "^0.1.4"
     signal-exit "^3.0.2"
+
+x-mac-cyrillic@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/x-mac-cyrillic/-/x-mac-cyrillic-1.0.0.tgz#43f111038ab51d766d0beb4ce5d283c1826f9bc9"
 
 xdg-basedir@^3.0.0:
   version "3.0.0"
