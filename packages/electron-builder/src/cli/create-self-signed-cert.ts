@@ -1,6 +1,6 @@
 import { bold } from "chalk"
-import { exec, log, spawn, TmpDir } from "electron-builder-util"
-import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { exec, log, spawn, TmpDir } from "builder-util"
+import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"

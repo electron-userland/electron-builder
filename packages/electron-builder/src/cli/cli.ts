@@ -2,8 +2,8 @@
 
 import { cyan, dim, green, reset, underline } from "chalk"
 import { parse as parseEnv } from "dotenv"
-import { exec, log, warn } from "electron-builder-util"
-import { printErrorAndExit } from "electron-builder-util/out/promise"
+import { exec, log, warn } from "builder-util"
+import { printErrorAndExit } from "builder-util/out/promise"
 import { readFile, readJson } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"

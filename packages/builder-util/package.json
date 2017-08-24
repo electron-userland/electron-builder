@@ -1,5 +1,5 @@
 {
-  "name": "electron-builder-util",
+  "name": "builder-util",
   "version": "0.0.0-semantic-release",
   "main": "out/util.js",
   "author": "Vladimir Krivosheev",

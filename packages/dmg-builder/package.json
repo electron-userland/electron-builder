@@ -1,7 +1,7 @@
 {
-  "name": "electron-builder-squirrel-windows",
+  "name": "dmg-builder",
   "version": "0.0.0-semantic-release",
-  "main": "out/squirrelWindows.js",
+  "main": "out/httpExecutor.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
@@ -11,14 +11,11 @@
     "out"
   ],
   "dependencies": {
-    "builder-util": "^0.0.0-semantic-release",
-    "bluebird-lst": "^1.0.3",
     "fs-extra-p": "^4.4.0",
-    "archiver": "^2.0.0",
-    "sanitize-filename": "^1.6.1"
+    "bluebird-lst": "^1.0.3",
+    "iconv-lite": "^0.4.18",
+    "parse-color": "^1.0.0",
+    "builder-util": "^0.0.0-semantic-release"
   },
-  "peerDependencies": {
-    "electron-builder": "~0.0.0-semantic-release"
-  },
-  "typings": "./out/squirrelWindows.d.ts"
+  "typings": "./out/dmg.d.ts"
 }

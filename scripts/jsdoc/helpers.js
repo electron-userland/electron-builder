@@ -260,8 +260,8 @@ function identifierToLink(id, root) {
 
   let linked = resolveById(id)
   if (linked == null) {
-    if (id === "module:electron-builder/out/core.Arch" || id === "module:electron-builder-util/out/arch.Arch") {
-      id = "module:electron-builder-util.Arch"
+    if (id === "module:electron-builder/out/core.Arch" || id === "module:builder-util/out/arch.Arch") {
+      id = "module:builder-util.Arch"
     }
     else if (id === "module:electron-builder-http/out/CancellationToken.CancellationToken") {
       id = "module:electron-builder-http.CancellationToken"

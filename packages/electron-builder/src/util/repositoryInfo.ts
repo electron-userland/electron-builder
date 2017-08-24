@@ -1,4 +1,4 @@
-import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
+import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { readFile } from "fs-extra-p"
 import { fromUrl, Info } from "hosted-git-info"
 import * as path from "path"

@@ -163,7 +163,7 @@
 | isTwoPackageJsonProjectLayoutUsed = <code>true</code>| <code>Boolean</code> | 
 | eventEmitter = <code>new EventEmitter()</code>| <code>internal:EventEmitter</code> | 
 | **appInfo**| <code>[AppInfo](#AppInfo)</code> | 
-| tempDirManager = <code>new TmpDir()</code>| <code>module:electron-builder-util/out/tmp.TmpDir</code> | 
+| tempDirManager = <code>new TmpDir()</code>| <code>module:builder-util/out/tmp.TmpDir</code> | 
 | options| <code>[PackagerOptions](Options#PackagerOptions)</code> | 
 | **repositoryInfo**| <code>Promise&lt; \| [SourceRepositoryInfo](#SourceRepositoryInfo)&gt;</code> | 
 | **productionDeps**| <code>[Lazy](electron-builder-http#Lazy)&lt;Array&lt;module:electron-builder/out/util/packageDependencies.Dependency&gt;&gt;</code> | 

@@ -1,5 +1,5 @@
 import { GithubOptions } from "electron-builder-http/out/publishOptions"
-import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
+import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { parse as parseUrl } from "url"

@@ -1,7 +1,7 @@
 export { Packager, BuildResult } from "./packager"
 export { PackagerOptions, ArtifactCreated } from "./packagerApi"
 export { Platform, Target, DIR_TARGET } from "./core"
-export { getArchSuffix, Arch, archFromString } from "electron-builder-util"
+export { getArchSuffix, Arch, archFromString } from "builder-util"
 export { build, CliOptions, createTargets } from "./builder"
 export { Metadata, Config, AfterPackContext, MetadataDirectories, Protocol, FileAssociation, PlatformSpecificBuildOptions, AuthorMetadata, RepositoryInfo, AsarOptions, FilePattern, ReleaseInfo, ElectronDownloadOptions } from "./metadata"
 export { MacOptions, DmgOptions, MasBuildOptions, MacOsTargetName, PkgOptions, DmgContent, DmgWindow } from "./options/macOptions"

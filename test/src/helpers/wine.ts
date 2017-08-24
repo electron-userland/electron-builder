@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { exec, safeStringifyJson } from "electron-builder-util"
-import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { exec, safeStringifyJson } from "builder-util"
+import { unlinkIfExists } from "builder-util/out/fs"
 import { emptyDir, ensureDir, readFile, writeFile } from "fs-extra-p"
 import { homedir } from "os"
 import * as path from "path"

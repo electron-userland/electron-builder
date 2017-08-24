@@ -16,7 +16,6 @@ export function toLangWithRegion(lang: string): string {
   return result == null ? `${lang}_${lang.toUpperCase()}` : result
 }
 
-/** @internal */
 export const lcid: any = {
   af_ZA: 1078,
   am_ET: 1118,

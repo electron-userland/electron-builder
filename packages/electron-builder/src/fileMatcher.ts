@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { asArray, debug, warn } from "electron-builder-util"
-import { copyDir, copyOrLinkFile, Filter, statOrNull } from "electron-builder-util/out/fs"
+import { asArray, debug, warn } from "builder-util"
+import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs"
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
@@ -168,8 +168,11 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   // exclude ony for app root, use .yarnclean to clean node_modules
   patterns.push("!.editorconfig")
 
-  debug(`File patterns of first/default matcher:\n\t${patterns.join("\n\t")}`)
-
+  const debugLogger = packager.info.debugLogger
+  if (debugLogger.enabled) {
+    //tslint:disable-next-line:no-invalid-template-strings
+    debugLogger.add(`${macroExpander("${arch}")}.firstOrDefaultFilePatterns`, patterns)
+  }
   return matchers
 }
 

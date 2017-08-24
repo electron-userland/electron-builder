@@ -1,5 +1,5 @@
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { Arch, archFromString, ArchType } from "electron-builder-util"
+import { Arch, archFromString, ArchType } from "builder-util"
 
 export type TargetConfigType = Array<string | TargetConfig> | string | TargetConfig | null
 

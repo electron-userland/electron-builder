@@ -1,13 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch, asArray, AsyncTaskManager, getArchSuffix, spawn, use } from "builder-util"
+import { copyDir, copyOrLinkFile } from "builder-util/out/fs"
 import _debug from "debug"
-import { Arch, asArray, getArchSuffix, spawn, use } from "electron-builder-util"
-import { copyDir, copyOrLinkFile } from "electron-builder-util/out/fs"
 import { emptyDir, mkdir, readdir, readFile, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { Target } from "../core"
 import { AppXOptions } from "../options/winOptions"
-import { AsyncTaskManager } from "../util/asyncTaskManager"
+import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
 
@@ -79,7 +79,7 @@ export default class AppXTarget extends Target {
       }
       return null
     }))
-    taskManager.addTask(this.writeManifest(path.join(__dirname, "..", "..", "templates", "appx"), preAppx, arch, publisher!, userAssets))
+    taskManager.addTask(this.writeManifest(getTemplatePath("appx"), preAppx, arch, publisher!, userAssets))
     taskManager.addTask(copyDir(appOutDir, path.join(preAppx, "app")))
     await taskManager.awaitTasks()
 

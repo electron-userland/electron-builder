@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, log, warn } from "electron-builder-util"
+import { isEmptyOrSpaces, log, warn } from "builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
 import { Metadata } from "../metadata"

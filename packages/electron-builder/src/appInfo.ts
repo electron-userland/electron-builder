@@ -1,4 +1,4 @@
-import { isEmptyOrSpaces, smarten, warn } from "electron-builder-util"
+import { isEmptyOrSpaces, smarten, warn } from "builder-util"
 import sanitizeFileName from "sanitize-filename"
 import { prerelease, SemVer } from "semver"
 import { Packager } from "./packager"

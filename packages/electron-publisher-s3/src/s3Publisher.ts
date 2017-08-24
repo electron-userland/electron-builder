@@ -1,7 +1,7 @@
 import { S3 } from "aws-sdk"
 import { CreateMultipartUploadRequest, ObjectCannedACL, StorageClass } from "aws-sdk/clients/s3"
 import { S3Options } from "electron-builder-http/out/publishOptions"
-import { Arch, debug } from "electron-builder-util"
+import { Arch, debug } from "builder-util"
 import { PublishContext, Publisher } from "electron-publish"
 import { ProgressCallback } from "electron-publish/out/progress"
 import { ensureDir, stat, symlink } from "fs-extra-p"

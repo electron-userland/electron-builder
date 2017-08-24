@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, log } from "electron-builder-util"
-import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull } from "electron-builder-util/out/fs"
+import { AsyncTaskManager, debug, log } from "builder-util"
+import { CONCURRENCY, FileCopier, Filter, MAX_FILE_REQUESTS, statOrNull } from "builder-util/out/fs"
 import { createReadStream, createWriteStream, ensureDir, readFile, Stats, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { AsarFilesystem, Node, readAsar } from "../asar"
@@ -8,7 +8,6 @@ import { AsarOptions } from "../metadata"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
 import { ensureEndSlash, FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
-import { AsyncTaskManager } from "./asyncTaskManager"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require("chromium-pickle-js")

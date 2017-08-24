@@ -1,4 +1,4 @@
-import { setPrinter } from "electron-builder-util/out/log"
+import { setPrinter } from "builder-util/out/log"
 import { ProgressBar } from "./progress"
 
 export class MultiProgress {

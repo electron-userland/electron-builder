@@ -37,7 +37,7 @@ async function main() {
   const developerFiles = (await globby([
     "builder/electron-builder-out-appInfo.js",
     "builder/electron-builder-out-core.js",
-    "util/electron-builder-util.js",
+    "util/builder-util.js",
   ], {cwd: source}))
     .filter(it => !userFiles.includes(it))
 
@@ -84,9 +84,9 @@ function sortOptions(pages) {
     return false
   })
 
-  // move Arch from electron-builder-util to electron-builder
+  // move Arch from builder-util to electron-builder
   pages[1].data = pages[1].data.filter(member => {
-    if (!member.id.startsWith("module:electron-builder-util")) {
+    if (!member.id.startsWith("module:builder-util")) {
       return true
     }
 

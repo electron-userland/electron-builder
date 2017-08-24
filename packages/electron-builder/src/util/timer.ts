@@ -1,4 +1,4 @@
-import { debug } from "electron-builder-util"
+import { debug } from "builder-util"
 
 export interface Timer {
   end(): void

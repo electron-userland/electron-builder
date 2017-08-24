@@ -1,6 +1,6 @@
 import Ajv, { AdditionalPropertiesParams, ErrorObject, TypeParams } from "ajv"
-import { asArray, debug, log, warn } from "electron-builder-util"
-import { statOrNull } from "electron-builder-util/out/fs"
+import { asArray, debug, log, warn } from "builder-util"
+import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"

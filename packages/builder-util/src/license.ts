@@ -1,9 +1,8 @@
 import * as path from "path"
-import { PlatformPackager } from "../platformPackager"
-import { langIdToName, toLangWithRegion } from "../util/langs"
+import { PackageBuilder } from "./api"
+import { langIdToName, toLangWithRegion } from "./langs"
 
-/** @internal */
-export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<Array<LicenseFile>> {
+export async function getLicenseFiles(packager: PackageBuilder): Promise<Array<LicenseFile>> {
   const files = (await packager.resourceList)
     .filter(it => {
       const name = it.toLowerCase()
@@ -30,7 +29,6 @@ export async function getLicenseFiles(packager: PlatformPackager<any>): Promise<
   })
 }
 
-/** @internal */
 export interface LicenseFile {
   file: string
   lang: string

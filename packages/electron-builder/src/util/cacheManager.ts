@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { Hash } from "crypto"
-import { Arch, debug, warn } from "electron-builder-util"
-import { copyFile } from "electron-builder-util/out/fs"
-import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
+import { Arch, debug, warn } from "builder-util"
+import { copyFile } from "builder-util/out/fs"
+import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { ensureDir, readFile, readJson, writeJson } from "fs-extra-p"
 import * as path from "path"
 
@@ -37,7 +37,7 @@ export class BuildCacheManager {
       return false
     }
 
-    debug(`Copy cached executable to ${this.executableFile}`)
+    debug(`Copy cached ${this.cacheFile} executable to ${this.executableFile}`)
     try {
       await copyFile(this.cacheFile, this.executableFile, false)
       return true

@@ -10,8 +10,5 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
-  "files": [
-    "../../typings/debug.d.ts"
   ]
 }

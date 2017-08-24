@@ -141,12 +141,12 @@ export interface DmgOptions extends TargetSpecificOptions {
    * If background is not specified, use `window.size`. Default locations expected background size to be 540x380.
    * @see [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).
    */
-  readonly background?: string | null
+  background?: string | null
 
   /**
    * The background color (accepts css colors). Defaults to `#ffffff` (white) if no background image.
    */
-  readonly backgroundColor?: string | null
+  backgroundColor?: string | null
 
   /**
    * The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.

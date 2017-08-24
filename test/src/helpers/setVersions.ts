@@ -3,8 +3,8 @@ import { readdir, readJson, writeJson } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 
-const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
-const exec = require("../../../packages/electron-builder-util/out/util").exec
+const printErrorAndExit = require("../../../packages/builder-util/out/promise").printErrorAndExit
+const exec = require("../../../packages/builder-util/out/util").exec
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
@@ -75,7 +75,7 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
         }
 
         const newVersion = versions[depIndex]
-        if (oldVersion == newVersion || newVersion === "0.0.0-semantic-release") {
+        if (oldVersion === newVersion || newVersion === "0.0.0-semantic-release") {
           console.log(`Skip ${depPackageName} for ${packageName} — version ${newVersion} is actual`)
           continue
         }

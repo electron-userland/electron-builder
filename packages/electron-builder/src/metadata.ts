@@ -1,6 +1,6 @@
 import { AsarIntegrityOptions } from "asar-integrity"
 import { Publish } from "electron-builder-http/out/publishOptions"
-import { Arch } from "electron-builder-util"
+import { Arch } from "builder-util"
 import { BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "./core"
 import { AppImageOptions, DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"

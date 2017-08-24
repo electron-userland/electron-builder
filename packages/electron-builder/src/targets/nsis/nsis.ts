@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "builder-util"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { copyFile, statOrNull } from "builder-util/out/fs"
 import _debug from "debug"
-import { Arch, asArray, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "electron-builder-util"
-import { getBinFromGithub } from "electron-builder-util/out/binDownload"
-import { copyFile, statOrNull } from "electron-builder-util/out/fs"
 import { readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -10,7 +10,6 @@ import sanitizeFileName from "sanitize-filename"
 import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../../core"
 import { normalizeExt } from "../../platformPackager"
-import { AsyncTaskManager } from "../../util/asyncTaskManager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
@@ -414,8 +413,9 @@ export class NsisTarget extends Target {
 
     args.push("-")
 
-    if (debug.enabled) {
-      process.stdout.write("\n\nNSIS script:\n\n" + script + "\n\n---\nEnd of NSIS script.\n\n")
+    const debugLogger = this.packager.info.debugLogger
+    if (debugLogger.enabled) {
+      debugLogger.add("nsis.script", script)
     }
 
     const nsisPath = await NSIS_PATH.value

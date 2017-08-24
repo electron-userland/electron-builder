@@ -22,6 +22,10 @@
     "7zip-bin-mac" "^1.0.1"
     "7zip-bin-win" "^2.1.0"
 
+"@types/debug@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.30.tgz#dc1e40f7af3b9c815013a7860e6252f6352a84df"
+
 "@types/dotenv@^4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@types/dotenv/-/dotenv-4.0.1.tgz#a0db2a2d25b5c01ff387f07c4f1e002d592873e8"
@@ -32,9 +36,9 @@
   version "1.3.29"
   resolved "https://registry.yarnpkg.com/@types/ini/-/ini-1.3.29.tgz#1325e981e047d40d13ce0359b821475b97741d2f"
 
-"@types/jest@^20.0.7":
-  version "20.0.7"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-20.0.7.tgz#39cd215db8bda03928dceb933a1e63eb2cbd210e"
+"@types/jest@^20.0.8":
+  version "20.0.8"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-20.0.8.tgz#7f8c97f73d20d3bf5448fbe33661a342002b5954"
 
 "@types/js-yaml@^3.9.1":
   version "3.9.1"
@@ -43,6 +47,10 @@
 "@types/node@*":
   version "8.0.24"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.24.tgz#06c580084d9add1fb40c1510ef0b448961246fb1"
+
+"@types/sanitize-filename@^1.1.28":
+  version "1.1.28"
+  resolved "https://registry.yarnpkg.com/@types/sanitize-filename/-/sanitize-filename-1.1.28.tgz#baa18f5ce4330fcbb3ea7b62f65550963d9aaa07"
 
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
@@ -3388,9 +3396,9 @@ truncate-utf8-bytes@^1.0.0:
   dependencies:
     utf8-byte-length "^1.0.1"
 
-ts-babel@^4.0.1:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.0.1.tgz#d8c822858d38b11ba87942653ceaaf8c51eb48ed"
+ts-babel@^4.1.3:
+  version "4.1.3"
+  resolved "https://registry.yarnpkg.com/ts-babel/-/ts-babel-4.1.3.tgz#2bbf0efcfe7af496292e4c97b7df9e5d42eb1da5"
   dependencies:
     babel-core "^6.26.0"
     bluebird-lst "^1.0.3"
@@ -3707,10 +3715,6 @@ write-file-atomic@^2.0.0:
     graceful-fs "^4.1.11"
     imurmurhash "^0.1.4"
     signal-exit "^3.0.2"
-
-x-mac-cyrillic@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/x-mac-cyrillic/-/x-mac-cyrillic-1.0.0.tgz#43f111038ab51d766d0beb4ce5d283c1826f9bc9"
 
 xdg-basedir@^3.0.0:
   version "3.0.0"

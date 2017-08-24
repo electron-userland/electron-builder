@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug } from "electron-builder-util"
-import { CONCURRENCY } from "electron-builder-util/out/fs"
-import { orNullIfFileNotExist } from "electron-builder-util/out/promise"
+import { debug } from "builder-util"
+import { CONCURRENCY } from "builder-util/out/fs"
+import { orNullIfFileNotExist } from "builder-util/out/promise"
 import { lstat, readdir, readFile, realpath, Stats } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -36,7 +36,7 @@ const knownAlwaysIgnoredDevDeps = new Set([
 
 if (process.env.ALLOW_ELECTRON_BUILDER_AS_PRODUCTION_DEPENDENCY !== "true") {
   knownAlwaysIgnoredDevDeps.add("electron-builder")
-  knownAlwaysIgnoredDevDeps.add("electron-builder-util")
+  knownAlwaysIgnoredDevDeps.add("builder-util")
   knownAlwaysIgnoredDevDeps.add("electron-publish")
   knownAlwaysIgnoredDevDeps.add("electron-download-tf")
 }

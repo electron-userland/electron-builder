@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, exec, isPullRequest, log, task, warn } from "electron-builder-util"
+import { Arch, AsyncTaskManager, exec, isPullRequest, log, task, warn } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
@@ -10,10 +10,9 @@ import { DIR_TARGET, Platform, Target } from "./core"
 import { MacOptions, MasBuildOptions } from "./options/macOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
-import { DmgTarget } from "./targets/dmg/dmg"
+import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { AsyncTaskManager } from "./util/asyncTaskManager"
 import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
 
 const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +

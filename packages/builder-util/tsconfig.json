@@ -11,7 +11,6 @@
     "../../typings/semver.d.ts",
     "../../typings/stat-mode.d.ts",
     "../../typings/chalk.d.ts",
-    "../../typings/debug.d.ts",
     "../../typings/node-emoji.d.ts",
     "../../typings/fcopy-pre-bundled.d.ts"
   ],

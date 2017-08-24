@@ -1,9 +1,9 @@
 import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "electron-builder-util"
-import { getBinFromGithub } from "electron-builder-util/out/binDownload"
-import { computeEnv, getLinuxToolsPath } from "electron-builder-util/out/bundledTool"
-import { unlinkIfExists } from "electron-builder-util/out/fs"
+import { Arch, debug, exec, isMacOsSierra, log, smarten, TmpDir, toLinuxArchString, use, warn } from "builder-util"
+import { getBinFromGithub } from "builder-util/out/binDownload"
+import { computeEnv, getLinuxToolsPath } from "builder-util/out/bundledTool"
+import { unlinkIfExists } from "builder-util/out/fs"
 import { ensureDir, outputFile, readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -11,6 +11,7 @@ import { Target } from "../core"
 import * as errorMessages from "../errorMessages"
 import { LinuxPackager } from "../linuxPackager"
 import { DebOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { getTemplatePath } from "../util/pathManager"
 import { installPrefix, LinuxTargetHelper } from "./LinuxTargetHelper"
 
 const fpmPath = new Lazy(() => {
@@ -44,7 +45,7 @@ export default class FpmTarget extends Target {
   }
 
   private async createScripts(): Promise<Array<string>> {
-    const defaultTemplatesDir = path.join(__dirname, "..", "..", "templates", "linux")
+    const defaultTemplatesDir = getTemplatePath("linux")
 
     const packager = this.packager
     const templateOptions = {

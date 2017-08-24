@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, Platform } from "electron-builder"
-import { walk } from "electron-builder-util/out/fs"
+import { walk } from "builder-util/out/fs"
 import { readAsarJson } from "electron-builder/out/asar"
 import { outputFile, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"

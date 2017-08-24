@@ -1,5 +1,5 @@
 import { path7za } from "7zip-bin"
-import { exec, spawn } from "electron-builder-util"
+import { exec, spawn } from "builder-util"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import * as path from "path"

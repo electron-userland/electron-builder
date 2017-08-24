@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, use } from "electron-builder-util"
-import { statOrNull } from "electron-builder-util/out/fs"
+import { Arch, debug, exec, use } from "builder-util"
+import { statOrNull } from "builder-util/out/fs"
 import { readFile, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { findIdentity, Identity } from "../codeSign"

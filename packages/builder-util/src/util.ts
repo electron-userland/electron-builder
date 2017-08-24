@@ -12,6 +12,7 @@ export { log, warn, task, subTask } from "./log"
 export { isMacOsSierra } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
+export { AsyncTaskManager } from "./asyncTaskManager"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -72,6 +73,13 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
           message += `\n${yellow(stdout.toString())}`
         }
         if (stderr.length !== 0) {
+          if (file.endsWith("wine")) {
+            stderr = stderr.toString()
+              .split("\n")
+              .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"") && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe"))
+              .join("\n")
+          }
+
           message += `\n${red(stderr.toString())}`
         }
 
@@ -163,7 +171,7 @@ export function handleProcess(event: string, childProcess: ChildProcess, command
 
   childProcess.once(event, (code: number) => {
     if (code === 0 && debug.enabled) {
-      debug(`${command} (${childProcess.pid}) exited with exit code 0`)
+      debug(`${path.basename(command)} (${childProcess.pid}) exited with exit code 0`)
     }
 
     if (code === 0) {
@@ -188,10 +196,7 @@ export function use<T, R>(value: T | null, task: (it: T) => R): R | null {
 export function debug7zArgs(command: "a" | "x"): Array<string> {
   const args = [command, "-bd"]
   if (debug7z.enabled) {
-    args.push("-bb3")
-  }
-  else if (!debug.enabled) {
-    args.push("-bb0")
+    args.push("-bb")
   }
   return args
 }

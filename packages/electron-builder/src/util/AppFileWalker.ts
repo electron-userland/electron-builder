@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug } from "electron-builder-util"
-import { CONCURRENCY, FileConsumer, Filter } from "electron-builder-util/out/fs"
+import { CONCURRENCY, FileConsumer, Filter } from "builder-util/out/fs"
 import { lstat, readdir, readlink, stat, Stats } from "fs-extra-p"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher"
@@ -40,10 +39,11 @@ export class AppFileWalker implements FileConsumer {
   }
 
   private handleNodeModulesDir(nodeModulesDir: string, parent: string) {
-    return (parent === this.packager.appDir ? this.packager.productionDeps.value : getProductionDependencies(parent))
+    const packager = this.packager
+    return (parent === packager.appDir ? packager.productionDeps.value : getProductionDependencies(parent))
       .then(it => {
-        if (debug.enabled) {
-          debug(`Production dependencies in the ${parent}: ${it.filter(it => it.path.startsWith(nodeModulesDir)).map(it => path.relative(nodeModulesDir, it.path)).join(", ")}`)
+        if (packager.debugLogger.enabled) {
+          packager.debugLogger.add(`productionDependencies.${parent}`, it.filter(it => it.path.startsWith(nodeModulesDir)).map(it => path.relative(nodeModulesDir, it.path)))
         }
 
         return this.copyNodeModules(it, this.filter, (file, fileStat) => {

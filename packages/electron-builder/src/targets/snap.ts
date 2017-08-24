@@ -1,5 +1,5 @@
-import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString } from "electron-builder-util"
-import { copyFile } from "electron-builder-util/out/fs"
+import { Arch, debug, exec, log, replaceDefault, spawn, toLinuxArchString } from "builder-util"
+import { copyFile } from "builder-util/out/fs"
 import { emptyDir, outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { homedir } from "os"

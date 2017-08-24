@@ -3,7 +3,7 @@ import * as path from "path"
 
 const workerFarm = require("worker-farm")
 
-const printErrorAndExit = require("../../../packages/electron-builder-util/out/promise").printErrorAndExit
+const printErrorAndExit = require("../../../packages/builder-util/out/promise").printErrorAndExit
 
 const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")

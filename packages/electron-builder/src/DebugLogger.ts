@@ -1,0 +1,47 @@
+import BluebirdPromise from "bluebird-lst"
+import { outputFile } from "fs-extra-p"
+import { safeDump } from "js-yaml"
+
+export class DebugLogger {
+  readonly data: any = {}
+
+  constructor(readonly enabled = true) {
+  }
+
+  add(key: string, value: any) {
+    const dataPath = key.split(".")
+    let o = this.data
+    let lastName: string | null = null
+    for (const p of dataPath) {
+      if (p === dataPath[dataPath.length - 1]) {
+        lastName = p
+        break
+      }
+      else {
+        if (o[p] == null) {
+          o[p] = Object.create(null)
+        }
+        else if (typeof o[p] === "string") {
+          o[p] = [o[p]]
+        }
+        o = o[p]
+      }
+    }
+
+    if (Array.isArray(o[lastName!!])) {
+      o[lastName!!].push(value)
+    }
+    else {
+      o[lastName!!] = value
+    }
+  }
+
+  save(file: string) {
+    if (Object.keys(this.data).length > 0) {
+      return outputFile(file, safeDump(this.data))
+    }
+    else {
+      return BluebirdPromise.resolve()
+    }
+  }
+}

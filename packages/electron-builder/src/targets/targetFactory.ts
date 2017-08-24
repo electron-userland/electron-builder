@@ -1,4 +1,4 @@
-import { addValue, Arch, archFromString, ArchType, asArray } from "electron-builder-util"
+import { addValue, Arch, archFromString, ArchType, asArray } from "builder-util"
 import { DEFAULT_TARGET, DIR_TARGET, Platform, Target, TargetConfig } from "../core"
 import { PlatformSpecificBuildOptions } from "../metadata"
 import { PlatformPackager } from "../platformPackager"

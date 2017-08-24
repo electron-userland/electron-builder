@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch, AsyncTaskManager, debug, exec, log, safeStringifyJson, TmpDir, use } from "builder-util"
+import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
 import { CancellationToken } from "electron-builder-http"
-import { Arch, debug, exec, log, safeStringifyJson, TmpDir, use } from "electron-builder-util"
-import { executeFinally, orNullIfFileNotExist } from "electron-builder-util/out/promise"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -11,12 +11,12 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar"
 import { Platform, SourceRepositoryInfo, Target } from "./core"
+import { DebugLogger } from "./DebugLogger"
 import MacPackager from "./macPackager"
 import { AfterPackContext, Config, Metadata } from "./metadata"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
-import { AsyncTaskManager } from "./util/asyncTaskManager"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./util/electronVersion"
 import { createLazyProductionDeps, Dependency } from "./util/packageDependencies"
@@ -64,6 +64,8 @@ export class Packager {
   private readonly afterPackHandlers: Array<(context: AfterPackContext) => Promise<any> | null> = []
 
   readonly options: PackagerOptions
+
+  readonly debugLogger = new DebugLogger(debug.enabled)
 
   get repositoryInfo(): Promise<SourceRepositoryInfo | null> {
     return this._repositoryInfo.value
@@ -181,7 +183,12 @@ export class Packager {
     const outDir = path.resolve(this.projectDir, use(this.config.directories, it => it!.output) || "dist")
     return {
       outDir,
-      platformToTargets: await executeFinally(this.doBuild(outDir), () => this.tempDirManager.cleanup())
+      platformToTargets: await executeFinally(this.doBuild(outDir), async () => {
+        if (this.debugLogger.enabled) {
+          await this.debugLogger.save(path.join(outDir, "electron-builder-debug.yml"))
+        }
+        await this.tempDirManager.cleanup()
+      })
     }
   }
 

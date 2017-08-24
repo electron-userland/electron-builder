@@ -1,4 +1,4 @@
-import { exists } from "electron-builder-util/out/fs"
+import { exists } from "builder-util/out/fs"
 import { lstat, stat } from "fs-extra-p"
 import * as path from "path"
 

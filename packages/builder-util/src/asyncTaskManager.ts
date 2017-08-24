@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { CancellationToken } from "electron-builder-http"
-import { debug } from "electron-builder-util"
-import { NestedError } from "electron-builder-util/out/promise"
+import { NestedError } from "./promise"
+import { debug } from "./util"
 
 export class AsyncTaskManager {
   readonly tasks: Array<Promise<any>> = []

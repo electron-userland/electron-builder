@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { copyOrLinkFile } from "electron-builder-util/out/fs"
+import { copyOrLinkFile } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"

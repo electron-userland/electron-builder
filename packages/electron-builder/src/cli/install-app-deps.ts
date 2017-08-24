@@ -1,8 +1,8 @@
 #! /usr/bin/env node
 
 import BluebirdPromise from "bluebird-lst"
-import { log, use, warn } from "electron-builder-util"
-import { printErrorAndExit } from "electron-builder-util/out/promise"
+import { log, use, warn } from "builder-util"
+import { printErrorAndExit } from "builder-util/out/promise"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"

@@ -1,5 +1,5 @@
-import { warn } from "electron-builder-util"
-import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
+import { warn } from "builder-util"
+import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"

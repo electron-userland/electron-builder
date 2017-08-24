@@ -12,7 +12,6 @@
   ],
   "files": [
     "../../typings/mime.d.ts",
-    "../../typings/debug.d.ts",
     "../../typings/chalk.d.ts"
   ]
 }

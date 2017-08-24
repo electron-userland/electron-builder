@@ -1,11 +1,10 @@
-import { debug, exec } from "electron-builder-util"
+import { debug, exec } from "builder-util"
+import { PackageBuilder } from "builder-util/out/api"
+import { getLicenseFiles } from "builder-util/out/license"
 import { outputFile, readFile } from "fs-extra-p"
-import { PlatformPackager } from "../../platformPackager"
-import { getLicenseFiles } from "../license"
-import { getVendorPath } from "../../util/pathManager"
+import { getDmgVendorPath } from "./dmgUtil"
 
-/** @internal */
-export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: string) {
+export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string) {
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return
@@ -60,7 +59,7 @@ export async function addLicenseToDmg(packager: PlatformPackager<any>, dmgPath: 
   await exec("/usr/bin/python", [tempFile], {
     env: {
       ...process.env,
-      PYTHONPATH: getVendorPath(),
+      PYTHONPATH: getDmgVendorPath(),
       LC_CTYPE: "en_US.UTF-8",
       LANG: "en_US.UTF-8",
     }

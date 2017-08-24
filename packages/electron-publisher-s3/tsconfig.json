@@ -7,7 +7,6 @@
     "src/**/*.ts"
   ],
   "files": [
-    "../../typings/mime.d.ts",
-    "../../typings/debug.d.ts"
+    "../../typings/mime.d.ts"
   ]
 }

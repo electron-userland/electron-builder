@@ -1,8 +1,9 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "electron-builder-util"
-import { statOrNull, unlinkIfExists } from "electron-builder-util/out/fs"
-import { orIfFileNotExist } from "electron-builder-util/out/promise"
+import { Arch, asArray, AsyncTaskManager, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
+import { PackageBuilder } from "builder-util/out/api"
+import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
+import { orIfFileNotExist } from "builder-util/out/promise"
 import { readdir, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import { Minimatch } from "minimatch"
@@ -20,9 +21,8 @@ import { PackagerOptions } from "./packagerApi"
 import { copyAppFiles } from "./util/appFileCopier"
 import { computeFileSets, ELECTRON_COMPILE_SHIM_FILENAME } from "./util/AppFileCopierHelper"
 import { AsarPackager, checkFileInArchive } from "./util/asarUtil"
-import { AsyncTaskManager } from "./util/asyncTaskManager"
 
-export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> {
+export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> implements PackageBuilder {
   readonly packagerOptions: PackagerOptions
 
   readonly projectDir: string

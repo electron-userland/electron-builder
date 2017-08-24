@@ -1,4 +1,4 @@
-import { isEnvTrue } from "electron-builder-util"
+import { isEnvTrue } from "builder-util"
 
 export function isUseSystemSigncode() {
   return isEnvTrue(process.env.USE_SYSTEM_SIGNCODE)

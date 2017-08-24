@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, log } from "electron-builder-util"
-import { CONCURRENCY, FileTransformer, statOrNull, walk } from "electron-builder-util/out/fs"
+import { debug, log } from "builder-util"
+import { CONCURRENCY, FileTransformer, statOrNull, walk } from "builder-util/out/fs"
 import { ensureDir, Stats } from "fs-extra-p"
 import * as path from "path"
 import { FileMatcher } from "../fileMatcher"

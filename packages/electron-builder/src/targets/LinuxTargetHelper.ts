@@ -1,10 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { debug, exec, isEmptyOrSpaces, warn } from "electron-builder-util"
-import { statOrNull } from "electron-builder-util/out/fs"
-import { ensureDir, outputFile, readdir } from "fs-extra-p"
+import { debug, exec, isEmptyOrSpaces, warn } from "builder-util"
+import { statOrNull } from "builder-util/out/fs"
+import { outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
 import { LinuxPackager } from "../linuxPackager"
 import { LinuxBuildOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { getTemplatePath } from "../util/pathManager"
 
 export const installPrefix = "/opt"
 
@@ -49,9 +50,7 @@ export class LinuxTargetHelper {
       return await this.iconsFromDir(path.join(packager.buildResourcesDir, "icons"))
     }
     else {
-      const iconDir = await packager.getTempDir("linux.iconset")
-      ensureDir(iconDir)
-      return await this.createFromIcns(iconDir)
+      return await this.createFromIcns(await packager.info.tempDirManager.createTempDir({suffix: ".iconset"}))
     }
   }
 
@@ -153,7 +152,7 @@ export class LinuxTargetHelper {
   private async createFromIcns(tempDir: string): Promise<Array<Array<string>>> {
     const iconPath = await this.getIcns()
     if (iconPath == null) {
-      return await this.iconsFromDir(path.join(__dirname, "..", "..", "templates", "linux", "electron-icons"))
+      return await this.iconsFromDir(path.join(getTemplatePath("linux"), "electron-icons"))
     }
 
     if (process.platform === "darwin") {

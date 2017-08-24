@@ -1,4 +1,4 @@
-import { removePassword, TmpDir } from "electron-builder-util"
+import { removePassword, TmpDir } from "builder-util"
 import { createKeychain } from "electron-builder/out/codeSign"
 import { CSC_LINK } from "../helpers/codeSignData"
 

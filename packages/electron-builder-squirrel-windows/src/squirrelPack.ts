@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "electron-builder-util"
-import { copyFile, walk } from "electron-builder-util/out/fs"
+import { Arch, debug, exec, execWine, log, prepareWindowsExecutableArgs as prepareArgs, spawn } from "builder-util"
+import { copyFile, walk } from "builder-util/out/fs"
 import { WinPackager } from "electron-builder/out/winPackager"
 import { createWriteStream, ensureDir, remove, stat, unlink } from "fs-extra-p"
 import * as path from "path"

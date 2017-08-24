@@ -1,21 +1,17 @@
-import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, exec, isEmptyOrSpaces, log, spawn, warn } from "electron-builder-util"
-import { copyFile, exists, statOrNull } from "electron-builder-util/out/fs"
-import { outputFile, readFile, remove, unlink } from "fs-extra-p"
+import { Arch, AsyncTaskManager, debug, exec, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
+import { copyFile, exists, statOrNull } from "builder-util/out/fs"
+import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
+import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
+import { outputFile, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
-import { DmgOptions, MacOptions } from "../../options/macOptions"
-import { PlatformPackager } from "../../platformPackager"
-import { addLicenseToDmg } from "./dmgLicense"
-import { Target } from "../../core"
-import { attachAndExecute, detach } from "./dmgUtil"
-import { getTemplatePath, getVendorPath } from "../../util/pathManager"
+import { Target } from "../core"
+import { DmgOptions, MacOptions } from "../options/macOptions"
+import { PlatformPackager } from "../platformPackager"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
-
-  private helperDir = getTemplatePath("dmg")
 
   constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
     super("dmg")
@@ -64,9 +60,8 @@ export class DmgTarget extends Target {
     }
 
     const isContinue = await attachAndExecute(tempDmg, true, async () => {
-      const promises = [
-        specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`),
-      ]
+      const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
+      asyncTaskManager.addTask(specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`))
 
       const window = specification.window!
       const env: any = {
@@ -87,7 +82,7 @@ export class DmgTarget extends Target {
       }
       else {
         const volumeIcon = `${volumePath}/.VolumeIcon.icns`
-        promises.push(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
+        asyncTaskManager.addTask(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
         env.volumeIcon = volumeIcon
       }
 
@@ -130,23 +125,10 @@ export class DmgTarget extends Target {
         entries += `&makeEntries("${entryName}", Iloc_xy => [ ${c.x}, ${c.y} ]),\n`
 
         if (c.type === "link") {
-          promises.push(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
+          asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
         }
       }
-      debug(entries)
-
-      const dmgPropertiesFile = await packager.getTempFile("dmgProperties.pl")
-
-      promises.push(outputFile(dmgPropertiesFile, (await readFile(path.join(this.helperDir, "dmgProperties.pl"), "utf-8")).replace("$ENTRIES", entries)))
-      await BluebirdPromise.all<any>(promises)
-
-      await exec("/usr/bin/perl", [dmgPropertiesFile], {
-        cwd: getVendorPath(),
-        env
-      })
-
-      await exec("sync")
-
+      await applyProperties(entries, env, asyncTaskManager, packager)
       return packager.packagerOptions.effectiveOptionComputed == null || !(await packager.packagerOptions.effectiveOptionComputed({volumePath, specification, packager}))
     })
 
@@ -233,21 +215,10 @@ export class DmgTarget extends Target {
       if (specification.background != null) {
         throw new Error("Both dmg.backgroundColor and dmg.background are specified — please set the only one")
       }
-
-      (specification as any).backgroundColor = require("parse-color")(specification.backgroundColor).hex
+      specification.backgroundColor = computeBackgroundColor(specification.backgroundColor)
     }
-
-    if (specification.backgroundColor == null && !("background" in specification)) {
-      const resourceList = await packager.resourceList
-      if (resourceList.includes("background.tiff")) {
-        (specification as any).background = path.join(packager.buildResourcesDir, "background.tiff")
-      }
-      else if (resourceList.includes("background.png")) {
-        (specification as any).background = path.join(packager.buildResourcesDir, "background.png")
-      }
-      else {
-        (specification as any).background = path.join(this.helperDir, "background.tiff")
-      }
+    else if (!("background" in specification)) {
+      specification.background = await computeBackground(packager)
     }
 
     if (specification.format == null) {

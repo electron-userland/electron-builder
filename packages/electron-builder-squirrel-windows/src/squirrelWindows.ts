@@ -1,6 +1,6 @@
 import { Arch, getArchSuffix, Target } from "electron-builder"
-import { log, warn } from "electron-builder-util"
-import { getBinFromGithub } from "electron-builder-util/out/binDownload"
+import { log, warn } from "builder-util"
+import { getBinFromGithub } from "builder-util/out/binDownload"
 import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
 import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"

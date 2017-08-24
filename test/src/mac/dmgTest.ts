@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
+import { copyFile } from "builder-util/out/fs"
+import { attachAndExecute, getDmgTemplatePath } from "dmg-builder/out/dmgUtil"
 import { Platform } from "electron-builder"
-import { copyFile } from "electron-builder-util/out/fs"
 import { PlatformPackager } from "electron-builder/out/platformPackager"
-import { attachAndExecute } from "electron-builder/out/targets/dmg/dmgUtil"
 import { remove, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -48,7 +48,7 @@ test.ifAll.ifMac("custom background - new way", () => {
     },
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
-      copyFile(path.join(__dirname, "..", "..", "..", "packages", "electron-builder", "templates", "dmg", "background.tiff"), path.join(projectDir, customBackground)),
+      copyFile(path.join(getDmgTemplatePath(), "background.tiff"), path.join(projectDir, customBackground)),
       // copy, but not rename to test that default icon is not used
       copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "build", "customIcon.icns")),
       copyFile(path.join(projectDir, "build", "icon.icns"), path.join(projectDir, "foo.icns")),

@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Platform } from "electron-builder"
-import { exec } from "electron-builder-util"
+import { exec } from "builder-util"
 import { readFile, symlink } from "fs-extra-p"
 import * as path from "path"
 import pathSorter from "path-sort"

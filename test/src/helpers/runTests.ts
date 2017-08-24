@@ -7,7 +7,7 @@ import * as path from "path"
 import { ELECTRON_VERSION } from "./testConfig"
 
 // we set NODE_PATH in this file, so, we cannot use 'out/util' path here
-const util = require("../../../packages/electron-builder-util/out/util")
+const util = require("../../../packages/builder-util/out/util")
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))

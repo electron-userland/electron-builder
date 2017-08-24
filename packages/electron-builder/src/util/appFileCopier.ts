@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS } from "electron-builder-util/out/fs"
+import { AsyncTaskManager } from "builder-util"
+import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS } from "builder-util/out/fs"
 import { ensureDir, readlink, symlink } from "fs-extra-p"
 import * as path from "path"
 import { Packager } from "../packager"
 import { ensureEndSlash, FileSet } from "./AppFileCopierHelper"
 import { copyFileOrData } from "./asarUtil"
-import { AsyncTaskManager } from "./asyncTaskManager"
 
 export async function copyAppFiles(fileSet: FileSet, packager: Packager) {
   const metadata = fileSet.metadata

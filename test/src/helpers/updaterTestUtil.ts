@@ -1,6 +1,6 @@
 import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
-import { TmpDir } from "electron-builder-util"
-import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
+import { TmpDir } from "builder-util"
+import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { AppUpdater, NoOpLogger } from "electron-updater/out/AppUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"

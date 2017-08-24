@@ -7,8 +7,11 @@ import { isMacOsSierra } from "./macosVersion"
 import { debug, exec, ExecOptions, isEnvTrue } from "./util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
-  debug(`USE_SYSTEM_WINE: ${process.env.USE_SYSTEM_WINE}`)
-  if (!isEnvTrue(process.env.USE_SYSTEM_WINE) && await isMacOsSierra()) {
+  const isUseSystemWine = isEnvTrue(process.env.USE_SYSTEM_WINE)
+  if (isUseSystemWine) {
+    debug("Using system wine is forced")
+  }
+  if (!isUseSystemWine && await isMacOsSierra()) {
     // noinspection SpellCheckingInspection
     const wineDir = await getBinFromGithub("wine", "2.0.1-mac-10.12", "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg==")
     return {

@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto"
-import { httpExecutor } from "electron-builder-util/out/nodeHttpExecutor"
+import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { tmpdir } from "os"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"

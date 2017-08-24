@@ -1,9 +1,9 @@
+import { AsyncTaskManager } from "builder-util"
 import { Arch, MacOptions, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder/out/codeSign"
 import MacPackager from "electron-builder/out/macPackager"
-import { DmgTarget } from "electron-builder/out/targets/dmg/dmg"
-import { AsyncTaskManager } from "electron-builder/out/util/asyncTaskManager"
+import { DmgTarget } from "electron-builder/out/targets/dmg"
 import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
 import { SignOptions as MacSignOptions } from "electron-osx-sign"
@@ -48,7 +48,7 @@ export class CheckingMacPackager extends MacPackager {
     for (const target of targets) {
       // do not use instanceof to avoid dmg require
       if (target.name === "dmg") {
-        this.effectiveDistOptions = await (<DmgTarget>target).computeDmgOptions()
+        this.effectiveDistOptions = await (target as DmgTarget).computeDmgOptions()
         break
       }
     }
