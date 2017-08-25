@@ -175,7 +175,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     const signOptions: any = {
       "identity-validation": false,
       // https://github.com/electron-userland/electron-builder/issues/1699
-      ignore: (file: string) => file.startsWith("/Contents/PlugIns", appPath.length),
+      // kext are signed by the chipset manufacturers. You need a special certificate (only available on request) from Apple to be able to sign kext.
+      ignore: (file: string) => file.endsWith(".kext") || file.startsWith("/Contents/PlugIns", appPath.length),
       identity: identity!,
       type,
       platform: isMas ? "mas" : "darwin",

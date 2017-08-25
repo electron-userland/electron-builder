@@ -35,6 +35,7 @@
       <w>bootstrapper</w>
       <w>buildpack</w>
       <w>checksums</w>
+      <w>chipset</w>
       <w>chown</w>
       <w>circleci</w>
       <w>clcerts</w>
@@ -141,6 +142,7 @@
       <w>isbinaryfile</w>
       <w>joliet</w>
       <w>jspm</w>
+      <w>kext</w>
       <w>keyserver</w>
       <w>langs</w>
       <w>lcid</w>
