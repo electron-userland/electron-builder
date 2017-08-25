@@ -1,6 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -50,6 +50,10 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     this.projectDir = info.projectDir
 
     this.buildResourcesDir = path.resolve(this.projectDir, this.relativeBuildResourcesDirname)
+  }
+
+  get debugLogger(): DebugLogger {
+    return this.info.debugLogger
   }
 
   abstract get defaultTarget(): Array<string>

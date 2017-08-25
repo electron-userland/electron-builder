@@ -156,9 +156,9 @@ test.ifAll.ifMac("multi language license", app({
 }, {
   projectDirCreated: projectDir => {
     return BluebirdPromise.all([
-      writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
+      // writeFile(path.join(projectDir, "build", "license_en.txt"), "Hi"),
+      writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo"),
       writeFile(path.join(projectDir, "build", "license_ru.txt"), "Привет"),
-      writeFile(path.join(projectDir, "build", "license_de.txt"), "Hallo, Grünwald"),
     ])
   },
 }))

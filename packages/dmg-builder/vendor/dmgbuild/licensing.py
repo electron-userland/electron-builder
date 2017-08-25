@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import os
 import struct
 
 from .resources import *
@@ -220,25 +219,6 @@ encodings_map = {
     140: 'mac_farsi'        # kTextEncodingMacFarsi
 }
 
-# Standard fonts
-fonts = {
-    'New York':      2,
-    'Geneva':        3,
-    'Monaco':        4,
-    'Venice':        5,
-    'London':        6,
-    'Athens':        7,
-    'San Francisco': 8,
-    'Toronto':       9,
-    'Cairo':         11,
-    'Los Angeles':   12,
-    'Times':         20,
-    'Helvetica':     21,
-    'Courier':       22,
-    'Symbol':        23,
-    'Mobile':        24
-}
-
 # Buttons (these come from the SLAResources file which you can find in the SLA
 #          SDK on developer.apple.com)
 default_buttons = {
@@ -420,8 +400,7 @@ def add_license(filename, license_info):
     ndx = 1
     for language,license_info in license_info['licenses'].items():
         if language not in region_codes:
-            raise Exception("Unknown language '" + language + "'. Valid languages are: " +
-                            ", ".join(sorted(region_codes.keys())))
+            raise Exception("Unknown language '" + language + "'. Valid languages are: " + ", ".join(sorted(region_codes.keys())))
         encoding_name = get_encoder_name(language)
         lang_id = region_codes[language]
 
@@ -429,14 +408,11 @@ def add_license(filename, license_info):
 
         license_data = license_info.get('data')
 
-        if license_info.get('isRtf'):
-            fork.add(Resource(b'RTF ', 5000 + ndx, language + ' SLA',
-                              str(license_data)))
-        else:
-            fork.add(TextResource(5000 + ndx, language + ' SLA', license_data))
-            fork.add(StyleResource(5000 + ndx, language + ' SLA',
-                                   [Style(0, 12, 9, Style.Helvetica,
-                                          0, 0, (0, 0, 0))]))
+        # if license_info.get('isRtf'):
+        fork.add(Resource(b'RTF ', 5000 + ndx, language + ' SLA', license_data))
+        # else:
+        #     fork.add(TextResource(5000 + ndx, language + ' SLA', license_data))
+        #     fork.add(StyleResource(5000 + ndx, language + ' SLA', [Style(0, 12, 9, Style.Helvetica, 0, 0, (0, 0, 0))]))
 
         buttons = license_info.get('buttons', {}).get(language, None)
         if buttons is None:

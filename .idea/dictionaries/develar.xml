@@ -244,6 +244,7 @@
       <w>rollout</w>
       <w>rollouts</w>
       <w>rpmbuild</w>
+      <w>rtfs</w>
       <w>scripthost</w>
       <w>semver</w>
       <w>setfinderinfo</w>
@@ -254,6 +255,7 @@
       <w>simp</w>
       <w>smprograms</w>
       <w>snapcraft</w>
+      <w>splitted</w>
       <w>srcfolder</w>
       <w>subcommand</w>
       <w>targetsize</w>

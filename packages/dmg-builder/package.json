@@ -13,7 +13,6 @@
   "dependencies": {
     "fs-extra-p": "^4.4.0",
     "bluebird-lst": "^1.0.3",
-    "iconv-lite": "^0.4.18",
     "parse-color": "^1.0.0",
     "builder-util": "^0.0.0-semantic-release"
   },

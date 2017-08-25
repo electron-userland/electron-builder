@@ -13,6 +13,7 @@ export { isMacOsSierra } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
+export { DebugLogger } from "./DebugLogger"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")

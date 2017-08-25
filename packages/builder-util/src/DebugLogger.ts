@@ -9,6 +9,10 @@ export class DebugLogger {
   }
 
   add(key: string, value: any) {
+    if (!this.enabled) {
+      return
+    }
+
     const dataPath = key.split(".")
     let o = this.data
     let lastName: string | null = null
@@ -37,7 +41,8 @@ export class DebugLogger {
   }
 
   save(file: string) {
-    if (Object.keys(this.data).length > 0) {
+    // toml and json doesn't correctly output multiline string as multiline
+    if (this.enabled && Object.keys(this.data).length > 0) {
       return outputFile(file, safeDump(this.data))
     }
     else {

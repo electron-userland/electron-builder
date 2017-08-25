@@ -77,7 +77,7 @@
     "update-notifier": "^2.2.0",
     "uuid-1345": "^0.99.6",
     "yargs": "^8.0.2",
-    "debug": "^3.0.0",
+    "debug": "^3.0.1",
     "asar-integrity": "0.0.0-semantic-release",
     "lazy-val": "^1.0.2",
     "dotenv": "^4.0.0",

@@ -1,89 +1,135 @@
-import { debug, exec } from "builder-util"
+import { exec } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseFiles } from "builder-util/out/license"
 import { outputFile, readFile } from "fs-extra-p"
-import { getDmgVendorPath } from "./dmgUtil"
+import { getDefaultButtons } from "./licenseDefaultButtons"
+
+// DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
+const DEFAULT_REGION_CODE = 0
 
 export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string) {
+  // http://www.owsiak.org/?p=700
   const licenseFiles = await getLicenseFiles(packager)
   if (licenseFiles.length === 0) {
     return
   }
 
-  if (debug.enabled) {
-    debug(`License files: ${licenseFiles.join(" ")}`)
+  if (packager.debugLogger.enabled) {
+    packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
   }
 
-  let licenses = ""
-  const iconv = require("iconv-lite")
-  const indent = "    "
+  const style: Array<string> = []
+  const rtfs: Array<string> = []
+  const defaultButtons: Array<string> = []
+
+  let counter = 5000
+  const addedRegionCodes: Array<number> = []
   for (const item of licenseFiles) {
-    const encoding = getEncoderName(item.langWithRegion)
-    if (!iconv.encodingExists(encoding)) {
-      throw new Error(`${encoding} is not supported by iconv-lite`)
-    }
+    // value from DropDMG, data the same for any language
+    // noinspection SpellCheckingInspection
+    style.push(`data 'styl' (${counter}, "${item.langName}") {
+  $"0001 0000 0000 000E 0011 0015 0000 000C"
+  $"0000 0000 0000"
+};`)
 
+    let data = `data 'RTF ' (${counter}, "${item.langName}") {\n`
     const fileData = await readFile(item.file, "utf-8")
-    const data = iconv.encode(fileData, encoding)
     const isRtf = item.file.endsWith(".rtf") || item.file.endsWith(".RTF")
-    licenses += [
-      `${indent}'${item.langWithRegion}': {`,
-      `${indent}  'data': bytearray.fromhex('${data.toString("hex")}'),`,
-      `${indent}  'isRtf': ${isRtf ? "True" : "False"}`,
-      `${indent}}`,
-    ].join("\n") + ",\n"
+    data += isRtf ? serializeString(fileData) : wrapInRtf(fileData)
+    data += "\n};"
+    rtfs.push(data)
+
+    defaultButtons.push(getDefaultButtons(item.langWithRegion, counter, item.langName))
+
+    addedRegionCodes.push(getRegionCode(item.langWithRegion))
+
+    counter++
   }
 
-  const script = [
-    "# -*- coding: utf-8 -*-",
-    "from __future__ import unicode_literals",
-    "import dmgbuild.licensing",
-    "license = {",
-    "  'default-language': 'en_US',",
-    "  'licenses': {",
-    licenses,
-    "  }",
-    "}",
-    `dmgbuild.licensing.add_license('${dmgPath}', license)`
-  ]
+  const buffer = Buffer.allocUnsafe((2 + (3 * addedRegionCodes.length)) * 2)
+  let offset = 0
+  buffer.writeUInt16BE(DEFAULT_REGION_CODE, offset)
+  offset += 2
+  buffer.writeUInt16BE(addedRegionCodes.length, offset)
+  offset += 2
 
-  const tempFile = await packager.getTempFile(".py")
-  await outputFile(tempFile, script.join("\n"))
-
-  if (debug.enabled) {
-    debug(`License: ${script.join("\n")}`)
+  for (let i = 0; i < addedRegionCodes.length; i++) {
+    const regionCode = addedRegionCodes[i]
+    buffer.writeUInt16BE(regionCode, offset)
+    offset += 2
+    buffer.writeUInt16BE(i, offset)
+    offset += 2
+    buffer.writeUInt16BE(/* is two byte */ [14, 51, 52, 53].includes(regionCode) ? 1 : 0, offset)
+    offset += 2
   }
 
-  await exec("hdiutil", ["unflatten", "-quiet", dmgPath])
+  const lPic = `data 'LPic' (5000) {\n${serializeString(buffer.toString("hex"))}\n};`
+  const data = style
+    .concat(rtfs)
+    .concat(lPic)
+    .concat(defaultButtons)
+    .join("\n\n")
 
-  await exec("/usr/bin/python", [tempFile], {
-    env: {
-      ...process.env,
-      PYTHONPATH: getDmgVendorPath(),
-      LC_CTYPE: "en_US.UTF-8",
-      LANG: "en_US.UTF-8",
-    }
-  })
-
-  await exec("hdiutil", ["flatten", "-quiet", dmgPath])
+  packager.debugLogger.add("dmg.licenseResource", data)
+  const tempFile = await packager.getTempFile(".r")
+  await outputFile(tempFile, data)
+  await exec("hdiutil", ["unflatten", dmgPath])
+  await exec("Rez", ["-a", tempFile, "-o", dmgPath])
+  await exec("hdiutil", ["flatten", dmgPath])
 }
 
-function getEncoderName(langWithRegion: string): string {
-  const regionCode = regionCodes[langWithRegion]
-  if (regionCode == null) {
+function serializeString(data: string) {
+  return '  $"' + data.match(/.{1,32}/g)!!.map(it => it.match(/.{1,4}/g)!!.join(" ")).join('"\n  $"') + '"'
+}
+
+function getRtfUnicodeEscapedString(text: string) {
+  let result = ""
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "\\" || text[i] === "{" || text[i] === "}" || text[i] === "\n") {
+      result += `\\${text[i]}`
+    }
+    else if (text[i] === "\r") {
+      // ignore
+    }
+    else if (text.charCodeAt(i) <= 0x7f) {
+      result += text[i]
+    }
+    else {
+      result += `\\u${text.codePointAt(i)}`
+    }
+  }
+  return result
+}
+
+function wrapInRtf(text: string) {
+  return `  $"7B5C 7274 6631 5C61 6E73 695C 616E 7369"
+  $"6370 6731 3235 325C 636F 636F 6172 7466"
+  $"3135 3034 5C63 6F63 6F61 7375 6272 7466"
+  $"3833 300A 7B5C 666F 6E74 7462 6C5C 6630"
+  $"5C66 7377 6973 735C 6663 6861 7273 6574"
+  $"3020 4865 6C76 6574 6963 613B 7D0A 7B5C"
+  $"636F 6C6F 7274 626C 3B5C 7265 6432 3535"
+  $"5C67 7265 656E 3235 355C 626C 7565 3235"
+  $"353B 7D0A 7B5C 2A5C 6578 7061 6E64 6564"
+  $"636F 6C6F 7274 626C 3B3B 7D0A 5C70 6172"
+  $"645C 7478 3536 305C 7478 3131 3230 5C74"
+  $"7831 3638 305C 7478 3232 3430 5C74 7832"
+  $"3830 305C 7478 3333 3630 5C74 7833 3932"
+  $"305C 7478 3434 3830 5C74 7835 3034 305C"
+  $"7478 3536 3030 5C74 7836 3136 305C 7478"
+  $"3637 3230 5C70 6172 6469 726E 6174 7572"
+  $"616C 5C70 6172 7469 6768 7465 6E66 6163"
+  $"746F 7230 0A0A 5C66 305C 6673 3234 205C"
+${serializeString("63663020" + Buffer.from(getRtfUnicodeEscapedString(text)).toString("hex").toUpperCase() + "7D")}`
+  // ^ to produce correctly splitted output, this two leading chunks from default wrapper appended here
+}
+
+function getRegionCode(langWithRegion: string) {
+  const result = regionCodes[langWithRegion]
+  if (result == null) {
     throw new Error(`Cannot determine region code for ${langWithRegion}`)
   }
-
-  const scriptCode = scriptCodes[regionCode]
-  if (regionCode == null) {
-    throw new Error(`Cannot determine script code for ${langWithRegion}`)
-  }
-
-  const encodingName = encodingsMap[scriptCode]
-  if (regionCode == null) {
-    throw new Error(`Cannot mac determine encoding for ${langWithRegion}`)
-  }
-  return encodingName
+  return result
 }
 
 // noinspection SpellCheckingInspection
@@ -173,123 +219,4 @@ const regionCodes: any = {
   ne_NP: 106,
   kl: 107,
   en_IE: 108
-}
-
-const scriptCodes: any = {
-  0: 0,
-  1: 0,
-  2: 0,
-  3: 0,
-  4: 0,
-  5: 0,
-  6: 0,
-  7: 0,
-  8: 0,
-  9: 0,
-  10: 0,
-  11: 0,
-  12: 0,
-  13: 5,
-  14: 1,
-  15: 0,
-  16: 4,
-  17: 0,
-  18: 0,
-  19: 0,
-  20: 6,
-  21: 37,
-  22: 0,
-  23: 6,
-  24: 35,
-  25: 36,
-  26: 0,
-  27: 0,
-  30: 0,
-  31: 0,
-  32: 0,
-  33: 9,
-  34: 4,
-  35: 35,
-  36: 0,
-  37: 0,
-  39: 38,
-  40: 6,
-  41: 29,
-  42: 29,
-  43: 29,
-  44: 29,
-  45: 29,
-  46: 0,
-  47: 37,
-  48: 140,
-  49: 7,
-  50: 39,
-  51: 3,
-  52: 25,
-  53: 2,
-  54: 21,
-  56: 29,
-  57: 29,
-  59: 29,
-  60: 13,
-  61: 7,
-  62: 7,
-  64: 6,
-  65: 7,
-  66: 36,
-  67: 7,
-  68: 36,
-  70: 0,
-  71: 0,
-  72: 7,
-  73: 0,
-  75: 39,
-  76: 39,
-  77: 39,
-  78: 236,
-  79: 39,
-  81: 40,
-  82: 0,
-  83: 26,
-  84: 24,
-  85: 23,
-  86: 0,
-  88: 0,
-  91: 0,
-  92: 0,
-  94: 11,
-  95: 10,
-  96: 4,
-  97: 30,
-  98: 0,
-  99: 7,
-  100: 0,
-  101: 0,
-  102: 0,
-  103: 0,
-  104: 9,
-  105: 26,
-  106: 9,
-  107: 0,
-  108: 0
-}
-
-// https://github.com/ashtuchkin/iconv-lite/wiki/Supported-Encodings
-// noinspection SpellCheckingInspection
-const encodingsMap: any = {
-  0: "macroman",
-  1: "Shift_JIS",
-  2: "Big5",
-  3: "EUC-KR",
-  4: "mac_arabic",
-  6: "macgreek",
-  7: "maccyrillic",
-  21: "ISO-8859-1",
-  25: "EUC-CN",
-  29: "maccenteuro",
-  35: "macturkish",
-  36: "maccroatian",
-  37: "maciceland",
-  38: "macromania",
-  140: "macfarsi"
 }

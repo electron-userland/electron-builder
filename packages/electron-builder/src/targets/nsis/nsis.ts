@@ -413,9 +413,8 @@ export class NsisTarget extends Target {
 
     args.push("-")
 
-    const debugLogger = this.packager.info.debugLogger
-    if (debugLogger.enabled) {
-      debugLogger.add("nsis.script", script)
+    if (this.packager.debugLogger.enabled) {
+      this.packager.debugLogger.add("nsis.script", script)
     }
 
     const nsisPath = await NSIS_PATH.value
