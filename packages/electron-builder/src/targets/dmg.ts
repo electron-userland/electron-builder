@@ -1,4 +1,4 @@
-import { Arch, AsyncTaskManager, debug, exec, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
+import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
 import { copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
 import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
@@ -6,14 +6,15 @@ import { outputFile, remove, unlink } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
+import { findIdentity, isSignAllowed } from "../codeSign"
 import { Target } from "../core"
-import { DmgOptions, MacOptions } from "../options/macOptions"
-import { PlatformPackager } from "../platformPackager"
+import MacPackager from "../macPackager"
+import { DmgOptions } from "../options/macOptions"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
 
-  constructor(private readonly packager: PlatformPackager<MacOptions>, readonly outDir: string) {
+  constructor(private readonly packager: MacPackager, readonly outDir: string) {
     super("dmg")
   }
 
@@ -143,11 +144,50 @@ export class DmgTarget extends Target {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
     }
     await spawn("hdiutil", addVerboseIfNeed(args))
-    await exec("hdiutil", addVerboseIfNeed(["internet-enable", "-no"]).concat(artifactPath))
+    if (this.options.internetEnabled) {
+      await exec("hdiutil", addVerboseIfNeed(["internet-enable"]).concat(artifactPath))
+    }
 
     await addLicenseToDmg(packager, artifactPath)
 
+    await this.signDmg(artifactPath)
+
     this.packager.dispatchArtifactCreated(artifactPath, this, arch, packager.computeSafeArtifactName(artifactName, "dmg"))
+  }
+
+  private async signDmg(artifactPath: string) {
+    if (!isSignAllowed(false)) {
+      return
+    }
+
+    if (!(await isCanSignDmg())) {
+      warn("At least macOS 10.11.5 is required to sign DMG, please update OS.")
+    }
+
+    const packager = this.packager
+    const qualifier = packager.platformSpecificBuildOptions.identity
+    // explicitly disabled if set to null
+    if (qualifier === null) {
+      // macPackager already somehow handle this situation, so, here just return
+      return
+    }
+
+    const keychainName = (await packager.codeSigningInfo).keychainName
+    const certificateType = "Developer ID Application"
+    let identity = await findIdentity(certificateType, qualifier, keychainName)
+    if (identity == null) {
+      identity = await findIdentity("Mac Developer", qualifier, keychainName)
+      if (identity == null) {
+        return
+      }
+    }
+
+    const args = ["--sign", identity.hash]
+    if (keychainName != null) {
+      args.push("--keychain", keychainName)
+    }
+    args.push(artifactPath)
+    await exec("codesign", args)
   }
 
   computeVolumeName(custom?: string | null): string {

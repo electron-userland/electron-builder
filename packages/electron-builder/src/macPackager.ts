@@ -1,11 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, AsyncTaskManager, exec, isPullRequest, log, task, warn } from "builder-util"
+import { Arch, AsyncTaskManager, exec, log, task, warn } from "builder-util"
 import { signAsync, SignOptions } from "electron-osx-sign"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
-import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity } from "./codeSign"
+import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
 import { MacOptions, MasBuildOptions } from "./options/macOptions"
 import { Packager } from "./packager"
@@ -13,10 +13,6 @@ import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
-import { isAutoDiscoveryCodeSignIdentity } from "./util/flags"
-
-const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
-  "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
 
 export default class MacPackager extends PlatformPackager<MacOptions> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
@@ -122,22 +118,8 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
   }
 
   private async sign(appPath: string, outDir: string | null, masOptions: MasBuildOptions | null): Promise<void> {
-    if (process.platform !== "darwin") {
-      warn("macOS application code signing is supported only on macOS, skipping.")
+    if (!isSignAllowed()) {
       return
-    }
-
-    if (isPullRequest()) {
-      if (process.env.CSC_FOR_PULL_REQUEST === "true") {
-        warn(buildForPrWarning)
-      }
-      else {
-        // https://github.com/electron-userland/electron-builder/issues/1524
-        warn("Current build is a part of pull request, code signing will be skipped." +
-          "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
-          `\n${buildForPrWarning}`)
-        return
-      }
     }
 
     const isMas = masOptions != null
@@ -167,7 +149,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       }
 
       if (identity == null) {
-        await this.reportError(isMas, certificateType, qualifier, keychainName)
+        await reportError(isMas, certificateType, qualifier, keychainName, this.forceCodeSigning)
         return
       }
     }
@@ -203,45 +185,6 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       const artifactPath = path.join(outDir!, artifactName)
       await this.doFlat(appPath, artifactPath, masInstallerIdentity, keychainName)
       this.dispatchArtifactCreated(artifactPath, null, Arch.x64, this.computeSafeArtifactName(artifactName, "pkg"))
-    }
-  }
-
-  private async reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined) {
-    let message: string
-    if (qualifier == null) {
-      message = `App is not signed`
-      if (isAutoDiscoveryCodeSignIdentity()) {
-        const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
-        message += `: cannot find valid "${certificateType}" identity${postfix}`
-      }
-      message += ", see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
-      if (!isAutoDiscoveryCodeSignIdentity()) {
-        message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
-      }
-    }
-    else {
-      message = `Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`
-    }
-
-    const args = ["find-identity"]
-    if (keychainName != null) {
-      args.push(keychainName)
-    }
-
-    if (qualifier != null || isAutoDiscoveryCodeSignIdentity()) {
-      const allIdentities = (await exec("security", args))
-        .trim()
-        .split("\n")
-        .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
-        .join("\n")
-      message += "\n\nAll identities:\n" + allIdentities
-    }
-
-    if (isMas || this.forceCodeSigning) {
-      throw new Error(message)
-    }
-    else {
-      warn(message)
     }
   }
 

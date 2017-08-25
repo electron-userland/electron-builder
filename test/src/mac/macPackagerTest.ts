@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { copyOrLinkFile } from "builder-util/out/fs"
+import { createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readJson } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -12,6 +12,7 @@ test.ifMac("two-package", () => assertPack("test-app", {
     extraMetadata: {
       repository: "foo/bar"
     },
+    //tslint:disable-next-line:no-invalid-template-strings
     artifactName: "${name}-${version}-${os}.${ext}",
   },
 }, {
@@ -23,6 +24,7 @@ test.ifMac("one-package", app({
   config: {
     publish: {
       provider: "generic",
+      //tslint:disable-next-line:no-invalid-template-strings
       url: "https://develar.s3.amazonaws.com/test/${os}/${arch}",
     },
     mac: {

@@ -24,3 +24,7 @@ async function isOsVersionGreaterThanOrEqualTo(input: string) {
 export async function isMacOsSierra() {
   return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
 }
+
+export async function isCanSignDmg() {
+  return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.11.5")
+}

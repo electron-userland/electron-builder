@@ -79,7 +79,8 @@ export abstract class AppUpdater extends EventEmitter {
 
   protected readonly stagingUserIdPromise = new Lazy<string>(() => this.getOrCreateStagingUserId())
 
-  protected configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
+  // public, allow to read old config for anyone
+  configOnDisk = new Lazy<any>(() => this.loadUpdateConfig())
 
   private readonly untilAppReady: Promise<any>
   private checkForUpdatesPromise: Promise<UpdateCheckResult> | null

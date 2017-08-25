@@ -9,7 +9,7 @@ import "source-map-support/register"
 
 export { TmpDir } from "temp-file"
 export { log, warn, task, subTask } from "./log"
-export { isMacOsSierra } from "./macosVersion"
+export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"

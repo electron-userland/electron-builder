@@ -160,12 +160,20 @@ Object {
       "file": "latest.yml",
       "fileContent": Object {
         "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "packages": Object {
+          "ia32": "TestApp-1.1.0-ia32.nsis.7z",
+          "x64": "TestApp-1.1.0-x64.nsis.7z",
+        },
         "path": "Test App ßW Web Setup 1.1.0.exe",
         "version": "1.1.0",
       },
     },
     Object {
       "file": "Test App ßW Web Setup 1.1.0.exe",
+      "packageFiles": Object {
+        "ia32": "TestApp-1.1.0-ia32.nsis.7z",
+        "x64": "TestApp-1.1.0-x64.nsis.7z",
+      },
       "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
     },
     Object {
@@ -183,6 +191,10 @@ Object {
 exports[`web installer (default github) 2`] = `
 Object {
   "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+  "packages": Object {
+    "ia32": "TestApp-1.1.0-ia32.nsis.7z",
+    "x64": "TestApp-1.1.0-x64.nsis.7z",
+  },
   "path": "Test App ßW Web Setup 1.1.0.exe",
   "version": "1.1.0",
 }

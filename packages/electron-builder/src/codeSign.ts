@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { randomBytes } from "crypto"
-import { exec, getCacheDirectory, isEmptyOrSpaces, isMacOsSierra, TmpDir } from "builder-util"
+import { exec, getCacheDirectory, isEmptyOrSpaces, isEnvTrue, isMacOsSierra, isPullRequest, TmpDir, warn } from "builder-util"
 import { copyFile, statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { randomBytes } from "crypto"
 import { outputFile, rename } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
@@ -16,6 +16,75 @@ export type CertType = "Developer ID Application" | "Developer ID Installer" | "
 
 export interface CodeSigningInfo {
   keychainName?: string | null
+}
+
+export function isSignAllowed(isPrintWarn = true): boolean {
+  if (process.platform !== "darwin") {
+    if (isPrintWarn) {
+      warn("macOS application code signing is supported only on macOS, skipping.")
+    }
+    return false
+  }
+
+  const buildForPrWarning = "There are serious security concerns with CSC_FOR_PULL_REQUEST=true (see the  CircleCI documentation (https://circleci.com/docs/1.0/fork-pr-builds/) for details)" +
+    "\nIf you have SSH keys, sensitive env vars or AWS credentials stored in your project settings and untrusted forks can make pull requests against your repo, then this option isn't for you."
+
+  if (isPullRequest()) {
+    if (isEnvTrue(process.env.CSC_FOR_PULL_REQUEST)) {
+      if (isPrintWarn) {
+        warn(buildForPrWarning)
+      }
+    }
+    else {
+      if (isPrintWarn) {
+        // https://github.com/electron-userland/electron-builder/issues/1524
+        warn("Current build is a part of pull request, code signing will be skipped." +
+          "\nSet env CSC_FOR_PULL_REQUEST to true to force code signing." +
+          `\n${buildForPrWarning}`)
+      }
+      return false
+    }
+  }
+  return true
+}
+
+export async function reportError(isMas: boolean, certificateType: CertType, qualifier: string | null | undefined, keychainName: string | null | undefined, isForceCodeSigning: boolean) {
+  let message: string
+  if (qualifier == null) {
+    message = `App is not signed`
+    if (isAutoDiscoveryCodeSignIdentity()) {
+      const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
+      message += `: cannot find valid "${certificateType}" identity${postfix}`
+    }
+    message += ", see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
+    if (!isAutoDiscoveryCodeSignIdentity()) {
+      message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
+    }
+  }
+  else {
+    message = `Identity name "${qualifier}" is specified, but no valid identity with this name in the keychain`
+  }
+
+  const args = ["find-identity"]
+  if (keychainName != null) {
+    args.push(keychainName)
+  }
+
+  if (qualifier != null || isAutoDiscoveryCodeSignIdentity()) {
+    const allIdentities = (await exec("security", args))
+      .trim()
+      .split("\n")
+      .filter(it => !(it.includes("Policy: X.509 Basic") || it.includes("Matching identities")))
+      .join("\n")
+    message += "\n\nAll identities:\n" + allIdentities
+  }
+
+  if (isMas || isForceCodeSigning) {
+    throw new Error(message)
+  }
+  else {
+    warn(message)
+  }
 }
 
 /** @private */

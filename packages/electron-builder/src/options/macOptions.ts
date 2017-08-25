@@ -189,6 +189,12 @@ export interface DmgOptions extends TargetSpecificOptions {
    * The DMG windows position and size.
    */
   window?: DmgWindow
+
+  /**
+   * Whether to create internet-enabled disk image (when it is downloaded using a browser it will automatically decompress the image, put the application on the desktop, unmount and remove the disk image file).
+   * @default false
+   */
+  readonly internetEnabled?: boolean
 }
 
 export interface DmgWindow {
