@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
 import os
 import pkg_resources
 import re
 import shutil
-import stat
 import subprocess
 import sys
 import tempfile
 import tokenize
-import json
 
 try:
     {}.iteritems
@@ -29,7 +28,6 @@ from mac_alias import *
 from ds_store import *
 
 from . import colors
-from . import licensing
 
 try:
     from . import badge
@@ -257,7 +255,7 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
         }
 
     background = options['background']
-    
+
     columns = {
         'name': 'name',
         'date-modified': 'dateModified',
@@ -296,7 +294,7 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
         'version': 'ascending',
         'comments': 'ascending',
         }
-        
+
     lsvp = {
         'viewOptionsVersion': 1,
         'sortColumn': columns.get(options['list_sort_by'], 'name'),
@@ -318,7 +316,7 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
                                                    default_widths[column])
         asc = 'ascending' == options['list_column_sort_directions'].get(column,
                     default_sort_directions[column])
-        
+
         lsvp['columns'][columns[column]] = {
             'index': n,
             'width': width,
@@ -333,7 +331,7 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
             cndx[k] = n
             width = default_widths[k]
             asc = 'ascending' == default_sort_directions[k]
-            
+
         lsvp['columns'][columns[column]] = {
             'index': n,
             'width': width,
@@ -343,7 +341,7 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
             }
 
         n += 1
-    
+
     default_view = options['default_view']
     views = {
         'icon-view': b'icnv',
@@ -582,16 +580,3 @@ def build_dmg(filename, volume_name, settings_file=None, settings={},
 
     if ret:
         raise DMGError('Unable to convert')
-
-    if options['license']:
-        ret, output = hdiutil('unflatten', '-quiet', filename, plist=False)
-
-        if ret:
-            raise DMGError('Unable to unflatten to add license')
-
-        licensing.add_license(filename, options['license'])
-
-        ret, output = hdiutil('flatten', '-quiet', filename, plist=False)
-
-        if ret:
-            raise DMGError('Unable to flatten after adding license')

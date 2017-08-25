@@ -1,6 +1,6 @@
 {
   "name": "dmg-builder",
-  "version": "0.0.0-semantic-release",
+  "version": "1.0.1",
   "main": "out/httpExecutor.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
@@ -8,7 +8,9 @@
   "bugs": "https://github.com/electron-userland/electron-builder/issues",
   "homepage": "https://github.com/electron-userland/electron-builder",
   "files": [
-    "out"
+    "out",
+    "templates",
+    "vendor"
   ],
   "dependencies": {
     "fs-extra-p": "^4.4.0",
