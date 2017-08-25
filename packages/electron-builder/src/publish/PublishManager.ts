@@ -284,6 +284,17 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       sha512: await sha512.value, ...releaseInfo as UpdateInfo,
     }
 
+    const packageFiles = event.packageFiles
+    if (packageFiles != null) {
+      const keys = Object.keys(packageFiles)
+      if (keys.length > 0) {
+        info.packages = {}
+        for (const arch of keys) {
+          info.packages[arch] = path.basename(packageFiles[arch])
+        }
+      }
+    }
+
     if (event.safeArtifactName != null) {
       info.githubArtifactName = event.safeArtifactName
     }

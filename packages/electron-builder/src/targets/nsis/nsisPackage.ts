@@ -17,7 +17,6 @@ and we don't set even dict size and default 64M is used), but full package size 
 export async function createDifferentialPackage(archiveFile: string, archiveOptions: ArchiveOptions, packager: PlatformPackager<any>) {
   // Deflate to be able to decompress block map on the fly without 7za
   const args = compute7zCompressArgs("normal", "zip", {method: "Deflate"})
-  args.push(`-mm=${archiveOptions.method}`)
   args.push(archiveFile)
 
   // compute block map using compressed file data

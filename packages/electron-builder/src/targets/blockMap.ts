@@ -35,9 +35,9 @@ export async function computeBlockMap(archiveFile: string, compressionMethod: "l
     return {
       blockSize: 64,
       hashMethod: "sha256",
-      files,
       compressionMethod,
       compressionLevel,
+      files,
     }
   }
   finally {

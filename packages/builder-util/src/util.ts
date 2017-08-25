@@ -60,7 +60,7 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
       if (error == null) {
         if (isLogOutIfDebug && debug.enabled) {
           if (stderr.length !== 0) {
-            debug(stderr)
+            debug(file.endsWith("wine") ? removeWineSpam(stderr.toString()) : stderr)
           }
           if (stdout.length !== 0) {
             debug(stdout)
@@ -71,16 +71,15 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
       else {
         let message = red(removePassword(`Exit code: ${(error as any).code}. ${error.message}`))
         if (stdout.length !== 0) {
+          if (file.endsWith("wine")) {
+            stdout = removeWineSpam(stdout.toString())
+          }
           message += `\n${yellow(stdout.toString())}`
         }
         if (stderr.length !== 0) {
           if (file.endsWith("wine")) {
-            stderr = stderr.toString()
-              .split("\n")
-              .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"") && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe"))
-              .join("\n")
+            stderr = removeWineSpam(stderr.toString())
           }
-
           message += `\n${red(stderr.toString())}`
         }
 
@@ -88,6 +87,14 @@ export function exec(file: string, args?: Array<string> | null, options?: ExecOp
       }
     })
   })
+}
+
+function removeWineSpam(out: string) {
+  return out.toString()
+    .split("\n")
+    .filter(it => !it.includes("wine: cannot find L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe\"") && !it.includes("err:wineboot:ProcessRunKeys Error running cmd L\"C:\\\\windows\\\\system32\\\\winemenubuilder.exe"))
+    .join("\n")
+
 }
 
 export interface ExtraSpawnOptions {

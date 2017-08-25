@@ -168,17 +168,20 @@ export class NsisTarget extends Target {
       }
     }
 
-    if (this.archs.size === 1 && USE_NSIS_BUILT_IN_COMPRESSOR) {
+    const packageFiles: { [arch: string]: string } = {}
+    if (USE_NSIS_BUILT_IN_COMPRESSOR && this.archs.size === 1) {
       defines.APP_BUILD_DIR = this.archs.get(this.archs.keys().next().value)
     }
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
         const file = await this.packageHelper.packArch(arch, this)
-        defines[arch === Arch.x64 ? "APP_64" : "APP_32"] = file
-        defines[(arch === Arch.x64 ? "APP_64" : "APP_32") + "_NAME"] = path.basename(file)
+        const defineKey = arch === Arch.x64 ? "APP_64" : "APP_32"
+        defines[defineKey] = file
+        defines[`${defineKey}_NAME`] = path.basename(file)
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)
+          packageFiles[Arch[arch]] = file
         }
       })
     }
@@ -209,13 +212,13 @@ export class NsisTarget extends Target {
     }
 
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
-
     const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath, sharedHeader)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
     await packager.sign(installerPath)
 
     packager.info.dispatchArtifactCreated({
       file: installerPath,
+      packageFiles,
       target: this,
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
@@ -280,9 +283,11 @@ export class NsisTarget extends Target {
     return versionKey
   }
 
-  protected async configureDefines(oneClick: boolean, defines: any) {
+  protected configureDefines(oneClick: boolean, defines: any): Promise<any> {
     const packager = this.packager
     const options = this.options
+
+    const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
 
     if (oneClick) {
       defines.ONE_CLICK = null
@@ -291,23 +296,28 @@ export class NsisTarget extends Target {
         defines.RUN_AFTER_FINISH = null
       }
 
-      const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
-      if (installerHeaderIcon != null) {
-        defines.HEADER_ICO = installerHeaderIcon
-      }
+      asyncTaskManager.add(async () => {
+        const installerHeaderIcon = await packager.getResource(options.installerHeaderIcon, "installerHeaderIcon.ico")
+        if (installerHeaderIcon != null) {
+          defines.HEADER_ICO = installerHeaderIcon
+        }
+      })
     }
     else {
-      const installerHeader = await
-      packager.getResource(options.installerHeader, "installerHeader.bmp")
-      if (installerHeader != null) {
-        defines.MUI_HEADERIMAGE = null
-        defines.MUI_HEADERIMAGE_RIGHT = null
-        defines.MUI_HEADERIMAGE_BITMAP = installerHeader
-      }
+      asyncTaskManager.add(async () => {
+        const installerHeader = await packager.getResource(options.installerHeader, "installerHeader.bmp")
+        if (installerHeader != null) {
+          defines.MUI_HEADERIMAGE = null
+          defines.MUI_HEADERIMAGE_RIGHT = null
+          defines.MUI_HEADERIMAGE_BITMAP = installerHeader
+        }
+      })
 
-      const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
-      defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
-      defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+      asyncTaskManager.add(async () => {
+        const bitmap = (await packager.getResource(options.installerSidebar, "installerSidebar.bmp")) || "${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp"
+        defines.MUI_WELCOMEFINISHPAGE_BITMAP = bitmap
+        defines.MUI_UNWELCOMEFINISHPAGE_BITMAP = (await packager.getResource(options.uninstallerSidebar, "uninstallerSidebar.bmp")) || bitmap
+      })
 
       if (options.allowElevation !== false) {
         defines.MULTIUSER_INSTALLMODE_ALLOW_ELEVATION = null
@@ -352,12 +362,14 @@ export class NsisTarget extends Target {
       defines.DELETE_APP_DATA_ON_UNINSTALL = null
     }
 
-    const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
-    if (uninstallerIcon != null) {
-      // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
-      defines.UNINSTALLER_ICON = uninstallerIcon
-      defines.MUI_UNICON = uninstallerIcon
-    }
+    asyncTaskManager.add(async () => {
+      const uninstallerIcon = await packager.getResource(options.uninstallerIcon, "uninstallerIcon.ico")
+      if (uninstallerIcon != null) {
+        // we don't need to copy MUI_UNICON (defaults to app icon), so, we have 2 defines
+        defines.UNINSTALLER_ICON = uninstallerIcon
+        defines.MUI_UNICON = uninstallerIcon
+      }
+    })
 
     defines.UNINSTALL_DISPLAY_NAME = packager.expandMacro(options.uninstallDisplayName || "${productName} ${version}", null, {}, false)
     if (options.createDesktopShortcut === false) {
@@ -369,11 +381,15 @@ export class NsisTarget extends Target {
     }
 
     if (options.differentialPackage) {
-      // todo use x64 if installer only x64
-      const s7File = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
-      defines.SEVEN_ZIP_FILE = s7File
-      await packager.sign(s7File)
+      asyncTaskManager.add(async () => {
+        // todo use x64 if installer only x64
+        const s7File = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
+        defines.SEVEN_ZIP_FILE = s7File
+        await packager.sign(s7File)
+      })
     }
+
+    return asyncTaskManager.awaitTasks()
   }
 
   private configureDefinesForAllTypeOfInstaller(defines: any) {

@@ -1,5 +1,5 @@
-import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { Arch } from "builder-util"
+import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { Platform, Target } from "./core"
 import { Config } from "./metadata"
 import { Packager } from "./packager"
@@ -32,6 +32,8 @@ export interface ArtifactCreated {
 
   readonly file?: string
   readonly data?: Buffer
+
+  readonly packageFiles?: { [arch: string]: string } | null
 
   readonly safeArtifactName?: string | null
 

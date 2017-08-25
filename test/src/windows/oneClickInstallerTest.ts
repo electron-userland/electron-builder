@@ -31,9 +31,10 @@ test("one-click", app({
   }
 }))
 
-test("one-click - differential package", app({
+test.ifAll("one-click - differential package", app({
   targets: Platform.WINDOWS.createTarget(["nsis"], Arch.x64),
   config: {
+    publish: null,
     nsis: {
       differentialPackage: true,
     },

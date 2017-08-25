@@ -14,7 +14,7 @@ export class WebInstallerTarget extends NsisTarget {
     return true
   }
 
-  protected async configureDefines(oneClick: boolean, defines: any) {
+  protected async configureDefines(oneClick: boolean, defines: any): Promise<any> {
     //noinspection ES6MissingAwait
     await (NsisTarget.prototype as any).configureDefines.call(this, oneClick, defines)
 

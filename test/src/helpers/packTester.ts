@@ -1,13 +1,13 @@
 import { path7x, path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
+import { addValue, exec, log, spawn, warn } from "builder-util"
+import { getLinuxToolsPath } from "builder-util/out/bundledTool"
+import { copyDir, FileCopier, walk } from "builder-util/out/fs"
+import { executeFinally } from "builder-util/out/promise"
 import DecompressZip from "decompress-zip"
 import { Arch, ArtifactCreated, DIR_TARGET, getArchSuffix, MacOsTargetName, Packager, PackagerOptions, Platform, Target } from "electron-builder"
 import { CancellationToken } from "electron-builder-http"
 import { convertVersion } from "electron-builder-squirrel-windows/out/squirrelPack"
-import { addValue, exec, log, spawn, warn } from "builder-util"
-import { getLinuxToolsPath } from "builder-util/out/bundledTool"
-import { copyDir, FileCopier } from "builder-util/out/fs"
-import { executeFinally } from "builder-util/out/promise"
 import { PublishManager } from "electron-builder/out/publish/PublishManager"
 import { computeArchToTargetNamesMap } from "electron-builder/out/targets/targetFactory"
 import { PublishPolicy } from "electron-publish"
@@ -20,7 +20,6 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { TmpDir } from "temp-file"
 import { CSC_LINK, WIN_CSC_LINK } from "./codeSignData"
 import { assertThat } from "./fileAssert"
-import { walk } from "builder-util/out/fs"
 
 if (process.env.TRAVIS !== "true") {
   process.env.CIRCLE_BUILD_NUM = "42"
@@ -181,6 +180,18 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
           result.fileContent = fileContent
         }
         result.file = path.basename(result.file)
+      }
+      const packageFiles = result.packageFiles
+      if (packageFiles != null) {
+        const archs = Object.keys(packageFiles)
+        if (archs.length === 0) {
+          delete result.packageFiles
+        }
+        else {
+          for (const arch of archs) {
+            packageFiles[arch] = path.basename(packageFiles[arch])
+          }
+        }
       }
 
       // reduce snapshot - avoid noise

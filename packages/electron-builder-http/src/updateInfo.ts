@@ -7,6 +7,9 @@ export interface VersionInfo {
 
 export interface UpdateInfo extends VersionInfo {
   readonly path: string
+
+  packages?: { [arch: string]: string } | null
+
   githubArtifactName?: string | null
 
   /**
