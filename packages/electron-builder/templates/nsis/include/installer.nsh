@@ -1,5 +1,7 @@
 # Functions (nsis macro) for installer
 
+!include "extractAppPackage.nsh"
+
 # http://stackoverflow.com/questions/24595887/waiting-for-nsis-uninstaller-to-finish-in-nsis-installer-either-fails-or-the-uni
 !macro uninstallOldVersion ROOT_KEY
   ReadRegStr $R0 ${ROOT_KEY} "${UNINSTALL_REGISTRY_KEY}" UninstallString
@@ -69,16 +71,7 @@
       ${if} $R0 == ""
         !insertmacro downloadApplicationFiles
       ${else}
-        extractAppFiles:
-          ClearErrors
-          nsExec::ExecToStack '"$PLUGINSDIR\7za.exe" x "$R0" -aoa -bb0 -o"$INSTDIR"'
-          Pop $0 # return value/error/timeout
-          Pop $1 # printed text, up to ${NSIS_MAX_STRLEN}
-
-        ${if} $0 != "0"
-          MessageBox MB_RETRYCANCEL "Failed to extract files: $0 $1" /SD IDCANCEL IDRETRY extractAppFiles IDCANCEL
-          Quit
-        ${endIf}
+        !insertmacro extractUsing7za "$R0"
       ${endIf}
     !else
       !insertmacro extractEmbeddedAppPackage

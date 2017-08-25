@@ -37,5 +37,5 @@
     quit
   ${endif}
 
-  Nsis7z::Extract "$PLUGINSDIR\package.7z"
+  !insertmacro extractUsing7za "$PLUGINSDIR\package.7z"
 !macroend

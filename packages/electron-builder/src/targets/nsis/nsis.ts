@@ -370,8 +370,9 @@ export class NsisTarget extends Target {
 
     if (options.differentialPackage) {
       // todo use x64 if installer only x64
-      // todo sign using user cert
-      defines.SEVEN_ZIP_FILE = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
+      const s7File = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
+      defines.SEVEN_ZIP_FILE = s7File
+      await packager.sign(s7File)
     }
   }
 

@@ -1,4 +1,5 @@
 !include "common.nsh"
+!include "extractAppPackage.nsh"
 
 WindowIcon Off
 AutoCloseWindow True
