@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
+import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
 import { readAsarJson } from "electron-builder/out/asar"
 import { move, outputJson, readJson } from "fs-extra-p"
 import * as path from "path"
@@ -21,11 +21,10 @@ test("cli", async () => {
   }
 
   function expected(opt: any): object {
-    return Object.assign({
+    return {
       publish: undefined,
       draft: undefined,
-      prerelease: undefined,
-    }, opt)
+      prerelease: undefined, ...opt}
   }
 
   expect(parse("--platform mac")).toMatchSnapshot()
@@ -60,7 +59,7 @@ test("cli", async () => {
 test("build in the app package.json", appTwoThrows({targets: linuxDirTarget}, {
   projectDirCreated: it => modifyPackageJson(it, data => {
     data.build = {
-      "productName": "bar",
+      productName: "bar",
     }
   }, true)
 }))
@@ -72,7 +71,6 @@ test("relative index", appTwo({
     data.main = "./index.js"
   }, true)
 }))
-
 
 test("extraMetadata and config as path", app(Object.assign(require("electron-builder/out/builder").normalizeOptions({
   extraMetadata: {
@@ -177,7 +175,7 @@ test.ifDevOrLinuxCi("win smart unpack", app({
   installDepsBefore: true,
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      "debug": "^2.2.0",
+      debug: "^2.2.0",
       "edge-cs": "1.2.1",
       "@electron-builder/test-smart-unpack": "1.0.0",
       "@electron-builder/test-smart-unpack-empty": "1.0.0",
@@ -201,7 +199,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   installDepsBefore: true,
   projectDirCreated: packageJson(it => {
     it.dependencies = {
-      "debug": "^2.2.0",
+      debug: "^2.2.0",
       "edge-cs": "1.2.1",
       "lzma-native": "2.0.3",
       // test that prebuild-install is not copied

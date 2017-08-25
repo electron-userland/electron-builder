@@ -29,8 +29,6 @@
   "dependencies": {
     "7zip-bin": "^2.2.3",
     "@types/debug": "^0.0.30",
-    "ajv": "^5.2.2",
-    "ajv-keywords": "^2.1.0",
     "archiver": "^2.0.0",
     "async-exit-hook": "^2.0.1",
     "aws-sdk": "^2.103.0",
@@ -60,7 +58,7 @@
     "normalize-package-data": "^2.4.0",
     "parse-color": "^1.0.0",
     "plist": "^2.1.0",
-    "read-config-file": "^1.0.5",
+    "read-config-file": "1.1.0",
     "sanitize-filename": "^1.6.1",
     "semver": "^5.4.1",
     "source-map-support": "^0.4.16",

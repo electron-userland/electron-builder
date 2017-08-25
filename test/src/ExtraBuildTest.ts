@@ -182,3 +182,27 @@ test.ifAll("electronDist as path to local folder with electron builds zipped ", 
     electronDist: require("env-paths")("electron", {suffix: ""}).cache,
   },
 }))
+
+const overridePublishChannel: any = {
+  channel: "beta"
+}
+
+test.ifAll.ifDevOrLinuxCi("overriding the publish channel", app({
+  targets: linuxDirTarget,
+  config: {
+    publish: overridePublishChannel
+  },
+}, {
+  projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
+    data.devDependencies = {}
+    data.build.publish = [
+      {
+        provider: "s3",
+        bucket: "my-s3-bucket",
+      }
+    ]
+  }),
+  packed: async context => {
+    expect(context.packager.config.publish).toMatchSnapshot()
+  },
+}))

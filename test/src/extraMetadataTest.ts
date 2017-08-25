@@ -10,7 +10,7 @@ function createExtraMetadataTest(asar: boolean) {
   return app({
     targets: Platform.LINUX.createTarget(DIR_TARGET),
     config: coerceTypes({
-      asar: asar,
+      asar,
       linux: {
         executableName: "new-name",
       },
@@ -29,7 +29,7 @@ function createExtraMetadataTest(asar: boolean) {
   }, {
     projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
       data.scripts = {}
-      data.devDependencies = {"foo": "boo"}
+      data.devDependencies = {foo: "boo"}
       data.foo = {
         bar: 42,
         existingProp: 22,

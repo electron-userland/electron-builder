@@ -1,6 +1,6 @@
 import { AsarIntegrityOptions } from "asar-integrity"
-import { Publish } from "electron-builder-http/out/publishOptions"
 import { Arch } from "builder-util"
+import { Publish } from "electron-builder-http/out/publishOptions"
 import { BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "./core"
 import { AppImageOptions, DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
 import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
@@ -242,7 +242,7 @@ export interface Config extends PlatformSpecificBuildOptions {
    *
    * If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
    */
-  readonly publish?: Publish
+  publish?: Publish
 
   /**
    * The release info. Intended for command line usage (`-c.releaseInfo.releaseNotes="new features"`) or programmatically.

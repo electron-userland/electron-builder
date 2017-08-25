@@ -2791,10 +2791,12 @@ rc@^1.0.1, rc@^1.1.6, rc@^1.2.1:
     minimist "^1.2.0"
     strip-json-comments "~2.0.1"
 
-read-config-file@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/read-config-file/-/read-config-file-1.0.5.tgz#9992d2a4d24a993518e7eb6f3c30c0562264c367"
+read-config-file@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/read-config-file/-/read-config-file-1.1.0.tgz#c4abafc547571dfbaee0d0bf54ea174ffef8c3cf"
   dependencies:
+    ajv "^5.2.2"
+    ajv-keywords "^2.1.0"
     bluebird-lst "^1.0.3"
     fs-extra-p "^4.4.0"
     js-yaml "^3.9.1"
