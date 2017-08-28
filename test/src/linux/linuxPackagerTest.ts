@@ -1,4 +1,4 @@
-import { build, Platform } from "electron-builder"
+import { Arch, build, Platform } from "electron-builder"
 import { readFile, remove, rename } from "fs-extra-p"
 import * as path from "path"
 import { assertThat } from "../helpers/fileAssert"
@@ -6,6 +6,8 @@ import { app, appThrows, modifyPackageJson } from "../helpers/packTester"
 import { ELECTRON_VERSION } from "../helpers/testConfig"
 
 test.ifNotWindows.ifNotCiMac("AppImage", app({targets: Platform.LINUX.createTarget()}))
+
+test.ifAll.ifNotWindows.ifNotCiMac("AppImage ia32", app({targets: Platform.LINUX.createTarget("Appimage", Arch.ia32)}))
 
 test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app({
   targets: Platform.LINUX.createTarget(),

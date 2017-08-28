@@ -2,6 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log } from "builder-util"
 import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists } from "builder-util/out/fs"
+import * as ejs from "ejs"
 import { chmod, close, createReadStream, createWriteStream, open, outputFile, readFile, write } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -11,11 +12,12 @@ import { LinuxPackager } from "../linuxPackager"
 import { AppImageOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
-import * as ejs from "ejs"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
-const appImagePathPromise = process.platform === "darwin" ? getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") : getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
+const appImagePathPromise = process.platform === "darwin" ?
+  getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") :
+  getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
   return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
@@ -77,10 +79,9 @@ export default class AppImageTarget extends Target {
     }
     args.push("-map", this.helper.maxIconPath, "/.DirIcon")
 
-    if (arch === Arch.x64) {
+    if (arch === Arch.x64 || arch === Arch.ia32) {
       // noinspection SpellCheckingInspection
-      const libDir = process.platform === "darwin" ? path.join(appImagePath, "packages") : await getBin("AppImage-packages", "10.03.17", "https://bintray.com/electron-userland/bin/download_file?file_path=AppImage-packages-10.03.17-x64.7z", "172f9977fe9b24d35091d26ecbfebe2a14d96516a9c903e109e12b2a929042fe")
-      args.push("-map", libDir, "/usr/lib")
+      args.push("-map", path.join(await getBinFromGithub("appimage-packages", "28-08-17", "ionv5NRfkOFXTJsu9Db4GNN6bbTvuwvQCuK6eDZCaRJl0+4GwwdZhk2i8Cmk0J2bNNsUSsZxVCnOKw0MJxJRpQ=="), arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), "/usr/lib")
     }
 
     args.push("-chown_r", "0", "/", "--")
