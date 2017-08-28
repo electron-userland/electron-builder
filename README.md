@@ -41,7 +41,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 * [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
 * [electron-vue](https://github.com/SimulatedGREG/electron-vue) A boilerplate for making electron applications built with vue.
-* [electron-webpack](https://github.com/electron-userland/electron-webpack) — Scripts and configuration to compile Electron applications using webpack.
+* [electron-webpack](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimun project structure to get started developing with [`electron-webpack`](https://github.com/electron-userland/electron-webpack).
 
 ## Quick Setup Guide
 

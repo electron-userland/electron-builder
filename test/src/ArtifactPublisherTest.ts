@@ -8,7 +8,6 @@ import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
 import { GitHubPublisher } from "electron-publish/out/gitHubPublisher"
 import isCi from "is-ci"
 import { join } from "path"
-import { assertThat } from "./helpers/fileAssert"
 
 if (isCi && process.platform === "win32") {
   fit("Skip ArtifactPublisherTest suite on Windows CI", () => {
@@ -39,8 +38,16 @@ const publishContext: PublishContext = {
   progress: null,
 }
 
-test("GitHub unauthorized", () => {
-  return assertThat(new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber()).releasePromise).throws()
+test("GitHub unauthorized", async () => {
+  try {
+    await new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token: "incorrect token"}, versionNumber()).releasePromise
+  }
+  catch (e) {
+    expect(e.message).toMatch(/(Bad credentials|Unauthorized|API rate limit exceeded)/)
+    return
+  }
+
+  throw new Error("must be error")
 })
 
 function isApiRateError(e: Error): boolean {
