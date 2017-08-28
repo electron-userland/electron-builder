@@ -1,6 +1,6 @@
 import { spawn } from "child_process"
 import { CancellationError, CancellationToken, DownloadOptions } from "electron-builder-http"
-import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
+import { GenericServerOptions, PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
@@ -17,7 +17,7 @@ export class NsisUpdater extends AppUpdater {
   private quitAndInstallCalled = false
   private quitHandlerAdded = false
 
-  constructor(options?: PublishConfiguration | null, app?: any) {
+  constructor(options?: PublishConfiguration | GenericServerOptions | null, app?: any) {
     super(options, app)
   }
 

@@ -139,13 +139,7 @@ export abstract class HttpExecutor<REQUEST> {
       const redirectUrl = safeGetHeader(response, "location")
       if (redirectUrl != null) {
         if (redirectCount < this.maxRedirects) {
-          const parsedUrl = parseUrl(redirectUrl)
-          this.doDownload({
-            ...requestOptions,
-            hostname: parsedUrl.hostname,
-            path: parsedUrl.path,
-            port: parsedUrl.port == null ? undefined : parsedUrl.port
-          }, destination, redirectCount++, options, callback, onCancel)
+          this.doDownload(configureRequestOptionsFromUrl(redirectUrl, {...requestOptions}), destination, redirectCount++, options, callback, onCancel)
         }
         else {
           callback(new Error(`Too many redirects (> ${this.maxRedirects})`))
@@ -169,6 +163,22 @@ export abstract class HttpExecutor<REQUEST> {
       })
     })
   }
+}
+
+export function configureRequestOptionsFromUrl(url: string, options: RequestOptions) {
+  const parsedUrl = parseUrl(url)
+  options.protocol = parsedUrl.protocol
+  options.hostname = parsedUrl.hostname
+  if (parsedUrl.port == null) {
+    if (options.port != null) {
+      delete options.port
+    }
+  }
+  else {
+    options.port = parsedUrl.port
+  }
+  options.path = parsedUrl.path
+  return options
 }
 
 export class DigestTransform extends Transform {

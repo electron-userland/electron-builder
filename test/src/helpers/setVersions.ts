@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { readdir, readJson, writeJson } from "fs-extra-p"
+import { writeJson } from "fs-extra-p"
 import * as path from "path"
 import * as semver from "semver"
 
@@ -10,21 +10,19 @@ const rootDir = path.join(__dirname, "../../..")
 const packageDir = path.join(rootDir, "packages")
 
 async function main(): Promise<void> {
-  const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
-
-  const packageData = await BluebirdPromise.map(packages, it => readJson(path.join(packageDir, it, "package.json")))
+  const packageData: Array<any> = await require("ts-babel/out/util").readProjectMetadata(packageDir)
   const args = process.argv.slice(2)
   if (args.length > 0 && args[0] === "p") {
-    await setPackageVersions(packages, packageData)
+    await setPackageVersions(packageData)
   }
   else {
-    await setPackageVersions(packages, packageData)
-    await setDepVersions(packages, packageData)
+    await setPackageVersions(packageData)
+    await setDepVersions(packageData)
   }
 }
 
-async function setPackageVersions(packages: Array<string>, packageData: Array<any>) {
-  const versions = await BluebirdPromise.map(packages, it => exec("yarn", ["info", "--json", it, "dist-tags"])
+async function setPackageVersions(packageData: Array<any>) {
+  const versions = await BluebirdPromise.map(packageData, it => exec("yarn", ["info", "--json", it.name, "dist-tags"])
     .then((it: string) => {
       if (it === "") {
         // {"type":"error","data":"Received invalid response from npm."}
@@ -39,31 +37,30 @@ async function setPackageVersions(packages: Array<string>, packageData: Array<an
         throw new Error(`Cannot parse ${it}: ${e.stack || e}`)
       }
     }))
-  for (let i = 0; i < packages.length; i++) {
-    const packageName = packages[i]
-    const packageJson = packageData[i]
+  for (let i = 0; i < packageData.length; i++) {
+    const packageMetadata = packageData[i]
+    const packageName = packageMetadata.name
     const versionInfo = versions[i]
     const latestVersion = versionInfo.next || versionInfo.latest
-    if (latestVersion == null || packageJson.version == latestVersion || semver.lt(latestVersion, packageJson.version)) {
+    if (latestVersion == null || packageMetadata.version === latestVersion || semver.lt(latestVersion, packageMetadata.version)) {
       continue
     }
 
-    packageJson.version = latestVersion
+    packageMetadata.version = latestVersion
     console.log(`Set ${packageName} version to ${latestVersion}`)
-    await writeJson(path.join(packageDir, packageName, "package.json"), packageJson, {spaces: 2})
+    await writeJson(path.join(packageDir, packageName, "package.json"), packageMetadata, {spaces: 2})
   }
 }
 
-async function setDepVersions(packages: Array<string>, packageData: Array<any>) {
+async function setDepVersions(packageData: Array<any>) {
   const versions = packageData.map(it => it.version)
-  for (let i = 0; i < packages.length; i++) {
-    const packageName = packages[i]
-    const packageJson = packageData[i]
+  for (const packageMetadata of packageData) {
+    const packageName = packageMetadata.name
     let changed = false
-    for (let depIndex = 0; depIndex < packages.length; depIndex++) {
-      const depPackageName = packages[depIndex]
+    for (let depIndex = 0; depIndex < packageData.length; depIndex++) {
+      const depPackageName = packageData[depIndex].name
       for (const depType of ["dependencies", "peerDependencies"]) {
-        let oldVersion = packageJson[depType] == null ? null : packageJson[depType][depPackageName]
+        let oldVersion = packageMetadata[depType] == null ? null : packageMetadata[depType][depPackageName]
         if (oldVersion == null) {
           continue
         }
@@ -81,13 +78,13 @@ async function setDepVersions(packages: Array<string>, packageData: Array<any>) 
         }
 
         changed = true
-        packageJson[depType][depPackageName] = range + newVersion
+        packageMetadata[depType][depPackageName] = range + newVersion
         console.log(`Set ${depPackageName} to ${newVersion} from ${oldVersion} for ${packageName}`)
       }
     }
 
     if (changed) {
-      await writeJson(path.join(packageDir, packageName, "package.json"), packageJson, {spaces: 2})
+      await writeJson(path.join(packageDir, packageName, "package.json"), packageMetadata, {spaces: 2})
     }
   }
 }

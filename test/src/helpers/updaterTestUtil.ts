@@ -1,6 +1,6 @@
-import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
 import { TmpDir } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
 import { AppUpdater, NoOpLogger } from "electron-updater/out/AppUpdater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"
@@ -11,7 +11,7 @@ import { assertThat } from "./fileAssert"
 
 const tmpDir = new TmpDir()
 
-export function createTestApp(version: string) {
+export function createTestApp(version: string, appPath = "") {
   class MockApp {
     // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
     getVersion() {
@@ -20,7 +20,7 @@ export function createTestApp(version: string) {
 
     // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
     getAppPath() {
-      // ignored
+      return appPath
     }
 
     // noinspection JSMethodCanBeStatic,JSUnusedGlobalSymbols
@@ -39,6 +39,7 @@ export function createTestApp(version: string) {
   return new MockApp()
 }
 
+// to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
 export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir(), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))

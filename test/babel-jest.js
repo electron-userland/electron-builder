@@ -6,16 +6,22 @@ const fs = require("fs")
 const jestPreset = require("babel-preset-jest")
 const path = require("path")
 
-const convert = require("convert-source-map")
-
 let babelRc;
 
 function getBabelRcDigest() {
   if (babelRc == null) {
+    let configFile
+    try {
+      configFile = fs.readFileSync(path.join(__dirname, ".babelrc"))
+    }
+    catch (e) {
+      configFile = fs.readFileSync(path.join(__dirname, "..", ".babelrc"))
+    }
+
     babelRc = crypto
       .createHash("md5")
-      .update(fs.readFileSync(path.join(__dirname, "..", ".babelrc"), "utf8"))
-      .digest("hex")
+      .update(configFile)
+      .digest("base64")
   }
   return babelRc;
 }
@@ -72,20 +78,21 @@ function createTransformer(options) {
         }
       }
 
+      const sourceMapFile = `${filename}.map`
       const finalOptions = Object.assign({}, options, {
         filename,
         plugins,
-        inputSourceMap: JSON.parse(fs.readFileSync(filename + ".map", "utf-8")),
+        inputSourceMap: JSON.parse(fs.readFileSync(sourceMapFile, "utf-8")),
         sourceMaps: "inline",
       })
-      if (transformOptions && transformOptions.instrument) {
+      if (transformOptions != null && transformOptions.instrument) {
         finalOptions.auxiliaryCommentBefore = ' istanbul ignore next '
         finalOptions.plugins = plugins.concat(require('babel-plugin-istanbul').default);
       }
 
       const result = babel.transform(src, finalOptions)
-      const codeWithSourceMapUrl = result.code + "\n//# sourceMappingURL=data:application/json;base64," + convert.fromObject(result.map).toBase64()
-      return codeWithSourceMapUrl
+      fs.writeFileSync(sourceMapFile, JSON.stringify(result.map))
+      return result.code + `\n//# sourceMappingURL=file://${sourceMapFile}`
     }
   }
 }

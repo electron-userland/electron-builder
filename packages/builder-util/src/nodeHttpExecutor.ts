@@ -1,7 +1,7 @@
 import _debug from "debug"
-import { CancellationToken, configureRequestOptions, DownloadOptions, HttpExecutor } from "electron-builder-http"
+import { CancellationToken, configureRequestOptions, configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir, readFile } from "fs-extra-p"
-import { Agent, ClientRequest, IncomingMessage, request as _request, RequestOptions } from "http"
+import { Agent, ClientRequest, IncomingMessage, request as httpRequest, RequestOptions } from "http"
 import * as https from "https"
 import { parse as parseIni } from "ini"
 import { homedir } from "os"
@@ -25,13 +25,10 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
 
     const agent = await this.httpsAgentPromise
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
-      const parsedUrl = parseUrl(url)
-      this.doDownload(configureRequestOptions({
-        hostname: parsedUrl.hostname,
-        path: parsedUrl.path,
+      this.doDownload(configureRequestOptions(configureRequestOptionsFromUrl(url, {
         headers: options.headers || undefined,
         agent,
-      }), destination, 0, options, (error: Error) => {
+      })), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -44,11 +41,11 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
 
   doApiRequest<T>(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
     if (debug.enabled) {
-      debug(`HTTPS request: ${safeStringifyJson(options)}`)
+      debug(`HTTP request: ${safeStringifyJson(options)}`)
     }
 
     return cancellationToken.createPromise((resolve, reject, onCancel) => {
-      const request = (options.protocol === "http:" ? _request : https.request)(options, (response: IncomingMessage) => {
+      const request = this.doRequest(options, (response: IncomingMessage) => {
         try {
           this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
         }
@@ -65,7 +62,7 @@ export class NodeHttpExecutor extends HttpExecutor<ClientRequest> {
   }
 
   protected doRequest(options: any, callback: (response: any) => void): any {
-    return https.request(options, callback)
+    return (options.protocol === "http:" ? httpRequest : https.request)(options, callback)
   }
 }
 

@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`web installer 1`] = `
+Object {
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "packages": Object {
+          "x64": "TestApp-1.1.0-x64.nsis.zip",
+        },
+        "path": "Test App ßW Web Setup 1.1.0.exe",
+        "version": "1.1.0",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.1.0.exe",
+      "packageFiles": Object {
+        "x64": "TestApp-1.1.0-x64.nsis.zip",
+      },
+      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.1.0-x64.nsis.zip",
+    },
+  ],
+}
+`;
+
+exports[`web installer 2`] = `
+Object {
+  "name": "Test App ßW Web Setup 1.1.0.exe",
+}
+`;
