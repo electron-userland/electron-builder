@@ -450,6 +450,8 @@ export class NsisTarget extends Target {
     const scriptGenerator = new NsisScriptGenerator()
     const langConfigurator = new LangConfigurator(options)
 
+    scriptGenerator.include(path.join(nsisTemplatesDir, "include", "StdUtils.nsh"))
+
     const includeDir = path.join(nsisTemplatesDir, "include")
     scriptGenerator.addIncludeDir(includeDir)
     scriptGenerator.flags(["--updated", "--force-run", "--keep-shortcuts", "--no-desktop-shortcut", "--delete-app-data"])
@@ -488,7 +490,7 @@ export class NsisTarget extends Target {
     }
 
     await taskManager.awaitTasks()
-    return `!include ${path.join(nsisTemplatesDir, "include", "StdUtils.nsh")}\n${scriptGenerator.build()}`
+    return scriptGenerator.build()
   }
 
   private async computeFinalScript(originalScript: string, isInstaller: boolean) {

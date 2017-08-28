@@ -11,13 +11,14 @@ import { LinuxPackager } from "../linuxPackager"
 import { AppImageOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { LinuxTargetHelper } from "./LinuxTargetHelper"
+import * as ejs from "ejs"
 
 const appImageVersion = process.platform === "darwin" ? "AppImage-17-06-17-mac" : "AppImage-09-07-16-linux"
 //noinspection SpellCheckingInspection
 const appImagePathPromise = process.platform === "darwin" ? getBinFromGithub("AppImage", "17-06-17-mac", "vIaikS8Z2dEnZXKSgtcTn4gimPHCclp+v62KV2Eh9EhxvOvpDFgR3FCgdOsON4EqP8PvnfifNtxgBixCfuQU0A==") : getBin("AppImage", appImageVersion, `https://dl.bintray.com/electron-userland/bin/${appImageVersion}.7z`, "ac324e90b502f4e995f6a169451dbfc911bb55c0077e897d746838e720ae0221")
 
 const appRunTemplate = new Lazy<(data: any) => string>(async () => {
-  return require("ejs").compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
+  return ejs.compile(await readFile(path.join(getTemplatePath("linux"), "AppRun.sh"), "utf-8"))
 })
 
 export default class AppImageTarget extends Target {

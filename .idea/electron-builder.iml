@@ -7,6 +7,7 @@
   </component>
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
       <excludeFolder url="file://$MODULE_DIR$/jsdoc/out" />
       <excludeFolder url="file://$MODULE_DIR$/out-jsdoc" />
       <excludeFolder url="file://$MODULE_DIR$/packages/asar-integrity/out" />
