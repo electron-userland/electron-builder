@@ -66,7 +66,7 @@
     "is-ci": "^1.0.10",
     "isbinaryfile": "^3.0.2",
     "js-yaml": "^3.9.1",
-    "read-config-file": "^1.0.5",
+    "read-config-file": "1.1.0",
     "minimatch": "^3.0.4",
     "normalize-package-data": "^2.4.0",
     "plist": "^2.1.0",
