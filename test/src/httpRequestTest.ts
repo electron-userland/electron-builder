@@ -1,7 +1,5 @@
-import { randomBytes } from "crypto"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { tmpdir } from "os"
-import * as path from "path"
+import { TmpDir } from "temp-file"
 import { assertThat } from "./helpers/fileAssert"
 
 if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
@@ -10,8 +8,12 @@ if (process.env.ELECTRON_BUILDER_OFFLINE === "true") {
   })
 }
 
+const tmpDir = new TmpDir()
+
+afterEach(() => tmpDir.cleanup())
+
 test.ifAll.ifDevOrLinuxCi("download to nonexistent dir", async () => {
-  const tempFile = path.join(process.env.TEST_DIR || tmpdir(), `${process.pid}-${randomBytes(8).toString("hex")}`, Date.now().toString(16), "foo.txt")
+  const tempFile = await tmpDir.getTempFile()
   await httpExecutor.download("https://drive.google.com/uc?export=download&id=0Bz3JwZ-jqfRONTkzTGlsMkM2TlE", tempFile)
   await assertThat(tempFile).isFile()
 })

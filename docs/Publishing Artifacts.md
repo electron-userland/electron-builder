@@ -12,7 +12,8 @@ Excerpt from [CLI Usage](https://github.com/electron-userland/electron-builder#c
 ```
 Publishing:
   --publish, -p  [choices: "onTag", "onTagOrDraft", "always", "never"]
-  --draft        Create a draft (unpublished) release        [boolean]
+  --draft        Whether to create a draft (unpublished) release or release. 
+                 Defaults to `true`.                         [boolean]
   --prerelease   Identify the release as a prerelease        [boolean]
 ```
 CLI `--publish` option values:

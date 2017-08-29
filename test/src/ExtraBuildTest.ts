@@ -1,5 +1,4 @@
-import { Arch, DIR_TARGET, Platform } from "electron-builder"
-import { build } from "electron-builder/out/builder"
+import { Arch, build, DIR_TARGET, Platform } from "electron-builder"
 import { move, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"

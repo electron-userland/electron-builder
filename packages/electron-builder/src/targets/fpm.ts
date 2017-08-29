@@ -60,7 +60,6 @@ export default class FpmTarget extends Target {
       return path.resolve(packager.projectDir, value)
     }
 
-    //noinspection ES6MissingAwait
     return await BluebirdPromise.all<string>([
       writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterInstall, "after-install.tpl"), templateOptions),
       writeConfigFile(packager.info.tempDirManager, getResource(this.options.afterRemove, "after-remove.tpl"), templateOptions)

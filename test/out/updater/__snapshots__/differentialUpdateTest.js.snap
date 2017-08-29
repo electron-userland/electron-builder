@@ -6,25 +6,25 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
+        "githubArtifactName": "TestApp-WebSetup-1.0.0.exe",
         "packages": Object {
-          "x64": "TestApp-1.1.0-x64.nsis.zip",
+          "x64": "TestApp-1.0.0-x64.nsis.zip",
         },
-        "path": "Test App ßW Web Setup 1.1.0.exe",
-        "version": "1.1.0",
+        "path": "Test App ßW Web Setup 1.0.0.exe",
+        "version": "1.0.0",
       },
     },
     Object {
       "arch": "x64",
-      "file": "Test App ßW Web Setup 1.1.0.exe",
+      "file": "Test App ßW Web Setup 1.0.0.exe",
       "packageFiles": Object {
-        "x64": "TestApp-1.1.0-x64.nsis.zip",
+        "x64": "TestApp-1.0.0-x64.nsis.zip",
       },
-      "safeArtifactName": "TestApp-WebSetup-1.1.0.exe",
+      "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
     },
     Object {
       "arch": "x64",
-      "file": "TestApp-1.1.0-x64.nsis.zip",
+      "file": "TestApp-1.0.0-x64.nsis.zip",
     },
   ],
 }
@@ -32,6 +32,36 @@ Object {
 
 exports[`web installer 2`] = `
 Object {
-  "name": "Test App ßW Web Setup 1.1.0.exe",
+  "win": Array [
+    Object {
+      "file": "latest.yml",
+      "fileContent": Object {
+        "githubArtifactName": "TestApp-WebSetup-1.0.1.exe",
+        "packages": Object {
+          "x64": "TestApp-1.0.1-x64.nsis.zip",
+        },
+        "path": "Test App ßW Web Setup 1.0.1.exe",
+        "version": "1.0.1",
+      },
+    },
+    Object {
+      "arch": "x64",
+      "file": "Test App ßW Web Setup 1.0.1.exe",
+      "packageFiles": Object {
+        "x64": "TestApp-1.0.1-x64.nsis.zip",
+      },
+      "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
+    },
+    Object {
+      "arch": "x64",
+      "file": "TestApp-1.0.1-x64.nsis.zip",
+    },
+  ],
+}
+`;
+
+exports[`web installer 3`] = `
+Object {
+  "name": "Test App ßW Web Setup 1.0.1.exe",
 }
 `;

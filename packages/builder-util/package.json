@@ -11,7 +11,7 @@
     "out"
   ],
   "dependencies": {
-    "temp-file": "^2.0.2",
+    "temp-file": "^2.0.3",
     "fs-extra-p": "^4.4.0",
     "fcopy-pre-bundled": "0.3.4",
     "is-ci": "^1.0.10",

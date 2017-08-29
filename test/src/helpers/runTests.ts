@@ -13,7 +13,7 @@ const isEmptyOrSpaces = util.isEmptyOrSpaces
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 const baseDir = process.env.ELECTRON_BUILDER_TEST_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
-const TEST_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
+const TEST_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
 
 runTests()
   .catch(error => {
@@ -71,7 +71,7 @@ async function runTests() {
   await BluebirdPromise.all([
     deleteOldElectronVersion(),
     downloadAllRequiredElectronVersions(),
-    emptyDir(TEST_DIR),
+    emptyDir(TEST_TMP_DIR),
   ])
 
   const testFiles: string | null | undefined = process.env.TEST_FILES
@@ -104,7 +104,7 @@ async function runTests() {
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
 
-  process.env.TEST_DIR = TEST_DIR
+  process.env.TEST_TMP_DIR = TEST_TMP_DIR
 
   const rootDir = path.join(__dirname, "..", "..", "..")
 
@@ -175,7 +175,7 @@ async function runTests() {
   }, [rootDir], (result: any) => {
     const exitCode = !result || result.success ? 0 : 1
     process.exitCode = exitCode
-    remove(TEST_DIR)
+    remove(TEST_TMP_DIR)
       .catch(e => {
         console.error(e.stack)
       })
