@@ -182,3 +182,13 @@ test.ifAll.ifMac("license en", app({
     ])
   },
 }))
+
+test.ifAll.ifMac("license rtf", app({
+  targets: Platform.MAC.createTarget("dmg"),
+}, {
+  projectDirCreated: projectDir => {
+    return BluebirdPromise.all([
+      copyTestAsset("license_de.rtf", path.join(projectDir, "build", "license_de.rtf")),
+    ])
+  },
+}))

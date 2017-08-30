@@ -35,7 +35,7 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
     let data = `data 'RTF ' (${counter}, "${item.langName}") {\n`
     const fileData = await readFile(item.file, "utf-8")
     const isRtf = item.file.endsWith(".rtf") || item.file.endsWith(".RTF")
-    data += isRtf ? serializeString(fileData) : wrapInRtf(fileData)
+    data += isRtf ? serializeString((Buffer.from(fileData)).toString("hex")) : wrapInRtf(await readFile(item.file, "utf-8"))
     data += "\n};"
     rtfs.push(data)
 
