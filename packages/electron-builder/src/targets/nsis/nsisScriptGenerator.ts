@@ -29,9 +29,10 @@ export class NsisScriptGenerator {
     this.lines.push(`!insertmacro ${name} ${parameters}`)
   }
 
+  // without -- !!!
   flags(flags: Array<string>) {
     for (const flagName of flags) {
-      const variableName = "is" + flagName[2].toUpperCase() + flagName.substring(3)
+      const variableName = "is" + flagName[0].toUpperCase() + flagName.substring(1)
         .replace(/[\-]+(\w|$)/g, (m, p1) => p1.toUpperCase())
       this.lines.push(`!macro _${variableName} _a _b _t _f
   $\{StdUtils.TestParameter} $R9 "${flagName}"

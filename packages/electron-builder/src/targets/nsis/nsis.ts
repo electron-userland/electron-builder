@@ -454,7 +454,7 @@ export class NsisTarget extends Target {
 
     const includeDir = path.join(nsisTemplatesDir, "include")
     scriptGenerator.addIncludeDir(includeDir)
-    scriptGenerator.flags(["--updated", "--force-run", "--keep-shortcuts", "--no-desktop-shortcut", "--delete-app-data"])
+    scriptGenerator.flags(["updated", "force-run", "keep-shortcuts", "no-desktop-shortcut", "delete-app-data"])
 
     createAddLangsMacro(scriptGenerator, langConfigurator)
 

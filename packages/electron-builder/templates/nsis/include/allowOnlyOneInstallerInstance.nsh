@@ -30,7 +30,7 @@
     ${If} $R0 == 0
       ${if} ${isUpdated}
         Goto doStopProcess
-      ${endif}
+      ${endIf}
       MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "$(appRunning)" /SD IDOK IDOK doStopProcess
       Quit
       doStopProcess:
@@ -38,7 +38,7 @@
         ${nsProcess::KillProcess} "${APP_EXECUTABLE_FILENAME}" $R0
         DetailPrint "Waiting for ${PRODUCT_NAME} to close."
         Sleep 2000
-    ${EndIf}
+    ${endIf}
     ${nsProcess::Unload}
   ${endIf}
 !macroend
