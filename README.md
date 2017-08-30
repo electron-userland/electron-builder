@@ -173,7 +173,7 @@ and other distributable formats.
 Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading
-See [docs](https://electron.buid).
+See [docs](https://electron.build).
 
 ## Debug
 
