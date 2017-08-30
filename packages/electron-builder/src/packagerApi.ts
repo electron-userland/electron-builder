@@ -1,7 +1,7 @@
 import { Arch } from "builder-util"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
+import { Configuration } from "./configuration"
 import { Platform, Target } from "./core"
-import { Config } from "./metadata"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 
@@ -18,7 +18,7 @@ export interface PackagerOptions {
 
   platformPackagerFactory?: ((info: Packager, platform: Platform) => PlatformPackager<any>) | null
 
-  readonly config?: Config | string | null
+  readonly config?: Configuration | string | null
 
   readonly effectiveOptionComputed?: (options: any) => Promise<boolean>
 

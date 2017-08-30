@@ -3,7 +3,7 @@ import { readFile } from "fs-extra-p"
 import { fromUrl, Info } from "hosted-git-info"
 import * as path from "path"
 import { SourceRepositoryInfo } from "../core"
-import { Metadata, RepositoryInfo } from "../metadata"
+import { Metadata, RepositoryInfo } from "../options/metadata"
 
 export function getRepositoryInfo(projectDir: string, metadata?: Metadata, devMetadata?: Metadata): Promise<SourceRepositoryInfo | null> {
   return _getInfo(projectDir, (devMetadata == null ? null : devMetadata.repository) || (metadata == null ? null : metadata.repository))

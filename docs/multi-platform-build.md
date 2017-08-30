@@ -27,7 +27,7 @@ To build rpm: `brew install rpm` ([brew](https://brew.sh)).
 
 ## Linux
 
-You can use [Docker](https://github.com/electron-userland/electron-builder/wiki/Docker) to avoid installing system dependencies.
+You can use [Docker](docker.md) to avoid installing system dependencies.
 
 To build app in distributable format for Linux:
 ```
@@ -79,4 +79,4 @@ osx_image: xcode8.3
 
 ## Windows
 
-Please use [Docker](https://github.com/electron-userland/electron-builder/wiki/Docker).
+Please use [Docker](docker.md).

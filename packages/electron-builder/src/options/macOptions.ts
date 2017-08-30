@@ -1,9 +1,9 @@
-import { TargetConfig, TargetSpecificOptions } from "../core"
-import { PlatformSpecificBuildOptions } from "../metadata"
+import { PlatformSpecificBuildOptions } from "../configuration"
+import { TargetConfiguration, TargetSpecificOptions } from "../core"
 
 export type MacOsTargetName = "default" | "dmg" | "mas" | "mas-dev" | "pkg" | "7z" | "zip" | "tar.xz" | "tar.lz" | "tar.gz" | "tar.bz2" | "dir"
 
-export interface MacOptions extends PlatformSpecificBuildOptions {
+export interface MacConfiguration extends PlatformSpecificBuildOptions {
   /**
    * The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.
    *
@@ -16,11 +16,11 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
   /**
    * The target package type: list of `default`, `dmg`, `mas`, `pkg`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`. Defaults to `default` (dmg and zip for Squirrel.Mac).
   */
-  readonly target?: Array<MacOsTargetName | TargetConfig> | MacOsTargetName | TargetConfig | null
+  readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
-   * MAS installer identity is specified in the [mas](#MasBuildOptions-identity).
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
+   * MAS installer identity is specified in the [mas](mas.md#MasConfiguration-identity).
    */
   readonly identity?: string | null
 
@@ -32,7 +32,7 @@ export interface MacOptions extends PlatformSpecificBuildOptions {
 
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   * MAS entitlements is specified in the [mas](#MasBuildOptions-entitlements).
+   * MAS entitlements is specified in the [mas](mas.md#MasConfiguration-identity).
    */
   readonly entitlements?: string | null
 
@@ -130,7 +130,7 @@ export interface PkgOptions extends TargetSpecificOptions {
   readonly allowRootDirectory?: boolean | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](https://github.com/electron-userland/electron-builder/wiki/Code-Signing) instead of specifying this option.
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
    */
   readonly identity?: string | null
 }
@@ -149,7 +149,7 @@ export interface DmgOptions extends TargetSpecificOptions {
   backgroundColor?: string | null
 
   /**
-   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * The path to DMG icon (volume icon), which will be shown when mounted, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to the application icon (`build/icon.icns`).
    */
   readonly icon?: string | null
@@ -234,7 +234,7 @@ export interface DmgContent {
   path?: string
 }
 
-export interface MasBuildOptions extends MacOptions {
+export interface MasConfiguration extends MacConfiguration {
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mas.plist` will be used if exists (it is a recommended way to set).
    * Otherwise [default](https://github.com/electron-userland/electron-osx-sign/blob/master/default.entitlements.mas.plist).

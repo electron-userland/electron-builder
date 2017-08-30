@@ -8,7 +8,7 @@ export interface CommonNsisOptions {
   readonly unicode?: boolean
 
   /**
-   * See [GUID vs Application Name](https://github.com/electron-userland/electron-builder/wiki/NSIS#guid-vs-application-name).
+   * See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
    */
   readonly guid?: string | null
 
@@ -26,7 +26,7 @@ export interface CommonNsisOptions {
 }
 
 /**
- * NSIS options. See [NSIS target notes](https://github.com/electron-userland/electron-builder/wiki/NSIS).
+ * NSIS options.
  */
 export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   /**
@@ -68,37 +68,37 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly runAfterFinish?: boolean
 
   /**
-   * The path to installer icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * The path to installer icon, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerIcon.ico` or application icon.
    */
   readonly installerIcon?: string | null
 
   /**
-   * The path to uninstaller icon, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * The path to uninstaller icon, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/uninstallerIcon.ico` or application icon.
    */
   readonly uninstallerIcon?: string | null
 
   /**
-   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * @default build/installerHeader.bmp
    */
   readonly installerHeader?: string | null
 
   /**
-   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly installerSidebar?: string | null
 
   /**
-   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
   readonly uninstallerSidebar?: string | null
 
   /**
-   * *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory.
+   * *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
@@ -115,12 +115,12 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly displayLanguageSelector?: boolean
 
   /**
-   * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+   * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
    */
   readonly include?: string | null
 
   /**
-   * The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](https://github.com/electron-userland/electron-builder/wiki/NSIS#custom-nsis-script).
+   * The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).
    */
   readonly script?: string | null
 
@@ -157,7 +157,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly uninstallDisplayName?: string
 
   /**
-   * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Setup ${version}.${ext}`.
+   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 
@@ -186,7 +186,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
 }
 
 /**
- * Portable specific options.
+ * Portable options.
  */
 export interface PortableOptions extends TargetSpecificOptions, CommonNsisOptions {
   /**
@@ -197,7 +197,7 @@ export interface PortableOptions extends TargetSpecificOptions, CommonNsisOption
 }
 
 /**
- * Web Installer specific options.
+ * Web Installer options.
  */
 export interface NsisWebOptions extends NsisOptions {
   /**
@@ -211,7 +211,7 @@ export interface NsisWebOptions extends NsisOptions {
   readonly appPackageUrl?: string | null
 
   /**
-   * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName} Web Setup ${version}.${ext}`.
+   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Web Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
 }

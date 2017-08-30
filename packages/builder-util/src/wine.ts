@@ -52,7 +52,7 @@ export function prepareWindowsExecutableArgs(args: Array<string>, exePath: strin
 /** @private */
 export async function checkWineVersion(checkPromise: Promise<string>) {
   function wineError(prefix: string): string {
-    return `${prefix}, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build#${(process.platform === "linux" ? "linux" : "macos")}`
+    return `${prefix}, please see https://electron.build/multi-platform-build#${(process.platform === "linux" ? "linux" : "macos")}`
   }
 
   let wineVersion: string

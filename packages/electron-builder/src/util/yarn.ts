@@ -4,11 +4,11 @@ import { exists } from "builder-util/out/fs"
 import { Lazy } from "lazy-val"
 import { homedir } from "os"
 import * as path from "path"
-import { Config } from "../metadata"
+import { Configuration } from "../configuration"
 import { Dependency } from "./packageDependencies"
 
 /** @internal */
-export async function installOrRebuild(config: Config, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
+export async function installOrRebuild(config: Configuration, appDir: string, options: RebuildOptions, forceInstall: boolean = false) {
   const effectiveOptions = {
     buildFromSource: config.buildDependenciesFromSource === true,
     additionalArgs: asArray(config.npmArgs), ...options

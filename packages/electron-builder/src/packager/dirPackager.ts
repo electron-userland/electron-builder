@@ -4,7 +4,7 @@ import { debug7zArgs, log, spawn } from "builder-util"
 import { copyDir, DO_NOT_USE_HARD_LINKS, statOrNull } from "builder-util/out/fs"
 import { chmod, emptyDir } from "fs-extra-p"
 import * as path from "path"
-import { Config, ElectronDownloadOptions } from "../metadata"
+import { Configuration, ElectronDownloadOptions } from "../configuration"
 import { PlatformPackager } from "../platformPackager"
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
@@ -15,7 +15,7 @@ interface InternalElectronDownloadOptions extends ElectronDownloadOptions {
   arch: string
 }
 
-function createDownloadOpts(opts: Config, platform: string, arch: string, electronVersion: string): InternalElectronDownloadOptions {
+function createDownloadOpts(opts: Configuration, platform: string, arch: string, electronVersion: string): InternalElectronDownloadOptions {
   return {
     platform,
     arch,

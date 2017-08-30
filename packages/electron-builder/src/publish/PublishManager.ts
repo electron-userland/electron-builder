@@ -16,8 +16,8 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { WriteStream as TtyWriteStream } from "tty"
 import * as url from "url"
+import { PlatformSpecificBuildOptions, ReleaseInfo } from "../configuration"
 import { Platform, Target } from "../core"
-import { PlatformSpecificBuildOptions, ReleaseInfo } from "../metadata"
 import { Packager } from "../packager"
 import { ArtifactCreated } from "../packagerApi"
 import { PlatformPackager } from "../platformPackager"
@@ -501,7 +501,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
       return info
     }
 
-    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts`
+    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://electron.build/publishing-artifacts`
     if (errorIfCannot) {
       throw new Error(message)
     }

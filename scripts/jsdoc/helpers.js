@@ -110,7 +110,7 @@ function renderProperties(object, root, level) {
 
     result += indent + "* " + renderMemberName(member, object)
 
-    const types = member.type.names
+    const types = member.type == null ? [] : member.type.names
     let child = getInlinedChild(types)
     if (child != null && (!child.inlined || child.rendered)) {
       child = null
@@ -154,10 +154,10 @@ function renderProperties(object, root, level) {
 }
 
 function renderMemberName(member, object) {
-  let result = `<a name="${object.name}-${member.name}"></a>`
-
   const wrap = member.optional ? "" : "**"
-  result += wrap + "`" + member.name + "`" + wrap
+  // gitbook doesn't like several "a" tags in a row (another one will be added if property is an object and documented as inlined)
+  // in any case better to avoid empty "a" tags, since ` will be transformed to <code>
+  let result = `${wrap}<code id="${object.name}-${member.name}">${member.name}</code>${wrap}`
   if (member.defaultvalue != null) {
     result += " = `" + member.defaultvalue + "`"
   }
@@ -257,10 +257,13 @@ function identifierToLink(id, root) {
   if (id === "number") {
     return "Number"
   }
+  if (id === "internal:EventEmitter") {
+    return "[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)"
+  }
 
   let linked = resolveById(id)
   if (linked == null) {
-    if (id === "module:electron-builder/out/core.Arch" || id === "module:builder-util/out/arch.Arch") {
+    if (id === "module:electron-builder/out/core.Arch" || id === "module:builder-util/out/arch.Arch" || id === "Arch") {
       id = "module:builder-util.Arch"
     }
     else if (id === "module:electron-builder-http/out/CancellationToken.CancellationToken") {
@@ -282,6 +285,25 @@ function identifierToLink(id, root) {
       id !== "module:https.RequestOptions" &&
       !id.endsWith(".__type")
     ) {
+      for (const name of ["GithubOptions", "GenericServerOptions", "BintrayOptions", "S3Options", "PublishConfiguration"]) {
+        if (id.endsWith(`.${name}`)) {
+          return `[${name}](/publishing-artifacts.md#${name})`
+        }
+      }
+
+      if (id.endsWith(".PlatformPackager")) {
+        // don't want complicate docs, if someone need - just see source code
+        return "PlatformPackager"
+      }
+      if (id.endsWith(".Dependency")) {
+        // don't want complicate docs, if someone need - just see source code
+        return "Dependency"
+      }
+      if (id.endsWith(".RequestHeaders")) {
+        // don't want complicate docs, if someone need - just see source code
+        return "[key: string]: string"
+      }
+
       console.warn(`Unresolved member ${id}`)
     }
     return id

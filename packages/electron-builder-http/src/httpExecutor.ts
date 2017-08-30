@@ -15,7 +15,7 @@ export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 const debug = _debug("electron-builder")
 
 export interface RequestHeaders {
-  [key: string]: any
+  [key: string]: string
 }
 
 // tslint:disable:no-empty-interface

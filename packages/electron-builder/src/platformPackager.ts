@@ -10,10 +10,10 @@ import { Minimatch } from "minimatch"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
+import { AfterPackContext, AsarOptions, Configuration, FileAssociation, PlatformSpecificBuildOptions } from "./configuration"
 import { Platform, Target, TargetSpecificOptions } from "./core"
 import { copyFiles, FileMatcher, getFileMatchers, getMainFileMatchers } from "./fileMatcher"
 import { createTransformer, isElectronCompileUsed } from "./fileTransformer"
-import { AfterPackContext, AsarOptions, Config, FileAssociation, PlatformSpecificBuildOptions } from "./metadata"
 import { Packager } from "./packager"
 import { unpackElectron, unpackMuon } from "./packager/dirPackager"
 import { createMacApp } from "./packager/mac"
@@ -28,7 +28,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   readonly projectDir: string
   readonly buildResourcesDir: string
 
-  readonly config: Config
+  readonly config: Configuration
 
   readonly platformSpecificBuildOptions: DC
 

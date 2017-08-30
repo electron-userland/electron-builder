@@ -10,9 +10,10 @@ import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { readAsarJson } from "./asar"
+import { AfterPackContext, Configuration } from "./configuration"
 import { Platform, SourceRepositoryInfo, Target } from "./core"
 import MacPackager from "./macPackager"
-import { AfterPackContext, Config, Metadata } from "./metadata"
+import { Metadata } from "./options/metadata"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
 import { PlatformPackager } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
@@ -44,10 +45,10 @@ export class Packager {
 
   private devMetadata: Metadata
 
-  private _config: Config
+  private _configuration: Configuration
 
-  get config(): Config {
-    return this._config
+  get config(): Configuration {
+    return this._configuration
   }
 
   isTwoPackageJsonProjectLayoutUsed = true
@@ -143,7 +144,7 @@ export class Packager {
       debug(`Effective config:\n${safeDump(JSON.parse(safeStringifyJson(config)))}`)
     }
     await validateConfig(config)
-    this._config = config
+    this._configuration = config
 
     this.appDir = await computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app))
 
@@ -218,7 +219,7 @@ export class Packager {
       }
 
       if (platform === Platform.MAC && process.platform === Platform.WINDOWS.nodeName) {
-        throw new Error("Build for macOS is supported only on macOS, please see https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build")
+        throw new Error("Build for macOS is supported only on macOS, please see https://electron.build/multi-platform-build")
       }
 
       const packager = this.createHelper(platform)

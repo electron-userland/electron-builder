@@ -4,7 +4,7 @@ import { statOrNull } from "builder-util/out/fs"
 import { outputFile, readdir } from "fs-extra-p"
 import * as path from "path"
 import { LinuxPackager } from "../linuxPackager"
-import { LinuxBuildOptions, LinuxTargetSpecificOptions } from "../options/linuxOptions"
+import { LinuxConfiguration, LinuxTargetSpecificOptions } from "../options/linuxOptions"
 import { getTemplatePath } from "../util/pathManager"
 
 export const installPrefix = "/opt"
@@ -37,7 +37,7 @@ export class LinuxTargetHelper {
           throw new Error(`Icon set directory ${iconDir} doesn't exist`)
         }
         else if (e.code === "ENOTDIR") {
-          throw new Error(`linux.icon must be set to an icon set directory, but ${iconDir} is not a directory. Please see https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-icon`)
+          throw new Error(`linux.icon must be set to an icon set directory, but ${iconDir} is not a directory. Please see https://electron.build/configuration/configuration#LinuxBuildOptions-icon`)
         }
         else {
           throw e
@@ -96,7 +96,7 @@ export class LinuxTargetHelper {
     return iconPath == null ? await this.packager.getDefaultIcon("icns") : path.resolve(this.packager.projectDir, iconPath)
   }
 
-  getDescription(options: LinuxBuildOptions) {
+  getDescription(options: LinuxConfiguration) {
     return options.description || this.packager.appInfo.description
   }
 
@@ -127,7 +127,7 @@ export class LinuxTargetHelper {
 
       if (category == null) {
         // https://github.com/develar/onshape-desktop-shell/issues/48
-        let message = "Application category is not set for Linux (linux.category).\nPlease see https://github.com/electron-userland/electron-builder/wiki/Options#LinuxBuildOptions-category"
+        let message = "Application category is not set for Linux (linux.category).\nPlease see https://electron.build/configuration/configuration#LinuxBuildOptions-category"
         if (macCategory != null) {
           message += `\n Cannot map mac category "${macCategory}" to Linux. If possible mapping is known for you, please file issue to add it.`
         }

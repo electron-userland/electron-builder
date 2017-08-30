@@ -44,7 +44,7 @@ export class PkgTarget extends Target {
     ]))[0]
 
     if (identity == null && packager.forceCodeSigning) {
-      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+      throw new Error(`Cannot find valid "${certType}" to sign standalone installer, please see https://electron.build/code-signing`)
     }
 
     const artifactName = packager.expandArtifactNamePattern(options, "pkg")

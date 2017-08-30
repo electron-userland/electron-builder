@@ -1,76 +1,18 @@
 import { AsarIntegrityOptions } from "asar-integrity"
 import { Arch } from "builder-util"
-import { Publish } from "electron-builder-http/out/publishOptions"
-import { BeforeBuildContext, CompressionLevel, Target, TargetConfig, TargetSpecificOptions } from "./core"
-import { AppImageOptions, DebOptions, LinuxBuildOptions, LinuxTargetSpecificOptions } from "./options/linuxOptions"
-import { DmgOptions, MacOptions, MasBuildOptions, PkgOptions } from "./options/macOptions"
+import { BeforeBuildContext, CompressionLevel, Target, TargetConfiguration, TargetSpecificOptions } from "./core"
+import { AppImageOptions, DebOptions, LinuxConfiguration, LinuxTargetSpecificOptions } from "./options/linuxOptions"
+import { DmgOptions, MacConfiguration, MasConfiguration, PkgOptions } from "./options/macOptions"
 import { SnapOptions } from "./options/SnapOptions"
-import { AppXOptions, SquirrelWindowsOptions, WinBuildOptions } from "./options/winOptions"
+import { SquirrelWindowsOptions } from "./options/SquirrelWindowsOptions"
+import { AppXOptions, WindowsConfiguration } from "./options/winOptions"
 import { PlatformPackager } from "./platformPackager"
 import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsisOptions"
 
 /**
- * Some standard fields should be defined in the `package.json`.
- */
-export interface Metadata {
-  /**
-   * The application name.
-   * @required
-   */
-  readonly name?: string
-
-  /**
-   * The application description.
-   */
-  readonly description?: string
-
-  /**
-   * The url to the project [homepage](https://docs.npmjs.com/files/package.json#homepage) (NuGet Package `projectUrl` (optional) or Linux Package URL (required)).
-   *
-   * If not specified and your project repository is public on GitHub, it will be `https://github.com/${user}/${project}` by default.
-   */
-  readonly homepage?: string | null
-
-  /**
-   * *linux-only.* The [license](https://docs.npmjs.com/files/package.json#license) name.
-   */
-  readonly license?: string | null
-
-  readonly author?: AuthorMetadata
-
-  /**
-   * The [repository](https://docs.npmjs.com/files/package.json#repository).
-   */
-  readonly repository?: string | RepositoryInfo | null
-
-  /**
-   * The electron-builder configuration.
-   */
-  readonly build?: Config
-
-  /** @private */
-  readonly dependencies?: { [key: string]: string }
-  /** @private */
-  readonly version?: string
-  /** @private */
-  readonly productName?: string | null
-  /** @private */
-  readonly main?: string | null
-}
-
-export interface AuthorMetadata {
-  readonly name: string
-  readonly email?: string
-}
-
-export interface RepositoryInfo {
-  readonly url: string
-}
-
-/**
  * Configuration Options
  */
-export interface Config extends PlatformSpecificBuildOptions {
+export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
    * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID be set.
@@ -84,20 +26,20 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly productName?: string | null
 
   /**
-   * The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
    */
   readonly artifactName?: string | null
 
   /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
    *
-   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#Config-asarUnpack) - please file issue if this doesn't work.
+   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file issue if this doesn't work.
    * @default true
   */
   readonly asar?: boolean | AsarOptions | null
 
   /**
-   * A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
+   * A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
    */
   readonly asarUnpack?: Array<string> | string | null
 
@@ -116,15 +58,15 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly directories?: MetadataDirectories | null
 
   /**
-   * A [glob patterns](#file-patterns) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
+   * A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
    *
    * Development dependencies are never copied in any case. You don't need to ignore it explicitly.
    *
    * Default pattern `**\/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
    * `package.json` and `**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case.
-   * All [default ignores](#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
+   * All [default ignores](/file-patterns.md#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
    *
-   * May be specified in the platform options (e.g. in the [mac](#MacOptions)).
+   * May be specified in the platform options (e.g. in the [mac](mac.md)).
    *
    * You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
    *
@@ -138,19 +80,19 @@ export interface Config extends PlatformSpecificBuildOptions {
    * ]<br>
    * ```
    *
-   * You can use [file macros](#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
+   * You can use [file macros](/file-patterns.md/#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
    */
   readonly files?: Array<FilePattern | string> | FilePattern | string | null
 
   /**
-   * A [glob patterns](#file-patterns) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
+   * A [glob patterns](/file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
    *
    * File patterns (and support for `from` and `to` fields) the same as for [files](#multiple-glob-patterns).
    */
   readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
 
   /**
-   * The same as [extraResources](#Config-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
+   * The same as [extraResources](#configuration-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
    */
   readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
 
@@ -236,16 +178,11 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly npmSkipBuildFromSource?: boolean
 
   /**
-   * The [publish configuration](https://github.com/electron-userland/electron-builder/wiki/Publishing-Artifacts#publish-options). Order is important — first item will be used as a default auto-update server.
+   * The release info. Intended for command line usage:
    *
-   * If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-   *
-   * If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-   */
-  publish?: Publish
-
-  /**
-   * The release info. Intended for command line usage (`-c.releaseInfo.releaseNotes="new features"`) or programmatically.
+   * ```
+   * -c.releaseInfo.releaseNotes="new features"
+   * ```
    */
   readonly releaseInfo?: ReleaseInfo
 
@@ -262,48 +199,56 @@ export interface Config extends PlatformSpecificBuildOptions {
   readonly detectUpdateChannel?: boolean
 
   /**
-   * macOS options.
+   * Options related to how build macOS targets.
    */
-  readonly mac?: MacOptions | null
+  readonly mac?: MacConfiguration | null
 
   /**
    * MAS (Mac Application Store) options.
    */
-  readonly mas?: MasBuildOptions | null
+  readonly mas?: MasConfiguration | null
 
   /**
    * macOS DMG options.
-   *
-   * To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
-   * If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
    */
   readonly dmg?: DmgOptions | null
 
+  /**
+   * macOS PKG options.
+   */
   readonly pkg?: PkgOptions | null
 
   /**
-   * Windows options.
+   * Options related to how build Windows targets.
    */
-  readonly win?: WinBuildOptions | null
+  readonly win?: WindowsConfiguration | null
   readonly nsis?: NsisOptions | null
+
   readonly nsisWeb?: NsisWebOptions | null
   readonly portable?: PortableOptions | null
   readonly appx?: AppXOptions | null
   readonly squirrelWindows?: SquirrelWindowsOptions | null
 
   /**
-   * Linux options.
+   * Options related to how build Linux targets.
    */
-  readonly linux?: LinuxBuildOptions | null
+  readonly linux?: LinuxConfiguration | null
+
   /**
-   * Debian package specific options.
+   * Debian package options.
    */
   readonly deb?: DebOptions | null
+
   /**
-   * [Snap](http://snapcraft.io) options.
+   * Snap options.
    */
   readonly snap?: SnapOptions | null
+
+  /**
+   * AppImage options.
+   */
   readonly appImage?: AppImageOptions | null
+
   readonly pacman?: LinuxTargetSpecificOptions | null
   readonly rpm?: LinuxTargetSpecificOptions | null
   readonly freebsd?: LinuxTargetSpecificOptions | null
@@ -384,7 +329,7 @@ export interface Protocol {
  *
  * macOS (corresponds to [CFBundleDocumentTypes](https://developer.apple.com/library/content/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-101685)) and NSIS only.
  *
- * On Windows works only if [nsis.perMachine](https://github.com/electron-userland/electron-builder/wiki/Options#NsisOptions-perMachine) is set to `true`.
+ * On Windows works only if [nsis.perMachine](https://electron.build/configuration/configuration#NsisOptions-perMachine) is set to `true`.
  */
 export interface FileAssociation {
   /**
@@ -428,7 +373,7 @@ export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
 
   readonly asar?: AsarOptions | boolean | null
 
-  readonly target?: Array<string | TargetConfig> | string | TargetConfig | null
+  readonly target?: Array<string | TargetConfiguration> | string | TargetConfiguration | null
 
   readonly icon?: string | null
 
@@ -457,7 +402,7 @@ export interface FilePattern {
    */
   to?: string
   /**
-   * The [glob patterns](#file-patterns).
+   * The [glob patterns](/file-patterns.md).
    */
   filter?: Array<string> | string
 }
@@ -496,16 +441,16 @@ export interface ElectronDownloadOptions {
    */
   mirror?: string | null
 
+  /** @private */
   customDir?: string | null
+  /** @private */
   customFilename?: string | null
+
   quiet?: boolean
 
   strictSSL?: boolean
   verifyChecksum?: boolean
 
+  /** @private */
   force?: boolean
-  symbols?: boolean
-  mksnapshot?: boolean
-  ffmpeg?: boolean
-  dsym?: boolean
 }

@@ -8,7 +8,7 @@ First, in `package.json`, make sure you're building a package (`.pkg`) and not t
 }
 ```
 
-Place your script and the kernel extensions in `build/pkg-scripts`, or [define a custom directory](https://github.com/electron-userland/electron-builder/wiki/Options#PkgOptions-scripts). Note that the script **must** be called either `preinstall` or `postinstall`.  Remember to use ` #!/bin/sh` as the first line in your script. Also, your script must be executable (`chmod +x <filename>`).
+Place your script and the kernel extensions in `build/pkg-scripts`, or [define a custom directory](../configuration/pkg.md#PkgOptions-scripts). Note that the script **must** be called either `preinstall` or `postinstall`.  Remember to use ` #!/bin/sh` as the first line in your script. Also, your script must be executable (`chmod +x <filename>`).
 
 An example script:
 ```sh

@@ -30,3 +30,7 @@ dist/
 /scripts/jsdoc/out/
 
 electron-builder-*.d.ts
+
+/_book/
+
+/scripts/renderer/out/

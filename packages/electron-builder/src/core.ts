@@ -1,9 +1,9 @@
-import { Publish } from "electron-builder-http/out/publishOptions"
 import { Arch, archFromString, ArchType } from "builder-util"
+import { Publish } from "electron-builder-http/out/publishOptions"
 
-export type TargetConfigType = Array<string | TargetConfig> | string | TargetConfig | null
+export type TargetConfigType = Array<string | TargetConfiguration> | string | TargetConfiguration | null
 
-export interface TargetConfig {
+export interface TargetConfiguration {
   /**
    * The target name. e.g. `snap`.
    */
@@ -88,11 +88,18 @@ export abstract class Target {
 
 export interface TargetSpecificOptions {
   /**
-   The [artifact file name pattern](https://github.com/electron-userland/electron-builder/wiki/Options#artifact-file-name-pattern).
+   The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
    */
   readonly artifactName?: string | null
 
-  readonly publish?: Publish
+  /**
+   * The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
+   *
+   * If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
+   *
+   * If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+   */
+  publish?: Publish
 }
 
 export const DEFAULT_TARGET = "default"

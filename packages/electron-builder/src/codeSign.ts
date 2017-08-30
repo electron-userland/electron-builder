@@ -56,7 +56,7 @@ export async function reportError(isMas: boolean, certificateType: CertType, qua
       const postfix = isMas ? "" : ` or custom non-Apple code signing certificate`
       message += `: cannot find valid "${certificateType}" identity${postfix}`
     }
-    message += ", see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"
+    message += ", see https://electron.build/code-signing"
     if (!isAutoDiscoveryCodeSignIdentity()) {
       message += `\n(CSC_IDENTITY_AUTO_DISCOVERY=false)`
     }

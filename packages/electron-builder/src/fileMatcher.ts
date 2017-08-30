@@ -4,8 +4,8 @@ import { copyDir, copyOrLinkFile, Filter, statOrNull } from "builder-util/out/fs
 import { mkdirs } from "fs-extra-p"
 import { Minimatch } from "minimatch"
 import * as path from "path"
+import { Configuration, FilePattern, PlatformSpecificBuildOptions } from "./configuration"
 import { Platform } from "./core"
-import { Config, FilePattern, PlatformSpecificBuildOptions } from "./metadata"
 import { PlatformPackager } from "./platformPackager"
 import { createFilter, hasMagic } from "./util/filter"
 
@@ -177,7 +177,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
 }
 
 /** @internal */
-export function getFileMatchers(config: Config, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
+export function getFileMatchers(config: Configuration, name: "files" | "extraFiles" | "extraResources" | "asarUnpack", defaultSrc: string, defaultDestination: string, macroExpander: (pattern: string) => string, customBuildOptions: PlatformSpecificBuildOptions): Array<FileMatcher> | null {
   const globalPatterns: Array<string | FilePattern> | string | null | undefined | FilePattern = (config as any)[name]
   const platformSpecificPatterns: Array<string | FilePattern> | string | null | undefined = (customBuildOptions as any)[name]
 

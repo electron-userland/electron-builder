@@ -1,9 +1,9 @@
+import { PlatformSpecificBuildOptions } from "../configuration"
 import { TargetConfigType, TargetSpecificOptions } from "../core"
-import { PlatformSpecificBuildOptions } from "../metadata"
 
-export interface WinBuildOptions extends PlatformSpecificBuildOptions {
+export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
-   * Target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
+   * The target package type: list of `nsis`, `nsis-web` (Web installer), `portable` (portable app without installation), `appx`, `squirrel`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    * AppX package can be built only on Windows 10.
    *
    * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
@@ -33,13 +33,13 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 
   /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
-   * Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   * Please see [Code Signing](../code-signing.md).
    */
   readonly certificateFile?: string | null
 
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
-   * Please see [Code Signing](https://github.com/electron-userland/electron-builder/wiki/Code-Signing).
+   * Please see [Code Signing](../code-signing.md).
    */
   readonly certificatePassword?: string | null
 
@@ -78,7 +78,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 
   /**
    * Whether to verify the signature of an available update before installation.
-   * The [publisher name](WinBuildOptions#publisherName) will be used for the signature verification.
+   * The [publisher name](#publisherName) will be used for the signature verification.
    *
    * @default true
    */
@@ -95,57 +95,7 @@ export interface WinBuildOptions extends PlatformSpecificBuildOptions {
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"
 
 /**
- * Squirrel.Windows options. Squirrel.Windows target is maintained, but deprecated. Please use `nsis` instead.
- *
- * To use Squirrel.Windows please install `electron-builder-squirrel-windows` dependency.
- * To build for Squirrel.Windows on macOS, please install `mono`: `brew install mono`.
- */
-export interface SquirrelWindowsOptions extends WinBuildOptions {
-  /**
-   * A URL to an ICO file to use as the application icon (displayed in Control Panel > Programs and Features). Defaults to the Electron icon.
-   *
-   * Please note — [local icon file url is not accepted](https://github.com/atom/grunt-electron-installer/issues/73), must be https/http.
-   *
-   * If you don't plan to build windows installer, you can omit it.
-   * If your project repository is public on GitHub, it will be `https://github.com/${u}/${p}/blob/master/build/icon.ico?raw=true` by default.
-   */
-  readonly iconUrl?: string | null
-
-  /**
-   * The path to a .gif file to display during install. `build/install-spinner.gif` will be used if exists (it is a recommended way to set)
-   * (otherwise [default](https://github.com/electron/windows-installer/blob/master/resources/install-spinner.gif)).
-   */
-  readonly loadingGif?: string | null
-
-  /**
-   * Whether to create an MSI installer. Defaults to `false` (MSI is not created).
-   */
-  readonly msi?: boolean
-
-  /**
-   * A URL to your existing updates. Or `true` to automatically set to your GitHub repository. If given, these will be downloaded to create delta updates.
-   */
-  readonly remoteReleases?: string | boolean | null
-
-  /**
-   * Authentication token for remote updates
-   */
-  readonly remoteToken?: string | null
-
-  /**
-   * Use `appId` to identify package instead of `name`.
-   */
-  readonly useAppIdAsId?: boolean
-
-  /**
-   * https://github.com/electron-userland/electron-builder/issues/1743
-   * @private
-   */
-  readonly name?: string
-}
-
-/**
- * AppX options. See [Windows AppX docs](https://msdn.microsoft.com/en-us/library/windows/apps/br211453.aspx).
+ * AppX options.
  */
 export interface AppXOptions extends TargetSpecificOptions {
   /**
@@ -189,6 +139,7 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly languages?: Array<string> | string | null
 
   /**
+   * @private
    * @default false
    */
   readonly electronUpdaterAware?: boolean

@@ -1,9 +1,9 @@
 #! /usr/bin/env node
 
-import { cyan, dim, green, reset, underline } from "chalk"
-import { parse as parseEnv } from "dotenv"
 import { exec, log, warn } from "builder-util"
 import { printErrorAndExit } from "builder-util/out/promise"
+import { cyan, dim, green, reset, underline } from "chalk"
+import { parse as parseEnv } from "dotenv"
 import { readFile, readJson } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
@@ -36,7 +36,7 @@ yargs
     yargs => yargs,
     wrap(argv => start()))
   .help()
-  .epilog(`See the Wiki (${underline("https://github.com/electron-userland/electron-builder/wiki")}) for more documentation.`)
+  .epilog(`See the Wiki (${underline("https://electron.build")}) for more documentation.`)
   .strict()
   .argv
 

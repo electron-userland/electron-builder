@@ -9,7 +9,7 @@ export interface SnapOptions extends CommonLinuxOptions, TargetSpecificOptions {
   readonly confinement?: "devmode" | "strict" | "classic" | null
 
   /**
-   * The 78 character long summary. Defaults to [productName](#Config-productName).
+   * The 78 character long summary. Defaults to [productName](configuration.md#Configuration-productName).
    */
   readonly summary?: string | null
 

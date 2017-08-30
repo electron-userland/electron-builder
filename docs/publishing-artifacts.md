@@ -54,7 +54,7 @@ But please consider using automatic rules instead of explicitly specifying `publ
 
 See [GithubOptions](#GithubOptions), [S3Options](#S3Options), [BintrayOptions](#BintrayOptions).
 
-Can be specified in the [configuration options](https://github.com/electron-userland/electron-builder/wiki/Options#Config) or any platform- or target- specific options.
+Can be specified in the [configuration options](configuration/configuration#configuration) or any platform- or target- specific options.
 
 ```json
 "win": {
@@ -121,8 +121,8 @@ Define `GH_TOKEN` environment variable.
 * <a name="GithubOptions-vPrefixedTagName"></a>`vPrefixedTagName` = `true` Boolean - Whether to use `v`-prefixed tag name.
 * <a name="GithubOptions-host"></a>`host` = `github.com` String - The host (including the port if need).
 * <a name="GithubOptions-protocol"></a>`protocol` = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
-* <a name="GithubOptions-token"></a>`token` String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](module:electron-updater/out/AppUpdater.AppUpdater+setFeedURL).
-* <a name="GithubOptions-private"></a>`private` Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See: https://github.com/electron-userland/electron-builder/wiki/Auto-Update#private-github-update-repo
+* <a name="GithubOptions-token"></a>`token` String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update.md#appupdatersetfeedurloptions).
+* <a name="GithubOptions-private"></a>`private` Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See [Private GitHub Update Repo](auto-update.md#private-github-update-repo).
 * <a name="GithubOptions-provider"></a>**`provider`** "github" | "bintray" | "s3" | "generic" - The provider.
 
 <a name="PublishConfiguration"></a>

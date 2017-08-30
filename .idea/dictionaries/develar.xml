@@ -25,6 +25,7 @@
       <w>atexit</w>
       <w>atime</w>
       <w>aumi</w>
+      <w>aumid</w>
       <w>authenticode</w>
       <w>awaiter</w>
       <w>babelrc</w>
@@ -68,6 +69,7 @@
       <w>dmgbuild</w>
       <w>docdash</w>
       <w>docstrap</w>
+      <w>donorbox</w>
       <w>dpkg</w>
       <w>dsym</w>
       <w>dyld</w>

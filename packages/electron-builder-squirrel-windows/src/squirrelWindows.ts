@@ -1,7 +1,6 @@
-import { Arch, getArchSuffix, Target } from "electron-builder"
 import { log, warn } from "builder-util"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { SquirrelWindowsOptions } from "electron-builder/out/options/winOptions"
+import { Arch, getArchSuffix, SquirrelWindowsOptions, Target } from "electron-builder"
 import { WinPackager } from "electron-builder/out/winPackager"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -64,7 +63,7 @@ export default class SquirrelWindowsTarget extends Target {
       }
 
       if (iconUrl == null) {
-        throw new Error("iconUrl is not specified, please see https://github.com/electron-userland/electron-builder/wiki/Options#WinBuildOptions-iconUrl")
+        throw new Error("iconUrl is not specified, please see https://electron.build/configuration/configuration#WinBuildOptions-iconUrl")
       }
     }
 

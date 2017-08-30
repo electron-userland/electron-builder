@@ -7,14 +7,14 @@ import { deepAssign } from "read-config-file/out/deepAssign"
 import { AppInfo } from "./appInfo"
 import { appleCertificatePrefixes, CertType, CodeSigningInfo, createKeychain, findIdentity, Identity, isSignAllowed, reportError } from "./codeSign"
 import { DIR_TARGET, Platform, Target } from "./core"
-import { MacOptions, MasBuildOptions } from "./options/macOptions"
+import { MacConfiguration, MasConfiguration } from "./options/macOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import { DmgTarget } from "./targets/dmg"
 import { PkgTarget, prepareProductBuildArgs } from "./targets/pkg"
 import { createCommonTarget, NoOpTarget } from "./targets/targetFactory"
 
-export default class MacPackager extends PlatformPackager<MacOptions> {
+export default class MacPackager extends PlatformPackager<MacConfiguration> {
   readonly codeSigningInfo: Promise<CodeSigningInfo>
 
   constructor(info: Packager) {
@@ -117,7 +117,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  private async sign(appPath: string, outDir: string | null, masOptions: MasBuildOptions | null): Promise<void> {
+  private async sign(appPath: string, outDir: string | null, masOptions: MasConfiguration | null): Promise<void> {
     if (!isSignAllowed()) {
       return
     }
@@ -178,7 +178,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
       const certType = isDevelopment ? "Mac Developer" : "3rd Party Mac Developer Installer"
       const masInstallerIdentity = await findIdentity(certType, masOptions.identity, keychainName)
       if (masInstallerIdentity == null) {
-        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+        throw new Error(`Cannot find valid "${certType}" identity to sign MAS installer, please see https://electron.build/code-signing`)
       }
 
       const artifactName = this.expandArtifactNamePattern(masOptions, "pkg")
@@ -188,7 +188,7 @@ export default class MacPackager extends PlatformPackager<MacOptions> {
     }
   }
 
-  private async adjustSignOptions(signOptions: any, masOptions: MasBuildOptions | null) {
+  private async adjustSignOptions(signOptions: any, masOptions: MasConfiguration | null) {
     const resourceList = await this.resourceList
     if (resourceList.includes(`entitlements.osx.plist`)) {
       throw new Error("entitlements.osx.plist is deprecated name, please use entitlements.mac.plist")

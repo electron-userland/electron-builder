@@ -1,6 +1,6 @@
-import { bold } from "chalk"
 import { exec, log, spawn, TmpDir } from "builder-util"
 import { unlinkIfExists } from "builder-util/out/fs"
+import { bold } from "chalk"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -26,7 +26,7 @@ export async function createSelfSignedCert(publisher: string) {
     const pfx = path.join(targetDir, `${sanitizeFileName(publisher)}.pfx`)
     await unlinkIfExists(pfx)
     await exec(path.join(vendorPath, "pvk2pfx.exe"), ["-pvk", pvk, "-spc", cer, "-pfx", pfx])
-    log(`${pfx} created. Please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing how to use it to sign.`)
+    log(`${pfx} created. Please see https://electron.build/code-signing how to use it to sign.`)
 
     const certLocation = "Cert:\\LocalMachine\\TrustedPeople"
     log(`${pfx} will be imported into ${certLocation} Operation will be succeed only if runned from root. Otherwise import file manually.`)

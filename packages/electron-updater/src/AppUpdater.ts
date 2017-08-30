@@ -139,7 +139,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /**
-   * Configure update provider. If value is `string`, {@link module:electron-builder-http/out/publishOptions.GenericServerOptions} will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](/publishing-artifacts.md#GenericServerOptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | GenericServerOptions | S3Options | BintrayOptions | GithubOptions | string) {
@@ -208,6 +208,13 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
+  private computeFinalheaders(headers: RequestHeaders) {
+    if (this.requestHeaders != null) {
+      Object.assign(headers, this.requestHeaders)
+    }
+    return headers
+  }
+
   private async doCheckForUpdates(): Promise<UpdateCheckResult> {
     if (this.clientPromise == null) {
       this.clientPromise = this.configOnDisk.value.then(it => this.createClient(it))
@@ -215,7 +222,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders({"X-User-Staging-Id": stagingUserId, ...this.requestHeaders})
+    client.setRequestHeaders(this.computeFinalheaders({"X-User-Staging-Id": stagingUserId}))
     const versionInfo = await client.getLatestVersion()
 
     const latestVersion = parseVersion(versionInfo.version)
@@ -308,11 +315,11 @@ export abstract class AppUpdater extends EventEmitter {
 
   /*** @private */
   protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders {
-    const requestHeaders = this.requestHeaders
     if (fileInfo.headers != null) {
+      const requestHeaders = this.requestHeaders
       return requestHeaders == null ? fileInfo.headers : {...fileInfo.headers, ...requestHeaders}
     }
-    return {Accept: "*/*", ...requestHeaders}
+    return this.computeFinalheaders({Accept: "*/*"})
   }
 
   private createClient(data: string | PublishConfiguration) {

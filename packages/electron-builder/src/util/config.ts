@@ -5,11 +5,11 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { getConfig as _getConfig, loadParentConfig, orNullIfFileNotExist, ReadConfigRequest, validateConfig as _validateConfig } from "read-config-file"
 import { deepAssign } from "read-config-file/out/deepAssign"
-import { Config } from "../metadata"
+import { Configuration } from "../configuration"
 import { reactCra } from "../presets/rectCra"
 
 // https://github.com/electron-userland/electron-builder/issues/1847
-function mergePublish(config: Config, configFromOptions: Config) {
+function mergePublish(config: Configuration, configFromOptions: Configuration) {
   // if config from disk doesn't have publish (or object), no need to handle, it will be simply merged by deepAssign
   const publish = Array.isArray(config.publish) ? configFromOptions.publish : null
   if (publish != null) {
@@ -33,9 +33,9 @@ function mergePublish(config: Config, configFromOptions: Config) {
 }
 
 /** @internal */
-export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Config | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Config> {
+export async function getConfig(projectDir: string, configPath: string | null, configFromOptions: Configuration | null | undefined, packageMetadata: Lazy<{ [key: string]: any } | null> = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<Configuration> {
   const configRequest: ReadConfigRequest = {packageKey: "build", configFilename: "electron-builder", projectDir, packageMetadata, log}
-  const config = await _getConfig<Config>(configRequest, configPath)
+  const config = await _getConfig<Configuration>(configRequest, configPath)
   if (configFromOptions != null) {
     mergePublish(config, configFromOptions)
   }
@@ -59,12 +59,12 @@ export async function getConfig(projectDir: string, configPath: string | null, c
     return config
   }
 
-  let parentConfig: Config | null
+  let parentConfig: Configuration | null
   if (extendsSpec === "react-cra") {
     parentConfig = await reactCra(projectDir)
   }
   else {
-    parentConfig = await loadParentConfig<Config>(configRequest, extendsSpec)
+    parentConfig = await loadParentConfig<Configuration>(configRequest, extendsSpec)
   }
 
   // electron-webpack and electrify client config - want to exclude some files
@@ -84,7 +84,7 @@ export async function getConfig(projectDir: string, configPath: string | null, c
 const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
 
 /** @internal */
-export async function validateConfig(config: Config) {
+export async function validateConfig(config: Configuration) {
   const extraMetadata = config.extraMetadata
   if (extraMetadata != null) {
     if (extraMetadata.build != null) {
@@ -108,7 +108,7 @@ export async function validateConfig(config: Config) {
     return `${message}
 
 How to fix:
-1. Open https://github.com/electron-userland/electron-builder/wiki/Options
+1. Open https://electron.build/configuration/configuration
 2. Search the option name on the page.
   * Not found? The option was deprecated or not exists (check spelling).
   * Found? Check that the option in the appropriate place. e.g. "title" only in the "dmg", not in the root.

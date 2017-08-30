@@ -4,12 +4,12 @@ import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { orNullIfFileNotExist } from "read-config-file"
-import { Config } from "../metadata"
+import { Configuration } from "../configuration"
 import { getConfig } from "./config"
 
 export type MetadataValue = Lazy<{ [key: string]: any } | null>
 
-export async function getElectronVersion(projectDir: string, config?: Config, projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<string> {
+export async function getElectronVersion(projectDir: string, config?: Configuration, projectMetadata: MetadataValue = new Lazy(() => orNullIfFileNotExist(readJson(path.join(projectDir, "package.json"))))): Promise<string> {
   if (config == null) {
     config = await getConfig(projectDir, null, null)
   }

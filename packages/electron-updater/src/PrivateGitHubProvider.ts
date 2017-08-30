@@ -94,6 +94,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
 
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    // noinspection JSDeprecatedSymbols
     return {
       name,
       url: versionInfo.assets.find(it => it.name === name)!.url,

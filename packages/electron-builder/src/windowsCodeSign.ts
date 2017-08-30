@@ -5,7 +5,7 @@ import { rename } from "fs-extra-p"
 import isCi from "is-ci"
 import * as os from "os"
 import * as path from "path"
-import { WinBuildOptions } from "./options/winOptions"
+import { WindowsConfiguration } from "./options/winOptions"
 import { isUseSystemSigncode } from "./util/flags"
 
 export function getSignVendorPath() {
@@ -30,7 +30,7 @@ export interface SignOptions {
   readonly password?: string | null
   readonly site?: string | null
 
-  readonly options: WinBuildOptions
+  readonly options: WindowsConfiguration
 }
 
 export async function sign(options: SignOptions) {

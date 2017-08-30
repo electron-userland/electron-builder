@@ -7,13 +7,13 @@ Files
 * `icon.icns` (macOS app icon). Icon size should be at least 512x512.
 * `background.png` (macOS DMG background).
 
-need to be placed in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) directory.
+need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
 
 ## Windows (NSIS)
 
 * `icon.ico` (Windows app icon). Icon size should be at least 256x256.
 
-need to be placed in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) directory.
+need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
 
 ## Linux
 
@@ -24,7 +24,7 @@ The filename must contain the size (e.g. `32x32.png`) of the icon). Recommended 
 
 ## AppX
 
-AppX assets need to be placed in the `appx` folder in the [build](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) directory.
+AppX assets need to be placed in the `appx` folder in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
 
 The assets should follow these naming conventions:
 

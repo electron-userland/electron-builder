@@ -1,7 +1,7 @@
 import { isEmptyOrSpaces, log, warn } from "builder-util"
 import { readFile, readJson } from "fs-extra-p"
 import * as path from "path"
-import { Metadata } from "../metadata"
+import { Metadata } from "../options/metadata"
 
 const normalizeData = require("normalize-package-data")
 

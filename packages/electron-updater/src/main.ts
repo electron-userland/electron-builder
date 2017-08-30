@@ -7,6 +7,7 @@ import { LoginCallback } from "./electronHttpExecutor"
 
 export { NET_SESSION_NAME } from "./electronHttpExecutor"
 export { AppUpdater } from "./AppUpdater"
+export { UpdateInfo, VersionInfo }
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
@@ -116,8 +117,7 @@ export class UpdaterSignal {
   }
 
   /**
-   * Emitted when an authenticating proxy is asking for user credentials.
-   * @see [Electron docs](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login)
+   * Emitted when an authenticating proxy is [asking for user credentials](https://github.com/electron/electron/blob/master/docs/api/client-request.md#event-login).
    */
   login(handler: LoginHandler) {
     addHandler(this.emitter, "login", handler)

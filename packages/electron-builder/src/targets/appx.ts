@@ -39,7 +39,7 @@ export default class AppXTarget extends Target {
 
     const cscInfo = await this.packager.cscInfo.value
     if (cscInfo == null) {
-      throw new Error("AppX package must be signed, but certificate is not set, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing\n\nYou can use `electron-builder create-self-signed-cert -p YourName` to create self-signed certificate")
+      throw new Error("AppX package must be signed, but certificate is not set, please see https://electron.build/code-signing\n\nYou can use `electron-builder create-self-signed-cert -p YourName` to create self-signed certificate")
     }
 
     let publisher = this.options.publisher

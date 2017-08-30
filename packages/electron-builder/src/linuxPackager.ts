@@ -1,9 +1,9 @@
 import { rename } from "fs-extra-p"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
+import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
-import { AfterPackContext } from "./metadata"
-import { LinuxBuildOptions } from "./options/linuxOptions"
+import { LinuxConfiguration } from "./options/linuxOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppImageTarget from "./targets/appImage"
@@ -12,7 +12,7 @@ import { LinuxTargetHelper } from "./targets/LinuxTargetHelper"
 import SnapTarget from "./targets/snap"
 import { createCommonTarget } from "./targets/targetFactory"
 
-export class LinuxPackager extends PlatformPackager<LinuxBuildOptions> {
+export class LinuxPackager extends PlatformPackager<LinuxConfiguration> {
   readonly executableName: string
 
   constructor(info: Packager) {

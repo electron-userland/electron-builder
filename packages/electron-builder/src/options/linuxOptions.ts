@@ -1,24 +1,24 @@
+import { PlatformSpecificBuildOptions } from "../configuration"
 import { TargetConfigType, TargetSpecificOptions } from "../core"
-import { PlatformSpecificBuildOptions } from "../metadata"
 
-export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificBuildOptions {
+export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecificBuildOptions {
   /**
    * Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
    *
-   * electron-builder [docker image](https://github.com/electron-userland/electron-builder/wiki/Docker) can be used to build Linux targets on any platform. See [Multi platform build](https://github.com/electron-userland/electron-builder/wiki/Multi-Platform-Build).
+   * electron-builder [docker image](/docker.md) can be used to build Linux targets on any platform. See [Multi Platform build](/multi-platform-build.md).
    *
-   * @see [Please do not put an AppImage into another archive like a .zip or .tar.gz](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake)
+   * Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
    * @default AppImage
    */
   readonly target?: TargetConfigType
 
   /**
-   * The maintainer. Defaults to [author](#Metadata-author).
+   * The maintainer. Defaults to [author](/configuration/configuration.md#Metadata-author).
    */
   readonly maintainer?: string | null
 
   /**
-   * The vendor. Defaults to [author](#Metadata-author).
+   * The vendor. Defaults to [author](/configuration/configuration.md#Metadata-author).
    */
   readonly vendor?: string | null
 
@@ -35,7 +35,7 @@ export interface LinuxBuildOptions extends CommonLinuxOptions, PlatformSpecificB
   readonly executableName?: string | null
 
   /**
-   * The path to icon set directory, relative to the the [build resources](https://github.com/electron-userland/electron-builder/wiki/Options#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   * The path to icon set directory, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string
@@ -54,7 +54,7 @@ export interface CommonLinuxOptions {
   readonly synopsis?: string | null
 
   /**
-   * As [description](#Metadata-description) from application package.json, but allows you to specify different for Linux.
+   * As [description](/configuration/configuration.md#Metadata-description) from application package.json, but allows you to specify different for Linux.
    */
   readonly description?: string | null
 
@@ -79,7 +79,7 @@ export interface LinuxTargetSpecificOptions extends CommonLinuxOptions, TargetSp
   readonly icon?: string
 
   /**
-   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
+   * The package category.
    */
   readonly packageCategory?: string | null
 
@@ -102,6 +102,11 @@ export interface DebOptions extends LinuxTargetSpecificOptions {
    * @default xz
    */
   readonly compression?: "gz" | "bzip2" | "xz" | null
+
+  /**
+   * The [package category](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Section).
+   */
+  readonly packageCategory?: string | null
 
   /**
    * The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.

@@ -1,5 +1,5 @@
 import { AsyncTaskManager } from "builder-util"
-import { Arch, MacOptions, Packager, Target } from "electron-builder"
+import { Arch, MacConfiguration, Packager, Target } from "electron-builder"
 import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder/out/codeSign"
 import MacPackager from "electron-builder/out/macPackager"
@@ -57,7 +57,7 @@ export class CheckingMacPackager extends MacPackager {
   }
 
   //noinspection JSUnusedLocalSymbols
-  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacOptions, targets: Array<Target>) {
+  async doPack(outDir: string, appOutDir: string, platformName: string, arch: Arch, customBuildOptions: MacConfiguration, targets: Array<Target>) {
     // skip
   }
 

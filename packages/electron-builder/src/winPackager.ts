@@ -1,16 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch, asArray, exec, execWine, log, use, warn } from "builder-util"
 import { createHash } from "crypto"
 import _debug from "debug"
 import { parseDn } from "electron-builder-http/out/rfc2253Parser"
-import { Arch, asArray, exec, execWine, log, use, warn } from "builder-util"
 import { close, open, read, rename } from "fs-extra-p"
 import isCI from "is-ci"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import { downloadCertificate } from "./codeSign"
+import { AfterPackContext } from "./configuration"
 import { DIR_TARGET, Platform, Target } from "./core"
-import { AfterPackContext } from "./metadata"
-import { RequestedExecutionLevel, WinBuildOptions } from "./options/winOptions"
+import { RequestedExecutionLevel, WindowsConfiguration } from "./options/winOptions"
 import { Packager } from "./packager"
 import { PlatformPackager } from "./platformPackager"
 import AppXTarget from "./targets/appx"
@@ -23,7 +23,7 @@ import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
 
-export class WinPackager extends PlatformPackager<WinBuildOptions> {
+export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
     const platformSpecificBuildOptions = this.platformSpecificBuildOptions
     const subjectName = platformSpecificBuildOptions.certificateSubjectName
@@ -75,7 +75,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
   })
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
-    let publisherName = (this.platformSpecificBuildOptions as WinBuildOptions).publisherName
+    let publisherName = (this.platformSpecificBuildOptions as WindowsConfiguration).publisherName
     if (publisherName === null) {
       return null
     }
@@ -198,7 +198,7 @@ export class WinPackager extends PlatformPackager<WinBuildOptions> {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       if (this.forceCodeSigning) {
-        throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing`)
+        throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
       }
 
       return

@@ -1,0 +1,11 @@
+{
+  "extends": "../../node_modules/ts-babel/tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "module": "commonjs"
+  },
+  "declaration": false,
+  "include": [
+    "src/**/*.ts"
+  ]
+}
