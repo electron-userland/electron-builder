@@ -19,7 +19,7 @@ exports[`invalid target 1`] = `
      \\"type\\": \\"null\\"
    }
    macOS options.
-   
+
    Details:
     * configuration.mac.target should be an object.
     * configuration.mac.target[0] should be an object.
@@ -39,14 +39,14 @@ exports[`invalid target 1`] = `
         \\"type\\": \\"null\\"
       }
       The target package type: list of \`default\`, \`dmg\`, \`mas\`, \`pkg\`, \`7z\`, \`zip\`, \`tar.xz\`, \`tar.lz\`, \`tar.gz\`, \`tar.bz2\`, \`dir\`. Defaults to \`default\` (dmg and zip for Squirrel.Mac).
-   
+
     * configuration.mac should be null:
       {
         \\"type\\": \\"null\\"
       }
 
 How to fix:
-1. Open https://github.com/electron-userland/electron-builder/wiki/Options
+1. Open https://electron.build/configuration/configuration
 2. Search the option name on the page.
   * Not found? The option was deprecated or not exists (check spelling).
   * Found? Check that the option in the appropriate place. e.g. \\"title\\" only in the \\"dmg\\", not in the root.
