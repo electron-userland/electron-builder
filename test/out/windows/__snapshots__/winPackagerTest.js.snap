@@ -10,7 +10,7 @@ exports[`sign electronDist 1`] = `"ENOENT: no such file or directory, scandir '<
 
 exports[`sign ev 1`] = `"certificateSubjectName supported only on Windows"`;
 
-exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://github.com/electron-userland/electron-builder/wiki/Code-Signing"`;
+exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing"`;
 
 exports[`win zip 1`] = `
 Object {

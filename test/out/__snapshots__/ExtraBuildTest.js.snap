@@ -116,7 +116,7 @@ exports[`scheme validation 1`] = `
  - configuration has an unknown property 'foo'. These properties are valid:
    object { afterPack?, apk?, appId?, appImage?, appx?, artifactName?, asar?, asarUnpack?, beforeBuild?, buildDependenciesFromSource?, buildVersion?, compression?, copyright?, deb?, detectUpdateChannel?, directories?, dmg?, electronCompile?, electronDist?, electronDownload?, electronVersion?, extends?, extraFiles?, extraMetadata?, extraResources?, fileAssociations?, files?, forceCodeSigning?, freebsd?, icon?, linux?, mac?, mas?, muonVersion?, nodeGypRebuild?, npmArgs?, npmRebuild?, npmSkipBuildFromSource?, nsis?, nsisWeb?, p5p?, pacman?, pkg?, portable?, productName?, protocols?, publish?, releaseInfo?, rpm?, snap?, squirrelWindows?, target?, win? }
    Configuration Options
-
+   
    For typos: please correct them.
    For loader options: webpack 2 no longer allows custom properties in configuration.
      Loaders should be updated to allow passing options via loader options in module.rules.
@@ -133,8 +133,8 @@ exports[`scheme validation 1`] = `
    object { artifactName?, asar?, asarUnpack?, binaries?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, publish?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
-   macOS options.
-
+   Options related to how build macOS targets.
+   
    Details:
     * configuration.mac has an unknown property 'foo'. These properties are valid:
       object { artifactName?, asar?, asarUnpack?, binaries?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, publish?, requirements?, target?, type? }
