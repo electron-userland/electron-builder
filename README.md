@@ -24,7 +24,7 @@ A complete solution to package and build a ready for distribution Electron app f
 | “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://slackin.electron.build) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
-| “I want to donate” | [Donate with Donorbox](https://donorbox.org/electron-builder) or [Paypal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W6V79R2RGCCHL) |
+| “I want to donate” | [Donate](https://www.electron.build/donate) |
 
 Real project example — [onshape-desktop-shell](https://github.com/develar/onshape-desktop-shell).
 
