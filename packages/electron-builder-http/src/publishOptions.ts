@@ -64,8 +64,8 @@ export interface GithubOptions extends PublishConfiguration {
 }
 
 /** @private */
-export function githubUrl(options: GithubOptions) {
-  return `${options.protocol || "https"}://${options.host || "github.com"}`
+export function githubUrl(options: GithubOptions, defaultHost: string = "github.com") {
+  return `${options.protocol || "https"}://${options.host || defaultHost}`
 }
 
 /**

@@ -12,10 +12,10 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
   // so, we don't need to parse port (because node http doesn't support host as url does)
   protected readonly baseUrl: RequestOptions
 
-  constructor(protected readonly options: GithubOptions, baseHost: string) {
+  constructor(protected readonly options: GithubOptions, defaultHost: string) {
     super()
 
-    const baseUrl = parseUrl(`${options.protocol || "https"}://${options.host || baseHost}`)
+    const baseUrl = parseUrl(githubUrl(options, defaultHost))
     this.baseUrl = {
       protocol: baseUrl.protocol,
       hostname: baseUrl.hostname,
@@ -120,7 +120,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private get basePath() {
-    return `/${this.options.owner}/${this.options.repo}/releases`
+    const result = `/${this.options.owner}/${this.options.repo}/releases`
+    // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
+    const host = this.options.host
+    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {
@@ -130,6 +133,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
     // space is not supported on GitHub
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
+    // noinspection JSDeprecatedSymbols
     return {
       name,
       url: formatUrl({path: this.getBaseDownloadPath(versionInfo.version, name), ...this.baseUrl} as any),
