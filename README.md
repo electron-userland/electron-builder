@@ -37,11 +37,10 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
 ## Boilerplates
 
+* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
 * [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
 * [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
-* [electron-vue](https://github.com/SimulatedGREG/electron-vue) A boilerplate for making electron applications built with vue.
-* [electron-webpack](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimun project structure to get started developing with [`electron-webpack`](https://github.com/electron-userland/electron-webpack).
 
 ## Quick Setup Guide
 
@@ -72,12 +71,11 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
 5. If you have native addons of your own that are part of the application (not as a dependency), add `"nodeGypRebuild": true` to the `build` section of your development `package.json`.  
-   :bulb: Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use [node-gyp-rebuild](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241488783) bin instead.
-
+   :bulb: Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.
    
 6. Install the [required system packages](https://electron.build/multi-platform-build) if you are not on macOS 10.12+.
 
-Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration/configuration#Config-asar).
+Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration/configuration#Configuration-asar).
 
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://electron.build/code-signing#where-to-buy-code-signing-certificate).
 
@@ -86,7 +84,7 @@ For an app that will be shipped to production, you should sign your application.
 See [Command Line Interface](https://www.electron.build/cli).
 
 ## Programmatic Usage
-See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.
+See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.
 
 ```js
 "use strict"
@@ -122,7 +120,7 @@ and other distributable formats.
 
 ## Community
 
-[electron-builder](https://slackin.electron.build) on Slack (please use [threads](https://get.slack.help/hc/en-us/articles/115000769927-Message-threads)).
+[electron-builder](https://slackin.electron.build) on Slack (please use [threads](https://get.slack.help/hc/articles/115000769927-Message-threads)).
 Public [archive](http://electron-builder.slackarchive.io) without registration.
 
 ## Further Reading

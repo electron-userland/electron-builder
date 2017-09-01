@@ -1,7 +1,7 @@
 {
   "root": "./docs",
   "title": "electron-builder",
-  "plugins": ["edit-link", "github", "github-buttons", "develar-toolbar-buttons", "analytics"],
+  "plugins": ["edit-link", "github", "github-buttons", "develar-toolbar-buttons", "analytics", "advanced-emoji"],
   "pluginsConfig": {
     "edit-link": {
       "base": "https://github.com/electron-userland/electron-builder/tree/master/docs"

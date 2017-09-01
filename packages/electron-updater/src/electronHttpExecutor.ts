@@ -1,9 +1,8 @@
 import _debug from "debug"
 import { net, session } from "electron"
-import { CancellationToken, configureRequestOptions, DownloadOptions, dumpRequestOptions, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
+import { CancellationToken, configureRequestOptions, configureRequestOptionsFromUrl, DownloadOptions, dumpRequestOptions, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
-import { parse as parseUrl } from "url"
 
 export const NET_SESSION_NAME = "electron-updater"
 
@@ -12,7 +11,7 @@ const debug = _debug("electron-builder")
 export type LoginCallback = (username: string, password: string) => void
 
 export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
-  constructor(private proxyLoginCallback?: (authInfo: any, callback: LoginCallback) => void) {
+  constructor(private readonly proxyLoginCallback?: (authInfo: any, callback: LoginCallback) => void) {
     super()
   }
 
@@ -22,15 +21,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     }
 
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
-      const parsedUrl = parseUrl(url)
-
-      this.doDownload(configureRequestOptions({
-        protocol: parsedUrl.protocol,
-        hostname: parsedUrl.hostname,
-        path: parsedUrl.path,
-        port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : undefined,
+      this.doDownload(configureRequestOptions(configureRequestOptionsFromUrl(url, {
         headers: options.headers || undefined,
-      }), destination, 0, options, (error: Error) => {
+      })), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }

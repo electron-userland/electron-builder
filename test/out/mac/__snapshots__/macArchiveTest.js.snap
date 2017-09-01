@@ -18,8 +18,8 @@ exports[`invalid target 1`] = `
    object { artifactName?, asar?, asarUnpack?, binaries?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, publish?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
-   macOS options.
-
+   Options related to how build macOS targets.
+   
    Details:
     * configuration.mac.target should be an object.
     * configuration.mac.target[0] should be an object.
@@ -39,7 +39,7 @@ exports[`invalid target 1`] = `
         \\"type\\": \\"null\\"
       }
       The target package type: list of \`default\`, \`dmg\`, \`mas\`, \`pkg\`, \`7z\`, \`zip\`, \`tar.xz\`, \`tar.lz\`, \`tar.gz\`, \`tar.bz2\`, \`dir\`. Defaults to \`default\` (dmg and zip for Squirrel.Mac).
-
+   
     * configuration.mac should be null:
       {
         \\"type\\": \\"null\\"

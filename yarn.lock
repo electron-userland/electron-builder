@@ -1255,6 +1255,10 @@ electron-osx-sign@0.4.7:
     minimist "^1.2.0"
     plist "^2.1.0"
 
+emojify.js@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/emojify.js/-/emojify.js-1.1.0.tgz#079fff223307c9007f570785e8e4935d5c398beb"
+
 encodeurl@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-1.0.1.tgz#79e3d58655346909fe6f0f45a5de68103b294d20"
@@ -1533,6 +1537,12 @@ getpass@^0.1.1:
   resolved "https://registry.yarnpkg.com/getpass/-/getpass-0.1.7.tgz#5eff8e3e684d569ae4cb2b1282604e8ba62149fa"
   dependencies:
     assert-plus "^1.0.0"
+
+gitbook-plugin-advanced-emoji@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/gitbook-plugin-advanced-emoji/-/gitbook-plugin-advanced-emoji-0.2.2.tgz#08bcc69f62a749cd69204435276518c941c319e3"
+  dependencies:
+    emojify.js "^1.1.0"
 
 gitbook-plugin-analytics@^0.2.1:
   version "0.2.1"

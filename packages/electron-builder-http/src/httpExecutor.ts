@@ -2,7 +2,7 @@ import { createHash, Hash } from "crypto"
 import _debug from "debug"
 import { EventEmitter } from "events"
 import { createWriteStream } from "fs-extra-p"
-import { IncomingMessage, RequestOptions } from "http"
+import { IncomingMessage, OutgoingHttpHeaders, RequestOptions } from "http"
 import { Socket } from "net"
 import { Transform } from "stream"
 import { parse as parseUrl } from "url"
@@ -14,7 +14,7 @@ export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTrans
 
 const debug = _debug("electron-builder")
 
-export interface RequestHeaders {
+export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: string
 }
 
@@ -32,7 +32,7 @@ export interface Response extends EventEmitter {
 }
 
 export interface DownloadOptions {
-  readonly headers?: RequestHeaders | null
+  readonly headers?: OutgoingHttpHeaders | null
   readonly skipDirCreation?: boolean
   readonly sha2?: string | null
   readonly sha512?: string | null
@@ -151,6 +151,9 @@ export abstract class HttpExecutor<REQUEST> {
     })
     this.addTimeOutHandler(request, callback)
     request.on("error", callback)
+    request.on("aborted", () => {
+      callback(new Error("Request has been aborted by the server"))
+    })
     onCancel(() => request.abort())
     request.end()
   }
