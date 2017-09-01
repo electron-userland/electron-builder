@@ -4,8 +4,10 @@ import { CancellationToken } from "electron-builder-http"
 import { addValue, Arch, archFromString, isEmptyOrSpaces, warn } from "builder-util"
 import { executeFinally } from "builder-util/out/promise"
 import { PublishOptions } from "electron-publish"
+import { deepAssign } from "read-config-file/out/deepAssign"
 import { DIR_TARGET, Platform } from "./core"
 import { normalizePlatforms, Packager } from "./packager"
+import { Configuration } from "./configuration"
 import { PackagerOptions } from "./packagerApi"
 import { PublishManager } from "./publish/PublishManager"
 
@@ -153,6 +155,24 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
   let config = result.config
   const extraMetadata = result.extraMetadata
   delete result.extraMetadata
+
+  // config is array when combining dot-notation values with a config file value (#2016)
+  if (config instanceof Array) {
+    let newConfig: Configuration = {}
+
+    config.forEach(configItem => {
+      if (typeof configItem === "object") {
+        newConfig = deepAssign(newConfig, configItem)
+      }
+      else if (typeof configItem === "string") {
+        newConfig.extends = configItem
+      }
+    })
+
+    config = newConfig
+    result.config = newConfig
+  }
+
   if (extraMetadata != null) {
     if (typeof config === "string") {
       // transform to object and specify path to config as extends

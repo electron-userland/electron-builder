@@ -47,6 +47,14 @@ test("cli", async () => {
   expect(parse("-l tar.gz")).toMatchSnapshot()
   expect(parse("-w tar.gz:x64")).toMatchSnapshot()
 
+  expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
+    config: {
+      asar: true,
+      compress: 'store',
+      extends: './config.json'
+    }
+  });
+
   function parseExtraMetadata(input: string) {
     const result = parse(input)
     delete result.targets
