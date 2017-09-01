@@ -50,10 +50,10 @@ test("cli", async () => {
   expect(parse("-c.compress=store -c.asar -c ./config.json")).toMatchObject({
     config: {
       asar: true,
-      compress: 'store',
-      extends: './config.json'
+      compress: "store",
+      extends: "./config.json"
     }
-  });
+  })
 
   function parseExtraMetadata(input: string) {
     const result = parse(input)
