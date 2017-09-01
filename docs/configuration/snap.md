@@ -1,4 +1,4 @@
-The top-level `snap` key contains set of options instructing electron-builder on how it should build [Snap](http://snapcraft.io).
+The top-level [snap](configuration.md#Configuration-snap) key contains set of options instructing electron-builder on how it should build [Snap](http://snapcraft.io).
 
 <!-- do not edit. start of generated block -->
 * <code id="SnapOptions-confinement">confinement</code> = `strict` "devmode" | "strict" | "classic" - The type of [confinement](https://snapcraft.io/docs/reference/confinement) supported by the snap.

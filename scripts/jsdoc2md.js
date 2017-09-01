@@ -74,7 +74,10 @@ async function render2(files, jsdoc2MdOptions) {
   const { Renderer, TypeNamePlace, Page } = require("./renderer/out/main")
   const renderer = new Renderer(dataMap)
 
-  const blockedPropertyName = new Set(["fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack"])
+  const blockedPropertyName = new Set([
+    "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack",
+    "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector",
+  ])
   renderer.isInsertHorizontalLineBefore = item => {
     return blockedPropertyName.has(item.name)
   }

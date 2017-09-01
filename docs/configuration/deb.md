@@ -1,4 +1,4 @@
-The top-level `deb` key contains set of options instructing electron-builder on how it should build Debian package.
+The top-level [deb](configuration.md#Configuration-deb) key contains set of options instructing electron-builder on how it should build Debian package.
 
 <!-- do not edit. start of generated block -->
 * <code id="DebOptions-compression">compression</code> = `xz` "gz" | "bzip2" | "xz" - The compression type.

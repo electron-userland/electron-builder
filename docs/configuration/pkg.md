@@ -1,4 +1,4 @@
-The top-level `pkg` key contains set of options instructing electron-builder on how it should build [PKG](https://goo.gl/yVvgF6) (macOS installer component package).
+The top-level [pkg](configuration.md#Configuration-pkg) key contains set of options instructing electron-builder on how it should build [PKG](https://goo.gl/yVvgF6) (macOS installer component package).
 
 <!-- do not edit. start of generated block -->
 * <code id="PkgOptions-scripts">scripts</code> = `build/pkg-scripts` String - The scripts directory, relative to `build` (build resources directory). The scripts can be in any language so long as the files are marked executable and have the appropriate shebang indicating the path to the interpreter. Scripts are required to be executable (`chmod +x file`). See: [Scripting in installer packages](http://macinstallers.blogspot.de/2012/07/scripting-in-installer-packages.html).

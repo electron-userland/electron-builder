@@ -1,4 +1,4 @@
-The top-level `appx` key contains set of options instructing electron-builder on how it should build AppX (Windows Store).
+The top-level [appx](configuration.md#Configuration-appx) key contains set of options instructing electron-builder on how it should build AppX (Windows Store).
 
 Please also see [AppX Assets](/icons.md#appx).
 

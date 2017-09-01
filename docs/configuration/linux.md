@@ -1,4 +1,4 @@
-The top-level `linux` key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
+The top-level [linux](configuration.md#Configuration-linux) key contains set of options instructing electron-builder on how it should build Linux targets. These options applicable for any Linux target.
 
 <!-- do not edit. start of generated block -->
 * <code id="LinuxConfiguration-target">target</code> = `AppImage` String | [TargetConfiguration](target.md#targetconfig) - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.

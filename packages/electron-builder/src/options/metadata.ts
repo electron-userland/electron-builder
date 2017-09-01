@@ -24,7 +24,7 @@ export interface Metadata {
    */
   readonly license?: string | null
 
-  readonly author?: AuthorMetadata
+  readonly author?: AuthorMetadata | null
 
   /**
    * The [repository](https://docs.npmjs.com/files/package.json#repository).

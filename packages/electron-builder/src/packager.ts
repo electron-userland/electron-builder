@@ -43,7 +43,7 @@ export class Packager {
     return this._isPrepackedAppAsar
   }
 
-  private devMetadata: Metadata
+  devMetadata: Metadata
 
   private _configuration: Configuration
 

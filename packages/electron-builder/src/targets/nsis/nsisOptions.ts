@@ -53,12 +53,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly allowToChangeInstallationDirectory?: boolean
 
   /**
-   * Whether to create desktop shortcut.
-   * @default true
-   */
-  readonly createDesktopShortcut?: boolean
-
-  /**
    * *one-click installer only.* Run application after finish.
    * @default true
    */
@@ -69,53 +63,41 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
    * Defaults to `build/installerIcon.ico` or application icon.
    */
   readonly installerIcon?: string | null
-
   /**
    * The path to uninstaller icon, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/uninstallerIcon.ico` or application icon.
    */
   readonly uninstallerIcon?: string | null
-
   /**
    * *assisted installer only.* `MUI_HEADERIMAGE`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * @default build/installerHeader.bmp
    */
   readonly installerHeader?: string | null
-
-  /**
-   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
-   * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
-   */
-  readonly installerSidebar?: string | null
-
-  /**
-   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
-   * Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
-   */
-  readonly uninstallerSidebar?: string | null
-
   /**
    * *one-click installer only.* The path to header icon (above the progress bar), relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
    * Defaults to `build/installerHeaderIcon.ico` or application icon.
    */
   readonly installerHeaderIcon?: string | null
-
   /**
-   * The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what.
+   * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
+   * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
-  readonly installerLanguages?: Array<string> | string | null
-
+  readonly installerSidebar?: string | null
   /**
-   * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
-   * @default false
+   * *assisted installer only.* `MUI_UNWELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
+   * Defaults to `installerSidebar` option or `build/uninstallerSidebar.bmp` or `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
    */
-  readonly displayLanguageSelector?: boolean
+  readonly uninstallerSidebar?: string | null
+  /**
+   * The uninstaller display name in the control panel.
+   * @default ${productName} ${version}
+   */
+  readonly uninstallDisplayName?: string
 
   /**
    * The path to NSIS include script to customize installer. Defaults to `build/installer.nsh`. See [Custom NSIS script](#custom-nsis-script).
    */
   readonly include?: string | null
-
   /**
    * The path to NSIS script to customize installer. Defaults to `build/installer.nsi`. See [Custom NSIS script](#custom-nsis-script).
    */
@@ -132,28 +114,6 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly license?: string | null
 
   /**
-   * [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
-   */
-  readonly language?: string | null
-
-  /**
-   * Whether to create multi-language installer. Defaults to `unicode` option value.
-   */
-  readonly multiLanguageInstaller?: boolean
-
-  /**
-   * Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
-   * @default false
-   */
-  readonly menuCategory?: boolean | string
-
-  /**
-   * The uninstaller display name in the control panel.
-   * @default ${productName} ${version}
-   */
-  readonly uninstallDisplayName?: string
-
-  /**
    * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
    */
   readonly artifactName?: string | null
@@ -165,21 +125,48 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
-   * @default true
-   */
-  readonly packElevateHelper?: boolean
-
-  /**
    * @private
    * @default false
    */
   readonly differentialPackage?: boolean
 
   /**
+   * Whether to create desktop shortcut.
+   * @default true
+   */
+  readonly createDesktopShortcut?: boolean
+  /**
+   * Whether to create submenu for start menu shortcut and program files directory. If `true`, company name will be used. Or string value.
+   * @default false
+   */
+  readonly menuCategory?: boolean | string
+  /**
    * The name that will be used for all shortcuts. Defaults to the application name.
    */
   readonly shortcutName?: string | null
+
+  /**
+   * Whether to display a language selection dialog. Not recommended (by default will be detected using OS language).
+   * @default false
+   */
+  readonly displayLanguageSelector?: boolean
+  /**
+   * The installer languages (e.g. `en_US`, `de_DE`). Change only if you understand what do you do and for what.
+   */
+  readonly installerLanguages?: Array<string> | string | null
+  /**
+   * [LCID Dec](https://msdn.microsoft.com/en-au/goglobal/bb964664.aspx), defaults to `1033`(`English - United States`).
+   */
+  readonly language?: string | null
+  /**
+   * Whether to create multi-language installer. Defaults to `unicode` option value.
+   */
+  readonly multiLanguageInstaller?: boolean
+  /**
+   * Whether to pack the elevate executable (required for electron-updater if per-machine installer used or can be used in the future). Ignored if `perMachine` is set to `true`.
+   * @default true
+   */
+  readonly packElevateHelper?: boolean
 }
 
 /**

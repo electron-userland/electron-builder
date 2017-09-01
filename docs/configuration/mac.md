@@ -1,4 +1,4 @@
-The top-level `mac` key contains set of options instructing electron-builder on how it should build macOS targets. These options applicable for any macOS target.
+The top-level [mac](configuration.md#Configuration-mac) key contains set of options instructing electron-builder on how it should build macOS targets. These options applicable for any macOS target.
 
 <!-- do not edit. start of generated block -->
 * <code id="MacConfiguration-category">category</code> String - The application category type, as shown in the Finder via *View -> Arrange by Application Category* when viewing the Applications directory.

@@ -1,4 +1,4 @@
-The top-level `dmg` key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image).
+The top-level [dmg](configuration.md#Configuration-dmg) key contains set of options instructing electron-builder on how it should build [DMG](https://en.wikipedia.org/wiki/Apple_Disk_Image).
 
 <!-- do not edit. start of generated block -->
 * <code id="DmgOptions-background">background</code> String - The path to background image (default: `build/background.tiff` or `build/background.png` if exists). The resolution of this file determines the resolution of the installer window. If background is not specified, use `window.size`. Default locations expected background size to be 540x380. See: [DMG with Retina background support](http://stackoverflow.com/a/11204769/1910191).

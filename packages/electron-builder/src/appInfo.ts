@@ -45,8 +45,12 @@ export class AppInfo {
     return `${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}.${this.buildNumber || "0"}`
   }
 
+  private get notNullDevMetadata() {
+    return this.info.devMetadata || {}
+  }
+
   get companyName(): string | null {
-    const author = this.info.metadata.author
+    const author = this.info.metadata.author || this.notNullDevMetadata.author
     return author == null ? null : author.name
   }
 
@@ -86,7 +90,7 @@ export class AppInfo {
   }
 
   async computePackageUrl(): Promise<string | null> {
-    const url = this.info.metadata.homepage
+    const url = this.info.metadata.homepage || this.notNullDevMetadata.homepage
     if (url != null) {
       return url
     }
