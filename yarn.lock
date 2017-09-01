@@ -1538,9 +1538,9 @@ gitbook-plugin-analytics@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/gitbook-plugin-analytics/-/gitbook-plugin-analytics-0.2.1.tgz#272056a03c7edb5a800860b318e29e6bcdc22522"
 
-gitbook-plugin-develar-toolbar-buttons@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/gitbook-plugin-develar-toolbar-buttons/-/gitbook-plugin-develar-toolbar-buttons-1.0.1.tgz#dcee97700eb9fa0f56ce9604a76ae0244e952ea1"
+gitbook-plugin-develar-toolbar-buttons@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/gitbook-plugin-develar-toolbar-buttons/-/gitbook-plugin-develar-toolbar-buttons-1.0.2.tgz#3e9c57b325801548f1b8d23e32f89b394a94b8ee"
 
 gitbook-plugin-edit-link@^2.0.2:
   version "2.0.2"
