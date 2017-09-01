@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { underline } from "chalk"
-import { CancellationToken } from "electron-builder-http"
 import { addValue, Arch, archFromString, isEmptyOrSpaces, warn } from "builder-util"
 import { executeFinally } from "builder-util/out/promise"
+import { underline } from "chalk"
+import { CancellationToken } from "electron-builder-http"
 import { PublishOptions } from "electron-publish"
 import { DIR_TARGET, Platform } from "./core"
 import { normalizePlatforms, Packager } from "./packager"
@@ -287,19 +287,19 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("mac", {
       group: buildGroup,
       alias: ["m", "o", "macos"],
-      description: `Build for macOS, accepts target list (see ${underline("https://goo.gl/HAnnq8")}).`,
+      description: `Build for macOS, accepts target list (see ${underline("https://goo.gl/5uHuzj")}).`,
       type: "array",
     })
     .option("linux", {
       group: buildGroup,
       alias: "l",
-      description: `Build for Linux, accepts target list (see ${underline("https://goo.gl/O80IL2")})`,
+      description: `Build for Linux, accepts target list (see ${underline("https://goo.gl/4vwQad")})`,
       type: "array",
     })
     .option("win", {
       group: buildGroup,
       alias: ["w", "windows"],
-      description: `Build for Windows, accepts target list (see ${underline("https://goo.gl/dL4i8i")})`,
+      description: `Build for Windows, accepts target list (see ${underline("https://goo.gl/jYsTEJ")})`,
       type: "array",
     })
     .option("x64", {
@@ -325,7 +325,7 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
     .option("publish", {
       group: publishGroup,
       alias: "p",
-      description: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/WMlr4n")}`,
+      description: `Publish artifacts (to GitHub Releases), see ${underline("https://goo.gl/tSFycD")}`,
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("draft", {

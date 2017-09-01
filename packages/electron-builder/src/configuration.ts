@@ -44,7 +44,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly asarUnpack?: Array<string> | string | null
 
   /**
-   * The compression level. If you want to rapidly test build, `store` can reduce build time significantly.
+   * The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
    * @default normal
    */
   readonly compression?: CompressionLevel | null
@@ -57,54 +57,106 @@ export interface Configuration extends PlatformSpecificBuildOptions {
 
   readonly directories?: MetadataDirectories | null
 
-  /**
-   * A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to include when copying files to create the package.
-   *
-   * Development dependencies are never copied in any case. You don't need to ignore it explicitly.
-   *
-   * Default pattern `**\/*` **is not added to your custom** if some of your patterns is not ignore (i.e. not starts with `!`).
-   * `package.json` and `**\/node_modules/**\/*` (only production dependencies will be copied) is added to your custom in any case.
-   * All [default ignores](/file-patterns.md#default-file-pattern) are added in any case — you don't need to repeat it if you configure own patterns.
-   *
-   * May be specified in the platform options (e.g. in the [mac](mac.md)).
-   *
-   * You may also specify custom source and destination directories by using JSON objects instead of simple glob patterns.
-   *
-   *```json<br>
-   * [<br>
-   *   {<br>
-   *     "from": "path/to/source",<br>
-   *     "to": "path/to/destination",<br>
-   *     "filter": ["**\/*", "!foo/*.js"]<br>
-   *   }<br>
-   * ]<br>
-   * ```
-   *
-   * You can use [file macros](/file-patterns.md/#file-macros) in the `from` and `to` fields as well. `from` and `to` can be files and you can use this to [rename](https://github.com/electron-userland/electron-builder/issues/1119) a file while packaging.
-   */
-  readonly files?: Array<FilePattern | string> | FilePattern | string | null
+  readonly files?: Array<FileSet | string> | FileSet | string | null
 
-  /**
-   * A [glob patterns](/file-patterns.md) relative to the project directory, when specified, copy the file or directory with matching names directly into the app's resources directory (`Contents/Resources` for MacOS, `resources` for Linux/Windows).
-   *
-   * File patterns (and support for `from` and `to` fields) the same as for [files](#multiple-glob-patterns).
-   */
-  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
+  readonly extraResources?: Array<FileSet | string> | FileSet | string | null
 
-  /**
-   * The same as [extraResources](#configuration-extraResources) but copy into the app's content directory (`Contents` for MacOS, root directory for Linux/Windows).
-   */
-  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
+  readonly extraFiles?: Array<FileSet | string> | FileSet | string | null
 
   /**
    * The file associations.
    */
   readonly fileAssociations?: Array<FileAssociation> | FileAssociation
-
   /**
    * The URL protocol schemes.
    */
   readonly protocols?: Array<Protocol> | Protocol
+
+  /**
+   * Options related to how build macOS targets.
+   */
+  readonly mac?: MacConfiguration | null
+  /**
+   * MAS (Mac Application Store) options.
+   */
+  readonly mas?: MasConfiguration | null
+  /**
+   * macOS DMG options.
+   */
+  readonly dmg?: DmgOptions | null
+  /**
+   * macOS PKG options.
+   */
+  readonly pkg?: PkgOptions | null
+
+  /**
+   * Options related to how build Windows targets.
+   */
+  readonly win?: WindowsConfiguration | null
+  readonly nsis?: NsisOptions | null
+  readonly nsisWeb?: NsisWebOptions | null
+  readonly portable?: PortableOptions | null
+  readonly appx?: AppXOptions | null
+  readonly squirrelWindows?: SquirrelWindowsOptions | null
+
+  /**
+   * Options related to how build Linux targets.
+   */
+  readonly linux?: LinuxConfiguration | null
+  /**
+   * Debian package options.
+   */
+  readonly deb?: DebOptions | null
+  /**
+   * Snap options.
+   */
+  readonly snap?: SnapOptions | null
+  /**
+   * AppImage options.
+   */
+  readonly appImage?: AppImageOptions | null
+  readonly pacman?: LinuxTargetSpecificOptions | null
+  readonly rpm?: LinuxTargetSpecificOptions | null
+  readonly freebsd?: LinuxTargetSpecificOptions | null
+  readonly p5p?: LinuxTargetSpecificOptions | null
+  readonly apk?: LinuxTargetSpecificOptions | null
+
+  /**
+   * Whether to build the application native dependencies from source.
+   * @default false
+   */
+  buildDependenciesFromSource?: boolean
+  /**
+   * Whether to execute `node-gyp rebuild` before starting to package the app.
+   * @default false
+   */
+  readonly nodeGypRebuild?: boolean
+  /**
+   * Additional command line arguments to use when installing app native deps.
+   */
+  readonly npmArgs?: Array<string> | string | null
+  /**
+   * Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies before starting to package the app.
+   * @default true
+   */
+  readonly npmRebuild?: boolean
+  /**
+   * @deprecated Please use npmBuildFromSource.
+   * @private
+   */
+  readonly npmSkipBuildFromSource?: boolean
+
+  /**
+   * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
+   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
+   */
+  readonly buildVersion?: string | null
+
+  /**
+   * Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+   * @default true
+   */
+  readonly detectUpdateChannel?: boolean
 
   /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
@@ -150,34 +202,6 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly muonVersion?: string | null
 
   /**
-   * Whether to execute `node-gyp rebuild` before starting to package the app.
-   * @default false
-   */
-  readonly nodeGypRebuild?: boolean
-
-  /**
-   * Additional command line arguments to use when installing app native deps.
-   */
-  readonly npmArgs?: Array<string> | string | null
-
-  /**
-   * Whether to [rebuild](https://docs.npmjs.com/cli/rebuild) native dependencies (`npm rebuild`) before starting to package the app.
-   * @default true
-   */
-  readonly npmRebuild?: boolean
-
-  /**
-   * Whether to build the application native dependencies from source.
-   * @default false
-   */
-  buildDependenciesFromSource?: boolean
-
-  /**
-   * @deprecated Please use npmBuildFromSource.
-   */
-  readonly npmSkipBuildFromSource?: boolean
-
-  /**
    * The release info. Intended for command line usage:
    *
    * ```
@@ -187,88 +211,16 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly releaseInfo?: ReleaseInfo
 
   /**
-   * The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`.
-   * If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
-   */
-  readonly buildVersion?: string | null
-
-  /**
-   * Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
-   * @default true
-   */
-  readonly detectUpdateChannel?: boolean
-
-  /**
-   * Options related to how build macOS targets.
-   */
-  readonly mac?: MacConfiguration | null
-
-  /**
-   * MAS (Mac Application Store) options.
-   */
-  readonly mas?: MasConfiguration | null
-
-  /**
-   * macOS DMG options.
-   */
-  readonly dmg?: DmgOptions | null
-
-  /**
-   * macOS PKG options.
-   */
-  readonly pkg?: PkgOptions | null
-
-  /**
-   * Options related to how build Windows targets.
-   */
-  readonly win?: WindowsConfiguration | null
-  readonly nsis?: NsisOptions | null
-
-  readonly nsisWeb?: NsisWebOptions | null
-  readonly portable?: PortableOptions | null
-  readonly appx?: AppXOptions | null
-  readonly squirrelWindows?: SquirrelWindowsOptions | null
-
-  /**
-   * Options related to how build Linux targets.
-   */
-  readonly linux?: LinuxConfiguration | null
-
-  /**
-   * Debian package options.
-   */
-  readonly deb?: DebOptions | null
-
-  /**
-   * Snap options.
-   */
-  readonly snap?: SnapOptions | null
-
-  /**
-   * AppImage options.
-   */
-  readonly appImage?: AppImageOptions | null
-
-  readonly pacman?: LinuxTargetSpecificOptions | null
-  readonly rpm?: LinuxTargetSpecificOptions | null
-  readonly freebsd?: LinuxTargetSpecificOptions | null
-  readonly p5p?: LinuxTargetSpecificOptions | null
-  readonly apk?: LinuxTargetSpecificOptions | null
-
-  /**
-   * @private
-   */
-  readonly icon?: string | null
-
-  /**
    * *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
-
   /**
    * *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
    */
   readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
+
+  /** @private */
+  readonly icon?: string | null
 }
 
 export interface AfterPackContext {
@@ -365,9 +317,9 @@ export interface FileAssociation {
 }
 
 export interface PlatformSpecificBuildOptions extends TargetSpecificOptions {
-  readonly files?: Array<FilePattern | string> | FilePattern | string | null
-  readonly extraFiles?: Array<FilePattern | string> | FilePattern | string | null
-  readonly extraResources?: Array<FilePattern | string> | FilePattern | string | null
+  readonly files?: Array<FileSet | string> | FileSet | string | null
+  readonly extraFiles?: Array<FileSet | string> | FileSet | string | null
+  readonly extraResources?: Array<FileSet | string> | FileSet | string | null
 
   readonly asarUnpack?: Array<string> | string | null
 
@@ -392,7 +344,7 @@ export interface AsarOptions extends AsarIntegrityOptions {
   ordering?: string | null
 }
 
-export interface FilePattern {
+export interface FileSet {
   /**
    * The source path relative to the project directory.
    */

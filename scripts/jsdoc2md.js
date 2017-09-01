@@ -62,10 +62,56 @@ async function render2(files, jsdoc2MdOptions) {
     files: pathSorter(files).map(it => path.resolve(source, it)),
   }, jsdoc2MdOptions))
 
-  const renderer = require("./renderer/out/renderer")
-  const Page = renderer.Page
+  const dataMap = new Map()
+  for (const member of data) {
+    if (member.name.endsWith("MetadataDirectories") || isInlinedMember(member)) {
+      member.inlined = true
+    }
 
-  renderer.customTypeNamePrinter = (types) => {
+    dataMap.set(member.id, member)
+  }
+
+  const { Renderer, TypeNamePlace, Page } = require("./renderer/out/main")
+  const renderer = new Renderer(dataMap)
+
+  const blockedPropertyName = new Set(["fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack"])
+  renderer.isInsertHorizontalLineBefore = item => {
+    return blockedPropertyName.has(item.name)
+  }
+
+  const originalRenderTypeName = renderer.renderTypeName
+  renderer.renderTypeName = context => {
+    if (context.place === TypeNamePlace.INHERITED_FROM) {
+      // no need to include big PlatformSpecificBuildOptions to mac/win/linux docs
+      if (context.typeItem.name === "PlatformSpecificBuildOptions") {
+        return null
+      }
+
+      // looks strange when on LinuxConfiguration page "Inherited from `CommonLinuxOptions`:" - no configuration inheritance in this case
+      if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && context.typeItem.name === "CommonNsisOptions")) {
+        return ""
+      }
+    }
+
+    let types = context.types
+    if (types == null) {
+      types = [context.typeItem.id]
+    }
+
+    if (context.place === TypeNamePlace.PROPERTY) {
+      if (types.some(it => it.includes(".FileSet"))) {
+        const propertyName = context.property.name
+        let label = "files"
+        if (propertyName === "extraResources") {
+          label = "extra resources"
+        }
+        if (propertyName === "extraFiles") {
+          label = "extra files"
+        }
+        return `The [${label}](/configuration/contents.md#${propertyName.toLowerCase()}) configuration.`
+      }
+    }
+
     if (types.some(it => it.endsWith("TargetConfiguration"))) {
       return "String | [TargetConfiguration](target.md#targetconfig)"
     }
@@ -110,6 +156,9 @@ async function render2(files, jsdoc2MdOptions) {
     if (types.some(it => it.endsWith("SnapOptions"))) {
       return "[SnapOptions](snap.md)"
     }
+    if (types.some(it => it.endsWith("AppImageOptions"))) {
+      return "[AppImageOptions](/configuration/linux-other.md#appimageoptions)"
+    }
     if (types.some(it => it.endsWith("DebOptions"))) {
       return "[DebOptions](deb.md)"
     }
@@ -117,7 +166,7 @@ async function render2(files, jsdoc2MdOptions) {
       return "[LinuxTargetSpecificOptions](/configuration/linux-other.md)"
     }
 
-    return null
+    return originalRenderTypeName.call(this, context)
   }
 
   const pages = [
@@ -146,14 +195,7 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/target.md", "TargetConfiguration"),
   ]
 
-  const dataMap = new Map()
-  for (const member of data) {
-    if (member.name.endsWith("MetadataDirectories") || isInlinedMember(member)) {
-      member.inlined = true
-    }
 
-    dataMap.set(member.id, member)
-  }
   renderer.dataMap = dataMap
 
   for (const item of data) {
@@ -203,13 +245,13 @@ function isInlinedMember(member) {
   if (member.id.includes(".Dmg") && member.name !== "DmgOptions") {
     return true
   }
-  return inlinedClasses.has(member.name) || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo" || member.name === "FilePattern" || member.name === "ReleaseInfo"
+  return inlinedClasses.has(member.name) || member.name === "Protocol" || member.name === "FileAssociation" || member.name === "AuthorMetadata" || member.name === "RepositoryInfo" || member.name === "ReleaseInfo"
 }
 
 function sortOptions(pages) {
   const electronBuilderApiPage = pages[0]
 
-  const excluded = new Set(["CommonLinuxOptions", "CommonNsisOptions", "LinuxTargetSpecificOptions", "PlatformSpecificBuildOptions", "ForgeOptions"])
+  const excluded = new Set(["CommonLinuxOptions", "CommonNsisOptions", "LinuxTargetSpecificOptions", "PlatformSpecificBuildOptions", "ForgeOptions", "FileSet"])
   electronBuilderApiPage.data = electronBuilderApiPage.data.filter(member => {
     if (member.kind === "module" || excluded.has(member.name)) {
       return true

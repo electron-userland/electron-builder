@@ -19,17 +19,17 @@
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Configuration --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/electron-builder-http packages/electron-updater packages/builder-util packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
-    "api": "yarn jsdoc && yarn jsdoc2md && gitbook build",
-    "docs": "yarn api && ./scripts/publish.sh"
+    "docs": "yarn jsdoc && yarn jsdoc2md && gitbook build",
+    "deploy-docs": "./scripts/publish.sh"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
-  "repository": "electron-userland/electron-builder",
+  "repository": "https://github.com/electron-userland/electron-builder",
   "///": "all dependencies for all packages (hoisted)",
   "dependencies": {
     "7zip-bin": "^2.2.3",
     "archiver": "^2.0.3",
     "async-exit-hook": "^2.0.1",
-    "aws-sdk": "^2.106.0",
+    "aws-sdk": "^2.107.0",
     "bluebird-lst": "^1.0.3",
     "chalk": "^2.1.0",
     "chromium-pickle-js": "^0.2.0",
@@ -43,6 +43,7 @@
     "electron-osx-sign": "0.4.7",
     "fcopy-pre-bundled": "0.3.4",
     "fs-extra-p": "^4.4.0",
+    "gitbook-plugin-footer": "^0.0.6",
     "hosted-git-info": "^2.5.0",
     "ini": "^1.3.4",
     "is-ci": "^1.0.10",
@@ -78,7 +79,7 @@
     "@types/sanitize-filename": "^1.1.28",
     "@types/source-map-support": "^0.4.0",
     "@types/xml2js": "^0.4.0",
-    "babel-preset-ts-node4-bluebird": "^0.1.0",
+    "babel-preset-ts-node4-bluebird": "^0.1.1",
     "convert-source-map": "^1.5.0",
     "decompress-zip": "^0.3.0",
     "depcheck": "^0.6.7",
@@ -86,24 +87,25 @@
     "electron-builder-tslint-config": "^1.0.4",
     "env-paths": "^1.0.0",
     "finalhandler": "^1.0.4",
+    "gitbook-plugin-analytics": "^0.2.1",
+    "gitbook-plugin-develar-toolbar-buttons": "^1.0.1",
+    "gitbook-plugin-edit-link": "^2.0.2",
+    "gitbook-plugin-github": "^2.0.0",
+    "gitbook-plugin-github-buttons": "^2.1.0",
     "globby": "^6.1.0",
     "jest-cli": "^20.0.4",
-    "jest-junit": "^2.1.0",
+    "jest-junit": "^3.0.0",
     "jsdoc-to-markdown": "^3.0.0",
     "path-sort": "^0.1.0",
     "serve-static": "^1.12.4",
-    "ts-babel": "^4.1.4",
+    "ts-babel": "^4.1.5",
     "ts-jsdoc": "^2.0.5",
     "tslint": "^5.7.0",
-    "typescript": "^2.5.0",
+    "typescript": "^2.5.2",
     "v8-compile-cache": "^1.1.0",
     "whitespace": "^2.1.0",
     "worker-farm": "^1.5.0",
-    "xml2js": "^0.4.19",
-    "gitbook-plugin-analytics": "^0.2.1",
-    "gitbook-plugin-edit-link": "^2.0.2",
-    "gitbook-plugin-github": "^2.0.0",
-    "gitbook-plugin-github-buttons": "^2.1.0"
+    "xml2js": "^0.4.19"
   },
   "jest": {
     "testEnvironment": "node",
@@ -122,5 +124,9 @@
       "<rootDir>/packages"
     ],
     "setupTestFrameworkScriptFile": "<rootDir>/test/jestSetup.js"
-  }
+  },
+  "name": "gitbook-plugin-toolbar-buttons",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "develar <develar@gmail.com>"
 }

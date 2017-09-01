@@ -94,9 +94,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
 
 export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requireAdministrator"
 
-/**
- * AppX options.
- */
 export interface AppXOptions extends TargetSpecificOptions {
   /**
    * The background color of the app tile.

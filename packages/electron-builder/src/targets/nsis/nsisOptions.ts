@@ -25,9 +25,6 @@ export interface CommonNsisOptions {
   readonly useZip?: boolean
 }
 
-/**
- * NSIS options.
- */
 export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   /**
    * One-click installation.

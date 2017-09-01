@@ -8,22 +8,7 @@
     },
     test: {
       sourceMaps: "inline",
-      presets: ["babel-preset-ts-node4-bluebird"],
-      plugins: [
-        [
-          "transform-async-to-module-method",
-          {
-            module: "bluebird-lst",
-            method: "coroutine"
-          }
-        ],
-        [
-          "transform-inline-imports-commonjs",
-          {
-            excludeModules: ["path", "debug"]
-          }
-        ],
-      ]
+      presets: ["babel-preset-ts-node4-bluebird"]
     }
   }
 }

@@ -7,7 +7,7 @@ import { AsarFilesystem, Node, readAsar } from "../asar"
 import { AsarOptions } from "../configuration"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { ensureEndSlash, FileSet, NODE_MODULES_PATTERN } from "./AppFileCopierHelper"
+import { ensureEndSlash, NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require("chromium-pickle-js")
@@ -42,7 +42,7 @@ export class AsarPackager {
   }
 
   // sort files to minimize file change (i.e. asar file is not changed dramatically on small change)
-  async pack(fileSets: Array<FileSet>, packager: PlatformPackager<any>) {
+  async pack(fileSets: Array<ResolvedFileSet>, packager: PlatformPackager<any>) {
     if (this.options.ordering != null) {
       // ordering doesn't support transformed files, but ordering is not used functionality - wait user report to fix it
       await order(fileSets[0].files, this.options.ordering, fileSets[0].src)
@@ -54,7 +54,7 @@ export class AsarPackager {
     await this.writeAsarFile(fileSets)
   }
 
-  private async createPackageFromFiles(fileSet: FileSet, packager: Packager) {
+  private async createPackageFromFiles(fileSet: ResolvedFileSet, packager: Packager) {
     const metadata = fileSet.metadata
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
@@ -160,7 +160,7 @@ export class AsarPackager {
     }
   }
 
-  private writeAsarFile(fileSets: Array<FileSet>): Promise<any> {
+  private writeAsarFile(fileSets: Array<ResolvedFileSet>): Promise<any> {
     const headerPickle = pickle.createEmpty()
     headerPickle.writeString(JSON.stringify(this.fs.header))
     const headerBuf = headerPickle.toBuffer()
@@ -254,7 +254,7 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   }
 }
 
-async function detectUnpackedDirs(fileSet: FileSet, autoUnpackDirs: Set<string>, unpackedDest: string) {
+async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string) {
   const dirToCreate = new Map<string, Array<string>>()
   const metadata = fileSet.metadata
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
@@ -363,7 +363,7 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
   return sortedFiles
 }
 
-function getRelativePath(fileSet: FileSet, p: string) {
+function getRelativePath(fileSet: ResolvedFileSet, p: string) {
   const relative = p.substring(ensureEndSlash(fileSet.src).length)
 
   if (path.sep === "\\") {
@@ -376,7 +376,7 @@ function getRelativePath(fileSet: FileSet, p: string) {
   return relative
 }
 
-function getTargetPath(fileSet: FileSet, p: string, to: string) {
+function getTargetPath(fileSet: ResolvedFileSet, p: string, to: string) {
   if (p === fileSet.src) {
     return to
   }

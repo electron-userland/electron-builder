@@ -1,4 +1,4 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg)](https://npmjs.org/package/electron-builder) [![downloads per month](http://img.shields.io/npm/dm/electron-builder.svg)](https://www.npmjs.org/package/electron-builder) [![donate](https://img.shields.io/badge/Donate-Donorbox-green.svg)](https://donorbox.org/electron-builder)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](http://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder) [![donate](https://img.shields.io/badge/Donate-Donorbox-green.svg)](https://www.electron.build/donate)
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
@@ -82,55 +82,8 @@ Please note that everything is packaged into an asar archive [by default](https:
 For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](https://electron.build/code-signing#where-to-buy-code-signing-certificate).
 
 ## CLI Usage
-Execute `node_modules/.bin/electron-builder --help` (`node_modules/.bin/electron-builder build --help` for `build subcommand) to get the actual CLI usage guide.
-```
-Building:
-  --mac, -m, -o, --macos   Build for macOS, accepts target list (see
-                           https://goo.gl/HAnnq8).                       [array]
-  --linux, -l              Build for Linux, accepts target list (see
-                           https://goo.gl/O80IL2)                        [array]
-  --win, -w, --windows     Build for Windows, accepts target list (see
-                           https://goo.gl/dL4i8i)                        [array]
-  --x64                    Build for x64                               [boolean]
-  --ia32                   Build for ia32                              [boolean]
-  --armv7l                 Build for armv7l                            [boolean]
-  --dir                    Build unpacked dir. Useful to test.         [boolean]
-  --extraMetadata, --em    Deprecated. Use -c.extraMetadata.
-  --prepackaged, --pd      The path to prepackaged app (to pack in a
-                           distributable format)
-  --projectDir, --project  The path to project directory. Defaults to current
-                           working directory.
-  --config, -c             The path to an electron-builder config. Defaults to
-                           `electron-builder.yml` (or `json`, or `json5`), see
-                           https://goo.gl/YFRJOM
 
-Publishing:
-  --publish, -p  Publish artifacts (to GitHub Releases), see
-                 https://goo.gl/WMlr4n
-                [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
-  --draft        Create a draft (unpublished) release                  [boolean]
-  --prerelease   Identify the release as a prerelease                  [boolean]
-
-Deprecated:
-  --platform  The target platform (preferred to use --mac, --win or --linux)
-           [choices: "mac", "win", "linux", "darwin", "win32", "all", undefined]
-  --arch      The target arch (preferred to use --x64 or --ia32)
-                                      [choices: "ia32", "x64", "all", undefined]
-
-Other:
-  --help     Show help                                                 [boolean]
-  --version
-
-Examples:
-  electron-builder -mwl                     build for macOS, Windows and Linux
-  electron-builder --linux deb tar.xz       build deb and tar.xz for Linux
-  electron-builder --win --ia32             build for Windows ia32
-  electron-builder --em.foo=bar             set package.json property `foo` to
-                                            `bar`
-  electron-builder                          configure unicode options for NSIS
-  --config.nsis.unicode=false
-
-```
+See [Command Line Interface](https://www.electron.build/cli).
 
 ## Programmatic Usage
 See `node_modules/electron-builder/out/electron-builder.d.ts`. [Typings](https://github.com/Microsoft/TypeScript/wiki/Typings-for-npm-packages) is supported.

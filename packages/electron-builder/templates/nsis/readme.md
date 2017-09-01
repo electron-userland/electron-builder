@@ -13,7 +13,7 @@ http://stackoverflow.com/questions/2565215/checking-if-the-application-is-runnin
 One-click installer: http://forums.winamp.com/showthread.php?t=300479
 
 # GUID
-See [wiki](https://electron.build/configuration/nsis).
+See [docs](https://electron.build/configuration/nsis).
 
 We use https://github.com/scravy/uuid-1345 to generate sha-1 name-based UUID.
 

@@ -11,7 +11,7 @@ import { AppFileWalker } from "./AppFileWalker"
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
-export interface FileSet {
+export interface ResolvedFileSet {
   src: string
   destination: string
 
@@ -20,8 +20,8 @@ export interface FileSet {
   transformedFiles: Array<string | Buffer | true | null>
 }
 
-export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer, packager: Packager, isElectronCompile: boolean): Promise<Array<FileSet>> {
-  const fileSets: Array<FileSet> = []
+export async function computeFileSets(matchers: Array<FileMatcher>, transformer: FileTransformer, packager: Packager, isElectronCompile: boolean): Promise<Array<ResolvedFileSet>> {
+  const fileSets: Array<ResolvedFileSet> = []
   for (const matcher of matchers) {
     const fileWalker = new AppFileWalker(matcher, packager)
 
@@ -54,7 +54,7 @@ const BOWER_COMPONENTS_PATTERN = `${path.sep}bower_components${path.sep}`
 /** @internal */
 export const ELECTRON_COMPILE_SHIM_FILENAME = "__shim.js"
 
-async function compileUsingElectronCompile(mainFileSet: FileSet, packager: Packager): Promise<FileSet> {
+async function compileUsingElectronCompile(mainFileSet: ResolvedFileSet, packager: Packager): Promise<ResolvedFileSet> {
   log("Compiling using electron-compile")
 
   const electronCompileCache = await packager.tempDirManager.getTempDir({prefix: "electron-compile-cache"})

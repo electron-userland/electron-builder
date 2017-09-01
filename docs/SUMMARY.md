@@ -1,4 +1,5 @@
 * [Configuration](configuration/configuration.md)
+  * [Application Contents](/configuration/contents.md)
   * [File Patterns](file-patterns.md)
   * [macOS](configuration/mac.md)
     * [DMG](configuration/dmg.md)
@@ -13,6 +14,9 @@
     * [Snap](configuration/snap.md)
     * [Other](configuration/linux-other.md)
   * [Target](configuration/target.md)
+  
+* [Command Line Interface (CLI)](cli.md)
+* [Docker](docker.md)
   
 * Guides
   * [Icons](icons.md)
@@ -29,5 +33,4 @@
 * Programmatic API
   * [electron-builder](api/electron-builder.md)
   
-* [Docker](docker.md)
 * [Donate](donate.md)

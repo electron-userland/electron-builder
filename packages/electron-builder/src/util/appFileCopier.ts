@@ -4,10 +4,10 @@ import { CONCURRENCY, FileCopier, Link, MAX_FILE_REQUESTS } from "builder-util/o
 import { ensureDir, readlink, symlink } from "fs-extra-p"
 import * as path from "path"
 import { Packager } from "../packager"
-import { ensureEndSlash, FileSet } from "./AppFileCopierHelper"
+import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
 import { copyFileOrData } from "./asarUtil"
 
-export async function copyAppFiles(fileSet: FileSet, packager: Packager) {
+export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager) {
   const metadata = fileSet.metadata
   const transformedFiles = fileSet.transformedFiles
   // search auto unpacked dir

@@ -36,7 +36,7 @@ yargs
     yargs => yargs,
     wrap(argv => start()))
   .help()
-  .epilog(`See the Wiki (${underline("https://electron.build")}) for more documentation.`)
+  .epilog(`See ${underline("https://electron.build")} for more documentation.`)
   .strict()
   .argv
 

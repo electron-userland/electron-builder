@@ -11,6 +11,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
     * [`.BuildResult`](#BuildResult)
     * [`.CommonLinuxOptions`](#CommonLinuxOptions)
     * [`.CommonNsisOptions`](#CommonNsisOptions)
+    * [`.FileSet`](#FileSet)
     * [`.ForgeOptions`](#ForgeOptions)
     * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
     * [`.PlatformSpecificBuildOptions`](#PlatformSpecificBuildOptions) ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
@@ -94,6 +95,14 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="CommonNsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
 * <code id="CommonNsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 
+<a name="FileSet"></a>
+## `FileSet`
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
+**Properties**
+* <code id="FileSet-from">from</code> String - The source path relative to the project directory.
+* <code id="FileSet-to">to</code> String - The destination path relative to the app's content directory for `extraFiles` and the app's resource directory for `extraResources`.
+* <code id="FileSet-filter">filter</code> Array&lt;String&gt; | String - The [glob patterns](/file-patterns.md).
+
 <a name="ForgeOptions"></a>
 ## `ForgeOptions`
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
@@ -128,9 +137,9 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
 **Extends**: <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>  
 **Properties**
-* <code id="PlatformSpecificBuildOptions-files">files</code> Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String
-* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String
-* <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> Array&lt;String | [FilePattern](#FilePattern)&gt; | [FilePattern](#FilePattern) | String
+* <code id="PlatformSpecificBuildOptions-files">files</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
+* <code id="PlatformSpecificBuildOptions-extraFiles">extraFiles</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
+* <code id="PlatformSpecificBuildOptions-extraResources">extraResources</code> Array&lt;String | [FileSet](#FileSet)&gt; | [FileSet](#FileSet) | String
 * <code id="PlatformSpecificBuildOptions-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String
 * <code id="PlatformSpecificBuildOptions-asar">asar</code> [AsarOptions](#AsarOptions) | Boolean
 * <code id="PlatformSpecificBuildOptions-target">target</code> Array&lt;String | [TargetConfiguration](#TargetConfiguration)&gt; | String | [TargetConfiguration](#TargetConfiguration)
