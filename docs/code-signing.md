@@ -18,7 +18,7 @@ To sign an app on Windows, there are two types of certificates:
 * EV Code Signing Certificate
 * Code Signing Certificate
 
-Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as appveyor. If you are using an EV Certificate, you need to provide `win.certificateSubjectName` in your electron builder config.
+Both certificates work with auto-update. The regular (and often cheaper) Code Signing Certificate shows a warning during installation that goes away once enough users installed your application and you've built up trust. The EV Certificate has more trust and thus works immediately without any warnings. However, it is not possible to export the EV Certificate as it is bound to a physical USB dongle. Thus, you can't export the certificate for signing code on a CI, such as appveyor. If you are using an EV Certificate, you need to provide [win.certificateSubjectName](/configuration/win.md#WindowsConfiguration-certificateSubjectName) in your electron-builder configuration.
 
 ## Travis, AppVeyor and other CI Servers
 To sign app on build server you need to set `CSC_LINK`, `CSC_KEY_PASSWORD`:

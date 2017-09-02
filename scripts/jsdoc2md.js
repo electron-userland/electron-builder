@@ -10,18 +10,10 @@ const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")
 
 async function main() {
-  const publishOptionsFiles = await globby([
-    "http/electron-builder-http-out-publishOptions.js",
-  ], {cwd: source})
-
   const httpFiles = await globby([
     "http/**/*.js",
     "!http/electron-builder-http-out-publishOptions.js",
     "!http/electron-builder-http-out-updateInfo.js",
-  ], {cwd: source})
-
-  const publishFiles = await globby([
-    "publisher/**/*.js",
   ], {cwd: source})
 
   const partialDir = path.join(__dirname, "jsdoc")
@@ -37,7 +29,7 @@ async function main() {
     },
 
     {
-      page: "auto-update.md", pageUrl: "Auto-Update", mainHeader: "API",
+      page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
       files: [
         path.join(source, "updater/electron-updater.js"),
         path.join(source, "http/electron-builder-http-out-updateInfo.js"),
@@ -54,7 +46,10 @@ async function main() {
   }
   await render(pages, jsdoc2MdOptions)
 
-  await render2([path.join(source, "builder", "electron-builder.js")], jsdoc2MdOptions)
+  await render2([
+    path.join(source, "builder", "electron-builder.js"),
+    path.join(source, "http", "electron-builder-http-out-publishOptions.js")
+  ], jsdoc2MdOptions)
 }
 
 async function render2(files, jsdoc2MdOptions) {
@@ -101,6 +96,10 @@ async function render2(files, jsdoc2MdOptions) {
       types = [context.typeItem.id]
     }
 
+    if (context.property != null && context.property.name === "publish") {
+      return "The [publish](/configuration/publish.md) options."
+    }
+
     if (context.place === TypeNamePlace.PROPERTY) {
       if (types.some(it => it.includes(".FileSet"))) {
         const propertyName = context.property.name
@@ -116,7 +115,7 @@ async function render2(files, jsdoc2MdOptions) {
     }
 
     if (types.some(it => it.endsWith("TargetConfiguration"))) {
-      return "String | [TargetConfiguration](target.md#targetconfig)"
+      return "String | [TargetConfiguration](target.md#targetconfiguration)"
     }
     if (types.some(it => it.endsWith(".Configuration") || it === "Configuration")) {
       // description contains link to.
@@ -195,9 +194,20 @@ async function render2(files, jsdoc2MdOptions) {
       "LinuxTargetSpecificOptions": "The top-level `apk`, `freebsd`, `pacman`, `p5p`,`rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.",
     }),
 
+    new Page("configuration/publish.md", null, {
+      "BintrayOptions": "",
+      "GenericServerOptions": "",
+      "GithubOptions": "",
+      "S3Options": "",
+    }),
+
+    // new Page("auto-update.md", null, {
+    //   "AppUpdater": "",
+    //   "UpdateInfo": "",
+    // }),
+
     new Page("configuration/target.md", "TargetConfiguration"),
   ]
-
 
   renderer.dataMap = dataMap
 

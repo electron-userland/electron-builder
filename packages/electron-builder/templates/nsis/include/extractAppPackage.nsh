@@ -52,3 +52,15 @@
     Nsis7z::Extract "${FILE}"
   !endif
 !macroend
+
+!macro copyPackageFile FILE
+  !ifdef SEVEN_ZIP_FILE
+    ClearErrors
+    Rename "${FILE}" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+    ${if} ${errors}
+      # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
+      ClearErrors
+      CopyFiles /SILENT "${FILE}" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+    ${endif}
+  !endif
+!macroend

@@ -287,7 +287,7 @@ function identifierToLink(id, root) {
     ) {
       for (const name of ["GithubOptions", "GenericServerOptions", "BintrayOptions", "S3Options", "PublishConfiguration"]) {
         if (id.endsWith(`.${name}`)) {
-          return `[${name}](/publishing-artifacts.md#${name})`
+          return `[${name}](/configuration/publish.md#${name.toLowerCase()})`
         }
       }
 

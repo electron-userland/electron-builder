@@ -12,7 +12,7 @@ import { createTestApp, tuneNsisUpdater, writeUpdateConfig } from "../helpers/up
 process.env.TEST_UPDATER_PLATFORM = "win32"
 
 test.ifAll.ifDevOrWinCi("web installer", async () => {
-  const outDirs: Array<string> = []
+  let outDirs: Array<string> = []
 
   async function buildApp(version: string) {
     await assertPack("test-app-one", {
@@ -62,6 +62,78 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     const oldDir = path.join(outDirs[1], "..", "oldDist")
     await rename(outDirs[0], oldDir)
     outDirs[0] = oldDir
+
+    await rename(path.join(oldDir, "TestApp-1.0.0-x64.nsis.zip"), path.join(oldDir, "win-unpacked", "package.zip"))
+  }
+  else {
+    // to  avoid snapshot mismatch (since in this node app is not packed)
+    expect({
+      win: [
+        {
+          file: "latest.yml",
+          fileContent: {
+            version: "1.0.0",
+            path: "Test App ßW Web Setup 1.0.0.exe",
+            packages: {
+              x64: {
+                file: "TestApp-1.0.0-x64.nsis.zip"
+              }
+            },
+            githubArtifactName: "TestApp-WebSetup-1.0.0.exe"
+          }
+        },
+        {
+          file: "Test App ßW Web Setup 1.0.0.exe",
+          packageFiles: {
+            x64: {
+              file: "TestApp-1.0.0-x64.nsis.zip"
+            }
+          },
+          arch: "x64",
+          safeArtifactName: "TestApp-WebSetup-1.0.0.exe"
+        },
+        {
+          file: "TestApp-1.0.0-x64.nsis.zip",
+          arch: "x64"
+        }
+      ]
+    }).toMatchSnapshot()
+    expect({
+      win: [
+        {
+          file: "latest.yml",
+          fileContent: {
+            version: "1.0.1",
+            path: "Test App ßW Web Setup 1.0.1.exe",
+            packages: {
+              x64: {
+                file: "TestApp-1.0.1-x64.nsis.zip"
+              }
+            },
+            githubArtifactName: "TestApp-WebSetup-1.0.1.exe"
+          }
+        },
+        {
+          file: "Test App ßW Web Setup 1.0.1.exe",
+          packageFiles: {
+            x64: {
+              file: "TestApp-1.0.1-x64.nsis.zip"
+            }
+          },
+          arch: "x64",
+          safeArtifactName: "TestApp-WebSetup-1.0.1.exe"
+        },
+        {
+          file: "TestApp-1.0.1-x64.nsis.zip",
+          arch: "x64"
+        }
+      ]
+    }).toMatchSnapshot()
+
+    outDirs = [
+      path.join(process.env.TEST_APP_TMP_DIR!!, "oldDist"),
+      path.join(process.env.TEST_APP_TMP_DIR!!, "dist"),
+    ]
   }
 
   await testBlockMap(outDirs[0], outDirs[1])
@@ -72,6 +144,10 @@ function testBlockMap(oldDir: string, newDir: string) {
   const finalHandler = require("finalhandler")
   const serve = serveStatic(newDir)
 
+  {
+    (process as any).resourcesPath = path.join(oldDir, "win-unpacked", "resources")
+  }
+
   const server = createServer((request, response) => {
     serve(request, response, finalHandler(request, response))
   })
@@ -79,7 +155,7 @@ function testBlockMap(oldDir: string, newDir: string) {
   const mockApp = createTestApp("0.0.1")
   jest.mock("electron", () => {
     return {
-      app: mockApp
+      app: mockApp,
     }
   }, {virtual: true})
 
@@ -89,6 +165,7 @@ function testBlockMap(oldDir: string, newDir: string) {
     server!!.listen(0, "127.0.0.1", 16, () => {
       const updater = new NsisUpdater()
       tuneNsisUpdater(updater)
+      updater.logger = console
       const doTest = async () => {
         const address = server!!.address()
         updater.updateConfigPath = await writeUpdateConfig<GenericServerOptions>({
@@ -99,12 +176,20 @@ function testBlockMap(oldDir: string, newDir: string) {
         const updateCheckResult = await updater.checkForUpdates()
         const downloadPromise = updateCheckResult.downloadPromise
         expect(downloadPromise).not.toBeNull()
-        await downloadPromise
+        const files = await downloadPromise
         const fileInfo: any = updateCheckResult.fileInfo
+
         delete fileInfo.sha2
         delete fileInfo.sha512
+
+        // because port is random
+        expect(fileInfo.url).toBeDefined()
+        expect(fileInfo.packageInfo).toBeDefined()
         delete fileInfo.url
+        delete fileInfo.packageInfo
+
         expect(fileInfo).toMatchSnapshot()
+        expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
       }
 
       doTest()

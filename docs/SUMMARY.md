@@ -14,6 +14,7 @@
     * [Snap](configuration/snap.md)
     * [Other](configuration/linux-other.md)
   * [Target](configuration/target.md)
+  * [Publish](configuration/publish.md)
   
 * [Command Line Interface (CLI)](cli.md)
 * [Docker](docker.md)

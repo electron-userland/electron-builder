@@ -1,12 +1,9 @@
-import _debug from "debug"
 import { net, session } from "electron"
-import { CancellationToken, configureRequestOptions, configureRequestOptionsFromUrl, DownloadOptions, dumpRequestOptions, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
+import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 
 export const NET_SESSION_NAME = "electron-updater"
-
-const debug = _debug("electron-builder")
 
 export type LoginCallback = (username: string, password: string) => void
 
@@ -21,9 +18,9 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
     }
 
     return await options.cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
-      this.doDownload(configureRequestOptions(configureRequestOptionsFromUrl(url, {
+      this.doDownload(configureRequestOptionsFromUrl(url, {
         headers: options.headers || undefined,
-      })), destination, 0, options, (error: Error) => {
+      }), destination, 0, options, (error: Error) => {
         if (error == null) {
           resolve(destination)
         }
@@ -31,28 +28,6 @@ export class ElectronHttpExecutor extends HttpExecutor<Electron.ClientRequest> {
           reject(error)
         }
       }, onCancel)
-    })
-  }
-
-  doApiRequest<T>(options: RequestOptionsEx, cancellationToken: CancellationToken, requestProcessor: (request: Electron.ClientRequest, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<T> {
-    if (debug.enabled) {
-      debug(`request: ${dumpRequestOptions(options)}`)
-    }
-
-    return cancellationToken.createPromise<T>((resolve, reject, onCancel) => {
-      const request = (net as any).request({session: (session as any).fromPartition(NET_SESSION_NAME), ...options}, (response: any) => {
-        try {
-          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
-        }
-        catch (e) {
-          reject(e)
-        }
-      })
-      this.addProxyLoginHandler(request)
-      this.addTimeOutHandler(request, reject)
-      request.on("error", reject)
-      requestProcessor(request, reject)
-      onCancel(() => request.abort())
     })
   }
 

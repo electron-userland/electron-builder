@@ -7,6 +7,7 @@ import { tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 import { AppUpdater } from "./AppUpdater"
+import { DifferentialDownloader } from "./differentialPackage"
 import { DownloadedUpdateHelper } from "./DownloadedUpdateHelper"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 import { verifySignature } from "./windowsExecutableCodeSignatureVerifier"
@@ -22,26 +23,28 @@ export class NsisUpdater extends AppUpdater {
   }
 
   /*** @private */
-  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
+  protected async doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
     const downloadOptions: DownloadOptions = {
       skipDirCreation: true,
       headers: this.computeRequestHeaders(fileInfo),
       cancellationToken,
-      sha2: fileInfo == null ? null : fileInfo.sha2,
       sha512: fileInfo == null ? null : fileInfo.sha512,
     }
 
-    const downloadedFile = this.downloadedUpdateHelper.getDownloadedFile(versionInfo, fileInfo)
-    if (downloadedFile != null) {
-      return downloadedFile
+    let packagePath: string | null = this.downloadedUpdateHelper.packagePath
+
+    let installerPath = this.downloadedUpdateHelper.getDownloadedFile(versionInfo, fileInfo)
+    if (installerPath != null) {
+      return packagePath == null ? [installerPath] : [installerPath, packagePath]
     }
 
     if (this.listenerCount(DOWNLOAD_PROGRESS) > 0) {
       downloadOptions.onProgress = it => this.emit(DOWNLOAD_PROGRESS, it)
     }
 
-    const tempDir = await mkdtemp(`${path.join(tmpdir(), "up")}-`)
-    const tempFile = path.join(tempDir, fileInfo.name)
+    // use TEST_APP_TMP_DIR if defined and developer machine (must be not windows due to security reasons - we must not use env var in the production)
+    const tempDir = await mkdtemp(`${path.join((process.platform === "darwin" ? process.env.TEST_APP_TMP_DIR : null) || tmpdir(), "up")}-`)
+    installerPath = path.join(tempDir, fileInfo.name)
 
     const removeTempDirIfAny = () => {
       this.downloadedUpdateHelper.clear()
@@ -53,8 +56,25 @@ export class NsisUpdater extends AppUpdater {
 
     let signatureVerificationStatus
     try {
-      await this.httpExecutor.download(fileInfo.url, tempFile, downloadOptions)
-      signatureVerificationStatus = await this.verifySignature(tempFile)
+      await this.httpExecutor.download(fileInfo.url, installerPath, downloadOptions)
+      signatureVerificationStatus = await this.verifySignature(installerPath)
+
+      const packageInfo = fileInfo.packageInfo
+      if (packageInfo != null) {
+        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.file) || ".zip"}`)
+        try {
+          await new DifferentialDownloader(packageInfo, this.httpExecutor, this.requestHeaders, path.join(process.resourcesPath!, "..", "package.zip"), this._logger, packagePath).download()
+        }
+        catch (e) {
+          this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+          await this.httpExecutor.download(packageInfo.file, packagePath, {
+            skipDirCreation: true,
+            headers: this.computeRequestHeaders(fileInfo),
+            cancellationToken,
+            sha512: packageInfo.sha512,
+          })
+        }
+      }
     }
     catch (e) {
       await removeTempDirIfAny()
@@ -72,11 +92,11 @@ export class NsisUpdater extends AppUpdater {
       throw new Error(`New version ${this.versionInfo!.version} is not signed by the application owner: ${signatureVerificationStatus}`)
     }
 
-    this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${tempFile}`)
-    this.downloadedUpdateHelper.setDownloadedFile(tempFile, versionInfo, fileInfo)
+    this._logger.info(`New version ${this.versionInfo!.version} has been downloaded to ${installerPath}`)
+    this.downloadedUpdateHelper.setDownloadedFile(installerPath, packagePath, versionInfo, fileInfo)
     this.addQuitHandler()
     this.emit(UPDATE_DOWNLOADED, this.versionInfo)
-    return tempFile
+    return packagePath == null ? [installerPath] : [installerPath, packagePath]
   }
 
   // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'
@@ -124,10 +144,9 @@ export class NsisUpdater extends AppUpdater {
       return false
     }
 
-    const setupPath = this.downloadedUpdateHelper.file
-    if (!this.updateAvailable || setupPath == null) {
-      const message = "No update available, can't quit and install"
-      this.emit("error", new Error(message), message)
+    const installerPath = this.downloadedUpdateHelper.file
+    if (!this.updateAvailable || installerPath == null) {
+      this.dispatchError(new Error("No update available, can't quit and install"))
       return false
     }
 
@@ -143,13 +162,19 @@ export class NsisUpdater extends AppUpdater {
       args.push("--force-run")
     }
 
+    const packagePath = this.downloadedUpdateHelper.packagePath
+    if (packagePath != null) {
+      // only = form is supported
+      args.push(`--package-file=${packagePath}`)
+    }
+
     const spawnOptions = {
       detached: true,
       stdio: "ignore",
     }
 
     try {
-      spawn(setupPath, args, spawnOptions)
+      spawn(installerPath, args, spawnOptions)
         .unref()
     }
     catch (e) {
@@ -158,7 +183,7 @@ export class NsisUpdater extends AppUpdater {
       if ((e as any).code === "UNKNOWN" || (e as any).code === "EACCES") { // Node 8 sends errors: https://nodejs.org/dist/latest-v8.x/docs/api/errors.html#errors_common_system_errors
         this._logger.info("Access denied or UNKNOWN error code on spawn, will be executed again using elevate")
         try {
-          spawn(path.join(process.resourcesPath!, "elevate.exe"), [setupPath].concat(args), spawnOptions)
+          spawn(path.join(process.resourcesPath!, "elevate.exe"), [installerPath].concat(args), spawnOptions)
             .unref()
         }
         catch (e) {

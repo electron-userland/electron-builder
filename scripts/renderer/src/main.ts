@@ -12,6 +12,10 @@ export class Renderer {
     return false
   }
 
+  isRenderParentPropertiesBefore(object: Item): boolean {
+    return false
+  }
+
   // INHERITED_FROM - null result means skip, empty string result means to not print "Inherited from "
   renderTypeName: ((context: RenderContext) => string | null) = context => {
     if (context.place === TypeNamePlace.INHERITED_FROM) {

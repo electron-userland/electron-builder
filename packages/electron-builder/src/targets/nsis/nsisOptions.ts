@@ -80,7 +80,7 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly installerHeaderIcon?: string | null
   /**
    * *assisted installer only.* `MUI_WELCOMEFINISHPAGE_BITMAP`, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory.
-   * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`
+   * Defaults to `build/installerSidebar.bmp` or `${NSISDIR}\\Contrib\\Graphics\\Wizard\\nsis3-metro.bmp`. Image size 164 × 314 pixels.
    */
   readonly installerSidebar?: string | null
   /**

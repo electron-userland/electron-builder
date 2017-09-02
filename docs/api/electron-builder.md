@@ -59,7 +59,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="ArtifactCreated-data">data</code> Buffer
 * <code id="ArtifactCreated-packageFiles">packageFiles</code> Object&lt;String, any&gt;
 * <code id="ArtifactCreated-safeArtifactName">safeArtifactName</code> String
-* <code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/publishing-artifacts.md#PublishConfiguration)
+* <code id="ArtifactCreated-publishConfig">publishConfig</code> [PublishConfiguration](/configuration/publish.md#publishconfiguration)
 * <code id="ArtifactCreated-isWriteUpdateInfo">isWriteUpdateInfo</code> Boolean
 
 <a name="BeforeBuildContext"></a>
@@ -126,11 +126,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="LinuxTargetSpecificOptions-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 * <code id="LinuxTargetSpecificOptions-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 * <code id="LinuxTargetSpecificOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="LinuxTargetSpecificOptions-publish">publish</code> String | [GithubOptions](/publishing-artifacts.md#GithubOptions) | [S3Options](/publishing-artifacts.md#S3Options) | [GenericServerOptions](/publishing-artifacts.md#GenericServerOptions) | [BintrayOptions](/publishing-artifacts.md#BintrayOptions) | Array - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="LinuxTargetSpecificOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
 
 <a name="PlatformSpecificBuildOptions"></a>
 ## `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
@@ -147,11 +143,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)
 * <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
 * <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/publishing-artifacts.md#GithubOptions) | [S3Options](/publishing-artifacts.md#S3Options) | [GenericServerOptions](/publishing-artifacts.md#GenericServerOptions) | [BintrayOptions](/publishing-artifacts.md#BintrayOptions) | Array - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
 
 <a name="SourceRepositoryInfo"></a>
 ## `SourceRepositoryInfo`
@@ -190,6 +182,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * **<code id="Packager-appDir">appDir</code>** String
 * **<code id="Packager-metadata">metadata</code>** [Metadata](#Metadata)
 * **<code id="Packager-isPrepackedAppAsar">isPrepackedAppAsar</code>** Boolean
+* **<code id="Packager-devMetadata">devMetadata</code>** [Metadata](#Metadata)
 * **<code id="Packager-config">config</code>** [Configuration](#Configuration)
 * <code id="Packager-isTwoPackageJsonProjectLayoutUsed">isTwoPackageJsonProjectLayoutUsed</code> = `true` Boolean
 * <code id="Packager-eventEmitter">eventEmitter</code> = `new EventEmitter()` [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)

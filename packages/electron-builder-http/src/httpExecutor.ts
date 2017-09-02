@@ -18,10 +18,6 @@ export interface RequestHeaders extends OutgoingHttpHeaders {
   [key: string]: string
 }
 
-// tslint:disable:no-empty-interface
-export interface RequestOptionsEx extends RequestOptions {
-}
-
 export interface Response extends EventEmitter {
   statusCode?: number
   statusMessage?: string
@@ -43,7 +39,7 @@ export interface DownloadOptions {
 }
 
 export class HttpError extends Error {
-  constructor(public readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: Array<string>; } | undefined}, public description: any | null = null) {
+  constructor(readonly response: {statusMessage?: string | undefined, statusCode?: number | undefined, headers?: { [key: string]: Array<string>; } | undefined}, public description: any | null = null) {
     super(response.statusCode + " " + response.statusMessage + (description == null ? "" : ("\n" + JSON.stringify(description, null, "  "))) + "\nHeaders: " + JSON.stringify(response.headers, null, "  "))
 
     this.name = "HttpError"
@@ -59,29 +55,55 @@ export abstract class HttpExecutor<REQUEST> {
 
   request(options: RequestOptions, cancellationToken: CancellationToken = new CancellationToken(), data?: { [name: string]: any; } | null): Promise<string | null> {
     configureRequestOptions(options)
-    const encodedData = data == null ? undefined : new Buffer(JSON.stringify(data))
+    const encodedData = data == null ? undefined : Buffer.from(JSON.stringify(data))
     if (encodedData != null) {
       options.method = "post"
       options.headers!["Content-Type"] = "application/json"
       options.headers!["Content-Length"] = encodedData.length
     }
-    return this.doApiRequest(options, cancellationToken, it => (it as any).end(encodedData), 0)
+    return this.doApiRequest(options, cancellationToken, it => (it as any).end(encodedData))
   }
 
-  protected abstract doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number): Promise<string>
-
-  protected handleResponse(response: Response, options: RequestOptionsEx, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+  doApiRequest(options: RequestOptions, cancellationToken: CancellationToken, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void, redirectCount: number = 0): Promise<string> {
     if (debug.enabled) {
-      debug(`Response status: ${response.statusCode} ${response.statusMessage}, request options: ${dumpRequestOptions(options)}`)
+      debug(`Request: ${safeStringifyJson(options)}`)
+    }
+
+    return cancellationToken.createPromise<string>((resolve, reject, onCancel) => {
+      const request = this.doRequest(options, (response: any) => {
+        try {
+          this.handleResponse(response, options, cancellationToken, resolve, reject, redirectCount, requestProcessor)
+        }
+        catch (e) {
+          reject(e)
+        }
+      })
+      this.addErrorAndTimeoutHandlers(request, reject)
+      requestProcessor(request, reject)
+      onCancel(() => request.abort())
+    })
+  }
+
+  addErrorAndTimeoutHandlers(request: any, reject: (error?: Error | null) => void) {
+    this.addTimeOutHandler(request, reject)
+    request.on("error", reject)
+    request.on("aborted", () => {
+      reject(new Error("Request has been aborted by the server"))
+    })
+  }
+
+  protected handleResponse(response: Response, options: RequestOptions, cancellationToken: CancellationToken, resolve: (data?: any) => void, reject: (error: Error) => void, redirectCount: number, requestProcessor: (request: REQUEST, reject: (error: Error) => void) => void) {
+    if (debug.enabled) {
+      debug(`Response: ${response.statusCode} ${response.statusMessage}, request options: ${safeStringifyJson(options)}`)
     }
 
     // we handle any other >= 400 error on request end (read detailed message in the response body)
     if (response.statusCode === 404) {
       // error is clear, we don't need to read detailed error description
-      reject(new HttpError(response, `method: ${options.method} url: https://${options.hostname}${options.path}
+      reject(new HttpError(response, `method: ${options.method} url: ${options.protocol || "https:"}//${options.hostname}${options.path}
 
-    Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
-    `))
+Please double check that your authentication token is correct. Due to security reasons actual status maybe not reported, but 404.
+`))
       return
     }
     else if (response.statusCode === 204) {
@@ -97,8 +119,7 @@ export abstract class HttpExecutor<REQUEST> {
         return
       }
 
-      const newUrl = parseUrl(redirectUrl)
-      this.doApiRequest({...options, ...newUrl as any}, cancellationToken, requestProcessor, redirectCount)
+      this.doApiRequest(configureRequestOptionsFromUrl(redirectUrl, {...options}), cancellationToken, requestProcessor, redirectCount)
         .then(resolve)
         .catch(reject)
       return
@@ -112,8 +133,8 @@ export abstract class HttpExecutor<REQUEST> {
 
     response.on("end", () => {
       try {
-        const contentType = response.headers["content-type"]
         if (response.statusCode != null && response.statusCode >= 400) {
+          const contentType = safeGetHeader(response, "content-type")
           const isJson = contentType != null && (Array.isArray(contentType) ? contentType.find(it => it.includes("json")) != null : contentType.includes("json"))
           reject(new HttpError(response, isJson ? JSON.parse(data) : data))
         }
@@ -127,7 +148,7 @@ export abstract class HttpExecutor<REQUEST> {
     })
   }
 
-  protected abstract doRequest(options: any, callback: (response: any) => void): any
+  abstract doRequest(options: any, callback: (response: any) => void): any
 
   protected doDownload(requestOptions: any, destination: string, redirectCount: number, options: DownloadOptions, callback: (error: Error | null) => void, onCancel: (callback: () => void) => void) {
     const request = this.doRequest(requestOptions, (response: IncomingMessage) => {
@@ -149,11 +170,7 @@ export abstract class HttpExecutor<REQUEST> {
 
       configurePipes(options, response, destination, callback, options.cancellationToken)
     })
-    this.addTimeOutHandler(request, callback)
-    request.on("error", callback)
-    request.on("aborted", () => {
-      callback(new Error("Request has been aborted by the server"))
-    })
+    this.addErrorAndTimeoutHandlers(request, callback)
     onCancel(() => request.abort())
     request.end()
   }
@@ -181,7 +198,7 @@ export function configureRequestOptionsFromUrl(url: string, options: RequestOpti
     options.port = parsedUrl.port
   }
   options.path = parsedUrl.path
-  return options
+  return configureRequestOptions(options)
 }
 
 export class DigestTransform extends Transform {
@@ -300,10 +317,11 @@ export function configureRequestOptions(options: RequestOptions, token?: string 
   return options
 }
 
-export function dumpRequestOptions(options: RequestOptions): string {
-  const safe: any = {...options}
-  if (safe.headers != null && safe.headers.authorization != null) {
-    safe.headers.authorization = "<skipped>"
-  }
-  return JSON.stringify(safe, null, 2)
+export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
+  return JSON.stringify(data, (name, value) => {
+    if (name.endsWith("authorization") || name.endsWith("Password") || name.endsWith("PASSWORD") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
+      return "<stripped sensitive data>"
+    }
+    return value
+  }, 2)
 }

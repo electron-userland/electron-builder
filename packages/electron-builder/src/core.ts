@@ -92,13 +92,6 @@ export interface TargetSpecificOptions {
    */
   readonly artifactName?: string | null
 
-  /**
-   * The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-   *
-   * If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-   *
-   * If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-   */
   publish?: Publish
 }
 

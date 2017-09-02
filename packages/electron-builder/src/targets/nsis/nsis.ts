@@ -3,6 +3,7 @@ import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isE
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { copyFile, statOrNull } from "builder-util/out/fs"
 import _debug from "debug"
+import { PackageFileInfo } from "electron-builder-http/out/updateInfo"
 import { readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -13,10 +14,10 @@ import { normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
+import { createDifferentialPackage, createPackageFileInfo } from "../blockMap"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
-import { createDifferentialPackage } from "./nsisPackage"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
 import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
 
@@ -59,7 +60,7 @@ export class NsisTarget extends Target {
   }
 
   /** @private */
-  async buildAppPackage(appOutDir: string, arch: Arch) {
+  async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
 
@@ -89,10 +90,11 @@ export class NsisTarget extends Target {
     timer.end()
 
     if (options.differentialPackage) {
-      await createDifferentialPackage(archiveFile, archiveOptions, packager)
+      return await createDifferentialPackage(archiveFile, packager)
     }
-
-    return archiveFile
+    else {
+      return await createPackageFileInfo(archiveFile)
+    }
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -168,20 +170,21 @@ export class NsisTarget extends Target {
       }
     }
 
-    const packageFiles: { [arch: string]: string } = {}
+    const packageFiles: { [arch: string]: PackageFileInfo } = {}
     if (USE_NSIS_BUILT_IN_COMPRESSOR && this.archs.size === 1) {
       defines.APP_BUILD_DIR = this.archs.get(this.archs.keys().next().value)
     }
     else {
       await BluebirdPromise.map(this.archs.keys(), async arch => {
-        const file = await this.packageHelper.packArch(arch, this)
+        const fileInfo = await this.packageHelper.packArch(arch, this)
+        const file = fileInfo.file
         const defineKey = arch === Arch.x64 ? "APP_64" : "APP_32"
         defines[defineKey] = file
         defines[`${defineKey}_NAME`] = path.basename(file)
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)
-          packageFiles[Arch[arch]] = file
+          packageFiles[Arch[arch]] = fileInfo
         }
       })
     }
@@ -388,6 +391,7 @@ export class NsisTarget extends Target {
         await packager.sign(s7File)
       })
     }
+    defines.PACKAGE_FILE_EXT = options.differentialPackage ? "zip" : "7z"
 
     return asyncTaskManager.awaitTasks()
   }

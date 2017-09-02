@@ -18,12 +18,17 @@ export interface PublishConfiguration {
 }
 
 /**
- * GitHub options.
+ * [GitHub](https://help.github.com/articles/about-releases/) options.
  *
  * GitHub [personal access token](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) is required. You can generate by going to [https://github.com/settings/tokens/new](https://github.com/settings/tokens/new). The access token should have the repo scope/permission.
  * Define `GH_TOKEN` environment variable.
  */
 export interface GithubOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `github`.
+   */
+  readonly provider: "github"
+
   /**
    * The repository name. [Detected automatically](#github-repository-and-bintray-package).
    */
@@ -73,6 +78,11 @@ export function githubUrl(options: GithubOptions, defaultHost: string = "github.
  */
 export interface GenericServerOptions extends PublishConfiguration {
   /**
+   * The provider. Must be `generic`.
+   */
+  readonly provider: "generic"
+
+  /**
    * The base url. e.g. `https://bucket_name.s3.amazonaws.com`. You can use `${os}` (expanded to `mac`, `linux` or `win` according to target platform) and `${arch}` macros.
    */
   readonly url: string
@@ -85,13 +95,18 @@ export interface GenericServerOptions extends PublishConfiguration {
 }
 
 /**
- * Amazon S3 options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
+ * [Amazon S3](https://aws.amazon.com/s3/) options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
  *
  * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
  * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
  * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
  */
 export interface S3Options extends PublishConfiguration {
+  /**
+   * The provider. Must be `s3`.
+   */
+  readonly provider: "s3"
+
   /**
    * The bucket name.
    */
@@ -159,9 +174,14 @@ export function s3Url(options: S3Options) {
 }
 
 /**
- * Bintray options.
+ * [Bintray](https://bintray.com/) options.
  */
 export interface BintrayOptions extends PublishConfiguration {
+  /**
+   * The provider. Must be `bintray`.
+   */
+  readonly provider: "bintray"
+
   /**
    * The Bintray package name.
    */

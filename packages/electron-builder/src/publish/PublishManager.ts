@@ -1,6 +1,5 @@
-import { hashFile } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, hashFile, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn } from "builder-util"
 import _debug from "debug"
 import { CancellationToken } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
@@ -217,7 +216,7 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
 
   const version = packager.appInfo.version
   const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
-  const sha512 = new Lazy<string>(() => hashFile(event.file!, "sha512", "base64"))
+  const sha512 = new Lazy<string>(() => hashFile(event.file!))
   const isMac = packager.platform === Platform.MAC
 
   const releaseInfo: ReleaseInfo = {...packager.config.releaseInfo}
@@ -287,7 +286,11 @@ async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: Array<Pu
       if (keys.length > 0) {
         info.packages = {}
         for (const arch of keys) {
-          info.packages[arch] = path.basename(packageFiles[arch])
+          const packageFileInfo = packageFiles[arch]
+          info.packages[arch] = {
+            ...packageFileInfo,
+            file: path.basename(packageFileInfo.file)
+          }
         }
       }
     }
@@ -321,10 +324,10 @@ export function createPublisher(context: PublishContext, version: string, publis
   const provider = publishConfig.provider
   switch (provider) {
     case "github":
-      return new GitHubPublisher(context, publishConfig, version, options)
+      return new GitHubPublisher(context, publishConfig as GithubOptions, version, options)
 
     case "bintray":
-      return new BintrayPublisher(context, publishConfig, version, options)
+      return new BintrayPublisher(context, publishConfig as BintrayOptions, version, options)
 
     case "generic":
       return null
@@ -501,7 +504,7 @@ async function getResolvedPublishConfig(packager: PlatformPackager<any>, options
       return info
     }
 
-    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://electron.build/publishing-artifacts`
+    const message = `Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).\nPlease see https://electron.build/configuration/publish`
     if (errorIfCannot) {
       throw new Error(message)
     }

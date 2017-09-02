@@ -49,11 +49,7 @@ The top-level [nsis](configuration.md#Configuration-nsis) key contains set of op
 * <code id="NsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
 
 Inherited from `TargetSpecificOptions`:
-* <code id="NsisOptions-publish">publish</code> - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="NsisOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->
 
 Unicode enabled by default. Large strings are supported (maximum string length of 8192 bytes instead of the default of 1024 bytes).

@@ -21,9 +21,9 @@ function getBabelRcDigest() {
     babelRc = crypto
       .createHash("md5")
       .update(configFile)
-      .digest("base64")
+      .digest()
   }
-  return babelRc;
+  return babelRc
 }
 
 // compiled by ts-babel - do not transform

@@ -1,8 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { configureRequestOptions, HttpError, parseJson } from "electron-builder-http"
-import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, warn } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { configureRequestOptions, HttpError, parseJson } from "electron-builder-http"
+import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest } from "http"
 import mime from "mime"
 import { parse as parseUrl } from "url"
@@ -105,7 +105,7 @@ export class GitHubPublisher extends HttpPublisher {
     return null
   }
 
-  protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<void> {
+  protected async doUpload(fileName: string, arch: Arch, dataLength: number, requestProcessor: (request: ClientRequest, reject: (error: Error) => void) => void): Promise<any> {
     const release = await this.releasePromise
     if (release == null) {
       debug(`Release with tag ${this.tag} doesn't exist and is not created, artifact ${fileName} is not published`)
@@ -116,7 +116,7 @@ export class GitHubPublisher extends HttpPublisher {
     let attemptNumber = 0
     uploadAttempt: for (let i = 0; i < 3; i++) {
       try {
-        return await httpExecutor.doApiRequest<any>(configureRequestOptions({
+        return await httpExecutor.doApiRequest(configureRequestOptions({
           hostname: parsedUrl.hostname,
           path: parsedUrl.path,
           method: "POST",

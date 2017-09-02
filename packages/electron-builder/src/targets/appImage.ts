@@ -107,7 +107,7 @@ export default class AppImageTarget extends Target {
 
     const fd = await open(resultFile, "r+")
     try {
-      const magicData = new Buffer([0x41, 0x49, 0x01])
+      const magicData = Buffer.from([0x41, 0x49, 0x01])
       await write(fd, magicData, 0, magicData.length, 8)
     }
     finally {

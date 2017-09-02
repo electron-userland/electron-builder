@@ -1,4 +1,4 @@
-See [Publishing Artifacts](publishing-artifacts.md) for more information on how to configure your CI environment for automated deployments.
+See [publish configuration](/configuration/publish.md) and [Publishing Artifacts](publishing-artifacts.md) guide for more information on how to configure your CI environment for automated deployments.
 
 Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
 
@@ -15,9 +15,9 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 
 ## Quick Setup Guide
 
-1. Install [electron-updater](https://www.npmjs.com/package/electron-updater) as an app dependency.
+1. Install [electron-updater](https://yarn.pm/electron-updater) as an app dependency.
 
-2. [Configure publish](publishing-artifacts.md#PublishConfiguration).
+2. [Configure publish](/configuration/publish.md).
 
 3. Use `autoUpdater` from `electron-updater` instead of `electron`:
 
@@ -32,7 +32,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 **NOTICE**: 
 
 1. Do not call [setFeedURL](#appupdatersetfeedurloptions). electron-builder automatically creates `app-update.yml` file for you on build in the `resources` (this file is internal, you don't need to be aware of it). 
-2. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.json` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
+2. `zip` target for macOS is **required** for Squirrel.Mac, whereas `latest-mac.yml` cannot be created, which causes `autoUpdater` error. Default [target](configuration/mac.md#MacOptions-target) for macOS `dmg`+`zip`, you don't need to explicitly specify target.
 
 ### Examples
 
@@ -183,10 +183,10 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 #### `appUpdater.getFeedURL()` ⇒ <code>undefined</code> \| <code>null</code> \| <code>String</code>
 <a name="module_electron-updater.AppUpdater+setFeedURL"></a>
 #### `appUpdater.setFeedURL(options)`
-Configure update provider. If value is `string`, [GenericServerOptions](/publishing-artifacts.md#GenericServerOptions) will be set with value as `url`.
+Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
 
-- options <code>[PublishConfiguration](/publishing-artifacts.md#PublishConfiguration)</code> | <code>[GenericServerOptions](/publishing-artifacts.md#GenericServerOptions)</code> | <code>[S3Options](/publishing-artifacts.md#S3Options)</code> | <code>[BintrayOptions](/publishing-artifacts.md#BintrayOptions)</code> | <code>[GithubOptions](/publishing-artifacts.md#GithubOptions)</code> | <code>String</code> - If you want to override configuration in the `app-update.yml`.
+- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>String</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 #### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`

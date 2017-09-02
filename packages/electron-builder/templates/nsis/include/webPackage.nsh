@@ -28,7 +28,7 @@
   ${endif}
 
   download:
-  inetc::get /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
+  inetc::get /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}" /END
   Pop $0
   ${if} $0 == "Cancelled"
     quit
@@ -37,5 +37,6 @@
     quit
   ${endif}
 
-  !insertmacro extractUsing7za "$PLUGINSDIR\package.7z"
+  !insertmacro extractUsing7za "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
+  !insertmacro copyPackageFile "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
 !macroend

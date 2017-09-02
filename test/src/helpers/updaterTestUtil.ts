@@ -1,7 +1,7 @@
 import { TmpDir } from "builder-util"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
-import { AppUpdater, NoOpLogger } from "electron-updater/out/AppUpdater"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "electron-builder-http/out/publishOptions"
+import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
@@ -40,7 +40,7 @@ export function createTestApp(version: string, appPath = "") {
 }
 
 // to reduce difference in test mode, setFeedURL is not used to set (NsisUpdater also read configOnDisk to load original publisherName)
-export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions>(data: T): Promise<string> {
+export async function writeUpdateConfig<T extends GenericServerOptions | GithubOptions | BintrayOptions | S3Options>(data: T): Promise<string> {
   const updateConfigPath = path.join(await tmpDir.getTempDir(), "app-update.yml")
   await outputFile(updateConfigPath, safeDump(data))
   return updateConfigPath
@@ -57,7 +57,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
       expect(await updateCheckResult.downloadPromise).toBeNull()
     }
     else {
-      await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+      await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
     }
   }
   else {

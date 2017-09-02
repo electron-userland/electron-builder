@@ -1,9 +1,9 @@
 import BluebirdPromise from "bluebird-lst"
+import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
+import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { configureRequestOptions, HttpError } from "electron-builder-http"
 import { BintrayClient, Version } from "electron-builder-http/out/bintray"
 import { BintrayOptions } from "electron-builder-http/out/publishOptions"
-import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
-import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 
@@ -61,8 +61,6 @@ export class BintrayPublisher extends HttpPublisher {
       return
     }
 
-    let attemptNumber = 0
-
     const options: RequestOptions = {
       hostname: "api.bintray.com",
       path: `/content/${this.client.owner}/${this.client.repo}/${this.client.packageName}/${version.name}/${fileName}`,
@@ -85,12 +83,12 @@ export class BintrayPublisher extends HttpPublisher {
       options.headers["X-Bintray-Debian-Component"] = this.client.component
     }
 
-    for (let i = 0; i < 3; i++) {
+    for (let attemptNumber = 0; ; attemptNumber++) {
       try {
-        return await httpExecutor.doApiRequest<any>(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
+        return await httpExecutor.doApiRequest(configureRequestOptions(options, this.client.auth), this.context.cancellationToken, requestProcessor)
       }
       catch (e) {
-        if (attemptNumber++ < 3 && ((e instanceof HttpError && e.response.statusCode === 502) || e.code === "EPIPE")) {
+        if (attemptNumber < 3 && ((e instanceof HttpError && e.response.statusCode === 502) || e.code === "EPIPE")) {
           continue
         }
 

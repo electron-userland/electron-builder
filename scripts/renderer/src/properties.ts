@@ -73,30 +73,49 @@ export function renderProperties(renderer: Renderer, object: Item, level = 0) {
     }
   }
 
+  const renderParentProperties = (isPrintInherits: boolean) => {
+    // no need to show MacConfiguration options for MasConfiguration
+    if (parents != null && level === 0 && object.name !== "MasConfiguration") {
+      for (const parentId of parents) {
+        const parent = renderer.resolveById(parentId)
+        if (parent == null) {
+          console.log(`Unresolved parent \`${parentId}\``)
+          continue
+        }
+
+        const parentProperties = parent.properties.filter(parentProperty => !object.properties.some(it => it.name === parentProperty.name))
+        if (parentProperties.length === 0) {
+          continue
+        }
+
+        if (isPrintInherits) {
+          const renderedName = renderer.renderTypeName({object, typeItem: parent, place: TypeNamePlace.INHERITED_FROM})
+          if (renderedName == null) {
+            continue
+          }
+
+          result += "\n"
+
+          if (renderedName.length > 0) {
+            result += `\nInherited from ${renderedName}:\n`
+          }
+        }
+
+        doRenderProperties(parentProperties)
+      }
+    }
+  }
+
+  const isRenderParentPropertiesBefore = renderer.isRenderParentPropertiesBefore(object)
+  if (isRenderParentPropertiesBefore) {
+    renderParentProperties(false)
+    result += "\n"
+  }
+
   doRenderProperties(object.properties)
 
-  // no need to show MacConfiguration options for MasConfiguration
-  if (parents != null && level === 0 && object.name !== "MasConfiguration") {
-    for (const parentId of parents) {
-      const parent = renderer.resolveById(parentId)
-      if (parent == null) {
-        console.log(`Unresolved parent \`${parentId}\``)
-        continue
-      }
-
-      const renderedName = renderer.renderTypeName({object, typeItem: parent, place: TypeNamePlace.INHERITED_FROM})
-      if (renderedName == null) {
-        continue
-      }
-
-      result += "\n"
-
-      if (renderedName.length > 0) {
-        result += `\nInherited from ${renderedName}:\n`
-      }
-
-      doRenderProperties(parent.properties.filter(parentProperty => !object.properties.some(it => it.name === parentProperty.name)))
-    }
+  if (!isRenderParentPropertiesBefore) {
+    renderParentProperties(true)
   }
 
   if (level === 0) {

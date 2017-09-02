@@ -1,5 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
-import { BintrayOptions, GenericServerOptions, GithubOptions } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "electron-builder-http/out/publishOptions"
+import { UpdateCheckResult } from "electron-updater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
 import { tmpdir } from "os"
@@ -51,7 +52,7 @@ async function testUpdateFromBintray(app: any) {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  await checkDownloadPromise(updateCheckResult)
 
   expect(actualEvents).toEqual(expectedEvents)
 }
@@ -119,7 +120,7 @@ test("file url generic", async () => {
 
   const updateCheckResult = await updater.checkForUpdates()
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+  await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
 
   expect(actualEvents).toMatchSnapshot()
 })
@@ -158,7 +159,7 @@ test("file url generic - manual download", async () => {
   expect(updateCheckResult.downloadPromise).toBeNull()
   expect(actualEvents).toMatchSnapshot()
 
-  await assertThat(path.join(await updater.downloadUpdate())).isFile()
+  await assertThat(path.join((await updater.downloadUpdate())[0])).isFile()
 })
 
 // https://github.com/electron-userland/electron-builder/issues/1045
@@ -180,7 +181,7 @@ test("checkForUpdates several times", async () => {
   async function checkForUpdates() {
     const updateCheckResult = await updater.checkForUpdates()
     expect(updateCheckResult.fileInfo).toMatchSnapshot()
-    await assertThat(path.join(await updateCheckResult.downloadPromise)).isFile()
+    await checkDownloadPromise(updateCheckResult)
   }
 
   await checkForUpdates()
@@ -189,6 +190,10 @@ test("checkForUpdates several times", async () => {
 
   expect(actualEvents).toMatchSnapshot()
 })
+
+async function checkDownloadPromise(updateCheckResult: UpdateCheckResult) {
+  return await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
+}
 
 test("file url github", async () => {
   const updater = new NsisUpdater()
@@ -279,7 +284,7 @@ test.ifAll.ifWindows("invalid signature", async () => {
   })
   tuneNsisUpdater(updater)
   const actualEvents = trackEvents(updater)
-  await assertThat(updater.checkForUpdates().then(it => it.downloadPromise)).throws()
+  await assertThat(updater.checkForUpdates().then((it): any => it.downloadPromise)).throws()
   expect(actualEvents).toMatchSnapshot()
 })
 
@@ -288,7 +293,7 @@ test("90 staging percentage", async () => {
   await outputFile(userIdFile, "12a70172-80f8-5cc4-8131-28f5e0edd2a1")
 
   const updater = new NsisUpdater()
-  updater.updateConfigPath = await writeUpdateConfig({
+  updater.updateConfigPath = await writeUpdateConfig<S3Options>({
     provider: "s3",
     channel: "staging-percentage",
     bucket: "develar",

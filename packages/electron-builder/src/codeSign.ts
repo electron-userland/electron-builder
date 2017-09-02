@@ -109,7 +109,7 @@ export async function downloadCertificate(urlOrBase64: string, tmpDir: TmpDir, c
         await httpExecutor.download(urlOrBase64, tempFile)
       }
       else {
-        await outputFile(tempFile, new Buffer(urlOrBase64, "base64"))
+        await outputFile(tempFile, Buffer.from(urlOrBase64, "base64"))
       }
       return tempFile
     }

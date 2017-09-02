@@ -5,10 +5,16 @@ export interface VersionInfo {
   readonly version: string
 }
 
+export interface PackageFileInfo {
+  file: string
+  size: number
+  sha512: string
+}
+
 export interface UpdateInfo extends VersionInfo {
   readonly path: string
 
-  packages?: { [arch: string]: string } | null
+  packages?: { [arch: string]: PackageFileInfo } | null
 
   githubArtifactName?: string | null
 

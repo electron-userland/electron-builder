@@ -12,9 +12,5 @@ Please also see [AppX Assets](/icons.md#appx).
 
 Inherited from `TargetSpecificOptions`:
 * <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="AppXOptions-publish">publish</code> - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->

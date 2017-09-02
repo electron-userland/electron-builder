@@ -43,7 +43,7 @@ export class DmgTarget extends Target {
     }
 
     // allocate space for .DS_Store
-    await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), new Buffer(preallocatedSize))
+    await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), Buffer.allocUnsafe(preallocatedSize))
 
     //noinspection SpellCheckingInspection
     await spawn("hdiutil", addVerboseIfNeed(["create",

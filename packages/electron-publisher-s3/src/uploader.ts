@@ -1,7 +1,7 @@
 import { config as awsConfig, S3 } from "aws-sdk"
 import { CreateMultipartUploadRequest } from "aws-sdk/clients/s3"
 import BluebirdPromise from "bluebird-lst"
-import { createHash } from "crypto"
+import { hashFile } from "builder-util"
 import { EventEmitter } from "events"
 import { createReadStream, Stats } from "fs-extra-p"
 import { cpus } from "os"
@@ -64,7 +64,7 @@ export class Uploader extends EventEmitter {
   async upload() {
     const client = this.client
     if (this.contentLength < client.multipartUploadThreshold) {
-      const md5 = await hashFile(this.localFile, "md5", "base64")
+      const md5 = await hashFile(this.localFile, "md5")
       await this.runOrRetry(this.putObject.bind(this, md5))
       return
     }
@@ -219,21 +219,4 @@ interface Part {
 function smallestPartSizeFromFileSize(fileSize: number) {
   const partSize = Math.ceil(fileSize / MAX_MULTIPART_COUNT)
   return partSize < MIN_MULTIPART_SIZE ? MIN_MULTIPART_SIZE : partSize
-}
-
-function hashFile(file: string, algorithm: string, encoding: string = "hex", options?: any) {
-  return new BluebirdPromise<string>((resolve, reject) => {
-    const hash = createHash(algorithm)
-    hash
-      .on("error", reject)
-      .setEncoding(encoding)
-
-    createReadStream(file, options)
-      .on("error", reject)
-      .on("end", () => {
-        hash.end()
-        resolve(hash.read() as string)
-      })
-      .pipe(hash, {end: false})
-  })
 }

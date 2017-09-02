@@ -3,10 +3,12 @@ import { red, yellow } from "chalk"
 import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
+import { safeStringifyJson } from "electron-builder-http"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 
+export { safeStringifyJson } from "electron-builder-http"
 export { TmpDir } from "temp-file"
 export { log, warn, task, subTask } from "./log"
 export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
@@ -14,6 +16,8 @@ export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"
 export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
+
+export { hashFile } from "./hash"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")
@@ -314,15 +318,6 @@ export function isPullRequest() {
   }
 
   return isSet(process.env.TRAVIS_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUEST) || isSet(process.env.CI_PULL_REQUESTS) || isSet(process.env.BITRISE_PULL_REQUEST) || isSet(process.env.APPVEYOR_PULL_REQUEST_NUMBER)
-}
-
-export function safeStringifyJson(data: any, skippedNames?: Set<string>) {
-  return JSON.stringify(data, (name, value) => {
-    if (name.endsWith("Password") || name.endsWith("PASSWORD") || name.endsWith("Token") || name.includes("password") || name.includes("token") || (skippedNames != null && skippedNames.has(name))) {
-      return "<stripped sensitive data>"
-    }
-    return value
-  }, 2)
 }
 
 export function isEnvTrue(value: string | null | undefined) {

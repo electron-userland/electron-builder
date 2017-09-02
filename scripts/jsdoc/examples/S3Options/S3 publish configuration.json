@@ -1,4 +1,0 @@
-{
-  "provider": "s3",
-  "bucket": "bucket-name"
-}

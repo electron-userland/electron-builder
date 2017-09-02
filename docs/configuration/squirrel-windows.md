@@ -19,9 +19,5 @@ To build for Squirrel.Windows on macOS, please install `mono` (`brew install mon
 
 Inherited from `TargetSpecificOptions`:
 * <code id="SquirrelWindowsOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="SquirrelWindowsOptions-publish">publish</code> - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="SquirrelWindowsOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->

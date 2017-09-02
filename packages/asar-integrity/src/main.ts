@@ -20,7 +20,7 @@ export interface AsarIntegrity extends AsarIntegrityOptions {
 export async function computeData(resourcesPath: string, options?: AsarIntegrityOptions | null): Promise<AsarIntegrity> {
   // sort to produce constant result
   const names = (await readdir(resourcesPath)).filter(it => it.endsWith(".asar")).sort()
-  const checksums = await BluebirdPromise.map(names, it => hashFile(path.join(resourcesPath, it), "sha512", "base64"))
+  const checksums = await BluebirdPromise.map(names, it => hashFile(path.join(resourcesPath, it)))
 
   const result: { [key: string]: string; } = {}
   for (let i = 0; i < names.length; i++) {
@@ -29,7 +29,7 @@ export async function computeData(resourcesPath: string, options?: AsarIntegrity
   return {checksums: result, ...options}
 }
 
-export function hashFile(file: string, algorithm: string, encoding: "hex" | "base64" | "latin1" = "hex") {
+function hashFile(file: string, algorithm: string = "sha512", encoding: "hex" | "base64" | "latin1" = "base64") {
   return new BluebirdPromise<string>((resolve, reject) => {
     const hash = createHash(algorithm)
     hash

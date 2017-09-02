@@ -19,8 +19,8 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: Array<MacOsTargetName | TargetConfiguration> | MacOsTargetName | TargetConfiguration | null
 
   /**
-   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](../code-signing.md) instead of specifying this option.
-   * MAS installer identity is specified in the [mas](mas.md#MasConfiguration-identity).
+   * The name of certificate to use when signing. Consider using environment variables [CSC_LINK or CSC_NAME](/code-signing.md) instead of specifying this option.
+   * MAS installer identity is specified in the [mas](mas.md).
    */
   readonly identity?: string | null
 
@@ -32,7 +32,7 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
 
   /**
    * The path to entitlements file for signing the app. `build/entitlements.mac.plist` will be used if exists (it is a recommended way to set).
-   * MAS entitlements is specified in the [mas](mas.md#MasConfiguration-identity).
+   * MAS entitlements is specified in the [mas](mas.md).
    */
   readonly entitlements?: string | null
 

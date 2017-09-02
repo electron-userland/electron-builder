@@ -1,10 +1,10 @@
 import BluebirdPromise from "bluebird-lst"
 import { randomBytes } from "crypto"
-import { CancellationToken, RequestHeaders } from "electron-builder-http"
 import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
 import { outputFile, readFile } from "fs-extra-p"
+import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -15,7 +15,7 @@ import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
-import { FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
+import { CancellationToken, FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -40,7 +40,7 @@ export abstract class AppUpdater extends EventEmitter {
   /**
    *  The request headers.
    */
-  requestHeaders: RequestHeaders | null
+  requestHeaders: OutgoingHttpHeaders | null
 
   protected _logger: Logger = console
 
@@ -110,11 +110,9 @@ export abstract class AppUpdater extends EventEmitter {
       this.httpExecutor = new ElectronHttpExecutor((authInfo, callback) => this.emit("login", authInfo, callback))
       this.untilAppReady = new BluebirdPromise(resolve => {
         if (this.app.isReady()) {
-          this._logger.info("App is ready")
           resolve()
         }
         else {
-          this._logger.info("Wait for app ready")
           this.app.on("ready", resolve)
         }
       })
@@ -139,7 +137,7 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /**
-   * Configure update provider. If value is `string`, [GenericServerOptions](/publishing-artifacts.md#GenericServerOptions) will be set with value as `url`.
+   * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
   setFeedURL(options: PublishConfiguration | GenericServerOptions | S3Options | BintrayOptions | GithubOptions | string) {
@@ -208,7 +206,7 @@ export abstract class AppUpdater extends EventEmitter {
     }
   }
 
-  private computeFinalheaders(headers: RequestHeaders) {
+  private computeFinalHeaders(headers: OutgoingHttpHeaders) {
     if (this.requestHeaders != null) {
       Object.assign(headers, this.requestHeaders)
     }
@@ -222,7 +220,7 @@ export abstract class AppUpdater extends EventEmitter {
 
     const client = await this.clientPromise
     const stagingUserId = await this.stagingUserIdPromise.value
-    client.setRequestHeaders(this.computeFinalheaders({"X-User-Staging-Id": stagingUserId}))
+    client.setRequestHeaders(this.computeFinalHeaders({"X-User-Staging-Id": stagingUserId}))
     const versionInfo = await client.getLatestVersion()
 
     const latestVersion = parseVersion(versionInfo.version)
@@ -271,9 +269,8 @@ export abstract class AppUpdater extends EventEmitter {
     const versionInfo = this.versionInfo
     const fileInfo = this.fileInfo
     if (versionInfo == null || fileInfo == null) {
-      const message = "Please check update first"
-      const error = new Error(message)
-      this.emit("error", error, message)
+      const error = new Error("Please check update first")
+      this.dispatchError(error)
       throw error
     }
 
@@ -292,7 +289,7 @@ export abstract class AppUpdater extends EventEmitter {
     this.emit("error", e, (e.stack || e).toString())
   }
 
-  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<any>
+  protected async abstract doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>>
 
   /**
    * Restarts the app and installs the update after it has been downloaded.
@@ -314,12 +311,12 @@ export abstract class AppUpdater extends EventEmitter {
   }
 
   /*** @private */
-  protected computeRequestHeaders(fileInfo: FileInfo): RequestHeaders {
+  protected computeRequestHeaders(fileInfo: FileInfo): OutgoingHttpHeaders {
     if (fileInfo.headers != null) {
       const requestHeaders = this.requestHeaders
       return requestHeaders == null ? fileInfo.headers : {...fileInfo.headers, ...requestHeaders}
     }
-    return this.computeFinalheaders({Accept: "*/*"})
+    return this.computeFinalHeaders({Accept: "*/*"})
   }
 
   private createClient(data: string | PublishConfiguration) {

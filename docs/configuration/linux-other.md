@@ -1,6 +1,6 @@
 <!-- do not edit. start of generated block -->
 ## AppImageOptions
-The top-level [appImage](configuration.md#Configuration-appImage) key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/).
+The top-level `appImage` key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/).
 
 * <code id="AppImageOptions-systemIntegration">systemIntegration</code> = `ask` "ask" | "doNotAsk" - The system integration installation.
 
@@ -12,14 +12,10 @@ Inherited from `CommonLinuxOptions`:
 
 Inherited from `TargetSpecificOptions`:
 * <code id="AppImageOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="AppImageOptions-publish">publish</code> - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="AppImageOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 ## LinuxTargetSpecificOptions
-The top-level [apk](configuration.md#Configuration-apk), [freebsd](configuration.md#Configuration-freebsd), [pacman](configuration.md#Configuration-pacman), [p5p](configuration.md#Configuration-p5p), [rpm](configuration.md#Configuration-rpm) keys contains set of options instructing electron-builder on how it should build corresponding Linux target.
+The top-level `apk`, `freebsd`, `pacman`, `p5p`,`rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.
 
 * <code id="LinuxTargetSpecificOptions-depends">depends</code> Array&lt;String&gt; - Package dependencies.
 * <code id="LinuxTargetSpecificOptions-icon">icon</code> String
@@ -37,10 +33,6 @@ Inherited from `CommonLinuxOptions`:
 
 Inherited from `TargetSpecificOptions`:
 * <code id="LinuxTargetSpecificOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="LinuxTargetSpecificOptions-publish">publish</code> - The [publish configuration](/publishing-artifacts.md#publish-options). Order is important — first item will be used as a default auto-update server.
-  
-  If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
-  
-  If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
+* <code id="LinuxTargetSpecificOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 <!-- end of generated block -->

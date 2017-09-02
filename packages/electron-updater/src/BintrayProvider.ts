@@ -13,7 +13,7 @@ export class BintrayProvider extends Provider<VersionInfo> {
   }
 
   constructor(configuration: BintrayOptions, httpExecutor: HttpExecutor<any>) {
-    super()
+    super(httpExecutor)
 
     this.client = new BintrayClient(configuration, httpExecutor, new CancellationToken())
   }

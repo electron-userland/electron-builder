@@ -1,14 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, subTask } from "builder-util"
+import { PackageFileInfo } from "electron-builder-http/out/updateInfo"
 import { unlink } from "fs-extra-p"
-import { NsisTarget } from "./nsis"
 import { getTemplatePath } from "../../util/pathManager"
+import { NsisTarget } from "./nsis"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
-
-interface PackageFileInfo {
-  file: string
-}
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -17,11 +14,10 @@ export class AppPackageHelper {
   /** @private */
   refCount = 0
 
-  async packArch(arch: Arch, target: NsisTarget) {
+  async packArch(arch: Arch, target: NsisTarget): Promise<PackageFileInfo> {
     let infoPromise = this.archToFileInfo.get(arch)
     if (infoPromise == null) {
       infoPromise = subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, target.buildAppPackage(target.archs.get(arch)!, arch))
-        .then(it => ({file: it}))
       this.archToFileInfo.set(arch, infoPromise)
     }
 
@@ -32,7 +28,7 @@ export class AppPackageHelper {
     else if (!this.infoToIsDelete.has(info)) {
       this.infoToIsDelete.set(info, true)
     }
-    return info.file
+    return info
   }
 
   async finishBuild(): Promise<any> {

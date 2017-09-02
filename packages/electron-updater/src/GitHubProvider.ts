@@ -1,32 +1,26 @@
-import { CancellationToken, HttpError, HttpExecutor, RequestOptionsEx } from "electron-builder-http"
+import { HttpError, HttpExecutor } from "electron-builder-http"
 import { GithubOptions, githubUrl } from "electron-builder-http/out/publishOptions"
 import { UpdateInfo } from "electron-builder-http/out/updateInfo"
-import { RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
-import { parse as parseUrl } from "url"
+import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
-import { FileInfo, formatUrl, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, Provider } from "./main"
+import { CancellationToken, FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)
-  protected readonly baseUrl: RequestOptions
+  protected readonly baseUrl: URL
 
-  constructor(protected readonly options: GithubOptions, defaultHost: string) {
-    super()
+  constructor(protected readonly options: GithubOptions, defaultHost: string, executor: HttpExecutor<any>) {
+    super(executor)
 
-    const baseUrl = parseUrl(githubUrl(options, defaultHost))
-    this.baseUrl = {
-      protocol: baseUrl.protocol,
-      hostname: baseUrl.hostname,
-      port: baseUrl.port as any,
-    }
+    this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
   }
 }
 
 export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
-  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, private readonly executor: HttpExecutor<any>) {
-    super(options, "github.com")
+  constructor(protected readonly options: GithubOptions, private readonly updater: AppUpdater, executor: HttpExecutor<any>) {
+    super(options, "github.com", executor)
   }
 
   async getLatestVersion(): Promise<UpdateInfo> {
@@ -34,10 +28,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     const cancellationToken = new CancellationToken()
 
     const xElement = require("xelement")
-    const feedXml = await this.executor.request({
-      path: `${basePath}.atom`,
-      headers: {...this.requestHeaders, Accept: "application/xml, application/atom+xml, text/xml, */*"},
-      ...this.baseUrl as any
+    const feedXml = await this.httpRequest(newUrlFromBase(`${basePath}.atom`, this.baseUrl), {
+      Accept: "application/xml, application/atom+xml, text/xml, */*",
     }, cancellationToken)
 
     const feed = new xElement.Parse(feedXml)
@@ -65,7 +57,8 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
     let result: UpdateInfo
     const channelFile = getChannelFilename(getDefaultChannelName())
-    const requestOptions = {path: this.getBaseDownloadPath(version, channelFile), headers: this.requestHeaders || undefined, ...this.baseUrl}
+    const channelFileUrl = newUrlFromBase(this.getBaseDownloadPath(version, channelFile), this.baseUrl)
+    const requestOptions = this.createRequestOptions(channelFileUrl)
     let rawData: string
     try {
       rawData = (await this.executor.request(requestOptions, cancellationToken))!!
@@ -73,7 +66,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
     catch (e) {
       if (!this.updater.allowPrerelease) {
         if (e instanceof HttpError && e.response.statusCode === 404) {
-          throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${formatUrl(requestOptions as any)}): ${e.stack || e.message}`)
+          throw new Error(`Cannot find ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}`)
         }
       }
       throw e
@@ -83,7 +76,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       result = safeLoad(rawData)
     }
     catch (e) {
-      throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${formatUrl(requestOptions as any)}): ${e.stack || e.message}, rawData: ${rawData}`)
+      throw new Error(`Cannot parse update info from ${channelFile} in the latest release artifacts (${channelFileUrl}): ${e.stack || e.message}, rawData: ${rawData}`)
     }
 
     Provider.validateUpdateInfo(result)
@@ -101,12 +94,10 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private async getLatestVersionString(basePath: string, cancellationToken: CancellationToken): Promise<string | null> {
-    const requestOptions: RequestOptionsEx = {
-      path: `${basePath}/latest`,
-      headers: {...this.requestHeaders, Accept: "application/json"}, ...this.baseUrl as any}
+    const url = newUrlFromBase(`${basePath}/latest`, this.baseUrl)
     try {
       // do not use API to avoid limit
-      const rawData = await this.executor.request(requestOptions, cancellationToken)
+      const rawData = await this.httpRequest(url, {Accept: "application/json"}, cancellationToken)
       if (rawData == null) {
         return null
       }
@@ -115,7 +106,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
       return (releaseInfo.tag_name.startsWith("v")) ? releaseInfo.tag_name.substring(1) : releaseInfo.tag_name
     }
     catch (e) {
-      throw new Error(`Unable to find latest version on GitHub (${formatUrl(requestOptions as any)}), please ensure a production release exists: ${e.stack || e.message}`)
+      throw new Error(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`)
     }
   }
 
@@ -133,13 +124,21 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
 
     // space is not supported on GitHub
     const name = versionInfo.githubArtifactName || path.posix.basename(versionInfo.path).replace(/ /g, "-")
-    // noinspection JSDeprecatedSymbols
-    return {
+    const result: FileInfo = {
       name,
-      url: formatUrl({path: this.getBaseDownloadPath(versionInfo.version, name), ...this.baseUrl} as any),
-      sha2: versionInfo.sha2,
+      url: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, name), this.baseUrl).href,
       sha512: versionInfo.sha512,
     }
+
+    const packages = versionInfo.packages
+    const packageInfo = packages == null ? null : (packages[process.arch] || packages.ia32)
+    if (packageInfo != null) {
+      result.packageInfo = {
+        ...packageInfo,
+        file: newUrlFromBase(this.getBaseDownloadPath(versionInfo.version, packageInfo.file), this.baseUrl).href,
+      }
+    }
+    return result
   }
 
   private getBaseDownloadPath(version: string, fileName: string) {

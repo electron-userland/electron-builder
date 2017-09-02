@@ -1,9 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken, configureRequestOptions, DigestTransform, ProgressCallbackTransform, RequestHeaders, safeGetHeader } from "electron-builder-http"
+import { CancellationToken, configureRequestOptionsFromUrl, DigestTransform, ProgressCallbackTransform, RequestHeaders, safeGetHeader } from "electron-builder-http"
 import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
 import { VersionInfo } from "electron-builder-http/out/updateInfo"
-import { createServer, IncomingMessage, ServerResponse } from "http"
-import { parse as parseUrl } from "url"
+import { createServer, IncomingMessage, OutgoingHttpHeaders, ServerResponse } from "http"
 import { AppUpdater } from "./AppUpdater"
 import { DOWNLOAD_PROGRESS, FileInfo, UPDATE_DOWNLOADED } from "./main"
 import AutoUpdater = Electron.AutoUpdater
@@ -24,7 +23,7 @@ export class MacUpdater extends AppUpdater {
     })
   }
 
-  protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken) {
+  protected doDownloadUpdate(versionInfo: VersionInfo, fileInfo: FileInfo, cancellationToken: CancellationToken): Promise<Array<string>> {
     const server = createServer()
     server.on("close", () => {
       this._logger.info(`Proxy server for native Squirrel.Mac is closed (was started to download ${fileInfo.url})`)
@@ -35,7 +34,7 @@ export class MacUpdater extends AppUpdater {
       return `http://${address.address}:${address.port}`
     }
 
-    return new BluebirdPromise<null>((resolve, reject) => {
+    return new BluebirdPromise<Array<string>>((resolve, reject) => {
       server.on("request", (request: IncomingMessage, response: ServerResponse) => {
         const requestUrl = request.url!
         this._logger.info(`${requestUrl} requested`)
@@ -53,7 +52,7 @@ export class MacUpdater extends AppUpdater {
             finally {
               if (!errorOccurred) {
                 this.nativeUpdater.removeListener("error", reject)
-                resolve(null)
+                resolve([])
               }
             }
           })
@@ -85,24 +84,18 @@ export class MacUpdater extends AppUpdater {
   }
 
   private proxyUpdateFile(nativeResponse: ServerResponse, fileInfo: FileInfo, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    this.doProxyUpdateFile(nativeResponse, parseUrl(fileInfo.url), this.computeRequestHeaders(fileInfo), fileInfo.sha512 || null, cancellationToken, errorHandler)
+    this.doProxyUpdateFile(nativeResponse, fileInfo.url, this.computeRequestHeaders(fileInfo), fileInfo.sha512 || null, cancellationToken, errorHandler)
   }
 
-  private doProxyUpdateFile(nativeResponse: ServerResponse, parsedUrl: any, headers: RequestHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
-    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptions({
-      protocol: parsedUrl.protocol,
-      hostname: parsedUrl.hostname,
-      path: parsedUrl.path,
-      port: parsedUrl.port ? parseInt(parsedUrl.port, 10) : undefined,
-      headers,
-    }), downloadResponse => {
+  private doProxyUpdateFile(nativeResponse: ServerResponse, url: string, headers: OutgoingHttpHeaders, sha512: string | null, cancellationToken: CancellationToken, errorHandler: (error: Error) => void) {
+    const downloadRequest = this.httpExecutor.doRequest(configureRequestOptionsFromUrl(url, {headers}), downloadResponse => {
       if (downloadResponse.statusCode! >= 400) {
         try {
           nativeResponse.writeHead(404)
           nativeResponse.end()
         }
         finally {
-          errorHandler(new Error(`Cannot download "${JSON.stringify(parsedUrl)}", status ${downloadResponse.statusCode}: ${downloadResponse.statusMessage}`))
+          errorHandler(new Error(`Cannot download "${url}", status ${downloadResponse.statusCode}: ${downloadResponse.statusMessage}`))
         }
         return
       }
@@ -110,8 +103,7 @@ export class MacUpdater extends AppUpdater {
       // in tests Electron NET Api is not used, so, we have to handle redirect.
       const redirectUrl = safeGetHeader(downloadResponse, "location")
       if (redirectUrl != null) {
-        const newUrl = parseUrl(redirectUrl)
-        this.doProxyUpdateFile(nativeResponse, newUrl, headers, sha512, cancellationToken, errorHandler)
+        this.doProxyUpdateFile(nativeResponse, redirectUrl, headers, sha512, cancellationToken, errorHandler)
         return
       }
 

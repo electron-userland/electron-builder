@@ -1,14 +1,6 @@
 {
-  env: {
-    development: {
-      presets: ["babel-preset-ts-node4-bluebird"],
-      plugins: [
-        "./scripts/babel-plugin-version-transform.js",
-      ],
-    },
-    test: {
-      sourceMaps: "inline",
-      presets: ["babel-preset-ts-node4-bluebird"]
-    }
-  }
+  presets: ["babel-preset-ts-node4-bluebird"],
+  plugins: [
+    "./scripts/babel-plugin-version-transform.js"
+  ]
 }

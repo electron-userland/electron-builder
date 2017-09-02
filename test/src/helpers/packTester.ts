@@ -177,6 +177,21 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
           delete fileContent.sha2
           delete fileContent.sha512
           delete fileContent.releaseDate
+
+          if (fileContent.packages != null) {
+            const archs = Object.keys(fileContent.packages)
+            if (archs.length === 0) {
+              delete fileContent.packages
+            }
+            else {
+              for (const arch of archs) {
+                delete fileContent.packages[arch].sha512
+                delete fileContent.packages[arch].size
+                fileContent.packages[arch].file = path.basename(fileContent.packages[arch].file)
+              }
+            }
+          }
+
           result.fileContent = fileContent
         }
         result.file = path.basename(result.file)
@@ -189,7 +204,9 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         }
         else {
           for (const arch of archs) {
-            packageFiles[arch] = path.basename(packageFiles[arch])
+            delete packageFiles[arch].sha512
+            delete packageFiles[arch].size
+            packageFiles[arch].file = path.basename(packageFiles[arch].file)
           }
         }
       }

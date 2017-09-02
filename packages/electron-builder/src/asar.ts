@@ -129,14 +129,14 @@ export async function readAsar(archive: string): Promise<AsarFilesystem> {
   let size
   let headerBuf
   try {
-    const sizeBuf = new Buffer(8)
+    const sizeBuf = Buffer.allocUnsafe(8)
     if (await read(fd, sizeBuf, 0, 8, null as any) !== 8) {
       throw new Error("Unable to read header size")
     }
 
     const sizePickle = createFromBuffer(sizeBuf)
     size = sizePickle.createIterator().readUInt32()
-    headerBuf = new Buffer(size)
+    headerBuf = Buffer.allocUnsafe(size)
     if (await read(fd, headerBuf, 0, size, null as any) !== size) {
       throw new Error("Unable to read header")
     }
@@ -156,7 +156,7 @@ export async function readAsarJson(archive: string, file: string): Promise<any> 
 }
 
 async function readFileFromAsar(filesystem: AsarFilesystem, filename: string, info: Node): Promise<Buffer> {
-  const buffer = new Buffer(info.size)
+  const buffer = Buffer.allocUnsafe(info.size)
   if (info.size <= 0) {
     return buffer
   }

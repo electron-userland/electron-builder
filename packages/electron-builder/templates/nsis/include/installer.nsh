@@ -72,6 +72,7 @@
         !insertmacro downloadApplicationFiles
       ${else}
         !insertmacro extractUsing7za "$R0"
+        !insertmacro copyPackageFile "$R0"
       ${endIf}
     !else
       !insertmacro extractEmbeddedAppPackage

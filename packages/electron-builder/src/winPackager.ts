@@ -339,7 +339,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
 async function checkIcon(file: string): Promise<void> {
   const fd = await open(file, "r")
-  const buffer = new Buffer(512)
+  const buffer = Buffer.allocUnsafe(512)
   try {
     await read(fd, buffer, 0, buffer.length, 0)
   }

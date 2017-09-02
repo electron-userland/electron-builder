@@ -1,8 +1,8 @@
-import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
+import { configureRequestOptionsFromUrl } from "electron-builder-http"
+import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
-import { parse as parseUrl } from "url"
 import { createTestApp, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 class TestNativeUpdater extends EventEmitter {
@@ -18,13 +18,8 @@ class TestNativeUpdater extends EventEmitter {
   }
 
   private async download() {
-    const data = JSON.parse((await httpExecutor.request({
-      ...parseUrl(this.updateUrl!) as any
-    }))!!)
-
-    await httpExecutor.request({
-      ...parseUrl(data.url) as any
-    })
+    const data = JSON.parse((await httpExecutor.request(configureRequestOptionsFromUrl(this.updateUrl!, {})))!!)
+    await httpExecutor.request(configureRequestOptionsFromUrl(data.url, {}))
   }
 
   // noinspection JSMethodCanBeStatic
@@ -53,7 +48,7 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
   }
   updater.updateConfigPath = await writeUpdateConfig(options)
 
-  updater.on("download-progress", data => {
+  updater.on("download-progress", () => {
     // console.log(JSON.stringify(data))
   })
 

@@ -8,7 +8,9 @@ Object {
       "fileContent": Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.0.exe",
         "packages": Object {
-          "x64": "TestApp-1.0.0-x64.nsis.zip",
+          "x64": Object {
+            "file": "TestApp-1.0.0-x64.nsis.zip",
+          },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
         "version": "1.0.0",
@@ -18,7 +20,9 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "packageFiles": Object {
-        "x64": "TestApp-1.0.0-x64.nsis.zip",
+        "x64": Object {
+          "file": "TestApp-1.0.0-x64.nsis.zip",
+        },
       },
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
     },
@@ -38,7 +42,9 @@ Object {
       "fileContent": Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.1.exe",
         "packages": Object {
-          "x64": "TestApp-1.0.1-x64.nsis.zip",
+          "x64": Object {
+            "file": "TestApp-1.0.1-x64.nsis.zip",
+          },
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",
         "version": "1.0.1",
@@ -48,7 +54,9 @@ Object {
       "arch": "x64",
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "packageFiles": Object {
-        "x64": "TestApp-1.0.1-x64.nsis.zip",
+        "x64": Object {
+          "file": "TestApp-1.0.1-x64.nsis.zip",
+        },
       },
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
     },
@@ -64,4 +72,11 @@ exports[`web installer 3`] = `
 Object {
   "name": "Test App ßW Web Setup 1.0.1.exe",
 }
+`;
+
+exports[`web installer 4`] = `
+Array [
+  "Test App ßW Web Setup 1.0.1.exe",
+  "Test App ßW Web Setup 1.0.1.exe-package.zip",
+]
 `;

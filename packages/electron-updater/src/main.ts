@@ -1,13 +1,16 @@
-import { CancellationToken, ProgressInfo, RequestHeaders } from "electron-builder-http"
-import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
+import { CancellationToken, ProgressInfo } from "electron-builder-http"
+import { PackageFileInfo, UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
-import { format as buggyFormat, Url } from "url"
+import { OutgoingHttpHeaders } from "http"
+import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
 import { LoginCallback } from "./electronHttpExecutor"
 
 export { NET_SESSION_NAME } from "./electronHttpExecutor"
-export { AppUpdater } from "./AppUpdater"
+export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo, VersionInfo }
+export { CancellationToken } from "electron-builder-http"
+export { Provider } from "./Provider"
 
 // autoUpdater to mimic electron bundled autoUpdater
 let _autoUpdater: any
@@ -39,37 +42,13 @@ Object.defineProperty(exports, "autoUpdater", {
 export interface FileInfo {
   readonly name: string
   readonly url: string
+
+  packageInfo?: PackageFileInfo
+
   readonly sha2?: string
   readonly sha512?: string
-  readonly headers?: RequestHeaders
-}
 
-export abstract class Provider<T extends VersionInfo> {
-  protected requestHeaders: RequestHeaders | null
-
-  setRequestHeaders(value: RequestHeaders | null): void {
-    this.requestHeaders = value
-  }
-
-  abstract getLatestVersion(): Promise<T>
-
-  abstract getUpdateFile(versionInfo: T): Promise<FileInfo>
-
-  static validateUpdateInfo(info: UpdateInfo) {
-    if (isUseOldMacProvider()) {
-      if ((info as any).url == null) {
-        throw new Error("Update info doesn't contain url")
-      }
-      return
-    }
-
-    if (info.sha2 == null && info.sha512 == null) {
-      throw new Error(`Update info doesn't contain sha2 or sha512 checksum: ${JSON.stringify(info, null, 2)}`)
-    }
-    if (info.path == null) {
-      throw new Error(`Update info doesn't contain file path: ${JSON.stringify(info, null, 2)}`)
-    }
-  }
+  readonly headers?: OutgoingHttpHeaders
 }
 
 // due to historical reasons for windows we use channel name without platform specifier
@@ -102,7 +81,7 @@ export interface UpdateCheckResult {
   readonly versionInfo: VersionInfo
   readonly fileInfo?: FileInfo
 
-  readonly downloadPromise?: Promise<any> | null
+  readonly downloadPromise?: Promise<Array<string>> | null
 
   readonly cancellationToken?: CancellationToken
 }
@@ -150,18 +129,32 @@ function addHandler(emitter: EventEmitter, event: string, handler: (...args: Arr
   }
 }
 
-// url.format doesn't correctly use path and requires explicit pathname
-export function formatUrl(url: Url) {
-  if (url.path != null && url.pathname == null) {
-    url.pathname = url.path
-  }
-  return buggyFormat(url)
-}
-
 export interface Logger {
   info(message?: any): void
 
   warn(message?: any): void
 
   error(message?: any): void
+
+  debug?(message: string): void
+}
+
+// if baseUrl path doesn't ends with /, this path will be not prepended to passed pathname for new URL(input, base)
+/** @internal */
+export function newBaseUrl(url: string) {
+  const result = new URL(url)
+  if (!result.pathname.endsWith("/")) {
+    result.pathname += "/"
+  }
+  return result
+}
+
+/** @internal */
+export function newUrlFromBase(pathname: string, baseUrl: URL): URL {
+  const result = new URL(pathname, baseUrl)
+  // search is not propagated
+  if (!result.search && baseUrl.search) {
+    result.search = baseUrl.search
+  }
+  return result
 }

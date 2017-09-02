@@ -41,6 +41,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * <code id="Configuration-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
 * <code id="Configuration-compression">compression</code> = `normal` "store" | "normal" | "maximum" - The compression level. If you want to rapidly test build, `store` can reduce build time significantly. `maximum` doesn't lead to noticeable size difference, but increase build time.
 * <code id="Configuration-copyright">copyright</code> = `Copyright © year ${author}` String - The human-readable copyright line for the app.
+* <code id="Configuration-publish">publish</code> The [publish](/configuration/publish.md) options.
 
 ---
 

@@ -161,16 +161,16 @@ export class AsarPackager {
   }
 
   private writeAsarFile(fileSets: Array<ResolvedFileSet>): Promise<any> {
-    const headerPickle = pickle.createEmpty()
-    headerPickle.writeString(JSON.stringify(this.fs.header))
-    const headerBuf = headerPickle.toBuffer()
-
-    const sizePickle = pickle.createEmpty()
-    sizePickle.writeUInt32(headerBuf.length)
-    const sizeBuf = sizePickle.toBuffer()
-
-    const writeStream = createWriteStream(this.outFile)
     return new BluebirdPromise((resolve, reject) => {
+      const headerPickle = pickle.createEmpty()
+      headerPickle.writeString(JSON.stringify(this.fs.header))
+      const headerBuf = headerPickle.toBuffer()
+
+      const sizePickle = pickle.createEmpty()
+      sizePickle.writeUInt32(headerBuf.length)
+
+      const sizeBuf = sizePickle.toBuffer()
+      const writeStream = createWriteStream(this.outFile)
       writeStream.on("error", reject)
       writeStream.on("close", resolve)
       writeStream.write(sizeBuf)
