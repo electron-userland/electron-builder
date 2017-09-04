@@ -57,7 +57,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
     ```
    See [all options](https://electron.build/configuration/configuration).
 
-3. Add [icons](https://electron.buid/icons).
+3. Add [icons](https://electron.build/icons).
 
 4. Add the [scripts](https://docs.npmjs.com/cli/run-script) key to the development `package.json`:
     ```json
