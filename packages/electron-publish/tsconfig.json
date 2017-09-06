@@ -9,9 +9,5 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
-  "files": [
-    "../../typings/mime.d.ts",
-    "../../typings/chalk.d.ts"
   ]
 }

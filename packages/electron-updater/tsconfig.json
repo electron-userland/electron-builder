@@ -9,9 +9,7 @@
     "access": "public"
   },
   "files": [
-    "../../typings/semver.d.ts",
-    "../../typings/electron.d.ts",
-    "../../typings/uuid-1345.d.ts"
+    "../../typings/electron.d.ts"
   ],
   "include": [
     "src/**/*.ts"

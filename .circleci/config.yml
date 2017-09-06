@@ -1,0 +1,61 @@
+version: 2
+
+jobs:
+    build:
+      docker:
+        - image: circleci/node:8.4.0
+      steps:
+        - checkout
+        - restore_cache:
+            keys:
+              - dependencies-{{ checksum "yarn.lock" }}
+        - run:
+            command: yarn
+        - run:
+            command: yarn pretest
+        - save_cache:
+            key: dependencies-{{ checksum "yarn.lock" }}
+            paths:
+              - node_modules
+
+    test:
+      parallelism: 4
+      docker:
+        - image: electronuserland/electron-builder:wine
+      steps:
+        - checkout
+        - run:
+            name: "git-lfs"
+            command: |
+              mkdir -p /tmp/git-lfs
+              curl -L https://github.com/github/git-lfs/releases/download/v2.2.1/git-lfs-linux-amd64-2.2.1.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
+              /tmp/git-lfs/git-lfs pull
+        - restore_cache:
+            keys:
+              - dependencies-{{ checksum "yarn.lock" }}
+        - restore_cache:
+            keys:
+              - v-1.7.6-electron
+        # because in the build job we use circleci docker image and circleci restores cache to original user home
+        - run:
+            command: mv /home/circleci/project/node_modules node_modules
+        - run:
+            # do not use yarn test because lint is done in the build job
+            command: |
+              yarn compile
+              node ./test/out/helpers/runTests.js
+        - store_test_results:
+            path: test-reports
+        - save_cache:
+            key: v-1.7.6-electron
+            paths:
+              - ~/.cache/electron
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build

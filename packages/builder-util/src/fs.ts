@@ -152,7 +152,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
 
     if (originalModeNumber !== stats.mode) {
       if (debug.enabled) {
-        const oldMode = new Mode({...stats, mode: originalModeNumber})
+        const oldMode = new Mode({mode: originalModeNumber})
         debug(`${dest} permissions fixed from ${oldMode.toOctal()} (${oldMode.toString()}) to ${mode.toOctal()} (${mode.toString()})`)
       }
 

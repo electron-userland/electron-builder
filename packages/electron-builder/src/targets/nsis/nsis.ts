@@ -1,14 +1,13 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "builder-util"
+import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { copyFile, statOrNull } from "builder-util/out/fs"
 import _debug from "debug"
-import { PackageFileInfo } from "electron-builder-http/out/updateInfo"
 import { readFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
-import { v5 as uuid5 } from "uuid-1345"
 import { Target } from "../../core"
 import { normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
@@ -129,7 +128,7 @@ export class NsisTarget extends Target {
     const oneClick = options.oneClick !== false
 
     const installerPath = path.join(this.outDir, installerFilename)
-    const guid = options.guid || await BluebirdPromise.promisify(uuid5)({namespace: ELECTRON_BUILDER_NS_UUID, name: appInfo.id})
+    const guid = options.guid || UUID.v5(appInfo.id, ELECTRON_BUILDER_NS_UUID)
     const companyName = appInfo.companyName
     const defines: any = {
       APP_ID: appInfo.id,

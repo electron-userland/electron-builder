@@ -1,9 +1,8 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, toLinuxArchString } from "builder-util"
+import { BintrayOptions, configureRequestOptions, HttpError } from "builder-util-runtime"
+import { BintrayClient, Version } from "builder-util-runtime/out/bintray"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { configureRequestOptions, HttpError } from "electron-builder-http"
-import { BintrayClient, Version } from "electron-builder-http/out/bintray"
-import { BintrayOptions } from "electron-builder-http/out/publishOptions"
 import { ClientRequest, RequestOptions } from "http"
 import { HttpPublisher, PublishContext, PublishOptions } from "./publisher"
 

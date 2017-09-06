@@ -1,5 +1,4 @@
-import { CancellationToken, ProgressInfo } from "electron-builder-http"
-import { PackageFileInfo, UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
+import { CancellationToken, PackageFileInfo, ProgressInfo, UpdateInfo, VersionInfo } from "builder-util-runtime"
 import { EventEmitter } from "events"
 import { OutgoingHttpHeaders } from "http"
 import { URL } from "url"
@@ -9,7 +8,7 @@ import { LoginCallback } from "./electronHttpExecutor"
 export { NET_SESSION_NAME } from "./electronHttpExecutor"
 export { AppUpdater, NoOpLogger } from "./AppUpdater"
 export { UpdateInfo, VersionInfo }
-export { CancellationToken } from "electron-builder-http"
+export { CancellationToken } from "builder-util-runtime"
 export { Provider } from "./Provider"
 
 // autoUpdater to mimic electron bundled autoUpdater

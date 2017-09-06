@@ -1,7 +1,5 @@
+import { CancellationError, CancellationToken, DownloadOptions, GenericServerOptions, PublishConfiguration, VersionInfo } from "builder-util-runtime"
 import { spawn } from "child_process"
-import { CancellationError, CancellationToken, DownloadOptions } from "electron-builder-http"
-import { GenericServerOptions, PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { VersionInfo } from "electron-builder-http/out/updateInfo"
 import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
 import * as path from "path"

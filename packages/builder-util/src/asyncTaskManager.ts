@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { CancellationToken } from "electron-builder-http"
+import { CancellationToken } from "builder-util-runtime"
 import { NestedError } from "./promise"
 import { debug } from "./util"
 

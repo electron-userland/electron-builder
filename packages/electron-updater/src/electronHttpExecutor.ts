@@ -1,5 +1,5 @@
+import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "builder-util-runtime"
 import { net, session } from "electron"
-import { configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "electron-builder-http"
 import { ensureDir } from "fs-extra-p"
 import * as path from "path"
 

@@ -1,4 +1,4 @@
-import { VersionInfo } from "electron-builder-http/out/updateInfo"
+import { VersionInfo } from "builder-util-runtime"
 import isEqual from "lodash.isequal"
 import { FileInfo } from "./main"
 

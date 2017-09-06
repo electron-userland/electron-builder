@@ -5,8 +5,5 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
-  "files": [
-    "../../typings/mime.d.ts"
   ]
 }

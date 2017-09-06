@@ -14,7 +14,7 @@
     "fs-extra-p": "^4.4.0",
     "mime": "^1.4.0",
     "bluebird-lst": "^1.0.3",
-    "electron-builder-http": "~0.0.0-semantic-release",
+    "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",
     "chalk": "^2.1.0"
   },

@@ -154,8 +154,8 @@ function identifierToLink(renderer: Renderer, id: any) {
     if (id === "module:electron-builder/out/core.Arch" || id === "module:builder-util/out/arch.Arch") {
       id = "module:builder-util.Arch"
     }
-    else if (id === "module:electron-builder-http/out/CancellationToken.CancellationToken") {
-      id = "module:electron-builder-http.CancellationToken"
+    else if (id === "module:builder-util-runtime/out/CancellationToken.CancellationToken") {
+      id = "module:builder-util-runtime.CancellationToken"
     }
     linked = renderer.resolveById(id)
   }

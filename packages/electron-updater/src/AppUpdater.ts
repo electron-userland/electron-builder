@@ -1,7 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
+import { BintrayOptions, CancellationToken, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
 import { randomBytes } from "crypto"
-import { BintrayOptions, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url } from "electron-builder-http/out/publishOptions"
-import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
 import { EventEmitter } from "events"
 import { outputFile, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
@@ -10,12 +9,11 @@ import { Lazy } from "lazy-val"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
-import * as UUID from "uuid-1345"
 import { BintrayProvider } from "./BintrayProvider"
 import { ElectronHttpExecutor } from "./electronHttpExecutor"
 import { GenericProvider } from "./GenericProvider"
 import { GitHubProvider } from "./GitHubProvider"
-import { CancellationToken, FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
+import { FileInfo, Logger, Provider, UpdateCheckResult, UpdaterSignal } from "./main"
 import { PrivateGitHubProvider } from "./PrivateGitHubProvider"
 
 export abstract class AppUpdater extends EventEmitter {
@@ -119,10 +117,11 @@ export abstract class AppUpdater extends EventEmitter {
     }
 
     const currentVersionString = this.app.getVersion()
-    this.currentVersion = parseVersion(currentVersionString)
-    if (this.currentVersion == null) {
+    const currentVersion = parseVersion(currentVersionString)
+    if (currentVersion == null) {
       throw new Error(`App version is not valid semver version: "${currentVersionString}`)
     }
+    this.currentVersion = currentVersion
 
     this.allowPrerelease = hasPrereleaseComponents(this.currentVersion)
 
@@ -373,7 +372,7 @@ export abstract class AppUpdater extends EventEmitter {
       }
     }
 
-    const id = UUID.v5({name: randomBytes(4096), namespace: UUID.namespace.oid})
+    const id = UUID.v5(randomBytes(4096), UUID.OID)
     this._logger.info(`Generated new staging user ID: ${id}`)
     try {
       await outputFile(file, id)

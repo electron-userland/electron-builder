@@ -1,14 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
+import { safeStringifyJson } from "builder-util-runtime"
 import { red, yellow } from "chalk"
 import { ChildProcess, execFile, spawn as _spawn, SpawnOptions } from "child_process"
 import { createHash } from "crypto"
 import _debug from "debug"
-import { safeStringifyJson } from "electron-builder-http"
 import { homedir, tmpdir } from "os"
 import * as path from "path"
 import "source-map-support/register"
 
-export { safeStringifyJson } from "electron-builder-http"
+export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
 export { log, warn, task, subTask } from "./log"
 export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
@@ -18,6 +18,7 @@ export { AsyncTaskManager } from "./asyncTaskManager"
 export { DebugLogger } from "./DebugLogger"
 
 export { hashFile } from "./hash"
+export { copyFile } from "./fs"
 
 export const debug = _debug("electron-builder")
 export const debug7z = _debug("electron-builder:7z")

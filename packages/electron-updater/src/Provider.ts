@@ -1,8 +1,7 @@
-import { HttpExecutor } from "electron-builder-http"
-import { UpdateInfo, VersionInfo } from "electron-builder-http/out/updateInfo"
+import { CancellationToken, HttpExecutor, UpdateInfo, VersionInfo } from "builder-util-runtime"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { URL } from "url"
-import { CancellationToken, FileInfo, isUseOldMacProvider } from "./main"
+import { FileInfo, isUseOldMacProvider } from "./main"
 
 export abstract class Provider<T extends VersionInfo> {
   protected requestHeaders: OutgoingHttpHeaders | null

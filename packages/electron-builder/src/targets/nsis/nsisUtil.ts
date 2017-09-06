@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, subTask } from "builder-util"
-import { PackageFileInfo } from "electron-builder-http/out/updateInfo"
+import { PackageFileInfo } from "builder-util-runtime"
 import { unlink } from "fs-extra-p"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./nsis"

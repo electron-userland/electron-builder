@@ -1,7 +1,7 @@
 {
   "name": "dmg-builder",
   "version": "1.0.1",
-  "main": "out/httpExecutor.js",
+  "main": "out/dmgUtil.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",

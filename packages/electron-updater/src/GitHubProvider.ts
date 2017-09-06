@@ -1,11 +1,9 @@
-import { HttpError, HttpExecutor } from "electron-builder-http"
-import { GithubOptions, githubUrl } from "electron-builder-http/out/publishOptions"
-import { UpdateInfo } from "electron-builder-http/out/updateInfo"
+import { CancellationToken, GithubOptions, githubUrl, HttpError, HttpExecutor, UpdateInfo } from "builder-util-runtime"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { URL } from "url"
 import { AppUpdater } from "./AppUpdater"
-import { CancellationToken, FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
+import { FileInfo, getChannelFilename, getDefaultChannelName, isUseOldMacProvider, newBaseUrl, newUrlFromBase, Provider } from "./main"
 
 export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<T> {
   // so, we don't need to parse port (because node http doesn't support host as url does)

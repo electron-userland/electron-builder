@@ -1,6 +1,5 @@
+import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { configureRequestOptionsFromUrl } from "electron-builder-http"
-import { GithubOptions } from "electron-builder-http/out/publishOptions"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
 import { createTestApp, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"

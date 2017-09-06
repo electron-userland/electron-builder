@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "electron-builder-http/out/publishOptions"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"

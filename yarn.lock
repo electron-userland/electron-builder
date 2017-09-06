@@ -22,6 +22,10 @@
     "7zip-bin-mac" "^1.0.1"
     "7zip-bin-win" "^2.1.0"
 
+"@types/chalk@^0.4.31":
+  version "0.4.31"
+  resolved "https://registry.yarnpkg.com/@types/chalk/-/chalk-0.4.31.tgz#a31d74241a6b1edbb973cf36d97a2896834a51f9"
+
 "@types/debug@^0.0.30":
   version "0.0.30"
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.30.tgz#dc1e40f7af3b9c815013a7860e6252f6352a84df"
@@ -58,6 +62,14 @@
   version "4.14.74"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.74.tgz#ac3bd8db988e7f7038e5d22bd76a7ba13f876168"
 
+"@types/mime@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.1.tgz#2cf42972d0931c1060c7d5fa6627fce6bd876f2f"
+
+"@types/node-emoji@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@types/node-emoji/-/node-emoji-1.4.0.tgz#34068c35b74ee5c9d73eb9b84c60b2c06a169412"
+
 "@types/node@*":
   version "8.0.25"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.25.tgz#66ecaf4df93f5281b48427ee96fbcdfc4f0cdce1"
@@ -66,11 +78,19 @@
   version "1.1.28"
   resolved "https://registry.yarnpkg.com/@types/sanitize-filename/-/sanitize-filename-1.1.28.tgz#baa18f5ce4330fcbb3ea7b62f65550963d9aaa07"
 
+"@types/semver@^5.4.0":
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-5.4.0.tgz#f3658535af7f1f502acd6da7daf405ffeb1f7ee4"
+
 "@types/source-map-support@^0.4.0":
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/@types/source-map-support/-/source-map-support-0.4.0.tgz#a62a1866614af68c888173c001481f242aaf148b"
   dependencies:
     "@types/node" "*"
+
+"@types/stat-mode@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@types/stat-mode/-/stat-mode-0.2.0.tgz#e16dd655f08d097865288eb8162654675b6510a9"
 
 "@types/xml2js@^0.4.0":
   version "0.4.0"
@@ -2588,10 +2608,6 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-macaddress@^0.2.7:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/macaddress/-/macaddress-0.2.8.tgz#5904dc537c39ec6dbefeae902327135fa8511f12"
-
 make-dir@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-1.0.0.tgz#97a011751e91dd87cfadef58832ebb04936de978"
@@ -3984,12 +4000,6 @@ utf8-byte-length@^1.0.1:
 util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
-
-uuid-1345@^0.99.6:
-  version "0.99.6"
-  resolved "https://registry.yarnpkg.com/uuid-1345/-/uuid-1345-0.99.6.tgz#b1270ae015a7721c7adec6c46ec169c6098aed40"
-  dependencies:
-    macaddress "^0.2.7"
 
 uuid@3.0.1:
   version "3.0.1"

@@ -1,6 +1,6 @@
-import { green } from "chalk"
-import { CancellationToken, ProgressCallbackTransform } from "electron-builder-http"
 import { Arch, log } from "builder-util"
+import { CancellationToken, ProgressCallbackTransform } from "builder-util-runtime"
+import { green } from "chalk"
 import { createReadStream, stat, Stats } from "fs-extra-p"
 import { ClientRequest } from "http"
 import { basename } from "path"
@@ -8,6 +8,8 @@ import { MultiProgress } from "./multiProgress"
 import { ProgressBar } from "./progress"
 
 export type PublishPolicy = "onTag" | "onTagOrDraft" | "always" | "never"
+
+export { ProgressCallback } from "./progress"
 
 export interface PublishOptions {
   publish?: PublishPolicy | null

@@ -1,6 +1,5 @@
 import { Arch } from "builder-util"
-import { PublishConfiguration } from "electron-builder-http/out/publishOptions"
-import { PackageFileInfo } from "electron-builder-http/out/updateInfo"
+import { PackageFileInfo, PublishConfiguration } from "builder-util-runtime"
 import { Configuration } from "./configuration"
 import { Platform, Target } from "./core"
 import { Packager } from "./packager"

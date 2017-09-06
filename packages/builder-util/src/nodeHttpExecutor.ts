@@ -1,4 +1,4 @@
-import { CancellationToken, configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "electron-builder-http"
+import { CancellationToken, configureRequestOptionsFromUrl, DownloadOptions, HttpExecutor } from "builder-util-runtime"
 import { ensureDir, readFile } from "fs-extra-p"
 import { Agent, ClientRequest, request as httpRequest } from "http"
 import * as https from "https"

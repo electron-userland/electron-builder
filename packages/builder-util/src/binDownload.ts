@@ -1,7 +1,7 @@
 import { path7za } from "7zip-bin"
 import BluebirdPromise from "bluebird-lst"
+import { CancellationToken, DownloadOptions } from "builder-util-runtime"
 import _debug from "debug"
-import { CancellationToken, DownloadOptions } from "electron-builder-http"
 import { emptyDir, rename, unlink } from "fs-extra-p"
 import * as path from "path"
 import { getTempName } from "temp-file"

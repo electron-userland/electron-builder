@@ -1,12 +1,12 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, exec, log } from "builder-util"
+import { UUID } from "builder-util-runtime"
 import { getBin, getBinFromGithub } from "builder-util/out/binDownload"
 import { unlinkIfExists } from "builder-util/out/fs"
 import * as ejs from "ejs"
 import { chmod, close, createReadStream, createWriteStream, open, outputFile, readFile, write } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { v1 as uuid1 } from "uuid-1345"
 import { Target } from "../core"
 import { LinuxPackager } from "../linuxPackager"
 import { AppImageOptions } from "../options/linuxOptions"
@@ -31,11 +31,10 @@ export default class AppImageTarget extends Target {
     super("appImage")
 
     // we add X-AppImage-BuildId to ensure that new desktop file will be installed
-    this.desktopEntry = BluebirdPromise.promisify(uuid1)({mac: false})
-      .then(uuid => helper.computeDesktopEntry(this.options, "AppRun", null, {
-        "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
-        "X-AppImage-BuildId": uuid,
-      }))
+    this.desktopEntry = helper.computeDesktopEntry(this.options, "AppRun", null, {
+      "X-AppImage-Version": `${packager.appInfo.buildVersion}`,
+      "X-AppImage-BuildId": UUID.v1(),
+    })
   }
 
   async build(appOutDir: string, arch: Arch): Promise<any> {

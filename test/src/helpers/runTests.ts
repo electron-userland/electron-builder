@@ -6,8 +6,10 @@ import { tmpdir } from "os"
 import * as path from "path"
 import { ELECTRON_VERSION } from "./testConfig"
 
+const rootDir = path.join(__dirname, "../../..")
+
 // we set NODE_PATH in this file, so, we cannot use 'out/util' path here
-const util = require("../../../packages/builder-util/out/util")
+const util = require(`${rootDir}/packages/builder-util/out/util`)
 const isEmptyOrSpaces = util.isEmptyOrSpaces
 
 const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
@@ -89,17 +91,21 @@ async function runTests() {
     if (circleNodeIndex === 0) {
       args.push("debTest")
       args.push("fpmTest")
+      args.push("oneClickInstallerTest")
+      args.push("winPackagerTest")
     }
     else if (circleNodeIndex === 1) {
       args.push("BuildTest", "extraMetadataTest", "mainEntryTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest", "PublishManagerTest")
       args.push("mac.+")
+      args.push("squirrelWindowsTest")
       args.push(...baseForLinuxTests)
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
     }
     else {
-      args.push("windows.*", "linuxArchiveTest")
+      args.push("installerTest", "portableTest")
+      args.push("linuxArchiveTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }
@@ -162,8 +168,8 @@ async function runTests() {
   }
 
   if (process.env.CIRCLECI != null) {
-    config.testResultsProcessor = "<rootDir>/node_modules/jest-junit"
-    process.env.JEST_JUNIT_OUTPUT = path.join(process.env.CIRCLE_TEST_REPORTS == null ? path.join(__dirname, "..", "..") : path.join(process.env.CIRCLE_TEST_REPORTS!!, "reports"), "test-report.xml")
+    config.testResultsProcessor = "jest-junit"
+    process.env.JEST_JUNIT_OUTPUT = path.join(rootDir, "test-reports", "test-report.xml")
   }
 
   require("jest-cli").runCLI({

@@ -4,7 +4,7 @@ set -e
 ln -f README.md packages/electron-builder/README.md
 
 npm publish packages/asar-integrity || true
-npm publish packages/electron-builder-http || true
+npm publish packages/builder-util-runtime || true
 npm publish packages/dmg-builder || true
 npm publish packages/builder-util || true
 npm publish packages/electron-publish || true

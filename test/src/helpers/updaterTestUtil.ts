@@ -1,6 +1,6 @@
 import { TmpDir } from "builder-util"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "electron-builder-http/out/publishOptions"
 import { AppUpdater, NoOpLogger } from "electron-updater"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { outputFile } from "fs-extra-p"

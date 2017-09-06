@@ -12,8 +12,8 @@ const source = path.join(__dirname, "jsdoc", "out")
 async function main() {
   const httpFiles = await globby([
     "http/**/*.js",
-    "!http/electron-builder-http-out-publishOptions.js",
-    "!http/electron-builder-http-out-updateInfo.js",
+    "!http/builder-util-runtime-out-publishOptions.js",
+    "!http/builder-util-runtime-out-updateInfo.js",
   ], {cwd: source})
 
   const partialDir = path.join(__dirname, "jsdoc")
@@ -32,7 +32,7 @@ async function main() {
       page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
       files: [
         path.join(source, "updater/electron-updater.js"),
-        path.join(source, "http/electron-builder-http-out-updateInfo.js"),
+        path.join(source, "http/builder-util-runtime-out-updateInfo.js"),
       ]
     },
   ]
@@ -48,7 +48,7 @@ async function main() {
 
   await render2([
     path.join(source, "builder", "electron-builder.js"),
-    path.join(source, "http", "electron-builder-http-out-publishOptions.js")
+    path.join(source, "http", "builder-util-runtime-out-publishOptions.js")
   ], jsdoc2MdOptions)
 }
 
@@ -322,7 +322,7 @@ function sortAutoUpdate(pages) {
   })
 
   pages[pageIndex].data = pages[pageIndex].data.filter(member => {
-    if (!member.id.startsWith("module:electron-builder-http")) {
+    if (!member.id.startsWith("module:builder-util-runtime")) {
       return true
     }
 

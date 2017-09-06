@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
+import { parseDn } from "builder-util-runtime"
 import { execFile, execFileSync } from "child_process"
-import { parseDn } from "electron-builder-http/out/rfc2253Parser"
 import { Logger } from "./main"
 
 // $certificateInfo = (Get-AuthenticodeSignature 'xxx\yyy.exe'

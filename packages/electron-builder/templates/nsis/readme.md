@@ -15,7 +15,7 @@ One-click installer: http://forums.winamp.com/showthread.php?t=300479
 # GUID
 See [docs](https://electron.build/configuration/nsis).
 
-We use https://github.com/scravy/uuid-1345 to generate sha-1 name-based UUID.
+We use UUID v5 to generate sha-1 name-based UUID.
 
 http://stackoverflow.com/questions/3029994/convert-uri-to-guid
 https://alexandrebrisebois.wordpress.com/2013/11/14/create-predictable-guids-for-your-windows-azure-table-storage-entities/

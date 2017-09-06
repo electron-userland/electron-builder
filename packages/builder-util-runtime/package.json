@@ -1,7 +1,7 @@
 {
-  "name": "electron-builder-http",
+  "name": "builder-util-runtime",
   "version": "0.0.0-semantic-release",
-  "main": "out/httpExecutor.js",
+  "main": "out/index.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
@@ -18,5 +18,5 @@
     "fs-extra-p": "^4.4.0",
     "bluebird-lst": "^1.0.3"
   },
-  "typings": "./out/httpExecutor.d.ts"
+  "types": "./out/index.d.ts"
 }

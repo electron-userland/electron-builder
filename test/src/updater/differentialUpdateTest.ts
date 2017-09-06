@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
+import { GenericServerOptions } from "builder-util-runtime"
 import { Arch, Platform } from "electron-builder"
-import { GenericServerOptions } from "electron-builder-http/out/publishOptions"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { rename } from "fs-extra-p"
 import { createServer } from "http"

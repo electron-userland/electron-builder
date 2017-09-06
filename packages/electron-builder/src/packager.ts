@@ -1,7 +1,7 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, AsyncTaskManager, debug, DebugLogger, exec, log, safeStringifyJson, TmpDir, use } from "builder-util"
+import { CancellationToken } from "builder-util-runtime"
 import { executeFinally, orNullIfFileNotExist } from "builder-util/out/promise"
-import { CancellationToken } from "electron-builder-http"
 import { EventEmitter } from "events"
 import { ensureDir } from "fs-extra-p"
 import { safeDump } from "js-yaml"
