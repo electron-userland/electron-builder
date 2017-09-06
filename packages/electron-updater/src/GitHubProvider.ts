@@ -14,6 +14,12 @@ export abstract class BaseGitHubProvider<T extends UpdateInfo> extends Provider<
 
     this.baseUrl = newBaseUrl(githubUrl(options, defaultHost))
   }
+
+  protected computeGithubBasePath(result: string) {
+    // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
+    const host = this.options.host
+    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
+  }
 }
 
 export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
@@ -109,10 +115,7 @@ export class GitHubProvider extends BaseGitHubProvider<UpdateInfo> {
   }
 
   private get basePath() {
-    const result = `/${this.options.owner}/${this.options.repo}/releases`
-    // https://github.com/electron-userland/electron-builder/issues/1903#issuecomment-320881211
-    const host = this.options.host
-    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result
+    return this.computeGithubBasePath(`/${this.options.owner}/${this.options.repo}/releases`)
   }
 
   async getUpdateFile(versionInfo: UpdateInfo): Promise<FileInfo> {

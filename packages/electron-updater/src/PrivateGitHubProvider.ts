@@ -82,7 +82,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   }
 
   private get basePath() {
-    return `/repos/${this.options.owner}/${this.options.repo}/releases`
+    return this.computeGithubBasePath(`/repos/${this.options.owner}/${this.options.repo}/releases`)
   }
 
   async getUpdateFile(versionInfo: PrivateGitHubUpdateInfo): Promise<FileInfo> {
