@@ -30,12 +30,12 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ## Configuration
 
 <!-- do not edit. start of generated block -->
-* <code id="Configuration-appId">appId</code> = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID be set.
+* <code id="Configuration-appId">appId</code> = `com.electron.${name}` String - The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
 * <code id="Configuration-productName">productName</code> String - As [name](#Metadata-name), but allows you to specify a product name for your executable which contains spaces and other special characters not allowed in the [name property](https://docs.npmjs.com/files/package.json#name}).
-* <code id="Configuration-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+* <code id="Configuration-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
 * <code id="Configuration-asar">asar</code> = `true` Boolean | AsarOptions<a name="AsarOptions"></a> - Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
   
-  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file issue if this doesn't work.
+  Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
   * <code id="AsarOptions-smartUnpack">smartUnpack</code> = `true` Boolean - Whether to automatically unpack executables files.
   * <code id="AsarOptions-ordering">ordering</code> String
 * <code id="Configuration-asarUnpack">asarUnpack</code> Array&lt;String&gt; | String - A [glob patterns](/file-patterns.md) relative to the [app directory](#MetadataDirectories-app), which specifies which files to unpack when creating the [asar](http://electron.atom.io/docs/tutorial/application-packaging/) archive.
@@ -48,7 +48,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 * <code id="Configuration-directories">directories</code><a name="MetadataDirectories"></a>
   * <code id="MetadataDirectories-buildResources">buildResources</code> = `build` String - The path to build resources.
     
-    Please note — build resources is not packed into app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
+    Please note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**/*", "build/icon.*"]`
   * <code id="MetadataDirectories-output">output</code> = `dist` String - The output directory.
   * <code id="MetadataDirectories-app">app</code> String - The application directory (containing the application package.json), defaults to `app`, `www` or working directory.
 * <code id="Configuration-files">files</code> The [files](/configuration/contents.md#files) configuration.
@@ -115,7 +115,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 ---
 
 * <code id="Configuration-buildVersion">buildVersion</code> String - The build version. Maps to the `CFBundleVersion` on macOS, and `FileVersion` metadata property on Windows. Defaults to the `version`. If `TRAVIS_BUILD_NUMBER` or `APPVEYOR_BUILD_NUMBER` or `CIRCLE_BUILD_NUM` or `BUILD_NUMBER` or `bamboo.buildNumber` env defined, it will be used as a build version (`version.build_number`).
-* <code id="Configuration-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+* <code id="Configuration-detectUpdateChannel">detectUpdateChannel</code> = `true` Boolean - Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
 * <code id="Configuration-electronCompile">electronCompile</code> Boolean - Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
 * <code id="Configuration-electronDist">electronDist</code> String - The path to custom Electron build (e.g. `~/electron/out/R`).
 * <code id="Configuration-electronDownload">electronDownload</code><a name="ElectronDownloadOptions"></a> - The [electron-download](https://github.com/electron-userland/electron-download#usage) options.
@@ -129,7 +129,7 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
   
   If `react-scripts` in the app dev dependencies, `react-cra` will be set automatically. Set to `null` to disable automatic detection.
 * <code id="Configuration-extraMetadata">extraMetadata</code> any - Inject properties to `package.json`.
-* <code id="Configuration-forceCodeSigning">forceCodeSigning</code> = `false` Boolean - Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+* <code id="Configuration-forceCodeSigning">forceCodeSigning</code> = `false` Boolean - Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
 * <code id="Configuration-muonVersion">muonVersion</code> String - The version of muon you are packaging for.
 * <code id="Configuration-releaseInfo">releaseInfo</code><a name="ReleaseInfo"></a> - The release info. Intended for command line usage:
   

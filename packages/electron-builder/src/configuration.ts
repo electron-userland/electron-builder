@@ -16,7 +16,7 @@ import { NsisOptions, NsisWebOptions, PortableOptions } from "./targets/nsis/nsi
 export interface Configuration extends PlatformSpecificBuildOptions {
   /**
    * The application id. Used as [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070) for MacOS and as
-   * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID be set.
+   * [Application User Model ID](https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx) for Windows (NSIS target only, Squirrel.Windows not supported). It is strongly recommended that an explicit ID is set.
    * @default com.electron.${name}
    */
   readonly appId?: string | null
@@ -27,14 +27,14 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly productName?: string | null
 
   /**
-   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have another defaults, see corresponding options).
+   * The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName}-${version}.${ext}` (some target can have other defaults, see corresponding options).
    */
   readonly artifactName?: string | null
 
   /**
    * Whether to package the application's source code into an archive, using [Electron's archive format](http://electron.atom.io/docs/tutorial/application-packaging/).
    *
-   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file issue if this doesn't work.
+   * Node modules, that must be unpacked, will be detected automatically, you don't need to explicitly set [asarUnpack](#configuration-asarUnpack) - please file an issue if this doesn't work.
    * @default true
   */
   readonly asar?: boolean | AsarOptions | null
@@ -156,7 +156,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly buildVersion?: string | null
 
   /**
-   * Whether to infer update channel from application version prerelease components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
+   * Whether to infer update channel from application version pre-release components. e.g. if version `0.12.1-alpha.1`, channel will be set to `alpha`. Otherwise to `latest`.
    * @default true
    */
   readonly detectUpdateChannel?: boolean
@@ -194,7 +194,7 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly extraMetadata?: any
 
   /**
-   * Whether to fail if application will be not signed (to prevent unsigned app if code signing configuration is not correct).
+   * Whether to fail if the application is not signed (to prevent unsigned app if code signing configuration is not correct).
    * @default false
    */
   readonly forceCodeSigning?: boolean
@@ -239,7 +239,7 @@ export interface MetadataDirectories {
   /**
    * The path to build resources.
    *
-   * Please note — build resources is not packed into app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**\/*", "build/icon.*"]`
+   * Please note — build resources is not packed into the app. If you need to use some files, e.g. as tray icon, please include required files explicitly: `"files": ["**\/*", "build/icon.*"]`
    * @default build
    */
   readonly buildResources?: string | null

@@ -19,7 +19,8 @@
     "schema": "typescript-json-schema packages/electron-builder/tsconfig.json Configuration --out packages/electron-builder/scheme.json --noExtraProps --useTypeOfKeyword --strictNullChecks --titles --required",
     "jsdoc": "ts2jsdoc packages/builder-util-runtime packages/electron-updater packages/builder-util packages/electron-builder packages/electron-publish",
     "jsdoc2md": "node scripts/jsdoc2md.js",
-    "docs": "yarn jsdoc && yarn jsdoc2md && gitbook build",
+    "docs": "yarn jsdoc && yarn jsdoc2md && yarn gitbook",
+    "gitbook": "node node_modules/@develar/gitbook/lib/cli/build.js",
     "deploy-docs": "./scripts/publish.sh"
   },
   "//": "repository must be specified otherwise conventional-changelog will use forked repo (currently cloned)",
@@ -70,6 +71,7 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
+    "@develar/gitbook": "^3.2.3",
     "@types/chalk": "^0.4.31",
     "@types/debug": "^0.0.30",
     "@types/dotenv": "^4.0.1",
@@ -106,7 +108,7 @@
     "path-sort": "^0.1.0",
     "serve-static": "^1.12.4",
     "ts-babel": "^4.1.5",
-    "ts-jsdoc": "^2.0.5",
+    "ts-jsdoc": "^2.0.6",
     "tslint": "^5.7.0",
     "typescript": "^2.5.2",
     "v8-compile-cache": "^1.1.0",

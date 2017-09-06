@@ -10,12 +10,6 @@ const pathSorter = require("path-sort")
 const source = path.join(__dirname, "jsdoc", "out")
 
 async function main() {
-  const httpFiles = await globby([
-    "http/**/*.js",
-    "!http/builder-util-runtime-out-publishOptions.js",
-    "!http/builder-util-runtime-out-updateInfo.js",
-  ], {cwd: source})
-
   const partialDir = path.join(__dirname, "jsdoc")
   const partials = (await globby(["*.hbs"], {cwd: partialDir})).map(it => path.resolve(partialDir, it))
 
@@ -32,7 +26,7 @@ async function main() {
       page: "auto-update.md", pageUrl: "auto-update", mainHeader: "API",
       files: [
         path.join(source, "updater/electron-updater.js"),
-        path.join(source, "http/builder-util-runtime-out-updateInfo.js"),
+        path.join(source, "builder-util-runtime/builder-util-runtime.js"),
       ]
     },
   ]
@@ -44,12 +38,12 @@ async function main() {
       path.join(partialDir, "helpers.js")
     ],
   }
-  await render(pages, jsdoc2MdOptions)
-
   await render2([
     path.join(source, "builder", "electron-builder.js"),
-    path.join(source, "http", "builder-util-runtime-out-publishOptions.js")
+    path.join(source, "builder-util-runtime", "builder-util-runtime.js")
   ], jsdoc2MdOptions)
+
+  await render(pages, jsdoc2MdOptions)
 }
 
 async function render2(files, jsdoc2MdOptions) {

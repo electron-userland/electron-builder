@@ -260,6 +260,10 @@ function identifierToLink(id, root) {
   if (id === "internal:EventEmitter") {
     return "[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)"
   }
+  if (id.endsWith(".OutgoingHttpHeaders")) {
+    // no need to point to external docs in this case
+    return "[key: string]: string"
+  }
 
   let linked = resolveById(id)
   if (linked == null) {
@@ -291,6 +295,12 @@ function identifierToLink(id, root) {
         }
       }
 
+      const p = "module:builder-util-runtime/out/updateInfo."
+      if (id.startsWith(p)) {
+        // don't want complicate docs, if someone need - just see source code
+        return "module:builder-util-runtime." + id.substring(p.length)
+      }
+
       if (id.endsWith(".PlatformPackager")) {
         // don't want complicate docs, if someone need - just see source code
         return "PlatformPackager"
@@ -304,7 +314,7 @@ function identifierToLink(id, root) {
         return "[key: string]: string"
       }
 
-      console.warn(`Unresolved member ${id}`)
+      console.warn(`Unresolved member (helpers.js) ${id}`)
     }
     return id
   }

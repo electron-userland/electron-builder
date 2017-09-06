@@ -132,17 +132,18 @@ Emitted on progress. Only supported over Windows build, since `Squirrel.Mac` [do
         * [`.quitAndInstall(isSilent, isForceRunAfter)`](#module_electron-updater.AppUpdater+quitAndInstall)
     * [`.FileInfo`](#FileInfo)
     * [`.Logger`](#Logger)
+        * [`.debug(message)`](#module_electron-updater.Logger+debug)
         * [`.error(message)`](#module_electron-updater.Logger+error)
         * [`.info(message)`](#module_electron-updater.Logger+info)
         * [`.warn(message)`](#module_electron-updater.Logger+warn)
+    * [`.UpdateInfo`](#UpdateInfo) ⇐ <code>[VersionInfo](#VersionInfo)</code>
+    * [`.VersionInfo`](#VersionInfo)
     * [`.UpdateCheckResult`](#UpdateCheckResult)
     * [.UpdaterSignal](#UpdaterSignal)
         * [`.login(handler)`](#module_electron-updater.UpdaterSignal+login)
         * [`.progress(handler)`](#module_electron-updater.UpdaterSignal+progress)
         * [`.updateCancelled(handler)`](#module_electron-updater.UpdaterSignal+updateCancelled)
         * [`.updateDownloaded(handler)`](#module_electron-updater.UpdaterSignal+updateDownloaded)
-    * [`.UpdateInfo`](#UpdateInfo) ⇐ <code>[VersionInfo](#VersionInfo)</code>
-    * [`.VersionInfo`](#VersionInfo)
 
 <a name="AppUpdater"></a>
 ### AppUpdater ⇐ <code>[EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)</code>
@@ -206,6 +207,7 @@ This is different from the normal quit event sequence.
 **Properties**
 * **<code id="FileInfo-name">name</code>** String
 * **<code id="FileInfo-url">url</code>** String
+* <code id="FileInfo-packageInfo">packageInfo</code> module:builder-util-runtime.PackageFileInfo
 * <code id="FileInfo-sha2">sha2</code> String
 * <code id="FileInfo-sha512">sha512</code> String
 * <code id="FileInfo-headers">headers</code> [key: string]: string
@@ -215,9 +217,15 @@ This is different from the normal quit event sequence.
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 
 * [`.Logger`](#Logger)
+    * [`.debug(message)`](#module_electron-updater.Logger+debug)
     * [`.error(message)`](#module_electron-updater.Logger+error)
     * [`.info(message)`](#module_electron-updater.Logger+info)
     * [`.warn(message)`](#module_electron-updater.Logger+warn)
+
+<a name="module_electron-updater.Logger+debug"></a>
+#### `logger.debug(message)`
+
+- message <code>String</code>
 
 <a name="module_electron-updater.Logger+error"></a>
 #### `logger.error(message)`
@@ -234,13 +242,34 @@ This is different from the normal quit event sequence.
 
 - message <code>any</code>
 
+<a name="UpdateInfo"></a>
+### `UpdateInfo` ⇐ <code>[VersionInfo](#VersionInfo)</code>
+**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
+**Extends**: <code>[VersionInfo](#VersionInfo)</code>  
+**Properties**
+* **<code id="UpdateInfo-path">path</code>** String
+* <code id="UpdateInfo-packages">packages</code> Object&lt;String, any&gt;
+* <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
+* <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
+* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String - The release notes.
+* **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
+* <code id="UpdateInfo-sha512">sha512</code> String
+* <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
+* **<code id="UpdateInfo-version">version</code>** String - The version.
+
+<a name="VersionInfo"></a>
+### `VersionInfo`
+**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
+**Properties**
+* **<code id="VersionInfo-version">version</code>** String - The version.
+
 <a name="UpdateCheckResult"></a>
 ### `UpdateCheckResult`
 **Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
 **Properties**
-* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** [VersionInfo](#VersionInfo)
+* **<code id="UpdateCheckResult-versionInfo">versionInfo</code>** module:builder-util-runtime.VersionInfo
 * <code id="UpdateCheckResult-fileInfo">fileInfo</code> [FileInfo](#FileInfo)
-* <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;any&gt;
+* <code id="UpdateCheckResult-downloadPromise">downloadPromise</code> Promise&lt;Array&lt;String&gt;&gt;
 * <code id="UpdateCheckResult-cancellationToken">cancellationToken</code> CancellationToken
 
 <a name="UpdaterSignal"></a>
@@ -274,27 +303,6 @@ Emitted when an authenticating proxy is [asking for user credentials](https://gi
 #### `updaterSignal.updateDownloaded(handler)`
 
 - handler <code>callback</code>
-
-<a name="UpdateInfo"></a>
-### `UpdateInfo` ⇐ <code>[VersionInfo](#VersionInfo)</code>
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Extends**: <code>[VersionInfo](#VersionInfo)</code>  
-**Properties**
-* **<code id="UpdateInfo-path">path</code>** String
-* <code id="UpdateInfo-packages">packages</code> Object&lt;String, any&gt;
-* <code id="UpdateInfo-githubArtifactName">githubArtifactName</code> String
-* <code id="UpdateInfo-releaseName">releaseName</code> String - The release name.
-* <code id="UpdateInfo-releaseNotes">releaseNotes</code> String - The release notes.
-* **<code id="UpdateInfo-releaseDate">releaseDate</code>** String - The release date.
-* <code id="UpdateInfo-sha512">sha512</code> String
-* <code id="UpdateInfo-stagingPercentage">stagingPercentage</code> Number - The [staged rollout](auto-update.md#staged-rollouts) percentage, 0-100.
-* **<code id="UpdateInfo-version">version</code>** String - The version.
-
-<a name="VersionInfo"></a>
-### `VersionInfo`
-**Kind**: interface of [<code>electron-updater</code>](#module_electron-updater)<br/>
-**Properties**
-* **<code id="VersionInfo-version">version</code>** String - The version.
 
 
 <!-- end of generated block -->

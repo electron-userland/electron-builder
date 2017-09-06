@@ -9,9 +9,6 @@ import { parse as parseUrl } from "url"
 import { CancellationToken } from "./CancellationToken"
 import { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
 
-export { CancellationToken, CancellationError} from "./CancellationToken"
-export { ProgressCallbackTransform, ProgressInfo } from "./ProgressCallbackTransform"
-
 const debug = _debug("electron-builder")
 
 export interface RequestHeaders extends OutgoingHttpHeaders {

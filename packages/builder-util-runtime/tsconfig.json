@@ -4,7 +4,7 @@
     "outDir": "out"
   },
   "jsdoc": {
-    "out": "../../scripts/jsdoc/out/http",
+    "out": "../../scripts/jsdoc/out/builder-util-runtime",
     "examples": "../../scripts/jsdoc/examples",
     "access": "public"
   },
