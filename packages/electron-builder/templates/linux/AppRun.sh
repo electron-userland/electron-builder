@@ -181,7 +181,7 @@ if [ -z "$SKIP" ] ; then
     --set-icon="$VENDORPREFIX-$APP" --set-key=TryExec --set-value=${APPIMAGE// /\\s} "$DESKTOP_FILE" \
     --dir "$DESTINATION_DIR_DESKTOP"
   chmod a+x "$DESTINATION_DIR_DESKTOP/"*
-  RESOURCE_NAME=$(echo "$VENDORPREFIX-$DESKTOP_FILE_NAME" | sed -e 's/.desktop//g')
+  RESOURCE_NAME=$(echo "$VENDORPREFIX-$DESKTOP_FILE_NAME" | sed -e 's/\.desktop//g')
 
   # uninstall previous icons
   xdg-icon-resource uninstall --noupdate --size 16 "$RESOURCE_NAME"
