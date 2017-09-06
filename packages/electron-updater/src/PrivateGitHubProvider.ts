@@ -86,7 +86,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
   private get basePath() {
     const result = `/repos/${this.options.owner}/${this.options.repo}/releases`;
     const host = this.options.host;
-    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3/repos${result}` : result;
+    return host != null && host !== "github.com" && host !== "api.github.com" ? `/api/v3${result}` : result;
   }
 
   async getUpdateFile(versionInfo: PrivateGitHubUpdateInfo): Promise<FileInfo> {
