@@ -48,16 +48,21 @@ export default class AppImageTarget extends Target {
     const resultFile = path.join(this.outDir, artifactName)
     await unlinkIfExists(resultFile)
 
+    const finalDesktopFilename = `${this.packager.executableName}.desktop`
+
     const appRunData = (await appRunTemplate.value)({
-      systemIntegration: this.options.systemIntegration || "ask"
+      systemIntegration: this.options.systemIntegration || "ask",
+      desktopFileName: finalDesktopFilename,
+      executableName: this.packager.executableName,
+      resourceName: `appimagekit-${this.packager.executableName}`,
     })
     const appRunFile = await packager.getTempFile(".sh")
     await outputFile(appRunFile, appRunData, {
       mode: "0755",
     })
 
-    const appImagePath = await appImagePathPromise
     const desktopFile = await this.desktopEntry
+    const appImagePath = await appImagePathPromise
     const args = [
       "-joliet", "on",
       "-volid", "AppImage",
@@ -66,7 +71,7 @@ export default class AppImageTarget extends Target {
       "-map", appOutDir, "/usr/bin",
       "-map", appRunFile, "/AppRun",
       // we get executable name in the AppRun by desktop file name, so, must be named as executable
-      "-map", desktopFile, `/${this.packager.executableName}.desktop`,
+      "-map", desktopFile, `/${finalDesktopFilename}`,
     ]
     for (const [from, to] of (await this.helper.icons)) {
       args.push("-map", from, `/usr/share/icons/default/${to}`)
