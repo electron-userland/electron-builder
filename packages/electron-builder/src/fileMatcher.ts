@@ -156,7 +156,7 @@ export function getMainFileMatchers(appDir: string, destination: string, macroEx
   //noinspection SpellCheckingInspection
   patterns.push("!**/{.git,.hg,.svn,CVS,RCS,SCCS," +
     "__pycache__,.DS_Store,thumbs.db,.gitignore,.gitkeep,.gitattributes,.npmignore," +
-    ".idea,.vs,.flowconfig,.jshintrc,.eslintrc," +
+    ".idea,.vs,.flowconfig,.jshintrc,.eslintrc,.circleci," +
     ".yarn-integrity,.yarn-metadata.json,yarn-error.log,yarn.lock,package-lock.json,npm-debug.log," +
     "appveyor.yml,.travis.yml,circle.yml,.nyc_output}")
 

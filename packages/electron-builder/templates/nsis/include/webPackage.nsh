@@ -37,6 +37,5 @@
     quit
   ${endif}
 
-  !insertmacro extractUsing7za "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
-  !insertmacro copyPackageFile "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
+  StrCpy $packageFile "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
 !macroend

@@ -2,10 +2,9 @@
 
 exports[`mac updates 1`] = `
 Object {
-  "name": "Onshape-0.5.12-mac.zip",
-  "sha2": undefined,
-  "sha512": "XdtVkKtXXHuFczx6vQBkCpezrz5yCMv3M42z1TrzVeq7/bOp5yeHiDm6oa+sRfIv6EAPgpxLl4qlOza1EJRVhQ==",
-  "url": "https://github.com/develar/onshape-desktop-shell/releases/download/v0.5.12/Onshape-0.5.12-mac.zip",
+  "name": "Onshape-0.5.13-mac.zip",
+  "sha512": "fbQfATZV6mGoJMfWtskRSgB+aGFmbYMs8GUDdOiDORf+7jG6UoM3ruVgnRHqg7vwB9s72G27s3uH150fewUTtw==",
+  "url": "https://github.com/develar/onshape-desktop-shell/releases/download/v0.5.13/Onshape-0.5.13-mac.zip",
 }
 `;
 

@@ -30,6 +30,7 @@ The top-level [nsis](configuration.md#Configuration-nsis) key contains set of op
   Appropriate license file will be selected by user OS language.
 * <code id="NsisOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template). Defaults to `${productName} Setup ${version}.${ext}`.
 * <code id="NsisOptions-deleteAppDataOnUninstall">deleteAppDataOnUninstall</code> = `false` Boolean - *one-click installer only.* Whether to delete app data on uninstall.
+* <code id="NsisOptions-differentialPackage">differentialPackage</code> Boolean - Defaults to `true` for web installer (`nsis-web`)
 
 ---
 
@@ -52,12 +53,24 @@ Inherited from `TargetSpecificOptions`:
 * <code id="NsisOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->
 
+---
+
 Unicode enabled by default. Large strings are supported (maximum string length of 8192 bytes instead of the default of 1024 bytes).
 
 ## 32 bit + 64 bit
 
 If you build both ia32 and x64 arch (`--x64 --ia32`), you in any case get one installer. Appropriate arch will be installed automatically.
-The same applied to web installer (`nsis-web` target).
+The same applied to web installer (`nsis-web` [target](/configuration/win.md#WindowsConfiguration-target)).
+
+## Web Installer
+
+To build web installer, set [target](/configuration/win.md#WindowsConfiguration-target) to `nsis-web`. Web Installer automatically detects OS architecture and downloads corresponding package file. So, user don't need to guess what installer to download and in the same time you don't bundle package files for all architectures in the one installer (as in case of default `nsis` target). It doesn't matter for common Electron application (due to superb LZMA compression, size difference is acceptable), but if your application is huge, Web Installer is a solution.
+
+If for some reasons web installer cannot download (antivirus, offline):
+* Download package file into the same directory where installer located. It will be detected automatically and used instead of downloading from the Internet. Please note — only original package file is allowed (checksum is checked).
+* Specify any local package file using `--package-file=path_to_file`.
+
+
 
 ## Custom NSIS script
 

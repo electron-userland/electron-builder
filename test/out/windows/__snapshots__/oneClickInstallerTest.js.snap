@@ -196,26 +196,6 @@ Object {
 }
 `;
 
-exports[`web installer (default github) 2`] = `
-Object {
-  "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
-  "packages": Object {
-    "ia32": Object {
-      "file": "TestApp-1.1.0-ia32.nsis.7z",
-      "sha512": "WdC7BOFFM4ARiugwxl3MS71xcTvijrtlPebeu148kwqOMVssYD8WCb9GokblRWFzB4kOJF+NqzClvCG/EDCa+w==",
-      "size": 107273118,
-    },
-    "x64": Object {
-      "file": "TestApp-1.1.0-x64.nsis.7z",
-      "sha512": "5vdBM/v4D7Ko/td7tplSlxbMB9dWDWa7jEr4dFEWNiFA7kyvAxVJgweU5TcD48dc21U9sE5K5M/XAU++0/dENg==",
-      "size": 138435914,
-    },
-  },
-  "path": "Test App ßW Web Setup 1.1.0.exe",
-  "version": "1.1.0",
-}
-`;
-
 exports[`web installer 1`] = `
 Object {
   "win": Array [

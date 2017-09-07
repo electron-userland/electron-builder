@@ -125,10 +125,9 @@ export interface NsisOptions extends CommonNsisOptions, TargetSpecificOptions {
   readonly deleteAppDataOnUninstall?: boolean
 
   /**
-   * @private
-   * @default false
+   * Defaults to `true` for web installer (`nsis-web`)
    */
-  readonly differentialPackage?: boolean
+  differentialPackage?: boolean
 
   /**
    * Whether to create desktop shortcut.

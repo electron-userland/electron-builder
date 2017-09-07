@@ -14,22 +14,16 @@
     SetCompress "${COMPRESS}"
   !endif
 
-  !ifdef APP_64
-    ${if} ${RunningX64}
-      !insertmacro doExtractEmbeddedAppPackage "64"
-    ${else}
-      !insertmacro doExtractEmbeddedAppPackage "32"
+  StrCpy $0 "64"
+  !ifdef APP_32
+    ${ifNot} ${RunningX64}
+      StrCpy $0 "32"
     ${endif}
-  !else
-    !insertmacro doExtractEmbeddedAppPackage "32"
   !endif
-!macroend
-
-!macro doExtractEmbeddedAppPackage ARCH
   !ifdef ZIP_COMPRESSION
-    nsisunz::Unzip "$PLUGINSDIR\app-${ARCH}.zip" "$INSTDIR"
+    nsisunz::Unzip "$PLUGINSDIR\app-$0.zip" "$INSTDIR"
   !else
-    !insertmacro extractUsing7za "$PLUGINSDIR\app-${ARCH}.7z"
+    !insertmacro extractUsing7za "$PLUGINSDIR\app-$0.7z"
   !endif
 !macroend
 
@@ -50,17 +44,5 @@
     !undef UniqueID
   !else
     Nsis7z::Extract "${FILE}"
-  !endif
-!macroend
-
-!macro copyPackageFile FILE
-  !ifdef SEVEN_ZIP_FILE
-    ClearErrors
-    Rename "${FILE}" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
-    ${if} ${errors}
-      # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
-      ClearErrors
-      CopyFiles /SILENT "${FILE}" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
-    ${endif}
   !endif
 !macroend

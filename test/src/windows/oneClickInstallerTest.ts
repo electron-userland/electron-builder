@@ -238,14 +238,4 @@ test.ifAll.ifNotCiMac("web installer (default github)", app({
       repo: "foo/bar"
     }
   },
-}, {
-  packed: async context => {
-    const data = safeLoad(await readFile(path.join(context.outDir, "nsis-web", "latest.yml"), "utf-8"))
-    expect(data.releaseDate).toBeDefined()
-    expect(data.sha512).toBeDefined()
-    delete data.releaseDate
-    delete data.sha2
-    delete data.sha512
-    expect(data).toMatchSnapshot()
-  },
 }))

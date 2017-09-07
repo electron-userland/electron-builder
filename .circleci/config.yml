@@ -9,6 +9,9 @@ jobs:
         - restore_cache:
             keys:
               - dependencies-{{ checksum "yarn.lock" }}
+        - restore_cache:
+            keys:
+              - v-1.8.0-electron
         - run:
             command: yarn
         - run:
@@ -17,11 +20,19 @@ jobs:
             key: dependencies-{{ checksum "yarn.lock" }}
             paths:
               - node_modules
+        - run:
+            command: node ./test/out/helpers/downloadElectron.js
+        - save_cache:
+            key: v-1.8.0-electron
+            paths:
+              - ~/.cache/electron
 
     test:
       parallelism: 4
       docker:
         - image: electronuserland/electron-builder:wine
+          environment:
+            JEST_JUNIT_OUTPUT: ./test-reports/test.xml
       steps:
         - checkout
         - run:
@@ -35,10 +46,13 @@ jobs:
               - dependencies-{{ checksum "yarn.lock" }}
         - restore_cache:
             keys:
-              - v-1.7.6-electron
+              - v-1.8.0-electron
         # because in the build job we use circleci docker image and circleci restores cache to original user home
         - run:
-            command: mv /home/circleci/project/node_modules node_modules
+            command: |
+              mv /home/circleci/project/node_modules node_modules
+              mkdir -p ~/.cache
+              mv /home/circleci/.cache/electron ~/.cache/electron
         - run:
             # do not use yarn test because lint is done in the build job
             command: |
@@ -46,10 +60,6 @@ jobs:
               node ./test/out/helpers/runTests.js
         - store_test_results:
             path: test-reports
-        - save_cache:
-            key: v-1.7.6-electron
-            paths:
-              - ~/.cache/electron
 
 workflows:
   version: 2

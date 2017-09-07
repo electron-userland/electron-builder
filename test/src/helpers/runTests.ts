@@ -1,18 +1,16 @@
 import BluebirdPromise from "bluebird-lst"
 import { createHash } from "crypto"
-import { emptyDir, readdir, readJson, remove, unlink } from "fs-extra-p"
+import { emptyDir, readJson, remove } from "fs-extra-p"
 import isCi from "is-ci"
 import { tmpdir } from "os"
 import * as path from "path"
-import { ELECTRON_VERSION } from "./testConfig"
+import { deleteOldElectronVersion, downloadAllRequiredElectronVersions } from "./downloadElectron"
 
 const rootDir = path.join(__dirname, "../../..")
 
 // we set NODE_PATH in this file, so, we cannot use 'out/util' path here
 const util = require(`${rootDir}/packages/builder-util/out/util`)
 const isEmptyOrSpaces = util.isEmptyOrSpaces
-
-const downloadElectron: (options: any) => Promise<any> = BluebirdPromise.promisify(require("electron-download-tf"))
 
 const baseDir = process.env.ELECTRON_BUILDER_TEST_DIR || (process.platform === "darwin" && !require("is-ci") ? "/tmp" : tmpdir())
 const TEST_TMP_DIR = path.join(baseDir, `et-${createHash("md5").update(__dirname).digest("hex")}`)
@@ -23,58 +21,17 @@ runTests()
     process.exit(1)
   })
 
-async function deleteOldElectronVersion(): Promise<any> {
-  if (!isCi) {
-    return
-  }
-
-  const cacheDir = require("env-paths")("electron", {suffix: ""}).cache
-  try {
-    const deletePromises: Array<Promise<any>> = []
-    for (const file of (await readdir(cacheDir))) {
-      if (file.endsWith(".zip") && !file.includes(ELECTRON_VERSION)) {
-        console.log(`Remove old electron ${file}`)
-        deletePromises.push(unlink(path.join(cacheDir, file)))
-      }
-    }
-    return await BluebirdPromise.all(deletePromises)
-  }
-  catch (e) {
-    if (e.code === "ENOENT") {
-      return []
-    }
-    else {
-      throw e
-    }
-  }
-}
-
-function downloadAllRequiredElectronVersions(): Promise<any> {
-  const platforms = process.platform === "win32" ? ["win32"] : ["darwin", "linux", "win32"]
-  if (process.platform === "darwin") {
-    platforms.push("mas")
-  }
-
-  const versions: Array<any> = []
-  for (const platform of platforms) {
-    const archs = (platform === "mas" || platform === "darwin") ? ["x64"] : (platform === "win32" ? ["ia32", "x64"] : ["ia32", "x64", "armv7l"])
-    for (const arch of archs) {
-      versions.push({
-        version: ELECTRON_VERSION,
-        arch,
-        platform,
-      })
-    }
-  }
-  return BluebirdPromise.map(versions, it => downloadElectron(it), {concurrency: 3})
-}
-
 async function runTests() {
-  await BluebirdPromise.all([
-    deleteOldElectronVersion(),
-    downloadAllRequiredElectronVersions(),
-    emptyDir(TEST_TMP_DIR),
-  ])
+  if (process.env.CIRCLECI) {
+    await emptyDir(TEST_TMP_DIR)
+  }
+  else {
+    await BluebirdPromise.all([
+      deleteOldElectronVersion(),
+      downloadAllRequiredElectronVersions(),
+      emptyDir(TEST_TMP_DIR),
+    ])
+  }
 
   const testFiles: string | null | undefined = process.env.TEST_FILES
 
@@ -154,7 +111,8 @@ async function runTests() {
               testPathIgnorePatterns.push("[\\/]{1}ArtifactPublisherTest.js$")
               config.cacheDirectory += `-${suffix}`
             }
-            break
+              // noinspection TsLint
+              break
 
             default:
               throw new Error(`Unknown opt ${scriptArg}`)
@@ -167,18 +125,19 @@ async function runTests() {
     }
   }
 
-  if (process.env.CIRCLECI != null) {
-    config.testResultsProcessor = "jest-junit"
-    process.env.JEST_JUNIT_OUTPUT = path.join(rootDir, "test-reports", "test-report.xml")
-  }
-
-  require("jest-cli").runCLI({
+  const jestArgs: any = {
     verbose: true,
     updateSnapshot: process.env.UPDATE_SNAPSHOT === "true",
     config,
     runInBand,
-    testPathPattern: args.length > 0 ? args.join("|") : null,
-  }, [rootDir], (result: any) => {
+  }
+  if (args.length > 0) {
+    jestArgs.testPathPattern = args.join("|")
+  }
+  if (process.env.CIRCLECI != null) {
+    jestArgs.testResultsProcessor = "jest-junit"
+  }
+  require("jest-cli").runCLI(jestArgs, [rootDir], (result: any) => {
     const exitCode = !result || result.success ? 0 : 1
     process.exitCode = exitCode
     remove(TEST_TMP_DIR)

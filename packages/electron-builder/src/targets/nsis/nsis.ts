@@ -180,6 +180,8 @@ export class NsisTarget extends Target {
         const defineKey = arch === Arch.x64 ? "APP_64" : "APP_32"
         defines[defineKey] = file
         defines[`${defineKey}_NAME`] = path.basename(file)
+        // nsis expect a hexadecimal string
+        defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)

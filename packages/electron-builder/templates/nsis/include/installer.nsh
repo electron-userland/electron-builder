@@ -67,13 +67,52 @@
     File /r "${APP_BUILD_DIR}/*.*"
   !else
     !ifdef APP_PACKAGE_URL
-      ${StdUtils.GetParameter} $R0 "package-file" ""
-      ${if} $R0 == ""
+      Var /GLOBAL packageFile
+      ${StdUtils.GetParameter} $packageFile "package-file" ""
+      ${if} $packageFile == ""
+        !ifdef APP_64_NAME
+          !ifdef APP_32_NAME
+            ${if} ${RunningX64}
+              StrCpy $packageFile "${APP_64_NAME}"
+              StrCpy $1 "${APP_64_HASH}"
+            ${else}
+              StrCpy $packageFile "${APP_32_NAME}"
+              StrCpy $1 "${APP_32_HASH}"
+            ${endif}
+          !else
+            StrCpy $packageFile "${APP_64_NAME}"
+            StrCpy $1 "${APP_64_HASH}"
+          !endif
+        !else
+          StrCpy $packageFile "${APP_32_NAME}"
+          StrCpy $1 "${APP_32_HASH}"
+        !endif
+        StrCpy $4 "$packageFile"
+        StrCpy $packageFile "$EXEDIR/$packageFile"
+
+        ${if} ${FileExists} "$packageFile"
+          # we do not check file hash is specifed explicitly using --package-file because it is clear that user definitly want to use this file and it is user responsibility to check
+          # 1. auto-updater uses --package-file and validates checksum 2. user can user another package file (use case - one installer suitable for any app version (use latest version))
+          ${StdUtils.HashFile} $3 "SHA2-512" "$packageFile"
+          ${if} $3 == $1
+            Goto fun_extract
+          ${else}
+            MessageBox MB_OK "Package file $4 found locally, but checksum doesn't match — expected $1, actual $3.$\r$\nLocal file is ignored and package will be downloaded from Internet."
+          ${endIf}
+        ${endIf}
         !insertmacro downloadApplicationFiles
-      ${else}
-        !insertmacro extractUsing7za "$R0"
-        !insertmacro copyPackageFile "$R0"
       ${endIf}
+
+      fun_extract:
+        !insertmacro extractUsing7za "$packageFile"
+
+        ClearErrors
+        Rename "$packageFile" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+        ${if} ${errors}
+          # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
+          ClearErrors
+          CopyFiles /SILENT "$packageFile" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+        ${endif}
     !else
       !insertmacro extractEmbeddedAppPackage
     !endif

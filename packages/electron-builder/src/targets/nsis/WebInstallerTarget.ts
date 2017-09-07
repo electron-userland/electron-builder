@@ -8,6 +8,10 @@ import { AppPackageHelper } from "./nsisUtil"
 export class WebInstallerTarget extends NsisTarget {
   constructor(packager: WinPackager, outDir: string, targetName: string, packageHelper: AppPackageHelper) {
     super(packager, outDir, targetName, packageHelper)
+
+    if (this.options.differentialPackage == null) {
+      this.options.differentialPackage = true
+    }
   }
 
   get isWebInstaller(): boolean {
@@ -16,12 +20,12 @@ export class WebInstallerTarget extends NsisTarget {
 
   protected async configureDefines(oneClick: boolean, defines: any): Promise<any> {
     //noinspection ES6MissingAwait
-    await (NsisTarget.prototype as any).configureDefines.call(this, oneClick, defines)
+    await (NsisTarget.prototype as WebInstallerTarget).configureDefines.call(this, oneClick, defines)
 
     const packager = this.packager
-    const options = this.options
+    const options = this.options as NsisWebOptions
 
-    let appPackageUrl = (options as NsisWebOptions).appPackageUrl
+    let appPackageUrl = options.appPackageUrl
     if (appPackageUrl == null) {
       const publishConfigs = await getPublishConfigsForUpdateInfo(packager, await getPublishConfigs(packager, this.options, null), null)
       if (publishConfigs == null || publishConfigs.length === 0) {
