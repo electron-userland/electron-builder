@@ -2,7 +2,9 @@ import { exec } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseFiles } from "builder-util/out/license"
 import { outputFile, readFile } from "fs-extra-p"
-import { getDefaultButtons } from "./licenseDefaultButtons"
+import { getLicenseButtonsFile, getLicenseButtons } from "./licenseButtons"
+import _debug from "debug"
+export const debug = _debug("electron-builder")
 
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
 const DEFAULT_REGION_CODE = 0
@@ -13,6 +15,8 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   if (licenseFiles.length === 0) {
     return
   }
+
+  const licenseButtonFiles = await getLicenseButtonsFile(packager)
 
   if (packager.debugLogger.enabled) {
     packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
@@ -25,6 +29,9 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   let counter = 5000
   const addedRegionCodes: Array<number> = []
   for (const item of licenseFiles) {
+
+    debug("Adding " + item.langName + " license")
+
     // value from DropDMG, data the same for any language
     // noinspection SpellCheckingInspection
     style.push(`data 'styl' (${counter}, "${item.langName}") {
@@ -39,7 +46,7 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
     data += "\n};"
     rtfs.push(data)
 
-    defaultButtons.push(getDefaultButtons(item.langWithRegion, counter, item.langName))
+    defaultButtons.push(await getLicenseButtons(licenseButtonFiles, item.langWithRegion, counter, item.langName))
 
     addedRegionCodes.push(getRegionCode(item.langWithRegion))
 
