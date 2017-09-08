@@ -141,6 +141,14 @@ export function getFixtureDir() {
   return path.join(__dirname, "..", "..", "fixtures")
 }
 
+function normalizeUpdateInfo(host: any, key: string) {
+  delete host[key].sha512
+  delete host[key].size
+  delete host[key].headerSize
+  delete host[key].blockMapSize
+  host[key].file = path.basename(host[key].file)
+}
+
 async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: AssertPackOptions) {
   const cancellationToken = new CancellationToken()
   const packager = new Packager(packagerOptions, cancellationToken)
@@ -185,9 +193,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
             }
             else {
               for (const arch of archs) {
-                delete fileContent.packages[arch].sha512
-                delete fileContent.packages[arch].size
-                fileContent.packages[arch].file = path.basename(fileContent.packages[arch].file)
+                normalizeUpdateInfo(fileContent.packages, arch)
               }
             }
           }
@@ -204,9 +210,7 @@ async function packAndCheck(packagerOptions: PackagerOptions, checkOptions: Asse
         }
         else {
           for (const arch of archs) {
-            delete packageFiles[arch].sha512
-            delete packageFiles[arch].size
-            packageFiles[arch].file = path.basename(packageFiles[arch].file)
+            normalizeUpdateInfo(packageFiles, arch)
           }
         }
       }

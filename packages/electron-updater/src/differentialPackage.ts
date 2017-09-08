@@ -1,27 +1,31 @@
 import BluebirdPromise from "bluebird-lst"
 import { configureRequestOptionsFromUrl, DigestTransform, HttpError, HttpExecutor, PackageFileInfo, safeGetHeader } from "builder-util-runtime"
-import { BLOCK_MAP_FILE_NAME, BlockMap, BlockMapFile } from "builder-util-runtime/out/differentialUpdate/blockMapApi"
-import { openZip } from "builder-util-runtime/out/differentialUpdate/localZip"
-import { Entry, eocdrWithoutCommentSize, readCentralDirectoryEntry } from "builder-util-runtime/out/differentialUpdate/zip"
-import { close, createReadStream, createWriteStream, open } from "fs-extra-p"
+import { BlockMap, BlockMapFile, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockMapApi"
+import { close, createReadStream, createWriteStream, open, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders, RequestOptions } from "http"
 import { safeLoad } from "js-yaml"
 import { Logger } from "./main"
 
 const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
 
+export class DifferentialDownloaderOptions {
+  readonly oldBlockMapFile: string
+  readonly oldPackageFile: string
+  readonly logger: Logger
+  readonly packagePath: string
+
+  readonly requestHeaders: OutgoingHttpHeaders | null
+}
+
 export class DifferentialDownloader {
   private readonly baseRequestOptions: RequestOptions
 
-  private blockMapBuffer: Buffer
-  private centralDirectoryBuffer: Buffer
+  private fileMetadataBuffer: Buffer
 
-  constructor(private readonly packageInfo: PackageFileInfo,
-              private readonly httpExecutor: HttpExecutor<any>,
-              private readonly requestHeaders: OutgoingHttpHeaders | null,
-              private readonly oldPackageFile: string,
-              private readonly logger: Logger,
-              private readonly packagePath: string) {
+  private readonly logger: Logger
+
+  constructor(private readonly packageInfo: PackageFileInfo, private readonly httpExecutor: HttpExecutor<any>, private readonly options: DifferentialDownloaderOptions) {
+    this.logger = options.logger
     this.baseRequestOptions = configureRequestOptionsFromUrl(packageInfo.file, {})
   }
 
@@ -30,45 +34,19 @@ export class DifferentialDownloader {
       ...this.baseRequestOptions,
       method,
       headers: {
-        ...this.requestHeaders,
+        ...this.options.requestHeaders,
         Accept: "*/*",
       } as any,
     }
   }
 
   async download() {
-    const entries = await this.readCentralDirectory()
-    await this.computeDifference(entries)
-  }
+    const packageInfo = this.packageInfo
+    const offset = packageInfo.size - packageInfo.headerSize!! - packageInfo.blockMapSize!!
+    this.fileMetadataBuffer = await this.readRemoteBytes(offset, packageInfo.size - 1)
 
-  private async readCentralDirectory() {
-    // eocdrWithoutCommentSize, we assume that zip file must not have comment
-    const bufferSize = eocdrWithoutCommentSize
-    const buffer = await this.readRemoteBytes(this.packageInfo.size - bufferSize, bufferSize)
-
-    const zipReader = readCentralDirectoryEntry(buffer)
-    const centralDirectoryBuffer = await this.readRemoteBytes(zipReader.centralDirectoryOffset, zipReader.centralDirectorySize)
-    const entries = zipReader.readEntries(await this.readRemoteBytes(zipReader.centralDirectoryOffset, zipReader.centralDirectorySize))
-    this.centralDirectoryBuffer = Buffer.concat([buffer, centralDirectoryBuffer])
-    return entries
-  }
-
-  private async computeDifference(newEntries: Array<Entry>) {
-    const oldZip = await openZip(this.oldPackageFile)
-    const oldEntries = await oldZip.readEntries()
-
-    const oldEntryMap = buildEntryMap(oldEntries)
-    const oldBlockMapEntry = getBlockMapEntry(oldEntryMap)
-
-    const newEntryMap = buildEntryMap(newEntries)
-    const newBlockMapEntry = getBlockMapEntry(newEntryMap)
-
-    const oldBlockMap = await readBlockMap(await oldZip.readEntryData(oldBlockMapEntry))
-
-    // we append blockMapBuffer to result file as is, so, read not only entry data, but entry header also
-    const headerSize = newBlockMapEntry.dataStart - newBlockMapEntry.offset
-    this.blockMapBuffer = await this.readRemoteBytes(newBlockMapEntry.offset, headerSize + newBlockMapEntry.compressedSize)
-    const newBlockMap = await readBlockMap(this.blockMapBuffer.slice(headerSize))
+    const oldBlockMap = safeLoad(await readFile(this.options.oldBlockMapFile, "utf-8"))
+    const newBlockMap = await readBlockMap(this.fileMetadataBuffer.slice(this.packageInfo.headerSize!!))
 
     // we don't check other metadata like compressionMethod - generic check that it is make sense to differentially update is suitable for it
     if (oldBlockMap.hashMethod !== newBlockMap.hashMethod) {
@@ -78,7 +56,7 @@ export class DifferentialDownloader {
       throw new Error(`blockSize is different (${oldBlockMap.blockSize} - ${newBlockMap.blockSize}), full download is required`)
     }
 
-    const operations = this.computeOperations(newEntries, oldEntryMap, oldBlockMap, newBlockMap)
+    const operations = this.computeOperations(oldBlockMap, newBlockMap)
     if (this.logger.debug != null) {
       this.logger.debug(JSON.stringify(operations, null, 2))
     }
@@ -96,7 +74,7 @@ export class DifferentialDownloader {
     }
 
     const newPackageSize = this.packageInfo.size
-    if ((downloadSize + copySize + this.blockMapBuffer.length + this.centralDirectoryBuffer.length) !== newPackageSize) {
+    if ((downloadSize + copySize + this.fileMetadataBuffer.length + 32) !== newPackageSize) {
       throw new Error(`Internal error, size mismatch: downloadSize: ${downloadSize}, copySize: ${copySize}, newPackageSize: ${newPackageSize}`)
     }
 
@@ -106,14 +84,30 @@ export class DifferentialDownloader {
   }
 
   private async downloadFile(operations: Array<Operation>) {
-    const oldFileFd = await open(this.oldPackageFile, "r")
+    // todo we can avoid download remote and construct manually
+    const signature = await this.readRemoteBytes(0, SIGNATURE_HEADER_SIZE - 1)
+
+    const oldFileFd = await open(this.options.oldPackageFile, "r")
     await new BluebirdPromise((resolve, reject) => {
       const streams: Array<any> = []
-      streams.push(new DigestTransform(this.packageInfo.sha512, "sha512", "base64"))
+      const digestTransform = new DigestTransform(this.packageInfo.sha512)
+      // to simply debug, do manual validation to allow file to be fully written
+      digestTransform.isValidateOnEnd = false
+      streams.push(digestTransform)
 
-      const fileOut = createWriteStream(this.packagePath)
+      const fileOut = createWriteStream(this.options.packagePath)
       fileOut.on("finish", () => {
-        (fileOut.close as any)(resolve)
+        (fileOut.close as any)(() => {
+          try {
+            digestTransform.validate()
+          }
+          catch (e) {
+            reject(e)
+            return
+          }
+
+          resolve()
+        })
       })
 
       streams.push(fileOut)
@@ -129,26 +123,27 @@ export class DifferentialDownloader {
         }
       }
 
+      const firstStream = streams[0]
+
       const w = (index: number) => {
         if (index >= operations.length) {
-          fileOut.write(this.blockMapBuffer, () => {
-            fileOut.end(this.centralDirectoryBuffer)
-          })
+          firstStream.end(this.fileMetadataBuffer)
           return
         }
 
         const operation = operations[index++]
 
         if (operation.kind === OperationKind.COPY) {
-          const readStream = createReadStream(this.oldPackageFile, {
+          const readStream = createReadStream(this.options.oldPackageFile, {
             fd: oldFileFd,
             autoClose: false,
             start: operation.start,
-            end: operation.end,
+            // end is inclusive
+            end: operation.end - 1,
           })
           readStream.on("error", reject)
           readStream.once("end", () => w(index))
-          readStream.pipe(streams[0], {
+          readStream.pipe(firstStream, {
             end: false
           })
         }
@@ -156,14 +151,14 @@ export class DifferentialDownloader {
           // https://github.com/electron-userland/electron-builder/issues/1523#issuecomment-327084661
           // todo to reduce http requests we need to consolidate non sequential download operations (Multipart ranges)
           const requestOptions = this.createRequestOptions("get")
-          requestOptions.headers!!.Range = `bytes=${operation.start}-${operation.end}`
+          requestOptions.headers!!.Range = `bytes=${operation.start}-${operation.end - 1}`
           const request = this.httpExecutor.doRequest(requestOptions, response => {
             // Electron net handles redirects automatically, our NodeJS test server doesn't use redirects - so, we don't check 3xx codes.
             if (response.statusCode >= 400) {
               reject(new HttpError(response))
             }
 
-            response.pipe(streams[0], {
+            response.pipe(firstStream, {
               end: false
             })
             response.once("end", () => w(index))
@@ -173,32 +168,32 @@ export class DifferentialDownloader {
         }
       }
 
-      w(0)
+      firstStream.write(signature, () => w(0))
     })
       .finally(() => close(oldFileFd))
   }
 
-  private computeOperations(newEntries: Array<Entry>, oldEntryMap: Map<string, Entry>, oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+  private computeOperations(oldBlockMap: BlockMap, newBlockMap: BlockMap) {
+    // const oldEntryMap: Map<string, Entry>
     const nameToOldBlocks = buildBlockFileMap(oldBlockMap.files)
     const nameToNewBlocks = buildBlockFileMap(newBlockMap.files)
 
     // convert kb to bytes
     const blockSize = newBlockMap.blockSize * 1024
 
-    const operations: Array<Operation> = []
-    for (const entry of newEntries) {
-      if (entry.fileName === BLOCK_MAP_FILE_NAME) {
-        continue
-      }
+    const oldEntryMap = buildEntryMap(oldBlockMap.files)
 
+    const operations: Array<Operation> = []
+    for (const blockMapFile of newBlockMap.files) {
       // for new empty file we can avoid HTTP request (construct entry manually), but as it is a rare case, we avoid code complication and handle it as for a new file
-      const oldEntry = entry.compressedSize === 0 ? null : oldEntryMap.get(entry.fileName)
-      if (oldEntry == null || oldEntry.compressedSize === 0 /* new file is not empty, but old is empty - no need to check block map, just download the whole new entry */) {
+      const name = blockMapFile.name
+      const oldEntry = blockMapFile.size === 0 ? null : oldEntryMap.get(name)
+      if (oldEntry == null || blockMapFile.size === 0 /* new file is not empty, but old is empty - no need to check block map, just download the whole new entry */) {
         // new file
         operations.push({
           kind: OperationKind.DOWNLOAD,
-          start: entry.offset,
-          end: entry.dataEnd,
+          start: blockMapFile.offset,
+          end: blockMapFile.size - blockMapFile.offset,
         })
         continue
       }
@@ -206,8 +201,8 @@ export class DifferentialDownloader {
       let lastOperation: Operation | null = null
       // const operationCountBeforeFile = operations.length
 
-      const newFile = nameToNewBlocks.get(entry.fileName)!!
-      const oldFile = nameToOldBlocks.get(entry.fileName)!!
+      const newFile = nameToNewBlocks.get(name)!!
+      const oldFile = nameToOldBlocks.get(name)!!
 
       let changedBlockCount = 0
 
@@ -223,11 +218,9 @@ export class DifferentialDownloader {
 
         if (oldFile.blocks[i] === newFile.blocks[i]) {
           if (lastOperation == null || lastOperation.kind !== OperationKind.COPY) {
-            const start = isFirstBlock ? oldEntry.offset : (oldEntry.dataStart + (i * blockSize))
-            let end = start + currentBlockSize
+            const start = oldEntry.offset + (i * blockSize)
+            const end = start + currentBlockSize
             if (isFirstBlock) {
-              end += (oldEntry.dataStart - oldEntry.offset)
-
               if (operations.length > 0) {
                 const prevOperation = operations[operations.length - 1]
                 if (prevOperation.kind === OperationKind.COPY && prevOperation.end === start) {
@@ -252,12 +245,8 @@ export class DifferentialDownloader {
         else {
           changedBlockCount++
 
-          const start = isFirstBlock ? entry.offset : (entry.dataStart + (i * blockSize))
-          let end = start + currentBlockSize
-          if (isFirstBlock) {
-            end += (oldEntry.dataStart - oldEntry.offset)
-          }
-
+          const start = blockMapFile.offset + (i * blockSize)
+          const end = start + currentBlockSize
           if (lastOperation == null || lastOperation.kind !== OperationKind.DOWNLOAD) {
             lastOperation = {
               kind: OperationKind.DOWNLOAD,
@@ -273,16 +262,16 @@ export class DifferentialDownloader {
       }
 
       if (changedBlockCount > 0) {
-        this.logger.info(`File ${entry.fileName} has ${changedBlockCount} changed blocks`)
+        this.logger.info(`File ${blockMapFile.name} has ${changedBlockCount} changed blocks`)
       }
     }
     return operations
   }
 
-  private async readRemoteBytes(offset: number, length: number) {
-    const buffer = Buffer.allocUnsafe(length)
-    const requestOptions = this.createRequestOptions("get")
-    requestOptions.headers!!.Range = `bytes=${offset}-${offset + length}`
+  private async readRemoteBytes(start: number, endInclusive: number) {
+    const buffer = Buffer.allocUnsafe((endInclusive + 1) - start)
+    const requestOptions = this.createRequestOptions()
+    requestOptions.headers!!.Range = `bytes=${start}-${endInclusive}`
     let position = 0
     await this.request(requestOptions, chunk => {
       chunk.copy(buffer, position)
@@ -328,18 +317,10 @@ interface Operation {
   end: number
 }
 
-function getBlockMapEntry(map: Map<string, Entry>) {
-  const result = map.get(BLOCK_MAP_FILE_NAME)
-  if (result == null) {
-    throw new Error("Current package doesn't have blockMap.yml")
-  }
-  return result
-}
-
-function buildEntryMap(list: Array<Entry>) {
-  const result = new Map<string, Entry>()
+function buildEntryMap(list: Array<BlockMapFile>) {
+  const result = new Map<string, BlockMapFile>()
   for (const item of list) {
-    result.set(item.fileName, item)
+    result.set(item.name, item)
   }
   return result
 }

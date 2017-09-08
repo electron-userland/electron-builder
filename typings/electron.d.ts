@@ -6940,7 +6940,7 @@ declare namespace Electron {
     /**
      * A subtitle for the notification, which will be displayed below the title.
      */
-    subtitle: string;
+    subtitle?: string;
     /**
      * The body text of the notification, which will be displayed below the title or
      * subtitle
@@ -6966,7 +6966,7 @@ declare namespace Electron {
      * Actions to add to the notification. Please read the available actions and
      * limitations in the NotificationAction documentation
      */
-    actions: NotificationAction[];
+    actions?: NotificationAction[];
   }
 
   interface OnBeforeRedirectDetails {

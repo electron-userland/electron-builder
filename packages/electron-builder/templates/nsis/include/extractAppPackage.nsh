@@ -3,46 +3,38 @@
     SetCompress off
   !endif
 
-  !ifdef APP_32
-    File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
-  !endif
+  Var /GLOBAL packageArch
+
   !ifdef APP_64
-    File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
+    StrCpy $packageArch "64"
+
+    !ifdef APP_32
+      ${if} ${RunningX64}
+        File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
+      ${else}
+        StrCpy $packageArch "32"
+        File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
+      ${endIf}
+    !else
+      File /oname=$PLUGINSDIR\app-64.${COMPRESSION_METHOD} "${APP_64}"
+    !endif
+  !else
+    StrCpy $packageArch "32"
+
+    File /oname=$PLUGINSDIR\app-32.${COMPRESSION_METHOD} "${APP_32}"
   !endif
 
   !ifdef COMPRESS
     SetCompress "${COMPRESS}"
   !endif
 
-  StrCpy $0 "64"
-  !ifdef APP_32
-    ${ifNot} ${RunningX64}
-      StrCpy $0 "32"
-    ${endif}
-  !endif
   !ifdef ZIP_COMPRESSION
-    nsisunz::Unzip "$PLUGINSDIR\app-$0.zip" "$INSTDIR"
+    nsisunz::Unzip "$PLUGINSDIR\app-$packageArch.zip" "$INSTDIR"
   !else
-    !insertmacro extractUsing7za "$PLUGINSDIR\app-$0.7z"
+    !insertmacro extractUsing7za "$PLUGINSDIR\app-$packageArch.7z"
   !endif
 !macroend
 
 !macro extractUsing7za FILE
-  !ifdef SEVEN_ZIP_FILE
-    # http://nsis.sourceforge.net/Tutorial:_Using_labels_in_macro%27s
-    !define UniqueID ${__LINE__}
-    extractAppFiles_${UniqueID}:
-      ClearErrors
-      nsExec::ExecToStack '"$PLUGINSDIR\7za.exe" x "${FILE}" -aoa -bb0 -o"$INSTDIR"'
-      Pop $0 # return value/error/timeout
-      Pop $1 # printed text, up to ${NSIS_MAX_STRLEN}
-
-    ${if} $0 != "0"
-      MessageBox MB_RETRYCANCEL "Failed to extract files: $0 $1" /SD IDCANCEL IDRETRY extractAppFiles_${UniqueID} IDCANCEL
-      Quit
-    ${endIf}
-    !undef UniqueID
-  !else
-    Nsis7z::Extract "${FILE}"
-  !endif
+  Nsis7z::Extract "${FILE}"
 !macroend

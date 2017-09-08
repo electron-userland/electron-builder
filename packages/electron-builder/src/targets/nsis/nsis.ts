@@ -1,10 +1,11 @@
+import { createDifferentialPackage, createPackageFileInfo } from "app-package-builder"
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
 import { copyFile, statOrNull } from "builder-util/out/fs"
 import _debug from "debug"
-import { readFile } from "fs-extra-p"
+import { readFile, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -13,7 +14,6 @@ import { normalizeExt } from "../../platformPackager"
 import { time } from "../../util/timer"
 import { WinPackager } from "../../winPackager"
 import { archive, ArchiveOptions } from "../archive"
-import { createDifferentialPackage, createPackageFileInfo } from "../blockMap"
 import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } from "./nsisLang"
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
@@ -74,14 +74,16 @@ export class NsisTarget extends Target {
     }
 
     const isDifferentialPackage = options.differentialPackage
-    const format = isDifferentialPackage || options.useZip ? "zip" : "7z"
+    const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
     const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
     const archiveOptions: ArchiveOptions = {withoutDir: true}
     let compression = packager.config.compression
 
     const timer = time(`nsis package, ${Arch[arch]}`)
     if (isDifferentialPackage) {
-      archiveOptions.method = "LZMA"
+      archiveOptions.solid = false
+      // our reader doesn't support compressed headers
+      archiveOptions.isArchiveHeaderCompressed = false
       // do not allow to change compression level to avoid different packages
       compression = null
     }
@@ -89,7 +91,7 @@ export class NsisTarget extends Target {
     timer.end()
 
     if (options.differentialPackage) {
-      return await createDifferentialPackage(archiveFile, packager)
+      return await createDifferentialPackage(archiveFile)
     }
     else {
       return await createPackageFileInfo(archiveFile)
@@ -182,6 +184,13 @@ export class NsisTarget extends Target {
         defines[`${defineKey}_NAME`] = path.basename(file)
         // nsis expect a hexadecimal string
         defines[`${defineKey}_HASH`] = Buffer.from(fileInfo.sha512, "base64").toString("hex").toUpperCase()
+
+        if (fileInfo.blockMapData != null) {
+          const blockMapFile = await packager.getTempFile(".yml")
+          await writeFile(blockMapFile, fileInfo.blockMapData)
+          defines[`${defineKey}_BLOCK_MAP_FILE`] = blockMapFile
+          delete fileInfo.blockMapData
+        }
 
         if (this.isWebInstaller) {
           packager.dispatchArtifactCreated(file, this, arch)
@@ -383,16 +392,6 @@ export class NsisTarget extends Target {
     if (options.displayLanguageSelector === true) {
       defines.DISPLAY_LANG_SELECTOR = null
     }
-
-    if (options.differentialPackage) {
-      asyncTaskManager.add(async () => {
-        // todo use x64 if installer only x64
-        const s7File = path.join(await nsisResourcePathPromise.value, "ia32", "7za.exe")
-        defines.SEVEN_ZIP_FILE = s7File
-        await packager.sign(s7File)
-      })
-    }
-    defines.PACKAGE_FILE_EXT = options.differentialPackage ? "zip" : "7z"
 
     return asyncTaskManager.awaitTasks()
   }

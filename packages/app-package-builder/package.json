@@ -1,7 +1,7 @@
 {
-  "name": "electron-publisher-s3",
+  "name": "app-package-builder",
   "version": "0.0.0-semantic-release",
-  "main": "out/s3Publisher.js",
+  "main": "out/main.js",
   "author": "Vladimir Krivosheev",
   "license": "MIT",
   "repository": "electron-userland/electron-builder",
@@ -11,12 +11,12 @@
     "out"
   ],
   "dependencies": {
+    "bluebird-lst": "^1.0.3",
     "fs-extra-p": "^4.4.0",
-    "aws-sdk": "^2.112.0",
-    "mime": "^1.4.0",
-    "electron-publish": "~0.0.0-semantic-release",
-    "builder-util": "^0.0.0-semantic-release",
-    "bluebird-lst": "^1.0.3"
+    "int64-buffer": "^0.1.9",
+    "builder-util-runtime": "0.0.0-semantic-release",
+    "builder-util": "0.0.0-semantic-release",
+    "js-yaml": "^3.9.1"
   },
-  "typings": "./out/s3Publisher.d.ts"
+  "types": "./out/main.d.ts"
 }

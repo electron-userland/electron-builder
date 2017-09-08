@@ -9,7 +9,9 @@ Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.0.exe",
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.0.0-x64.nsis.zip",
+            "blockMapSize": 13478,
+            "file": "TestApp-1.0.0-x64.nsis.7z",
+            "headerSize": 9982,
           },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
@@ -21,14 +23,14 @@ Object {
       "file": "Test App ßW Web Setup 1.0.0.exe",
       "packageFiles": Object {
         "x64": Object {
-          "file": "TestApp-1.0.0-x64.nsis.zip",
+          "file": "TestApp-1.0.0-x64.nsis.7z",
         },
       },
       "safeArtifactName": "TestApp-WebSetup-1.0.0.exe",
     },
     Object {
       "arch": "x64",
-      "file": "TestApp-1.0.0-x64.nsis.zip",
+      "file": "TestApp-1.0.0-x64.nsis.7z",
     },
   ],
 }
@@ -43,7 +45,9 @@ Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.1.exe",
         "packages": Object {
           "x64": Object {
-            "file": "TestApp-1.0.1-x64.nsis.zip",
+            "blockMapSize": 13475,
+            "file": "TestApp-1.0.1-x64.nsis.7z",
+            "headerSize": 9982,
           },
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",
@@ -55,14 +59,14 @@ Object {
       "file": "Test App ßW Web Setup 1.0.1.exe",
       "packageFiles": Object {
         "x64": Object {
-          "file": "TestApp-1.0.1-x64.nsis.zip",
+          "file": "TestApp-1.0.1-x64.nsis.7z",
         },
       },
       "safeArtifactName": "TestApp-WebSetup-1.0.1.exe",
     },
     Object {
       "arch": "x64",
-      "file": "TestApp-1.0.1-x64.nsis.zip",
+      "file": "TestApp-1.0.1-x64.nsis.7z",
     },
   ],
 }
@@ -77,6 +81,6 @@ Object {
 exports[`web installer 4`] = `
 Array [
   "Test App ßW Web Setup 1.0.1.exe",
-  "Test App ßW Web Setup 1.0.1.exe-package.zip",
+  "Test App ßW Web Setup 1.0.1.exe-package.7z",
 ]
 `;

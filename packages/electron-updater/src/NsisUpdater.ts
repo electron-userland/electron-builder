@@ -1,4 +1,5 @@
 import { CancellationError, CancellationToken, DownloadOptions, GenericServerOptions, PublishConfiguration, VersionInfo } from "builder-util-runtime"
+import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { spawn } from "child_process"
 import { mkdtemp, remove } from "fs-extra-p"
 import { tmpdir } from "os"
@@ -59,13 +60,29 @@ export class NsisUpdater extends AppUpdater {
 
       const packageInfo = fileInfo.packageInfo
       if (packageInfo != null) {
-        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.file) || ".zip"}`)
-        try {
-          await new DifferentialDownloader(packageInfo, this.httpExecutor, this.requestHeaders, path.join(process.resourcesPath!, "..", "package.zip"), this._logger, packagePath).download()
+        packagePath = path.join(tempDir, `${fileInfo.name}-package${path.extname(packageInfo.file) || ".7z"}`)
+
+        let isDownloadFull = packageInfo.blockMapSize == null || packageInfo.headerSize == null
+        if (!isDownloadFull) {
+          try {
+            await new DifferentialDownloader(packageInfo, this.httpExecutor,
+              {
+                oldBlockMapFile: path.join(process.resourcesPath!, "..", BLOCK_MAP_FILE_NAME),
+                oldPackageFile: path.join(process.resourcesPath!, "..", "package.7z"),
+                logger: this._logger,
+                packagePath,
+                requestHeaders: this.requestHeaders,
+              }).download()
+          }
+          catch (e) {
+            this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
+            // during test (developer machine mac or linux) we must throw error
+            isDownloadFull = process.platform === "win32"
+          }
         }
-        catch (e) {
-          this._logger.error(`Cannot download differentially, fallback to full download: ${e.stack || e}`)
-          await this.httpExecutor.download(packageInfo.file, packagePath, {
+
+        if (isDownloadFull) {
+          await this.httpExecutor.download(packageInfo.file, packagePath!!, {
             skipDirCreation: true,
             headers: this.computeRequestHeaders(fileInfo),
             cancellationToken,

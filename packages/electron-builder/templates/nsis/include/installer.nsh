@@ -59,10 +59,6 @@
 !endif
 
 !macro installApplicationFiles
-  !ifdef SEVEN_ZIP_FILE
-    File /oname=$PLUGINSDIR\7za.exe "${SEVEN_ZIP_FILE}"
-  !endif
-
   !ifdef APP_BUILD_DIR
     File /r "${APP_BUILD_DIR}/*.*"
   !else
@@ -107,12 +103,26 @@
         !insertmacro extractUsing7za "$packageFile"
 
         ClearErrors
-        Rename "$packageFile" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+        Rename "$packageFile" "$INSTDIR\package.7z"
         ${if} ${errors}
           # not clear - can NSIS rename on another drive or not, so, in case of error, just copy
           ClearErrors
-          CopyFiles /SILENT "$packageFile" "$INSTDIR\package.${PACKAGE_FILE_EXT}"
+          CopyFiles /SILENT "$packageFile" "$INSTDIR\package.7z"
         ${endif}
+
+        !ifdef APP_64
+          !ifdef APP_32
+            ${if} ${RunningX64}
+              File /oname=_blockMap.yml "${APP_64_BLOCK_MAP_FILE}"
+            ${else}
+              File /oname=_blockMap.yml "${APP_32_BLOCK_MAP_FILE}"
+            ${endIf}
+          !else
+            File /oname=_blockMap.yml "${APP_64_BLOCK_MAP_FILE}"
+          !endif
+        !else
+          File /oname=_blockMap.yml "${APP_32_BLOCK_MAP_FILE}"
+        !endif
     !else
       !insertmacro extractEmbeddedAppPackage
     !endif

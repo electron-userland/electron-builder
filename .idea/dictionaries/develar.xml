@@ -48,6 +48,7 @@
       <w>controlfields</w>
       <w>coroutine</w>
       <w>cpus</w>
+      <w>crcs</w>
       <w>createconfig</w>
       <w>crypto</w>
       <w>csproj</w>
@@ -265,6 +266,7 @@
       <w>splitted</w>
       <w>srcfolder</w>
       <w>subcommand</w>
+      <w>subsequence</w>
       <w>targetsize</w>
       <w>templating</w>
       <w>testapp</w>

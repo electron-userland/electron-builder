@@ -1,9 +1,11 @@
 import BluebirdPromise from "bluebird-lst"
-import { GenericServerOptions } from "builder-util-runtime"
+import { GenericServerOptions, UpdateInfo } from "builder-util-runtime"
+import { BLOCK_MAP_FILE_NAME } from "builder-util-runtime/out/blockMapApi"
 import { Arch, Platform } from "electron-builder"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
-import { rename } from "fs-extra-p"
+import { close, open, read, readFile, rename, writeFile } from "fs-extra-p"
 import { createServer } from "http"
+import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { TmpDir } from "temp-file"
 import { assertPack } from "../helpers/packTester"
@@ -36,7 +38,22 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       packed: async context => {
         const outDir = context.outDir
         outDirs.push(outDir)
-        await rename(path.join(outDir, "nsis-web", "latest.yml"), path.join(outDir, "latest.yml"))
+        const updateInfoFile = path.join(outDir, "latest.yml")
+        await rename(path.join(outDir, "nsis-web", "latest.yml"), updateInfoFile)
+
+        const updateInfo: UpdateInfo = safeLoad(await readFile(updateInfoFile, "utf-8"))
+        const fd = await open(path.join(outDir, `TestApp-${version}-x64.nsis.7z`), "r")
+        try {
+          const packageInfo = updateInfo.packages!!.x64
+          const buffer = Buffer.allocUnsafe(packageInfo.blockMapSize!!)
+          await read(fd, buffer, 0, buffer.length, packageInfo.size - buffer.length)
+          const inflateRaw: any = BluebirdPromise.promisify(require("zlib").inflateRaw)
+          const blockMapData = (await inflateRaw(buffer)).toString()
+          await writeFile(path.join(outDir, "win-unpacked", BLOCK_MAP_FILE_NAME), blockMapData)
+        }
+        finally {
+          await close(fd)
+        }
       }
     })
   }
@@ -63,7 +80,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     await rename(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await rename(path.join(oldDir, "TestApp-1.0.0-x64.nsis.zip"), path.join(oldDir, "win-unpacked", "package.zip"))
+    await rename(path.join(oldDir, "TestApp-1.0.0-x64.nsis.7z"), path.join(oldDir, "win-unpacked", "package.7z"))
   }
   else {
     // to  avoid snapshot mismatch (since in this node app is not packed)
@@ -76,7 +93,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
             path: "Test App ßW Web Setup 1.0.0.exe",
             packages: {
               x64: {
-                file: "TestApp-1.0.0-x64.nsis.zip"
+                file: "TestApp-1.0.0-x64.nsis.7z"
               }
             },
             githubArtifactName: "TestApp-WebSetup-1.0.0.exe"
@@ -86,14 +103,14 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
           file: "Test App ßW Web Setup 1.0.0.exe",
           packageFiles: {
             x64: {
-              file: "TestApp-1.0.0-x64.nsis.zip"
+              file: "TestApp-1.0.0-x64.nsis.7z"
             }
           },
           arch: "x64",
           safeArtifactName: "TestApp-WebSetup-1.0.0.exe"
         },
         {
-          file: "TestApp-1.0.0-x64.nsis.zip",
+          file: "TestApp-1.0.0-x64.nsis.7z",
           arch: "x64"
         }
       ]
@@ -107,7 +124,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
             path: "Test App ßW Web Setup 1.0.1.exe",
             packages: {
               x64: {
-                file: "TestApp-1.0.1-x64.nsis.zip"
+                file: "TestApp-1.0.1-x64.nsis.7z"
               }
             },
             githubArtifactName: "TestApp-WebSetup-1.0.1.exe"
@@ -117,14 +134,14 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
           file: "Test App ßW Web Setup 1.0.1.exe",
           packageFiles: {
             x64: {
-              file: "TestApp-1.0.1-x64.nsis.zip"
+              file: "TestApp-1.0.1-x64.nsis.7z"
             }
           },
           arch: "x64",
           safeArtifactName: "TestApp-WebSetup-1.0.1.exe"
         },
         {
-          file: "TestApp-1.0.1-x64.nsis.zip",
+          file: "TestApp-1.0.1-x64.nsis.7z",
           arch: "x64"
         }
       ]
@@ -138,6 +155,54 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
 
   await testBlockMap(outDirs[0], outDirs[1])
 })
+
+// test.ifAll("s3", async () => {
+//   if (process.env.OLD_DIST == null) {
+//     return
+//   }
+//
+//   const mockApp = createTestApp("0.5.13")
+//   jest.mock("electron", () => {
+//     return {
+//       app: mockApp,
+//     }
+//   }, {virtual: true})
+//
+//   const updater = new NsisUpdater()
+//   updater.updateConfigPath = await writeUpdateConfig({
+//     provider: "s3",
+//     bucket: "develar",
+//     path: "onshape-test",
+//   })
+//   tuneNsisUpdater(updater)
+//   updater.logger = console
+//
+//   {
+//     (process as any).resourcesPath = path.join(process.env.OLD_DIST!!, "win-unpacked", "resources")
+//   }
+//
+//   await checkResult(updater)
+// })
+
+async function checkResult(updater: NsisUpdater) {
+  const updateCheckResult = await updater.checkForUpdates()
+  const downloadPromise = updateCheckResult.downloadPromise
+  expect(downloadPromise).not.toBeNull()
+  const files = await downloadPromise
+  const fileInfo: any = updateCheckResult.fileInfo
+
+  delete fileInfo.sha2
+  delete fileInfo.sha512
+
+  // because port is random
+  expect(fileInfo.url).toBeDefined()
+  expect(fileInfo.packageInfo).toBeDefined()
+  delete fileInfo.url
+  delete fileInfo.packageInfo
+
+  expect(fileInfo).toMatchSnapshot()
+  expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
+}
 
 function testBlockMap(oldDir: string, newDir: string) {
   const serveStatic = require("serve-static")
@@ -173,23 +238,7 @@ function testBlockMap(oldDir: string, newDir: string) {
           url: `http://${address.address}:${address.port}`,
         })
 
-        const updateCheckResult = await updater.checkForUpdates()
-        const downloadPromise = updateCheckResult.downloadPromise
-        expect(downloadPromise).not.toBeNull()
-        const files = await downloadPromise
-        const fileInfo: any = updateCheckResult.fileInfo
-
-        delete fileInfo.sha2
-        delete fileInfo.sha512
-
-        // because port is random
-        expect(fileInfo.url).toBeDefined()
-        expect(fileInfo.packageInfo).toBeDefined()
-        delete fileInfo.url
-        delete fileInfo.packageInfo
-
-        expect(fileInfo).toMatchSnapshot()
-        expect(files!!.map(it => path.basename(it))).toMatchSnapshot()
+        await checkResult(updater)
       }
 
       doTest()

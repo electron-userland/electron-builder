@@ -68,6 +68,11 @@ export interface ArchiveOptions {
    */
   solid?: boolean
 
+  /**
+   * @default true
+   */
+  isArchiveHeaderCompressed?: boolean
+
   listFile?: string
 
   dictSize?: number
@@ -109,6 +114,10 @@ export function compute7zCompressArgs(compression: CompressionLevel | any | any,
   if (format === "7z" || format.endsWith(".7z")) {
     if (options.solid === false) {
       args.push("-ms=off")
+    }
+
+    if (options.isArchiveHeaderCompressed === false) {
+      args.push("-mhc=off")
     }
 
     // args valid only for 7z

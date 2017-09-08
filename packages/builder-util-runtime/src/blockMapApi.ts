@@ -1,4 +1,5 @@
-export const BLOCK_MAP_FILE_NAME = "blockMap.yml"
+export const BLOCK_MAP_FILE_NAME = "_blockMap.yml"
+export const SIGNATURE_HEADER_SIZE = 12 /* signature + 2 bytes version + 4 bytes CRC */ + 20
 
 export interface BlockMap {
   blockSize: number
@@ -13,6 +14,7 @@ export interface BlockMap {
 
 export interface BlockMapFile {
   name: string
+  offset: number
   size: number
 
   // size of block 64K, last block size `size % (64 * 1024)`

@@ -5,6 +5,7 @@ ln -f README.md packages/electron-builder/README.md
 
 npm publish packages/asar-integrity || true
 npm publish packages/builder-util-runtime || true
+npm publish packages/app-package-builder || true
 npm publish packages/dmg-builder || true
 npm publish packages/builder-util || true
 npm publish packages/electron-publish || true

@@ -9,6 +9,13 @@ export interface PackageFileInfo {
   file: string
   size: number
   sha512: string
+
+  headerSize?: number
+  blockMapSize?: number
+
+  // we cannot pack blockMap file as part of package file because of chicken and egg problem — we build blockMap for package file (and we don't to complicate)
+  // used and not null only during build time
+  blockMapData?: string
 }
 
 export interface UpdateInfo extends VersionInfo {

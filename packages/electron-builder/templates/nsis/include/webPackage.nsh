@@ -28,14 +28,14 @@
   ${endif}
 
   download:
-  inetc::get /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}" /END
+  inetc::get /USERAGENT "electron-builder (Mozilla)" /header "X-Arch: $packageArch" /RESUME "" "$packageUrl" "$PLUGINSDIR\package.7z" /END
   Pop $0
   ${if} $0 == "Cancelled"
     quit
   ${elseif} $0 != "OK"
     Messagebox MB_RETRYCANCEL|MB_ICONEXCLAMATION "Unable to download application package from $packageUrl (status: $0).$\r$\n$\r$\nPlease check you Internet connection and retry." IDRETRY download
-    quit
+    Quit
   ${endif}
 
-  StrCpy $packageFile "$PLUGINSDIR\package.${PACKAGE_FILE_EXT}"
+  StrCpy $packageFile "$PLUGINSDIR\package.7z"
 !macroend

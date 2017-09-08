@@ -1,11 +1,14 @@
 import BluebirdPromise from "bluebird-lst"
 import { BintrayOptions, CancellationToken, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
 import { randomBytes } from "crypto"
+import { Notification } from "electron"
+import isDev from "electron-is-dev"
 import { EventEmitter } from "events"
 import { outputFile, readFile } from "fs-extra-p"
 import { OutgoingHttpHeaders } from "http"
 import { safeLoad } from "js-yaml"
 import { Lazy } from "lazy-val"
+import * as os from "os"
 import * as path from "path"
 import { eq as isVersionsEqual, gt as isVersionGreaterThan, prerelease as getVersionPreleaseComponents, valid as parseVersion } from "semver"
 import "source-map-support/register"
@@ -169,6 +172,25 @@ export abstract class AppUpdater extends EventEmitter {
     return checkForUpdatesPromise
   }
 
+  checkForUpdatesAndNotify() {
+    if (isDev) {
+      return
+    }
+
+    const platform = os.platform()
+    if (platform === "linux") {
+      return
+    }
+
+    this.signals.updateDownloaded(it => {
+      new Notification({
+        title: "A new update is ready to install",
+        body: `Version ${it.version} is downloaded and will be automatically installed on Quit`
+      }).show()
+    })
+    return this.checkForUpdates()
+  }
+
   private async isStagingMatch(updateInfo: UpdateInfo): Promise<boolean> {
     const rawStagingPercentage = updateInfo.stagingPercentage
     let stagingPercentage = rawStagingPercentage
@@ -304,7 +326,7 @@ export abstract class AppUpdater extends EventEmitter {
 
   private async loadUpdateConfig() {
     if (this._appUpdateConfigPath == null) {
-      this._appUpdateConfigPath = require("electron-is-dev") ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!, "app-update.yml")
+      this._appUpdateConfigPath = isDev ? path.join(this.app.getAppPath(), "dev-app-update.yml") : path.join(process.resourcesPath!, "app-update.yml")
     }
     return safeLoad(await readFile(this._appUpdateConfigPath, "utf-8"))
   }

@@ -201,7 +201,15 @@ export function configureRequestOptionsFromUrl(url: string, options: RequestOpti
 export class DigestTransform extends Transform {
   private readonly digester: Hash
 
-  constructor(private readonly expected: string, private readonly algorithm: string, private readonly encoding: "hex" | "base64" | "latin1") {
+  private _actual: string
+
+  get actual() {
+    return this._actual
+  }
+
+  isValidateOnEnd: boolean = true
+
+  constructor(readonly expected: string, private readonly algorithm: string = "sha512", private readonly encoding: "hex" | "base64" | "latin1" = "base64") {
     super()
 
     this.digester = createHash(algorithm)
@@ -213,8 +221,31 @@ export class DigestTransform extends Transform {
   }
 
   _flush(callback: any): void {
-    const hash = this.digester.digest(this.encoding)
-    callback(hash === this.expected ? null : new Error(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${hash}`))
+    this._actual = this.digester.digest(this.encoding)
+
+    if (this.isValidateOnEnd) {
+      try {
+        this.validate()
+      }
+      catch (e) {
+        callback(e)
+        return
+      }
+    }
+
+    callback(null)
+  }
+
+  validate() {
+    if (this._actual == null) {
+      throw new Error("Not finished yet")
+    }
+
+    if (this._actual !== this.expected) {
+      throw new Error(`${this.algorithm} checksum mismatch, expected ${this.expected}, got ${this._actual}`)
+    }
+
+    return null
   }
 }
 

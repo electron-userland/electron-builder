@@ -54,7 +54,7 @@ export async function validateDownload(updater: AppUpdater, expectDownloadPromis
   expect(updateCheckResult.fileInfo).toMatchSnapshot()
   if (expectDownloadPromise) {
     if (updater instanceof MacUpdater) {
-      expect(await updateCheckResult.downloadPromise).toBeNull()
+      expect(await updateCheckResult.downloadPromise).toBe([])
     }
     else {
       await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
