@@ -100,7 +100,7 @@
     "gitbook-plugin-analytics": "^0.2.1",
     "gitbook-plugin-develar-toolbar-buttons": "^1.0.2",
     "gitbook-plugin-edit-link": "^2.0.2",
-    "gitbook-plugin-github": "^3.0.0",
+    "gitbook-plugin-github": "^2.0.0",
     "gitbook-plugin-github-buttons": "^2.1.0",
     "globby": "^6.1.0",
     "jest-cli": "^21.0.2",

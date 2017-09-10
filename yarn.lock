@@ -2043,9 +2043,9 @@ gitbook-plugin-github-buttons@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/gitbook-plugin-github-buttons/-/gitbook-plugin-github-buttons-2.1.0.tgz#7993aa1e6c2051e1743ce4e2c373c43db65e8ae4"
 
-gitbook-plugin-github@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/gitbook-plugin-github/-/gitbook-plugin-github-3.0.0.tgz#67457df98a57ea8ef9b2518b88340db370a5317b"
+gitbook-plugin-github@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/gitbook-plugin-github/-/gitbook-plugin-github-2.0.0.tgz#5166e763cfcc402d432880b7a6c85c1c54b56a8d"
 
 gitbook-plugin-highlight@2.0.2:
   version "2.0.2"
