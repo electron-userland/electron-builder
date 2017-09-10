@@ -162,6 +162,12 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly detectUpdateChannel?: boolean
 
   /**
+   * Please see [Building and Releasing using Channels](https://github.com/electron-userland/electron-builder/issues/1182#issuecomment-324947139).
+   * @default false
+   */
+  readonly generateUpdatesFilesForAllChannels?: boolean
+
+  /**
    * Whether to use [electron-compile](http://github.com/electron/electron-compile) to compile app. Defaults to `true` if `electron-compile` in the dependencies. And `false` if in the `devDependencies` or doesn't specified.
    */
   readonly electronCompile?: boolean
