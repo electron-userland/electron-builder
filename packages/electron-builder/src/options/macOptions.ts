@@ -224,7 +224,7 @@ export interface DmgWindow {
 export interface DmgContent {
   x: number
   y: number
-  type?: "link" | "file"
+  type?: "link" | "file" | "dir"
 
   /**
    * The name of the file within the DMG. Defaults to basename of `path`.
