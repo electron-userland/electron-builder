@@ -1,5 +1,5 @@
 import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log, spawn, warn } from "builder-util"
-import { copyFile, exists, statOrNull } from "builder-util/out/fs"
+import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
 import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
 import { outputFile, remove, unlink } from "fs-extra-p"
@@ -127,6 +127,12 @@ export class DmgTarget extends Target {
 
         if (c.type === "link") {
           asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
+        }
+        else if (c.type === "file" && c.path != null) {
+          asyncTaskManager.addTask(copyFile((await packager.getResource(entryPath))!, `${volumePath}/${entryName}`))
+        }
+        else if (c.type === "dir" && c.path != null) {
+          asyncTaskManager.addTask(copyDir((await packager.getResource(entryPath))!, `${volumePath}/${entryName}`))
         }
       }
       await applyProperties(entries, env, asyncTaskManager, packager)
