@@ -34,6 +34,17 @@ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
   ${endif}
 !endif
 
+Var /GLOBAL keepShortcuts
+StrCpy $keepShortcuts "false"
+!ifndef allowToChangeInstallationDirectory
+  ReadRegStr $R1 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" KeepShortcuts
+
+  ${if} $R1 == "true"
+  ${andIf} ${FileExists} "$appExe"
+    StrCpy $keepShortcuts "true"
+  ${endIf}
+!endif
+
 !insertmacro uninstallOldVersion SHELL_CONTEXT
 ${if} $installMode == "all"
   !insertmacro uninstallOldVersion HKEY_CURRENT_USER
@@ -47,8 +58,8 @@ SetOutPath $INSTDIR
 
 !insertmacro installApplicationFiles
 !insertmacro registryAddInstallInfo
-!insertmacro addStartMenuLink
-!insertmacro addDesktopLink
+!insertmacro addStartMenuLink $keepShortcuts
+!insertmacro addDesktopLink $keepShortcuts
 
 ${if} ${FileExists} "$newStartMenuLink"
   StrCpy $launchLink "$newStartMenuLink"
