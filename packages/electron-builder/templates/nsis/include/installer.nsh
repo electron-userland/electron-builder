@@ -182,41 +182,56 @@
   ${endIf}
 !macroend
 
-!macro addStartMenuLink
-  !insertmacro cleanupOldMenuDirectory
-
+!macro createMenuDirectory
   !ifdef MENU_FILENAME
     CreateDirectory "$SMPROGRAMS\${MENU_FILENAME}"
     ClearErrors
   !endif
+!macroend
 
-  ${if} $oldStartMenuLink != $newStartMenuLink
-  ${andIf} ${FileExists} "$oldStartMenuLink"
-    Rename $oldStartMenuLink $newStartMenuLink
-    WinShell::UninstShortcut "$oldStartMenuLink"
-  ${else}
+!macro addStartMenuLink keepShortcuts
+  # The keepShortcuts mechanism is NOT enabled.
+  # Menu shortcut will be recreated.
+  ${if} $keepShortcuts  == "false"
+    !insertmacro cleanupOldMenuDirectory
+    !insertmacro createMenuDirectory
+
     CreateShortCut "$newStartMenuLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
     # clear error (if shortcut already exists)
     ClearErrors
-  ${endIf}
+    WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+  # The keepShortcuts mechanism IS enabled.
+  # The menu shortcut could either not exist (it shouldn't be recreated) or exist in an obsolete location.
+  ${elseif} $oldStartMenuLink != $newStartMenuLink
+  ${andIf} ${FileExists} "$oldStartMenuLink"
+    !insertmacro createMenuDirectory
 
-  WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+    Rename $oldStartMenuLink $newStartMenuLink
+    WinShell::UninstShortcut "$oldStartMenuLink"
+    WinShell::SetLnkAUMI "$newStartMenuLink" "${APP_ID}"
+
+    !insertmacro cleanupOldMenuDirectory
+  ${endIf}
 !macroend
 
-!macro addDesktopLink
+!macro addDesktopLink keepShortcuts
   !ifndef DO_NOT_CREATE_DESKTOP_SHORTCUT
     # https://github.com/electron-userland/electron-builder/pull/1432
     ${ifNot} ${isNoDesktopShortcut}
-      ${if} $oldDesktopLink != $newDesktopLink
+      # The keepShortcuts mechanism is NOT enabled.
+      # Shortcuts will be recreated.
+      ${if} $keepShortcuts  == "false"
+        CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
+        ClearErrors
+        WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+      # The keepShortcuts mechanism IS enabled.
+      # The desktop shortcut could exist in an obsolete location (due to name change).
+      ${elseif} $oldDesktopLink != $newDesktopLink
       ${andIf} ${FileExists} "$oldDesktopLink"
         Rename $oldDesktopLink $newDesktopLink
         WinShell::UninstShortcut "$oldDesktopLink"
-      ${else}
-        CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "${APP_DESCRIPTION}"
-        ClearErrors
+        WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
       ${endIf}
-
-      WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
       System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
     ${endIf}
   !endif
