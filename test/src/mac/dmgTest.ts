@@ -195,15 +195,11 @@ test.ifAll.ifMac("license rtf", app({
 
 test.ifAll.ifMac("license buttons config", () => {
   return assertPack("test-app-one", {
-    targets: Platform.MAC.createTarget("dmg"),
-    effectiveOptionComputed: async it => {
-      expect(it).toEqual("nya")
-      return false
-    },
+    targets: Platform.MAC.createTarget("dmg")
   }, {
     projectDirCreated: projectDir => BluebirdPromise.all([
       copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt")),
-      copyTestAsset("licensebuttons_en.json", path.join(projectDir, "build", "licensebuttons_en.json")),
+      copyTestAsset("licensebuttons_en.json", path.join(projectDir, "build", "licensebuttons_en.json"))
     ]),
   })
 })

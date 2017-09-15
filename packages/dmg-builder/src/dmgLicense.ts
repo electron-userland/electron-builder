@@ -1,4 +1,4 @@
-import { exec } from "builder-util"
+import { exec, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseFiles } from "builder-util/out/license"
 import { outputFile, readFile } from "fs-extra-p"
@@ -12,11 +12,13 @@ const DEFAULT_REGION_CODE = 0
 export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string) {
   // http://www.owsiak.org/?p=700
   const licenseFiles = await getLicenseFiles(packager)
+  log(licenseFiles.length + " license files found")
   if (licenseFiles.length === 0) {
     return
   }
 
   const licenseButtonFiles = await getLicenseButtonsFile(packager)
+  log(licenseButtonFiles.length + " license button files found")
 
   if (packager.debugLogger.enabled) {
     packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
@@ -30,7 +32,7 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   const addedRegionCodes: Array<number> = []
   for (const item of licenseFiles) {
 
-    debug("Adding " + item.langName + " license")
+    log("Adding " + item.langName + " license")
 
     // value from DropDMG, data the same for any language
     // noinspection SpellCheckingInspection
