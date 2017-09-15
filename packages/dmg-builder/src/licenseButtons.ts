@@ -6,7 +6,7 @@ import { readFile } from "fs-extra-p"
 import { parseJson } from "builder-util-runtime"
 import _debug from "debug"
 export const debug = _debug("electron-builder")
-const cptable = require("codepage")
+const iconv = require("iconv-lite")
 
 export async function getLicenseButtonsFile(packager: PackageBuilder): Promise<Array<LicenseButtonsFile>> {
   const files = (await packager.resourceList)
@@ -93,7 +93,6 @@ function numberToHex(nb: number) {
 }
 
 function hexEncode(str: string, lang: string, langWithRegion: string) {
-  let code
   let hex
   let i
   const macCodePages = getMacCodePage(lang, langWithRegion)
@@ -101,16 +100,14 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
 
   for (i = 0; i < str.length; i++) {
     try {
-      code = getMacCharCode(str, i, macCodePages)
-      if (code === undefined) {
+      hex = getMacHexCode(str, i, macCodePages)
+      if (hex === undefined) {
         hex = "3F" //?
-      } else {
-        hex = code.toString(16)
       }
 
       result += hex
     } catch (e) {
-      debug("there was a problem while trying to convert a char to hex: " + e)
+      debug("there was a problem while trying to convert a char (" + str[i] + ") to hex: " + e)
       result += "3F" //?
     }
   }
@@ -121,34 +118,34 @@ function hexEncode(str: string, lang: string, langWithRegion: string) {
 function getMacCodePage(lang: string, langWithRegion: string) {
   switch (lang) {
     case "ja": //japanese
-      return [10001] //Apple Japanese
+      return ["euc-jp"] //Apple Japanese
     case "zh": //chinese
       if (langWithRegion === "zh_CN") {
-        return [10008] //Apple Simplified Chinese (GB 2312)
+        return ["gb2312"] //Apple Simplified Chinese (GB 2312)
       }
-      return [10002] //Apple Traditional Chinese (Big5)
+      return ["big5"] //Apple Traditional Chinese (Big5)
     case "ko": //korean
-      return [10003] //Apple Korean
+      return ["euc-kr"] //Apple Korean
     case "ar": //arabic
     case "ur": //urdu
-      return [10004] //Apple Arabic
+      return ["macarabic"] //Apple Arabic
     case "he": //hebrew
-      return [10005] //Apple Hebrew
+      return ["machebrew"] //Apple Hebrew
     case "el": //greek
     case "elc": //greek
-      return [10006] //Apple Greek
+      return ["macgreek"] //Apple Greek
     case "ru": //russian
     case "be": //belarussian
     case "sr": //serbian
     case "bg": //bulgarian
     case "uz": //uzbek
-      return [10007] //Apple Macintosh Cyrillic
+      return ["maccyrillic"] //Apple Macintosh Cyrillic
     case "ro": //romanian
-      return [10010] //Apple Romanian
+      return ["macromania"] //Apple Romanian
     case "uk": //ukrainian
-      return [10017] //Apple Ukrainian
+      return ["macukraine"] //Apple Ukrainian
     case "th": //thai
-      return [10021] //Apple Thai
+      return ["macthai"] //Apple Thai
     case "et": //estonian
     case "lt": //lithuanian
     case "lv": //latvian
@@ -156,33 +153,32 @@ function getMacCodePage(lang: string, langWithRegion: string) {
     case "hu": //hungarian
     case "cs": //czech
     case "sk": //slovak
-      return [10029] //Apple Macintosh Central Europe
+      return ["maccenteuro"] //Apple Macintosh Central Europe
     case "is": //icelandic
     case "fo": //faroese
-      return [10079] //Apple Icelandic
+      return ["maciceland"] //Apple Icelandic
     case "tr": //turkish
-      return [10081] //Apple Turkish
+      return ["macturkish"] //Apple Turkish
     case "hr": //croatian
     case "sl": //slovenian
-      return [10082] //Apple Croatian
+      return ["maccroatian"] //Apple Croatian
     default:
-      return [10000] //Apple Macintosh Roman
+      return ["macroman"] //Apple Macintosh Roman
   }
 }
 
-function getMacCharCode(str: string, i: number, macCodePages: any) {
+function getMacHexCode(str: string, i: number, macCodePages: any) {
   let code = str.charCodeAt(i)
   let j
   if (code < 128) {
-    code = str.charCodeAt(i)
+    return code.toString(16)
   }
   else if (code < 256) {
-    //codepage 10000 = mac OS Roman
-    code = cptable[10000].enc[str[i]]
+    code = iconv.encode(str[i], "macroman").toString("hex")
   }
   else {
     for (j = 0; j < macCodePages.length; j++) {
-      code = cptable[macCodePages[j]].enc[str[i]]
+      code = iconv.encode(str[i], macCodePages[j]).toString("hex")
       if (code !== undefined) {
         break
       }
