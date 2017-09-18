@@ -192,3 +192,20 @@ test.ifAll.ifMac("license rtf", app({
     ])
   },
 }))
+
+test.ifAll.ifMac("license buttons config", () => {
+  return assertPack("test-app-one", {
+    targets: Platform.MAC.createTarget("dmg")
+  }, {
+    projectDirCreated: projectDir => BluebirdPromise.all([
+      copyTestAsset("license_en.txt", path.join(projectDir, "build", "license_en.txt")),
+      copyTestAsset("license_fr.txt", path.join(projectDir, "build", "license_fr.txt")),
+      copyTestAsset("license_ja.txt", path.join(projectDir, "build", "license_ja.txt")),
+      copyTestAsset("license_ko.txt", path.join(projectDir, "build", "license_ko.txt")),
+      copyTestAsset("licensebuttons_en.json", path.join(projectDir, "build", "licensebuttons_en.json")),
+      copyTestAsset("licensebuttons_fr.json", path.join(projectDir, "build", "licensebuttons_fr.json")),
+      copyTestAsset("licensebuttons_ja.json", path.join(projectDir, "build", "licensebuttons_ja.json")),
+      copyTestAsset("licensebuttons_ko.json", path.join(projectDir, "build", "licensebuttons_ko.json"))
+    ]),
+  })
+})

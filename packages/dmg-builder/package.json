@@ -16,7 +16,10 @@
     "fs-extra-p": "^4.4.0",
     "bluebird-lst": "^1.0.3",
     "parse-color": "^1.0.0",
-    "builder-util": "^0.0.0-semantic-release"
+    "builder-util": "^0.0.0-semantic-release",
+    "builder-util-runtime": "^0.0.0-semantic-release",
+    "debug": "^3.0.1",
+    "iconv-lite": "^0.4.19"
   },
   "typings": "./out/dmg.d.ts"
 }

@@ -7,7 +7,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 * <code id="DmgOptions-iconSize">iconSize</code> = `80` Number - The size of all the icons inside the DMG.
 * <code id="DmgOptions-iconTextSize">iconTextSize</code> = `12` Number - The size of all the icon texts inside the DMG.
 * <code id="DmgOptions-title">title</code> = `${productName} ${version}` String - The title of the produced DMG, which will be shown when mounted (volume name).
-  
+
   Macro `${productName}`, `${version}` and `${name}` are supported.
 * <code id="DmgOptions-contents">contents</code> Array&lt;[DmgContent](#DmgContent)&gt; - The content — to customize icon locations.
 * <code id="DmgOptions-format">format</code> = `UDZO` "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" - The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
@@ -27,3 +27,15 @@ Inherited from `TargetSpecificOptions`:
 
 To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
 If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
+You can also change the default button labels of the DMG by passing a json file named `licensebuttons_LANG_CODE.json`. The german file would be named: `licensebuttons_de.json`.
+The contain file should have the following format:
+```json
+    {
+      "lang": "English",
+      "agree": "Agree",
+      "disagree": "Disagree",
+      "print": "Print",
+      "save": "Save",
+      "description": "Here is my own description"
+    }
+   ```
