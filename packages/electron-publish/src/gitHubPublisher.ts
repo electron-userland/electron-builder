@@ -87,11 +87,12 @@ export class GitHubPublisher extends HttpPublisher {
       }
 
       // https://github.com/electron-userland/electron-builder/issues/1133
+      // https://github.com/electron-userland/electron-builder/issues/2074
       // if release created < 2 hours — allow to upload
-      const publishedAt = release.published_at == null ? null : new Date(release.published_at)
-      if (publishedAt != null && (Date.now() - publishedAt.getMilliseconds()) > (2 * 3600 * 1000)) {
+      const publishedAt = release.published_at == null ? null : +new Date(release.published_at)
+      if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
-        warn(`Release with tag ${this.tag} published at ${publishedAt.toString()}, more than 2 hours ago`)
+        warn(`Release with tag ${this.tag} published at ${new Date(publishedAt).toString()}, more than 2 hours ago`)
         return null
       }
       return release
