@@ -1,3 +1,10 @@
+# 2.9.3 (2017-09-10)
+
+### Features
+
+* [Delta updates for Windows Web Installer](https://github.com/electron-userland/electron-builder/releases/tag/v19.28.4).
+
+
 # 2.8.9 (2017-09-01)
 
 ### Bug Fixes

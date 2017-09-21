@@ -53,7 +53,7 @@ export default class S3Publisher extends Publisher {
     const s3Options: CreateMultipartUploadRequest  = {
       Key: target,
       Bucket: this.info.bucket!,
-      ContentType: mime.lookup(file)
+      ContentType: mime.getType(file) || "application/octet-stream"
     }
 
     // if explicitly set to null, do not add

@@ -1,9 +1,11 @@
 import { exec, log } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { getLicenseFiles } from "builder-util/out/license"
-import { outputFile, readFile } from "fs-extra-p"
-import { getLicenseButtonsFile, getLicenseButtons } from "./licenseButtons"
 import _debug from "debug"
+import { outputFile, readFile } from "fs-extra-p"
+import { serializeString } from "./dmgUtil"
+import { getLicenseButtons, getLicenseButtonsFile } from "./licenseButtons"
+
 export const debug = _debug("electron-builder")
 
 // DropDMG/dmgbuild a in any case (even if no english, but only ru/de) set to 0 (en_US), well, without docs, just believe that's correct
@@ -12,17 +14,13 @@ const DEFAULT_REGION_CODE = 0
 export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string) {
   // http://www.owsiak.org/?p=700
   const licenseFiles = await getLicenseFiles(packager)
-  log(licenseFiles.length + " license files found")
   if (licenseFiles.length === 0) {
     return
   }
 
   const licenseButtonFiles = await getLicenseButtonsFile(packager)
-  log(licenseButtonFiles.length + " license button files found")
-
-  if (packager.debugLogger.enabled) {
-    packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
-  }
+  packager.debugLogger.add("dmg.licenseFiles", licenseFiles)
+  packager.debugLogger.add("dmg.licenseButtons", licenseButtonFiles)
 
   const style: Array<string> = []
   const rtfs: Array<string> = []
@@ -85,10 +83,6 @@ export async function addLicenseToDmg(packager: PackageBuilder, dmgPath: string)
   await exec("hdiutil", ["unflatten", dmgPath])
   await exec("Rez", ["-a", tempFile, "-o", dmgPath])
   await exec("hdiutil", ["flatten", dmgPath])
-}
-
-function serializeString(data: string) {
-  return '  $"' + data.match(/.{1,32}/g)!!.map(it => it.match(/.{1,4}/g)!!.join(" ")).join('"\n  $"') + '"'
 }
 
 function getRtfUnicodeEscapedString(text: string) {

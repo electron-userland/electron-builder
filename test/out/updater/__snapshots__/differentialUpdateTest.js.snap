@@ -9,9 +9,7 @@ Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.0.exe",
         "packages": Object {
           "x64": Object {
-            "blockMapSize": 13478,
             "file": "TestApp-1.0.0-x64.nsis.7z",
-            "headerSize": 9982,
           },
         },
         "path": "Test App ßW Web Setup 1.0.0.exe",
@@ -45,9 +43,7 @@ Object {
         "githubArtifactName": "TestApp-WebSetup-1.0.1.exe",
         "packages": Object {
           "x64": Object {
-            "blockMapSize": 13475,
             "file": "TestApp-1.0.1-x64.nsis.7z",
-            "headerSize": 9982,
           },
         },
         "path": "Test App ßW Web Setup 1.0.1.exe",

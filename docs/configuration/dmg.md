@@ -27,7 +27,7 @@ Inherited from `TargetSpecificOptions`:
 
 To add license to DMG, create file `license_LANG_CODE.txt` in the build resources. Multiple license files in different languages are supported — use lang postfix (e.g. `_de`, `_ru`)). For example, create files `license_de.txt` and `license_en.txt` in the build resources.
 If OS language is german, `license_de.txt` will be displayed. See map of [language code to name](https://github.com/meikidd/iso-639-1/blob/master/src/data.js).
-You can also change the default button labels of the DMG by passing a json file named `licensebuttons_LANG_CODE.json`. The german file would be named: `licensebuttons_de.json`.
+You can also change the default button labels of the DMG by passing a json file named `licenseButtons_LANG_CODE.json`. The german file would be named: `licenseButtons_de.json`.
 The contain file should have the following format:
 ```json
     {

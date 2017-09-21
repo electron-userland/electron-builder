@@ -8,4 +8,4 @@
 * **Target**: 
 
 <!-- Enter your issue details below this comment. -->
-<!-- If you want, you can donate to increase issue priority (https://donorbox.org/electron-builder) -->
+<!-- If you want, you can donate to increase issue priority (https://www.electron.build/donate) -->

@@ -1,38 +1,20 @@
-import * as path from "path"
 import { PackageBuilder } from "builder-util/out/api"
-import { langIdToName, toLangWithRegion } from "builder-util/out/langs"
-import { getDefaultButtons } from "./licenseDefaultButtons"
-import { readFile } from "fs-extra-p"
-import { parseJson } from "builder-util-runtime"
+import { getLicenseAssets } from "builder-util/out/license"
 import _debug from "debug"
+import { readFile } from "fs-extra-p"
+import * as iconv from "iconv-lite"
+import { safeLoad } from "js-yaml"
+import { serializeString } from "./dmgUtil"
+import { getDefaultButtons } from "./licenseDefaultButtons"
+
 export const debug = _debug("electron-builder")
-const iconv = require("iconv-lite")
 
 export async function getLicenseButtonsFile(packager: PackageBuilder): Promise<Array<LicenseButtonsFile>> {
-  const files = (await packager.resourceList)
+  return getLicenseAssets((await packager.resourceList)
     .filter(it => {
       const name = it.toLowerCase()
-      return name.startsWith("licensebuttons_") && name.endsWith(".json")
-    })
-    .sort((a, b) => {
-      const aW = a.includes("_en") ? 0 : 100
-      const bW = b.includes("_en") ? 0 : 100
-      return aW === bW ? a.localeCompare(b) : aW - bW
-    })
-
-  return files.map(file => {
-    let lang = file.match(/_([^.]+)\./)![1]
-    let langWithRegion
-    if (lang.includes("_")) {
-      langWithRegion = lang
-      lang = langWithRegion.substring(0, lang.indexOf("_"))
-    }
-    else {
-      lang = lang.toLowerCase()
-      langWithRegion = toLangWithRegion(lang)
-    }
-    return {file: path.join(packager.buildResourcesDir, file), lang, langWithRegion, langName: (langIdToName as any)[lang]}
-  })
+      return name.startsWith("licenseButtons_") && (name.endsWith(".json") || name.endsWith(".yml"))
+    }), packager)
 }
 
 export interface LicenseButtonsFile {
@@ -46,40 +28,37 @@ export async function getLicenseButtons(licenseButtonFiles: Array<LicenseButtons
   let data = getDefaultButtons(langWithRegion, id, name)
 
   for (const item of licenseButtonFiles) {
-    if (item.langWithRegion === langWithRegion) {
-      try {
-        const fileData = await parseJson(readFile(item.file, "utf-8"))
-        const buttonsStr = labelToHex(fileData.lang, item.lang, item.langWithRegion) +
-          labelToHex(fileData.agree, item.lang, item.langWithRegion) +
-          labelToHex(fileData.disagree, item.lang, item.langWithRegion) +
-          labelToHex(fileData.print, item.lang, item.langWithRegion) +
-          labelToHex(fileData.save, item.lang, item.langWithRegion) +
-          labelToHex(fileData.description, item.lang, item.langWithRegion)
+    if (item.langWithRegion !== langWithRegion) {
+      continue
+    }
 
-        debug("Overwriting the " + item.langName + " license buttons")
+    try {
+      const fileData = safeLoad(await
+        readFile(item.file, "utf-8")
+      )
+      const buttonsStr = labelToHex(fileData.lang, item.lang, item.langWithRegion) +
+        labelToHex(fileData.agree, item.lang, item.langWithRegion) +
+        labelToHex(fileData.disagree, item.lang, item.langWithRegion) +
+        labelToHex(fileData.print, item.lang, item.langWithRegion) +
+        labelToHex(fileData.save, item.lang, item.langWithRegion) +
+        labelToHex(fileData.description, item.lang, item.langWithRegion)
 
-        data = `data 'STR#' (${id}, "${name}") {\n`
-        data += serializeString("0006" + buttonsStr)
-        data += `\n};`
+      data = `data 'STR#' (${id}, "${name}") {\n`
+      data += serializeString("0006" + buttonsStr)
+      data += `\n};`
 
-        debug("Result " + data)
-
-        console.log(data)
-
-        return data
-      } catch ($e) {
-        debug("!Error while overwriting buttons: " + $e)
-        return data
+      if (debug.enabled) {
+        debug(`Overwriting the ${item.langName} license buttons:\n${data}`)
       }
+      return data
+    }
+    catch (e) {
+      debug(`!Error while overwriting buttons: ${e}`)
+      return data
     }
   }
 
-  debug("Result " + data)
   return data
-}
-
-function serializeString(data: string) {
-  return '  $"' + data.match(/.{1,32}/g)!!.map(it => it.match(/.{1,4}/g)!!.join(" ")).join('"\n  $"') + '"'
 }
 
 function labelToHex(label: string, lang: string, langWithRegion: string) {
@@ -93,21 +72,19 @@ function numberToHex(nb: number) {
 }
 
 function hexEncode(str: string, lang: string, langWithRegion: string) {
-  let hex
-  let i
   const macCodePages = getMacCodePage(lang, langWithRegion)
   let result = ""
 
-  for (i = 0; i < str.length; i++) {
+  for (let i = 0; i < str.length; i++) {
     try {
-      hex = getMacHexCode(str, i, macCodePages)
+      let hex = getMacHexCode(str, i, macCodePages)
       if (hex === undefined) {
         hex = "3F" //?
       }
-
       result += hex
-    } catch (e) {
-      debug("there was a problem while trying to convert a char (" + str[i] + ") to hex: " + e)
+    }
+    catch (e) {
+      debug(`there was a problem while trying to convert a char (${str[i]}) to hex: ${e}`)
       result += "3F" //?
     }
   }
@@ -168,22 +145,20 @@ function getMacCodePage(lang: string, langWithRegion: string) {
 }
 
 function getMacHexCode(str: string, i: number, macCodePages: any) {
-  let code = str.charCodeAt(i)
-  let j
+  const code = str.charCodeAt(i)
   if (code < 128) {
     return code.toString(16)
   }
   else if (code < 256) {
-    code = iconv.encode(str[i], "macroman").toString("hex")
+    return iconv.encode(str[i], "macroman").toString("hex")
   }
   else {
-    for (j = 0; j < macCodePages.length; j++) {
-      code = iconv.encode(str[i], macCodePages[j]).toString("hex")
-      if (code !== undefined) {
-        break
+    for (let i = 0; i < macCodePages.length; i++) {
+      const result = iconv.encode(str[i], macCodePages[i]).toString("hex")
+      if (result !== undefined) {
+        return result
       }
     }
   }
-
   return code
 }

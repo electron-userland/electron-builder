@@ -8,6 +8,7 @@
     "access": "public"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "../../typings/mime.d.ts"
   ]
 }

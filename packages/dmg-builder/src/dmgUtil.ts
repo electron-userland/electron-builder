@@ -78,3 +78,8 @@ export async function applyProperties(entries: any, env: any, asyncTaskManager: 
     env
   })
 }
+
+/** @internal */
+export function serializeString(data: string) {
+  return '  $"' + data.match(/.{1,32}/g)!!.map(it => it.match(/.{1,4}/g)!!.join(" ")).join('"\n  $"') + '"'
+}

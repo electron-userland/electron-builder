@@ -7,8 +7,7 @@
     "src/**/*.ts"
   ],
   "files": [
-    "../../typings/is-ci.d.ts",
-    "../../typings/fcopy-pre-bundled.d.ts"
+    "../../typings/is-ci.d.ts"
   ],
   "jsdoc": {
     "out": "../../scripts/jsdoc/out/util",

@@ -3,7 +3,7 @@ version: 2
 jobs:
     build:
       docker:
-        - image: circleci/node:8.4.0
+        - image: circleci/node:8.5.0
       steps:
         - checkout
         - restore_cache:
@@ -39,7 +39,7 @@ jobs:
             name: "git-lfs"
             command: |
               mkdir -p /tmp/git-lfs
-              curl -L https://github.com/github/git-lfs/releases/download/v2.2.1/git-lfs-linux-amd64-2.2.1.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
+              curl -L https://github.com/github/git-lfs/releases/download/v2.3.0/git-lfs-linux-amd64-2.3.0.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
               /tmp/git-lfs/git-lfs pull
         - restore_cache:
             keys:

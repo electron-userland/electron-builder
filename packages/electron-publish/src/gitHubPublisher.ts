@@ -32,6 +32,8 @@ export class GitHubPublisher extends HttpPublisher {
 
   readonly providerName = "GitHub"
 
+  private readonly releaseType: "draft" | "prerelease" | "release"
+
   /** @private */
   get releasePromise(): Promise<Release | null> {
     if (this._releasePromise == null) {
@@ -64,6 +66,13 @@ export class GitHubPublisher extends HttpPublisher {
     }
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
+
+    if (options.prerelease) {
+      this.releaseType = "prerelease"
+    }
+    else {
+      this.releaseType = options.draft === false ? "release" : "draft"
+    }
   }
 
   private async getOrCreateRelease(): Promise<Release | null> {
@@ -81,7 +90,7 @@ export class GitHubPublisher extends HttpPublisher {
       // https://github.com/electron-userland/electron-builder/issues/1197
       // https://electron-builder.slack.com/archives/general/p1485961449000202
       // https://github.com/electron-userland/electron-builder/issues/2072
-      if (this.options.draft) {
+      if (this.releaseType === "draft") {
         warn(`Release with tag ${this.tag} already exists`)
         return null
       }
@@ -89,7 +98,7 @@ export class GitHubPublisher extends HttpPublisher {
       // https://github.com/electron-userland/electron-builder/issues/1133
       // https://github.com/electron-userland/electron-builder/issues/2074
       // if release created < 2 hours — allow to upload
-      const publishedAt = release.published_at == null ? null : +new Date(release.published_at)
+      const publishedAt = release.published_at == null ? null : Date.parse(release.published_at)
       if (publishedAt != null && (Date.now() - publishedAt) > (2 * 3600 * 1000)) {
         // https://github.com/electron-userland/electron-builder/issues/1183#issuecomment-275867187
         warn(`Release with tag ${this.tag} published at ${new Date(publishedAt).toString()}, more than 2 hours ago`)
@@ -123,7 +132,7 @@ export class GitHubPublisher extends HttpPublisher {
           method: "POST",
           headers: {
             Accept: "application/vnd.github.v3+json",
-            "Content-Type": mime.lookup(fileName),
+            "Content-Type": mime.getType(fileName) || "application/octet-stream",
             "Content-Length": dataLength
           }
         }, this.token), this.context.cancellationToken, requestProcessor)
@@ -162,8 +171,8 @@ export class GitHubPublisher extends HttpPublisher {
     return this.githubRequest<Release>(`/repos/${this.info.owner}/${this.info.repo}/releases`, this.token, {
       tag_name: this.tag,
       name: this.version,
-      draft: this.options.draft !== false,
-      prerelease: this.options.prerelease === true,
+      draft: this.releaseType === "draft",
+      prerelease: this.releaseType === "prerelease",
     })
   }
 

@@ -205,12 +205,22 @@ export class AsarPackager {
           return
         }
 
-        const readStream = createReadStream(file)
-        readStream.on("error", reject)
-        readStream.once("end", () => w(index))
-        readStream.pipe(writeStream, {
-          end: false
-        })
+        // https://github.com/yarnpkg/yarn/pull/3539
+        if (file.includes("node_modules") || file.endsWith(".js") || file.endsWith(".map.js") || file.endsWith(".json")) {
+          readFile(file)
+            .then(it => {
+              writeStream.write(it, () => w(index))
+            })
+            .catch(reject)
+        }
+        else {
+          const readStream = createReadStream(file)
+          readStream.on("error", reject)
+          readStream.once("end", () => w(index))
+          readStream.pipe(writeStream, {
+            end: false
+          })
+        }
       }
 
       writeStream.write(headerBuf, () => w(0))

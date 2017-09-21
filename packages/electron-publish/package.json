@@ -11,8 +11,8 @@
     "out"
   ],
   "dependencies": {
-    "fs-extra-p": "^4.4.0",
-    "mime": "^1.4.0",
+    "fs-extra-p": "^4.4.2",
+    "mime": "^2.0.2",
     "bluebird-lst": "^1.0.3",
     "builder-util-runtime": "^0.0.0-semantic-release",
     "builder-util": "^0.0.0-semantic-release",

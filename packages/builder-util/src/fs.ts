@@ -1,6 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import fcopy from "fcopy-pre-bundled"
-import { access, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
+import { access, chmod, copyFile as _nodeCopyFile, createReadStream, createWriteStream, ensureDir, link, lstat, readdir, readlink, stat, Stats, symlink, unlink, writeFile } from "fs-extra-p"
 import isCi from "is-ci"
 import * as path from "path"
 import Mode from "stat-mode"
@@ -170,9 +169,28 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
     return link(src, dest)
   }
 
-  return new BluebirdPromise((resolve, reject) => {
-    fcopy(src, dest, stats == null ? undefined : {mode: stats.mode}, error => error == null ? resolve() : reject(error))
-  })
+  if (_nodeCopyFile == null) {
+    return new BluebirdPromise((resolve, reject) => {
+      const reader = createReadStream(src)
+      const writer = createWriteStream(dest, stats === null ? undefined : {mode: stats!!.mode})
+      reader.on("error", reject)
+      writer.on("error", reject)
+      writer.on("open", () => {
+        reader.pipe(writer)
+      })
+      writer.once("close", resolve)
+    })
+  }
+  else {
+    // node 8.5.0
+    return _nodeCopyFile(src, dest)
+      .then((): any => {
+        if (stats != null) {
+          return chmod(dest, stats.mode)
+        }
+        return null
+      })
+  }
 }
 
 export class FileCopier {

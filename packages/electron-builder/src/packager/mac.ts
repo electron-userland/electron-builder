@@ -11,7 +11,7 @@ function doRename(basePath: string, oldName: string, newName: string) {
   return rename(path.join(basePath, oldName), path.join(basePath, newName))
 }
 
-function moveHelpers(frameworksPath: string, appName: string, prefix: string) {
+function moveHelpers(frameworksPath: string, appName: string, prefix: string): Promise<any> {
   return BluebirdPromise.map([" Helper", " Helper EH", " Helper NP"], suffix => {
     const executableBasePath = path.join(frameworksPath, `${prefix}${suffix}.app`, "Contents", "MacOS")
     return doRename(executableBasePath, `${prefix}${suffix}`, appName + suffix)

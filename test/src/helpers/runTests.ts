@@ -59,6 +59,7 @@ async function runTests() {
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
+      args.push("configurationValidationTest")
     }
     else {
       args.push("installerTest", "portableTest")
@@ -134,20 +135,15 @@ async function runTests() {
   if (args.length > 0) {
     jestArgs.testPathPattern = args.join("|")
   }
-  if (process.env.CIRCLECI != null) {
+  if (process.env.CIRCLECI != null || process.env.TEST_JUNIT_REPORT === "true") {
     jestArgs.testResultsProcessor = "jest-junit"
   }
-  require("jest-cli").runCLI(jestArgs, [rootDir], (result: any) => {
-    const exitCode = !result || result.success ? 0 : 1
-    process.exitCode = exitCode
-    remove(TEST_TMP_DIR)
-      .catch(e => {
-        console.error(e.stack)
-      })
 
-    // strange, without this code process exit code always 0
-    if (exitCode > 0) {
-      process.on("exit", () => process.exit(exitCode))
-    }
-  })
+  const testResult = await require("jest-cli").runCLI(jestArgs, [rootDir])
+  const exitCode = testResult.results == null || testResult.results.success ? 0 : testResult.globalConfig.testFailureExitCode
+  await remove(TEST_TMP_DIR)
+  process.exitCode = exitCode
+  if (testResult.globalConfig.forceExit) {
+    process.exit(exitCode)
+  }
 }

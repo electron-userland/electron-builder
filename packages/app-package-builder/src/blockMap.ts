@@ -5,7 +5,6 @@ import { BlockMap, SIGNATURE_HEADER_SIZE } from "builder-util-runtime/out/blockM
 import { createHash } from "crypto"
 import { appendFile, read, stat } from "fs-extra-p"
 import { safeDump } from "js-yaml"
-import { constants } from "zlib"
 import { Archive } from "./Archive"
 import { SevenZArchiveEntry } from "./SevenZArchiveEntry"
 import { SevenZFile } from "./SevenZFile"
@@ -28,7 +27,7 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
     sevenZFile.close()
 
     const blockMapDataString = safeDump(blockMap)
-    const blockMapFileData = await deflateRaw(blockMapDataString, {level: constants.Z_BEST_COMPRESSION})
+    const blockMapFileData = await deflateRaw(blockMapDataString, {level: 9})
     await appendFile(archiveFile, blockMapFileData)
     const packageFileInfo = await createPackageFileInfo(archiveFile)
     packageFileInfo.headerSize = archive.headerSize

@@ -3,7 +3,7 @@ import { move, readFile } from "fs-extra-p"
 import { safeLoad } from "js-yaml"
 import * as path from "path"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, modifyPackageJson } from "./helpers/packTester"
+import { app, assertPack, modifyPackageJson } from "./helpers/packTester"
 import { expectUpdateMetadata } from "./helpers/winHelper"
 
 function createBuildResourcesTest(platform: Platform) {
@@ -119,56 +119,6 @@ test.ifAll.ifDevOrWinCi("override targets in the config - only arch", app({
     delete updateInfo.sha512
     delete updateInfo.releaseDate
     expect(updateInfo).toMatchSnapshot()
-  },
-}))
-
-test.ifAll.ifDevOrLinuxCi("scheme validation", appThrows({
-  targets: linuxDirTarget,
-  config: {
-    foo: 123,
-    mac: {
-      foo: 12123,
-    },
-  } as any,
-}))
-
-test.ifDevOrLinuxCi("scheme validation 2", appThrows({
-  targets: linuxDirTarget,
-  config: {
-    appId: {},
-  } as any,
-}))
-
-// https://github.com/electron-userland/electron-builder/issues/1302
-test.ifAll.ifDevOrLinuxCi("scheme validation extraFiles", app({
-  targets: Platform.LINUX.createTarget([]),
-  config: {
-    linux: {
-      target: "zip:ia32",
-    },
-    extraFiles: [
-      "lib/*.jar",
-      "lib/Proguard/**/*",
-      {
-        from: "lib/",
-        to: ".",
-        filter: [
-          "*.dll"
-        ]
-      },
-      {
-        from: "lib/",
-        to: ".",
-        filter: [
-          "*.exe"
-        ]
-      },
-      "BLClient/BLClient.json",
-      {
-        from: "include/",
-        to: "."
-      }
-    ],
   },
 }))
 
