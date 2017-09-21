@@ -52,6 +52,11 @@ function createTransformer(options) {
     process(src, filename, config, transformOptions) {
       // allow  ~/Documents/electron-builder/node_modules/electron-builder/out/targets/nsis.js:1
 
+      if (require("is-ci")) {
+        // precompiled on CI
+        return src
+      }
+
       const nodeModulesIndexOf = filename.indexOf("node_modules")
       if ((nodeModulesIndexOf > 0 && !filename.includes("electron-builder", nodeModulesIndexOf)) || !(filename.includes("/out/") || filename.includes("\\out\\"))) {
         // console.log(`Skip ${filename}`)

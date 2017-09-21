@@ -2,12 +2,7 @@ It is developer documentation. See [user documentation](https://electron.build/d
 
 # Build
 
-```
-docker build -t electronuserland/electron-builder docker
-docker build -t electronuserland/electron-builder:wine docker/wine
-```
-
-Or just `npm run docker-images`
+`yarn docker-images`
 
 # Notes
 

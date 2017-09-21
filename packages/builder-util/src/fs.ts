@@ -172,7 +172,7 @@ export function copyOrLinkFile(src: string, dest: string, stats?: Stats | null, 
   if (_nodeCopyFile == null) {
     return new BluebirdPromise((resolve, reject) => {
       const reader = createReadStream(src)
-      const writer = createWriteStream(dest, stats === null ? undefined : {mode: stats!!.mode})
+      const writer = createWriteStream(dest, stats == null ? undefined : {mode: stats!!.mode})
       reader.on("error", reject)
       writer.on("error", reject)
       writer.on("open", () => {

@@ -1,8 +1,8 @@
-# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](http://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
+# electron-builder [![npm version](https://img.shields.io/npm/v/electron-builder.svg?label=latest)](https://yarn.pm/electron-builder) [![downloads per month](https://img.shields.io/npm/dm/electron-builder.svg)](https://yarn.pm/electron-builder)
 A complete solution to package and build a ready for distribution Electron app for macOS, Windows and Linux with “auto update” support out of the box.
 
 * NPM packages management:
-  * [Native application dependencies](http://electron.atom.io/docs/latest/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
+  * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
   * Development dependencies are never included. You don't need to ignore them explicitly.
 * [Code Signing](code-signing.md) on a CI server or development machine.
 * [Auto Update](auto-update.md) ready application packaging.
@@ -70,14 +70,13 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
     To ensure your native dependencies are always matched electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-5. If you have native addons of your own that are part of the application (not as a dependency), add `"nodeGypRebuild": true` to the `build` section of your development `package.json`.  
-   :bulb: Don't [use](https://github.com/electron-userland/electron-builder/issues/683#issuecomment-241214075) [npm](http://electron.atom.io/docs/tutorial/using-native-node-modules/#using-npm) (neither `.npmrc`) for configuring electron headers. Use `electron-builder node-gyp-rebuild` instead.
+5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](/configuration#Configuration-nodeGypRebuild) to `true`.
    
 6. Install the [required system packages](multi-platform-build.md) if you are not on macOS 10.12+.
 
 Please note that everything is packaged into an asar archive [by default](configuration/configuration.md#Configuration-asar).
 
-For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](code-signing.md#where-to-buy-code-signing-certificate).
+For an app that will be shipped to production, you should sign your application. See [Where to buy code signing certificates](/code-signing.md#where-to-buy-code-signing-certificate).
 
 ## Programmatic Usage
 See `node_modules/electron-builder/out/index.d.ts`. Typings for TypeScript is provided.

@@ -2,7 +2,7 @@ import { configureRequestOptionsFromUrl, GithubOptions } from "builder-util-runt
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { MacUpdater } from "electron-updater/out/MacUpdater"
 import { EventEmitter } from "events"
-import { createTestApp, validateDownload, writeUpdateConfig } from "../helpers/updaterTestUtil"
+import { createTestApp, trackEvents, tuneNsisUpdater, writeUpdateConfig } from "../helpers/updaterTestUtil"
 
 class TestNativeUpdater extends EventEmitter {
   private updateUrl: string | null = null
@@ -51,5 +51,11 @@ test.ifAll.ifNotCi.ifMac("mac updates", async () => {
     // console.log(JSON.stringify(data))
   })
 
-  await validateDownload(updater)
+  tuneNsisUpdater(updater)
+  const actualEvents = trackEvents(updater)
+
+  const updateCheckResult = await updater.checkForUpdates()
+  expect(updateCheckResult.fileInfo!!.sha512).toBeDefined()
+  expect(await updateCheckResult.downloadPromise).toEqual([])
+  expect(actualEvents).toMatchSnapshot()
 })

@@ -144,7 +144,7 @@ export default class SnapTarget extends Target {
         "-v", `${homedir()}/.electron:/root/.electron`,
         // dist dir can be outside of project dir
         "-v", `${this.outDir}:/out`,
-        "electronuserland/electron-builder:latest",
+        "electronuserland/builder:latest",
         "/bin/bash", "-c", commands.join(" && ")], {
         cwd: packager.info.projectDir,
         stdio: ["ignore", "inherit", "inherit"],

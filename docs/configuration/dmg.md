@@ -7,7 +7,7 @@ The top-level [dmg](configuration.md#Configuration-dmg) key contains set of opti
 * <code id="DmgOptions-iconSize">iconSize</code> = `80` Number - The size of all the icons inside the DMG.
 * <code id="DmgOptions-iconTextSize">iconTextSize</code> = `12` Number - The size of all the icon texts inside the DMG.
 * <code id="DmgOptions-title">title</code> = `${productName} ${version}` String - The title of the produced DMG, which will be shown when mounted (volume name).
-
+  
   Macro `${productName}`, `${version}` and `${name}` are supported.
 * <code id="DmgOptions-contents">contents</code> Array&lt;[DmgContent](#DmgContent)&gt; - The content — to customize icon locations.
 * <code id="DmgOptions-format">format</code> = `UDZO` "UDRW" | "UDRO" | "UDCO" | "UDZO" | "UDBZ" | "ULFO" - The disk image format. `ULFO` (lzfse-compressed image (OS X 10.11+ only)).
