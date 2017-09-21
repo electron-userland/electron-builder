@@ -48,18 +48,19 @@ async function runTests() {
     if (circleNodeIndex === 0) {
       args.push("debTest")
       args.push("fpmTest")
-      args.push("oneClickInstallerTest")
       args.push("winPackagerTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest", "extraMetadataTest", "mainEntryTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest", "PublishManagerTest")
+      args.push("BuildTest", "extraMetadataTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest", "PublishManagerTest")
       args.push("mac.+")
       args.push("squirrelWindowsTest")
+      args.push("oneClickInstallerTest")
       args.push(...baseForLinuxTests)
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
       args.push("configurationValidationTest")
+      args.push("mainEntryTest")
     }
     else {
       args.push("installerTest", "portableTest")

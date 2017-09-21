@@ -48,6 +48,9 @@ export function createAddLangsMacro(scriptGenerator: NsisScriptGenerator, langCo
     else if (langWithRegion === "nb_NO") {
       name = "Norwegian"
     }
+    else if (langWithRegion === "pt_BR") {
+      name = "PortugueseBR"
+    }
     else {
       const lang = langWithRegion.substring(0, langWithRegion.indexOf("_"))
       name = (langIdToName as any)[lang]
