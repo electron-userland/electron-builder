@@ -6,6 +6,7 @@ import { Packager } from "./packager"
 export class AppInfo {
   readonly description = smarten(this.info.metadata.description || "")
   readonly version: string
+
   readonly buildNumber: string | undefined
   readonly buildVersion: string
 
@@ -15,9 +16,12 @@ export class AppInfo {
   constructor(private readonly info: Packager, buildVersion?: string | null) {
     this.version = info.metadata.version!
 
-    this.buildNumber = info.config.buildVersion || process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    if (buildVersion == null) {
+      buildVersion = info.config.buildVersion
+    }
 
-    if (isEmptyOrSpaces(buildVersion)) {
+    this.buildNumber = process.env.TRAVIS_BUILD_NUMBER || process.env.APPVEYOR_BUILD_NUMBER || process.env.CIRCLE_BUILD_NUM || process.env.BUILD_NUMBER
+    if (buildVersion == null) {
       buildVersion = this.version
       if (!isEmptyOrSpaces(this.buildNumber)) {
         buildVersion += `.${this.buildNumber}`
@@ -25,7 +29,7 @@ export class AppInfo {
       this.buildVersion = buildVersion
     }
     else {
-      this.buildVersion = buildVersion!
+      this.buildVersion = buildVersion
     }
 
     this.productName = info.config.productName || info.metadata.productName || info.metadata.name!
