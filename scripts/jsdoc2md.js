@@ -79,6 +79,10 @@ async function render2(files, jsdoc2MdOptions) {
         return null
       }
 
+      if (context.typeItem.name === "BaseS3Options") {
+        return ""
+      }
+
       // looks strange when on LinuxConfiguration page "Inherited from `CommonLinuxOptions`:" - no configuration inheritance in this case
       if (context.object.name === "LinuxConfiguration" || (context.object.name === "NsisOptions" && context.typeItem.name === "CommonNsisOptions")) {
         return ""
@@ -193,6 +197,7 @@ async function render2(files, jsdoc2MdOptions) {
       "GenericServerOptions": "",
       "GithubOptions": "",
       "S3Options": "",
+      "SpacesOptions": "",
     }),
 
     // new Page("auto-update.md", null, {

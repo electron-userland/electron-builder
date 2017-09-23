@@ -10,7 +10,7 @@ Simplified auto-update is supported on Windows if you use the default NSIS targe
 * Download progress supported on all platforms, including macOS.
 * [Staged rollouts](#staged-rollouts) supported on all platforms, including macOS.
 * Actually, built-in autoUpdater is used inside on macOS.
-* Different providers supported out of the box (GitHub, Bintray, Amazon S3, generic HTTP(s) server).
+* Different providers supported out of the box ([GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces), [Bintray](https://bintray.com) and generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
 
 ## Quick Setup Guide

@@ -20,7 +20,7 @@ export class BintrayPublisher extends HttpPublisher {
     if (isEmptyOrSpaces(token)) {
       token = process.env.BT_TOKEN
       if (isEmptyOrSpaces(token)) {
-        throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN"`)
+        throw new Error(`Bintray token is not set, neither programmatically, nor using env "BT_TOKEN" (see https://www.electron.build/configuration/publish#bintrayoptions)`)
       }
 
       token = token.trim()

@@ -30,3 +30,7 @@ Gruntfile.js
 *.md
 
 !tslint/lib/test
+
+aws-sdk.min.js
+aws-sdk-react-native.js
+aws-sdk-core-react-native.js

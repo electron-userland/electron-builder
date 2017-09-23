@@ -1,6 +1,6 @@
 import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, isEmptyOrSpaces, isPullRequest, log, safeStringifyJson, warn } from "builder-util"
-import { BintrayOptions, CancellationToken, GenericServerOptions, GithubOptions, githubUrl, PublishConfiguration, PublishProvider, S3Options, s3Url } from "builder-util-runtime"
+import { BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, githubUrl, PublishConfiguration, PublishProvider } from "builder-util-runtime"
 import _debug from "debug"
 import { getCiTag, HttpPublisher, PublishContext, Publisher, PublishOptions } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
@@ -200,7 +200,7 @@ export async function getPublishConfigsForUpdateInfo(packager: PlatformPackager<
 
 export function createPublisher(context: PublishContext, version: string, publishConfig: PublishConfiguration, options: PublishOptions): Publisher | null {
   if (debug.enabled) {
-    debug(`create publisher: ${safeStringifyJson(publishConfig)}`)
+    debug(`Create publisher: ${safeStringifyJson(publishConfig)}`)
   }
 
   const provider = publishConfig.provider
@@ -231,14 +231,17 @@ function requireProviderClass(provider: string): any | null {
     case "generic":
       return null
 
+    case "spaces":
+      return require(`electron-publisher-s3/out/${provider}Publisher`).default
+
     default:
       return require(`electron-publisher-${provider}`).default
   }
 }
 
-export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
-  if (publishConfig.provider === "generic") {
-    const baseUrlString = (publishConfig as GenericServerOptions).url
+export function computeDownloadUrl(publishConfiguration: PublishConfiguration, fileName: string | null, packager: PlatformPackager<any>) {
+  if (publishConfiguration.provider === "generic") {
+    const baseUrlString = (publishConfiguration as GenericServerOptions).url
     if (fileName == null) {
       return baseUrlString
     }
@@ -248,12 +251,12 @@ export function computeDownloadUrl(publishConfig: PublishConfiguration, fileName
   }
 
   let baseUrl
-  if (publishConfig.provider === "s3") {
-    baseUrl = s3Url((publishConfig as S3Options))
+  if (publishConfiguration.provider === "github") {
+    const gh = publishConfiguration as GithubOptions
+    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
   }
   else {
-    const gh = publishConfig as GithubOptions
-    baseUrl = `${githubUrl(gh)}/${gh.owner}/${gh.repo}/releases/download/${gh.vPrefixedTagName === false ? "" : "v"}${packager.appInfo.version}`
+    baseUrl = getS3LikeProviderBaseUrl(publishConfiguration)
   }
 
   if (fileName == null) {

@@ -13,8 +13,14 @@ const commonUploadSize = 15 * 1024 * 1024
 
 awsConfig.setPromisesDependency(require("bluebird-lst"))
 
-export class S3Client {
-  readonly s3: S3
+export class Uploader extends EventEmitter {
+  /** @readonly */
+  loaded = 0
+
+  private cancelled = false
+
+  readonly contentLength: number
+
   readonly s3RetryCount: number
   readonly s3RetryDelay: number
   readonly multipartUploadThreshold: number
@@ -22,15 +28,16 @@ export class S3Client {
   readonly multipartDownloadThreshold: number
   readonly multipartDownloadSize: number
 
-  constructor(options: any = {}) {
-    this.s3 = options.s3Client || new S3(options.s3Options)
-    this.s3RetryCount = options.s3RetryCount || 3
-    this.s3RetryDelay = options.s3RetryDelay || 1000
+  constructor(private readonly s3: S3, private readonly s3Options: CreateMultipartUploadRequest, private readonly localFile: string, localFileStat: Stats) {
+    super()
 
-    this.multipartUploadThreshold = options.multipartUploadThreshold || (20 * 1024 * 1024)
-    this.multipartUploadSize = options.multipartUploadSize || commonUploadSize
-    this.multipartDownloadThreshold = options.multipartDownloadThreshold || (20 * 1024 * 1024)
-    this.multipartDownloadSize = options.multipartDownloadSize || commonUploadSize
+    this.s3RetryCount = 3
+    this.s3RetryDelay = 1000
+
+    this.multipartUploadThreshold = (20 * 1024 * 1024)
+    this.multipartUploadSize = commonUploadSize
+    this.multipartDownloadThreshold = (20 * 1024 * 1024)
+    this.multipartDownloadSize = commonUploadSize
 
     if (this.multipartUploadThreshold < MIN_MULTIPART_SIZE) {
       throw new Error("Minimum multipartUploadThreshold is 5MB.")
@@ -44,32 +51,17 @@ export class S3Client {
     if (this.multipartUploadSize > MAX_PUT_OBJECT_SIZE) {
       throw new Error("Maximum multipartUploadSize is 5GB.")
     }
-  }
-}
-
-export class Uploader extends EventEmitter {
-  /** @readonly */
-  loaded = 0
-
-  private cancelled = false
-
-  readonly contentLength: number
-
-  constructor(private readonly client: S3Client, private readonly s3Options: CreateMultipartUploadRequest, private readonly localFile: string, localFileStat: Stats) {
-    super()
-
     this.contentLength = localFileStat.size
   }
 
   async upload() {
-    const client = this.client
-    if (this.contentLength < client.multipartUploadThreshold) {
+    if (this.contentLength < this.multipartUploadThreshold) {
       const md5 = await hashFile(this.localFile, "md5")
       await this.runOrRetry(this.putObject.bind(this, md5))
       return
     }
 
-    let multipartUploadSize = client.multipartUploadSize
+    let multipartUploadSize = this.multipartUploadSize
     if (Math.ceil(this.contentLength / multipartUploadSize) > MAX_MULTIPART_COUNT) {
       multipartUploadSize = smallestPartSizeFromFileSize(this.contentLength)
     }
@@ -78,7 +70,7 @@ export class Uploader extends EventEmitter {
       throw new Error(`File size exceeds maximum object size: ${this.localFile}`)
     }
 
-    const data = await this.runOrRetry(() => client.s3.createMultipartUpload(this.s3Options).promise())
+    const data = await this.runOrRetry(() => this.s3.createMultipartUpload(this.s3Options).promise())
     await this.multipartUpload(data.UploadId!, multipartUploadSize)
   }
 
@@ -89,7 +81,7 @@ export class Uploader extends EventEmitter {
   private putObject(md5: string) {
     this.loaded = 0
     return new BluebirdPromise<any>((resolve, reject) => {
-      this.client.s3.putObject({
+      this.s3.putObject({
         Body: createReadStream(this.localFile),
         ContentMD5: md5,
         ...this.s3Options,
@@ -136,7 +128,7 @@ export class Uploader extends EventEmitter {
     }, {concurrency: cpus().length})
 
     await BluebirdPromise.map(parts, it => this.makeUploadPart(it, uploadId), {concurrency: 4})
-    return await this.runOrRetry(() => this.client.s3.completeMultipartUpload({
+    return await this.runOrRetry(() => this.s3.completeMultipartUpload({
         Bucket: this.s3Options.Bucket,
         Key: this.s3Options.Key,
         UploadId: uploadId,
@@ -149,11 +141,10 @@ export class Uploader extends EventEmitter {
 
   private makeUploadPart(part: Part, uploadId: string): Promise<any> {
     const contentLength = part.end - part.start
-    const client = this.client
     return this.runOrRetry(() => {
       let partLoaded = 0
       return new BluebirdPromise((resolve, reject) => {
-        client.s3.uploadPart({
+        this.s3.uploadPart({
           ContentLength: contentLength,
           PartNumber: part.part.PartNumber,
           UploadId: uploadId,
@@ -192,14 +183,14 @@ export class Uploader extends EventEmitter {
         task()
           .then(resolve)
           .catch(error => {
-            if (++attemptNumber >= this.client.s3RetryCount) {
+            if (++attemptNumber >= this.s3RetryCount) {
               reject(error)
             }
             else if (this.cancelled) {
               reject(new Error("cancelled"))
             }
             else {
-              setTimeout(tryRun, this.client.s3RetryDelay)
+              setTimeout(tryRun, this.s3RetryDelay)
             }
           })
       }

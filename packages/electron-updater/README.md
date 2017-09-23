@@ -19,7 +19,7 @@ Linux support is [planned](https://github.com/electron-userland/electron-builder
 * Download progress supported on all platforms, including macOS.
 * [Staged rollouts](https://electron.build/auto-update#staged-rollouts) supported on all platforms, including macOS.
 * Actually, built-in autoUpdater is used inside on macOS.
-* Different providers supported out of the box (GitHub, Bintray, Amazon S3, generic HTTP(s) server).
+* Different providers supported out of the box (GitHub, Bintray, Amazon S3, DigitalOcean Spaces, generic HTTP(s) server).
 * You need only 2 lines of code to make it work.
 
 ## Credits

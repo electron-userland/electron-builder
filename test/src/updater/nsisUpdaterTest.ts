@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options } from "builder-util-runtime"
+import { BintrayOptions, GenericServerOptions, GithubOptions, S3Options, SpacesOptions } from "builder-util-runtime"
 import { UpdateCheckResult } from "electron-updater"
 import { NsisUpdater } from "electron-updater/out/NsisUpdater"
 import { outputFile } from "fs-extra-p"
@@ -114,15 +114,18 @@ test("file url generic", async () => {
     provider: "generic",
     url: "https://develar.s3.amazonaws.com/test",
   })
-  tuneNsisUpdater(updater)
+  await validateDownload(updater)
+})
 
-  const actualEvents = trackEvents(updater)
-
-  const updateCheckResult = await updater.checkForUpdates()
-  expect(updateCheckResult.fileInfo).toMatchSnapshot()
-  await assertThat(path.join((await updateCheckResult.downloadPromise)!![0])).isFile()
-
-  expect(actualEvents).toMatchSnapshot()
+test("DigitalOcean Spaces", async () => {
+  const updater = new NsisUpdater()
+  updater.updateConfigPath = await writeUpdateConfig<SpacesOptions>({
+    provider: "spaces",
+    name: "electron-builder-test",
+    path: "light-updater-test",
+    region: "nyc3",
+  })
+  await validateDownload(updater)
 })
 
 test.ifNotCiWin("sha512 mismatch error event", async () => {

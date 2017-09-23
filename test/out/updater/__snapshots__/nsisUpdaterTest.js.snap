@@ -24,6 +24,22 @@ Array [
 ]
 `;
 
+exports[`DigitalOcean Spaces 1`] = `
+Object {
+  "name": "TestApp Setup 1.1.0.exe",
+  "sha512": "Dj51I0q8aPQ3ioaz9LMqGYujAYRbDNblAQbodDRXAMxmY6hsHqEl3F6SvhfJj5oPhcqdX1ldsgEvfMNXGUXBIw==",
+  "url": "https://electron-builder-test.nyc3.digitaloceanspaces.com/light-updater-test/TestApp%20Setup%201.1.0.exe",
+}
+`;
+
+exports[`DigitalOcean Spaces 2`] = `
+Array [
+  "checking-for-update",
+  "update-available",
+  "update-downloaded",
+]
+`;
+
 exports[`cancel download with progress 1`] = `"Cancelled"`;
 
 exports[`check updates - no versions at all 1`] = `"No latest version, please ensure that user, package and repository correctly configured. Or at least one version is published. HttpError: 404 Not Found"`;

@@ -1,4 +1,4 @@
-export type PublishProvider = "github" | "bintray" | "s3" | "generic"
+export type PublishProvider = "github" | "bintray" | "s3" | "spaces" | "generic"
 
 // typescript-json-schema generates only PublishConfiguration if it is specified in the list, so, it is not added here
 export type AllPublishOptions = string | GithubOptions | S3Options | GenericServerOptions | BintrayOptions
@@ -94,6 +94,27 @@ export interface GenericServerOptions extends PublishConfiguration {
   readonly channel?: string | null
 }
 
+export interface BaseS3Options extends PublishConfiguration {
+  /**
+   * The update channel.
+   * @default latest
+   */
+  channel?: string | null
+
+  /**
+   * The directory path.
+   * @default /
+   */
+  readonly path?: string | null
+
+  /**
+   * The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
+   *
+   * @default public-read
+   */
+  readonly acl?: "private" | "public-read" | null
+}
+
 /**
  * [Amazon S3](https://aws.amazon.com/s3/) options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
  *
@@ -101,7 +122,7 @@ export interface GenericServerOptions extends PublishConfiguration {
  * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
  * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
  */
-export interface S3Options extends PublishConfiguration {
+export interface S3Options extends BaseS3Options {
   /**
    * The provider. Must be `s3`.
    */
@@ -113,21 +134,9 @@ export interface S3Options extends PublishConfiguration {
   readonly bucket: string
 
   /**
-   * The directory path.
-   * @default /
-   */
-  readonly path?: string | null
-
-  /**
    * The region. Is determined and set automatically when publishing.
    */
-  readonly region?: string | null
-
-  /**
-   * The channel.
-   * @default latest
-   */
-  readonly channel?: string | null
+  region?: string | null
 
   /**
    * The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
@@ -145,8 +154,39 @@ export interface S3Options extends PublishConfiguration {
   readonly storageClass?: "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" | null
 }
 
-/** @private */
-export function s3Url(options: S3Options) {
+/**
+ * [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) options.
+ * Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.
+ */
+export interface SpacesOptions extends BaseS3Options {
+  /**
+   * The provider. Must be `spaces`.
+   */
+  readonly provider: "spaces"
+
+  /**
+   * The space name.
+   */
+  readonly name: string
+
+  /**
+   * The region (e.g. `nyc3`).
+   */
+  readonly region: string
+}
+
+export function getS3LikeProviderBaseUrl(configuration: PublishConfiguration) {
+  const provider = configuration.provider
+  if (provider === "s3") {
+    return s3Url((configuration as S3Options))
+  }
+  if (provider === "spaces") {
+    return spacesUrl((configuration as SpacesOptions))
+  }
+  throw new Error(`Not supported provider: ${provider}`)
+}
+
+function s3Url(options: S3Options) {
   let url: string
   if (!options.bucket.includes(".")) {
     if (options.region === "cn-north-1") {
@@ -157,7 +197,7 @@ export function s3Url(options: S3Options) {
     }
   }
   else {
-    if (!options.region) {
+    if (options.region == null) {
       throw new Error(`Bucket name "${options.bucket}" includes a dot, but S3 region is missing`)
     }
 
@@ -173,8 +213,24 @@ export function s3Url(options: S3Options) {
   return url
 }
 
+function spacesUrl(options: SpacesOptions) {
+  if (options.name == null) {
+    throw new Error(`name is missing`)
+  }
+  if (options.region == null) {
+    throw new Error(`region is missing`)
+  }
+
+  let url = `https://${options.name}.${options.region}.digitaloceanspaces.com`
+  if (options.path != null) {
+    url += `/${options.path}`
+  }
+  return url
+}
+
 /**
- * [Bintray](https://bintray.com/) options.
+ * [Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page ("Edit Your Profile" -> API Key).
+ * Define `BT_TOKEN` environment variable.
  */
 export interface BintrayOptions extends PublishConfiguration {
   /**

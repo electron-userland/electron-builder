@@ -36,11 +36,10 @@ async function runTests() {
   const testFiles: string | null | undefined = process.env.TEST_FILES
 
   const args = []
-  const baseForLinuxTests = ["ArtifactPublisherTest.js", "httpRequestTest.js", "RepoSlugTest.js"]
   if (!isEmptyOrSpaces(testFiles)) {
     args.push(...testFiles!!.split(",").map(it => `${it.trim()}.js`))
     if (process.platform === "linux") {
-      args.push(...baseForLinuxTests)
+      args.push("httpRequestTest.js", "RepoSlugTest.js")
     }
   }
   else if (!isEmptyOrSpaces(process.env.CIRCLE_NODE_INDEX)) {
@@ -49,18 +48,18 @@ async function runTests() {
       args.push("debTest")
       args.push("fpmTest")
       args.push("winPackagerTest")
+      args.push("squirrelWindowsTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest", "extraMetadataTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest", "PublishManagerTest")
+      args.push("BuildTest", "extraMetadataTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest")
       args.push("mac.+")
-      args.push("squirrelWindowsTest")
       args.push("oneClickInstallerTest")
-      args.push(...baseForLinuxTests)
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
       args.push("configurationValidationTest")
       args.push("mainEntryTest")
+      args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
     }
     else {
       args.push("installerTest", "portableTest")

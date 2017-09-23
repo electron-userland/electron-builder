@@ -56,7 +56,8 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
       dir = path.join(outDir, publishConfig.provider)
     }
 
-    if (isMac) {
+    // spaces is a new publish provider, no need to keep backward compatibility
+    if (isMac && publishConfig.provider !== "spaces") {
       await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
     }
 

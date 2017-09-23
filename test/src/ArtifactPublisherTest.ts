@@ -1,5 +1,5 @@
 import { Arch, copyFile, TmpDir } from "builder-util"
-import { CancellationToken, HttpError, S3Options } from "builder-util-runtime"
+import { CancellationToken, HttpError, S3Options, SpacesOptions } from "builder-util-runtime"
 import { createPublisher } from "electron-builder/out/publish/PublishManager"
 import { PublishContext } from "electron-publish"
 import { BintrayPublisher } from "electron-publish/out/BintrayPublisher"
@@ -112,6 +112,20 @@ testAndIgnoreApiRate("GitHub upload", async () => {
 if (process.env.AWS_ACCESS_KEY_ID != null && process.env.AWS_SECRET_ACCESS_KEY != null) {
   test("S3 upload", async () => {
     const publisher = createPublisher(publishContext, "0.0.1", {provider: "s3", bucket: "electron-builder-test"} as S3Options, {})!!
+    await publisher.upload(iconPath, Arch.x64)
+    // test overwrite
+    await publisher.upload(iconPath, Arch.x64)
+  })
+}
+
+if (process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null) {
+  test("DO upload", async () => {
+    const configuration: SpacesOptions = {
+      provider: "spaces",
+      name: "electron-builder-test",
+      region: "nyc3",
+    }
+    const publisher = createPublisher(publishContext, "0.0.1", configuration, {})!!
     await publisher.upload(iconPath, Arch.x64)
     // test overwrite
     await publisher.upload(iconPath, Arch.x64)

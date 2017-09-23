@@ -68,6 +68,7 @@
       <w>devmode</w>
       <w>difflet</w>
       <w>digester</w>
+      <w>digitaloceanspaces</w>
       <w>dirname</w>
       <w>disturl</w>
       <w>dmgbuild</w>
@@ -99,6 +100,7 @@
       <w>fontconfig</w>
       <w>fseventsd</w>
       <w>gconf</w>
+      <w>gitattributes</w>
       <w>github</w>
       <w>gitkeep</w>
       <w>globaldots</w>

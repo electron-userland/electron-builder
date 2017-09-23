@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { BintrayOptions, CancellationToken, GenericServerOptions, GithubOptions, PublishConfiguration, S3Options, s3Url, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
+import { BaseS3Options, BintrayOptions, CancellationToken, GenericServerOptions, getS3LikeProviderBaseUrl, GithubOptions, PublishConfiguration, S3Options, SpacesOptions, UpdateInfo, UUID, VersionInfo } from "builder-util-runtime"
 import { randomBytes } from "crypto"
 import { Notification } from "electron"
 import isDev from "electron-is-dev"
@@ -142,7 +142,7 @@ export abstract class AppUpdater extends EventEmitter {
    * Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
    * @param options If you want to override configuration in the `app-update.yml`.
    */
-  setFeedURL(options: PublishConfiguration | GenericServerOptions | S3Options | BintrayOptions | GithubOptions | string) {
+  setFeedURL(options: PublishConfiguration | GenericServerOptions | S3Options | SpacesOptions | BintrayOptions | GithubOptions | string) {
     // https://github.com/electron-userland/electron-builder/issues/1105
     let client: Provider<any>
     if (typeof options === "string") {
@@ -357,14 +357,13 @@ export abstract class AppUpdater extends EventEmitter {
           return new PrivateGitHubProvider(githubOptions, token, this.httpExecutor)
         }
 
-      case "s3": {
-        const s3 = data as S3Options
+      case "s3":
+      case "spaces":
         return new GenericProvider({
           provider: "generic",
-          url: s3Url(s3),
-          channel: s3.channel || ""
+          url: getS3LikeProviderBaseUrl(data),
+          channel: (data as BaseS3Options).channel || ""
         }, this.httpExecutor)
-      }
 
       case "generic":
         return new GenericProvider(data as GenericServerOptions, this.httpExecutor)

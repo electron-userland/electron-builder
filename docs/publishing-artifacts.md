@@ -2,7 +2,7 @@ Travis and AppVeyor support publishing artifacts. But it requires additional con
 
 `electron-builder` allows you to just set `GH_TOKEN` environment variable and that's all (see [publish configuration](/configuration/publish.md)).
 
-Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/) and [Bintray](https://bintray.com) are supported.
+Currently, [GitHub Releases](https://help.github.com/articles/about-releases/), [Amazon S3](https://aws.amazon.com/s3/), [DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) and [Bintray](https://bintray.com) are supported.
 
 To use Amazon S3 please install `electron-publisher-s3` dependency.
 

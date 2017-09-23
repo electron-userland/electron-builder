@@ -35,7 +35,8 @@ Detected automatically using:
  
 <!-- do not edit. start of generated block -->
 ## BintrayOptions
-[Bintray](https://bintray.com/) options.
+[Bintray](https://bintray.com/) options. Requires an API key. An API key can be obtained from the user [profile](https://bintray.com/profile/edit) page ("Edit Your Profile" -> API Key).
+Define `BT_TOKEN` environment variable.
 
 * **<code id="BintrayOptions-provider">provider</code>** "bintray" - The provider. Must be `bintray`.
 * <code id="BintrayOptions-package">package</code> String - The Bintray package name.
@@ -77,12 +78,23 @@ Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/
 
 * **<code id="S3Options-provider">provider</code>** "s3" - The provider. Must be `s3`.
 * **<code id="S3Options-bucket">bucket</code>** String - The bucket name.
-* <code id="S3Options-path">path</code> = `/` String - The directory path.
 * <code id="S3Options-region">region</code> String - The region. Is determined and set automatically when publishing.
-* <code id="S3Options-channel">channel</code> = `latest` String - The channel.
 * <code id="S3Options-acl">acl</code> = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
   
   Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
 * <code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" - The type of storage to use for the object.
+* <code id="S3Options-channel">channel</code> = `latest` String - The update channel.
+* <code id="S3Options-path">path</code> = `/` String - The directory path.
+
+## SpacesOptions
+[DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) options.
+Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.
+
+* **<code id="SpacesOptions-provider">provider</code>** "spaces" - The provider. Must be `spaces`.
+* **<code id="SpacesOptions-name">name</code>** String - The space name.
+* **<code id="SpacesOptions-region">region</code>** String - The region (e.g. `nyc3`).
+* <code id="SpacesOptions-channel">channel</code> = `latest` String - The update channel.
+* <code id="SpacesOptions-path">path</code> = `/` String - The directory path.
+* <code id="SpacesOptions-acl">acl</code> = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
 
 <!-- end of generated block -->
