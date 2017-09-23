@@ -1,3 +1,9 @@
+# 2.10.0 (2017-09-22)
+
+### Features
+
+* [DigitalOcean Spaces support](https://github.com/electron-userland/electron-builder/releases/tag/v19.30.0).
+
 # 2.9.3 (2017-09-10)
 
 ### Features

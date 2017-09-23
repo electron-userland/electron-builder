@@ -191,7 +191,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
 
-- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>String</code> - If you want to override configuration in the `app-update.yml`.
+- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>String</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 #### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`

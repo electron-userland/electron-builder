@@ -21,7 +21,7 @@ import { createCommonTarget } from "./targets/targetFactory"
 import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
-import { FileCodeSigningInfo, getSignVendorPath, sign, SignOptions } from "./windowsCodeSign"
+import { FileCodeSigningInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
@@ -195,12 +195,21 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   }
 
   async sign(file: string, logMessagePrefix?: string) {
+    const signOptions: WindowsSignOptions = {
+      path: file,
+      name: this.appInfo.productName,
+      site: await this.appInfo.computePackageUrl(),
+      options: this.platformSpecificBuildOptions,
+    }
+
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
-      if (this.forceCodeSigning) {
+      if (this.platformSpecificBuildOptions.sign != null) {
+        await sign(signOptions)
+      }
+      else if (this.forceCodeSigning) {
         throw new Error(`App is not signed and "forceCodeSigning" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing`)
       }
-
       return
     }
 
@@ -221,14 +230,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log(`${logMessagePrefix} (certificate file: "${certFile}")`)
     }
 
-    await this.doSign({
-      path: file,
-
+    await WinPackager.doSign({
+      ...signOptions,
       cert: certFile,
-
       password: cscInfo.password,
-      name: this.appInfo.productName,
-      site: await this.appInfo.computePackageUrl(),
       options: {
         ...this.platformSpecificBuildOptions,
         certificateSubjectName: cscInfo.subjectName,
@@ -237,8 +242,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
   }
 
-  //noinspection JSMethodCanBeStatic
-  protected async doSign(options: SignOptions) {
+  private static async doSign(options: WindowsSignOptions) {
     for (let i = 0; i < 3; i++) {
       try {
         await sign(options)

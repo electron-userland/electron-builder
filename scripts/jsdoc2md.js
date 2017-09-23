@@ -65,7 +65,7 @@ async function render2(files, jsdoc2MdOptions) {
 
   const blockedPropertyName = new Set([
     "fileAssociations", "directories", "buildVersion", "mac", "linux", "win", "buildDependenciesFromSource", "afterPack",
-    "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector",
+    "installerIcon", "include", "createDesktopShortcut", "displayLanguageSelector", "signingHashAlgorithms", "publisherName"
   ])
   renderer.isInsertHorizontalLineBefore = item => {
     return blockedPropertyName.has(item.name)
@@ -109,6 +109,18 @@ async function render2(files, jsdoc2MdOptions) {
           label = "extra files"
         }
         return `The [${label}](/configuration/contents.md#${propertyName.toLowerCase()}) configuration.`
+      }
+
+      if (context.property.name === "sign" && context.object.name === "WindowsConfiguration") {
+        return "String | (configuration: CustomWindowsSignTaskConfiguration) => Promise"
+      }
+      if (context.object.name === "Configuration") {
+        if (context.property.name === "afterPack") {
+          return "(context: AfterPackContext) => Promise | null"
+        }
+        if (context.property.name === "beforeBuild") {
+          return "(context: BeforeBuildContext) => Promise | null"
+        }
       }
     }
 

@@ -4,14 +4,6 @@ exports[`icon < 256 1`] = `"Windows icon size must be at least 256x256, please f
 
 exports[`icon not an image 1`] = `"Windows icon is not valid ico file, please fix \\"<path>/icon.ico\\""`;
 
-exports[`sign certificateSha1 1`] = `"certificateSha1 supported only on Windows"`;
-
-exports[`sign electronDist 1`] = `"ENOENT: no such file or directory, scandir '<path>/foo'"`;
-
-exports[`sign ev 1`] = `"certificateSubjectName supported only on Windows"`;
-
-exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing"`;
-
 exports[`win zip 1`] = `
 Object {
   "win": Array [

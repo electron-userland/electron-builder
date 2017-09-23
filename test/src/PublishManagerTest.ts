@@ -4,7 +4,7 @@ import { app, checkDirContents } from "./helpers/packTester"
 
 const target = Platform.MAC.createTarget("zip")
 
-test.ifDevOrLinuxCi("generic and github", app({
+test.ifDevOrLinuxCi("generic, github and spaces", app({
   targets: target,
   config: {
     publish: [
@@ -15,6 +15,11 @@ test.ifDevOrLinuxCi("generic and github", app({
       {
         provider: "github",
         repo: "foo/foo"
+      },
+      {
+        provider: "spaces",
+        name: "mySpaceName",
+        region: "nyc3"
       },
     ]
   },

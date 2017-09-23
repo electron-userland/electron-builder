@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`sign certificateSha1 1`] = `"certificateSha1 supported only on Windows"`;
+
+exports[`sign electronDist 1`] = `"ENOENT: no such file or directory, scandir '<path>/foo'"`;
+
+exports[`sign ev 1`] = `"certificateSubjectName supported only on Windows"`;
+
+exports[`sign forceCodeSigning 1`] = `"App is not signed and \\"forceCodeSigning\\" is set to true, please ensure that code signing configuration is correct, please see https://electron.build/code-signing"`;

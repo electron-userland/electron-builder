@@ -15,7 +15,7 @@ import { Platform, SourceRepositoryInfo, Target } from "./core"
 import MacPackager from "./macPackager"
 import { Metadata } from "./options/metadata"
 import { ArtifactCreated, PackagerOptions } from "./packagerApi"
-import { PlatformPackager } from "./platformPackager"
+import { PlatformPackager, resolveFunction } from "./platformPackager"
 import { computeArchToTargetNamesMap, createTargets, NoOpTarget } from "./targets/targetFactory"
 import { computeDefaultAppDirectory, getConfig, validateConfig } from "./util/config"
 import { computeElectronVersion, getElectronVersionFromInstalled } from "./util/electronVersion"
@@ -143,7 +143,7 @@ export class Packager {
     if (debug.enabled) {
       debug(`Effective config:\n${safeDump(JSON.parse(safeStringifyJson(config)))}`)
     }
-    await validateConfig(config)
+    await validateConfig(config, this.debugLogger)
     this._configuration = config
 
     this.appDir = await computeDefaultAppDirectory(projectDir, use(config.directories, it => it!.app))
@@ -318,7 +318,7 @@ export class Packager {
       return
     }
 
-    const beforeBuild = config.beforeBuild
+    const beforeBuild = resolveFunction(config.beforeBuild)
     if (beforeBuild != null) {
       const performDependenciesInstallOrRebuild = await beforeBuild({
         appDir: this.appDir,
@@ -345,7 +345,7 @@ export class Packager {
   }
 
   afterPack(context: AfterPackContext): Promise<any> {
-    const afterPack = this.config.afterPack
+    const afterPack = resolveFunction(this.config.afterPack)
     const handlers = this.afterPackHandlers.slice()
     if (afterPack != null) {
       // user handler should be last

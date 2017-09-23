@@ -117,6 +117,7 @@ You can explicitly set guid using option [nsis.guid](#NsisOptions-guid), but it 
 
 It is also important to set the Application User Model ID (AUMID) to the [appId](configuration.md#Configuration-appId) of the application, in order for notifications on Windows 8/8.1 to function and for Window 10 notifications to display the app icon within the notifications by default. The AUMID should be set within the Main process and before any BrowserWindows have been opened, it is normally the first piece of code executed: `app.setAppUserModelId(appId)`
 
+---
 
 ## Common Questions
 #### How do change the default installation directory to custom?

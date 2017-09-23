@@ -1,4 +1,4 @@
-import { DIR_TARGET, Platform } from "electron-builder"
+import { Platform } from "electron-builder"
 import { rename, unlink, writeFile } from "fs-extra-p"
 import * as path from "path"
 import { CheckingWinPackager } from "../helpers/CheckingPackager"
@@ -37,49 +37,13 @@ test.ifMac("custom icon", () => {
     platformPackagerFactory: (packager, platform) => platformPackager = new CheckingWinPackager(packager),
     config: {
       win: {
-        icon: "customIcon"
+        icon: "customIcon",
       },
-    }
+    },
   }, {
     projectDirCreated: projectDir => rename(path.join(projectDir, "build", "icon.ico"), path.join(projectDir, "customIcon.ico")),
     packed: async context => {
       expect(await platformPackager!!.getIconPath()).toEqual(path.join(context.projectDir, "customIcon.ico"))
     },
   })
-})
-
-describe.ifAll("sign", () => {
-  const windowsDirTarget = Platform.WINDOWS.createTarget(["dir"])
-
-  test.ifNotWindows("ev", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      win: {
-        certificateSubjectName: "ev",
-      }
-    }
-  }))
-
-  test.ifNotWindows("certificateSha1", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      win: {
-        certificateSha1: "boo",
-      }
-    }
-  }))
-
-  test.ifNotCiMac("forceCodeSigning", appThrows({
-    targets: windowsDirTarget,
-    config: {
-      forceCodeSigning: true,
-    }
-  }))
-
-  test.ifNotCiMac("electronDist", appThrows({
-    targets: Platform.WINDOWS.createTarget(DIR_TARGET),
-    config: {
-      electronDist: "foo",
-    }
-  }))
 })

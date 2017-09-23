@@ -6,6 +6,7 @@ import isCi from "is-ci"
 import * as os from "os"
 import * as path from "path"
 import { WindowsConfiguration } from "./options/winOptions"
+import { resolveFunction } from "./platformPackager"
 import { isUseSystemSigncode } from "./util/flags"
 
 export function getSignVendorPath() {
@@ -21,7 +22,9 @@ export interface FileCodeSigningInfo {
   readonly certificateSha1?: string | null
 }
 
-export interface SignOptions {
+export type CustomWindowsSign = (configuration: CustomWindowsSignTaskConfiguration) => Promise<any>
+
+export interface WindowsSignOptions {
   readonly path: string
 
   readonly cert?: string | null
@@ -33,7 +36,19 @@ export interface SignOptions {
   readonly options: WindowsConfiguration
 }
 
-export async function sign(options: SignOptions) {
+export interface WindowsSignTaskConfiguration extends WindowsSignOptions {
+  // set if output path differs from input (e.g. osslsigncode cannot sign file inplace)
+  resultOutputPath?: string
+
+  hash: string
+  isNest: boolean
+}
+
+export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfiguration {
+  computeSignToolArgs(isWin: boolean): Array<string>
+}
+
+export async function sign(options: WindowsSignOptions) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -42,38 +57,50 @@ export async function sign(options: SignOptions) {
   else if (options.path.endsWith(".appx")) {
     hashes = ["sha256"]
   }
+  else if (hashes == null) {
+    hashes = ["sha1", "sha256"]
+  }
   else {
-    if (hashes == null) {
-      hashes = ["sha1", "sha256"]
-    }
-    else {
-      hashes = Array.isArray(hashes) ? hashes.slice() : [hashes]
-    }
+    hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  const isWin = process.platform === "win32"
-  let nest = false
-  //noinspection JSUnusedAssignment
-  let outputPath = ""
+  const executor = resolveFunction(options.options.sign) || doSign
+  let isNest = false
   for (const hash of hashes) {
-    outputPath = isWin ? options.path : getOutputPath(options.path, hash)
-    await spawnSign(options, options.path, outputPath, hash, nest)
-    nest = true
-    if (!isWin) {
-      await rename(outputPath, options.path)
+    const taskConfiguration: WindowsSignTaskConfiguration = {...options, hash, isNest}
+    await executor({
+      ...taskConfiguration,
+      computeSignToolArgs: isWin => computeSignToolArgs(taskConfiguration, isWin)
+    })
+    isNest = true
+    if (taskConfiguration.resultOutputPath != null) {
+      await rename(taskConfiguration.resultOutputPath, options.path)
     }
   }
 }
 
+async function doSign(configuration: CustomWindowsSignTaskConfiguration) {
+  const toolInfo = await getToolPath()
+  await exec(toolInfo.path, configuration.computeSignToolArgs(process.platform === "win32"), {
+    // https://github.com/electron-userland/electron-builder/pull/1944
+    timeout: parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000,
+    env: toolInfo.env || process.env
+  })
+}
+
 // on windows be aware of http://stackoverflow.com/a/32640183/1910191
-async function spawnSign(options: SignOptions, inputPath: string, outputPath: string, hash: string, nest: boolean) {
-  const isWin = process.platform === "win32"
-  const args = isWin ? ["sign"] : ["-in", inputPath, "-out", outputPath]
+function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean): Array<string> {
+  const outputPath = isWin ? options.path : getOutputPath(options.path, options.hash)
+  if (!isWin) {
+    options.resultOutputPath = outputPath
+  }
+
+  const args = isWin ? ["sign"] : ["-in", options.path, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
     const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.verisign.com/scripts/timstamp.dll"
     if (isWin) {
-      args.push(nest || hash === "sha256" ? "/tr" : "/t", nest || hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
+      args.push(options.isNest || options.hash === "sha256" ? "/tr" : "/t", options.isNest || options.hash === "sha256" ? (options.options.rfc3161TimeStampServer || "http://timestamp.comodoca.com/rfc3161") : timestampingServiceUrl)
     }
     else {
       args.push("-t", timestampingServiceUrl)
@@ -104,8 +131,8 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
     }
   }
 
-  if (!isWin || hash !== "sha1") {
-    args.push(isWin ? "/fd" : "-h", hash)
+  if (!isWin || options.hash !== "sha1") {
+    args.push(isWin ? "/fd" : "-h", options.hash)
     if (isWin && process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
       args.push("/td", "sha256")
     }
@@ -120,7 +147,7 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
   }
 
   // msi does not support dual-signing
-  if (nest) {
+  if (options.isNest) {
     args.push(isWin ? "/as" : "-nest")
   }
 
@@ -134,14 +161,10 @@ async function spawnSign(options: SignOptions, inputPath: string, outputPath: st
 
   if (isWin) {
     // must be last argument
-    args.push(inputPath)
+    args.push(options.path)
   }
 
-  const toolInfo = await getToolPath()
-  return await exec(toolInfo.path, args, {
-    timeout: parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 120 * 1000,
-    env: toolInfo.env || process.env
-  })
+  return args
 }
 
 function getOutputPath(inputPath: string, hash: string) {

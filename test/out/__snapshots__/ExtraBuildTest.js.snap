@@ -47,7 +47,6 @@ Object {
     Object {
       "file": "beta.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
         "path": "beta-TestApp.exe",
         "version": "1.0.0-beta.1",
       },
@@ -71,7 +70,6 @@ Object {
 
 exports[`override targets in the config - only arch 3`] = `
 Object {
-  "githubArtifactName": "TestApp-Setup-1.0.0-beta.1.exe",
   "path": "beta-TestApp.exe",
   "version": "1.0.0-beta.1",
 }

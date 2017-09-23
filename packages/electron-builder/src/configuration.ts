@@ -222,11 +222,11 @@ export interface Configuration extends PlatformSpecificBuildOptions {
   readonly releaseInfo?: ReleaseInfo
 
   /**
-   * *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
+   * The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
    */
   readonly afterPack?: (context: AfterPackContext) => Promise<any> | null
   /**
-   * *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
+   * The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
    */
   readonly beforeBuild?: (context: BeforeBuildContext) => Promise<any> | null
 

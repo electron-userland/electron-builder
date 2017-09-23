@@ -144,8 +144,8 @@ Env file `electron-builder.env` in the current dir ([example](https://github.com
 
 ---
 
-* <code id="Configuration-afterPack">afterPack</code> callback - *programmatic API only* The function to be run after pack (but before pack into distributable format and sign). Promise must be returned.
-* <code id="Configuration-beforeBuild">beforeBuild</code> callback - *programmatic API only* The function to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Promise must be returned. Resolving to `false` will skip dependencies install or rebuild.
+* <code id="Configuration-afterPack">afterPack</code> (context: AfterPackContext) => Promise | null - The function (or path to file or module id) to be run after pack (but before pack into distributable format and sign).
+* <code id="Configuration-beforeBuild">beforeBuild</code> (context: BeforeBuildContext) => Promise | null - The function (or path to file or module id) to be run before dependencies are installed or rebuilt. Works when `npmRebuild` is set to `true`. Resolving to `false` will skip dependencies install or rebuild.
 
 ## Metadata
 Some standard fields should be defined in the `package.json`.

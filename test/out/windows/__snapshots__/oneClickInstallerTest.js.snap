@@ -112,7 +112,6 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-Setup-1.1.0.exe",
         "path": "TestApp Setup 1.1.0.exe",
         "version": "1.1.0",
       },
@@ -135,7 +134,6 @@ Object {
 
 exports[`perMachine, no run after finish 3`] = `
 Object {
-  "githubArtifactName": "TestApp-Setup-1.1.0.exe",
   "path": "TestApp Setup 1.1.0.exe",
   "version": "1.1.0",
 }
@@ -202,7 +200,6 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-WebSetup-1.1.0.exe",
         "packages": Object {
           "x64": Object {
             "file": "TestApp-1.1.0-x64.nsis.7z",

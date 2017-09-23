@@ -6,7 +6,6 @@ Object {
     Object {
       "file": "latest.yml",
       "fileContent": Object {
-        "githubArtifactName": "TestApp-WebSetup-1.0.0.exe",
         "packages": Object {
           "x64": Object {
             "file": "TestApp-1.0.0-x64.nsis.7z",

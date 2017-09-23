@@ -1,6 +1,6 @@
 import { computeData } from "asar-integrity"
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, debug, DebugLogger, getArchSuffix, isEmptyOrSpaces, log, use, warn } from "builder-util"
 import { PackageBuilder } from "builder-util/out/api"
 import { statOrNull, unlinkIfExists } from "builder-util/out/fs"
 import { orIfFileNotExist } from "builder-util/out/promise"
@@ -551,4 +551,25 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
 // remove leading dot
 export function normalizeExt(ext: string) {
   return ext.startsWith(".") ? ext.substring(1) : ext
+}
+
+export function resolveFunction<T>(executor: T | string): T {
+  if (typeof executor !== "string") {
+    return executor
+  }
+
+  let p = executor as string
+  if (p.startsWith(".")) {
+    p = path.resolve(p)
+  }
+  try {
+    p = require.resolve(p)
+  }
+  catch (e) {
+    debug(e)
+    p = path.resolve(p)
+  }
+
+  const m = require(p)
+  return m.default || m
 }

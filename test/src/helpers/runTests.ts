@@ -48,10 +48,12 @@ async function runTests() {
       args.push("debTest")
       args.push("fpmTest")
       args.push("winPackagerTest")
+      args.push("winCodeSignTest")
       args.push("squirrelWindowsTest")
+      args.push("nsisUpdaterTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest", "extraMetadataTest", "globTest", "filesTest", "ignoreTest", "nsisUpdaterTest")
+      args.push("BuildTest", "extraMetadataTest")
       args.push("mac.+")
       args.push("oneClickInstallerTest")
     }
@@ -62,8 +64,12 @@ async function runTests() {
       args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
     }
     else {
-      args.push("installerTest", "portableTest")
+      args.push("assistedInstallerTest")
+      args.push("portableTest")
       args.push("linuxArchiveTest")
+      args.push("filesTest")
+      args.push("globTest")
+      args.push("ignoreTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

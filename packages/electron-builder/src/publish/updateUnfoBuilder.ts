@@ -57,7 +57,9 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     }
 
     // spaces is a new publish provider, no need to keep backward compatibility
-    if (isMac && publishConfig.provider !== "spaces") {
+    const isElectronUpdater1xCompatibility = publishConfig.provider !== "spaces"
+
+    if (isMac && isElectronUpdater1xCompatibility) {
       await writeOldMacInfo(publishConfig, outDir, dir, channel, createdFiles, version, packager)
     }
 
@@ -69,12 +71,12 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
     createdFiles.add(updateInfoFile)
 
     // noinspection JSDeprecatedSymbols
-    if (packager.platform === Platform.WINDOWS && info.sha2 == null) {
+    if (isElectronUpdater1xCompatibility && packager.platform === Platform.WINDOWS && info.sha2 == null) {
       // backward compatibility
       (info as any).sha2 = await sha2.value
     }
 
-    if (event.safeArtifactName != null) {
+    if (event.safeArtifactName != null && publishConfig.provider === "github") {
       info = {
         ...info,
         githubArtifactName: event.safeArtifactName,

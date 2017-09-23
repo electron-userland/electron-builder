@@ -1,4 +1,4 @@
-import { asArray, debug, log, warn } from "builder-util"
+import { asArray, DebugLogger, log, warn } from "builder-util"
 import { statOrNull } from "builder-util/out/fs"
 import { readJson } from "fs-extra-p"
 import { Lazy } from "lazy-val"
@@ -84,7 +84,7 @@ export async function getConfig(projectDir: string, configPath: string | null, c
 const schemeDataPromise = new Lazy(() => readJson(path.join(__dirname, "..", "..", "scheme.json")))
 
 /** @internal */
-export async function validateConfig(config: Configuration) {
+export async function validateConfig(config: Configuration, debugLogger: DebugLogger) {
   const extraMetadata = config.extraMetadata
   if (extraMetadata != null) {
     if (extraMetadata.build != null) {
@@ -101,8 +101,8 @@ export async function validateConfig(config: Configuration) {
   }
 
   await _validateConfig(config, schemeDataPromise, (message, errors) => {
-    if (debug.enabled) {
-      debug(JSON.stringify(errors, null, 2))
+    if (debugLogger.enabled) {
+      debugLogger.add("invalidConfig", JSON.stringify(errors, null, 2))
     }
 
     return `${message}

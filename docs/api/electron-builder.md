@@ -126,7 +126,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="LinuxTargetSpecificOptions-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 * <code id="LinuxTargetSpecificOptions-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 * <code id="LinuxTargetSpecificOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="LinuxTargetSpecificOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
+* <code id="LinuxTargetSpecificOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [SpacesOptions](/configuration/publish.md#spacesoptions) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
 
 <a name="PlatformSpecificBuildOptions"></a>
 ## `PlatformSpecificBuildOptions` ⇐ <code>[TargetSpecificOptions](#TargetSpecificOptions)</code>
@@ -143,7 +143,7 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="PlatformSpecificBuildOptions-fileAssociations">fileAssociations</code> Array&lt;[FileAssociation](#FileAssociation)&gt; | [FileAssociation](#FileAssociation)
 * <code id="PlatformSpecificBuildOptions-forceCodeSigning">forceCodeSigning</code> Boolean
 * <code id="PlatformSpecificBuildOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
-* <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
+* <code id="PlatformSpecificBuildOptions-publish">publish</code> String | [GithubOptions](/configuration/publish.md#githuboptions) | [S3Options](/configuration/publish.md#s3options) | [SpacesOptions](/configuration/publish.md#spacesoptions) | [GenericServerOptions](/configuration/publish.md#genericserveroptions) | [BintrayOptions](/configuration/publish.md#bintrayoptions) | Array
 
 <a name="SourceRepositoryInfo"></a>
 ## `SourceRepositoryInfo`

@@ -1,5 +1,6 @@
 import { PlatformSpecificBuildOptions } from "../configuration"
 import { TargetConfigType, TargetSpecificOptions } from "../core"
+import { CustomWindowsSign } from "../windowsCodeSign"
 
 export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   /**
@@ -15,12 +16,6 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly target?: TargetConfigType
 
   /**
-   * Array of signing algorithms used. For AppX `sha256` is always used.
-   * @default ['sha1', 'sha256']
-   */
-  readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
-
-  /**
    * The path to application icon.
    * @default build/icon.ico
    */
@@ -32,38 +27,41 @@ export interface WindowsConfiguration extends PlatformSpecificBuildOptions {
   readonly legalTrademarks?: string | null
 
   /**
+   * Array of signing algorithms used. For AppX `sha256` is always used.
+   * @default ['sha1', 'sha256']
+   */
+  readonly signingHashAlgorithms?: Array<"sha1" | "sha256"> | null
+  /**
+   * The custom function (or path to file or module id) to sign Windows executable.
+   */
+  readonly sign?: CustomWindowsSign| string | null
+  /**
    * The path to the *.pfx certificate you want to sign with. Please use it only if you cannot use env variable `CSC_LINK` (`WIN_CSC_LINK`) for some reason.
    * Please see [Code Signing](../code-signing.md).
    */
   readonly certificateFile?: string | null
-
   /**
    * The password to the certificate provided in `certificateFile`. Please use it only if you cannot use env variable `CSC_KEY_PASSWORD` (`WIN_CSC_KEY_PASSWORD`) for some reason.
    * Please see [Code Signing](../code-signing.md).
    */
   readonly certificatePassword?: string | null
-
   /**
    * The name of the subject of the signing certificate. Required only for EV Code Signing and works only on Windows.
    */
   readonly certificateSubjectName?: string | null
-
   /**
    * The SHA1 hash of the signing certificate. The SHA1 hash is commonly specified when multiple certificates satisfy the criteria specified by the remaining switches. Works only on Windows.
    */
   readonly certificateSha1?: string | null
-
   /**
    * The path to an additional certificate file you want to add to the signature block.
    */
   readonly additionalCertificateFile?: string | null
-
   /**
    * The URL of the RFC 3161 time stamp server.
    * @default http://timestamp.comodoca.com/rfc3161
    */
   readonly rfc3161TimeStampServer?: string | null
-
   /**
    * The URL of the time stamp server.
    * @default http://timestamp.verisign.com/scripts/timstamp.dll

@@ -4,13 +4,11 @@ import SquirrelWindowsTarget from "electron-builder-squirrel-windows"
 import { Identity } from "electron-builder/out/codeSign"
 import MacPackager from "electron-builder/out/macPackager"
 import { DmgTarget } from "electron-builder/out/targets/dmg"
-import { SignOptions } from "electron-builder/out/windowsCodeSign"
 import { WinPackager } from "electron-builder/out/winPackager"
 import { SignOptions as MacSignOptions } from "electron-osx-sign"
 
 export class CheckingWinPackager extends WinPackager {
   effectiveDistOptions: any
-  signOptions: SignOptions | null
 
   constructor(info: Packager) {
     super(info)
@@ -28,11 +26,6 @@ export class CheckingWinPackager extends WinPackager {
   //noinspection JSUnusedLocalSymbols
   packageInDistributableFormat(appOutDir: string, arch: Arch, targets: Array<Target>, taskManager: AsyncTaskManager): void {
     // skip
-  }
-
-  //noinspection JSUnusedGlobalSymbols
-  protected async doSign(opts: SignOptions): Promise<any> {
-    this.signOptions = opts
   }
 }
 
