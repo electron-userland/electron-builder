@@ -137,6 +137,12 @@ Array [
 ]
 `;
 
+exports[`files.from asar 1`] = `
+Object {
+  "linux": Array [],
+}
+`;
+
 exports[`map resources 1`] = `
 Object {
   "linux": Array [],

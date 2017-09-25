@@ -11,6 +11,7 @@ import { AppFileWalker } from "./AppFileWalker"
 /** @internal */
 export const NODE_MODULES_PATTERN = `${path.sep}node_modules${path.sep}`
 
+// os path separator is used
 export interface ResolvedFileSet {
   src: string
   destination: string

@@ -46,13 +46,24 @@ export class DmgTarget extends Target {
     await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), Buffer.allocUnsafe(preallocatedSize))
 
     //noinspection SpellCheckingInspection
-    await spawn("hdiutil", addVerboseIfNeed(["create",
+    const imageArgs = addVerboseIfNeed(["create",
       "-srcfolder", backgroundDir,
       "-srcfolder", appPath,
       "-volname", volumeName,
-      "-anyowners", "-nospotlight", "-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16",
+      "-anyowners", "-nospotlight",
       "-format", "UDRW",
-    ]).concat(tempDmg))
+    ])
+
+    // if (await isMacOsHighSierra()) {
+    //   imageArgs.push("-fs", "APFS")
+    // }
+    // else {
+    imageArgs.push("-fs", "HFS+")
+      // imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
+    // }
+
+    imageArgs.push(tempDmg)
+    await spawn("hdiutil", imageArgs)
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await exists(volumePath)) {

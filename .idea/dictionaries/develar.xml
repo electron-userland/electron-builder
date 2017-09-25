@@ -11,6 +11,7 @@
       <w>amazonaws</w>
       <w>andif</w>
       <w>antivirus</w>
+      <w>apfs</w>
       <w>appdir</w>
       <w>appdmg</w>
       <w>appimage</w>
@@ -98,6 +99,7 @@
       <w>finishpage</w>
       <w>flattennpmmodules</w>
       <w>fontconfig</w>
+      <w>fsargs</w>
       <w>fseventsd</w>
       <w>gconf</w>
       <w>gitattributes</w>

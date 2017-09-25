@@ -2,7 +2,7 @@ import BluebirdPromise from "bluebird-lst"
 import { walk } from "builder-util/out/fs"
 import { checkWineVersion } from "builder-util/out/wine"
 import { Arch, createTargets, DIR_TARGET, Platform } from "electron-builder"
-import { readAsarJson } from "electron-builder/out/asar"
+import { readAsar } from "electron-builder/out/asar"
 import { move, outputJson, readJson } from "fs-extra-p"
 import * as path from "path"
 import { app, appTwo, appTwoThrows, assertPack, modifyPackageJson, packageJson } from "./helpers/packTester"
@@ -192,10 +192,21 @@ test.ifDevOrLinuxCi("win smart unpack", app({
   packed: context => verifySmartUnpack(context.getResources(Platform.WINDOWS))
 }))
 
+export function removeUnstableProperties(data: any) {
+  return JSON.parse(JSON.stringify(data, (name, value) => {
+    if (name === "offset") {
+      return undefined
+    }
+    return value
+  }))
+}
+
 async function verifySmartUnpack(resourceDir: string) {
-  expect(await readAsarJson(path.join(resourceDir, "app.asar"), "node_modules/debug/package.json")).toMatchObject({
+  const fs = await readAsar(path.join(resourceDir, "app.asar"))
+  expect(await fs.readJson("node_modules/debug/package.json")).toMatchObject({
     name: "debug"
   })
+  expect(removeUnstableProperties(fs.header)).toMatchSnapshot()
 
   expect((await walk(resourceDir, file => !path.basename(file).startsWith("."))).map(it => it.substring(resourceDir.length + 1))).toMatchSnapshot()
 }

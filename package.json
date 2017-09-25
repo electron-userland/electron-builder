@@ -96,7 +96,7 @@
     "develar-typescript-json-schema": "0.17.0",
     "electron-builder-tslint-config": "^1.0.4",
     "env-paths": "^1.0.0",
-    "finalhandler": "^1.0.6",
+    "finalhandler": "^1.1.0",
     "gitbook-plugin-analytics": "^0.2.1",
     "gitbook-plugin-develar-toolbar-buttons": "^1.0.2",
     "gitbook-plugin-edit-link": "^2.0.2",

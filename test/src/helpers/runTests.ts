@@ -53,7 +53,7 @@ async function runTests() {
       args.push("nsisUpdaterTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest", "extraMetadataTest")
+      args.push("BuildTest")
       args.push("mac.+")
       args.push("oneClickInstallerTest")
     }
@@ -70,6 +70,7 @@ async function runTests() {
       args.push("filesTest")
       args.push("globTest")
       args.push("ignoreTest")
+      args.push("extraMetadataTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

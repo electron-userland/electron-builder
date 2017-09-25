@@ -7,7 +7,8 @@ import { AsarFilesystem, Node, readAsar } from "../asar"
 import { AsarOptions } from "../configuration"
 import { Packager } from "../packager"
 import { PlatformPackager } from "../platformPackager"
-import { ensureEndSlash, NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
+import { NODE_MODULES_PATTERN, ResolvedFileSet } from "./AppFileCopierHelper"
+import { getDestinationPath } from "./appFileCopier"
 
 const isBinaryFile: any = BluebirdPromise.promisify(require("isbinaryfile"))
 const pickle = require("chromium-pickle-js")
@@ -37,7 +38,7 @@ export class AsarPackager {
   private readonly fs = new AsarFilesystem(this.src)
   private readonly outFile: string
 
-  constructor(private readonly src: string, destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
+  constructor(private readonly src: string, private readonly destination: string, private readonly options: AsarOptions, private readonly unpackPattern: Filter | null) {
     this.outFile = path.join(destination, "app.asar")
   }
 
@@ -59,29 +60,30 @@ export class AsarPackager {
     // search auto unpacked dir
     const unpackedDirs = new Set<string>()
     const unpackedDest = `${this.outFile}.unpacked`
+    const rootForAppFilesWithoutAsar = path.join(this.destination, "app")
 
     if (this.options.smartUnpack !== false) {
-      await detectUnpackedDirs(fileSet, unpackedDirs, unpackedDest)
+      await detectUnpackedDirs(fileSet, unpackedDirs, unpackedDest, rootForAppFilesWithoutAsar)
     }
 
     const dirToCreateForUnpackedFiles = new Set<string>(unpackedDirs)
 
-    const isDirNodeUnpacked = async (file: string, dirNode: Node) => {
+    const isDirNodeUnpacked = async (filePathInArchive: string, dirNode: Node) => {
       if (dirNode.unpacked) {
         return
       }
 
-      if (unpackedDirs.has(file)) {
+      if (unpackedDirs.has(filePathInArchive)) {
         dirNode.unpacked = true
       }
       else {
         for (const dir of unpackedDirs) {
-          if (file.length > (dir.length + 2) && file[dir.length] === path.sep && file.startsWith(dir)) {
+          if (filePathInArchive.length > (dir.length + 2) && filePathInArchive[dir.length] === path.sep && filePathInArchive.startsWith(dir)) {
             dirNode.unpacked = true
-            unpackedDirs.add(file)
+            unpackedDirs.add(filePathInArchive)
             // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
             // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-            await ensureDir(getTargetPath(fileSet, file, unpackedDest))
+            await ensureDir(path.join(unpackedDest, filePathInArchive))
             break
           }
         }
@@ -98,13 +100,20 @@ export class AsarPackager {
     for (let i = 0, n = fileSet.files.length; i < n; i++) {
       const file = fileSet.files[i]
       const stat = metadata.get(file)
+      const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
       if (stat != null && stat.isFile()) {
-        const fileParent = path.dirname(file)
+        let fileParent = path.dirname(pathInArchive)
+        if (fileParent === ".") {
+          fileParent = ""
+        }
 
         if (currentDirPath !== fileParent) {
           currentDirPath = fileParent
-          currentDirNode = this.fs.getOrCreateNode(getRelativePath(fileSet, fileParent))
-          await isDirNodeUnpacked(fileParent, currentDirNode)
+          currentDirNode = this.fs.getOrCreateNode(fileParent)
+          // do not check for root
+          if (fileParent !== "") {
+            await isDirNodeUnpacked(fileParent, currentDirNode)
+          }
         }
 
         const dirNode = currentDirNode!
@@ -118,10 +127,10 @@ export class AsarPackager {
 
           if (!dirNode.unpacked && !dirToCreateForUnpackedFiles.has(fileParent)) {
             dirToCreateForUnpackedFiles.add(fileParent)
-            await ensureDir(getTargetPath(fileSet, fileParent, unpackedDest))
+            await ensureDir(path.join(unpackedDest, fileParent))
           }
 
-          const unpackedFile = getTargetPath(fileSet, file, unpackedDest)
+          const unpackedFile = path.join(unpackedDest, pathInArchive)
           taskManager.addTask(copyFileOrData(fileCopier, newData, file, unpackedFile, stat))
           if (taskManager.tasks.length > MAX_FILE_REQUESTS) {
             await taskManager.awaitTasks()
@@ -133,25 +142,25 @@ export class AsarPackager {
       }
       else if (stat == null || stat.isDirectory()) {
         let unpacked = false
-        if (unpackedDirs.has(file)) {
+        if (unpackedDirs.has(pathInArchive)) {
           unpacked = true
         }
         else {
           for (const dir of unpackedDirs) {
-            if (file.length > (dir.length + 2) && file[dir.length] === path.sep && file.startsWith(dir)) {
+            if (pathInArchive.length > (dir.length + 2) && pathInArchive[dir.length] === path.sep && pathInArchive.startsWith(dir)) {
               unpacked = true
-              unpackedDirs.add(file)
+              unpackedDirs.add(pathInArchive)
               // not all dirs marked as unpacked after first iteration - because node module dir can be marked as unpacked after processing node module dir content
               // e.g. node-notifier/example/advanced.js processed, but only on process vendor/terminal-notifier.app module will be marked as unpacked
-              await ensureDir(getTargetPath(fileSet, file, unpackedDest))
+              await ensureDir(path.join(unpackedDest, pathInArchive))
               break
             }
           }
         }
-        this.fs.insertDirectory(getRelativePath(fileSet, file), unpacked)
+        this.fs.insertDirectory(pathInArchive, unpacked)
       }
       else if (stat.isSymbolicLink()) {
-        this.fs.getOrCreateNode(getRelativePath(fileSet, file)).link = (stat as any).relativeLink
+        this.fs.getOrCreateNode(pathInArchive).link = (stat as any).relativeLink
       }
     }
 
@@ -178,6 +187,7 @@ export class AsarPackager {
       let fileSetIndex = 0
 
       let files = fileSets[0].files
+      let metadata = fileSets[0].metadata
       let transformedFiles = fileSets[0].transformedFiles
       const w = (index: number) => {
         let data
@@ -189,6 +199,7 @@ export class AsarPackager {
             }
             else {
               files = fileSets[fileSetIndex].files
+              metadata = fileSets[fileSetIndex].metadata
               transformedFiles = fileSets[fileSetIndex].transformedFiles
               index = 0
             }
@@ -206,7 +217,8 @@ export class AsarPackager {
         }
 
         // https://github.com/yarnpkg/yarn/pull/3539
-        if (file.includes("node_modules") || file.endsWith(".js") || file.endsWith(".map.js") || file.endsWith(".json")) {
+        const stat = metadata.get(file)
+        if (stat != null && stat.size < (4 * 1024 * 1024)) {
           readFile(file)
             .then(it => {
               writeStream.write(it, () => w(index))
@@ -264,9 +276,32 @@ export async function checkFileInArchive(asarFile: string, relativeFile: string,
   }
 }
 
-async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string) {
+async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<string>, unpackedDest: string, rootForAppFilesWithoutAsar: string) {
   const dirToCreate = new Map<string, Array<string>>()
   const metadata = fileSet.metadata
+
+  function addParents(child: string, root: string) {
+    child = path.dirname(child)
+    if (autoUnpackDirs.has(child)) {
+      return
+    }
+
+    do {
+      autoUnpackDirs.add(child)
+      const p = path.dirname(child)
+      // create parent dir to be able to copy file later without directory existence check
+      addValue(dirToCreate, p, path.basename(child))
+
+      if (child === root || p === root || autoUnpackDirs.has(p)) {
+        break
+      }
+      child = p
+    }
+    while (true)
+
+    autoUnpackDirs.add(root)
+  }
+
   for (let i = 0, n = fileSet.files.length; i < n; i++) {
     const file = fileSet.files[i]
     const index = file.lastIndexOf(NODE_MODULES_PATTERN)
@@ -288,12 +323,11 @@ async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<
     }
 
     const packageDir = file.substring(0, nextSlashIndex)
-    if (autoUnpackDirs.has(packageDir)) {
-      const fileParent = path.dirname(file)
-      if (fileParent !== packageDir && !autoUnpackDirs.has(fileParent)) {
-        autoUnpackDirs.add(fileParent)
-        addValue(dirToCreate, getRelativePath(fileSet, packageDir), path.relative(packageDir, fileParent))
-      }
+    const packageDirPathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(packageDir, fileSet))
+    const pathInArchive = path.relative(rootForAppFilesWithoutAsar, getDestinationPath(file, fileSet))
+    if (autoUnpackDirs.has(packageDirPathInArchive)) {
+      // if package dir is unpacked, any file also unpacked
+      addParents(pathInArchive, packageDirPathInArchive)
       continue
     }
 
@@ -310,27 +344,27 @@ async function detectUnpackedDirs(fileSet: ResolvedFileSet, autoUnpackDirs: Set<
     }
 
     if (debug.enabled) {
-      debug(`${getRelativePath(fileSet, packageDir)} is not packed into asar archive - contains executable code`)
+      debug(`${pathInArchive} is not packed into asar archive - contains executable code`)
     }
 
-    let fileParent = path.dirname(file)
-
-    // create parent dir to be able to copy file later without directory existence check
-    addValue(dirToCreate, getRelativePath(fileSet, packageDir), path.relative(packageDir, fileParent))
-
-    while (fileParent !== packageDir) {
-      autoUnpackDirs.add(fileParent)
-      fileParent = path.dirname(fileParent)
-    }
-    autoUnpackDirs.add(packageDir)
+    addParents(pathInArchive, packageDirPathInArchive)
   }
 
   if (dirToCreate.size > 0) {
+    await ensureDir(unpackedDest + path.sep + "node_modules")
     // child directories should be not created asynchronously - parent directories should be created first
-    await BluebirdPromise.map(dirToCreate.keys(), async it => {
-      const base = path.join(unpackedDest, it)
+    await BluebirdPromise.map(dirToCreate.keys(), async parentDir => {
+      const base = unpackedDest + path.sep + parentDir
       await ensureDir(base)
-      await BluebirdPromise.each(dirToCreate.get(it)!, it => ensureDir(path.join(base, it)))
+      await BluebirdPromise.each(dirToCreate.get(parentDir)!, (it): any => {
+        if (dirToCreate.has(parentDir + path.sep + it)) {
+          // already created
+          return null
+        }
+        else {
+          return ensureDir(base + path.sep + it)
+        }
+      })
     }, CONCURRENCY)
   }
 }
@@ -371,24 +405,4 @@ async function order(filenames: Array<string>, orderingFile: string, src: string
   }
   log(`Ordering file has ${((total - missing) / total * 100)}% coverage.`)
   return sortedFiles
-}
-
-function getRelativePath(fileSet: ResolvedFileSet, p: string) {
-  const relative = p.substring(ensureEndSlash(fileSet.src).length)
-
-  if (path.sep === "\\") {
-    if (relative.startsWith("\\")) {
-      // windows problem: double backslash, the above substring call removes root path with a single slash, so here can me some leftovers
-      return relative.substring(1)
-    }
-  }
-
-  return relative
-}
-
-function getTargetPath(fileSet: ResolvedFileSet, p: string, to: string) {
-  if (p === fileSet.src) {
-    return to
-  }
-  return p.replace(ensureEndSlash(fileSet.src), ensureEndSlash(to))
 }

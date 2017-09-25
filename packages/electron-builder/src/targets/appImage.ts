@@ -85,7 +85,7 @@ export default class AppImageTarget extends Target {
 
     if (arch === Arch.x64 || arch === Arch.ia32) {
       // noinspection SpellCheckingInspection
-      args.push("-map", path.join(await getBinFromGithub("appimage-packages", "28-08-17", "ionv5NRfkOFXTJsu9Db4GNN6bbTvuwvQCuK6eDZCaRJl0+4GwwdZhk2i8Cmk0J2bNNsUSsZxVCnOKw0MJxJRpQ=="), arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), "/usr/lib")
+      args.push("-map", path.join(await getBinFromGithub("appimage-packages", "25-09-17", "op5TeNhsqVD6X1AC4QukdpNPk2+7b3TNmiVFQdgLmAdnk3xzC7ZxXqYWmvRzQjyoIV4aHbq/iYTpfWwjRwi5XQ=="), arch === Arch.x64 ? "x86_64-linux-gnu" : "i386-linux-gnu"), "/usr/lib")
     }
 
     args.push("-chown_r", "0", "/", "--")

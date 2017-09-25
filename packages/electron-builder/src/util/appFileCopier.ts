@@ -7,6 +7,10 @@ import { Packager } from "../packager"
 import { ensureEndSlash, ResolvedFileSet } from "./AppFileCopierHelper"
 import { copyFileOrData } from "./asarUtil"
 
+export function getDestinationPath(file: string, fileSet: ResolvedFileSet) {
+  return file === fileSet.src ? fileSet.destination : file.replace(ensureEndSlash(fileSet.src), ensureEndSlash(fileSet.destination))
+}
+
 export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager) {
   const metadata = fileSet.metadata
   const transformedFiles = fileSet.transformedFiles
@@ -24,7 +28,7 @@ export async function copyAppFiles(fileSet: ResolvedFileSet, packager: Packager)
       continue
     }
 
-    const destinationFile = sourceFile === fileSet.src ? fileSet.destination : sourceFile.replace(ensureEndSlash(fileSet.src), ensureEndSlash(fileSet.destination))
+    const destinationFile = getDestinationPath(sourceFile, fileSet)
     if (stat.isFile()) {
       const newData = transformedFiles == null ? null : transformedFiles[i] as string | Buffer
       if (newData != null) {

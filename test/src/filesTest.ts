@@ -2,11 +2,11 @@ import BluebirdPromise from "bluebird-lst"
 import { DIR_TARGET, Platform } from "electron-builder"
 import { TmpDir } from "builder-util"
 import { copyDir } from "builder-util/out/fs"
-import { outputFile, readFile, stat, symlink } from "fs-extra-p"
+import { outputFile, readFile, move, stat, symlink } from "fs-extra-p"
 import * as path from "path"
 import Mode, { Permissions } from "stat-mode"
 import { assertThat } from "./helpers/fileAssert"
-import { app, appThrows, assertPack, checkDirContents } from "./helpers/packTester"
+import { app, appThrows, assertPack, checkDirContents, modifyPackageJson } from "./helpers/packTester"
 
 const linuxDirTarget = Platform.LINUX.createTarget(DIR_TARGET)
 
@@ -39,6 +39,31 @@ test.ifDevOrLinuxCi("files", app({
     const resources = path.join(context.getResources(Platform.LINUX), "app")
     return checkDirContents(resources)
   },
+}))
+
+test.ifDevOrLinuxCi("files.from asar", app({
+  targets: linuxDirTarget,
+  config: {
+    asar: true,
+    files: [
+      {
+        from: ".",
+        to: ".",
+        filter: ["package.json"]
+      },
+      {
+        from: "app/node",
+        to: "app/node"
+      },
+    ],
+  },
+}, {
+  projectDirCreated: projectDir => BluebirdPromise.all([
+    move(path.join(projectDir, "index.js"), path.join(projectDir, "app/node/index.js")),
+    modifyPackageJson(projectDir, data => {
+      data.main = "app/node/index.js"
+    })
+  ]),
 }))
 
 test.ifDevOrLinuxCi("map resources", app({
