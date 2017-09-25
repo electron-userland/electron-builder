@@ -24,7 +24,7 @@
     <rescap:Capability Name="runFullTrust"/>
   </Capabilities>
   <Applications>
-    <Application Id="${name}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="${applicationId}" Executable="${executable}" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
        BackgroundColor="${backgroundColor}"
        DisplayName="${displayName}"

@@ -94,14 +94,17 @@ export type RequestedExecutionLevel = "asInvoker" | "highestAvailable" | "requir
 
 export interface AppXOptions extends TargetSpecificOptions {
   /**
+   * The application id. Defaults to `identityName`. Can’t start with numbers.
+   */
+  readonly applicationId?: string
+
+  /**
    * The background color of the app tile.
    * @see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
    */
   readonly backgroundColor?: string | null
 
-  /**
-   * @private
-   */
+  /** @private */
   readonly makeappxArgs?: Array<string> | null
 
   /**

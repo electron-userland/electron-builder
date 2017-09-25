@@ -3,6 +3,7 @@ The top-level [appx](configuration.md#Configuration-appx) key contains set of op
 Please also see [AppX Assets](/icons.md#appx).
 
 <!-- do not edit. start of generated block -->
+* <code id="AppXOptions-applicationId">applicationId</code> String - The application id. Defaults to `identityName`. Can’t start with numbers.
 * <code id="AppXOptions-backgroundColor">backgroundColor</code> String - The background color of the app tile. See: [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
 * <code id="AppXOptions-publisher">publisher</code> String - Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. By default will be extracted from code sign certificate.
 * <code id="AppXOptions-displayName">displayName</code> String - A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).

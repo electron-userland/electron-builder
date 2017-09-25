@@ -131,8 +131,16 @@ export default class AppXTarget extends Target {
           case "version":
             return appInfo.versionInWeirdWindowsForm
 
-          case "name":
-            return options.identityName || appInfo.name
+          case "applicationId":
+            const result = options.applicationId || options.identityName || appInfo.name
+            if (!isNaN(parseInt(result[0], 10))) {
+              let message = `AppX Application.Id can’t start with numbers: "${result}"`
+              if (options.applicationId == null) {
+                message += `\nPlease set appx.applicationId (or correct appx.identityName or name)`
+              }
+              throw new Error(message)
+            }
+            return result
 
           case "identityName":
             return options.identityName  || appInfo.name
