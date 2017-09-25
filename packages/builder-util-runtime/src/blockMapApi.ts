@@ -5,8 +5,6 @@ export interface BlockMap {
   blockSize: number
   hashMethod: "sha256" | "md5"
 
-  // https://sourceforge.net/p/sevenzip/discussion/45798/thread/222c71f9/?limit=25
-  compressionMethod: "lzma"
   compressionLevel: 9 | 1
 
   files: Array<BlockMapFile>

@@ -38,11 +38,11 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
       packed: async context => {
         const outDir = context.outDir
         outDirs.push(outDir)
-        const updateInfoFile = path.join(outDir, "latest.yml")
-        await rename(path.join(outDir, "nsis-web", "latest.yml"), updateInfoFile)
+        const targetOutDir = path.join(outDir, "nsis-web")
+        const updateInfoFile = path.join(targetOutDir, "latest.yml")
 
         const updateInfo: UpdateInfo = safeLoad(await readFile(updateInfoFile, "utf-8"))
-        const fd = await open(path.join(outDir, `TestApp-${version}-x64.nsis.7z`), "r")
+        const fd = await open(path.join(targetOutDir, `TestApp-${version}-x64.nsis.7z`), "r")
         try {
           const packageInfo = updateInfo.packages!!.x64
           const buffer = Buffer.allocUnsafe(packageInfo.blockMapSize!!)
@@ -80,7 +80,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     await rename(outDirs[0], oldDir)
     outDirs[0] = oldDir
 
-    await rename(path.join(oldDir, "TestApp-1.0.0-x64.nsis.7z"), path.join(oldDir, "win-unpacked", "package.7z"))
+    await rename(path.join(oldDir, "nsis-web", "TestApp-1.0.0-x64.nsis.7z"), path.join(oldDir, "win-unpacked", "package.7z"))
   }
   else {
     // to  avoid snapshot mismatch (since in this node app is not packed)
@@ -96,7 +96,6 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
                 file: "TestApp-1.0.0-x64.nsis.7z"
               }
             },
-            githubArtifactName: "TestApp-WebSetup-1.0.0.exe"
           }
         },
         {
@@ -127,7 +126,6 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
                 file: "TestApp-1.0.1-x64.nsis.7z"
               }
             },
-            githubArtifactName: "TestApp-WebSetup-1.0.1.exe"
           }
         },
         {
@@ -153,7 +151,7 @@ test.ifAll.ifDevOrWinCi("web installer", async () => {
     ]
   }
 
-  await testBlockMap(outDirs[0], outDirs[1])
+  await testBlockMap(outDirs[0], path.join(outDirs[1], "nsis-web"))
 })
 
 // test.ifAll("s3", async () => {

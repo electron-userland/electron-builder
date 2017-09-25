@@ -26,7 +26,7 @@ const debug = _debug("electron-builder:nsis")
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
 // noinspection SpellCheckingInspection
-const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.1.13", "2921dd404ce9b69679088a6f1409a56dd360da2077fe1019573c0712c9edf057"))
+const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.2.1", "8t2wbvCUHxHGU9YMGGvb0VulCszBGXoCtKJZWZEcIB1lyM+bH2awYnZFnlwfr9VWQHzi7xM3CN25X6fZjDItFA=="))
 // noinspection SpellCheckingInspection
 const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
 
@@ -75,7 +75,7 @@ export class NsisTarget extends Target {
 
     const isDifferentialPackage = options.differentialPackage
     const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
-    const archiveFile = path.join(this.outDir, `${packager.appInfo.name}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
+    const archiveFile = path.join(this.outDir, `${packager.appInfo.sanitizedName}-${packager.appInfo.version}-${Arch[arch]}.nsis.${format}`)
     const archiveOptions: ArchiveOptions = {withoutDir: true}
     let compression = packager.config.compression
 
@@ -100,7 +100,7 @@ export class NsisTarget extends Target {
 
   // noinspection JSUnusedGlobalSymbols
   async finishBuild(): Promise<any> {
-    log("Building NSIS installer")
+    log(`Building ${this.name} installer (${Array.from(this.archs.keys()).map(it => Arch[it]).join(" and ")})`)
     try {
       await this.buildInstaller()
     }
@@ -236,7 +236,7 @@ export class NsisTarget extends Target {
       packager,
       arch: this.archs.size === 1 ? this.archs.keys().next().value : null,
       safeArtifactName: this.generateGitHubInstallerName(),
-      isWriteUpdateInfo: true,
+      isWriteUpdateInfo: !this.isPortable,
     })
   }
 

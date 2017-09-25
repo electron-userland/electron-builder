@@ -21,6 +21,10 @@ async function isOsVersionGreaterThanOrEqualTo(input: string) {
   return semver.gte(await macOsVersion.value, clean(input))
 }
 
+export function getMacOsVersion() {
+  return macOsVersion.value
+}
+
 export async function isMacOsSierra() {
   return process.platform === "darwin" && await isOsVersionGreaterThanOrEqualTo("10.12.0")
 }

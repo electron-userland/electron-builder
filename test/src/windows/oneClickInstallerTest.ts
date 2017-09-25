@@ -173,8 +173,8 @@ test.ifAll.ifNotCiMac("menuCategory", app({
   projectDirCreated: projectDir => modifyPackageJson(projectDir, data => {
     data.name = "test-menu-category"
   }),
-  packed: async context => {
-    await doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
+  packed: context => {
+    return doTest(context.outDir, false, "Test Menu Category", "test-menu-category", "Foo Bar")
   }
 }))
 
@@ -217,7 +217,6 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
 test.ifNotCiMac("web installer", app({
   targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
   config: {
-    compression: process.env.COMPRESSION as any || "store",
     publish: {
       provider: "s3",
       bucket: "develar",

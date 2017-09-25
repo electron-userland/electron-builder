@@ -1,6 +1,6 @@
 import { hashFile } from "builder-util"
 import { GenericServerOptions, PublishConfiguration, UpdateInfo } from "builder-util-runtime"
-import { ensureDir, outputFile, outputJson, readFile } from "fs-extra-p"
+import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
 import * as path from "path"
@@ -19,12 +19,7 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   }
 
   const target = event.target!
-  let outDir = target.outDir
-  if (event.packager.platform === Platform.WINDOWS && target.name !== "nsis") {
-    outDir = path.join(outDir, target.name)
-    await ensureDir(outDir)
-  }
-
+  const outDir = target.outDir
   const version = packager.appInfo.version
   const sha2 = new Lazy<string>(() => hashFile(event.file!, "sha256", "hex"))
   const isMac = packager.platform === Platform.MAC

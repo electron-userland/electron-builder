@@ -26,11 +26,6 @@ class Logger {
     }
   }
 
-  subTask(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
-    this.log(`  ${title}`)
-    return _promise as BluebirdPromise<any>
-  }
-
   task(title: string, _promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
     const promise = _promise as BluebirdPromise<any>
     this.log(title)
@@ -56,10 +51,6 @@ export function warn(message: string) {
 
 export function log(message: string) {
   logger.log(message)
-}
-
-export function subTask(title: string, promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {
-  return logger.subTask(title, promise)
 }
 
 export function task(title: string, promise: BluebirdPromise<any> | Promise<any>): BluebirdPromise<any> {

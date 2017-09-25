@@ -10,7 +10,7 @@ import "source-map-support/register"
 
 export { safeStringifyJson } from "builder-util-runtime"
 export { TmpDir } from "temp-file"
-export { log, warn, task, subTask } from "./log"
+export { log, warn, task } from "./log"
 export { isMacOsSierra, isCanSignDmg } from "./macosVersion"
 export { execWine, prepareWindowsExecutableArgs } from "./wine"
 export { Arch, toLinuxArchString, getArchSuffix, ArchType, archFromString } from "./arch"

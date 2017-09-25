@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, subTask } from "builder-util"
+import { Arch } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { unlink } from "fs-extra-p"
 import { getTemplatePath } from "../../util/pathManager"
@@ -17,7 +17,7 @@ export class AppPackageHelper {
   async packArch(arch: Arch, target: NsisTarget): Promise<PackageFileInfo> {
     let infoPromise = this.archToFileInfo.get(arch)
     if (infoPromise == null) {
-      infoPromise = subTask(`Packaging NSIS installer for arch ${Arch[arch]}`, target.buildAppPackage(target.archs.get(arch)!, arch))
+      infoPromise = target.buildAppPackage(target.archs.get(arch)!, arch)
       this.archToFileInfo.set(arch, infoPromise)
     }
 

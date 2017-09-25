@@ -145,7 +145,8 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
         mapper(name, outDir => new NsisTarget(this, outDir, name, getHelper()))
       }
       else if (name === "nsis-web") {
-        mapper(name, outDir => new WebInstallerTarget(this, outDir, name, getHelper()))
+        // package file format differs from nsis target
+        mapper(name, outDir => new WebInstallerTarget(this, path.join(outDir, name), name, new AppPackageHelper()))
       }
       else {
         const targetClass: typeof NsisTarget | typeof AppXTarget | null = (() => {
@@ -303,8 +304,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       }
 
       const timer = time("executable cache")
-      // md5 is faster, we don't need secure hash
-      const hash = createHash("md5")
+      const hash = createHash("sha512")
       hash.update(config.electronVersion || "no electronVersion")
       hash.update(config.muonVersion || "no muonVersion")
       hash.update(JSON.stringify(this.platformSpecificBuildOptions))

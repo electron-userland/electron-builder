@@ -82,6 +82,7 @@ async function runTests() {
   // use custom cache dir to avoid https://github.com/facebook/jest/issues/1903#issuecomment-261212137
   config.cacheDirectory = process.env.JEST_CACHE_DIR || "/tmp/jest-electron-builder-tests"
   // no need to transform — compiled before
+  config.transform = {}
   config.transformIgnorePatterns = [".*"]
   config.bail = process.env.TEST_BAIL === "true"
 

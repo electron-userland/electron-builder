@@ -1,9 +1,9 @@
 import { Lazy } from "lazy-val"
 import * as path from "path"
-import { lt as isVersionLessThan } from "semver"
+import * as semver from "semver"
 import { getBinFromGithub } from "./binDownload"
 import { computeEnv, EXEC_TIMEOUT, ToolInfo } from "./bundledTool"
-import { isMacOsSierra } from "./macosVersion"
+import { getMacOsVersion } from "./macosVersion"
 import { debug, exec, ExecOptions, isEnvTrue } from "./util"
 
 const wineExecutable = new Lazy<ToolInfo>(async () => {
@@ -11,17 +11,32 @@ const wineExecutable = new Lazy<ToolInfo>(async () => {
   if (isUseSystemWine) {
     debug("Using system wine is forced")
   }
-  if (!isUseSystemWine && await isMacOsSierra()) {
-    // noinspection SpellCheckingInspection
-    const wineDir = await getBinFromGithub("wine", "2.0.1-mac-10.12", "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg==")
-    return {
-      path: path.join(wineDir, "bin/wine"),
-      env: {
-        ...process.env,
-        WINEDEBUG: "-all,err+all",
-        WINEDLLOVERRIDES: "winemenubuilder.exe=d",
-        WINEPREFIX: path.join(wineDir, "wine-home"),
-        DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")])
+  else if (process.platform === "darwin") {
+    const osVersion = await getMacOsVersion()
+    let version: string | null = null
+    let checksum: string | null = null
+    if (semver.gte(osVersion, "10.13.0")) {
+      version = "2.0.2-mac-10.13"
+      // noinspection SpellCheckingInspection
+      checksum = "v6r9RSQBAbfvpVQNrEj48X8Cw1181rEGMRatGxSKY5p+7khzzy/0tOdfHGO8cU+GqYvH43FAKMK8p6vUfCqSSA=="
+    }
+    else if (semver.gte(osVersion, "10.12.0")) {
+      version = "2.0.1-mac-10.12"
+      // noinspection SpellCheckingInspection
+      checksum = "IvKwDml/Ob0vKfYVxcu92wxUzHu8lTQSjjb8OlCTQ6bdNpVkqw17OM14TPpzGMIgSxfVIrQZhZdCwpkxLyG3mg=="
+    }
+
+    if (version != null) {
+      const wineDir = await getBinFromGithub("wine", version, checksum!!)
+      return {
+        path: path.join(wineDir, "bin/wine"),
+        env: {
+          ...process.env,
+          WINEDEBUG: "-all,err+all",
+          WINEDLLOVERRIDES: "winemenubuilder.exe=d",
+          WINEPREFIX: path.join(wineDir, "wine-home"),
+          DYLD_FALLBACK_LIBRARY_PATH: computeEnv(process.env.DYLD_FALLBACK_LIBRARY_PATH, [path.join(wineDir, "lib")])
+        }
       }
     }
   }
@@ -86,7 +101,7 @@ export async function checkWineVersion(checkPromise: Promise<string>) {
     wineVersion += ".0"
   }
 
-  if (isVersionLessThan(wineVersion, "1.8.0")) {
+  if (semver.lt(wineVersion, "1.8.0")) {
     throw new Error(wineError(`wine 1.8+ is required, but your version is ${wineVersion}`))
   }
 }

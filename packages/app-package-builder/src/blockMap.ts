@@ -23,7 +23,7 @@ export async function createDifferentialPackage(archiveFile: string): Promise<Pa
   const sevenZFile = new SevenZFile(archiveFile)
   try {
     const archive = await sevenZFile.read()
-    const blockMap = await computeBlockMap(sevenZFile, "lzma", (process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9") as any)
+    const blockMap = await computeBlockMap(sevenZFile)
     sevenZFile.close()
 
     const blockMapDataString = safeDump(blockMap)
@@ -80,7 +80,10 @@ class BlockMapBuilder {
 
     const folderIndex = file.blockIndex
     if (folderIndex < 0) {
-      throw new Error("What does empty stream mean?")
+      // empty file
+      file.dataStart = 0
+      file.dataEnd = 0
+      return
     }
 
     if (folderIndex === this.currentFolderIndex) {
@@ -104,17 +107,21 @@ class BlockMapBuilder {
   }
 }
 
-export async function computeBlockMap(sevenZFile: SevenZFile, compressionMethod: "lzma", compressionLevel: 9 | 1): Promise<BlockMap> {
+export async function computeBlockMap(sevenZFile: SevenZFile): Promise<BlockMap> {
   const archive = sevenZFile.archive
   const builder = new BlockMapBuilder(archive)
-  const entries = archive.files
-  for (const file of entries) {
+
+  const files: Array<SevenZArchiveEntry> = []
+  for (const file of archive.files) {
     if (!file.isDirectory) {
       builder.buildFile(file)
+      // do not add empty files
+      if (file.dataStart !== file.dataEnd) {
+        files.push(file)
+      }
     }
   }
 
-  const files = archive.files.filter(it => !it.isDirectory)
   // just to be sure that file data really doesn't have gap and grouped one by one
   for (let i = 0; i < (files.length - 1); i++) {
     if (files[i].dataEnd !== files[i + 1].dataStart) {
@@ -134,8 +141,7 @@ export async function computeBlockMap(sevenZFile: SevenZFile, compressionMethod:
   return {
     blockSize: 64,
     hashMethod: "md5",
-    compressionMethod,
-    compressionLevel,
+    compressionLevel: 9,
     files: blocks,
   }
 }

@@ -12,7 +12,7 @@ class DevTimer implements Timer {
 
   end(): void {
     const end = process.hrtime(this.start)
-    console.info(`${this.label}: %ds %dms`, end[0], end[1] / 1000000)
+    console.info(`${this.label}: %ds %dms`, end[0], Math.round(end[1] / 1000000))
   }
 }
 

@@ -185,10 +185,10 @@ export class DifferentialDownloader {
 
     const operations: Array<Operation> = []
     for (const blockMapFile of newBlockMap.files) {
-      // for new empty file we can avoid HTTP request (construct entry manually), but as it is a rare case, we avoid code complication and handle it as for a new file
       const name = blockMapFile.name
       const oldEntry = blockMapFile.size === 0 ? null : oldEntryMap.get(name)
-      if (oldEntry == null || blockMapFile.size === 0 /* new file is not empty, but old is empty - no need to check block map, just download the whole new entry */) {
+      // block map doesn't contain empty files, but we check this case just to be sure
+      if (oldEntry == null) {
         // new file
         operations.push({
           kind: OperationKind.DOWNLOAD,
@@ -199,7 +199,6 @@ export class DifferentialDownloader {
       }
 
       let lastOperation: Operation | null = null
-      // const operationCountBeforeFile = operations.length
 
       const newFile = nameToNewBlocks.get(name)!!
       const oldFile = nameToOldBlocks.get(name)!!
