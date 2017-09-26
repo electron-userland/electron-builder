@@ -1,5 +1,5 @@
 {
-  "name": "electron-forge-maker-snap",
+  "name": "electron-installer-snap",
   "version": "0.0.0-semantic-release",
   "main": "main.js",
   "author": "Vladimir Krivosheev",
@@ -11,6 +11,6 @@
     "*.js"
   ],
   "dependencies": {
-    "electron-builder": "^0.0.0-semantic-release"
+    "electron-builder": "^19.30.3"
   }
 }

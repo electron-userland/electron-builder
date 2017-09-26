@@ -14,7 +14,7 @@ npm publish packages/electron-builder || true
 npm publish packages/electron-builder-squirrel-windows || true
 npm publish packages/electron-updater || true
 
-npm publish packages/electron-forge-maker-appimage || true
-npm publish packages/electron-forge-maker-snap || true
+npm publish packages/electron-installer-appimage || true
+npm publish packages/electron-installer-snap || true
 npm publish packages/electron-forge-maker-nsis || true
 npm publish packages/electron-forge-maker-nsis-web || true

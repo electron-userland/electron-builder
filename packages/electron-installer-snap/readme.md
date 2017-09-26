@@ -1,6 +1,6 @@
-# electron-forge-maker-appimage
+# electron-installer-snap
 
-[electron-builder](https://github.com/electron-userland/electron-builder) [appimage](http://appimage.org) target for electron-forge.
+[electron-builder](https://github.com/electron-userland/electron-builder) [snap](https://snapcraft.io) target for electron-forge.
 
 Recommended to build electron-forge project using electron-builder directly.
 [Publishing](https://electron.build/publishing-artifacts),

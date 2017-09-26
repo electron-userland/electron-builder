@@ -11,7 +11,7 @@ const packageDir = path.join(rootDir, "packages")
 
 async function main(): Promise<void> {
   let packageData: Array<any> = await require("ts-babel/out/util").readProjectMetadata(packageDir)
-  packageData = packageData.concat(await BluebirdPromise.map(["electron-forge-maker-appimage", "electron-forge-maker-nsis", "electron-forge-maker-nsis-web", "electron-forge-maker-snap"], it => readJson(path.join(packageDir, it, "package.json"))))
+  packageData = packageData.concat(await BluebirdPromise.map(["electron-installer-appimage", "electron-forge-maker-nsis", "electron-forge-maker-nsis-web", "electron-installer-snap"], it => readJson(path.join(packageDir, it, "package.json"))))
   const args = process.argv.slice(2)
   if (args.length > 0 && args[0] === "p") {
     await setPackageVersions(packageData)
