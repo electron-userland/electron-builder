@@ -12,7 +12,7 @@ const workers = workerFarm({maxRetries: 1, maxCallTime: 2 * 60 * 1000}, path.joi
 async function main(): Promise<void> {
   const packages = (await readdir(packageDir)).filter(it => !it.includes(".")).sort()
   for (const name of packages) {
-    if (name.includes("electron-forge-maker-")) {
+    if (name.includes("electron-forge-maker-") || name.includes("electron-installer-")) {
       continue
     }
 

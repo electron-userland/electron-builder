@@ -197,6 +197,11 @@ export function removeUnstableProperties(data: any) {
     if (name === "offset") {
       return undefined
     }
+    else if (name.endsWith(".node") && value.size != null) {
+      // size differs on various OS
+      value.size = "<size>"
+      return value
+    }
     return value
   }))
 }

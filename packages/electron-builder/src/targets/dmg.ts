@@ -2,7 +2,7 @@ import { Arch, AsyncTaskManager, debug, exec, isCanSignDmg, isEmptyOrSpaces, log
 import { copyDir, copyFile, exists, statOrNull } from "builder-util/out/fs"
 import { addLicenseToDmg } from "dmg-builder/out/dmgLicense"
 import { applyProperties, attachAndExecute, computeBackground, computeBackgroundColor, detach } from "dmg-builder/out/dmgUtil"
-import { outputFile, remove, unlink } from "fs-extra-p"
+import { stat } from "fs-extra-p"
 import * as path from "path"
 import { deepAssign } from "read-config-file/out/deepAssign"
 import sanitizeFileName from "sanitize-filename"
@@ -10,6 +10,8 @@ import { findIdentity, isSignAllowed } from "../codeSign"
 import { Target } from "../core"
 import MacPackager from "../macPackager"
 import { DmgOptions } from "../options/macOptions"
+import { isMacOsHighSierra } from "builder-util/out/macosVersion"
+import { CancellationToken } from "builder-util-runtime"
 
 export class DmgTarget extends Target {
   readonly options: DmgOptions = this.packager.config.dmg || Object.create(null)
@@ -24,46 +26,15 @@ export class DmgTarget extends Target {
 
     const specification = await this.computeDmgOptions()
     const volumeName = sanitizeFileName(this.computeVolumeName(specification.title))
-    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
-    const artifactPath = path.join(this.outDir, artifactName)
 
-    const tempDmg = await packager.getTempFile(".dmg")
-    const backgroundDir = path.join(await packager.getTempDir("dmg"), ".background")
+    const tempDmg = await createStageDmg(await packager.getTempFile(".dmg"), appPath, volumeName)
+
+    // https://github.com/electron-userland/electron-builder/issues/2115
     const backgroundFilename = specification.background == null ? null : path.basename(specification.background)
-    if (backgroundFilename != null) {
-      await copyFile(path.resolve(packager.info.projectDir, specification.background!), path.join(backgroundDir, backgroundFilename))
-    }
+    const backgroundFile = backgroundFilename == null ? null : path.resolve(packager.info.projectDir, specification.background!)
 
-    let preallocatedSize = 32 * 1024
-    if (specification.icon != null) {
-      const stat = await statOrNull(specification.icon)
-      if (stat != null) {
-        preallocatedSize += stat.size
-      }
-    }
-
-    // allocate space for .DS_Store
-    await outputFile(path.join(backgroundDir, "DSStorePlaceHolder"), Buffer.allocUnsafe(preallocatedSize))
-
-    //noinspection SpellCheckingInspection
-    const imageArgs = addVerboseIfNeed(["create",
-      "-srcfolder", backgroundDir,
-      "-srcfolder", appPath,
-      "-volname", volumeName,
-      "-anyowners", "-nospotlight",
-      "-format", "UDRW",
-    ])
-
-    // if (await isMacOsHighSierra()) {
-    //   imageArgs.push("-fs", "APFS")
-    // }
-    // else {
-    imageArgs.push("-fs", "HFS+")
-      // imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
-    // }
-
-    imageArgs.push(tempDmg)
-    await spawn("hdiutil", imageArgs)
+    const finalSize = await computeAssetSize(packager.info.cancellationToken, tempDmg, specification, backgroundFile)
+    await spawn("hdiutil", ["resize", "-size", finalSize.toString(), tempDmg])
 
     const volumePath = path.join("/Volumes", volumeName)
     if (await exists(volumePath)) {
@@ -71,91 +42,14 @@ export class DmgTarget extends Target {
       await detach(volumePath)
     }
 
-    const isContinue = await attachAndExecute(tempDmg, true, async () => {
-      const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
-      asyncTaskManager.addTask(specification.background == null ? remove(`${volumePath}/.background`) : unlink(`${volumePath}/.background/DSStorePlaceHolder`))
-
-      const window = specification.window!
-      const env: any = {
-        ...process.env,
-        volumePath,
-        appFileName: `${packager.appInfo.productFilename}.app`,
-        iconSize: specification.iconSize || 80,
-        iconTextSize: specification.iconTextSize || 12,
-
-        windowX: window.x,
-        windowY: window.y,
-
-        VERSIONER_PERL_PREFER_32_BIT: "true"
-      }
-
-      if (specification.icon == null) {
-        delete env.volumeIcon
-      }
-      else {
-        const volumeIcon = `${volumePath}/.VolumeIcon.icns`
-        asyncTaskManager.addTask(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
-        env.volumeIcon = volumeIcon
-      }
-
-      if (specification.backgroundColor != null || specification.background == null) {
-        env.backgroundColor = specification.backgroundColor || "#ffffff"
-        env.windowWidth = (window.width || 540).toString()
-        env.windowHeight = (window.height || 380).toString()
-      }
-      else {
-        delete env.backgroundColor
-
-        if (window.width == null) {
-          delete env.windowWidth
-        }
-        else {
-          env.windowWidth = window.width.toString()
-        }
-        if (window.height == null) {
-          delete env.windowHeight
-        }
-        else {
-          env.windowHeight = window.height.toString()
-        }
-
-        env.backgroundFilename = backgroundFilename as any
-      }
-
-      let entries = ""
-      for (const c of specification.contents!!) {
-        if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
-          warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
-        }
-
-        let entryPath = c.path || `${packager.appInfo.productFilename}.app`
-        if (entryPath.startsWith("/")) {
-          entryPath = entryPath.substring(1)
-        }
-
-        const entryName = c.name || path.basename(entryPath)
-        entries += `&makeEntries("${entryName}", Iloc_xy => [ ${c.x}, ${c.y} ]),\n`
-
-        if (c.type === "link") {
-          asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
-        }
-        else if (c.type === "file" && c.path != null) {
-          asyncTaskManager.addTask(copyFile((await packager.getResource(entryPath))!, `${volumePath}/${entryName}`))
-        }
-        else if (c.type === "dir" && c.path != null) {
-          asyncTaskManager.addTask(copyDir((await packager.getResource(entryPath))!, `${volumePath}/${entryName}`))
-        }
-      }
-      await applyProperties(entries, env, asyncTaskManager, packager)
-      return packager.packagerOptions.effectiveOptionComputed == null || !(await packager.packagerOptions.effectiveOptionComputed({volumePath, specification, packager}))
-    })
-
-    if (!isContinue) {
+    if (!await attachAndExecute(tempDmg, true, () => customizeDmg(volumePath, specification, packager, backgroundFile, backgroundFilename))) {
       return
     }
 
+    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
+    const artifactPath = path.join(this.outDir, artifactName)
+
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
-    //noinspection SpellCheckingInspection
     const args = ["convert", tempDmg, "-ov", "-format", specification.format!, "-o", artifactPath]
     if (specification.format === "UDZO") {
       args.push("-imagekey", `zlib-level=${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL || "9"}`)
@@ -304,9 +198,145 @@ export class DmgTarget extends Target {
   }
 }
 
+async function createStageDmg(tempDmg: string, appPath: string, volumeName: string) {
+  //noinspection SpellCheckingInspection
+  const imageArgs = addVerboseIfNeed(["create",
+    "-srcfolder", appPath,
+    "-volname", volumeName,
+    "-anyowners", "-nospotlight",
+    "-format", "UDRW",
+  ])
+
+  if (await isMacOsHighSierra()) {
+    // imageArgs.push("-fs", "APFS")
+    imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
+  }
+  else {
+    imageArgs.push("-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16")
+  }
+
+  imageArgs.push(tempDmg)
+  await spawn("hdiutil", imageArgs)
+  return tempDmg
+}
+
 function addVerboseIfNeed(args: Array<string>): Array<string> {
   if (process.env.DEBUG_DMG === "true") {
     args.push("-verbose")
   }
   return args
+}
+
+async function computeAssetSize(cancellationToken: CancellationToken, dmgFile: string, specification: DmgOptions, backgroundFile: string | null) {
+  const asyncTaskManager = new AsyncTaskManager(cancellationToken)
+  asyncTaskManager.addTask(stat(dmgFile))
+
+  if (specification.icon != null) {
+    asyncTaskManager.addTask(statOrNull(specification.icon))
+  }
+
+  if (backgroundFile != null) {
+    asyncTaskManager.addTask(stat(backgroundFile))
+  }
+
+  let result = 32 * 1024
+  for (const stat of await asyncTaskManager.awaitTasks()) {
+    if (stat != null) {
+      result += stat.size
+    }
+  }
+  return result
+}
+
+async function customizeDmg(volumePath: string, specification: DmgOptions, packager: MacPackager, backgroundFile: string | null, backgroundFilename: string | null) {
+  const asyncTaskManager = new AsyncTaskManager(packager.info.cancellationToken)
+
+  if (backgroundFile != null) {
+    asyncTaskManager.addTask(copyFile(backgroundFile, path.join(volumePath, ".background", backgroundFilename!!)))
+  }
+
+  const window = specification.window!
+  const env: any = {
+    ...process.env,
+    volumePath,
+    appFileName: `${packager.appInfo.productFilename}.app`,
+    iconSize: specification.iconSize || 80,
+    iconTextSize: specification.iconTextSize || 12,
+
+    windowX: window.x,
+    windowY: window.y,
+
+    LC_ALL: "en_US.UTF-8",
+    LANG: "en_US.UTF-8",
+
+    VERSIONER_PERL_PREFER_32_BIT: "true"
+  }
+
+  if (specification.icon == null) {
+    delete env.volumeIcon
+  }
+  else {
+    const volumeIcon = `${volumePath}/.VolumeIcon.icns`
+    asyncTaskManager.addTask(copyFile((await packager.getResource(specification.icon))!, volumeIcon))
+    env.volumeIcon = volumeIcon
+  }
+
+  if (specification.backgroundColor != null || specification.background == null) {
+    env.backgroundColor = specification.backgroundColor || "#ffffff"
+    env.windowWidth = (window.width || 540).toString()
+    env.windowHeight = (window.height || 380).toString()
+  }
+  else {
+    delete env.backgroundColor
+
+    if (window.width == null) {
+      delete env.windowWidth
+    }
+    else {
+      env.windowWidth = window.width.toString()
+    }
+    if (window.height == null) {
+      delete env.windowHeight
+    }
+    else {
+      env.windowHeight = window.height.toString()
+    }
+
+    env.backgroundFilename = backgroundFilename as any
+  }
+
+  await applyProperties(await computeDmgEntries(specification, volumePath, packager, asyncTaskManager), env, asyncTaskManager, packager)
+  return packager.packagerOptions.effectiveOptionComputed == null || !(await packager.packagerOptions.effectiveOptionComputed({volumePath, specification, packager}))
+}
+
+async function computeDmgEntries(specification: DmgOptions, volumePath: string, packager: MacPackager, asyncTaskManager: AsyncTaskManager) {
+  let result = ""
+  for (const c of specification.contents!!) {
+    if (c.path != null && c.path.endsWith(".app") && c.type !== "link") {
+      warn(`Do not specify path for application: "${c.path}". Actual path to app will be used instead.`)
+    }
+
+    let entryPath = c.path || `${packager.appInfo.productFilename}.app`
+    if (entryPath.startsWith("/")) {
+      entryPath = entryPath.substring(1)
+    }
+
+    const entryName = c.name || path.basename(entryPath)
+    result += `&makeEntries("${entryName}", Iloc_xy => [ ${c.x}, ${c.y} ]),\n`
+
+    if (c.type === "link") {
+      asyncTaskManager.addTask(exec("ln", ["-s", `/${entryPath}`, `${volumePath}/${entryName}`]))
+    }
+    else if (c.path != null && (c.type === "file" || c.type === "dir")) {
+      const source = await packager.getResource(entryPath)
+      if (source == null) {
+        warn(`${entryPath} doesn't exist`)
+        continue
+      }
+
+      const destination = `${volumePath}/${entryName}`
+      asyncTaskManager.addTask(c.type === "dir" || (await stat(source)).isDirectory() ? copyDir(source, destination) : copyFile(source, destination))
+    }
+  }
+  return result
 }

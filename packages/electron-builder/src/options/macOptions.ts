@@ -231,6 +231,9 @@ export interface DmgContent {
    */
   name?: string
 
+  /**
+   * The path of the file within the DMG.
+   */
   path?: string
 }
 
