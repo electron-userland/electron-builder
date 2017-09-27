@@ -51,8 +51,8 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
     Object.assign(appPlist, parsePlist(fileContents[4]))
   }
 
-  const macOptions = buildMetadata.mac
-  if (macOptions != null && macOptions.extendInfo != null) {
+  const macOptions = buildMetadata.mac || {}
+  if (macOptions.extendInfo != null) {
     Object.assign(appPlist, macOptions.extendInfo)
   }
 
@@ -89,7 +89,7 @@ export async function createMacApp(packager: PlatformPackager<any>, appOutDir: s
   helperEHPlist.CFBundleIdentifier = `${helperBundleIdentifier}.EH`
   helperNPPlist.CFBundleIdentifier = `${helperBundleIdentifier}.NP`
 
-  appPlist.CFBundleShortVersionString = appInfo.version
+  appPlist.CFBundleShortVersionString = macOptions.bundleShortVersion || appInfo.version
   appPlist.CFBundleVersion = appInfo.buildVersion
 
   const protocols = asArray(buildMetadata.protocols).concat(asArray(packager.platformSpecificBuildOptions.protocols))

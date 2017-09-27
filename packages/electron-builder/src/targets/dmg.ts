@@ -46,7 +46,8 @@ export class DmgTarget extends Target {
       return
     }
 
-    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg")
+    // tslint:disable-next-line:no-invalid-template-strings
+    const artifactName = packager.expandArtifactNamePattern(packager.config.dmg, "dmg", null, "${productName}-" + (packager.platformSpecificBuildOptions.bundleShortVersion || "${version}") + ".${ext}")
     const artifactPath = path.join(this.outDir, artifactName)
 
     // dmg file must not exist otherwise hdiutil failed (https://github.com/electron-userland/electron-builder/issues/1308#issuecomment-282847594), so, -ov must be specified
@@ -103,11 +104,14 @@ export class DmgTarget extends Target {
 
   computeVolumeName(custom?: string | null): string {
     const appInfo = this.packager.appInfo
+    const shortVersion = this.packager.platformSpecificBuildOptions.bundleShortVersion || appInfo.version
+
     if (custom == null) {
-      return `${appInfo.productFilename} ${appInfo.version}`
+      return `${appInfo.productFilename} ${shortVersion}`
     }
 
     return custom
+      .replace(/\${shortVersion}/g, shortVersion)
       .replace(/\${version}/g, appInfo.version)
       .replace(/\${name}/g, appInfo.name)
       .replace(/\${productName}/g, appInfo.productName)

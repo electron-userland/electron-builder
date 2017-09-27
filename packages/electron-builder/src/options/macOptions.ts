@@ -50,6 +50,11 @@ export interface MacConfiguration extends PlatformSpecificBuildOptions {
   readonly bundleVersion?: string | null
 
   /**
+   * The `CFBundleShortVersionString`. Do not use it unless you need to.
+   */
+  readonly bundleShortVersion?: string | null
+
+  /**
    * The bundle identifier to use in the application helper's plist.
    * @default ${appBundleIdentifier}.helper
    */

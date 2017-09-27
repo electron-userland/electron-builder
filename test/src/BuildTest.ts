@@ -179,8 +179,10 @@ test.ifLinuxOrDevMac("beforeBuild", () => {
 // https://github.com/electron-userland/electron-builder/issues/1738
 test.ifDevOrLinuxCi("win smart unpack", app({
   targets: Platform.WINDOWS.createTarget(DIR_TARGET),
+  config: {
+    npmRebuild: true,
+  },
 }, {
-  installDepsBefore: true,
   projectDirCreated: packageJson(it => {
     it.dependencies = {
       debug: "^2.2.0",
@@ -219,15 +221,20 @@ async function verifySmartUnpack(resourceDir: string) {
 // https://github.com/electron-userland/electron-builder/issues/1738
 test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
   targets: linuxDirTarget,
+  config: {
+    npmRebuild: true,
+  }
 }, {
-  installDepsBefore: true,
   projectDirCreated: packageJson(it => {
     it.dependencies = {
       debug: "^2.2.0",
       "edge-cs": "1.2.1",
       "lzma-native": "2.0.3",
       // test that prebuild-install is not copied
-      "keytar-prebuild": "4.0.3",
+      "keytar-prebuild": "4.0.4",
+    }
+    it.resolutions = {
+      "node-abi": "^2.1.1"
     }
   }),
   packed: context => verifySmartUnpack(context.getResources(Platform.LINUX))}))

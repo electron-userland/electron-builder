@@ -32,7 +32,7 @@ test.ifAll.ifMac("custom background - new way", () => {
     config: {
       publish: null,
       mac: {
-        icon: "customIcon"
+        icon: "customIcon",
       },
       dmg: {
         background: customBackground,
@@ -120,7 +120,7 @@ test.ifMac("no background", app({
     dmg: {
       background: null,
       title: "Foo",
-    }
+    },
   }
 }, {
   packed: context => {
@@ -128,6 +128,26 @@ test.ifMac("no background", app({
       return assertThat(path.join("/Volumes/NoBackground 1.1.0/.background")).doesNotExist()
     })
   }
+}))
+
+test.ifAll.ifMac("bundleShortVersion", app({
+  targets: Platform.MAC.createTarget("dmg"),
+  config: {
+    // dmg can mount only one volume name, so, to test in parallel, we set different product name
+    productName: "BundleShortVersion",
+    mac: {
+      bundleShortVersion: "2017.1-alpha5",
+    },
+  }
+}, {
+  checkMacApp: async (appDir, info) => {
+    expect(info).toMatchSnapshot()
+  },
+  // packed: async context => {
+    // return attachAndExecute(path.join(context.outDir, "NoBackground-2017.1-alpha5.dmg"), false, () => {
+    //   return assertThat(path.join("/Volumes/NoBackground 2017.1-alpha5/.background")).doesNotExist()
+    // })
+  // }
 }))
 
 test.ifAll.ifMac("disable dmg icon (light), bundleVersion", () => {

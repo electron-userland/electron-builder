@@ -360,13 +360,14 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
       return null
     }
 
-    // tslint:disable:no-invalid-template-strings
+    // tslint:disable-next-line:no-invalid-template-strings
     return this.computeArtifactName("${name}-${version}-${arch}.${ext}", ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)
   }
 
   expandArtifactNamePattern(targetSpecificOptions: TargetSpecificOptions | null | undefined, ext: string, arch?: Arch | null, defaultPattern?: string, skipArchIfX64 = true): string {
     let pattern = targetSpecificOptions == null ? null : targetSpecificOptions.artifactName
     if (pattern == null) {
+      // tslint:disable-next-line:no-invalid-template-strings
       pattern = this.platformSpecificBuildOptions.artifactName || this.config.artifactName || defaultPattern || "${productName}-${version}-${arch}.${ext}"
     }
     return this.computeArtifactName(pattern, ext, skipArchIfX64 && arch === Arch.x64 ? null : arch)

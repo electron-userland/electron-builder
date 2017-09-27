@@ -432,7 +432,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 798,
+              "size": 847,
             },
           },
         },
@@ -481,7 +481,7 @@ Object {
                 },
               },
             },
-            "binding-v2.0.3-node-v56-linux-x64": Object {
+            "binding-v2.0.3-electron-v1.7-darwin-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,
@@ -489,7 +489,7 @@ Object {
                 },
               },
             },
-            "binding-v2.0.3-node-v57-darwin-x64": Object {
+            "binding-v2.0.3-node-v56-linux-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,
@@ -3714,7 +3714,7 @@ Object {
       },
     },
     "package.json": Object {
-      "size": 387,
+      "size": 436,
     },
   },
 }

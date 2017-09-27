@@ -70,3 +70,5 @@ if (!process.env.USE_HARD_LINKS) {
 if (!process.env.SZA_COMPRESSION_LEVEL) {
   process.env.SZA_COMPRESSION_LEVEL = "0"
 }
+
+process.env.FORCE_YARN = true
