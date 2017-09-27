@@ -22,6 +22,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { FileCodeSigningInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
+import { parseVmList, ParallelsVm, macPathToParallelsWindows, execParallels } from "./parallels"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
@@ -63,15 +64,37 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
 
+  readonly parallelsVm = new Lazy<ParallelsVm>(async () => {
+    const vmList = (await parseVmList()).filter(it => it.os === "win-10")
+    if (vmList.length === 0) {
+      throw new Error("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
+    }
+    this.debugLogger.add("parallelsVm", vmList)
+    return vmList[0]
+  })
+
   readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
     const cscInfo = await this.cscInfo.value
     if (cscInfo == null) {
       return null
     }
 
+    const isMac = process.platform === "darwin"
+
     // https://github.com/electron-userland/electron-builder/issues/1735
-    const args = cscInfo.password ? [`(Get-PfxData "${cscInfo.file!}" -Password (ConvertTo-SecureString -String "${cscInfo.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${cscInfo.file!}").Subject`]
-    return await exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
+    let certFile = cscInfo.file!
+    if (isMac) {
+      // https://stackoverflow.com/questions/4742992/cannot-access-network-drive-in-powershell-running-as-administrator
+      certFile = macPathToParallelsWindows(certFile)
+    }
+    const args = cscInfo.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${cscInfo.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
+
+    if (!isMac) {
+      return await exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
+    }
+
+    const vm = await this.parallelsVm.value
+    return await execParallels(vm, "powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
   })
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
@@ -231,7 +254,7 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
       log(`${logMessagePrefix} (certificate file: "${certFile}")`)
     }
 
-    await WinPackager.doSign({
+    await this.doSign({
       ...signOptions,
       cert: certFile,
       password: cscInfo.password,
@@ -243,10 +266,10 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
     })
   }
 
-  private static async doSign(options: WindowsSignOptions) {
+  private async doSign(options: WindowsSignOptions) {
     for (let i = 0; i < 3; i++) {
       try {
-        await sign(options)
+        await sign(options, this.parallelsVm)
         break
       }
       catch (e) {

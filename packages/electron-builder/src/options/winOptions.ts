@@ -99,13 +99,21 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly applicationId?: string
 
   /**
-   * The background color of the app tile.
-   * @see [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+   * The background color of the app tile. See [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
+   * @default #464646
    */
   readonly backgroundColor?: string | null
 
-  /** @private */
-  readonly makeappxArgs?: Array<string> | null
+  /**
+   * A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
+   * Defaults to the application product name.
+   */
+  readonly displayName?: string | null
+
+  /**
+   * The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](/configuration/configuration#Metadata-name).
+   */
+  readonly identityName?: string | null
 
   /**
    * Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package.
@@ -114,20 +122,10 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly publisher?: string | null
 
   /**
-   * A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx).
-   */
-  readonly displayName?: string | null
-
-  /**
    * A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx).
+   * Defaults to company name from the application metadata.
    */
   readonly publisherDisplayName?: string | null
-
-  /**
-   * The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx).
-   * @default ${name}
-   */
-  readonly identityName?: string | null
 
   /**
    * The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store.
@@ -141,4 +139,7 @@ export interface AppXOptions extends TargetSpecificOptions {
    * @default false
    */
   readonly electronUpdaterAware?: boolean
+
+  /** @private */
+  readonly makeappxArgs?: Array<string> | null
 }

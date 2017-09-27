@@ -249,6 +249,7 @@
       <w>preinstall</w>
       <w>prerelease</w>
       <w>priconfig</w>
+      <w>prlctl</w>
       <w>productbuild</w>
       <w>progexe</w>
       <w>proguard</w>

@@ -234,7 +234,7 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
     }
   }
 
-  // tslint:disable:no-empty
+  // tslint:disable-next-line:no-empty
   protected async postInitApp(packContext: AfterPackContext): Promise<any> {
   }
 
@@ -400,9 +400,13 @@ export abstract class PlatformPackager<DC extends PlatformSpecificBuildOptions> 
   expandMacro(pattern: string, arch?: string | null, extra: any = {}, isProductNameSanitized = true): string {
     if (arch == null) {
       pattern = pattern
+      // tslint:disable-next-line:no-invalid-template-strings
         .replace("-${arch}", "")
+        // tslint:disable-next-line:no-invalid-template-strings
         .replace(" ${arch}", "")
+        // tslint:disable-next-line:no-invalid-template-strings
         .replace("_${arch}", "")
+        // tslint:disable-next-line:no-invalid-template-strings
         .replace("/${arch}", "")
     }
 

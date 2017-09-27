@@ -14,6 +14,7 @@ The top-level [mac](configuration.md#Configuration-mac) key contains set of opti
   
   This option only applies when signing with `entitlements` provided.
 * <code id="MacConfiguration-bundleVersion">bundleVersion</code> String - The `CFBundleVersion`. Do not use it unless [you need to](https://github.com/electron-userland/electron-builder/issues/565#issuecomment-230678643).
+* <code id="MacConfiguration-bundleShortVersion">bundleShortVersion</code> String - The `CFBundleShortVersionString`. Do not use it unless you need to.
 * <code id="MacConfiguration-helperBundleId">helperBundleId</code> = `${appBundleIdentifier}.helper` String - The bundle identifier to use in the application helper's plist.
 * <code id="MacConfiguration-type">type</code> = `distribution` "distribution" | "development" - Whether to sign app for development or for distribution.
 * <code id="MacConfiguration-extendInfo">extendInfo</code> any - The extra entries for `Info.plist`.

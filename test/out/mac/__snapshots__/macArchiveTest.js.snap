@@ -15,7 +15,7 @@ Object {
 exports[`invalid target 1`] = `
 "Configuration is invalid.
  - configuration.mac should be one of these:
-   object { artifactName?, asar?, asarUnpack?, binaries?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, publish?, requirements?, target?, type? } | {
+   object { artifactName?, asar?, asarUnpack?, binaries?, bundleShortVersion?, bundleVersion?, category?, entitlements?, entitlementsInherit?, extendInfo?, extraFiles?, extraResources?, fileAssociations?, files?, forceCodeSigning?, helperBundleId?, icon?, identity?, publish?, requirements?, target?, type? } | {
      \\"type\\": \\"null\\"
    }
    Options related to how build macOS targets.

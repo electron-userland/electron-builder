@@ -8,6 +8,8 @@ import * as path from "path"
 import { WindowsConfiguration } from "./options/winOptions"
 import { resolveFunction } from "./platformPackager"
 import { isUseSystemSigncode } from "./util/flags"
+import { execParallels, macPathToParallelsWindows, ParallelsVm } from "./parallels"
+import { Lazy } from "lazy-val"
 
 export function getSignVendorPath() {
   //noinspection SpellCheckingInspection
@@ -48,7 +50,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
   computeSignToolArgs(isWin: boolean): Array<string>
 }
 
-export async function sign(options: WindowsSignOptions) {
+export async function sign(options: WindowsSignOptions, parallelsVm?: Lazy<ParallelsVm>) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -64,7 +66,11 @@ export async function sign(options: WindowsSignOptions) {
     hashes = Array.isArray(hashes) ? hashes : [hashes]
   }
 
-  const executor = resolveFunction(options.options.sign) || doSign
+  function defaultExecutor(configuration: CustomWindowsSignTaskConfiguration) {
+    return doSign(configuration, parallelsVm)
+  }
+
+  const executor = resolveFunction(options.options.sign) || defaultExecutor
   let isNest = false
   for (const hash of hashes) {
     const taskConfiguration: WindowsSignTaskConfiguration = {...options, hash, isNest}
@@ -79,11 +85,36 @@ export async function sign(options: WindowsSignOptions) {
   }
 }
 
-async function doSign(configuration: CustomWindowsSignTaskConfiguration) {
+async function doSign(configuration: CustomWindowsSignTaskConfiguration, parallelsVm?: Lazy<ParallelsVm>) {
+  // https://github.com/electron-userland/electron-builder/pull/1944
+  const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
+
+  if (configuration.path.endsWith(".appx")) {
+    const vm = await parallelsVm!!.value
+    const signOptions = {
+      ...configuration,
+      path: macPathToParallelsWindows(configuration.path),
+    }
+    const additionalCertificateFile = signOptions.options.additionalCertificateFile
+    if (additionalCertificateFile != null) {
+      signOptions.options = {
+        ...signOptions.options,
+        additionalCertificateFile: macPathToParallelsWindows(additionalCertificateFile)
+      }
+    }
+    if (signOptions.cert != null) {
+      signOptions.cert = macPathToParallelsWindows(signOptions.cert)
+    }
+    const vendorPath = await getSignVendorPath()
+    await execParallels(vm, path.join(vendorPath, "windows-10", process.arch, "signtool.exe"), computeSignToolArgs(signOptions, true), {
+      timeout,
+    })
+    return
+  }
+
   const toolInfo = await getToolPath()
   await exec(toolInfo.path, configuration.computeSignToolArgs(process.platform === "win32"), {
-    // https://github.com/electron-userland/electron-builder/pull/1944
-    timeout: parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000,
+    timeout,
     env: toolInfo.env || process.env
   })
 }
@@ -110,7 +141,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   const certificateFile = options.cert
   if (certificateFile == null) {
     const subjectName = options.options.certificateSubjectName
-    if (process.platform !== "win32") {
+    if (!isWin) {
       throw new Error(`${subjectName == null ? "certificateSha1" : "certificateSubjectName"} supported only on Windows`)
     }
 
