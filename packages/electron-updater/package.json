@@ -23,8 +23,5 @@
     "xelement": "^1.0.16",
     "lodash.isequal": "^4.5.0"
   },
-  "typings": "./out/main.d.ts",
-  "publishConfig": {
-    "tag": "next"
-  }
+  "typings": "./out/main.d.ts"
 }

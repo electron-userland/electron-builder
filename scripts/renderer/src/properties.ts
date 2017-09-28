@@ -147,6 +147,11 @@ function getInlinedChild(types: Array<string>, renderer: Renderer) {
     }
     return true
   })
+
+  if (types.length === 1 && types[0].startsWith(arrayTypePrefix)) {
+    types[0] = types[0].substring(arrayTypePrefix.length, types[0].indexOf(">"))
+  }
+
   return types.length === 1 ? renderer.resolveById(types[0]) : null
 }
 

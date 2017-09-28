@@ -1,7 +1,5 @@
 The top-level [appx](configuration.md#Configuration-appx) key contains set of options instructing electron-builder on how it should build AppX (Windows Store).
 
-Please also see [AppX Assets](/icons.md#appx).
-
 All options are optional. All required for AppX configuration is inferred and computed automatically.
 
 <!-- do not edit. start of generated block -->
@@ -17,6 +15,26 @@ Inherited from `TargetSpecificOptions`:
 * <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->
+
+## AppX Assets
+
+AppX assets need to be placed in the `appx` folder in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
+
+The assets should follow these naming conventions:
+
+- Logo: `StoreLogo.png`
+- Square150x150Logo: `Square150x150Logo.png`
+- Square44x44Logo: `Square44x44Logo.png`
+- Wide310x150Logo: `Wide310x150Logo.png`
+- *Optional* BadgeLogo: `BadgeLogo.png`
+- *Optional* Square310x310Logo: `LargeTile.png`
+- *Optional* Square71x71Logo: `SmallTile.png`
+- *Optional* SplashScreen: `SplashScreen.png`
+
+All official AppX asset types are supported by the build process. These assets can include scaled assets by using `target size` and `scale` in the name.
+See [Guidelines for tile and icon assets](https://docs.microsoft.com/en-us/windows/uwp/controls-and-patterns/tiles-and-notifications-app-assets) for more information.
+
+Default assets will be used for `Logo`, `Square150x150Logo`, `Square44x44Logo` and `Wide310x150Logo` if not provided. For assets marked `Optional`, these assets will not be listed in the manifest file if not provided.
 
 ## How to publish your Electron App to the Windows App Store
 

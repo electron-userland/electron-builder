@@ -1,20 +1,12 @@
 The [publish](/configuration/configuration.md#Configuration-publish) key contains set of options instructing electron-builder on how it should publish artifacts and build update info files for [auto update](/auto-update.md).
 
-`String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions) or [S3Options](#s3options). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](/configuration/configuration#configuration) or any platform- ([mac](/configuration/configuration.md#Configuration-mac), [linux](/configuration/configuration.md#Configuration-linux), [win](/configuration/configuration.md#Configuration-win)) or target- (e.g. [nsis](/configuration/configuration.md#Configuration-nsis)) specific configuration.
+`String | Object | Array<Object | String>` where `Object` it is [BintrayOptions](#bintrayoptions), [GenericServerOptions](#genericserveroptions), [GitHub](#githuboptions) or [S3Options](#s3options). Order is important — first item will be used as a default auto-update server. Can be specified in the [top-level configuration](/configuration/configuration#configuration) or any platform- ([mac](/configuration/mac.md), [linux](/configuration/linux.md), [win](/configuration/win.md)) or target- (e.g. [nsis](/configuration/nsis.md)) specific configuration.
 
-If `GH_TOKEN` is set — defaults to `[{provider: "github"}]`.
+If `GH_TOKEN` is defined — defaults to `[{provider: "github"}]`.
 
-If `BT_TOKEN` is set and `GH_TOKEN` is not set — defaults to `[{provider: "bintray"}]`.
-   
-For example, to configure publishing to [Amazon S3](https://aws.amazon.com/s3/):
-```json
-"publish": {
-  "provider": "s3",
-  "bucket": "bucket-name"
-}
-```
+If `BT_TOKEN` is defined and `GH_TOKEN` is not — defaults to `[{provider: "bintray"}]`.
 
-Or publish Windows artifacts to both GitHub and Bintray (order is important — first item will be used as a default auto-update server and [update metadata files](/auto-update.md#file-generated-and-uploaded-in-addition) will be generated for GitHub):
+You can publish to multiple providers. For example, to publish Windows artifacts to both GitHub and Bintray (order is important — first item will be used as a default auto-update server, so, in this example app will use github as auto-update provider):
 ```json
 "win": {
   "publish": ["github", "bintray"]
@@ -67,34 +59,27 @@ Define `GH_TOKEN` environment variable.
 * <code id="GithubOptions-host">host</code> = `github.com` String - The host (including the port if need).
 * <code id="GithubOptions-protocol">protocol</code> = `https` "https" | "http" - The protocol. GitHub Publisher supports only `https`.
 * <code id="GithubOptions-token">token</code> String - The access token to support auto-update from private github repositories. Never specify it in the configuration files. Only for [setFeedURL](/auto-update.md#appupdatersetfeedurloptions).
-* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
+* <code id="GithubOptions-private">private</code> Boolean - Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
+
+<!-- end of generated block -->
 
 ## S3Options
-[Amazon S3](https://aws.amazon.com/s3/) options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
+[Amazon S3](https://aws.amazon.com/s3/) options.
+
+To use Amazon S3 please add `electron-publisher-s3` dependency to `devDependencies` (`yarn add electron-publisher-s3 --dev`).
 
 AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
 Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
 Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
 
-* **<code id="S3Options-provider">provider</code>** "s3" - The provider. Must be `s3`.
-* **<code id="S3Options-bucket">bucket</code>** String - The bucket name.
-* <code id="S3Options-region">region</code> String - The region. Is determined and set automatically when publishing.
-* <code id="S3Options-acl">acl</code> = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
-  
-  Please see [required permissions for the S3 provider](https://github.com/electron-userland/electron-builder/issues/1618#issuecomment-314679128).
-* <code id="S3Options-storageClass">storageClass</code> = `STANDARD` "STANDARD" | "REDUCED_REDUNDANCY" | "STANDARD_IA" - The type of storage to use for the object.
-* <code id="S3Options-channel">channel</code> = `latest` String - The update channel.
-* <code id="S3Options-path">path</code> = `/` String - The directory path.
+Example configuration:
+```json
+"publish": {
+  "provider": "s3",
+  "bucket": "bucket-name"
+}
+```
 
-## SpacesOptions
-[DigitalOcean Spaces](https://www.digitalocean.com/community/tutorials/an-introduction-to-digitalocean-spaces) options.
-Access key is required, define `DO_KEY_ID` and `DO_SECRET_KEY` environment variables.
+{% include "/generated/s3-options.md" %}
 
-* **<code id="SpacesOptions-provider">provider</code>** "spaces" - The provider. Must be `spaces`.
-* **<code id="SpacesOptions-name">name</code>** String - The space name.
-* **<code id="SpacesOptions-region">region</code>** String - The region (e.g. `nyc3`).
-* <code id="SpacesOptions-channel">channel</code> = `latest` String - The update channel.
-* <code id="SpacesOptions-path">path</code> = `/` String - The directory path.
-* <code id="SpacesOptions-acl">acl</code> = `public-read` "private" | "public-read" - The ACL. Set to `null` to not [add](https://github.com/electron-userland/electron-builder/issues/1822).
-
-<!-- end of generated block -->
+{% include "/generated/spaces-options.md" %}

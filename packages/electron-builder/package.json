@@ -75,7 +75,7 @@
     "semver": "^5.4.1",
     "update-notifier": "^2.2.0",
     "yargs": "^9.0.1",
-    "debug": "^3.0.1",
+    "debug": "^3.1.0",
     "asar-integrity": "0.0.0-semantic-release",
     "lazy-val": "^1.0.2",
     "dotenv": "^4.0.0",

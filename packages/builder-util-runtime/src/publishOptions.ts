@@ -63,9 +63,15 @@ export interface GithubOptions extends PublishConfiguration {
   readonly token?: string | null
 
   /**
-   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is set. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
+   * Whether to use private github auto-update provider if `GH_TOKEN` environment variable is defined. See [Private GitHub Update Repo](/auto-update.md#private-github-update-repo).
    */
   readonly private?: boolean | null
+
+  /**
+   * The type of release. By default `draft` release will be created.
+   * @default draft
+   */
+  releaseType?: "draft" | "prerelease" | "release" | null
 }
 
 /** @private */
@@ -115,13 +121,6 @@ export interface BaseS3Options extends PublishConfiguration {
   readonly acl?: "private" | "public-read" | null
 }
 
-/**
- * [Amazon S3](https://aws.amazon.com/s3/) options. `https` must be used, so, if you use direct Amazon S3 endpoints, format `https://s3.amazonaws.com/bucket_name` [must be used](http://stackoverflow.com/a/11203685/1910191). And do not forget to make files/directories public.
- *
- * AWS credentials are required, please see [getting your credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/getting-your-credentials.html).
- * Define `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` [environment variables](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-environment.html).
- * Or in the [~/.aws/credentials](http://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/loading-node-credentials-shared.html).
- */
 export interface S3Options extends BaseS3Options {
   /**
    * The provider. Must be `s3`.

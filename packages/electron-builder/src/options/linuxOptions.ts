@@ -35,7 +35,7 @@ export interface LinuxConfiguration extends CommonLinuxOptions, PlatformSpecific
   readonly executableName?: string | null
 
   /**
-   * The path to icon set directory, relative to the the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
+   * The path to icon set directory, relative to the [build resources](/configuration/configuration.md#MetadataDirectories-buildResources) or to the project directory. The icon filename must contain the size (e.g. 32x32.png) of the icon.
    * By default will be generated automatically based on the macOS icns file.
    */
   readonly icon?: string

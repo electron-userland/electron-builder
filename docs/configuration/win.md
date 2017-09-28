@@ -47,3 +47,25 @@ exports.default = async function(configuration) {
   // your custom code
 }
 ```
+
+#### How do create Parallels Windows 10 Virtual Machine?
+
+You don't need to have Windows 10 license. Free (expire after 90 days, but it is not a problem because no additional setup is required) is provided.
+
+1. Open Parallels Desktop.
+2. File -> New.
+3. Select "Modern.IE" in the "Free Systems".
+4. Continue, Continue, Accept software license agreement.
+5. Select "Microsoft Edge on Windows 10".
+6. The next steps are general, see [Installing Windows on your Mac using Parallels Desktop](http://kb.parallels.com/4729) from "Step 6: Specify a name and location".
+
+#### How do create VirtualBox Windows 10 Virtual Machine?
+
+If you are not on macOS or don't want to buy [http://www.parallels.com/products/desktop/](Parallels Desktop), you can use free [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+
+1. Open [Download virtual machines](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/).
+2. Select "MSEdge on Win10 (x64) Stable".
+3. Select "VirtualBox" platform.
+4. Download. See [installation instructions](https://az792536.vo.msecnd.net/vms/release_notes_license_terms_8_1_15.pdf).
+
+VirtualBox is not supported by electron-builder for now, so, you need to setup build environment on Windows if you want to use VirtualBox to build AppX (and other Windows-only tasks).

@@ -24,20 +24,4 @@ The filename must contain the size (e.g. `32x32.png`) of the icon). Recommended 
 
 ## AppX
 
-AppX assets need to be placed in the `appx` folder in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
-
-The assets should follow these naming conventions:
-
-- Logo: `StoreLogo.png`
-- Square150x150Logo: `Square150x150Logo.png`
-- Square44x44Logo: `Square44x44Logo.png`
-- Wide310x150Logo: `Wide310x150Logo.png`
-- *Optional* BadgeLogo: `BadgeLogo.png`
-- *Optional* Square310x310Logo: `LargeTile.png`
-- *Optional* Square71x71Logo: `SmallTile.png`
-- *Optional* SplashScreen: `SplashScreen.png`
-
-All official AppX asset types are supported by the build process. These assets can include scaled assets by using `target size` and `scale` in the name.
-See [Guidelines for tile and icon assets](https://docs.microsoft.com/en-us/windows/uwp/controls-and-patterns/tiles-and-notifications-app-assets) for more information.
-
-Default assets will be used for `Logo`, `Square150x150Logo`, `Square44x44Logo` and `Wide310x150Logo` if not provided. For assets marked `Optional`, these assets will not be listed in the manifest file if not provided.    
+See [AppX Assets](/configuration/appx#appx-assets).

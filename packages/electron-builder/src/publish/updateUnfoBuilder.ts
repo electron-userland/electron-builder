@@ -1,5 +1,5 @@
 import { hashFile } from "builder-util"
-import { GenericServerOptions, PublishConfiguration, UpdateInfo } from "builder-util-runtime"
+import { GenericServerOptions, PublishConfiguration, UpdateInfo, GithubOptions } from "builder-util-runtime"
 import { outputFile, outputJson, readFile } from "fs-extra-p"
 import { safeDump } from "js-yaml"
 import { Lazy } from "lazy-val"
@@ -38,10 +38,15 @@ export async function writeUpdateInfo(event: ArtifactCreated, _publishConfigs: A
   const createdFiles = new Set<string>()
 
   const sharedInfo = await createUpdateInfo(version, event, releaseInfo)
-  for (const publishConfig of publishConfigs) {
+  for (let publishConfig of publishConfigs) {
     let info = sharedInfo
     if (publishConfig.provider === "bintray") {
       continue
+    }
+
+    if (publishConfig.provider === "github" && "releaseType" in publishConfig) {
+      publishConfig = {...publishConfig}
+      delete (publishConfig as GithubOptions).releaseType
     }
 
     const channel = (publishConfig as GenericServerOptions).channel || "latest"

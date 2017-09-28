@@ -208,7 +208,11 @@ async function render2(files, jsdoc2MdOptions) {
       "BintrayOptions": "",
       "GenericServerOptions": "",
       "GithubOptions": "",
-      "S3Options": "",
+    }),
+
+    new Page("generated/s3-options.md", "S3Options"),
+
+    new Page("generated/spaces-options.md", null, {
       "SpacesOptions": "",
     }),
 
@@ -263,7 +267,7 @@ async function render2(files, jsdoc2MdOptions) {
   }
 }
 
-const inlinedClasses = new Set(["AsarOptions", "ElectronDownloadOptions", "NsisWebOptions", "PortableOptions"])
+const inlinedClasses = new Set(["AsarOptions", "ElectronDownloadOptions", "NsisWebOptions", "PortableOptions", "DmgContent"])
 
 function isInlinedMember(member) {
   if (member.id.includes(".Dmg") && member.name !== "DmgOptions") {

@@ -14,7 +14,7 @@
     "node": ">=6.0.0"
   },
   "dependencies": {
-    "debug": "^3.0.1",
+    "debug": "^3.1.0",
     "fs-extra-p": "^4.4.2",
     "bluebird-lst": "^1.0.3"
   },
