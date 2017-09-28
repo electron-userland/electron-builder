@@ -32,8 +32,14 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     const cancellationToken = new CancellationToken()
     const channelFile = getChannelFilename(getDefaultChannelName())
 
-    const assets = await this.getLatestVersionInfo(basePath, cancellationToken)
-    const url = new URL(assets.find(it => it.name === channelFile)!.url)
+    const releaseInfo = await this.getLatestVersionInfo(basePath, cancellationToken)
+    const asset = releaseInfo.assets.find(it => it.name === channelFile)
+    if (asset == null) {
+      // html_url must be always, but just to be sure
+      throw new Error(`Cannot find ${channelFile} in the release ${releaseInfo.html_url || releaseInfo.name}`)
+    }
+
+    const url = new URL(asset.url)
     let result: any
     try {
       result = safeLoad((await this.httpRequest(url, this.configureHeaders("application/octet-stream"), cancellationToken))!!)
@@ -46,7 +52,7 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
 
     Provider.validateUpdateInfo(result);
-    (result as PrivateGitHubUpdateInfo).assets = assets
+    (result as PrivateGitHubUpdateInfo).assets = releaseInfo.assets
     return result
   }
 
@@ -71,10 +77,10 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
     }
   }
 
-  private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<Array<Asset>> {
+  private async getLatestVersionInfo(basePath: string, cancellationToken: CancellationToken): Promise<ReleaseInfo> {
     const url = newUrlFromBase(`${basePath}/latest`, this.baseUrl)
     try {
-      return (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!)).assets
+      return (JSON.parse((await this.httpRequest(url, this.configureHeaders("application/vnd.github.v3+json"), cancellationToken))!!))
     }
     catch (e) {
       throw new Error(`Unable to find latest version on GitHub (${url}), please ensure a production release exists: ${e.stack || e.message}`)
@@ -96,6 +102,12 @@ export class PrivateGitHubProvider extends BaseGitHubProvider<PrivateGitHubUpdat
       session: this.netSession
     } as any
   }
+}
+
+interface ReleaseInfo {
+  name: string
+  html_url: string
+  assets: Array<Asset>
 }
 
 export interface Asset {
