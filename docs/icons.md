@@ -4,16 +4,16 @@ Recommended tools: [MakeAppIcon](https://makeappicon.com/), [AppIcon Generator](
 
 Files
 
-* `icon.icns` (macOS app icon). Icon size should be at least 512x512.
-* `background.png` (macOS DMG background).
+* *Optional* `icon.icns` (macOS app icon). Icon size should be at least 512x512.
+* *Optional* `background.png` (macOS DMG background).
 
-need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
+need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. All files are optional — but it is important to provide `icon.icns`, otherwise default Electron icon will be used.
 
 ## Windows (NSIS)
 
-* `icon.ico` (Windows app icon). Icon size should be at least 256x256.
+* *Optional* `icon.ico` (Windows app icon). Icon size should be at least 256x256.
 
-need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory.
+need to be placed in the [build](/configuration/configuration.md#MetadataDirectories-buildResources) directory. It is important to provide `icon.ico`, otherwise default Electron icon will be used.
 
 ## Linux
 
