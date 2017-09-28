@@ -4,13 +4,13 @@ A complete solution to package and build a ready for distribution Electron app f
 * NPM packages management:
   * [Native application dependencies](https://electron.atom.io/docs/tutorial/using-native-node-modules/) compilation (including [Yarn](http://yarnpkg.com/) support).
   * Development dependencies are never included. You don't need to ignore them explicitly.
-* [Code Signing](https://electron.build/code-signing) on a CI server or development machine.
-* [Auto Update](https://electron.build/auto-update) ready application packaging.
+* [Code Signing](https://www.electron.build/code-signing) on a CI server or development machine.
+* [Auto Update](https://www.electron.build/auto-update) ready application packaging.
 * Numerous target formats:
   * All platforms: `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir` (unpacked directory).
-  * [macOS](https://electron.build/configuration/configuration#MacOptions-target): `dmg`, `pkg`, `mas`.
-  * [Linux](https://electron.build/configuration/configuration#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
-  * [Windows](https://electron.build/configuration/configuration#WinBuildOptions-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
+  * [macOS](https://www.electron.build/configuration/mac): `dmg`, `pkg`, `mas`.
+  * [Linux](https://www.electron.build/configuration/linux): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
+  * [Windows](https://www.electron.build/configuration/win): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
 * [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Build version management](https://www.electron.build/configuration/configuration#build-version-management).
 * [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
@@ -18,9 +18,10 @@ A complete solution to package and build a ready for distribution Electron app f
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.
 * [electron-compile](https://github.com/electron/electron-compile) support (compile for release-time on the fly on build).
+* [Docker](https://www.electron.build/multi-platform-build#docker) images to build Electron app for Linux or Windows on any platform.
 
 | Question | Answer |
-|--------|-------|
+|----------|-------|
 | “I want to configure electron-builder” | [See options](https://electron.build/configuration/configuration) |
 | “I have a question” | [Open an issue](https://github.com/electron-userland/electron-builder/issues) or [join the chat](https://slackin.electron.build) |
 | “I found a bug” | [Open an issue](https://github.com/electron-userland/electron-builder/issues/new) |
@@ -37,7 +38,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
 ## Boilerplates
 
-* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). Recommended.
+* [electron-webpack-quick-start](https://github.com/electron-userland/electron-webpack-quick-start) — A bare minimum project structure to get started developing with [electron-webpack](https://github.com/electron-userland/electron-webpack). This is a recommended way to create a new Electron application.
 * [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) A boilerplate for scalable cross-platform desktop apps.
 * [electron-react-redux-boilerplate](https://github.com/jschr/electron-react-redux-boilerplate) A minimal boilerplate to get started with Electron, React and Redux.
 * [electron-boilerplate](https://github.com/szwacz/electron-boilerplate) A minimalistic yet comprehensive boilerplate application.
@@ -72,7 +73,7 @@ Platform specific `7zip-bin-*` packages are `optionalDependencies`, which may re
 
 5. If you have native addons of your own that are part of the application (not as a dependency), set [nodeGypRebuild](https://www.electron.build/configuration/configuration#Configuration-nodeGypRebuild) to `true`.
    
-6. Install the [required system packages](https://electron.build/multi-platform-build) if you are not on macOS 10.12+.
+6. Install the [required system packages](https://www.electron.build/multi-platform-build) if you are not on macOS 10.12+.
 
 Please note that everything is packaged into an asar archive [by default](https://electron.build/configuration/configuration#Configuration-asar).
 
@@ -112,7 +113,7 @@ You can use electron-builder only to pack your electron app in a AppImage, Snaps
 and other distributable formats.
 
 ```
-./node_modules/.bin/build --prepackaged <packed dir>
+./node_modules/.bin/electron-builder --prepackaged <packed dir>
 ```
 
 `--projectDir` (the path to project directory) option also can be useful.

@@ -8,7 +8,7 @@ import * as path from "path"
 import { WindowsConfiguration } from "./options/winOptions"
 import { resolveFunction } from "./platformPackager"
 import { isUseSystemSigncode } from "./util/flags"
-import { execParallels, macPathToParallelsWindows, ParallelsVm } from "./parallels"
+import { VmManager } from "./parallels"
 import { Lazy } from "lazy-val"
 
 export function getSignVendorPath() {
@@ -50,7 +50,7 @@ export interface CustomWindowsSignTaskConfiguration extends WindowsSignTaskConfi
   computeSignToolArgs(isWin: boolean): Array<string>
 }
 
-export async function sign(options: WindowsSignOptions, parallelsVm?: Lazy<ParallelsVm>) {
+export async function sign(options: WindowsSignOptions, vm?: Lazy<VmManager>) {
   let hashes = options.options.signingHashAlgorithms
   // msi does not support dual-signing
   if (options.path.endsWith(".msi")) {
@@ -67,7 +67,7 @@ export async function sign(options: WindowsSignOptions, parallelsVm?: Lazy<Paral
   }
 
   function defaultExecutor(configuration: CustomWindowsSignTaskConfiguration) {
-    return doSign(configuration, parallelsVm)
+    return doSign(configuration, vm)
   }
 
   const executor = resolveFunction(options.options.sign) || defaultExecutor
@@ -85,28 +85,14 @@ export async function sign(options: WindowsSignOptions, parallelsVm?: Lazy<Paral
   }
 }
 
-async function doSign(configuration: CustomWindowsSignTaskConfiguration, parallelsVm?: Lazy<ParallelsVm>) {
+async function doSign(configuration: CustomWindowsSignTaskConfiguration, vmPromise?: Lazy<VmManager>) {
   // https://github.com/electron-userland/electron-builder/pull/1944
   const timeout = parseInt(process.env.SIGNTOOL_TIMEOUT as any, 10) || 10 * 60 * 1000
 
   if (configuration.path.endsWith(".appx")) {
-    const vm = await parallelsVm!!.value
-    const signOptions = {
-      ...configuration,
-      path: macPathToParallelsWindows(configuration.path),
-    }
-    const additionalCertificateFile = signOptions.options.additionalCertificateFile
-    if (additionalCertificateFile != null) {
-      signOptions.options = {
-        ...signOptions.options,
-        additionalCertificateFile: macPathToParallelsWindows(additionalCertificateFile)
-      }
-    }
-    if (signOptions.cert != null) {
-      signOptions.cert = macPathToParallelsWindows(signOptions.cert)
-    }
+    const vm = await vmPromise!!.value
     const vendorPath = await getSignVendorPath()
-    await execParallels(vm, path.join(vendorPath, "windows-10", process.arch, "signtool.exe"), computeSignToolArgs(signOptions, true), {
+    await vm.exec(path.join(vendorPath, "windows-10", process.arch, "signtool.exe"), computeSignToolArgs(configuration, true, vm), {
       timeout,
     })
     return
@@ -120,13 +106,14 @@ async function doSign(configuration: CustomWindowsSignTaskConfiguration, paralle
 }
 
 // on windows be aware of http://stackoverflow.com/a/32640183/1910191
-function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean): Array<string> {
-  const outputPath = isWin ? options.path : getOutputPath(options.path, options.hash)
+function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boolean, vm: VmManager = new VmManager()): Array<string> {
+  const inputFile = vm.toVmFile(options.path)
+  const outputPath = isWin ? inputFile : getOutputPath(inputFile, options.hash)
   if (!isWin) {
     options.resultOutputPath = outputPath
   }
 
-  const args = isWin ? ["sign"] : ["-in", options.path, "-out", outputPath]
+  const args = isWin ? ["sign"] : ["-in", inputFile, "-out", outputPath]
 
   if (process.env.ELECTRON_BUILDER_OFFLINE !== "true") {
     const timestampingServiceUrl = options.options.timeStampServer || "http://timestamp.verisign.com/scripts/timstamp.dll"
@@ -155,7 +142,7 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   else {
     const certExtension = path.extname(certificateFile)
     if (certExtension === ".p12" || certExtension === ".pfx") {
-      args.push(isWin ? "/f" : "-pkcs12", certificateFile)
+      args.push(isWin ? "/f" : "-pkcs12", vm.toVmFile(certificateFile))
     }
     else {
       throw new Error(`Please specify pkcs12 (.p12/.pfx) file, ${certificateFile} is not correct`)
@@ -187,12 +174,12 @@ function computeSignToolArgs(options: WindowsSignTaskConfiguration, isWin: boole
   }
 
   if (options.options.additionalCertificateFile) {
-    args.push(isWin ? "/ac" : "-ac", options.options.additionalCertificateFile)
+    args.push(isWin ? "/ac" : "-ac", vm.toVmFile(options.options.additionalCertificateFile))
   }
 
   if (isWin) {
     // must be last argument
-    args.push(options.path)
+    args.push(inputFile)
   }
 
   return args

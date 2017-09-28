@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, asArray, AsyncTaskManager, getArchSuffix, spawn, use } from "builder-util"
+import { Arch, asArray, AsyncTaskManager, getArchSuffix, use } from "builder-util"
 import { copyDir, copyFile } from "builder-util/out/fs"
 import _debug from "debug"
 import { emptyDir, mkdir, readdir, readFile, writeFile } from "fs-extra-p"
@@ -10,7 +10,7 @@ import { AppXOptions } from "../options/winOptions"
 import { getTemplatePath } from "../util/pathManager"
 import { getSignVendorPath, isOldWin6 } from "../windowsCodeSign"
 import { WinPackager } from "../winPackager"
-import { macPathToParallelsWindows } from "../parallels"
+import { VmManager } from "../parallels"
 
 const APPX_ASSETS_DIR_NAME = "appx"
 
@@ -87,32 +87,23 @@ export default class AppXTarget extends Target {
     const artifactName = packager.expandArtifactNamePattern(this.options, "appx", arch)
     const artifactPath = path.join(this.outDir, artifactName)
 
-    function argPath(file: string) {
-      return process.platform === "win32" ? file : macPathToParallelsWindows(file)
-    }
+    const vm = process.platform === "win32" ? new VmManager() : await packager.parallelsVm.value
 
-    const makeAppXArgs = ["pack", "/o", "/d", argPath(preAppx), "/p", argPath(artifactPath)]
+    const makeAppXArgs = ["pack", "/o", "/d", vm.toVmFile(preAppx), "/p", vm.toVmFile(artifactPath)]
 
     // we do not use process.arch to build path to tools, because even if you are on x64, ia32 appx tool must be used if you build appx for ia32
     if (isScaledAssetsProvided(userAssets)) {
-      const priConfigPath = path.join(preAppx, "priconfig.xml")
-      const makePriPath = path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe")
-      await spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, {isDebugEnabled: debug.enabled})
-      await spawn(makePriPath, ["new", "/pr", preAppx, "/cf", priConfigPath, "/of", preAppx], undefined, {isDebugEnabled: debug.enabled})
+      const priConfigPath = vm.toVmFile(path.join(preAppx, "priconfig.xml"))
+      const makePriPath = vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makepri.exe"))
+      await vm.spawn(makePriPath, ["createconfig", "/cf", priConfigPath, "/dq", "en-US", "/pv", "10.0.0", "/o"], undefined, {isDebugEnabled: debug.enabled})
+      await vm.spawn(makePriPath, ["new", "/pr", vm.toVmFile(preAppx), "/cf", priConfigPath, "/of", vm.toVmFile(preAppx)], undefined, {isDebugEnabled: debug.enabled})
 
       makeAppXArgs.push("/l")
     }
 
     use(this.options.makeappxArgs, (it: Array<string>) => makeAppXArgs.push(...it))
     // wine supports only ia32 binary in any case makeappx crashed on wine
-    const makeappx = path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")
-    if (process.platform === "darwin") {
-      const vm = await packager.parallelsVm.value
-      await spawn("prlctl", ["exec", vm.id, macPathToParallelsWindows(makeappx)].concat(makeAppXArgs), undefined, {isDebugEnabled: debug.enabled})
-    }
-    else {
-      await spawn(makeappx, makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
-    }
+    await vm.spawn(vm.toVmFile(path.join(vendorPath, "windows-10", Arch[arch], "makeappx.exe")), makeAppXArgs, undefined, {isDebugEnabled: debug.enabled})
     await packager.sign(artifactPath)
 
     packager.info.dispatchArtifactCreated({

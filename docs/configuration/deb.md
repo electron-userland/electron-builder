@@ -6,7 +6,7 @@ The top-level [deb](configuration.md#Configuration-deb) key contains set of opti
 * <code id="DebOptions-priority">priority</code> String - The [Priority](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Priority) attribute.
 * <code id="DebOptions-depends">depends</code> Array&lt;String&gt; - Package dependencies. Defaults to `["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]`.
 
-Inherited from [LinuxTargetSpecificOptions](/configuration/linux-other.md):
+Inherited from [LinuxTargetSpecificOptions](/configuration/linux.md):
 * <code id="DebOptions-icon">icon</code> String
 * <code id="DebOptions-vendor">vendor</code> String
 * <code id="DebOptions-maintainer">maintainer</code> String

@@ -41,7 +41,7 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     return args
   }
 
-  if ("draft" in args || "prerelease" in args) {
+  if ((args as any).draft != null || (args as any).prerelease != null) {
     warn("--draft and --prerelease is deprecated, please set releaseType (http://electron.build/configuration/publish#GithubOptions-releaseType) in the GitHub publish options instead")
   }
 

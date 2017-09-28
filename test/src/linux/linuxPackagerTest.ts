@@ -15,6 +15,9 @@ test.ifNotWindows.ifNotCiMac.ifAll("AppImage - doNotAsk system integration", app
     appImage: {
       systemIntegration: "doNotAsk",
     },
+    extraResources: {
+      from: "build/icons"
+    },
   }
 }))
 

@@ -169,13 +169,13 @@ async function render2(files, jsdoc2MdOptions) {
       return "[SnapOptions](snap.md)"
     }
     if (types.some(it => it.endsWith("AppImageOptions"))) {
-      return "[AppImageOptions](/configuration/linux-other.md#appimageoptions)"
+      return "[AppImageOptions](/configuration/linux.md#appimageoptions)"
     }
     if (types.some(it => it.endsWith("DebOptions"))) {
       return "[DebOptions](deb.md)"
     }
     if (types.some(it => it.endsWith("LinuxTargetSpecificOptions"))) {
-      return "[LinuxTargetSpecificOptions](/configuration/linux-other.md)"
+      return "[LinuxTargetSpecificOptions](/configuration/linux.md)"
     }
 
     return originalRenderTypeName.call(this, context)
@@ -199,10 +199,6 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("configuration/linux.md", "LinuxConfiguration"),
     new Page("configuration/deb.md", "DebOptions"),
     new Page("configuration/snap.md", "SnapOptions"),
-    new Page("configuration/linux-other.md", null, {
-      "AppImageOptions": "The top-level `appImage` key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/).",
-      "LinuxTargetSpecificOptions": "The top-level `apk`, `freebsd`, `pacman`, `p5p`,`rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.",
-    }),
 
     new Page("configuration/publish.md", null, {
       "BintrayOptions": "",
@@ -215,6 +211,9 @@ async function render2(files, jsdoc2MdOptions) {
     new Page("generated/spaces-options.md", null, {
       "SpacesOptions": "",
     }),
+
+    new Page("generated/appimage-options.md", "AppImageOptions"),
+    new Page("generated/LinuxTargetSpecificOptions.md", "LinuxTargetSpecificOptions"),
 
     // new Page("auto-update.md", null, {
     //   "AppUpdater": "",

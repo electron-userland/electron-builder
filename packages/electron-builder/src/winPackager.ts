@@ -22,7 +22,7 @@ import { BuildCacheManager, digest } from "./util/cacheManager"
 import { isBuildCacheEnabled } from "./util/flags"
 import { time } from "./util/timer"
 import { FileCodeSigningInfo, getSignVendorPath, sign, WindowsSignOptions } from "./windowsCodeSign"
-import { parseVmList, ParallelsVm, macPathToParallelsWindows, execParallels } from "./parallels"
+import { parseVmList, VmManager, ParallelsVmManager } from "./parallels"
 
 export class WinPackager extends PlatformPackager<WindowsConfiguration> {
   readonly cscInfo = new Lazy<FileCodeSigningInfo | null>(() => {
@@ -64,13 +64,13 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
   private _iconPath = new Lazy<string | null>(() => this.getValidIconPath())
 
-  readonly parallelsVm = new Lazy<ParallelsVm>(async () => {
-    const vmList = (await parseVmList()).filter(it => it.os === "win-10")
+  readonly parallelsVm = new Lazy<VmManager>(async () => {
+    const vmList = (await parseVmList(this.debugLogger)).filter(it => it.os === "win-10")
     if (vmList.length === 0) {
       throw new Error("Cannot find suitable Parallels Desktop virtual machine (Windows 10 is required)")
     }
     this.debugLogger.add("parallelsVm", vmList)
-    return vmList[0]
+    return new ParallelsVmManager(vmList[0])
   })
 
   readonly computedPublisherSubjectOnWindowsOnly = new Lazy<string | null>(async () => {
@@ -81,20 +81,11 @@ export class WinPackager extends PlatformPackager<WindowsConfiguration> {
 
     const isMac = process.platform === "darwin"
 
+    const vm = isMac ? await this.parallelsVm.value : new VmManager()
+    const certFile = vm.toVmFile(cscInfo.file!)
     // https://github.com/electron-userland/electron-builder/issues/1735
-    let certFile = cscInfo.file!
-    if (isMac) {
-      // https://stackoverflow.com/questions/4742992/cannot-access-network-drive-in-powershell-running-as-administrator
-      certFile = macPathToParallelsWindows(certFile)
-    }
     const args = cscInfo.password ? [`(Get-PfxData "${certFile}" -Password (ConvertTo-SecureString -String "${cscInfo.password}" -Force -AsPlainText)).EndEntityCertificates.Subject`] : [`(Get-PfxCertificate "${certFile}").Subject`]
-
-    if (!isMac) {
-      return await exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
-    }
-
-    const vm = await this.parallelsVm.value
-    return await execParallels(vm, "powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
+    return await vm.exec("powershell.exe", args, {timeout: 30 * 1000}).then(it => it.trim())
   })
 
   readonly computedPublisherName = new Lazy<Array<string> | null>(async () => {
@@ -416,9 +407,9 @@ function isIco(buffer: Buffer): boolean {
 const debugOpenssl = _debug("electron-builder:openssl")
 async function extractCommonNameUsingOpenssl(password: string, certPath: string): Promise<string> {
   const result = await exec("openssl", ["pkcs12", "-nokeys", "-nodes", "-passin", `pass:${password}`, "-nomacver", "-clcerts", "-in", certPath], {timeout: 30 * 1000, maxBuffer: 2 * 1024 * 1024}, debugOpenssl.enabled)
-  const match = result.match(/^subject.*\/CN=([^\/]+)$/m)
+  const match = result.match(/^subject.*\/CN=([^\/\n]+)/m)
   if (match == null || match[1] == null) {
-    throw new Error("Cannot extract common name from p12: " + result)
+    throw new Error(`Cannot extract common name from p12: ${result}`)
   }
   else {
     return match[1]

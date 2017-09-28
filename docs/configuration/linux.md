@@ -3,7 +3,7 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 <!-- do not edit. start of generated block -->
 * <code id="LinuxConfiguration-target">target</code> = `AppImage` String | [TargetConfiguration](target.md#targetconfiguration) - Target package type: list of `AppImage`, `snap`, `deb`, `rpm`, `freebsd`, `pacman`, `p5p`, `apk`, `7z`, `zip`, `tar.xz`, `tar.lz`, `tar.gz`, `tar.bz2`, `dir`.
   
-  electron-builder [docker image](/docker.md) can be used to build Linux targets on any platform. See [Multi Platform build](/multi-platform-build.md).
+  electron-builder [docker image](/multi-platform-build#docker) can be used to build Linux targets on any platform.
   
   Please [do not put an AppImage into another archive](https://github.com/probonopd/AppImageKit/wiki/Creating-AppImages#common-mistake) like a .zip or .tar.gz.
 * <code id="LinuxConfiguration-maintainer">maintainer</code> String - The maintainer. Defaults to [author](/configuration/configuration.md#Metadata-author).
@@ -15,3 +15,15 @@ The top-level [linux](configuration.md#Configuration-linux) key contains set of 
 * <code id="LinuxConfiguration-category">category</code> String - The [application category](https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry).
 * <code id="LinuxConfiguration-desktop">desktop</code> any - The [Desktop file](https://developer.gnome.org/integration-guide/stable/desktop-files.html.en) entries (name to value).
 <!-- end of generated block -->
+
+## AppImage Options
+
+The top-level `appImage` key contains set of options instructing electron-builder on how it should build [AppImage](https://appimage.org/).
+
+{% include "/generated/appimage-options.md" %}
+
+## APK, FreeBSD, Pacman, P5P and RPM Options
+
+The top-level `apk`, `freebsd`, `pacman`, `p5p` and `rpm` keys contains set of options instructing electron-builder on how it should build corresponding Linux target.
+
+{% include "/generated/LinuxTargetSpecificOptions.md" %}

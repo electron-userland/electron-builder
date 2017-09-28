@@ -229,7 +229,7 @@ test.ifAll.ifDevOrLinuxCi("posix smart unpack", app({
     it.dependencies = {
       debug: "^2.2.0",
       "edge-cs": "1.2.1",
-      "lzma-native": "2.0.3",
+      "lzma-native": "3.0.1",
       // test that prebuild-install is not copied
       "keytar-prebuild": "4.0.4",
     }

@@ -297,7 +297,7 @@ Object {
       "size": 841,
     },
     "index.js": Object {
-      "size": 3950,
+      "size": 4282,
     },
     "node_modules": Object {
       "files": Object {
@@ -481,7 +481,7 @@ Object {
                 },
               },
             },
-            "binding-v2.0.3-electron-v1.7-darwin-x64": Object {
+            "binding-v2.0.3-node-v56-linux-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,
@@ -489,7 +489,55 @@ Object {
                 },
               },
             },
-            "binding-v2.0.3-node-v56-linux-x64": Object {
+            "binding-v2.0.4-electron-v1.7-linux-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v2.0.4-node-v48-linux-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v2.0.4-node-v56-linux-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v3.0.0-electron-v1.7-linux-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v3.0.0-node-v56-linux-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v3.0.1-electron-v1.7-darwin-x64": Object {
+              "files": Object {
+                "lzma_native.node": Object {
+                  "executable": true,
+                  "size": "<size>",
+                },
+              },
+            },
+            "binding-v3.0.1-node-v56-linux-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,
@@ -502,7 +550,7 @@ Object {
               "size": 253,
             },
             "index.js": Object {
-              "size": 13678,
+              "size": 13877,
             },
             "liblzma-build.sh": Object {
               "executable": true,
@@ -3666,7 +3714,7 @@ Object {
               },
             },
             "package.json": Object {
-              "size": 1123,
+              "size": 1161,
             },
             "src": Object {
               "files": Object {
@@ -3760,7 +3808,7 @@ Object {
       "size": 841,
     },
     "index.js": Object {
-      "size": 3950,
+      "size": 4282,
     },
     "node_modules": Object {
       "files": Object {
