@@ -1,3 +1,9 @@
+# 2.10.1
+
+### Bug Fixes
+
+* PrivateGitHubProvider: clear error if no channel file in the latest github release
+
 # 2.10.0 (2017-09-22)
 
 ### Features
