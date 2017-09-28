@@ -69,6 +69,8 @@ export interface GithubOptions extends PublishConfiguration {
 
   /**
    * The type of release. By default `draft` release will be created.
+   *
+   * Also you can set release type using environment variable. If `EP_DRAFT`is set to `true` — `draft`, if `EP_PRELEASE`is set to `true` — `prerelease`.
    * @default draft
    */
   releaseType?: "draft" | "prerelease" | "release" | null

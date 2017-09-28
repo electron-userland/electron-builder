@@ -133,10 +133,7 @@ if (process.env.DO_KEY_ID != null && process.env.DO_SECRET_KEY != null) {
 }
 
 testAndIgnoreApiRate("prerelease", async () => {
-  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token}, versionNumber(), {
-    draft: false,
-    prerelease: true,
-  })
+  const publisher = new GitHubPublisher(publishContext, {provider: "github", owner: "actperepo", repo: "ecb2", token, releaseType: "prerelease"}, versionNumber())
   try {
     await publisher.upload(iconPath, Arch.x64)
     const r = await publisher.getRelease()

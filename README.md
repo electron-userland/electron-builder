@@ -11,9 +11,9 @@ A complete solution to package and build a ready for distribution Electron app f
   * [macOS](https://electron.build/configuration/configuration#MacOptions-target): `dmg`, `pkg`, `mas`.
   * [Linux](https://electron.build/configuration/configuration#LinuxBuildOptions-target): [AppImage](http://appimage.org), [snap](http://snapcraft.io), debian package (`deb`), `rpm`, `freebsd`, `pacman`, `p5p`, `apk`.
   * [Windows](https://electron.build/configuration/configuration#WinBuildOptions-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
-* [Two package.json structure](https://electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.  
-* [Build version management](https://electron.build/configuration/configuration#build-version-management).
-* [Publishing artifacts](https://electron.build/publishing-artifacts) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+* [Two package.json structure](https://www.electron.build/tutorials/two-package-structure) is supported, but you are not forced to use it even if you have native production dependencies.  
+* [Build version management](https://www.electron.build/configuration/configuration#build-version-management).
+* [Publishing artifacts](https://www.electron.build/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.

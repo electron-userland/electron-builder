@@ -23,7 +23,6 @@
   * [Icons](icons.md)
   * [Auto Update](auto-update.md)
   * [Code Signing](code-signing.md)
-  * [Publishing Artifacts](publishing-artifacts.md)
   * [Multi Platform Build](multi-platform-build.md)
   
 * Tutorials

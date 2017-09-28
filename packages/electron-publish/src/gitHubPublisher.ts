@@ -1,5 +1,5 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, warn } from "builder-util"
+import { Arch, debug, isEmptyOrSpaces, isTokenCharValid, log, warn, isEnvTrue } from "builder-util"
 import { configureRequestOptions, GithubOptions, HttpError, parseJson } from "builder-util-runtime"
 import { httpExecutor } from "builder-util/out/nodeHttpExecutor"
 import { ClientRequest } from "http"
@@ -67,11 +67,20 @@ export class GitHubPublisher extends HttpPublisher {
 
     this.tag = info.vPrefixedTagName === false ? version : `v${version}`
 
-    if (options.prerelease) {
+    if (isEnvTrue(process.env.EP_DRAFT)) {
+      this.releaseType = "draft"
+    }
+    else if (isEnvTrue(process.env.EP_PRELEASE)) {
+      this.releaseType = "prerelease"
+    }
+    else if (info.releaseType != null) {
+      this.releaseType = info.releaseType
+    }
+    else if ((options as any).prerelease) {
       this.releaseType = "prerelease"
     }
     else {
-      this.releaseType = options.draft === false ? "release" : "draft"
+      this.releaseType = (options as any).draft === false ? "release" : "draft"
     }
   }
 

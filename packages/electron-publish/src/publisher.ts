@@ -13,13 +13,6 @@ export { ProgressCallback } from "./progress"
 
 export interface PublishOptions {
   publish?: PublishPolicy | null
-
-  /**
-   * Whether to create a draft (unpublished) release or release.
-   * @default true
-   */
-  draft?: boolean
-  prerelease?: boolean
 }
 
 export interface PublishContext {

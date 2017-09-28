@@ -1,4 +1,4 @@
-See [publish configuration](/configuration/publish.md) and [Publishing Artifacts](publishing-artifacts.md) guide for more information on how to configure your CI environment for automated deployments.
+See [publish configuration](/configuration/publish.md) for more information on how to configure your CI environment for automated deployments.
 
 Simplified auto-update is supported on Windows if you use the default NSIS target, but is not supported for Squirrel.Windows.
 
@@ -191,7 +191,7 @@ Start downloading update manually. You can use this method if `autoDownload` opt
 Configure update provider. If value is `string`, [GenericServerOptions](/configuration/publish.md#genericserveroptions) will be set with value as `url`.
 
 
-- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>String</code> - If you want to override configuration in the `app-update.yml`.
+- options <code>[PublishConfiguration](/configuration/publish.md#publishconfiguration)</code> | <code>String</code> | <code>[GithubOptions](/configuration/publish.md#githuboptions)</code> | <code>[S3Options](/configuration/publish.md#s3options)</code> | <code>[SpacesOptions](/configuration/publish.md#spacesoptions)</code> | <code>[GenericServerOptions](/configuration/publish.md#genericserveroptions)</code> | <code>[BintrayOptions](/configuration/publish.md#bintrayoptions)</code> - If you want to override configuration in the `app-update.yml`.
 
 <a name="module_electron-updater.AppUpdater+quitAndInstall"></a>
 #### `appUpdater.quitAndInstall(isSilent, isForceRunAfter)`

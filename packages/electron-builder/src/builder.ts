@@ -41,6 +41,10 @@ export function normalizeOptions(args: CliOptions): BuildOptions {
     return args
   }
 
+  if ("draft" in args || "prerelease" in args) {
+    warn("--draft and --prerelease is deprecated, please set releaseType (http://electron.build/configuration/publish#GithubOptions-releaseType) in the GitHub publish options instead")
+  }
+
   let targets = new Map<Platform, Map<Arch, Array<string>>>()
 
   function processTargets(platform: Platform, types: Array<string>) {
@@ -259,13 +263,6 @@ export async function build(rawOptions?: CliOptions): Promise<Array<string>> {
     options.cscInstallerKeyPassword = process.env.CSC_INSTALLER_KEY_PASSWORD
   }
 
-  if (options.draft === undefined && !isEmptyOrSpaces(process.env.EP_DRAFT)) {
-    options.draft = process.env.EP_DRAFT!.toLowerCase() === "true"
-  }
-  if (options.prerelease === undefined && !isEmptyOrSpaces(process.env.EP_PRELEASE)) {
-    options.prerelease = process.env.EP_PRELEASE!.toLowerCase() === "true"
-  }
-
   const cancellationToken = new CancellationToken()
   const packager = new Packager(options, cancellationToken)
   // because artifact event maybe dispatched several times for different publish providers
@@ -349,14 +346,14 @@ export function configureBuildCommand(yargs: yargs.Yargs): yargs.Yargs {
       choices: ["onTag", "onTagOrDraft", "always", "never", undefined as any],
     })
     .option("draft", {
-      group: publishGroup,
-      description: "Create a draft (unpublished) release",
+      group: deprecated,
+      description: "Please set releaseType in the GitHub publish options instead",
       type: "boolean",
       default: undefined,
     })
     .option("prerelease", {
-      group: publishGroup,
-      description: "Identify the release as a prerelease",
+      group: deprecated,
+      description: "Please set releaseType in the GitHub publish options instead",
       type: "boolean",
       default: undefined,
     })

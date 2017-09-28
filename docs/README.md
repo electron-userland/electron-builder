@@ -13,7 +13,7 @@ A complete solution to package and build a ready for distribution Electron app f
   * [Windows](configuration/win.md#WindowsConfiguration-target): `nsis` (Installer), `nsis-web` (Web installer), `portable` (portable app without installation), AppX (Windows Store), Squirrel.Windows.
 * [Two package.json structure](tutorials/two-package-structure.md) is supported, but you are not forced to use it even if you have native production dependencies.  
 * [Build version management](configuration/configuration.md#build-version-management).
-* [Publishing artifacts](publishing-artifacts.md) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
+* [Publishing artifacts](/configuration/publish) to GitHub Releases, Amazon S3, DigitalOcean Spaces and Bintray.
 * Pack in a distributable format [already packaged app](#pack-only-in-a-distributable-format).
 * Separate [build steps](https://github.com/electron-userland/electron-builder/issues/1102#issuecomment-271845854).
 * Build and publish in parallel, using hard links on CI server to reduce IO and disk space usage.

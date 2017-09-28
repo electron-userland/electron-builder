@@ -42,8 +42,6 @@ Publishing:
   --publish, -p  Publish artifacts (to GitHub Releases), see
                  https://goo.gl/tSFycD
                 [choices: "onTag", "onTagOrDraft", "always", "never", undefined]
-  --draft        Create a draft (unpublished) release                  [boolean]
-  --prerelease   Identify the release as a prerelease                  [boolean]
 
 Deprecated:
   --platform  The target platform (preferred to use --mac, --win or --linux)
