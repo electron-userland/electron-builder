@@ -213,28 +213,3 @@ test.ifDevOrLinuxCi("file associations only perMachine", appThrows({
     ],
   },
 }))
-
-test.ifNotCiMac("web installer", app({
-  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.x64),
-  config: {
-    publish: {
-      provider: "s3",
-      bucket: "develar",
-      path: "test",
-    },
-    nsis: {
-      differentialPackage: true,
-    }
-  }
-}))
-
-test.ifAll.ifNotCiMac("web installer (default github)", app({
-  targets: Platform.WINDOWS.createTarget(["nsis-web"], Arch.ia32, Arch.x64),
-  config: {
-    publish: {
-      provider: "github",
-      // test form without owner
-      repo: "foo/bar"
-    }
-  },
-}))

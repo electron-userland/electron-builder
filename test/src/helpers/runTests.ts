@@ -52,27 +52,28 @@ async function runTests() {
       args.push("squirrelWindowsTest")
       args.push("nsisUpdaterTest")
       args.push("macArchiveTest")
+      args.push("macCodeSignTest")
+      args.push("extraMetadataTest")
     }
     else if (circleNodeIndex === 1) {
-      args.push("BuildTest")
-      args.push("macCodeSignTest")
       args.push("oneClickInstallerTest")
+      args.push("portableTest")
     }
     else if (circleNodeIndex === 2) {
       args.push("snapTest")
       args.push("configurationValidationTest")
       args.push("mainEntryTest")
       args.push("PublishManagerTest", "ArtifactPublisherTest", "httpRequestTest", "RepoSlugTest")
+      args.push("macPackagerTest")
     }
     else {
+      args.push("BuildTest")
       args.push("assistedInstallerTest")
-      args.push("portableTest")
       args.push("linuxArchiveTest")
       args.push("filesTest")
       args.push("globTest")
       args.push("ignoreTest")
-      args.push("extraMetadataTest")
-      args.push("macPackagerTest")
+      args.push("webInstallerTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

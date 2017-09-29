@@ -1,11 +1,18 @@
 import BluebirdPromise from "bluebird-lst"
-import { Arch } from "builder-util"
+import { Arch, warn } from "builder-util"
 import { PackageFileInfo } from "builder-util-runtime"
 import { unlink } from "fs-extra-p"
 import { getTemplatePath } from "../../util/pathManager"
 import { NsisTarget } from "./nsis"
+import { copyFile } from "builder-util/out/fs"
+import * as path from "path"
+import { Lazy } from "lazy-val"
+import { getBinFromGithub } from "builder-util/out/binDownload"
 
 export const nsisTemplatesDir = getTemplatePath("nsis")
+
+// noinspection SpellCheckingInspection
+export const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.2.1", "8t2wbvCUHxHGU9YMGGvb0VulCszBGXoCtKJZWZEcIB1lyM+bH2awYnZFnlwfr9VWQHzi7xM3CN25X6fZjDItFA=="))
 
 export class AppPackageHelper {
   private readonly archToFileInfo = new Map<Arch, Promise<PackageFileInfo>>()
@@ -14,10 +21,15 @@ export class AppPackageHelper {
   /** @private */
   refCount = 0
 
+  constructor(private readonly elevateHelper: CopyElevateHelper) {
+  }
+
   async packArch(arch: Arch, target: NsisTarget): Promise<PackageFileInfo> {
     let infoPromise = this.archToFileInfo.get(arch)
     if (infoPromise == null) {
-      infoPromise = target.buildAppPackage(target.archs.get(arch)!, arch)
+      const appOutDir = target.archs.get(arch)!
+      infoPromise = this.elevateHelper.copy(appOutDir, target)
+        .then(() => target.buildAppPackage(appOutDir, arch))
       this.archToFileInfo.set(arch, infoPromise)
     }
 
@@ -44,5 +56,30 @@ export class AppPackageHelper {
     }
 
     await BluebirdPromise.map(filesToDelete, it => unlink(it))
+  }
+}
+
+export class CopyElevateHelper {
+  private readonly copied = new Map<string, Promise<string>>()
+
+  copy(appOutDir: string, target: NsisTarget): Promise<any> {
+    let isPackElevateHelper = target.options.packElevateHelper
+    if (isPackElevateHelper === false && target.options.perMachine === true) {
+      isPackElevateHelper = true
+      warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
+    }
+
+    if (isPackElevateHelper === false) {
+      return BluebirdPromise.resolve()
+    }
+
+    let promise = this.copied.get(appOutDir)
+    if (promise != null) {
+      return promise
+    }
+
+    promise = NSIS_PATH.value.then(it => copyFile(path.join(it, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false))
+    this.copied.set(appOutDir, promise)
+    return promise
   }
 }

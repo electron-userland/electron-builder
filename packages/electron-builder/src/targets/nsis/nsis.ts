@@ -3,9 +3,9 @@ import BluebirdPromise from "bluebird-lst"
 import { Arch, asArray, AsyncTaskManager, execWine, getPlatformIconFileName, isEmptyOrSpaces, log, spawnAndWrite, use, warn } from "builder-util"
 import { PackageFileInfo, UUID } from "builder-util-runtime"
 import { getBinFromGithub } from "builder-util/out/binDownload"
-import { copyFile, statOrNull } from "builder-util/out/fs"
+import { statOrNull } from "builder-util/out/fs"
 import _debug from "debug"
-import { readFile, writeFile } from "fs-extra-p"
+import { readFile, unlink, writeFile } from "fs-extra-p"
 import { Lazy } from "lazy-val"
 import * as path from "path"
 import sanitizeFileName from "sanitize-filename"
@@ -18,15 +18,13 @@ import { addCustomMessageFileInclude, createAddLangsMacro, LangConfigurator } fr
 import { computeLicensePage } from "./nsisLicense"
 import { NsisOptions, PortableOptions } from "./nsisOptions"
 import { NsisScriptGenerator } from "./nsisScriptGenerator"
-import { AppPackageHelper, nsisTemplatesDir } from "./nsisUtil"
+import { AppPackageHelper, NSIS_PATH, nsisTemplatesDir } from "./nsisUtil"
 
 const debug = _debug("electron-builder:nsis")
 
 // noinspection SpellCheckingInspection
 const ELECTRON_BUILDER_NS_UUID = "50e065bc-3134-11e6-9bab-38c9862bdaf3"
 
-// noinspection SpellCheckingInspection
-const NSIS_PATH = new Lazy(() => getBinFromGithub("nsis", "3.0.2.1", "8t2wbvCUHxHGU9YMGGvb0VulCszBGXoCtKJZWZEcIB1lyM+bH2awYnZFnlwfr9VWQHzi7xM3CN25X6fZjDItFA=="))
 // noinspection SpellCheckingInspection
 const nsisResourcePathPromise = new Lazy(() => getBinFromGithub("nsis-resources", "3.3.0", "4okc98BD0v9xDcSjhPVhAkBMqos+FvD/5/H72fTTIwoHTuWd2WdD7r+1j72hxd+ZXxq1y3FRW0x6Z3jR0VfpMw=="))
 
@@ -62,16 +60,6 @@ export class NsisTarget extends Target {
   async buildAppPackage(appOutDir: string, arch: Arch): Promise<PackageFileInfo> {
     const options = this.options
     const packager = this.packager
-
-    let isPackElevateHelper = options.packElevateHelper
-    if (isPackElevateHelper === false && options.perMachine === true) {
-      isPackElevateHelper = true
-      warn("`packElevateHelper = false` is ignored, because `perMachine` is set to `true`")
-    }
-
-    if (isPackElevateHelper !== false) {
-      await copyFile(path.join(await NSIS_PATH.value, "elevate.exe"), path.join(appOutDir, "resources", "elevate.exe"), false)
-    }
 
     const isDifferentialPackage = options.differentialPackage
     const format = !isDifferentialPackage && options.useZip ? "zip" : "7z"
@@ -227,7 +215,7 @@ export class NsisTarget extends Target {
     const sharedHeader = await this.computeCommonInstallerScriptHeader()
     const script = isPortable ? await readFile(path.join(nsisTemplatesDir, "portable.nsi"), "utf8") : await this.computeScriptAndSignUninstaller(defines, commands, installerPath, sharedHeader)
     await this.executeMakensis(defines, commands, sharedHeader + await this.computeFinalScript(script, true))
-    await packager.sign(installerPath)
+    await BluebirdPromise.all<any>([packager.sign(installerPath), defines.UNINSTALLER_OUT_FILE == null ? BluebirdPromise.resolve() : unlink(defines.UNINSTALLER_OUT_FILE)])
 
     packager.info.dispatchArtifactCreated({
       file: installerPath,
@@ -264,8 +252,9 @@ export class NsisTarget extends Target {
       return script
     }
 
-    const uninstallerPath = await
-    packager.getTempFile("uninstaller.exe")
+    // https://github.com/electron-userland/electron-builder/issues/2103
+    // it is more safe and reliable to write uninstaller to our out dir
+    const uninstallerPath = path.join(this.outDir, `.__uninstaller-${this.name}-${process.pid.toString(16)}-${Date.now().toString(16)}.exe`)
     const isWin = process.platform === "win32"
     defines.BUILD_UNINSTALLER = null
     defines.UNINSTALLER_OUT_FILE = isWin ? uninstallerPath : path.win32.join("Z:", uninstallerPath)
