@@ -51,10 +51,11 @@ async function runTests() {
       args.push("winCodeSignTest")
       args.push("squirrelWindowsTest")
       args.push("nsisUpdaterTest")
+      args.push("macArchiveTest")
     }
     else if (circleNodeIndex === 1) {
       args.push("BuildTest")
-      args.push("mac.+")
+      args.push("macCodeSignTest")
       args.push("oneClickInstallerTest")
     }
     else if (circleNodeIndex === 2) {
@@ -71,6 +72,7 @@ async function runTests() {
       args.push("globTest")
       args.push("ignoreTest")
       args.push("extraMetadataTest")
+      args.push("macPackagerTest")
     }
     console.log(`Test files for node ${circleNodeIndex}: ${args.join(", ")}`)
   }

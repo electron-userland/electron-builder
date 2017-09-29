@@ -529,7 +529,7 @@ Object {
                 },
               },
             },
-            "binding-v3.0.1-electron-v1.7-darwin-x64": Object {
+            "binding-v3.0.1-electron-v1.7-linux-x64": Object {
               "files": Object {
                 "lzma_native.node": Object {
                   "executable": true,

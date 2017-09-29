@@ -50,7 +50,7 @@ exports.default = async function(configuration) {
 
 #### How do create Parallels Windows 10 Virtual Machine?
 
-You don't need to have Windows 10 license. Free (expire after 90 days, but it is not a problem because no additional setup is required) is provided.
+You don't need to have Windows 10 license. Free is provided (expire after 90 days, but it is not a problem because no additional setup is required).
 
 1. Open Parallels Desktop.
 2. File -> New.
@@ -58,6 +58,8 @@ You don't need to have Windows 10 license. Free (expire after 90 days, but it is
 4. Continue, Continue, Accept software license agreement.
 5. Select "Microsoft Edge on Windows 10".
 6. The next steps are general, see [Installing Windows on your Mac using Parallels Desktop](http://kb.parallels.com/4729) from "Step 6: Specify a name and location".
+
+Parallels Windows 10 VM will be used automatically to build AppX on macOS. No need even start VM — it will be started automatically on demand and suspended after build. No need to specify VM — it will be detected automatically (first Windows 10 VM will be used).
 
 #### How do create VirtualBox Windows 10 Virtual Machine?
 

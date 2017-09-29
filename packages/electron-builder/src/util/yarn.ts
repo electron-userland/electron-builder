@@ -53,6 +53,9 @@ export function getGypEnv(frameworkInfo: DesktopFrameworkInfo, platform: string,
     npm_config_arch: arch,
     npm_config_target_arch: arch,
     npm_config_platform: platform,
+    // required for node-pre-gyp
+    npm_config_target_platform: platform,
+    npm_config_fallback_to_build: true,
     npm_config_build_from_source: buildFromSource,
     npm_config_devdir: getElectronGypCacheDir(),
   }
@@ -63,7 +66,7 @@ function installDependencies(appDir: string, options: RebuildOptions): Promise<a
   const arch = options.arch || process.arch
   const additionalArgs = options.additionalArgs
 
-  log(`Installing app dependencies for arch ${arch} to ${appDir}`)
+  log(`Installing app dependencies for ${platform}:${arch} to ${appDir}`)
   let execPath = process.env.npm_execpath || process.env.NPM_CLI_JS
   const execArgs = ["install", "--production"]
 
