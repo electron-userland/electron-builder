@@ -7,7 +7,7 @@ All options are optional. All required for AppX configuration is inferred and co
 * <code id="AppXOptions-backgroundColor">backgroundColor</code> = `#464646` String - The background color of the app tile. See [Visual Elements](https://msdn.microsoft.com/en-us/library/windows/apps/br211471.aspx).
 * <code id="AppXOptions-displayName">displayName</code> String - A friendly name that can be displayed to users. Corresponds to [Properties.DisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211432.aspx). Defaults to the application product name.
 * <code id="AppXOptions-identityName">identityName</code> String - The name. Corresponds to [Identity.Name](https://msdn.microsoft.com/en-us/library/windows/apps/br211441.aspx). Defaults to the [application name](/configuration/configuration#Metadata-name).
-* <code id="AppXOptions-publisher">publisher</code> String - Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package. By default will be extracted from code sign certificate. Specify publisher only if electron-builder cannot compute correct one.
+* <code id="AppXOptions-publisher">publisher</code> String - The Windows Store publisher. Not used if AppX is build for testing. See [AppX Package Code Signing](#appx-package-code-signing) below.
 * <code id="AppXOptions-publisherDisplayName">publisherDisplayName</code> String - A friendly name for the publisher that can be displayed to users. Corresponds to [Properties.PublisherDisplayName](https://msdn.microsoft.com/en-us/library/windows/apps/br211460.aspx). Defaults to company name from the application metadata.
 * <code id="AppXOptions-languages">languages</code> Array&lt;String&gt; | String - The list of [supported languages](https://docs.microsoft.com/en-us/windows/uwp/globalizing/manage-language-and-region#specify-the-supported-languages-in-the-apps-manifest) that will be listed in the Windows Store. The first entry (index 0) will be the default language. Defaults to en-US if omitted.
 
@@ -15,6 +15,11 @@ Inherited from `TargetSpecificOptions`:
 * <code id="AppXOptions-artifactName">artifactName</code> String - The [artifact file name template](/configuration/configuration.md#artifact-file-name-template).
 * <code id="AppXOptions-publish">publish</code> The [publish](/configuration/publish.md) options.
 <!-- end of generated block -->
+
+## AppX Package Code Signing
+
+* If the AppX package is meant for enterprise or self-made distribution (manually install the app without using the Store for testing or for enterprise distribution), it must be [signed](/code-signing.md).
+* If the AppX package is meant for Windows Store distribution, no need to sign the package with any certificate. The Windows Store will take care of signing it with a Microsoft certificate during the submission process.
 
 ## AppX Assets
 

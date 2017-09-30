@@ -9,8 +9,10 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
     * [`.ArtifactCreated`](#ArtifactCreated)
     * [`.BeforeBuildContext`](#BeforeBuildContext)
     * [`.BuildResult`](#BuildResult)
+    * [`.CertificateFromStoreInfo`](#CertificateFromStoreInfo)
     * [`.CommonLinuxOptions`](#CommonLinuxOptions)
     * [`.CommonNsisOptions`](#CommonNsisOptions)
+    * [`.FileCodeSigningInfo`](#FileCodeSigningInfo)
     * [`.FileSet`](#FileSet)
     * [`.ForgeOptions`](#ForgeOptions)
     * [`.LinuxTargetSpecificOptions`](#LinuxTargetSpecificOptions) ⇐ <code>[CommonLinuxOptions](#CommonLinuxOptions)</code>
@@ -78,6 +80,15 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * **<code id="BuildResult-outDir">outDir</code>** String
 * **<code id="BuildResult-platformToTargets">platformToTargets</code>** Map&lt;[Platform](#Platform) | Map&lt;String | [Target](#Target)&gt;&gt;
 
+<a name="CertificateFromStoreInfo"></a>
+## `CertificateFromStoreInfo`
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
+**Properties**
+* **<code id="CertificateFromStoreInfo-thumbprint">thumbprint</code>** String
+* **<code id="CertificateFromStoreInfo-subject">subject</code>** String
+* **<code id="CertificateFromStoreInfo-store">store</code>** String
+* **<code id="CertificateFromStoreInfo-isLocalMachineStore">isLocalMachineStore</code>** Boolean
+
 <a name="CommonLinuxOptions"></a>
 ## `CommonLinuxOptions`
 **Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
@@ -94,6 +105,13 @@ Developer API only. See [Configuration](/configuration/configuration.md) for use
 * <code id="CommonNsisOptions-unicode">unicode</code> = `true` Boolean - Whether to create [Unicode installer](http://nsis.sourceforge.net/Docs/Chapter1.html#intro-unicode).
 * <code id="CommonNsisOptions-guid">guid</code> String - See [GUID vs Application Name](../configuration/nsis.md#guid-vs-application-name).
 * <code id="CommonNsisOptions-warningsAsErrors">warningsAsErrors</code> = `true` Boolean - If `warningsAsErrors` is `true` (default): NSIS will treat warnings as errors. If `warningsAsErrors` is `false`: NSIS will allow warnings.
+
+<a name="FileCodeSigningInfo"></a>
+## `FileCodeSigningInfo`
+**Kind**: interface of [<code>electron-builder</code>](#module_electron-builder)<br/>
+**Properties**
+* **<code id="FileCodeSigningInfo-file">file</code>** String
+* <code id="FileCodeSigningInfo-password">password</code> String
 
 <a name="FileSet"></a>
 ## `FileSet`

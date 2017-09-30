@@ -116,8 +116,7 @@ export interface AppXOptions extends TargetSpecificOptions {
   readonly identityName?: string | null
 
   /**
-   * Describes the publisher information in a form `CN=your name exactly as in your cert`. The Publisher attribute must match the publisher subject information of the certificate used to sign a package.
-   * By default will be extracted from code sign certificate. Specify publisher only if electron-builder cannot compute correct one.
+   * The Windows Store publisher. Not used if AppX is build for testing. See [AppX Package Code Signing](#appx-package-code-signing) below.
    */
   readonly publisher?: string | null
 
