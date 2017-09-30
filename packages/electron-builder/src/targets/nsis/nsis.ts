@@ -199,7 +199,9 @@ export class NsisTarget extends Target {
       commands.SetCompress = "off"
     }
     else {
-      commands.SetCompressor = "lzma"
+      // investigate https://github.com/electron-userland/electron-builder/issues/2134#issuecomment-333286194
+      // difference - 33.540 vs 33.601, only 61 KB
+      commands.SetCompressor = "zlib"
       if (!this.isWebInstaller) {
         defines.COMPRESS = "auto"
       }
